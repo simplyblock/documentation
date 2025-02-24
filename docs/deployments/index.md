@@ -13,37 +13,37 @@ inside and outside of Kubernetes.
 
     ---
 
-    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing/)<br/>
-    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme/)<br/>
-    [:octicons-arrow-right-24: Prerequisites](kubernetes/prerequisites/)<br/>
-    [:octicons-arrow-right-24: Hyper-Converged Setup](kubernetes/install-simplyblock/hyper-converged/)<br/>
-    [:octicons-arrow-right-24: Disaggregated Setup](kubernetes/install-simplyblock/disaggregated/)<br/>
-    [:octicons-arrow-right-24: Hybrid Setup](kubernetes/install-simplyblock/hybrid/)
+    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
+    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
+    [:octicons-arrow-right-24: Prerequisites](kubernetes/prerequisites.md)<br/>
+    [:octicons-arrow-right-24: Hyper-Converged Setup](kubernetes/install-simplyblock/hyper-converged.md)<br/>
+    [:octicons-arrow-right-24: Disaggregated Setup](kubernetes/install-simplyblock/disaggregated.md)<br/>
+    [:octicons-arrow-right-24: Hybrid Setup](kubernetes/install-simplyblock/hybrid.md)
 
 -   :material-linux:{ .lg .middle } __Bare Metal Linux__
 
     ---
 
-    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing/)<br/>
-    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme/)<br/>
-    [:octicons-arrow-right-24: Prerequisites](baremetal/prerequisites/)<br/>
-    [:octicons-arrow-right-24: Install Storage Cluster](baremetal/install-simplyblock/)<br/>
-    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](baremetal/install-simplyblock-csi/)<br/>
+    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
+    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
+    [:octicons-arrow-right-24: Prerequisites](baremetal/prerequisites.md)<br/>
+    [:octicons-arrow-right-24: Install Storage Cluster](baremetal/install-simplyblock.md)<br/>
+    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](baremetal/install-simplyblock-csi.md)<br/>
 
 -   :material-aws:{ .lg .middle } __AWS EC2__
 
     ---
 
-    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing/)<br/>
-    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme/)<br/>
-    [:octicons-arrow-right-24: Prerequisites](aws-ec2/prerequisites/)<br/>
-    [:octicons-arrow-right-24: Install Storage Cluster](aws-ec2/install-simplyblock/)<br/>
-    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](aws-ec2/install-simplyblock-csi/)<br/>
+    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
+    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
+    [:octicons-arrow-right-24: Prerequisites](aws-ec2/prerequisites.md)<br/>
+    [:octicons-arrow-right-24: Install Storage Cluster](aws-ec2/install-simplyblock.md)<br/>
+    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](aws-ec2/install-simplyblock-csi.md)<br/>
 
 -   :material-hvac-off:{ .lg .middle } __Air Gapped__
 
     ---
 
-    [:octicons-arrow-right-24: General Information](air-gap/)
+    [:octicons-arrow-right-24: General Information](air-gap/index.md)
 </div>
 
