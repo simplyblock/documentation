@@ -1,0 +1,81 @@
+site_name: Simplyblock Documentation
+site_url: https://docs.simplyblock.io/
+repo_url: https://github.com/simplyblock-io/documentation
+edit_uri: edit/main/docs/
+copyright: "&copy; 2024-2025 Simplyblock GmbH"
+extra:
+  homepage: https://www.simplyblock.io
+  homepage_name: Simplyblock
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/simplyblock-io
+    - icon: fontawesome/brands/github
+      link: https://github.com/simplyblock-io
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/simplyblock_io
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/@simplyblock
+    - icon: fontawesome/brands/bluesky
+      link: https://bsky.app/profile/simplyblock.io
+    - icon: fontawesome/brands/mastodon
+      link: https://mastodon.social/deck/@simplyblock
+plugins:
+  - search
+  - mike
+  - social
+  - glightbox
+  - mkdocs-nav-weight:
+      section_renamed: true
+  - git-revision-date-localized:
+      fallback_to_build_date: true
+      type: iso_date
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - tables
+  - pymdownx.betterem
+  - pymdownx.blocks.caption
+  - pymdownx.details
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.tabbed
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+theme:
+  name: material
+  logo: assets/simplyblock-logo-horizontal.svg
+  custom_dir: templates
+  palette:
+    scheme: slate
+    primary: custom
+  font:
+    text: Inter
+    code: Roboto Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.path
+    - navigation.indexes
+    - navigation.top
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.tooltips
+    - content.code.copy
+    - content.code.annotate
+extra_css:
+  - stylesheets/extra.css
