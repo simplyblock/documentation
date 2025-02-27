@@ -26,6 +26,7 @@ plugins:
   - mike
   - social
   - glightbox
+  - mkdocs-video
   - mkdocs-nav-weight:
       section_renamed: true
   - git-revision-date-localized:
@@ -42,11 +43,12 @@ markdown_extensions:
   - pymdownx.blocks.caption
   - pymdownx.details
   - pymdownx.smartsymbols
-  - pymdownx.snippets
   - pymdownx.tabbed
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ["./snippets"]
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.emoji:
@@ -56,6 +58,8 @@ theme:
   name: material
   logo: assets/simplyblock-logo-horizontal.svg
   custom_dir: templates
+  icon:
+    annotation: material/information-slab-circle
   palette:
     scheme: slate
     primary: custom
@@ -79,3 +83,5 @@ theme:
     - content.code.annotate
 extra_css:
   - stylesheets/extra.css
+extra_javascript:
+  - javascript/huge-pages-calculator.js

@@ -1,27 +1,22 @@
 ---
 title: "Documentation Conventions"
 weight: 20500
-params:
-  sidebar:
-    forceLinkTitle: "Documentation Conventions"
-cascade:
-  type: "docs"
 ---
 
 ## Feature Stages
 
-Features in simplyblock are generally released when reaching general availability. However, sometimes, features are
-made available earlier to receive feedback of testers. Those features need to be enabled specifically and are marked
-in the documentation accordingly. Features without a specific label are considered ready for production.
+Features in simplyblock are released when reaching general availability. However, sometimes, features are made available
+earlier to receive feedback from testers. Those features must be explicitly enabled and are marked in the
+documentation accordingly. Features without a specific label are considered ready for production.
 
 The documentation uses the following feature stage labels:
 
-- **General Availability:** This is the default stage if nothing else is defined on the feature. In this stage the
-                            feature is **considered ready for production**.
-- **Technical Preview:**    The feature is provided for testing and feedback acquisition. It is not considered stable
-                            or complete. Breaking changes may occur which could break backward compatibility. Features
-                            in this stage are **not considered ready for production**. Features in this stage need to
-                            be specifically enabled before use.
+- **General Availability:** This is the default stage, if nothing else is defined on the feature. In this stage the
+  feature is **considered ready for production**.
+- **Technical Preview:** The feature is provided for testing and feedback acquisition. It is not considered stable
+  or complete. Breaking changes may occur, which could break backward compatibility. Features
+  in this stage are **not considered ready for production**. Features in this stage need to
+  be specifically enabled before use.
 
 ## Admonitions (Call-Outs)
 
@@ -64,7 +59,7 @@ before proceeding.
 
 ### Dangers
 
-Dangers contain crucial information that can lead to harmful consequences such as data
+Dangers contain crucial information that can lead to harmful consequences, such as data
 loss and irreversible damage.
 
 !!! danger

@@ -17,19 +17,20 @@ users to provide feedback, report typos, suggest improvements, and submit fixes 
 The simplyblock documentation is built using [mkdocs](https://www.mkdocs.org/), specifically using the
 [mkdocs-material](https://squidfunk.github.io/mkdocs-material/) variant.
 
-Changes to the documentation can be done by changing or adding the necessary Markdown files.
+Changes to the documentation can be made by changing or adding the necessary Markdown files.
 
 ### 1. Provide Feedback or Report Issues
 
 If you notice any inaccuracies, typos, missing information, or outdated content, you can submit an issue on our GitHub
 repository:
 
-1. Navigate to [Simplyblock Documentation GitHub Repository](https://github.com/simplyblock-io/documentation).
+1. Navigate to the [Simplyblock Documentation GitHub Repository](https://github.com/simplyblock-io/documentation).
 2. Click on the **Issues** tab.
 3. Click **New Issue** and provide a clear description of the problem or suggestion.
 4. Submit the issue, and our team will review it.
 
 ### 2. Make Edits and Submit a Pull Request (PR)
+
 If you'd like to make direct changes to the documentation, follow these steps:
 
 1. **Fork the Repository**
@@ -71,7 +72,7 @@ If you'd like to make direct changes to the documentation, follow these steps:
 
 6. **Create a Pull Request (PR)**
 
-- Navigate to the original Simplyblock documentation repository.
+- Navigate to the original simplyblock documentation repository.
 - Click **New Pull Request** and select your branch.
 - Provide a concise description of the changes and submit the PR.
 - Our team will review and merge accepted contributions.
@@ -85,5 +86,5 @@ If you'd like to make direct changes to the documentation, follow these steps:
 
 ## Getting in Touch
 
-If you have questions about contributing, feel free to open an issue or contact us via the Simplyblock support channels.
+If you have questions about contributing, feel free to open an issue or contact us via the simplyblock support channels.
 

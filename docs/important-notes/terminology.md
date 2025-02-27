@@ -2,22 +2,22 @@
 title: "Terminology"
 weight: 20400
 params:
-  sidebar:
-    forceLinkTitle: "Terminology"
+sidebar:
+forceLinkTitle: "Terminology"
 cascade:
-  type: "docs"
+type: "docs"
 ---
 
 ## Simplyblock Specific Terms
 
-### Management Plane
+### Control Plane
 
-The management plane is responsible for orchestrating, monitoring, and controlling the overall storage infrastructure.
-It provides centralized administration, policy enforcement, and automation for managing storage nodes, logical volumes (
-LVs), and cluster-wide configurations. The management plane operates independently of the storage plane, ensuring that
-control and metadata operations do not interfere with data processing. It facilitates provisioning, fault management,
-and system scaling while offering APIs and CLI tools for seamless integration with external management systems. A single
-management plane can manage multiple clusters. 
+The control plane orchestrates, monitors, and controls the overall storage infrastructure. It provides centralized
+administration, policy enforcement, and automation for managing storage nodes, logical volumes (LVs), and cluster-wide
+configurations. The control plane operates independently of the storage plane, ensuring that control and metadata
+operations do not interfere with data processing. It facilitates provisioning, fault management, and system scaling
+while offering APIs and CLI tools for seamless integration with external management systems. A single control plane
+can manage multiple clusters.
 
 ### Storage Plane
 
@@ -53,7 +53,7 @@ modern storage architectures.
 
 ### Storage Device
 
-A storage device is a hardware component or system used to store and retrieve digital data in computing environments.
+A storage device is a hardware component or system that stores and retrieves digital data in computing environments.
 Storage devices can be classified into different types based on technology and access speed, including hard disk
 drives (HDDs), solid-state drives (SSDs), NVMe drives, and optical or tape storage. They can be locally attached to a
 single machine or shared across multiple systems in networked storage architectures such as Storage Area Networks (SANs)
@@ -63,7 +63,7 @@ applications.
 
 ### NVMe (Non-Volatile Memory Express)
 
-NVMe (Non-Volatile Memory Express) is a high-performance storage protocol designed specifically for flash-based storage
+NVMe (Non-Volatile Memory Express) is a high-performance storage protocol explicitly designed for flash-based storage
 devices like SSDs, leveraging the PCIe (Peripheral Component Interconnect Express) interface for ultra-low latency and
 high throughput. Unlike traditional protocols such as SATA or SAS, NVMe takes advantage of parallelism and multiple
 queues, significantly improving data transfer speeds and reducing CPU overhead. It is widely used in enterprise storage,
@@ -103,8 +103,8 @@ advantages.
 ### Multipathing
 
 Multipathing is a storage networking technique that enables multiple physical paths between a compute system and a
-storage device to improve redundancy, load balancing, and fault tolerance. By using multiple connections, multipathing
-enhances performance and reliability, ensuring continuous access to storage even if one path fails. It is commonly
+storage device to improve redundancy, load balancing, and fault tolerance. Multipathing enhances performance and
+reliability by using multiple connections, ensuring continuous access to storage even if one path fails. It is commonly
 implemented in Fibre Channel (FC), iSCSI, and NVMe-oF (including NVMe/TCP and NVMe/RoCE) environments, where high
 availability and optimized data transfer are critical.
 
@@ -119,20 +119,20 @@ often using techniques such as erasure coding or replication to safeguard agains
 
 ### Management Node
 
-A management node is a containerized component responsible for orchestrating, monitoring, and controlling the
-distributed storage cluster. It forms part of the control plane, managing cluster-wide configurations, provisioning
-logical volumes, handling metadata operations, and ensuring overall system health. Management nodes facilitate
-communication between storage nodes and client applications, enforcing policies such as access control, data placement,
-and fault tolerance. They also provide an interface for administrators to interact with the storage system via the
-Simplyblock CLI or API, enabling seamless deployment, scaling, and maintenance of the storage infrastructure.
+A management node is a containerized component that orchestrates, monitors, and controls the distributed storage
+cluster. It forms part of the control plane, managing cluster-wide configurations, provisioning logical volumes,
+handling metadata operations, and ensuring overall system health. Management nodes facilitate communication between
+storage nodes and client applications, enforcing policies such as access control, data placement, and fault tolerance.
+They also provide an interface for administrators to interact with the storage system via the Simplyblock CLI or API,
+enabling seamless deployment, scaling, and maintenance of the storage infrastructure.
 
 ### Storage Cluster
 
 A storage cluster is a group of interconnected storage nodes that work together to provide a scalable, fault-tolerant,
 and high-performance storage system. Unlike traditional single-node storage solutions, storage clusters distribute data
-across multiple nodes, ensuring redundancy, load balancing, and resilience against hardware failures. These clusters can
-be configured using different architectures, such as replication, erasure coding, or software-defined storage (SDS), to
-optimize data availability and efficiency. Storage clusters are commonly used in cloud storage, high-performance
+across multiple nodes, ensuring redundancy, load balancing, and resilience against hardware failures. To optimize data
+availability and efficiency, these clusters can be configured using different architectures, such as replication,
+erasure coding, or software-defined storage (SDS). Storage clusters are commonly used in cloud storage, high-performance
 computing (HPC), and enterprise data centers, enabling seamless scalability and improved data accessibility across
 distributed environments.
 
@@ -159,10 +159,10 @@ load balancing, and accessibility, making it a fundamental technique for enterpr
 
 RAID (Redundant Array of Independent Disks) is a data storage technology that combines multiple physical drives into a
 single logical unit to improve performance, fault tolerance, or both. RAID configurations vary based on their purpose:
-RAID 0 (striping) enhances speed but offers no redundancy, RAID 1 (mirroring) duplicates data for high availability, and
+RAID 0 (striping) enhances speed but offers no redundancy, RAID 1 (mirroring) duplicates data for high availability and
 RAID 5, 6, and 10 use combinations of striping and parity to balance performance and fault tolerance. RAID is widely
 used in enterprise storage, servers, and high-performance computing to protect against drive failures and optimize data
-access. It can be implemented in hardware controllers or software-defined storage solutions depending on system
+access. It can be implemented in hardware controllers or software-defined storage solutions, depending on system
 requirements.
 
 ### Quality of Service
@@ -171,7 +171,7 @@ Quality of Service (QoS) refers to the ability to define and enforce performance
 controlling key metrics such as IOPS (Input/Output Operations Per Second), throughput, and latency. QoS ensures that
 different applications receive appropriate levels of performance, preventing resource contention in multi-tenant
 environments. By setting limits and priorities for Logical Volumes (LVs), Simplyblock allows administrators to allocate
-storage resources efficiently, ensuring that critical workloads maintain consistent performance even under high demand.
+storage resources efficiently, ensuring critical workloads maintain consistent performance even under high demand.
 This capability is essential for optimizing storage operations, improving reliability, and meeting service-level
 agreements (SLAs) in distributed cloud-native environments.
 
@@ -179,7 +179,8 @@ agreements (SLAs) in distributed cloud-native environments.
 
 Storage Performance Development Kit (SPDK) is an open-source set of libraries and tools designed to optimize
 high-performance, low-latency storage applications by bypassing traditional kernel-based I/O processing. SPDK leverages
-user-space, polled-mode drivers to eliminate context switching and interrupts, significantly reducing CPU overhead and
+user-space and polled-mode drivers to eliminate context switching and interrupts, significantly reducing CPU overhead
+and
 improving throughput. It is particularly suited for NVMe storage, NVMe-over-Fabrics (NVMe-oF), and iSCSI target
 acceleration, making it a key technology in software-defined storage solutions. By providing a highly efficient
 framework for storage processing, SPDK enables modern storage architectures to achieve high IOPS, reduced latency, and
@@ -202,7 +203,7 @@ on the original data, a clone is a complete duplication that can operate separat
 Cloning is commonly used in enterprise storage, cloud environments, and containerized applications to create quick,
 reproducible environments for workloads without affecting the original data. Storage systems often use thin cloning to
 optimize space by sharing unchanged data blocks between the original and the clone, reducing storage overhead. COW is
-widely implemented in storage virtualization, and containerized environments, enabling fast, space-efficient backups,
+widely implemented in storage virtualization and containerized environments, enabling fast, space-efficient backups,
 cloning, and data protection while maintaining high system performance.
 
 ### CoW (Copy-on-Write)
@@ -212,27 +213,31 @@ optimize storage usage and performance. Instead of immediately duplicating data,
 is made, ensuring that only changed data blocks are written to a new location. This approach minimizes storage overhead,
 speeds up snapshot creation, and reduces unnecessary data duplication.
 
+![type:video](https://www.youtube.com/embed/wMy1r8RVTz8?si=mOl3nfBqkEtVGZH9)
+
 ## Kubernetes Related Terms
 
 ### Kubernetes
 
-Kubernetes is an open-source container orchestration platform that automates the deployment, scaling, and management of
-containerized applications across clusters of machines. Originally developed by Google and now maintained by the Cloud
-Native Computing Foundation (CNCF), Kubernetes provides a robust framework for load balancing, self-healing, storage
-orchestration, and automated rollouts and rollbacks. It manages application workloads using Pods, Deployments, Services,
-and Persistent Volumes (PVs), ensuring scalability and resilience. By abstracting underlying infrastructure, Kubernetes
-enables organizations to efficiently run containerized applications across on-premises, cloud, and hybrid environments,
-making it a cornerstone of modern cloud-native computing.
+[Kubernetes (K8s)](https://kubernetes.io/){:target="_blank"} is an open-source container orchestration platform that
+automates the deployment, scaling, and management of containerized applications across clusters of machines. Initially
+developed by Google and now maintained by the [Cloud Native Computing Foundation (CNCF)](https://www.cncf.io/){:
+target="_blank"},
+Kubernetes provides a robust framework for load balancing, self-healing, storage orchestration, and automated rollouts
+and rollbacks. It manages application workloads using Pods, Deployments, Services, and Persistent Volumes (PVs),
+ensuring scalability and resilience. By abstracting underlying infrastructure, Kubernetes enables organizations to
+efficiently run containerized applications across on-premises, cloud, and hybrid environments, making it a cornerstone
+of modern cloud-native computing.
 
 ### Kubernetes CSI (Container Storage Interface)
 
-The Kubernetes Container Storage Interface (CSI) is a standardized API that enables external storage providers to
-integrate their storage solutions with Kubernetes. CSI allows Kubernetes to dynamically provision, attach, mount, and
-manage Persistent Volumes (PVs) across different storage backends without requiring changes to the Kubernetes core. By
-using a CSI driver, storage vendors can offer block and file storage to Kubernetes workloads, supporting advanced
-features like snapshotting, cloning, and volume expansion. CSI enhances Kubernetes’ flexibility by enabling seamless
-integration with cloud, on-premises, and software-defined storage solutions, making it the de facto method for managing
-storage in containerized environments.
+The [Kubernetes Container Storage Interface (CSI)](https://kubernetes-csi.github.io/docs/drivers.html){:target="_blank"}
+is a standardized API enabling external storage providers to integrate their storage solutions with Kubernetes. CSI
+allows Kubernetes to dynamically provision, attach, mount, and manage Persistent Volumes (PVs) across different storage
+backends without requiring changes to the Kubernetes core. Using a CSI driver, storage vendors can offer block and file
+storage to Kubernetes workloads, supporting advanced features like snapshotting, cloning, and volume expansion. CSI
+enhances Kubernetes’ flexibility by enabling seamless integration with cloud, on-premises, and software-defined storage
+solutions, making it the de facto method for managing storage in containerized environments.
 
 ### Pod
 
@@ -266,11 +271,11 @@ Recycle, or Delete), determining whether the storage is preserved, cleared, or r
 
 ### Storage Class
 
-A StorageClass is an Kubernetes abstraction that defines different types of storage available within a cluster, enabling
+A StorageClass is a Kubernetes abstraction that defines different types of storage available within a cluster, enabling
 dynamic provisioning of Persistent Volumes (PVs). It allows administrators to specify storage requirements such as
 performance characteristics, replication policies, and backend storage providers (e.g., cloud block storage, network
 file systems, or distributed storage systems). Each StorageClass includes a provisioner, which determines how volumes
-are created, and parameters that define specific configurations for the underlying storage system. By referencing a
+are created and parameters that define specific configurations for the underlying storage system. By referencing a
 StorageClass in a Persistent Volume Claim (PVC), users can automatically provision storage that meets their
 application's needs without manually pre-allocating PVs, streamlining storage management in cloud-native environments.
 
@@ -279,7 +284,7 @@ application's needs without manually pre-allocating PVs, streamlining storage ma
 ### TCP (Transmission Control Protocol)
 
 Transmission Control Protocol (TCP) is a core communication protocol in the Internet Protocol (IP) suite that ensures
-reliable, ordered, and error-checked delivery of data between devices over a network. TCP operates at the transport
+reliable, ordered, and error-checked data delivery between devices over a network. TCP operates at the transport
 layer and establishes a connection-oriented communication channel using a three-way handshake process to synchronize
 data exchange. It segments large data streams into smaller packets, ensures their correct sequencing, and retransmits
 lost packets to maintain data integrity. TCP is widely used in applications requiring stable and accurate data
@@ -291,13 +296,13 @@ systems.
 User Datagram Protocol (UDP) is a lightweight, connectionless communication protocol in the Internet Protocol (IP) suite
 that enables fast, low-latency data transmission without guaranteeing delivery, order, or error correction. Unlike
 Transmission Control Protocol (TCP), UDP does not establish a connection before sending data, making it more efficient
-for applications that prioritize speed over reliability. It is commonly used in real-time communications, streaming
+for applications prioritizing speed over reliability. It is commonly used in real-time communications, streaming
 services, online gaming, and DNS lookups, where occasional data loss is acceptable in exchange for reduced latency and
 overhead.
 
 ### IP (Internet Protocol), IPv4, IPv6
 
-Internet Protocol (IP) is the fundamental networking protocol that enables devices to communicate over the internet and
+Internet Protocol (IP) is the fundamental networking protocol that enables devices to communicate over the Internet and
 private networks by assigning unique IP addresses to each device. Operating at the network layer of the Internet
 Protocol suite, IP is responsible for routing and delivering data packets from a source to a destination based on their
 addresses. It functions in a connectionless manner, meaning each packet is sent independently and may take different
@@ -307,7 +312,7 @@ ensure effective data transmission across networks.
 
 ### Netmask
 
-A netmask is a numerical value used in IP networking to define the range of IP addresses within a subnet. It works by
+A netmask is a numerical value used in IP networking to define a subnet's range of IP addresses. It works by
 masking a portion of an IP address to distinguish the network part from the host part. A netmask consists of a series of
 binary ones (1s) followed by zeros (0s), where the ones represent the network portion and the zeros indicate the host
 portion. Common netmasks include 255.255.255.0 (/24) for standard subnets and 255.255.0.0 (/16) for larger networks.
@@ -320,7 +325,7 @@ Classless Inter-Domain Routing (CIDR) is a method for allocating and managing IP
 traditional class-based system. CIDR uses variable-length subnet masking (VLSM) to define IP address ranges with
 flexible subnet sizes, reducing wasted addresses and improving routing efficiency. CIDR notation represents an IP
 address followed by a slash (/) and a number indicating the number of significant bits in the subnet mask (e.g.,
-192.168.1.0/24 means the first 24 bits define the network, leaving 8 bits for host addresses). Widely used in modern
+`192.168.1.0/24` means the first 24 bits define the network, leaving 8 bits for host addresses). Widely used in modern
 networking and the internet, CIDR helps optimize IP address distribution and enhances routing aggregation, reducing the
 size of global routing tables.
 
@@ -337,8 +342,8 @@ deployment, automation capabilities, and cost-effectiveness.
 ### Disaggregated
 
 Disaggregated refers to an IT architecture approach where compute, storage, and networking resources are separated into
-independent components, rather than being tightly integrated within the same physical system. In disaggregated storage,
-for example, storage resources are managed independently from compute nodes, allowing for flexible scaling, improved
+independent components rather than being tightly integrated within the same physical system. In disaggregated storage,
+for example, storage resources are managed independently of compute nodes, allowing for flexible scaling, improved
 resource utilization, and reduced hardware dependencies. This contrasts with traditional or hyper-converged
 architectures, where these resources are combined. Disaggregated architectures are widely used in cloud computing,
 high-performance computing (HPC), and modern data centers to enhance scalability, cost-efficiency, and operational

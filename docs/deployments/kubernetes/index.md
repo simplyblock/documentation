@@ -26,7 +26,7 @@ section depending on your chosen deployment model:
 - [Disaggregated Setup](install-simplyblock/disaggregated.md)
 - [Hybrid Setup](install-simplyblock/hybrid.md)
 
-In either case, you start with installing the management plane, before going over to the actual storage cluster and
+In either case, you start with installing the control plane, before going over to the actual storage cluster and
 the Kubernetes CSI driver.
 
 As a last step, you may want to install caching nodes on your Kubernetes workers to improve access latency. See the
