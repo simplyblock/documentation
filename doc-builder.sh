@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+IMAGE_NAME="simplyblock/mkdocs-builder"
+
+DOCKER=$(command -v docker)
+if ! [[ "${DOCKER}" ]]; then
+  echo "Command docker not found. Please install docker."
+  exit 1
+fi
+
+GREP=$(command -v grep)
+if ! [[ "${GREP}" ]]; then
+  echo "Command grep not found. Please install grep."
+  exit 1
+fi
+
+JQ=$(command -v jq)
+if ! [[ "${JQ}" ]]; then
+  echo "Command jq not found. Please install jq."
+  exit 1
+fi
+
+function ensure_docker_image() {
+  echo -n "Checking docker build image... "
+  local image=$(${DOCKER} image ls | ${GREP} ${IMAGE_NAME})
+  if [[ "${image}" ]]; then
+    echo "ok."
+    return
+  fi
+  echo "failed. Please run ./doc-builder.sh build-image"
+  exit 1
+}
+
+function build_image() {
+  docker build -t ${IMAGE_NAME} .
+  exit $?
+}
+
+function serve() {
+  ensure_docker_image
+  ${DOCKER} run --rm -it -p 127.0.0.1:8000:8000 -v "${PWD}:/docs" ${IMAGE_NAME} serve -a 0.0.0.0:8000
+  exit $?
+}
+
+function build() {
+  ensure_docker_image
+  echo -n "Cleaning site directory... "
+  rm -rf ./site > /dev/null
+  echo "ok."
+
+  echo "Building documentation... "
+  if ! ${DOCKER} run --rm -it -v "${PWD}:/docs" ${IMAGE_NAME} build --strict; then
+    echo "Building documentation failed. Please see above for potential issues. After fixing them, you can retry."
+    exit 1
+  fi
+}
+
+function deploy() {
+  local version="$1"
+  if [[ "${version}" == "" ]]; then
+    echo "Version missing. Please run as /doc-builder.sh build {version-name}"
+    exit 1
+  fi
+
+  if [[ -d "./deployment/${version}" ]]; then
+    echo "Version ${version} already exists."
+    exit 1
+  fi
+
+  if ! build; then
+    exit 1
+  fi
+
+  echo -n "Prepare version for deployment... "
+  mv "./site" "./deployment/${version}"
+  if [ -d ./deployment/latest ]; then
+    ${JQ} '.[].aliases=[]' ./deployment/latest/versions.json | ${JQ} --arg version "${version}" \
+          '. |= [{"version":$version, "title":$version, "aliases":["latest"]}] + .' > ./deployment/versions-temp.json
+    rm "./deployment/latest"
+  else
+    printf "[{\"version\":\"${version}\",\"title\":\"${version}\",\"aliases\":[\"latest\"]}]" | ${JQ} . > ./deployment/versions-temp.json
+  fi
+  ln -s "./${version}" "./deployment/latest"
+  mv ./deployment/versions-temp.json ./deployment/latest/versions.json
+
+  if [ ! -f ./deployment/versions.json ]; then
+    ln -s ./latest/versions.json ./deployment/versions.json
+  fi
+  echo "ok."
+}
+
+case "$1" in
+  "build-image")
+    build_image
+  ;;
+
+  "serve")
+    serve
+  ;;
+
+  "build")
+    build
+  ;;
+
+  "deploy")
+    deploy "${@:2}"
+  ;;
+
+  *)
+    echo "Simplyblock Documentation Builder"
+    echo "Available commands:"
+    echo "  ./doc-builder build-image              Building required docker image"
+    echo "  ./doc-builder serve                    Live serving content changes"
+    echo "  ./doc-builder build                    Building static documentation"
+    echo "  ./doc-builder deploy {version-name}    Preparing new version deployment "
+  ;;
+esac
+
