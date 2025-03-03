@@ -14,6 +14,21 @@ preparation phase to find missing configuration during the process.
 curl -L https://sblk.xyz/prerequisites | bash
 ```
 
+## Before We Start
+
+A simplyblock production cluster consists of three different types of nodes:
+
+1. _Management nodes_ are part of the control plane which managed the cluster(s). A production cluster requires at least **three nodes**.
+2. _Storage nodes_ are part of a specific storage cluster and provide capacity to the distributed storage pool. A production cluster requires at least **three nodes**.
+3. _Secondary nodes_ are part of a specific storage cluster and enable automatic fail over for NVMe-oF connections. A production cluster requires at least **one node**.
+
+A single control plane can manage one or more clusters. If started afresh, a control plane must be set up before
+creating a storage cluster. If there is a preexisting control plane, an additional storage cluster can be added
+to it directly.
+
+More information on the control plane, storage plane, as well as the different node types is available under
+[Simplyblock Cluster](../../architecture/concepts/simplyblock-cluster.md) in the architecture section.
+
 ## Network Preparation
 
 Simplyblock recommends two individual network interfaces, one for the control plane and one for the storage plane.
@@ -31,186 +46,8 @@ environment, you may have to adopt these commands to match your configuration.
     see the [Network Considerations](../../deployments/deployment-planning/network-considerations.md)
     section.
 
-## Control Plane Installation
-
-The first step when installing simplyblock, is to install the control plane. The control plane manages one or more
-storage clusters. If an existing control plane is available and the new cluster should be added to it, this section
-can be skipped. Jump right to the [Storage Plane Installation](#storage-plane-installation).
-
-### Firewall Configuration (CP)
-
-Simplyblock requires a number of TCP and UDP ports to be opened from certain networks. Additionally, it requires IPv6
-to be disabled on management nodes.
-
-Following is a list of all ports (TCP and UDP) required for operation as a management node. Attention is required, as
-this list is for management nodes only. Storage nodes have a different port configuration. See the
-[Firewall Configuration](#firewall-configuration-sp) section for the storage plane.
-
-| Service                     | Direction | Source / Target Network | Port  | Protocol(s) |
-|-----------------------------|-----------|-------------------------|-------|-------------|
-| Cluster API                 | ingress   | storage, control, admin | 80    | TCP         |
-| SSH                         | ingress   | storage, control, admin | 22    | TCP         |
-| Graylog                     | ingress   | storage, control        | 12201 | TCP / UDP   |
-| Graylog                     | ingress   | storage, control        | 12202 | TCP         |
-| Graylog                     | ingress   | storage, control        | 13201 | TCP         |
-| Graylog                     | ingress   | storage, control        | 13202 | TCP         |
-| Docker Daemon Remote Access | ingress   | storage, control        | 2375  | TCP         |
-| Docker Swarm Remote Access  | ingress   | storage, control        | 2377  | TCP         |
-| Docker Overlay Network      | ingress   | storage, control        | 4789  | UDP         |
-| Docker Network Discovery    | ingress   | storage, control        | 7946  | TCP / UDP   |
-| FoundationDB                | ingress   | storage, control        | 4500  | TCP         |
-| Prometheus                  | ingress   | storage, control        | 9100  | TCP         |
-|                             |           |                         |       |             |
-| Cluster Control             | egress    | storage, control        | 8080  | TCP         |
-| spdk-http-proxy             | egress    | storage, control        | 5000  | TCP         |
-| Docker Daemon Remote Access | egress    | storage, control        | 2375  | TCP         |
-| Docker Swarm Remote Access  | egress    | storage, control        | 2377  | TCP         |
-| Docker Overlay Network      | egress    | storage, control        | 4789  | UDP         |
-| Docker Network Discovery    | egress    | storage, control        | 7946  | TCP / UDP   |
-
-With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
-
-```plain title="Network Configuration"
-sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-sudo iptables -F
-sudo iptables -X
-sudo iptables -N CONTROL_AND_STORAGE
-sudo iptables -A CONTROL_AND_STORAGE -s 192.168.10.0/24 -j ACCEPT
-sudo iptables -A CONTROL_AND_STORAGE -s 10.10.10.0/24 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport 2375 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 2377 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 4500 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p udp --dport 4789 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 7946 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p udp --dport 7946 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 9100 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 12201 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p udp --dport 12201 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 12202 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 13201 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 13202 -j CONTROL_AND_STORAGE
-sudo iptables -P INPUT DROP
-```
-
-### Management Node Installation
-
-Now that the network is configured, the management node software can be installed.
-
-Simplyblock provides a command line interface called `sbcli`. It's built in Python and required Python 3 and Pip (the
-Python package manager) installed on the machine. This can be achieved with `yum`.
-
-```bash title="Install Python and Pip"
-sudo yum -y install python3-pip
-```
-
-Afterward, the `sbcli` command line interface can be installed. Upgrading the CLI later on, uses the same command.
-
-```bash title="Install Simplyblock CLI"
-sudo pip install sbcli --upgrade
-```
-
-!!! tip "Recommendation"
-    Simplyblock recommends to only upgrade `sbcli` if a system upgrade is executed to prevent potential
-    incompatibilities between the running simplyblock cluster and the version of `sbcli`.
-
-At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
-
-```bash title="Automatically check your configuration"
-curl -L https://sblk.xyz/prerequisites | bash
-```
-
-If the check succeeds, it's time to set up the primary management node: 
-
-```bash title="Deploy the primary management node"
-sbcli cluster create --ifname=<IF_NAME> -ha-type=ha
-```
-
-The output should look something like this:
-
-```plain title="Example output control plane creation"
-[root@vm11 ~]# sbcli cluster create --ifname=eth0 --ha-type=ha
-2025-02-26 12:37:06,097: INFO: Installing dependencies...
-2025-02-26 12:37:13,338: INFO: Installing dependencies > Done
-2025-02-26 12:37:13,358: INFO: Node IP: 192.168.10.1
-2025-02-26 12:37:13,510: INFO: Configuring docker swarm...
-2025-02-26 12:37:14,199: INFO: Configuring docker swarm > Done
-2025-02-26 12:37:14,200: INFO: Adding new cluster object
-File moved to /usr/local/lib/python3.9/site-packages/simplyblock_core/scripts/alerting/alert_resources.yaml successfully.
-2025-02-26 12:37:14,269: INFO: Deploying swarm stack ...
-2025-02-26 12:38:52,601: INFO: Deploying swarm stack > Done
-2025-02-26 12:38:52,604: INFO: deploying swarm stack succeeded
-2025-02-26 12:38:52,605: INFO: Configuring DB...
-2025-02-26 12:39:06,003: INFO: Configuring DB > Done
-2025-02-26 12:39:06,106: INFO: Settings updated for existing indices.
-2025-02-26 12:39:06,147: INFO: Template created for future indices.
-2025-02-26 12:39:06,505: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "OBJ_CREATED", "object_name": "Cluster", "message": "Cluster created 7bef076c-82b7-46a5-9f30-8c938b30e655", "caused_by": "cli"}
-2025-02-26 12:39:06,529: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "OBJ_CREATED", "object_name": "MgmtNode", "message": "Management node added vm11", "caused_by": "cli"}
-2025-02-26 12:39:06,533: INFO: Done
-2025-02-26 12:39:06,535: INFO: New Cluster has been created
-2025-02-26 12:39:06,535: INFO: 7bef076c-82b7-46a5-9f30-8c938b30e655
-7bef076c-82b7-46a5-9f30-8c938b30e655
-```
-
-If the deployment was successful, the last line returns the cluster id. This should be noted down. It's required in
-further steps of the installation.
-
-Additionally to the cluster id, the cluster secret is required in many further steps. The following command can be used
-to retrieve it.
-
-```bash title=""
-sbcli cluster get-secret <CLUSTER_ID>
-```
-
-```plain title="Example output get cluster secret"
-[root@vm11 ~]# sbcli cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
-e8SQ1ElMm8Y9XIwyn8O0
-```
-
-### Secondary Management Nodes
-
-A production cluster, requires at least three management nodes in the control plane. Hence, additional management
-nodes need to be added.
-
-On the secondary nodes, the network requires the same configuration as on the primary. Executing the commands under
-[Firewall Configuration (CP)](#firewall-configuration-cp) will get the node prepared.
-
-Afterward, Python, Pip, and `sbcli` need to be installed.
-
-```bash title="Deployment preparation"
-sudo yum -y install python3-pip
-pip install sbcli --upgrade
-```
-
-Finally, we deploy the management node software and join the control plane cluster.
-
-```bash title="Secondary management node deployment"
-sbcli mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
-```
-
-Running against the primary management node in the control plane should create an output similar to the following
-example:
-
-```plain title="Example output joining a control plane cluster"
-[root@vm12 ~]# sbcli-dev mgmt add 192.168.10.1 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 eth0
-2025-02-26 12:40:17,815: INFO: Cluster found, NQN:nqn.2023-02.io.simplyblock:7bef076c-82b7-46a5-9f30-8c938b30e655
-2025-02-26 12:40:17,816: INFO: Installing dependencies...
-2025-02-26 12:40:25,606: INFO: Installing dependencies > Done
-2025-02-26 12:40:25,626: INFO: Node IP: 192.168.10.2
-2025-02-26 12:40:26,802: INFO: Joining docker swarm...
-2025-02-26 12:40:27,719: INFO: Joining docker swarm > Done
-2025-02-26 12:40:32,726: INFO: Adding management node object
-2025-02-26 12:40:32,745: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "OBJ_CREATED", "object_name": "MgmtNode", "message": "Management node added vm12", "caused_by": "cli"}
-2025-02-26 12:40:32,752: INFO: Done
-2025-02-26 12:40:32,755: INFO: Node joined the cluster
-cdde125a-0bf3-4841-a6ef-a0b2f41b8245
-```
-
-From here, additional management nodes can be added to the control plane cluster. If the control plane cluster is ready,
-the storage plane can be installed.
+<!-- include: install control plane documentation -->
+--8<-- "install-control-plane.md"
 
 ## Storage Plane Installation
 
@@ -249,26 +86,31 @@ list is for storage nodes only. Management nodes have a different port configura
 
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 
-```bash title="Network Configuration"
+!!! danger
+    The example assumes that you have an external firewall between the _admin_ network and the public internet!<br/>
+    If this is not the case, ensure the correct source access for port _22_.
+
+```plain title="Network Configuration"
 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-sudo iptables -F
-sudo iptables -X
-sudo iptables -N CONTROL_AND_STORAGE
-sudo iptables -A CONTROL_AND_STORAGE -s 192.168.10.0/24 -j ACCEPT
-sudo iptables -A CONTROL_AND_STORAGE -s 10.10.10.0/24 -j ACCEPT
+# Clean up
+sudo iptables -F SIMPLYBLOCK
+sudo iptables -D DOCKER-FORWARD -j SIMPLYBLOCK
+sudo iptables -X SIMPLYBLOCK
+# Setup
+sudo iptables -N SIMPLYBLOCK
+sudo iptables -I DOCKER-FORWARD 1 -j SIMPLYBLOCK
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport 2375 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 2377 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 4420 -s 10.10.10.0/24 -j ACCEPT
-sudo iptables -A INPUT -p udp --dport 4789 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 5000 -s 192.168.10.0/24 -j ACCEPT
-sudo iptables -A INPUT -p udp --dport 7946 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p udp --dport 7946 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 8080 -j CONTROL_AND_STORAGE
-sudo iptables -A INPUT -p tcp --dport 7946 -s 10.10.10.0/24 -j ACCEPT
-sudo iptables -P INPUT DROP
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 2375 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 2377 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 4420 -s 10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p udp --dport 4789 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 5000 -s 192.168.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p udp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 8080 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 ```
 
 ### Storage Node Installation
@@ -293,7 +135,7 @@ Afterward, the `sbcli` command line interface can be installed. Upgrading the CL
 sudo pip install sbcli --upgrade
 ```
 
-!!! tip "Recommendation"
+!!! recommendation
     Simplyblock recommends to only upgrade `sbcli` if a system upgrade is executed to prevent potential
     incompatibilities between the running simplyblock cluster and the version of `sbcli`.
 
@@ -313,7 +155,7 @@ sudden power outage, NVMe devices need to be formatted for a specific LBA format
 The `lsblk` is the best way to find all NVMe devices attached to a system.
 
 ```plain title="Example output of lsblk"
-[demo@demo ~]# sudo lsblk
+[demo@demo-3 ~]# sudo lsblk
 NAME        MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
 sda           8:0    0   30G  0 disk
 ├─sda1        8:1    0    1G  0 part /boot
@@ -337,7 +179,7 @@ sudo nvme id-ns /dev/nvmeXnY
 The output depends on the NVMe device itself, but looks something like this:
 
 ```plain title="Example output of NVMe namespace information"
-[demo@demo ~]# sudo nvme id-ns /dev/nvme0n1
+[demo@demo-3 ~]# sudo nvme id-ns /dev/nvme0n1
 NVME Identify Namespace 1:
 ...
 lbaf  0 : ms:0   lbads:9  rp:0
@@ -368,13 +210,13 @@ recommended to always format the device before use.
 To format the drive, the `nvme` cli is used again.  
 
 ```bash title="Formatting the NVMe device"
-nvme format --lbaf=<lbaf> --ses=0 /dev/nvmeXnY
+sudo nvme format --lbaf=<lbaf> --ses=0 /dev/nvmeXnY
 ```
 
 The output of the command should give a successful response when executing similar to the below example.
 
 ```plain title="Example output of NVMe device formatting"
-[demo@demo ~]# sudo nvme format --lbaf=4 --ses=0 /dev/nvme0n1
+[demo@demo-3 ~]# sudo nvme format --lbaf=4 --ses=0 /dev/nvme0n1
 You are about to format nvme0n1, namespace 0x1.
 WARNING: Format may irrevocably delete this device's data.
 You have 10 seconds to press Ctrl-C to cancel this operation.
@@ -387,13 +229,13 @@ Success formatting namespace:1
 With all NVMe devices prepared, the storage node software can be deployed.
 
 ```bash title="Deploy the storage node"
-sbcli -d sn deploy --ifname eth0
+sudo sbcli sn deploy --ifname eth0
 ```
 
 The output will look something like the following example:
 
 ```plain title="Example output of a storage node deployment"
-[root@vm13 ~]# sbcli -d sn deploy --ifname eth0
+[demo@demo-3 ~]# sudo sbcli sn deploy --ifname eth0
 2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
 2025-02-26 13:35:07,038: INFO: Installing dependencies...
 2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.2
@@ -406,6 +248,34 @@ The output will look something like the following example:
 On a successful deployment, the last line will provide the storage node's control channel address. This should be noted
 for all storage nodes, as it is required in the next step to attach the storage node to the simplyblock storage cluster.
 
+### Secondary Node Installation
+
+A secondary node is a storage node without additional storage disks to contribute to the distributed storage pool.
+Apart from that, it is the same as a normal storage node.
+
+However, due to the missing storage devices, preparing a secondary node on requires deploying the storage node
+software.
+
+```bash title="Deploy the secondary node"
+sudo sbcli sn deploy --ifname eth0
+```
+
+The output will look something like the following example:
+
+```plain title="Example output of a secondary node deployment"
+[demo@demo-4 ~]# sudo sbcli sn deploy --ifname eth0
+2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
+2025-02-26 13:35:07,038: INFO: Installing dependencies...
+2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.4
+2025-02-26 13:35:13,623: INFO: Pulling image public.ecr.aws/simply-block/simplyblock:hmdi
+2025-02-26 13:35:15,219: INFO: Recreating SNodeAPI container
+2025-02-26 13:35:15,543: INFO: Pulling image public.ecr.aws/simply-block/ultra:main-latest
+192.168.10.4:5000
+```
+
+On a successful deployment, the last line will provide the secondary node's control channel address. This should be
+noted, as it is required in the next step to attach the secondary node to the simplyblock storage cluster.
+
 ### Attach the Storage Node to the Control Plane
 
 When all storage nodes are prepared, they can be added to the storage cluster.
@@ -414,17 +284,25 @@ When all storage nodes are prepared, they can be added to the storage cluster.
     The following command are executed from a management node. Attaching a storage node to a control plane is executed
     from a management node.
 
-```
-sbcli -d sn add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
-  --max-lvol 50 \
-  --max-prov 500g \
+```bash title="Attaching a storage node to the storage plane"
+sudo sbcli sn add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+  --max-lvol <MAX_LOGICAL_VOLUMES> \
+  --max-prov <MAX_PROVISIONING_CAPACITY> \
   --number-of-devices <NUM_STOR_NVME> \
-  --partitions 0 \
+  --partitions <NUM_OF_PARTITIONS> \
   --data-nics <DATA_IF>
 ```
 
-```plain title="Example output of adding a node to the control plane"
-sbcli -d sn add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
+!!! info
+    The number of partitions (_&lt;NUM_OF_PARTITIONS&gt;_) depends on the storage node setup. If a storage node has a
+    separate journaling device (which is strongly recommended), the value should be zero (_0_) to prevent the storage
+    devices to be partitioned. This improves the performance and prevents device sharing between the journal and
+    actual data storage location.
+
+The output will look something like the following example:
+
+```plain title="Example output of adding a storage node to the storage plane"
+[demo@demo ~]# sudo sbcli sn add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
 2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
 2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
 2025-02-26 14:55:17,341: INFO: Instance cloud: None
@@ -451,3 +329,71 @@ sbcli -d sn add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0
 2025-02-26 14:55:32,442: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
 2025-02-26 14:55:32,443: INFO: Done
 ```
+
+Repeat this process for all prepared storage nodes to add them to the storage plane.
+
+### Attach the Secondary Node to the Control Plane
+
+Afterward, the secondary node needs to be added to the cluster.
+
+```bash title="Attaching a secondary node to the storage plane"
+sudo sbcli sn add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+  --data-nics <DATA_IF>
+  --is-secondary-node
+```
+
+The output will look something like the following example:
+
+```plain title="Example output of a secondary node to the storage plane"
+[demo@demo ~]# sudo sbcli sn add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.5:5000 ens18 --data-nics=ens16 --is-secondary-node
+2025-02-28 13:34:57,877: INFO: Adding Storage node: 192.168.10.115:5000
+2025-02-28 13:34:57,952: INFO: Node found: vm5
+2025-02-28 13:34:57,953: INFO: Instance id: 5d679365-1361-40b0-bac0-3de949057bbc
+2025-02-28 13:34:57,953: INFO: Instance cloud: None
+2025-02-28 13:34:57,954: INFO: Instance type: None
+2025-02-28 13:34:57,954: INFO: Instance privateIp: 192.168.10.5
+2025-02-28 13:34:57,955: INFO: Instance public_ip: 192.168.10.5
+2025-02-28 13:34:57,977: WARNING: Unsupported instance-type None for deployment
+2025-02-28 13:34:57,977: INFO: Node Memory info
+...
+025-02-28 13:35:08,068: INFO: Connecting to remote devices
+2025-02-28 13:35:08,111: INFO: Connecting to node 2f4dafb1-d610-42a7-9a53-13732459523e
+2025-02-28 13:35:08,111: INFO: bdev found remote_alceml_378cf3b5-1959-4415-87bf-392fa1bbed6c_qosn1
+2025-02-28 13:35:08,112: INFO: bdev found remote_alceml_c4c4011a-8f82-4c9d-8349-b4023a20b87c_qosn1
+2025-02-28 13:35:08,112: INFO: bdev found remote_alceml_d27388b9-bbd8-4e82-8880-d8811aa45383_qosn1
+2025-02-28 13:35:08,113: INFO: Connecting to node b7db725a-96e2-40d1-b41b-738495d97093
+2025-02-28 13:35:08,113: INFO: bdev found remote_alceml_7f5ade89-53c6-440b-9614-ec24db3afbd9_qosn1
+2025-02-28 13:35:08,114: INFO: bdev found remote_alceml_8d160125-f095-43ae-9781-16d841ae9719_qosn1
+2025-02-28 13:35:08,114: INFO: bdev found remote_alceml_b0691372-1a4b-4fa9-a805-c2c1f311541c_qosn1
+2025-02-28 13:35:08,114: INFO: Connecting to node 43560b0a-f966-405f-b27a-2c571a2bb4eb
+2025-02-28 13:35:08,115: INFO: bdev found remote_alceml_29e74188-5efa-47d9-9282-84b4e46b77db_qosn1
+2025-02-28 13:35:08,115: INFO: bdev found remote_alceml_a1efcbbf-328c-4f86-859f-fcfceae1c7a8_qosn1
+2025-02-28 13:35:08,116: INFO: bdev found remote_alceml_cf2d3d24-e244-4a45-a71d-6383db07806f_qosn1
+2025-02-28 13:35:08,274: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
+2025-02-28 13:35:08,274: INFO: Done
+```
+
+On a successful response, it's finally time to activate the storage plane.
+
+### Activate the Storage Cluster
+
+The last step after all nodes are added to the storage cluster, the storage plane can be activated.
+
+```bash title="Storage cluster activation"
+sudo sbcli cluster activate <CLUSTER_ID>
+```
+
+The command output should look like this and respond with a successful activation of the storage cluster
+
+```plain title="Example output of a storage cluster activation"
+[demo@demo ~]# sbcli cluster activate 7bef076c-82b7-46a5-9f30-8c938b30e655
+2025-02-28 13:35:26,053: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from unready to in_activation", "caused_by": "cli"}
+2025-02-28 13:35:26,322: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to 2f4dafb1-d610-42a7-9a53-13732459523e
+2025-02-28 13:35:31,133: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to b7db725a-96e2-40d1-b41b-738495d97093
+2025-02-28 13:35:55,791: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from in_activation to active", "caused_by": "cli"}
+2025-02-28 13:35:55,794: INFO: Cluster activated successfully
+```
+
+Now that the cluster is ready, it is time to install the [Kubernetes CSI Driver](install-simplyblock-csi.md) or learn
+how to use the simplyblock storage cluster to
+[manually provision logical volumes](../../usage/baremetal/provisioning.md).

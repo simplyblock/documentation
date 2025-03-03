@@ -6,6 +6,20 @@
   --md-typeset-a-color: #27AE60;
 }
 
+.md-typeset .admonition.recommendation,
+.md-typeset details.recommendation {
+  border-color: rgb(43, 155, 70);
+}
+.md-typeset .recommendation > .admonition-title,
+.md-typeset .recommendation > summary {
+  background-color: rgba(43, 155, 70, 0.1);
+}
+.md-typeset .recommendation > .admonition-title::before,
+.md-typeset .recommendation > summary::before {
+  background-color: rgb(43, 155, 70);
+  -webkit-mask-image: var(--md-admonition-icon--tip);
+          mask-image: var(--md-admonition-icon--tip);
+
 .md-tabs__link {
   font-weight: 600;
 }

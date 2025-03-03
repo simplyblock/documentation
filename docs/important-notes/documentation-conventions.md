@@ -33,7 +33,7 @@ Notes include additional information which may be interesting but not crucial.
 
 Recommendations include best practices and recommendations.
 
-!!! tip "Recommendation"
+!!! recommendation
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla et euismod
     nulla. Curabitur feugiat, tortor non consequat finibus, justo purus auctor
     massa, nec semper lorem quam in massa.

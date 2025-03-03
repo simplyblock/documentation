@@ -63,7 +63,7 @@ amount of storage available in the cluster and the maximum amount of logical vol
 | Per logical volume             | 6 MiB              |
 | Per TB of max. cluster storage | 256 MiB            |
 
-!!! tip "Recommendation"
+!!! recommendation
     For bare metal or disaggregated deployments, simplyblock recommends allocating around 75% of the available memory
     as huge pages, minimizing memory overhead.<br/><br/>
     For hyper-converged deployments, please use the [huge pages calculator](../../reference/huge-pages-calculator.md). 
@@ -80,7 +80,7 @@ sudo sysctl vm.nr_hugepages=4096
 
 Since the allocation is temporary, it will disappear after a system reboot.
 
-!!! tip "Recommendation"
+!!! recommendation
     Simplyblock recommends to pre-allocate huge pages via the bootloader commandline. This prevents fragmentation of
     the huge pages memory and ensures a continuous memory area to be allocated.
     ```plain title="GRUB configuration change"
@@ -105,6 +105,22 @@ amount depends on the utilized storage.
     Used local SSD storage is the physically utilized capacity of the local NVMe devices on the storage node at a point
     in time. Used logical volume storage is the physically utilized capacity of all logical volumes on a specific
     storage node at a point in time.
+
+### Storage Planning
+
+Simplyblock storage nodes require one or more NVMe devices to provide storage capacity to the distributed storage pool
+of a storage cluster.
+
+!!! recommendation
+    Simplyblock requires at least three similar sized NVMe devices per storage node.
+
+Furthermore, simplyblock storage nodes require one additional NVMe device with less capacity as a journaling device.
+The journaling device becomes part of the distributed record journal, keeping track of all changes before being
+persisted into their final position. This helps with write performance and transactional behavior by using a
+write-ahead log structure and replaying the journal in case of a issue.
+
+!!! info
+    Secondary nodes don't need NVMe storage disks.
 
 ## Caching Nodes (K8s only)
 

@@ -23,7 +23,7 @@ In terms of bandwidth, simplyblock recommends at least 40GBit/s per second inter
 Especially with a high number of cluster nodes and logical volumes, simplyblock can easily saturate 200 GBit/s and
 more interconnects.
 
-!!! tip "Recommendation"
+!!! recommendation
     Simplyblock recommends NVIDIA Mellanox network adapters. However, every network adapter, including virtual
     ones will work. If using virtual machines, the physical network adapter should be made available to the VM
     using PCI-e passthrough (IOMMU).
@@ -31,7 +31,7 @@ more interconnects.
 Additionally, simplyblock recommends a physically separated storage network or using a VLAN to create a virtually
 separated network. This can improve performance and minimize network contention.
 
-!!! tip "Recommendation"
+!!! recommendation
     If VLANs are used, prefer hardware-based VLANs configured in switches over a software-based VLAN with Linux
     bridges.
 
@@ -41,7 +41,7 @@ Lastly, simplyblock requires a set of TCP/IP ports to be opened towards specific
 prerequisites for the deployment model of your choice list the required ports. Simplyblock also provides a shell
 script to pre-test the most important requirements to ensure a smooth installation.
 
-!!! tip "Recommendation"
+!!! recommendation
     Simplyblock strongly recommends two separate NICs, one for the control plane traffic and one for the storage plane.
     These can be implemented via VLAN. However, we recommend to port-based VLANs configured in the switch over virtual
     VLAN interfaces in Linux.

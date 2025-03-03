@@ -8,37 +8,6 @@ cascade:
 type: "docs"
 ---
 
-## Simplyblock Specific Terms
-
-### Control Plane
-
-The control plane orchestrates, monitors, and controls the overall storage infrastructure. It provides centralized
-administration, policy enforcement, and automation for managing storage nodes, logical volumes (LVs), and cluster-wide
-configurations. The control plane operates independently of the storage plane, ensuring that control and metadata
-operations do not interfere with data processing. It facilitates provisioning, fault management, and system scaling
-while offering APIs and CLI tools for seamless integration with external management systems. A single control plane
-can manage multiple clusters.
-
-### Storage Plane
-
-The storage plane is the layer responsible for managing and distributing data across storage nodes within a cluster. It
-handles data placement, replication, fault tolerance, and access control, ensuring that logical volumes (LVs) provide
-high-performance, low-latency storage to applications. The storage plane operates independently of the control plane,
-allowing seamless scalability and dynamic resource allocation without disrupting system operations. By leveraging
-NVMe-over-TCP and software-defined storage principles, Simplyblock’s storage plane ensures efficient data distribution,
-high availability, and resilience, making it ideal for cloud-native and high-performance computing environments.
-
-### Logical Volume
-
-A Logical Volume (LV) is a virtual NVMe device dynamically allocated from a distributed storage pool, providing
-scalable, high-performance block storage for cloud-native applications. Unlike traditional storage architectures,
-Simplyblock’s Logical Volumes leverage software-defined storage (SDS) principles, enabling thin provisioning,
-replication, and snapshotting for enhanced flexibility and resilience. LVs are seamlessly integrated with containerized
-workloads through Kubernetes' Container Storage Interface (CSI), allowing persistent storage for stateful applications.
-By abstracting physical storage into virtualized NVMe devices, Simplyblock ensures efficient resource utilization, high
-availability, and low-latency access, making Logical Volumes an essential component of its cloud-agnostic storage
-infrastructure.
-
 ## Storage Related Terms
 
 ### Storage Pool
