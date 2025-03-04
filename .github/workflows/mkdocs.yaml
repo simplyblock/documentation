@@ -71,6 +71,21 @@ jobs:
           password: ${{ secrets.ftp_password }}
           server-dir: /docs/
           local-dir: ./deployment/
+          exclude: |
+            latest/
+            versions.json
+      - name: "Updating Latest"
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.ssh_server }}
+          port: ${{ secrets.ssh_port }}
+          username: ${{ secrets.ssh_username }}
+          key: ${{ secrets.ssh_key }}
+          script: |
+            cd domains/simplyblock.io/public_html/docs/
+            rm latest
+            ln -s "./${{ env.RELEASE_NAME }}" "./latest"
+            [ -f ./versions.json ] && ln -s ./latest/versions.json ./versions.json
       - name: "Merge Tag to Main"
         uses: mtanzi/action-automerge@v1
         with:
