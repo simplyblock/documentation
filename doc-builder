@@ -84,36 +84,29 @@ function deploy() {
   if ! build; then
     exit 1
   fi
-ls -lah site
-  echo "Prepare version for deployment..."
 
-  echo "Creating directory: ./deployment/${version}..."
+  echo -n "Prepare version for deployment..."
   mkdir "./deployment/${version}"
-
-  echo "Moving generated documentation to ./deployment/${version}..."
   mv "./site" "./deployment/${version}"
 
   if [ -d ./deployment/latest ]; then
-    echo "Updating versions.json to versions-temp.json..."
     ${JQ} '.[].aliases=[]' ./deployment/latest/versions.json | ${JQ} --arg version "${version}" \
           '. |= [{"version":$version, "title":$version, "aliases":["latest"]}] + .' > ./deployment/versions-temp.json
     rm "./deployment/latest"
   else
-    echo "Creating versions-temp.json..."
     printf "[{\"version\":\"${version}\",\"title\":\"${version}\",\"aliases\":[\"latest\"]}]" | ${JQ} . > ./deployment/versions-temp.json
   fi
 
-  echo "Symlinking ./deployment/${version} to ./deployment/latest"
   ln -s "./${version}" "./deployment/latest"
 
-  echo "Moving versions-temp.json to version.json"
   mv ./deployment/versions-temp.json ./deployment/latest/versions.json
 
   if [ ! -f ./deployment/versions.json ]; then
-    echo "Creating ./deployment/versions.json symlink from ./deployment/latest/versons.json"
     ln -s ./latest/versions.json ./deployment/versions.json
   fi
   echo "ok."
+ls -lah deployment
+ls -lah deployment/${version}
 }
 
 case "$1" in
