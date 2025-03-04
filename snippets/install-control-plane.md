@@ -13,33 +13,13 @@ Following is a list of all ports (TCP and UDP) required for operation as a manag
 this list is for management nodes only. Storage nodes have a different port configuration. See the
 [Firewall Configuration](#firewall-configuration-sp) section for the storage plane.
 
-| Service                     | Direction | Source / Target Network | Port  | Protocol(s) |
-|-----------------------------|-----------|-------------------------|-------|-------------|
-| Cluster API                 | ingress   | storage, control, admin | 80    | TCP         |
-| SSH                         | ingress   | storage, control, admin | 22    | TCP         |
-| Graylog                     | ingress   | storage, control        | 12201 | TCP / UDP   |
-| Graylog                     | ingress   | storage, control        | 12202 | TCP         |
-| Graylog                     | ingress   | storage, control        | 13201 | TCP         |
-| Graylog                     | ingress   | storage, control        | 13202 | TCP         |
-| Docker Daemon Remote Access | ingress   | storage, control        | 2375  | TCP         |
-| Docker Swarm Remote Access  | ingress   | storage, control        | 2377  | TCP         |
-| Docker Overlay Network      | ingress   | storage, control        | 4789  | UDP         |
-| Docker Network Discovery    | ingress   | storage, control        | 7946  | TCP / UDP   |
-| FoundationDB                | ingress   | storage, control        | 4500  | TCP         |
-| Prometheus                  | ingress   | storage, control        | 9100  | TCP         |
-|                             |           |                         |       |             |
-| Cluster Control             | egress    | storage, control        | 8080  | TCP         |
-| spdk-http-proxy             | egress    | storage, control        | 5000  | TCP         |
-| Docker Daemon Remote Access | egress    | storage, control        | 2375  | TCP         |
-| Docker Swarm Remote Access  | egress    | storage, control        | 2377  | TCP         |
-| Docker Overlay Network      | egress    | storage, control        | 4789  | UDP         |
-| Docker Network Discovery    | egress    | storage, control        | 7946  | TCP / UDP   |
+--8<-- "control-plane-network-port-table.md"
 
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 
 !!! danger
-The example assumes that you have an external firewall between the _admin_ network and the public internet!<br/>
-If this is not the case, ensure the correct source access for ports _22_ and _80_.
+    The example assumes that you have an external firewall between the _admin_ network and the public internet!<br/>
+    If this is not the case, ensure the correct source access for ports _22_ and _80_.
 
 ```plain title="Network Configuration"
 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
@@ -88,8 +68,8 @@ sudo pip install sbcli --upgrade
 ```
 
 !!! recommendation
-Simplyblock recommends to only upgrade `sbcli` if a system upgrade is executed to prevent potential
-incompatibilities between the running simplyblock cluster and the version of `sbcli`.
+    Simplyblock recommends to only upgrade `sbcli` if a system upgrade is executed to prevent potential
+    incompatibilities between the running simplyblock cluster and the version of `sbcli`.
 
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 

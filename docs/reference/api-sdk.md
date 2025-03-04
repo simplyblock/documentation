@@ -21,7 +21,7 @@ combination of the cluster uuid and the cluster secret.
 
 HTTP Authorization header:
 ```plain
-Authorization: {CLUSTER_UUID} {CLUSTER_SECRET}
+Authorization: <CLUSTER_UUID> <CLUSTER_SECRET>
 ```
 
 The cluster id is provided during the initial cluster installation. The cluster secret can be obtained using
