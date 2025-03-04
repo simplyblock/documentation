@@ -51,7 +51,7 @@ jobs:
         env:
           name: "${{ github.ref_name }}"
         run: |
-          rvho "RELEASE_NAME=${name/\//-}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=${name/\//-}" >> $GITHUB_ENV
       - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
         run: |
           git add deployment && git commit -m "Auto-Build: ${RELEASE_NAME}" && git tag
