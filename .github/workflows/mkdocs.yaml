@@ -38,6 +38,7 @@ jobs:
   dev-deployment:
     if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
+    needs: build-test
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
