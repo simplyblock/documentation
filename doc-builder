@@ -84,7 +84,7 @@ function deploy() {
   if ! build; then
     exit 1
   fi
-ls -lah
+ls -lah site
   echo "Prepare version for deployment..."
 
   echo "Creating directory: ./deployment/${version}..."
