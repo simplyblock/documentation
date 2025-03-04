@@ -104,8 +104,6 @@ function deploy() {
     ln -s ./latest/versions.json ./deployment/versions.json
   fi
   echo "ok."
-ls -lah deployment
-ls -lah deployment/${version}
 }
 
 case "$1" in
