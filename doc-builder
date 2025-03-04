@@ -86,7 +86,6 @@ function deploy() {
   fi
 
   echo -n "Prepare version for deployment..."
-  mkdir "./deployment/${version}"
   mv "./site" "./deployment/${version}"
 
   if [ -d ./deployment/latest ]; then
