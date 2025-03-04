@@ -48,8 +48,14 @@ function build() {
   rm -rf ./site > /dev/null
   echo "ok."
 
+  local terminal="-it"
+  if [[ "${GITHUB_RUN_ID}" != "" ]]; then
+    echo "Running in GitHub Actions, disabling interactive terminal..."
+    terminal="-t"
+  fi
+
   echo "Building documentation... "
-  if ! ${DOCKER} run --rm -it -v "${PWD}:/docs" ${IMAGE_NAME} build --strict; then
+  if ! ${DOCKER} run --rm ${terminal} -v "${PWD}:/docs" ${IMAGE_NAME} build --strict; then
     echo "Building documentation failed. Please see above for potential issues. After fixing them, you can retry."
     exit 1
   fi
