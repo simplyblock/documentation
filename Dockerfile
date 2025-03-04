@@ -1,4 +1,4 @@
-FROM squidfunk/mkdocs-material
+FROM squidfunk/mkdocs-material:9.6.5
 RUN pip install mkdocs-git-revision-date-localized-plugin
 RUN pip install "mkdocs-material[imaging]"
 RUN pip install mkdocs-nav-weight
