@@ -24,6 +24,7 @@ defaults:
 
 jobs:
   build-test:
+    if: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout Repository"
