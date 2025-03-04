@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Stop on any error!
+set -e
+
 IMAGE_NAME="simplyblock/mkdocs-builder"
 
 DOCKER=$(command -v docker)
