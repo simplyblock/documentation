@@ -53,7 +53,6 @@ jobs:
           echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
       - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
         run: |
-          ls -la && \
           ./doc-builder deploy ${{ env.RELEASE_NAME }}
       - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
         run: |
