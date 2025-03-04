@@ -87,6 +87,8 @@ jobs:
           git tag ${RELEASE_NAME}
           git push --all
           git push --tags
+          rm versions.json
+          rm latest
       - name: "Upload Documentation"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -95,9 +97,6 @@ jobs:
           password: ${{ secrets.ftp_password }}
           server-dir: /
           local-dir: ./deployment/
-          exclude: |
-            **/latest/**
-            versions.json
       - name: "Updating Latest"
         uses: appleboy/ssh-action@v1.2.1
         with:
