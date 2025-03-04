@@ -50,18 +50,19 @@ jobs:
         env:
           name: "${{ github.ref_name }}"
         run: |
-          echo "RELEASE_NAME=${name/\//-}" >> $GITHUB_ENV
+          echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
       - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
         run: |
+          ls -la && \
           ./doc-builder deploy ${{ env.RELEASE_NAME }}
       - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
         run: |
           git config user.name github-actions && \
           git config user.email github-actions@github.com && \
           git add deployment && \
-          git commit -m "Auto-Build: ${env.RELEASE_NAME}" && \
-          git tag ${env.RELEASE_NAME} && \
-          git push ${env.RELEASE_NAME}
+          git commit -m "Auto-Build: ${RELEASE_NAME}" && \
+          git tag ${RELEASE_NAME} && \
+          git push ${RELEASE_NAME}
       - name: "Upload Documentation"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
