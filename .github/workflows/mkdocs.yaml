@@ -35,6 +35,28 @@ jobs:
       - name: "Build Documentation Test"
         run: |
           ./doc-builder build
+  dev-deployment:
+    if: ${{ github.ref == 'refs/head/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          token: '${{ github.token }}'
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      - name: "Prepare Documentation Dev Deployment"
+        run: |
+          ./doc-builder build
+      - name: "Upload Documentation"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_username }}
+          password: ${{ secrets.ftp_password }}
+          server-dir: /dev/
+          local-dir: ./site/
   deployment:
     if: ${{ startsWith(github.ref, 'refs/heads/release/') }}
     runs-on: ubuntu-latest
