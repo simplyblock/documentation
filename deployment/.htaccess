@@ -1,6 +1,6 @@
 Options +FollowSymlinks
 RewriteEngine On
-RewriteRule ^/$ /latest/ [L,R=301]
+RewriteRule ^/?$ /latest/ [L,R=301]
 RewriteCond %{REQUEST_URI} !^/latest/?
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
