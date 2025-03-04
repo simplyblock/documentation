@@ -56,7 +56,7 @@ jobs:
           ./doc-builder deploy ${{ env.RELEASE_NAME }}
       - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
         run: |
-          ls -lah .git && \
+          git config --global --add safe.directory $PWD && \
           git config user.name github-actions && \
           git config user.email github-actions@github.com && \
           git add deployment && \
