@@ -85,7 +85,6 @@ jobs:
           git add deployment
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
-          git push --all
           git push --tags
           rm ./deployment/versions.json
           rm ./deployment/latest
@@ -106,9 +105,10 @@ jobs:
           key: ${{ secrets.ssh_key }}
           script: |
             cd domains/simplyblock.io/public_html/docs/
-            [ -d latest ] && rm latest
+            [ -d latest ] && rm ./latest
             ln -s "./${{ env.RELEASE_NAME }}" "./latest"
-            [ ! -h ./versions.json ] && ln -s ./latest/versions.json ./versions.json
+            [ -h ./versions.json ] && rm ./versions.json
+            ln -s ./latest/versions.json ./versions.json
       - name: "Merge Tag to Main"
         uses: mtanzi/action-automerge@v1
         with:
@@ -116,3 +116,6 @@ jobs:
           source: "refs/tags/${{ env.RELEASE_NAME }}"
           target: "main"
           webhook_url: ""
+      - name: "Remove Release Branch"
+        run: |
+          git push origin :${{ github.ref_name }}
