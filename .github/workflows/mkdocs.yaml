@@ -72,8 +72,8 @@ jobs:
           server-dir: /docs/
           local-dir: ./deployment/
           exclude: |
-            ./deployment/latest/**
-            ./deployment/versions.json
+            **/latest/**
+            versions.json
       - name: "Updating Latest"
         uses: appleboy/ssh-action@v1.2.1
         with:
