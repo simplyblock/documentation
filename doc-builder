@@ -93,7 +93,7 @@ function deploy() {
           '. |= [{"version":$version, "title":$version, "aliases":["latest"]}] + .' > ./deployment/versions-temp.json
     rm "./deployment/latest"
   else
-    printf "[{\"version\":\"${version}\",\"title\":\"${version}\",\"aliases\":[\"latest\"]}]" | ${JQ} . > ./deployment/versions-temp.json
+    printf "[{\"version\":\"${version}\",\"title\":\"${version}\",\"aliases\":[\"latest\"]},{\"version\":\"dev\",\"title\":\"development\",\"aliases\":[]}]" | ${JQ} . > ./deployment/versions-temp.json
   fi
 
   ln -s "./${version}" "./deployment/latest"
