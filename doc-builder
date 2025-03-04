@@ -86,7 +86,7 @@ function deploy() {
   mkdir "./deployment/${version}"
 
   echo "Copying generated documentation to ./deployment/${version}..."
-  cp "./site/**" "./deployment/${version}/"
+  cp -r "./site/*" "./deployment/${version}/"
 
   if [ -d ./deployment/latest ]; then
     echo "Updating versions.json to versions-temp.json..."
