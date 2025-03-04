@@ -85,3 +85,6 @@ extra_css:
   - stylesheets/extra.css
 extra_javascript:
   - javascript/huge-pages-calculator.js
+validation:
+  links:
+    not_found: warn
