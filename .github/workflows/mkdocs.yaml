@@ -86,6 +86,7 @@ jobs:
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
           git push --all
+          git push --tags
       - name: "Upload Documentation"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
