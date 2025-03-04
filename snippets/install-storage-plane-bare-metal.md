@@ -42,7 +42,8 @@ sudo iptables -A SIMPLYBLOCK -p udp --dport 4789 -s 192.168.10.0/24,10.10.10.0/2
 sudo iptables -A SIMPLYBLOCK -p tcp --dport 5000 -s 192.168.10.0/24 -j RETURN
 sudo iptables -A SIMPLYBLOCK -p tcp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
 sudo iptables -A SIMPLYBLOCK -p udp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 8080 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 8080:8890 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 9090-9900 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
 sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 ```
 
