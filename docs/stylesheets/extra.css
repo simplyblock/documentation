@@ -19,6 +19,7 @@
   background-color: rgb(43, 155, 70);
   -webkit-mask-image: var(--md-admonition-icon--tip);
           mask-image: var(--md-admonition-icon--tip);
+}
 
 .md-tabs__link {
   font-weight: 600;
