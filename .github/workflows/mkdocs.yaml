@@ -87,8 +87,8 @@ jobs:
           git tag ${RELEASE_NAME}
           git push --all
           git push --tags
-          rm versions.json
-          rm latest
+          rm ./deployment/versions.json
+          rm ./deployment/latest
       - name: "Upload Documentation"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
