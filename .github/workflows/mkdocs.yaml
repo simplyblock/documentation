@@ -30,10 +30,10 @@ jobs:
         uses: actions/checkout@v4
       - name: "Prepare Documentation Builder"
         run: |
-          ./doc-builder.sh build-image
+          ./doc-builder build-image
       - name: "Build Documentation Test"
         run: |
-          ./doc-builder.sh build
+          ./doc-builder build
   deployment:
     if: ${{ startsWith(github.ref, 'refs/heads/releases/') }}
     runs-on: ubuntu-latest
@@ -42,10 +42,10 @@ jobs:
         uses: actions/checkout@v4
       - name: "Prepare Documentation Builder"
         run: |
-          ./doc-builder.sh build-image
+          ./doc-builder build-image
       - name: "Prepare Documentation Deployment"
         run: |
-          ./doc-builder.sh deploy ${{ github.ref_name }}
+          ./doc-builder deploy ${{ github.ref_name }}
       - name: "Create Version Tag: ${{ github.ref_name }}"
         uses: actions/github-script@v5
         with:
