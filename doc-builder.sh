@@ -38,7 +38,7 @@ function build_image() {
 
 function serve() {
   ensure_docker_image
-  ${DOCKER} run --rm -it -p 127.0.0.1:8000:8000 -v "${PWD}:/docs" ${IMAGE_NAME} serve -a 0.0.0.0:8000
+  ${DOCKER} run --rm -it -p 127.0.0.1:8000:8000 -v "${PWD}:/docs" ${IMAGE_NAME} serve --watch-theme -a 0.0.0.0:8000
   exit $?
 }
 
