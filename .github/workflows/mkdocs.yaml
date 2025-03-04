@@ -1,0 +1,73 @@
+name: Build or Deploy Simplyblock Documentation
+on:
+  push:
+    branches:
+      - 'main'
+      - 'release/**'
+  pull_request:
+    branches:
+      - 'main'
+      - '!main'
+
+permissions:
+  actions: write
+  contents: write
+  id-token: write
+
+concurrency:
+  group: "documentation"
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      - name: "Build Documentation Test"
+        run: |
+          ./doc-builder build
+  deployment:
+    if: ${{ startsWith(github.ref, 'refs/heads/releases/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      - name: "Prepare Documentation Deployment"
+        run: |
+          ./doc-builder deploy ${{ github.ref_name }}
+      - name: "Create Version Tag: ${{ github.ref_name }}"
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.action.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ github.ref_name }}',
+              sha: context.sha
+            })
+      - name: "Upload Documentation"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_username }}
+          password: ${{ secrets.ftp_password }}
+          server-dir: /docs/
+          local-dir: ./deployment/
+      - name: "Merge Tag to Main"
+        uses: mtanzi/action-automerge@v1
+        with:
+          github_token: "${{ github.token }}"
+          source: "refs/tags/${{ github.ref_name }}"
+          target: "main"
+          webhook_url: ""
