@@ -46,17 +46,22 @@ jobs:
       - name: "Prepare Documentation Builder"
         run: |
           ./doc-builder build-image
-      - name: "Prepare Documentation Deployment"
-        run: |
-          ./doc-builder deploy ${{ github.ref_name }}
       - name: "Adjust Release Name: ${{ github.ref_name }}"
         env:
           name: "${{ github.ref_name }}"
         run: |
           echo "RELEASE_NAME=${name/\//-}" >> $GITHUB_ENV
+      - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
+        run: |
+          ./doc-builder deploy ${{ env.RELEASE_NAME }}
       - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
         run: |
-          git add deployment && git commit -m "Auto-Build: ${RELEASE_NAME}" && git tag
+          git config user.name github-actions && \
+          git config user.email github-actions@github.com && \
+          git add deployment && \
+          git commit -m "Auto-Build: ${env.RELEASE_NAME}" && \
+          git tag ${env.RELEASE_NAME} && \
+          git push ${env.RELEASE_NAME}
       - name: "Upload Documentation"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
