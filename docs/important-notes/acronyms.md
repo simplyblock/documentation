@@ -28,6 +28,7 @@ weight: 20450
 | NVMe-oF                 | NVMe over Fabrics                    |
 | NVMe/RoCE               | NVMe over RDMA on Converged Ethernet |
 | NVMe/TCP                | NVMe over TCP                        |
+| OS                      | Operating System                     |
 | PV                      | Persistent Volume                    |
 | PVC                     | Persistent Volume Claim              |
 | QOS                     | Quality of Service                   |
