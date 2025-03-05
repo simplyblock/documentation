@@ -6,7 +6,6 @@ weight: 10300
 Simplyblock is a highly flexible storage solution. It can be installed in a variety of different deployment models
 inside and outside of Kubernetes.
 
-
 <div class="grid cards" markdown>
 
 -   :material-kubernetes:{ .lg .middle } __Kubernetes__
@@ -46,4 +45,3 @@ inside and outside of Kubernetes.
 
     [:octicons-arrow-right-24: General Information](air-gap/index.md)
 </div>
-
