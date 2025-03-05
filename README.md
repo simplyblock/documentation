@@ -3,6 +3,29 @@
 This repository contains the simplyblock documentation. It is built using [mkdocs](https://www.mkdocs.org/) and
 uses a provided shell script `doc-builder` to ease the process of working with it.
 
+- [Simplyblock Documentation](#simplyblock-documentation)
+    * [Docs Builder](#docs-builder)
+        + [Serving Content Locally](#serving-content-locally)
+        + [Building a Static Version of the Documentation](#building-a-static-version-of-the-documentation)
+        + [Preparing the Deployment of a New Version](#preparing-the-deployment-of-a-new-version)
+    * [Structure of the Documentation](#structure-of-the-documentation)
+        + [Folder Structure](#folder-structure)
+        + [Writing a Documentation Page](#writing-a-documentation-page)
+        + [Documentation Features](#documentation-features)
+            - [Links](#links)
+            - [Admonitions](#admonitions)
+                * [Notes](#notes)
+                * [Recommendations](#recommendations)
+                * [Infos](#infos)
+                * [Warnings](#warnings)
+                * [Dangers](#dangers)
+            - [Code Blocks](#code-blocks)
+            - [Content Tabs](#content-tabs)
+            - [Tables](#tables)
+            - [Diagrams](#diagrams)
+            - [Footnotes](#footnotes)
+            - [Icons and Emojis](#icons-and-emojis)
+
 ## Docs Builder
 
 The `doc-builder` tool uses Docker and a customized mkdocs Docker image to serve and build the documentation. The
