@@ -3,6 +3,103 @@ title: "Disaggregated Setup"
 weight: 50100
 ---
 
+A disaggregated setup on Kubernetes is very similar to a bare metal installation.
+
+!!! danger
+    Simplyblock requires a fully redundant network interconnect, implemented via a solution such as LACP or Static
+    LAG. Failing to provide that may cause data corruption or data loss in case of network issues. For more information
+    see the [Network Considerations](../../deployments/deployment-planning/network-considerations.md)
+    section.
+
+<!-- include: install intro -->
+--8<-- "bare-metal-intro.md"
+
 <!-- include: install control plane documentation -->
 --8<-- "install-control-plane.md"
 
+<!-- include: install storage plane (bare metal) documentation -->
+--8<-- "install-storage-plane-bare-metal.md"
+
+## Simplyblock CSI Driver Installation
+
+Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver.
+
+To install the Simplyblock CSI Driver, a helm chart is provided. While it can be installed manually, the helm chart is
+strongly recommended. If a manual installation is preferred, see the
+[CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank"}.
+
+Either way, the installation requires a few values to be available.
+
+First we need the unique cluster id. Note down the cluster uuid of the cluster to access.
+
+```bash title="Retrieving the Cluster UUID"
+sudo sbcli cluster list
+```
+
+An example of the output is below.
+
+```plain title="Example output of a cluster listing"
+[demo@demo ~]# sbcli cluster list
++--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
+| UUID                                 | NQN                                                             | ha_type | tls   | mgmt nodes | storage nodes | Mod | Status |
++--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
+| 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a | nqn.2023-02.io.simplyblock:4502977c-ae2d-4046-a8c5-ccc7fa78eb9a | ha      | False | 1          | 4             | 1x1 | active |
++--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
+```
+
+In addition, we need the cluster secret. Note down the cluster secret.
+
+```bash title="Retrieve the Cluster Secret"
+sbcli cluster get-secret <CLUSTER_UUID>
+```
+
+Retrieving the cluster secret will look somewhat like that.
+
+```plain title="Example output of retrieving a cluster secret"
+[demo@demo ~]# sbcli cluster get-secret 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+oal4PVNbZ80uhLMah2Bs
+```
+
+Additionally, a storage pool is required. If a pool already exists, it can be reused. Otherwise, creating a storage
+pool can be created as following:
+
+```bash title="Create a Storage Pool"
+sbcli pool add <POOL_NAME> <CLUSTER_UUID>
+```
+
+The last line of a successful storage pool creation returns the new pool id.
+
+```plain title="Example output of creating a storage pool"
+[demo@demo ~]# sbcli pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+2025-03-05 06:36:06,093: INFO: Adding pool
+2025-03-05 06:36:06,098: INFO: {"cluster_id": "4502977c-ae2d-4046-a8c5-ccc7fa78eb9a", "event": "OBJ_CREATED", "object_name": "Pool", "message": "Pool created test", "caused_by": "cli"}
+2025-03-05 06:36:06,100: INFO: Done
+ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
+```
+
+The last item necessary before deploying the CSI driver is the control plane address. On a standard bare metal
+installation it is any of the API addresses. Meaning, if the primary management node has the IP of `192.168.10.1`, the
+control plane address is `http://192.168.0.1`. It is, however, recommended to front all management nodes, with a load
+balancing proxy, such as HAproxy. In the latter case, the load balancer URL would be the address of the control plane.
+
+Anyhow, deploying the Simplyblock CSI Driver using the provided helm chart comes down to providing the four necessary
+values, adding the helm chart repository, and installing the driver.
+
+```bash title="Install Simplyblock's CSI Driver"
+CLUSTER_UUID="<UUID>"
+CLUSTER_SECRET="<SECRET>"
+CNTR_ADDR="<CONTROL-PLANE-ADDR>"
+POOL_NAME="<POOL-NAME>"
+helm repo add spdk-csi https://sblk.xyz/simplyblock-helm-charts
+helm repo update
+helm install -n spdk-csi --create-namespace spdk-csi spdk-csi/spdk-csi \
+    --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
+    --set csiConfig.simplybk.ip=${CNTR_ADDR} \
+    --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
+    --set logicalVolume.pool_name=${POOL_NAME} \
+    --set storagenode.create=true
+```
+
+```plain title="Example output of the CSI driver deployment"
+<missing>
+```
