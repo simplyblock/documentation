@@ -104,11 +104,7 @@ jobs:
           username: ${{ secrets.ssh_username }}
           key: ${{ secrets.ssh_key }}
           script: |
-            cd domains/simplyblock.io/public_html/docs/
-            [ -d latest ] && rm ./latest
-            ln -s "./${{ env.RELEASE_NAME }}" "./latest"
-            [ -h ./versions.json ] && rm ./versions.json
-            ln -s ./latest/versions.json ./versions.json
+            ./update-docs.sh ${{ env.RELEASE_NAME }}
       - name: "Merge Tag to Main"
         uses: mtanzi/action-automerge@v1
         with:
