@@ -55,8 +55,8 @@ storage plane:
 
 ## Benefits of Simplyblock’s High Availability Design
 
-- **No single point of failure** across the control plane, storage plane, and data paths.
-- **Seamless failover** and recovery from node, network, or disk failures.
-- **Efficient use of storage capacity** while ensuring redundancy through erasure coding.
-- **Continuous operation** during maintenance and upgrade procedures.
+- No single point of failure across the control plane, storage plane, and data paths.
+- Seamless fail over and recovery from node, network, or disk failures.
+- Efficient use of storage capacity while ensuring redundancy through erasure coding.
+- Continuous operation during maintenance and upgrade procedures.
 
