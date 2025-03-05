@@ -20,3 +20,7 @@ weight: 30100
 
 <!-- include: install storage plane (bare metal) documentation -->
 --8<-- "install-storage-plane-bare-metal.md"
+
+Now that the cluster is ready, it is time to install the [Kubernetes CSI Driver](install-simplyblock-csi.md) or learn
+how to use the simplyblock storage cluster to
+[manually provision logical volumes](../../usage/baremetal/provisioning.md).

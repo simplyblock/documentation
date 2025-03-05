@@ -327,7 +327,3 @@ The command output should look like this and respond with a successful activatio
 2025-02-28 13:35:55,791: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from in_activation to active", "caused_by": "cli"}
 2025-02-28 13:35:55,794: INFO: Cluster activated successfully
 ```
-
-Now that the cluster is ready, it is time to install the [Kubernetes CSI Driver](install-simplyblock-csi.md) or learn
-how to use the simplyblock storage cluster to
-[manually provision logical volumes](../../usage/baremetal/provisioning.md).
