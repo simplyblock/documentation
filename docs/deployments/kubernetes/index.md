@@ -30,4 +30,4 @@ In either case, you start with installing the control plane, before going over t
 the Kubernetes CSI driver.
 
 As a last step, you may want to install caching nodes on your Kubernetes workers to improve access latency. See the
-installation steps in the [Install Caching Nodes](install-caching-nodes/index.md) section.
+installation steps in the [Install Caching Nodes](install-caching-nodes.md) section.
