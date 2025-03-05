@@ -25,6 +25,8 @@ uses a provided shell script `doc-builder` to ease the process of working with i
             - [Diagrams](#diagrams)
             - [Footnotes](#footnotes)
             - [Icons and Emojis](#icons-and-emojis)
+  * [Contributing](#contributing)
+  * [Release Process](#release-process)
 
 ## Docs Builder
 
@@ -350,3 +352,29 @@ The icon names can be looked up in the corresponding collection's search feature
 
 Be aware that some of the collections have premium icons which are not included with the documentation builder. Only
 free icons are available.
+
+## Contributing
+
+If you find issues, typos, or have an enhancement request, please file and
+[issue](https://github.com/simplyblock-io/documentation/issues) or create a
+[pull request](https://github.com/simplyblock-io/documentation/pulls).
+
+Pull requests are automatically build to check that there is no issues in the documentation changes, such as broken
+links. After the pull request is successfully built, it will be reviewed and feedback provided or merged.
+
+Any help with the documentation is highly appreciated!
+
+## Release Process
+
+The `main` branch is rebuild on any push and automatically deployed to the live documentation as the
+[_development_ branch](https://docstest.simplyblock.io/dev/).
+
+To create a new full version of the documentation, create a new branch from `main` and the naming pattern
+`release/{version-name}`. The _version-name_ will be used as the folder name and title of the version. It is required
+to only use lowercase letters, number, underscores, and dashes.
+
+After pushing the new release branch, the GitHub action builder kicks in, builds the version, deploys it to the live
+website and updates the latest symlink, creates the necessary tag for history reasons, merges the built documentation
+into main (folder `deployment`), and finally deletes the release branch. 
+
+No further action is required.
