@@ -52,3 +52,278 @@ command.
 
 The given _version-name_ will be used as a directory name and name of the version in the dropdown selector. Hence, it
 is recommended that it only contains lowercase letters, numbers, and underscores or dashes.
+
+## Structure of the Documentation
+
+The simplyblock documentation uses [mkdocs](https://www.mkdocs.org/) as the underlying framework. As the theme, the
+simplyblock documentation uses [mkdocs-material](https://squidfunk.github.io/mkdocs-material/).
+
+### Folder Structure
+
+The simplyblock documentation uses the following basic folder structure:
+
+```plain
+ documentation root
+ ├─ deployment/                            (1)
+ |  ├─ .htaccess                           (2)
+ |  ├─ versions.json (symlink)             (3)
+ |  ├─ latest/ (symlink)                   (4)
+ |  ├─ ... version folders/                (5)
+ ├─ docs/                                  (6)
+ |  ├─ index.md                            (7)
+ |  ├─ assets/                             (8)
+ |  |  ├─ javascripts/                     (9)
+ |  |  |  └─ ... .js files                 (10)
+ |  |  ├─ stylesheets/                     (11)
+ |  |  |  └─ extra.css                     (12)
+ |  |  └─ ... .svg / .png / .jpg files     (13)
+ |  ├─ ... folders/                        (14)
+ |  |  ├─ index.md                         (15)
+ |  |  └─ ... .md files                    (16)
+ ├─ snippets/                              (17)
+ |  └─ ... .md files                       (18)
+ ├─ templates/                             (19)
+ ├─ doc-builder                            (20)
+ ├─ Dockerfile                             (21)
+ ├─ mkdocs.yml                             (22)
+ └─ README.md                              (23)
+```
+
+1. The `deployment` folder contains all currently built and deployed versions of the documentation.
+2. The `.htaccess` file contains the necessary redirect rules to automatically redirect to the latest version.
+3. The `versions.json` symlink links to `latest/versions.json`.
+4. The `latest` symlink links to the latest deployed version of the documentation.
+5. The versions folders are subfolders representing the different versions of the documentation.
+6. The `docs` folder contains the documentation source files.
+7. The `index.md` contains the initial index page of the documentation.
+8. The `assets` folder contains additional assets such as images, stylesheets, and javascript files.
+9. The `javascripts` folder contains additional javascript files.
+10. The additional javascript files.
+11. The `stylesheets` folder contains the extra.css file which defines additional stylesheets.
+12. The `extra.css` file defines additional stylesheets.
+13. The additional image files.
+14. The folders contain the substructure of the documentation. A folder represents a subsection of the documentation.
+15. The `index.md` file is the index page of the subsection.
+16. The other markdown files add additional pages to the subsection.
+17. The `snippets` folder contains reusable and injectable documentation snippets.
+18. The markdown files contain snippets to be injected.
+19. The `templates` folder contains template overrides and adjustments.
+20. The `doc-builder` file is the helper script to test and build the documentation.
+21. The `Dockerfile` file contains the necessary build instructions for the Docker container used by `doc-builder`.
+22. The `mkdocs.yml` file contains the mkdocs configuration.
+23. The `README.md` file is this file.
+
+### Writing a Documentation Page
+
+To add a new documentation pages, a markdown file have to be created. This markdown file consists of two sections, a
+section called front matter which is a YAML section defining the position of the new file in the subsections hierarchy
+and title, as well as the actual markdown part, representing the content of the file.
+
+```markdown
+---
+title: "My Page Title"  # Page Title
+weight: 123             # Page Position 
+---
+
+Introduction text
+
+## Markdown Header
+
+Markdown content
+```
+
+- A markdown documentation page always starts with a short introduction text without its own heading.
+- Markdown headings in documentation pages only use H2 (##), H3 (###), H4 (####), and H5 (#####). H1 (#) is never used directly.
+- The documentation page title must not be longer than two lines in the documentation navigation. Keep it short and precise.
+- The weight should use larger steps in the tens or hundreds to ease injection of additional pages without changing all following weights. 
+
+### Documentation Features
+
+The documentation system supports a number of styling and admonitions.
+
+#### Links
+
+The documentation uses standard markdown link syntax. However, links to external pages should be marked with an
+additional marker to open those links in a new browser tab.
+
+In addition, internal links must use relative paths to the linked content file. If the internal link links to a heading
+on the same page, the hash sign (#) can be used directly. It is also possible to link to headings in other pages by
+following up the relative link the hash sign (#) and the heading id.
+
+```markdown
+[Internal Link](../internal/url.md)
+[Internal Link To Heading](../internal/url.md#heading-id)
+[Heading Link](#heading-id)
+
+[External Link](https://some-external.url){:target="_blank"}
+```
+
+The required heading ids are automatically generated as a full lowercase version of the heading with whitespaces and
+special characters transformed into dashes (-).
+
+#### Admonitions
+
+Admonitions have specific meanings and should be used to emphasize certain parts of the documentation, warn users about
+dangerous options, and send people to additional information.
+
+Admonitions are normally started with three exclamation marks (!!!). In this case the admonition is fully visible at all
+times. If started with three question marks (???) instead, the admonition is collapsed by default and can be manually
+opened by the interested user with clicking the title. In this case, it is important to provide a title with the
+admonition definition.
+
+```markdown
+??? note "This is the admonition title"
+    The text goes here
+```
+
+##### Notes
+
+Notes include additional information which may be interesting but not crucial.
+
+```markdown
+!!! note
+    The text goes here
+```
+
+##### Recommendations
+
+Recommendations include best practices and recommendations.
+
+```markdown
+!!! recommendation
+    The text goes here
+```
+
+##### Infos
+
+Information boxes include background and links to additional information.
+
+```markdown
+!!! info
+    The text goes here
+```
+
+##### Warnings
+
+Warnings contain crucial information that contain crucial information be considered before proceeding.
+
+```markdown
+!!! warning
+    The text goes here
+```
+
+##### Dangers
+
+Dangers contain crucial information that can lead to harmful consequences, such as data loss and irreversible damage.
+
+```markdown
+!!! danger
+    The text goes here
+```
+
+#### Code Blocks
+
+The documentation heavily uses code blocks for command description and example output. Code blocks should always use
+the additional title attribute.
+
+````markdown
+```bash title="Some example title"
+... code goes here
+```
+````
+
+#### Content Tabs
+
+Content tabs can be used to provide the same content (such as API call) in multiple programming languages. Content tabs
+use three equal signs to define the different tabs and four spaces of indentation to define the tabs content.
+
+```markdown
+=== curl
+    ```plain
+    curl -L ...
+    ```
+    
+=== PHP
+    ```php
+    $foo = file_get_contents(...);
+    ```
+```
+
+#### Tables
+
+The documentation uses "standard" extended markdown tables.
+
+```markdown
+| Title first Column  | Title second Column  | ... |
+| ------------------- | -------------------- | --- |
+| Content first row   | Content first row    | ... |
+| Content second row  | Content second row   | ... |
+| ...                 | ...                  | ... |
+```
+| Title first Column  | Title second Column  | ... |
+| ------------------- | -------------------- | --- |
+| Content first row   | Content first row    | ... |
+| Content second row  | Content second row   | ... |
+| ...                 | ...                  | ... |
+
+
+To force left or right alignment of columns, colons (:) can be used.
+
+```markdown
+| Title first Column  | Title second Column  | ... |
+| :------------------ | -------------------: | --- |
+| Content first row   | Content first row    | ... |
+| Content second row  | Content second row   | ... |
+| ...                 | ...                  | ... |
+```
+| Title first Column  | Title second Column  | ... |
+| :------------------ | -------------------: | --- |
+| Content first row   | Content first row    | ... |
+| Content second row  | Content second row   | ... |
+| ...                 | ...                  | ... |
+
+#### Diagrams
+
+The documentation supports diagrams using mermaid. Please see the
+[mkdocs-material documentation](https://squidfunk.github.io/mkdocs-material/reference/diagrams/) for more information.
+
+````markdown
+``` mermaid
+graph LR
+  A[Start] --> B{Error?};
+  B -->|Yes| C[Hmm...];
+  C --> D[Debug];
+  D --> B;
+  B ---->|No| E[Yay!];
+```````
+
+#### Footnotes
+
+Footnotes can be used to add links to additional documentation.
+
+```markdown
+Here goes the text[^1] which uses the inline footnote identifier.
+
+[^1]: The footnote which will be added to the end of the page.
+```
+
+#### Icons and Emojis
+
+The documentation system provides three sets of icons and emojis which can be used throughout the documentation. Icons
+are inserted using a colon (:) at the start and end of the icon name. The latter is a combination of collection name,
+the name of the icon, and potentially additional parameters, such as the icon size.
+
+```markdown
+:fontawesome-brands-youtube:
+:octicons-heart-fill-24:
+:material-book-open-page-variant:
+```
+
+The icon names can be looked up in the corresponding collection's search feature:
+
+- Fontawesome: [https://fontawesome.com/search](https://fontawesome.com/search)
+- Octicons: [https://primer.style/foundations/icons](https://primer.style/foundations/icons)
+- Material: [https://pictogrammers.com/library/mdi/](https://pictogrammers.com/library/mdi/)
+
+Be aware that some of the collections have premium icons which are not included with the documentation builder. Only
+free icons are available.
