@@ -82,9 +82,9 @@ theme:
     - content.code.copy
     - content.code.annotate
 extra_css:
-  - stylesheets/extra.css
+  - assets/stylesheets/extra.css
 extra_javascript:
-  - javascript/huge-pages-calculator.js
+  - assets/javascripts/huge-pages-calculator.js
 validation:
   links:
     not_found: warn
