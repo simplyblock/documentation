@@ -1,7 +1,7 @@
 # Simplyblock Documentation
 
-This repository contains the simplyblock documentation. It is built using [mkdocs](https://www.mkdocs.org/) and
-uses a provided shell script `doc-builder` to ease the process of working with it.
+This repository contains the [simplyblock documentation](https://docs.simpylblock.io). It is built using
+[mkdocs](https://www.mkdocs.org/) and uses a provided shell script `doc-builder` to ease the process of working with it.
 
 - [Simplyblock Documentation](#simplyblock-documentation)
     * [Docs Builder](#docs-builder)
