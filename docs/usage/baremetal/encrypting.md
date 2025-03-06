@@ -57,6 +57,14 @@ sbcli lvol add \
 
 To see all available parameters when creating a logical volume, see [Provisioning](provisioning.md).
 
+### Parameters
+
+| Parameter                     | Description                                         | Default |
+|-------------------------------|-----------------------------------------------------|---------|
+| --encrypt                     | Enables in inline encryption on the logical volume. | false   |
+| --crypto-key1 CRYPTO_KEY1     | The hex value of the first encryption key.          |         |
+| --crypto-key2 CRYPTO_KEY2     | The hex value of the second encryption key.         |         |
+
 ## Verification
 
 Check encryption status with:
