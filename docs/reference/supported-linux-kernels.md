@@ -19,5 +19,5 @@ The following kernels are known to be compatible and tested. Additional kernel v
 | Amazon Linux 2023        | 2023.1.20230825.0 x86_64 HVM kernel-6.1 | modprobe nvme-tcp |
 
 !!! warning
-    Amazon Linux 2 has a bug with NVMe multipathing. That means that NVMe over Fabrics on Amazon Linux operates
-    in a degraded state. It is **NOT** recommended to use Amazon Linux 2 images to run simplyblock.
+    Amazon Linux 2 and Amazon Linux 2024 have a bug with NVMe multipathing. That means that NVMe over Fabrics on any
+    Amazon Linux operates in a degraded state. It is **NOT** recommended to use Amazon Linux images to run simplyblock.
