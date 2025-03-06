@@ -75,7 +75,7 @@ additional cores, network interfaces, and NVMe devices, with SPDK minimizing CPU
 Data written to a simplyblock logical volume is split into chunks and distributed across the storage plane cluster
 nodes. This improves throughput by parallelizing the access to data through multiple storage nodes.
 
-### Data Protection
+### Data Protection & Fault Tolerance
 
 Simplyblock's storage engine implements erasure coding, a RAID-like system, which uses parity information to protect
 data and restore it in case of a failure. Due to the fully distributed nature of simplyblock's erasure coding
@@ -84,9 +84,21 @@ This improves the data protection and enables higher fault tolerance over typica
 coding implementation provide a Maximum Tolerable Failure (MFT) in terms of how many disks can fail, simplyblock defines
 it as the number of nodes that can fail.
 
-<Multipathing>
+As a second layer, simplyblock leverages NVMe-oF multipathing to ensure continuous access to logical volumes by
+automatically handling failover between primary and secondary nodes. Each volume is presented with multiple active
+paths, allowing I/O operations to seamlessly reroute through secondary nodes if the primary node becomes unavailable due
+to failure, maintenance, or network disruption. This multipath configuration is managed transparently by the NVMe-oF
+subsystem, providing path redundancy, eliminating single points of failure, and maintaining high availability without
+requiring manual intervention. The system continuously monitors path health, and when the primary path is restored, it
+can be automatically reintegrated, ensuring optimal performance and reliability.
 
-<Encryption>
+Last, simplyblock provides robust encryption for data-at-rest, ensuring that all data stored on logical volumes is
+protected using industry-standard AES_XTS encryption with minimal performance overhead. This encryption is applied at
+the volume level and is managed transparently within the simplyblock cluster, allowing compliance with strict regulatory
+requirements such as GDPR, HIPAA, and PCI-DSS. Furthermore, simplyblock’s architecture is designed for strong
+multitenant isolation, ensuring that encryption keys, metadata, and data are securely segregated between tenants. This
+guarantees that unauthorized access between workloads and users is prevented, making simplyblock an ideal solution for
+shared environments where security, compliance, and tenant separation are critical.
 
 ## Technologies in Simplyblock
 
