@@ -22,6 +22,7 @@ weight: 20450
 | IP                      | Internet Protocol                    |
 | K8s                     | Kubernetes                           |
 | LV                      | Logical Volume                       |
+| MFT                     | Maximum Tolerable Failure            |
 | NIC                     | Network Interface Card               |
 | NQN                     | NVMe Qualified Name                  |
 | NVMe                    | Non-Volatile Memory Express          |
