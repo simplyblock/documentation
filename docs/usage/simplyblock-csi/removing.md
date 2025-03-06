@@ -35,3 +35,7 @@ Now the PV can be deleted:
 ```bash title="Delete a PersistentVolume"
 kubectl get pv <pv-name>
 ```
+
+!!! warning
+    If snapshots or snapshot chains of the logical volume exist, the internal storage is not reclaimed until all of the
+    snapshots are deleted as well.
