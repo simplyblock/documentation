@@ -3,6 +3,19 @@ title: "Encrypting"
 weight: 40500
 ---
 
+Simplyblock supports encryption of logical volumes (LVs) to protect data at rest, ensuring that sensitive
+information remains secure across the distributed storage cluster. Encryption is applied during volume creation as
+part of the storage class specification.
+
+Encrypting Logical Volumes ensure that simplyblock storage meets data protection and compliance requirements,
+safeguarding sensitive workloads without compromising performance.
+
+!!! warning
+    Encryption must be specified at the time of volume creation. Existing logical volumes cannot be retroactively
+    encrypted.
+
+## Encrypting Volumes with Simplyblock
+
 Simplyblock supports the encryption of logical volumes. Internally, simplyblock utilizes the industry-proven
 [crypto bdev](https://spdk.io/doc/bdev.html){:target="_blank"} provided by SPDK to implement its encryption
 functionality.
@@ -12,6 +25,7 @@ keys need to have the same length, meaning, if one key is 32 bytes long, the oth
 
 !!! recommendation
     Simplyblock strongly recommends two keys of 32 bytes.
+
 
 ## Generate Random Keys
 
