@@ -28,7 +28,7 @@ The available parameters are:
 
 | Parameter Name            | Value Type | Description                                                                                                                         | Optional | Default  |
 |---------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|----------|
-| qos_rw_iops               | int        | Defines the minimum IOPS reserved for a logical volume of this storage class. A zero (0) means no minimum.                          | true     | 0        |
-| qos_rw_mbytes             | int        | Defines the minimum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no minimum. | true     | 0        |
-| qos_r_mbytes              | int        | Defines the minimum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no minimum.  | true     | 0        |
-| qos_w_mbytes              | int        | Defines the minimum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no minimum. | true     | 0        |
+| qos_rw_iops               | int        | Defines the maximum IOPS reserved for a logical volume of this storage class. A zero (0) means no maximum.                          | true     | 0        |
+| qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum. | true     | 0        |
+| qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.  | true     | 0        |
+| qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum. | true     | 0        |
