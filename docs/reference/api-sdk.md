@@ -32,7 +32,7 @@ the simplyblock commandline interface tool `sbcli`.
 sbcli cluster get-secret CLUSTER_UUID
 ```
 
-## PUT/POST Requests 
+## PUT and POST Requests 
 
 For requests that send JSON payload to the backend endpoint, it is important to set the Content-Type header
 accordingly. Requests that require this header to be set are of type HTTP PUT or HTTP POST.
