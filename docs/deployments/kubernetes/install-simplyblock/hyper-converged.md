@@ -17,7 +17,7 @@ demo@worker-1 ~> sudo sysctl -w vm.nr_hugepages=4096
 
 !!! info
     To see how huge pages can be pre-reserved at boot time, see the node sizing documentation section on  
-    [Huge Pages](../deployment-planning/node-sizing.md#huge-pages).
+    [Huge Pages](../../deployment-planning/node-sizing.md#huge-pages).
 
 
 ```bash
