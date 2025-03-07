@@ -49,6 +49,8 @@ jobs:
           ./doc-builder build-image
       - name: "Prepare Documentation Dev Deployment"
         run: |
+          sed -i -r "s|(site_url: .*)|\1dev/|g" ./mkdocs.yml
+          cat ./mkdocs.yml
           ./doc-builder build
       - name: "Upload Documentation"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
