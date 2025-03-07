@@ -20,6 +20,7 @@ To provide authorization information, the simplyblock API uses the _Authorizatio
 combination of the cluster uuid and the cluster secret.
 
 HTTP Authorization header:
+
 ```plain
 Authorization: <CLUSTER_UUID> <CLUSTER_SECRET>
 ```
@@ -29,6 +30,17 @@ the simplyblock commandline interface tool `sbcli`.
 
 ```bash
 sbcli cluster get-secret CLUSTER_UUID
+```
+
+## PUT/POST Requests 
+
+For requests that send JSON payload to the backend endpoint, it is important to set the Content-Type header
+accordingly. Requests that require this header to be set are of type HTTP PUT or HTTP POST.
+
+The expected content type is `application/json`:
+
+```plain
+Content-Type: application/json
 ```
 
 ## API Documentation
