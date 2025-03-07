@@ -1,10 +1,10 @@
 document.addEventListener("DOMContentLoaded", function() {
-  const elNumDisks = document.getElementById("num-disks");
-  const elMaxProvStorage = document.getElementById("max-prov-storage");
-  const elNumLVols = document.getElementById("num-lvols");
-  const elNumCPUs = document.getElementById("num-cpus");
-  const elNumDistWorkers = document.getElementById("num-dist-workers");
-  const elCalcResult = document.getElementById("calc-result");
+  const elNumDisks = document.getElementById("hpc-num-disks");
+  const elMaxProvStorage = document.getElementById("hpc-max-prov-storage");
+  const elNumLVols = document.getElementById("hpc-num-lvols");
+  const elNumCPUs = document.getElementById("hpc-num-cpus");
+  const elNumDistWorkers = document.getElementById("hpc-num-dist-workers");
+  const elCalcResult = document.getElementById("hpc-calc-result");
 
   if (!elNumDisks) return;
 
