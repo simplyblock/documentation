@@ -13,6 +13,11 @@ resources for management and storage nodes, necessary permissions, network confi
 Verifying these requirements before installation will help avoid compatibility issues and ensure that Simplyblock
 integrates seamlessly with your Kubernetes deployment.
 
+## Node Sizing
+
+Simplyblock has certain requirements in terms of CPU, RAM, and storage. See the specific
+[Node Sizing](../deployment-planning/node-sizing.md) documentation to learn more.
+
 ## Control Plane
 
 Minimum 2 physical cores
@@ -105,10 +110,6 @@ sbcli mgmt add <CTR_PLANE_PRI_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
 cdde125a-0bf3-4841-a6ef-a0b2f41b8245
 ```
 
-
-
-
-
 ### Network Configuration
 
 #### Disable IPv6
@@ -157,18 +158,21 @@ Defined networks:
 
 ## Storage Plane
 
-```bash title="
+```bash title="Format the NVMe devices"
 lsblk
 nvme id-ns /dev/nvmeXnY
 nvme format --lbaf=<lbaf> --ses=0 /dev/nvmeXnY
 ```
 
 
-### Deploy a Storge Node
+### Deploy a Storage Node
+
+```bash
 sbcli -d sn deploy --ifname ens18
+```
 
 ```plain title="Example output deploying storage node"
-[demo@demo-sn-1 ~]# sbcli-hmdi -d sn deploy --ifname ens18
+[demo@demo-sn-1 ~]# sbcli sn deploy --ifname ens18
 2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
 2025-02-26 13:35:07,038: INFO: Installing dependencies...
 2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.153
@@ -181,7 +185,7 @@ sbcli -d sn deploy --ifname ens18
 ### Add Storage Node (from Management Node)
 
 ```plain title="Example output for adding a storage node"
-[root@vm11 ~]# sbcli-hmdi -d sn add-node 3196b77c-e6ee-46c3-8291-736debfe2472 192.168.10.152:5000 ens18 --max-lvol 100 --max-prov 5000 --number-of-devices 3 --partitions 0
+[root@vm11 ~]# sbcli sn add-node 3196b77c-e6ee-46c3-8291-736debfe2472 192.168.10.152:5000 ens18 --max-lvol 100 --max-prov 5000 --number-of-devices 3 --partitions 0
 2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.152:5000
 2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
 2025-02-26 14:55:17,341: INFO: Instance cloud: None
@@ -214,7 +218,7 @@ sbcli -d sn deploy --ifname ens18
 
 
 ```plain title="Example output of a storage node listing"
-[root@vm11 ~]# sbcli-hmdi sn list
+[root@vm11 ~]# sbcli sn list
 +--------------------------------------+----------+----------------+---------+-------+--------+--------+-----------+--------------------------------------+------------+----------------+
 | UUID                                 | Hostname | Management IP  | Devices | LVols | Status | Health | Up time   | Cloud ID                             | Cloud Type | Ext IP         |
 +--------------------------------------+----------+----------------+---------+-------+--------+--------+-----------+--------------------------------------+------------+----------------+
