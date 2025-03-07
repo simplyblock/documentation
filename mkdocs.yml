@@ -1,5 +1,5 @@
 site_name: Simplyblock Documentation
-site_url: https://docs.simplyblock.io/
+site_url: https://docstest.simplyblock.io/
 repo_url: https://github.com/simplyblock-io/documentation
 edit_uri: edit/main/docs/
 copyright: "&copy; 2024-2025 Simplyblock GmbH"
@@ -81,6 +81,7 @@ theme:
     - content.tooltips
     - content.code.copy
     - content.code.annotate
+    - content.action.edit
 extra_css:
   - assets/stylesheets/extra.css
 extra_javascript:
