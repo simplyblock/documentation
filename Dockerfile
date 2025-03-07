@@ -5,3 +5,4 @@ RUN pip install mkdocs-nav-weight
 RUN pip install mkdocs-glightbox
 RUN pip install mike
 RUN pip install mkdocs-video
+RUN pip install mkdocs-meta-descriptions-plugin

@@ -32,6 +32,8 @@ plugins:
   - git-revision-date-localized:
       fallback_to_build_date: true
       type: iso_date
+  - meta-descriptions:
+      trim: true
 markdown_extensions:
   - abbr
   - admonition
