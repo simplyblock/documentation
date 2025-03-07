@@ -1,5 +1,6 @@
 | Service                     | Direction | Source / Target Network | Port(s)   | Protocol(s) |
 |-----------------------------|-----------|-------------------------|-----------|-------------|
+| ICMP                        | ingress   | control                 | -         | ICMP        |
 | bdts                        | ingress   | storage                 | 4420      | TCP         |
 | Cluster Control             | ingress   | control                 | 5000      | TCP         |
 | spdk-http-proxy             | ingress   | storage, control        | 8080-8890 | TCP         |

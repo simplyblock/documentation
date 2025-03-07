@@ -1,5 +1,6 @@
 | Service                     | Direction | Source / Target Network | Port      | Protocol(s) |
 |-----------------------------|-----------|-------------------------|-----------|-------------|
+| ICMP                        | ingress   | control                 | -         | ICMP        |
 | Cluster API                 | ingress   | storage, control, admin | 80        | TCP         |
 | SSH                         | ingress   | storage, control, admin | 22        | TCP         |
 | Graylog                     | ingress   | storage, control        | 12201     | TCP / UDP   |
