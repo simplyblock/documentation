@@ -85,6 +85,10 @@ extra_css:
   - assets/stylesheets/extra.css
 extra_javascript:
   - assets/javascripts/huge-pages-calculator.js
+  - assets/javascripts/cpumask-calculator.js
 validation:
   links:
     not_found: warn
+    anchors: warn
+    unrecognized_links: warn
+    absolute_links: warn

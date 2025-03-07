@@ -57,8 +57,9 @@ function build() {
     terminal="-t"
   fi
 
+
   echo "Building documentation... "
-  if ! ${DOCKER} run --rm ${terminal} -v "${PWD}:/docs" ${IMAGE_NAME} build --strict; then
+  if ! ${DOCKER} run --rm ${terminal} -v "${PWD}:/docs" ${IMAGE_NAME} build --strict "$@"; then
     echo "Building documentation failed. Please see above for potential issues. After fixing them, you can retry."
     exit 1
   fi
@@ -81,7 +82,16 @@ function deploy() {
     exit 1
   fi
 
-  if ! build; then
+  echo "Adjusting canonical url..."
+  tempMkdocsYml="$(mktemp ./mkdocs.XXX)"
+  sed -r "s|(site_url: .*)|\1${version}/|g" mkdocs.yml > "${tempMkdocsYml}"
+
+  function cleanup() {
+    rm "${tempMkdocsYml}"
+  }
+  trap cleanup EXIT
+
+  if ! build --config-file "${tempMkdocsYml}" ; then
     exit 1
   fi
 
