@@ -48,7 +48,7 @@ allowVolumeExpansion: true
 
 | Parameter Name            | Value Type | Description                                                                                                                         | Optional | Default  |
 |---------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|----------|
-| csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                 | true     | none     |
+| csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                 | true     |          |
 | pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                   | false    | testing1 |
 | qos_rw_iops               | int        | Defines the minimum IOPS reserved for a logical volume of this storage class. A zero (0) means no minimum.                          | true     | 0        |
 | qos_rw_mbytes             | int        | Defines the minimum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no minimum. | true     | 0        |
@@ -59,5 +59,4 @@ allowVolumeExpansion: true
 | distr_ndcs                | int        | ?                                                                                                                                   | true     | 1        |
 | distr_npcs                | int        | ?                                                                                                                                   | true     | 1        |
 | lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                               | true     | 0        |
-
-
+| type                      | string     | Defines the type of the logical volume. If set to `cache`, the logical volume will use a local caching node.                        | true     |          |
