@@ -6,6 +6,15 @@
   --md-typeset-a-color: #27AE60;
 }
 
+.md-typeset__table {
+  width: 100%;
+}
+
+.md-typeset__table > table {
+  display: revert !important;
+  width: 100%;
+}
+
 .md-typeset .admonition.recommendation,
 .md-typeset details.recommendation {
   border-color: rgb(43, 155, 70);
