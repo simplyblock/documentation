@@ -57,6 +57,8 @@ function build() {
     terminal="-t"
   fi
 
+  echo "Generating CLI reference pages..."
+  ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/cli-reference-gen.py /docs
 
   echo "Building documentation... "
   if ! ${DOCKER} run --rm ${terminal} -v "${PWD}:/docs" ${IMAGE_NAME} build --strict "$@"; then

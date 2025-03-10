@@ -1,5 +1,6 @@
 import jinja2
 import yaml
+import sys
 import re
 
 def select_arguments(items):
@@ -67,7 +68,8 @@ def get_description(item):
         return "<missing documentation>"
 
 
-with open("./cli-reference.yaml") as stream:
+base_path = sys.argv[1]
+with open("%s/scripts/cli-reference.yaml" % base_path) as stream:
     try:
         reference = yaml.safe_load(stream)
 
@@ -81,7 +83,7 @@ with open("./cli-reference.yaml") as stream:
                     subcommand["arguments"] = arguments
                     subcommand["parameters"] = parameters
 
-            templateLoader = jinja2.FileSystemLoader(searchpath="./templates/")
+            templateLoader = jinja2.FileSystemLoader(searchpath="%s/scripts/templates/" % base_path)
             environment = jinja2.Environment(loader=templateLoader)
 
             environment.filters["no_newline"] = no_newline
@@ -92,7 +94,7 @@ with open("./cli-reference.yaml") as stream:
 
             template = environment.get_template("cli-reference-group.jinja2")
             output = template.render({"command": command})
-            with open("../docs/reference/cli/%s.md" % command["name"], "t+w") as target:
+            with open("%s/docs/reference/cli/%s.md" % (base_path, command["name"]), "t+w") as target:
                 target.write(output)
 
     except yaml.YAMLError as exc:
