@@ -1062,17 +1062,17 @@ commands:
             required: true
             type: int
           - name: "--max-rw-mbytes"
-            help: "Maximum Read Write Mega Bytes Per Second"
+            help: "Maximum Read Write Megabytes Per Second"
             dest: max-rw-mbytes
             required: true
             type: int
           - name: "--max-r-mbytes"
-            help: "Maximum Read Mega Bytes Per Second"
+            help: "Maximum Read Megabytes Per Second"
             dest: max-r-mbytes
             required: true
             type: int
           - name: "--max-w-mbytes"
-            help: "Maximum Write Mega Bytes Per Second"
+            help: "Maximum Write Megabytes Per Second"
             dest: max-w-mbytes
             required: true
             type: int
@@ -1650,17 +1650,17 @@ commands:
             required: true
             type: int
           - name: "--max-rw-mbytes"
-            help: "Maximum Read Write Mega Bytes Per Second"
+            help: "Maximum Read Write Megabytes Per Second"
             dest: max-rw-mbytes
             required: true
             type: int
           - name: "--max-r-mbytes"
-            help: "Maximum Read Mega Bytes Per Second"
+            help: "Maximum Read Megabytes Per Second"
             dest: max-r-mbytes
             required: true
             type: int
           - name: "--max-w-mbytes"
-            help: "Maximum Write Mega Bytes Per Second"
+            help: "Maximum Write Megabytes Per Second"
             dest: max-w-mbytes
             required: true
             type: int
@@ -1718,17 +1718,17 @@ commands:
             required: true
             type: int
           - name: "--max-rw-mbytes"
-            help: "Maximum Read Write Mega Bytes Per Second"
+            help: "Maximum Read Write Megabytes Per Second"
             dest: max-rw-mbytes
             required: true
             type: int
           - name: "--max-r-mbytes"
-            help: "Maximum Read Mega Bytes Per Second"
+            help: "Maximum Read Megabytes Per Second"
             dest: max-r-mbytes
             required: true
             type: int
           - name: "--max-w-mbytes"
-            help: "Maximum Write Mega Bytes Per Second"
+            help: "Maximum Write Megabytes Per Second"
             dest: max-w-mbytes
             required: true
             type: int
@@ -2016,17 +2016,17 @@ commands:
             required: true
             type: int
           - name: "--max-rw-mbytes"
-            help: "Maximum Read Write Mega Bytes Per Second"
+            help: "Maximum Read Write Megabytes Per Second"
             dest: max-rw-mbytes
             required: true
             type: int
           - name: "--max-r-mbytes"
-            help: "Maximum Read Mega Bytes Per Second"
+            help: "Maximum Read Megabytes Per Second"
             dest: max-r-mbytes
             required: true
             type: int
           - name: "--max-w-mbytes"
-            help: "Maximum Write Mega Bytes Per Second"
+            help: "Maximum Write Megabytes Per Second"
             dest: max-w-mbytes
             required: true
             type: int
@@ -2061,17 +2061,17 @@ commands:
             required: true
             type: int
           - name: "--max-rw-mbytes"
-            help: "Maximum Read Write Mega Bytes Per Second"
+            help: "Maximum Read Write Megabytes Per Second"
             dest: max-rw-mbytes
             required: true
             type: int
           - name: "--max-r-mbytes"
-            help: "Maximum Read Mega Bytes Per Second"
+            help: "Maximum Read Megabytes Per Second"
             dest: max-r-mbytes
             required: true
             type: int
           - name: "--max-w-mbytes"
-            help: "Maximum Write Mega Bytes Per Second"
+            help: "Maximum Write Megabytes Per Second"
             dest: max-w-mbytes
             required: true
             type: int
