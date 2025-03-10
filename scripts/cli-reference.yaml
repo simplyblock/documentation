@@ -1984,6 +1984,7 @@ commands:
     help: "Storage pool commands"
     aliases:
       - pool
+    weight: 500
     subcommands:
       - name: add
         help: "Adds a new storage pool"
@@ -2179,7 +2180,7 @@ commands:
             default: 20
   - name: "snapshot"
     help: "Snapshot commands"
-    weight: 500
+    weight: 600
     subcommands:
       - name: add
         help: "Creates a new snapshot"
@@ -2239,7 +2240,7 @@ commands:
     help: "Caching node commands"
     aliases:
       - cn
-    weight: 600
+    weight: 700
     subcommands:
       - name: deploy
         help: "Deploys a caching node on this machine (local run)"
