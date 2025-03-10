@@ -120,10 +120,10 @@ Anyhow, deploying the Simplyblock CSI Driver using the provided helm chart comes
 values, adding the helm chart repository, and installing the driver.
 
 ```bash title="Install Simplyblock's CSI Driver"
-CLUSTER_UUID="<UUID>"
-CLUSTER_SECRET="<SECRET>"
-CNTR_ADDR="<CONTROL-PLANE-ADDR>"
-POOL_NAME="<POOL-NAME>"
+CLUSTER_UUID="<cluster_uuid>"
+CLUSTER_SECRET="<cluster_secret>"
+CNTR_ADDR="<control_plane_api_addr>"
+POOL_NAME="<pool_name>"
 helm repo add simplyblock-csi https://install.simplyblock.io/helm
 helm repo update
 helm install -n simplyblock-csi --create-namespace simplyblock-csi simplyblock-csi/spdk-csi \

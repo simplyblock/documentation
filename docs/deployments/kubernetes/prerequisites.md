@@ -74,7 +74,7 @@ Returns cluster-id
 
 
 ### Get Cluster Secret
-sbcli-hmdi cluster get-secret <CLUSTER_ID>
+sbcli cluster get-secret <cluster_uuid>
 
 ```bash title="Example output get cluster secret"
 [demo@demo ~]# sudo sbcli cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
@@ -96,7 +96,7 @@ sbcli mgmt add <CTR_PLANE_PRI_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
 ```
 
 ```plain title="Example output joining a control plane cluster"
-[root@vm12 ~]# sbcli-dev mgmt add 192.168.10.151 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 ens18
+[root@vm12 ~]# sbcli mgmt add 192.168.10.151 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 ens18
 2025-02-26 12:40:17,815: INFO: Cluster found, NQN:nqn.2023-02.io.simplyblock:7bef076c-82b7-46a5-9f30-8c938b30e655
 2025-02-26 12:40:17,816: INFO: Installing dependencies...
 2025-02-26 12:40:25,606: INFO: Installing dependencies > Done
