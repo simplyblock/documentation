@@ -6,3 +6,5 @@ RUN pip install mkdocs-glightbox
 RUN pip install mike
 RUN pip install mkdocs-video
 RUN pip install mkdocs-meta-descriptions-plugin
+RUN pip install markdown-captions
+RUN pip install jinja2
