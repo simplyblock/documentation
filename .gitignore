@@ -3,3 +3,4 @@
 site
 venv
 .idea
+docs/reference/cli
