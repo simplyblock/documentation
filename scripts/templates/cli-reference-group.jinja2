@@ -1,0 +1,56 @@
+---
+title: {{ command.help }}
+{% if command.weight is defined %}weight: {{ command.weight }}{% endif %}
+---
+
+```bash
+sbcli {{ command.name }} --help
+```
+
+{% if command.aliases %}
+**Aliases:** {% for alias in command.aliases %} {{ alias }} {% endfor %}
+{% endif %}
+
+{{ command | get_description }}
+
+{% for subcommand in command.subcommands %}
+{% if not subcommand.private %}
+## {{ subcommand.help }}
+
+{{ subcommand | get_description }}
+
+```bash
+sbcli {{ command.name }} {{ subcommand.name }}
+{%- for argument in subcommand.arguments -%}
+{%- if not argument.private %}
+    {{ argument.name }}{{ argument | arg_value }}
+{%- endif -%}
+{% endfor -%}
+{%- for parameter in subcommand.parameters -%}
+{%- if not parameter.private %}
+    {{ parameter.name }}{{ parameter | arg_value }}
+{%- endif %}
+{%- endfor %}
+```
+
+{% if (subcommand.arguments is defined) and subcommand.arguments %}
+| Argument | Description | Data Type | Required |
+| -------- | ----------- | --------- | -------- |
+{% for argument in subcommand.arguments -%}
+{% if not argument.private -%}
+| {{ argument.name }} | {{ argument | get_description }} | {{ argument | data_type_name }} | {{ argument | required }} |
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+
+{%- if (subcommand.parameters is defined) and subcommand.parameters %}
+| Parameter | Description | Data Type | Required | Default |
+| --------- | ----------- | --------- | -------- | ------- |
+{% for parameter in subcommand.parameters -%}
+{% if not parameter.private -%}
+| {{ parameter.name }} | {{ parameter | get_description }}{% if parameter.choices %}<br/><br/>Available Options:{% for choice in parameter.choices %}<br/>- {{ choice }}{% endfor %}{% endif %} | {{ parameter | data_type_name }} | {{  parameter | required }} | {{ parameter.default | default("-") }} |
+{% endif -%}
+{% endfor -%}
+{% endif -%}
+{% endif -%}
+{% endfor -%}
