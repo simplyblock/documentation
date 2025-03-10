@@ -48,7 +48,9 @@ sbcli {{ command.name }} {{ subcommand.name }}
 | --------- | ----------- | --------- | -------- | ------- |
 {% for parameter in subcommand.parameters -%}
 {% if not parameter.private -%}
-| {{ parameter.name }} | {{ parameter | get_description }}{% if parameter.choices %}<br/><br/>Available Options:{% for choice in parameter.choices %}<br/>- {{ choice }}{% endfor %}{% endif %} | {{ parameter | data_type_name }} | {{  parameter | required }} | {{ parameter.default | default("-") }} |
+| {{ parameter.name }} | {{ parameter | get_description }}
+{%- if parameter.choices %}<br/><br/>Available Options:{% for choice in parameter.choices %}<br/>- {{ choice }}{% endfor %}{% endif %}
+{%- if parameter.value_range %}<br/><br/>Available Value Range: {{ parameter.value_range }}{% endif %} | {{ parameter | data_type_name }} | {{  parameter | required }} | {{ parameter.default | default("-") }} |
 {% endif -%}
 {% endfor -%}
 {% endif -%}

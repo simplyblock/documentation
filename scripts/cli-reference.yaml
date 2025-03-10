@@ -839,7 +839,7 @@ commands:
             dest: qpair_count
             required: true
             type: int
-            choices:
+            value_range: 0..128
             default: 0
           - name: "--max-queue-size"
             help: "The max size the queue will grow"
@@ -1029,7 +1029,7 @@ commands:
             type: bool
             action: store_true
             default: false
-          - name: "--max-size"
+          - name: "--max-volume-size"
             help: "Logical volume max size"
             dest: max_size
             required: true
@@ -1230,7 +1230,7 @@ commands:
             dest: qpair_count
             required: true
             type: int
-            choices:
+            value_range: 0..128
             default: 0
           - name: "--max-queue-size"
             help: "The max size the queue will grow"
@@ -1344,7 +1344,7 @@ commands:
             dest: qpair_count
             required: true
             type: int
-            choices:
+            value_range: 0..128
             default: 0
           - name: "--max-queue-size"
             help: "The max size the queue will grow"
@@ -1707,9 +1707,9 @@ commands:
       - name: qos-set
         help: "Changes QoS settings for an active logical volume"
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
           - name: "--max-rw-iops"
@@ -1776,9 +1776,9 @@ commands:
       - name: get
         help: "Gets the logical volume details"
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id or name"
-            dest: id
+            dest: volume_id
             required: true
             type: str
           - name: "--json"
@@ -1794,9 +1794,9 @@ commands:
           capacity will be freed as an asynchronous background task. It may take a while until the actual storage
           is released.
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volumes id or ids"
-            dest: id
+            dest: volume_id
             required: true
             type: str
             nargs: +
@@ -1810,9 +1810,9 @@ commands:
         help: "Gets the logical volume's NVMe/TCP connection string(s)"
         usage: Multiple connections to the cluster are always available for multi-pathing and high-availability.
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
       - name: resize
@@ -1821,9 +1821,9 @@ commands:
           Resizes a logical volume. Only increasing a volume is possible. The new capacity must fit into the storage
           pool's free capacity.
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
           - name: "size"
@@ -1834,9 +1834,9 @@ commands:
       - name: create-snapshot
         help: "Creates a snapshot from a logical volume"
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
           - name: "name"
@@ -1866,9 +1866,9 @@ commands:
         help: "Moves a full copy of the logical volume between nodes"
         private: true
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
           - name: "node_id"
@@ -1885,9 +1885,9 @@ commands:
       - name: get-capacity
         help: "Gets a logical volume's capacity"
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
           - name: "--history"
@@ -1898,9 +1898,9 @@ commands:
       - name: get-io-stats
         help: "Gets a logical volume's I/O statistics"
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
           - name: "--history"
@@ -1917,9 +1917,9 @@ commands:
       - name: check
         help: "Checks a logical volume's health"
         arguments:
-          - name: "id"
+          - name: "volume_id"
             help: "Logical volume id"
-            dest: id
+            dest: volume_id
             required: true
             type: str
       - name: inflate
@@ -1928,9 +1928,9 @@ commands:
           All unallocated clusters are allocated and copied from the parent or zero filled if not allocated in the
           parent. Then all dependencies on the parent are removed.
         arguments:
-          - name: "lvol_id"
+          - name: "volume_id"
             help: "Cloned logical volume id"
-            dest: lvol_id
+            dest: volume_id
             required: true
             type: str
   - name: "control-plane"
@@ -1975,9 +1975,9 @@ commands:
       - name: remove
         help: "Removes a control plane node"
         arguments:
-          - name: "id"
+          - name: "node_id"
             help: "Control plane node id"
-            dest: id
+            dest: node_id
             required: true
             type: str
   - name: "storage-pool"
@@ -2043,7 +2043,7 @@ commands:
         arguments:
           - name: "pool_id"
             help: "Pool id"
-            dest: id
+            dest: pool_id
             required: true
             type: str
           - name: "--pool-max"
@@ -2095,7 +2095,7 @@ commands:
         arguments:
           - name: "pool_id"
             help: "Pool id"
-            dest: id
+            dest: pool_id
             required: true
             type: str
           - name: "--json"
@@ -2110,7 +2110,7 @@ commands:
         arguments:
           - name: "pool_id"
             help: "Pool id"
-            dest: id
+            dest: pool_id
             required: true
             type: str
       - name: enable
@@ -2164,7 +2164,7 @@ commands:
         arguments:
           - name: "pool_id"
             help: "Pool id"
-            dest: id
+            dest: pool_id
             required: true
             type: str
           - name: "--history"
@@ -2185,9 +2185,9 @@ commands:
       - name: add
         help: "Creates a new snapshot"
         arguments:
-          - name: "id"
+          - name: "snapshot_id"
             help: "Logical volume id"
-            dest: id
+            dest: snapshot_id
             required: true
             type: str
           - name: "name"
@@ -2207,9 +2207,9 @@ commands:
       - name: delete
         help: "Deletes a snapshot"
         arguments:
-          - name: "id"
+          - name: "snapshot_id"
             help: "Snapshot id"
-            dest: id
+            dest: snapshot_id
             required: true
             type: str
           - name: "--force"
@@ -2221,9 +2221,9 @@ commands:
       - name: clone
         help: "Provisions a new logical volume from an existing snapshot"
         arguments:
-          - name: "id"
+          - name: "snapshot_id"
             help: "Snapshot id"
-            dest: id
+            dest: snapshot_id
             required: true
             type: str
           - name: "lvol_name"
@@ -2311,17 +2311,17 @@ commands:
       - name: list-lvols
         help: "Lists all connected logical volumes"
         arguments:
-          - name: "id"
+          - name: "node_id"
             help: "Caching node id"
-            dest: id
+            dest: node_id
             required: true
             type: str
       - name: remove
         help: "Removes a caching node from the cluster"
         arguments:
-          - name: "id"
+          - name: "node_id"
             help: "Caching node id"
-            dest: id
+            dest: node_id
             required: true
             type: str
           - name: "--force"
