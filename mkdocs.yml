@@ -42,7 +42,6 @@ markdown_extensions:
   - md_in_html
   - footnotes
   - tables
-  - markdown_captions
   - pymdownx.betterem
   - pymdownx.blocks.caption
   - pymdownx.details
