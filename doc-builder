@@ -40,10 +40,12 @@ function ensure_docker_image() {
   exit 1
 }
 
-function update_sbcli() {
+function update_repositories() {
   if [ ! -d ./scripts/sbcli-repo ]; then
-    git clone https://github.com/simplyblock-io/sbcli.git ./scripts/sbcli-repo
+    echo "Cloning sbcli repository..."
+    git clone git@github.com:simplyblock-io/sbcli.git ./scripts/sbcli-repo
   else
+    echo "Updating sbcli repository..."
     pushd ./scripts/sbcli-repo
     git reset --hard
     git pull -f
@@ -166,8 +168,8 @@ case "$1" in
     deploy "${@:2}"
   ;;
 
-  "update-sbcli")
-    update_sbcli
+  "update-repositories")
+    update_repositories
   ;;
 
   "gen-sbcli-ref")
@@ -178,7 +180,7 @@ case "$1" in
     echo "Simplyblock Documentation Builder"
     echo "Available commands:"
     echo "  ./doc-builder build-image              Building required docker image"
-    echo "  ./doc-builder update-sbcli             Initialized or updated sbcli repository"
+    echo "  ./doc-builder update-repositories      Initialized or updated external repository"
     echo "  ./doc-builder gen-sbcli-ref            Generates the sbcli reference pages"
     echo "  ./doc-builder serve                    Live serving content changes"
     echo "  ./doc-builder build                    Building static documentation"
