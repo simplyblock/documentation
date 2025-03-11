@@ -1,7 +1,7 @@
 ---
 title: Home
 weight: 10000
-
+test: true
 ---
 
 # Welcome to the Simplyblock Documentation
