@@ -69,7 +69,7 @@ def get_description(item):
 
 
 base_path = sys.argv[1]
-with open("%s/scripts/cli-reference.yaml" % base_path) as stream:
+with open("%s/scripts/sbcli-repo/cli-reference.yaml" % base_path) as stream:
     try:
         reference = yaml.safe_load(stream)
 
