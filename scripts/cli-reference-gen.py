@@ -28,7 +28,13 @@ def required(item):
         return False
     elif "default" in item:
         return False
-    return True
+    elif "private" in item and item["private"]:
+        return False
+    elif "required" in item and item["required"]:
+        return True
+    elif not item["name"].startswith("--"):
+        return True
+    return False
 
 
 def data_type_name(item):
