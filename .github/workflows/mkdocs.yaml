@@ -40,6 +40,7 @@ jobs:
           ./doc-builder build-image
       - name: "Build Documentation Test"
         run: |
+          ./doc-builder update-repositories
           ./doc-builder build
   dev-deployment:
     if: ${{ github.ref == 'refs/heads/main' }}
@@ -57,6 +58,7 @@ jobs:
         run: |
           sed -i -r "s|(site_url: .*)|\1dev/|g" ./mkdocs.yml
           cat ./mkdocs.yml
+          ./doc-builder update-repositories
           ./doc-builder build
       - name: "Upload Documentation"
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -84,6 +86,7 @@ jobs:
           echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
       - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
         run: |
+          ./doc-builder update-repositories
           ./doc-builder deploy ${{ env.RELEASE_NAME }}
       - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
         run: |

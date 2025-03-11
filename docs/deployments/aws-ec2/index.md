@@ -10,8 +10,8 @@ An installation on Amazon EKS is comparable with a standard Kubernetes installat
 EKS installation and a basic Kubernetes
 
 !!! warning
-    Amazon Linux 2 **does not** support
-    [NVMe over Fabrics Multipathing](../../important-notes/terminology.md#multipathing) right now!
+    Amazon Linux 2 and Amazon Linux 2023 **do not** support
+    [NVMe over Fabrics Multipathing](../../important-notes/terminology.md#multipathing)!
 
 <div class="grid cards" markdown>
 

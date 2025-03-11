@@ -1,5 +1,5 @@
 site_name: Simplyblock Documentation
-site_url: https://docstest.simplyblock.io/
+site_url: https://docs.simplyblock.io/
 repo_url: https://github.com/simplyblock-io/documentation
 edit_uri: edit/main/docs/
 copyright: "&copy; 2024-2025 Simplyblock GmbH"
@@ -42,7 +42,6 @@ markdown_extensions:
   - md_in_html
   - footnotes
   - tables
-  - markdown_captions
   - pymdownx.betterem
   - pymdownx.blocks.caption
   - pymdownx.details

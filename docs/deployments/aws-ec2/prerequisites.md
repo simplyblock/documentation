@@ -24,6 +24,13 @@ sudo pip install sbcli --upgrade
 Simplyblock has certain requirements in terms of CPU, RAM, and storage. See the specific
 [Node Sizing](../deployment-planning/node-sizing.md) documentation to learn more.
 
+### Node Instance Type
+
+Simplyblock recommends pre-tested and verified instance types. Those instance types are:
+
+- i3en.6xlarge
+- i4i.8xlarge
+
 ## Network Configuration
 
 Simplyblock requires a number of network ports to be available from different networks. The configuration of the
@@ -43,8 +50,20 @@ For access to the Cluster Management API, simplyblock recommends using an AWS lo
 making the API available directly.
 
 !!! warning
-    Amazon Linux 2 **does not** support
+    Amazon Linux 2 and Amazon Linux 2023 **do not** support
     [NVMe over Fabrics Multipathing](../../important-notes/terminology.md#multipathing) right now!
+
+### Careful with "Up To GBit/s Instances" 
+
+AWS heavily discounts instances with "up to GBit/s" network bandwidth. These instances use a credit-based system to
+calculate the currently available network bandwidth. These instances initially offer a good throughput until the credits
+are used up which happens very quickly.
+
+In addition to the limitation on the maximum available bandwidth, AWS heavily limits the number of packets per second.
+
+!!! recommendation
+    Simplyblock strongly recommends using EC2 instances with dedicated bandwidth. Generally recommended Amazon EC2
+    instances are _i3en.6xlarge_ and _i4i.8xlarge_.
 
 ### Network Ports for Control Plane
 
