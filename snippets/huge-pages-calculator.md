@@ -6,7 +6,7 @@
         <input class="column" id="hpc-num-disks" type="number" min="1" value="1"/>
     </div>
     <div class="row">
-        <label class="column" for="hpc-max-prov-storage">Max effective storage consumption per node (GB):</label>
+        <label class="column" for="hpc-max-prov-storage">Max effective storage consumption per node (TB):</label>
         <input class="column" id="hpc-max-prov-storage" type="number" min="10" value="10"/>
     </div>
     <div class="row">
