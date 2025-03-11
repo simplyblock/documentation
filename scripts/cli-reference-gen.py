@@ -76,8 +76,6 @@ with open("%s/scripts/sbcli-repo/cli-reference.yaml" % base_path) as stream:
         for command in reference["commands"]:
             for subcommand in command["subcommands"]:
                 if "arguments" in subcommand:
-                    for argument in subcommand["arguments"]:
-                        argument["required"] = False if "default" not in argument else True
                     arguments = select_arguments(subcommand["arguments"])
                     parameters = select_parameters(subcommand["arguments"])
                     subcommand["arguments"] = arguments
