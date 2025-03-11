@@ -9,13 +9,58 @@ files and locations. Therefore, simplyblock officially only supports Red Hat-bas
 
 While others may work, manual intervention may be required and simplyblock cannot support those as of now.
 
-The following Linux distributions are considered tested and supported:
+## Control Plane
 
-| Distribution             | Version | Support Level       |
-|--------------------------|---------|---------------------|
-| Red Hat Enterprise Linux | 9       | Fully supported     |
-| Rocky Linux              | 9       | Fully supported     |
-| AlmaLinux                | 9       | Fully supported     |
-| Amazon Linux 2           | -       | Partially supported |
-| Amazon Linux 2023        | -       | Fully supported     |
+The following Linux distributions are considered tested and supported to run a control plane:
 
+| Distribution             | Version     | Architecture | Support Level   |
+|--------------------------|-------------|--------------|-----------------|
+| Red Hat Enterprise Linux | 9 and later | x64          | Fully supported |
+| Rocky Linux              | 9 and later | x64          | Fully supported |
+| AlmaLinux                | 9 and later | x64          | Fully supported |
+
+## Disaggregated Storage Plane
+
+The following Linux distributions are considered tested and supported to run a disaggregated storage plane:
+
+| Distribution             | Version     | Architecture | Support Level   |
+|--------------------------|-------------|--------------|-----------------|
+| Red Hat Enterprise Linux | 9 and later | x64, arm64   | Fully supported |
+| Rocky Linux              | 9 and later | x64, arm64   | Fully supported |
+| AlmaLinux                | 9 and later | x64, arm64   | Fully supported |
+
+## Hyper-Converged Storage Plane
+
+The following Linux distributions are considered tested and supported to run a hyper-converged storage plane:
+
+| Distribution             | Version       | Architecture | Support Level   |
+|--------------------------|---------------|--------------|-----------------|
+| Red Hat Enterprise Linux | 8.1 and later | x64, arm64   | Fully supported |
+| CentOS                   | 8 and later   | x64, arm64   | Fully supported |
+| Rocky Linux              | 9 and later   | x64, arm64   | Fully supported |
+| AlmaLinux                | 9 and later   | x64, arm64   | Fully supported |
+| Ubuntu                   | 18.04         | x64, arm64   | Fully supported |
+| Ubuntu                   | 20.04         | x64, arm64   | Fully supported |
+| Ubuntu                   | 22.04         | x64, arm64   | Fully supported |
+| Debian                   | 12 or later   | x64, arm64   | Fully supported |
+| Amazon Linux 2 (AL2)     | -             | x64, arm64   | Fully supported |
+| Amazon Linux 2023        | -             | x64, arm64   | Fully supported |
+
+## Storage Clients
+
+The following Linux distributions are considered tested and supported as NVMe-oF storage clients:
+
+| Distribution             | Version       | Architecture | Support Level                    |
+|--------------------------|---------------|--------------|----------------------------------|
+| Red Hat Enterprise Linux | 8.1 and later | x64, arm64   | Fully supported                  |
+| CentOS                   | 8 and later   | x64, arm64   | Fully supported                  |
+| Rocky Linux              | 9 and later   | x64, arm64   | Fully supported                  |
+| AlmaLinux                | 9 and later   | x64, arm64   | Fully supported                  |
+| Ubuntu                   | 18.04         | x64, arm64   | Fully supported                  |
+| Ubuntu                   | 20.04         | x64, arm64   | Fully supported                  |
+| Ubuntu                   | 22.04         | x64, arm64   | Fully supported                  |
+| Debian                   | 12 or later   | x64, arm64   | Fully supported                  |
+| Amazon Linux 2 (AL2)     | -             | x64, arm64   | Partially supported<sup>*1</sup> |
+| Amazon Linux 2023        | -             | x64, arm64   | Partially supported<sup>*1</sup> |
+
+<span style="font-size: small;"><sup>*1</sup> Amazon Linux does not support NVMe-oF Multipathing and should not be used for clients.</span> 
