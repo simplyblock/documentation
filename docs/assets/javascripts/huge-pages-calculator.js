@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", function() {
   const elMaxProvStorage = document.getElementById("hpc-max-prov-storage");
   const elNumLVols = document.getElementById("hpc-num-lvols");
   const elNumCPUs = document.getElementById("hpc-num-cpus");
-  const elNumDistWorkers = document.getElementById("hpc-num-dist-workers");
   const elCalcResult = document.getElementById("hpc-calc-result");
 
   if (!elNumDisks) return;
@@ -13,7 +12,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const maxProvStorage = parseInt(elMaxProvStorage.value);
     const numLVols = parseInt(elNumLVols.value);
     const numCPUs = parseInt(elNumCPUs.value);
-    const numDistWorkers = parseInt(elNumDistWorkers.value);
+    const numDistWorkers = 4;
 
     const baseVal1 = 8;
     const baseVal2 = 128;
