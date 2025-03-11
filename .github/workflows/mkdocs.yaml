@@ -5,9 +5,15 @@ on:
       - 'main'
       - 'release/**'
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - auto_merge_enabled
+      - auto_merge_disabled
     branches:
       - 'main'
-      - '!main'
 
 permissions:
   actions: write
