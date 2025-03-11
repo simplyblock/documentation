@@ -43,7 +43,7 @@ function ensure_docker_image() {
 function update_repositories() {
   if [ ! -d ./scripts/sbcli-repo ]; then
     echo "Cloning sbcli repository..."
-    git clone git@github.com:simplyblock-io/sbcli.git ./scripts/sbcli-repo
+    git clone https://github.com/simplyblock-io/sbcli.git ./scripts/sbcli-repo
   else
     echo "Updating sbcli repository..."
     pushd ./scripts/sbcli-repo
