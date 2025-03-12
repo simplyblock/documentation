@@ -44,7 +44,7 @@ sbcli storage-node get-io-stats-device <DEVICE_ID>
 ```
 
 More information about the command are available in the
-[CLI reference section](../../reference/cli/storage-pool.md#gets-a-devices-io-statistics).
+[CLI reference section](../../reference/cli/storage-node.md#gets-a-devices-io-statistics).
 
 ## Accessing Storage Pool Statistics
 
