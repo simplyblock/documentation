@@ -66,7 +66,6 @@ Sign up for our newsletter and keep updated on what's happening at simplyblock.
     formId: "cbb58efc-4668-483b-a195-1d0ceab4bfb7",
     region: "eu1",
     onFormReady: function(form) {
-      console.log(form);
       form[0].style.color = "#e2e4e9";
     }
   });
