@@ -35,7 +35,7 @@ sbcli storage-node get-io-stats <NODE_ID>
 ```
 
 More information about the command are available in the
-[CLI reference section](../../reference/cli/cluster.md#gets-storage-node-io-statistics).
+[CLI reference section](../../reference/cli/storage-node.md#gets-storage-node-io-statistics).
 
 To access the I/O statistics of a specific device in a storage node, use the following command:
 
@@ -44,7 +44,7 @@ sbcli storage-node get-io-stats-device <DEVICE_ID>
 ```
 
 More information about the command are available in the
-[CLI reference section](../../reference/cli/cluster.md#gets-a-devices-io-statistics).
+[CLI reference section](../../reference/cli/storage-pool.md#gets-a-devices-io-statistics).
 
 ## Accessing Storage Pool Statistics
 
@@ -55,7 +55,7 @@ sbcli storage-pool get-io-stats <POOL_ID>
 ```
 
 More information about the command are available in the
-[CLI reference section](../../reference/cli/cluster.md#gets-a-storage-pools-io-statistics).
+[CLI reference section](../../reference/cli/storage-pool.md#gets-a-storage-pools-io-statistics).
 
 ## Accessing Logical Volume Statistics
 
@@ -66,4 +66,4 @@ sbcli volume get-io-stats <VOLUME_ID>
 ```
 
 More information about the command are available in the
-[CLI reference section](../../reference/cli/cluster.md#gets-a-logical-volumes-io-statistics).
+[CLI reference section](../../reference/cli/volume.md#gets-a-logical-volumes-io-statistics).
