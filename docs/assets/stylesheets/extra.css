@@ -119,3 +119,7 @@ tbody > tr:nth-child(even) {
 input[type=checkbox][disabled] {
     filter: hue-rotate(18deg) brightness(0.5);
 }
+
+.hbspot-custom .hs-input {
+    color: #FAFAFA !important;
+}
