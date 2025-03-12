@@ -190,7 +190,7 @@ following up the relative link the hash sign (#) and the heading id.
 [Internal Link To Heading](../internal/url.md#heading-id)
 [Heading Link](#heading-id)
 
-[External Link](https://some-external.url){:target="_blank"}
+[External Link](https://some-external.url){:target="_blank" rel="noopener"}
 ```
 
 The required heading ids are automatically generated as a full lowercase version of the heading with whitespaces and

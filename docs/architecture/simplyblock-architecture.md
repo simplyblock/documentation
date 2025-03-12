@@ -44,7 +44,7 @@ are free to define their own custom alerts.
 
 For log management, simplyblock uses Graylog. For a comprehensive insight, Graylog is configured to collect container
 logs from control plane and storage plane services, the RPC communication between the control plane and storage cluster
-and the data services logs ([SPDK](https://spdk.io/){:target="_blank"} or Storage Performance Development Kit).
+and the data services logs ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"} or Storage Performance Development Kit).
 
 ### Control Plane State Storage
 
@@ -52,7 +52,7 @@ The control plane is implemented as a stack of containers running on one or more
 environments, simplyblock requires at least 3 management nodes for high availability. The management nodes run as
 a set of replicated, stateful services.
 
-For internal state storage, the control plane uses ([FoundationDB](https://www.foundationdb.org/){:target="_blank"}) as
+For internal state storage, the control plane uses ([FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"}) as
 its key-value store. FoundationDB, by itself, operates in a replicated high-available cluster across all management
 nodes.
 
@@ -105,11 +105,11 @@ shared environments where security, compliance, and tenant separation are critic
 Building strong and reliable distributed storage technology has to build on a strong foundation. That's why simplyblock
 uses a variety of open source key technologies as its basis.
 
-| Component        | Technologies                                                                                                                                                                                                                                                               |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Networking       | [NVMe-oF](https://nvmexpress.org/){:target="_blank"}, [NVMe/TCP](../important-notes/terminology.md#nvmetcp-nvme-over-tcp), [NVMe/RoCE](../important-notes/terminology.md#nvmeroce-nvme-over-rdma-over-converged-ethernet), [DPDK](https://www.dpdk.org/){:target="_blank"} |
-| Storage          | [SPDK](https://spdk.io/){:target="_blank"}, [FoundationDB](https://www.foundationdb.org/){:target="_blank"}, [MongoDB](https://www.mongodb.com/){:target="_blank"}                                                                                                         |
-| Observability    | [Prometheus](https://prometheus.io/){:target="_blank"}, [Thanos](https://thanos.io/){:target="_blank"}, [Grafana](https://grafana.com/){:target="_blank"}                                                                                                                  |
-| Logging          | [Graylog](https://graylog.org/){:target="_blank"}, [OpenSearch](https://opensearch.org/){:target="_blank"}                                                                                                                                                                 |
-| Kubernetes       | [SPDK CSI](https://github.com/spdk/spdk-csi){:target="_blank"}, [Kubernetes CSI](https://kubernetes-csi.github.io/docs/){:target="_blank"}                                                                                                                                 |
-| Operating System | [Linux](https://www.kernel.org/){:target="_blank"}                                                                                                                                                                                                                         |
+| Component        | Technologies                                                                                                                                                                                                                                                                                             |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Networking       | [NVMe-oF](https://nvmexpress.org/){:target="_blank" rel="noopener"}, [NVMe/TCP](../important-notes/terminology.md#nvmetcp-nvme-over-tcp), [NVMe/RoCE](../important-notes/terminology.md#nvmeroce-nvme-over-rdma-over-converged-ethernet), [DPDK](https://www.dpdk.org/){:target="_blank" rel="noopener"} |
+| Storage          | [SPDK](https://spdk.io/){:target="_blank" rel="noopener"}, [FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"}, [MongoDB](https://www.mongodb.com/){:target="_blank" rel="noopener"}                                                                                          |
+| Observability    | [Prometheus](https://prometheus.io/){:target="_blank" rel="noopener"}, [Thanos](https://thanos.io/){:target="_blank" rel="noopener"}, [Grafana](https://grafana.com/){:target="_blank" rel="noopener"}                                                                                                   |
+| Logging          | [Graylog](https://graylog.org/){:target="_blank" rel="noopener"}, [OpenSearch](https://opensearch.org/){:target="_blank" rel="noopener"}                                                                                                                                                                 |
+| Kubernetes       | [SPDK CSI](https://github.com/spdk/spdk-csi){:target="_blank" rel="noopener"}, [Kubernetes CSI](https://kubernetes-csi.github.io/docs/){:target="_blank" rel="noopener"}                                                                                                                                 |
+| Operating System | [Linux](https://www.kernel.org/){:target="_blank" rel="noopener"}                                                                                                                                                                                                                                        |
