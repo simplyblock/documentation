@@ -23,12 +23,12 @@ sbcli {{ command.name }} --help
 sbcli {{ command.name }} {{ subcommand.name }}
 {%- for argument in subcommand.arguments -%}
 {%- if not argument.private %}
-    {{ argument.name }}{{ argument | arg_value }}
+    {{ argument | arg_value }}
 {%- endif -%}
 {% endfor -%}
 {%- for parameter in subcommand.parameters -%}
 {%- if not parameter.private %}
-    {{ parameter.name }}{{ parameter | arg_value }}
+    {{ parameter.name }}{{ parameter | param_value }}
 {%- endif %}
 {%- endfor %}
 ```
