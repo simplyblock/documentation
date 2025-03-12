@@ -38,7 +38,7 @@ sbcli {{ command.name }} {{ subcommand.name }}
 | -------- | ----------- | --------- | -------- |
 {% for argument in subcommand.arguments -%}
 {% if not argument.private -%}
-| {{ argument.name }} | {{ argument | get_description }} | {{ argument | data_type_name }} | {{ argument | required }} |
+| {{ argument.name | upper }} | {{ argument | get_description }} | {{ argument | data_type_name }} | {{ argument | required }} |
 {% endif -%}
 {% endfor -%}
 {% endif -%}
