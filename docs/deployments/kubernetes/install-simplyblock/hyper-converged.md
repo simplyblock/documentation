@@ -25,11 +25,13 @@ demo@worker-1 ~> sudo systemctl restart kubelet
 ```
 
 ```bash
-demo@worker-1 ~> kubectl describe node worker-1.kubernetes-cluster.local | grep hugepages-2Mi
+demo@worker-1 ~> kubectl describe node worker-1.kubernetes-cluster.local | \
+    grep hugepages-2Mi
 ```
 
 ```plain
-demo@demo ~> kubectl describe node worker-1.kubernetes-cluster.local | grep hugepages-2Mi
+demo@demo ~> kubectl describe node worker-1.kubernetes-cluster.local | \
+    grep hugepages-2Mi
   hugepages-2Mi:      9440Mi
   hugepages-2Mi:      9440Mi
   hugepages-2Mi      0 (0%)    0 (0%)
