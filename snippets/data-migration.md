@@ -65,7 +65,7 @@ Using the Device Mapper, the current and new block devices will be moved into a 
 in the background.  This solution requires two minimal downtimes to create and remount the devices.
 
 !!! warning
-    This method is quite involved, requires a lot of steps and can lead to data loss in case of wrong commands or
+    This method is quite involved, requires a lot of steps, and can lead to data loss in case of wrong commands or
     parameters. It should only be used by advanced users that understand the danger of the commands below.<br/><br/>
     Furthermore, this migration method **MUST NOT** be used for boot devices!
 
