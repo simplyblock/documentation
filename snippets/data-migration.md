@@ -14,7 +14,7 @@ successful and complete data transfers.
 A block-level copy duplicates the entire content of a source block device, including partition tables, file systems, and
 data. This method is ideal when migrating entire disks or volumes.
 
-```sh
+```sh title="Creating a block-level clone of a block device"
 dd if=/dev/source-device of=/dev/simplyblock-device bs=4M status=progress
 ```
 
@@ -37,17 +37,17 @@ For scenarios where only file contents need to be migrated (for example, after c
 simplyblock logical volume), `rsync` is a reliable tool.
 
 1. First, format the Simplyblock Logical Volume:
-   ```bash
+   ```bash title="Format the simplyblock block device with ext4"
    mkfs.ext4 /dev/simplyblock-device
    ```
 
 2. Mount the Logical Volume:
-   ```bash
+   ```bash title="Mount the block device"
    mount /dev/simplyblock-device /mnt/simplyblock
    ```
 
 3. Use `rsync` to copy files from the source directory:
-   ```bash
+   ```bash title="Synchronize the source disks content using rsync"
    rsync -avh --progress /source/data/ /mnt/simplyblock/
    ```
 
@@ -78,7 +78,7 @@ currently used and new device need to be collected.
 
 This can be done by executing the command `lsblk` to list all attached block devices.
 
-```bash
+```bash title="lsblk provides information about all attached block devices"
 lsblk
 ```
 
@@ -89,7 +89,7 @@ device and _nvme0n1_ is the newly attached simplyblock logical volume. The latte
     It is important to understand the difference between the currently used and the new device. Using them in the wrong
     order in the following steps will cause any or all data to be lost!
 
-```plain
+```plain title="Find the source and target block devices using lsblk"
 [root@demo ~]# lsblk
 NAME                      MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
 sda                         8:0    0   25G  0 disk
@@ -106,13 +106,13 @@ nvme0n1                   259:0    0   25G  0 disk
 Next up the cluster size of the current device is required. The value must be set on the RAID to-be-created. It needs
 to be noted down.
 
-```bash
+```bash title="Find the block size of the source filesystem"
 tune2fs -l /dev/sdb1 | grep -i 'block size'
 ```
 
 In this example, the block size is 4 KiB (4096 bytes).
 
-```plain
+```plain title="Example output of the block size"
 [root@demo ~]# tune2fs -l /dev/sdb1 | grep -i 'block size'
 Block size:               4096
 ```
@@ -120,13 +120,13 @@ Block size:               4096
 Last, it is important to ensure that the new target device is at least as large or larger than the current device.
 `lsblk` can be used again to get the required numbers.
 
-```bash
+```bash title="lsblk with byte sizes of the block devices"
 lsblk -b
 ```
 
 In this example, both devices are the same size, _26843545600_ bytes in total disk capacity.
 
-```plain
+```plain title="Example output of lsblk -b"
 [root@demo ~]# lsblk -b
 NAME                      MAJ:MIN RM        SIZE RO TYPE  MOUNTPOINTS
 sda                         8:0    0 26843545600  0 disk
@@ -158,7 +158,7 @@ Now, it's time to create the temporary RAID for disk synchronization. Anything b
     umount /data/pg
     ```
 
-```bash
+```bash title="Building a RAID-1 with mdadm"
 mdadm --build --chunk=<CHUNK_SIZE> --level=1 \
     --raid-devices=2 --bitmap=none \
     <RAID_NAME> <CURRENT_DEVICE_FILE> missing
@@ -169,7 +169,7 @@ RAID is called _migration_. The RAID-level is 1 (meaning, RAID-1) and it include
 of the command is required to tell the device mapper that the second device of the RAID is missing for now. It will be
 added later.
 
-```plain
+```plain title="Example output of a RAID-1 with mdadm"
 [root@demo ~]# mdadm --build --chunk=4096 --level=1 --raid-devices=2 --bitmap=none migration /dev/sdb missing
 mdadm: array /dev/md/migration built and started.
 ```
@@ -177,7 +177,7 @@ mdadm: array /dev/md/migration built and started.
 To ensure the that the RAID was created successfully, all device files with _/dev/md*_ can be listed. In this case,
 _/dev/md127_ is the actual RAID device, while _/dev/md/migration_ is the device mapper file.
 
-```plain
+```plain title="Finding the new device mapper device files"
 [root@demo ~]# ls /dev/md*
 /dev/md127  /dev/md127p1
 
@@ -189,7 +189,7 @@ After the RAID device name is confirmed, the new RAID device can be mounted. In 
 was partitioned. Hence, the RAID device also has one partition _/dev/md127p1_. This is what needs to be mounted to the
 same mount point as the original disk before, _/data/pg_ in this example.
 
-```plain
+```plain title="Mount the new device mapper device file"
 [root@demo ~]# mount /dev/md127p1 /data/pg/
 ```
 
@@ -200,13 +200,13 @@ same mount point as the original disk before, _/data/pg_ in this example.
 Now the second, new device must be added to the RAID setup to start the re-silvering (data synchronization) process.
 This is again done using `mdadm` tool.
 
-```bash
+```bash title="Add the new simplyblock block device to RAID-1"
 mdadm <RAID_DEVICE_MAPPER_FILE> --add <NEW_DEVICE_FILE>
 ```
 
 In the example, we add _/dev/nvme0n1_ (the simplyblock logical volume) to the RAID named "migration".
 
-```plain
+```plain title="Example output of mdadm --add"
 [root@demo ~]# mdadm /dev/md/migration --add /dev/nvme0n1
 mdadm: added /dev/nvme0n1
 ```
@@ -223,12 +223,12 @@ added device to the first device in the setup. This process is called re-silveri
 
 The synchronization process status can be monitored using one of two commands:
 
-```bash
+```bash title="Check status of re-silvering"
 mdadm -D <RAID_DEVICE_FILE>
 cat /proc/mdstat
 ```
 
-```plain
+```plain title="Example output of a status check via mdadm"
 [root@demo ~]#mdadm -D /dev/md127
 /dev/md127:
            Version :
@@ -254,7 +254,7 @@ Consistency Policy : resync
        2     259        0        1      spare rebuilding   /dev/nvme0n1
 ```
 
-```plain
+```plain title="Example output of a status check via /proc/mdstat"
 [root@localhost ~]# cat /proc/mdstat 
 Personalities : [raid1] 
 md0 : active raid1 sdb[1] nvme0n1[0]
@@ -269,7 +269,7 @@ unused devices: <none>
 Eventually, the synchronization finishes. At this point, the two devices (original and new) are kept in sync by the
 device mapper system.
 
-```plain
+```plain title="Example out of a finished synchronzation"
 [root@localhost ~]# mdadm -D /dev/md127
 /dev/md127:
            Version :
@@ -297,14 +297,14 @@ To fully switch to the new simplyblock logical volume, a second minimal downtime
 
 The RAID device needs to unmounted and the device mapper stopped.
 
-```bash
+```bash title="Stopping the device mapper RAID-1"
 umount <MOUNT_POINT>
 mdadm --stop <DEVICE_MAPPER_FILE>
 ```
 
 In this example _/data/pg_ and _/dev/md/migration_ are used.
 
-```plain
+```plain title="Example output of a stopped RAID-1"
 [root@localhost ~]# umount /data/pg/
 [root@localhost ~]# mdadm --stop /dev/md/migration
 mdadm: stopped /dev/md/migration
@@ -313,13 +313,13 @@ mdadm: stopped /dev/md/migration
 Now, the system should be restarted. If a system reboot takes too long and is out of the scope of the available
 maintenance window, a re-read of the partition tables can be forced.
 
-```bash
+```bash title="Re-read partition table"
 blockdev --rereadpt <NEW_DEVICE_FILE>
 ```
 
 After re-reading the partition table of a device, the partition should be recognized and visible.
 
-```plain
+```plain title="Example output of re-reading the partition table"
 [root@localhost ~]# blockdev --rereadpt /dev/nvme0n1
 [root@localhost ~]# ls /dev/nvme0n1p1
 /dev/nvme0n1p1
@@ -328,7 +328,7 @@ After re-reading the partition table of a device, the partition should be recogn
 As a last step, the partition must be mounted to the same mount point as the RAID device before. If the mount is
 successful, the services can be started again.
 
-```plain
+```plain title="Mounting the plain block device and restarting services"
 [root@localhost ~]# mount /dev/nvme0n1p1 /data/pg/
 [root@localhost ~]# service postgresql start
 ```
