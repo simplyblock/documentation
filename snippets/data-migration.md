@@ -255,7 +255,7 @@ Consistency Policy : resync
 ```
 
 ```plain title="Example output of a status check via /proc/mdstat"
-[root@localhost ~]# cat /proc/mdstat 
+[root@demo ~]# cat /proc/mdstat 
 Personalities : [raid1] 
 md0 : active raid1 sdb[1] nvme0n1[0]
       10484664 blocks super 1.2 [2/2] [UU]
@@ -270,7 +270,7 @@ Eventually, the synchronization finishes. At this point, the two devices (origin
 device mapper system.
 
 ```plain title="Example out of a finished synchronzation"
-[root@localhost ~]# mdadm -D /dev/md127
+[root@demo ~]# mdadm -D /dev/md127
 /dev/md127:
            Version :
      Creation Time : Sat Mar 15 17:24:17 2025
@@ -305,8 +305,8 @@ mdadm --stop <DEVICE_MAPPER_FILE>
 In this example _/data/pg_ and _/dev/md/migration_ are used.
 
 ```plain title="Example output of a stopped RAID-1"
-[root@localhost ~]# umount /data/pg/
-[root@localhost ~]# mdadm --stop /dev/md/migration
+[root@demo ~]# umount /data/pg/
+[root@demo ~]# mdadm --stop /dev/md/migration
 mdadm: stopped /dev/md/migration
 ```
 
@@ -320,8 +320,8 @@ blockdev --rereadpt <NEW_DEVICE_FILE>
 After re-reading the partition table of a device, the partition should be recognized and visible.
 
 ```plain title="Example output of re-reading the partition table"
-[root@localhost ~]# blockdev --rereadpt /dev/nvme0n1
-[root@localhost ~]# ls /dev/nvme0n1p1
+[root@demo ~]# blockdev --rereadpt /dev/nvme0n1
+[root@demo ~]# ls /dev/nvme0n1p1
 /dev/nvme0n1p1
 ```
 
@@ -329,7 +329,7 @@ As a last step, the partition must be mounted to the same mount point as the RAI
 successful, the services can be started again.
 
 ```plain title="Mounting the plain block device and restarting services"
-[root@localhost ~]# mount /dev/nvme0n1p1 /data/pg/
-[root@localhost ~]# service postgresql start
+[root@demo ~]# mount /dev/nvme0n1p1 /data/pg/
+[root@demo ~]# service postgresql start
 ```
 
