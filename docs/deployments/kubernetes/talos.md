@@ -10,25 +10,19 @@ Simplyblock requires a set of additional Linux kernel modules, as well as tools 
 That means that a custom Talos image has to be built to run simplyblock. The following section explains the required
 changes to make Talos compliant.
 
-## Required System Extensions (Worker Node)
-
-On Kubernetes worker nodes, simplyblock requires two additional system extension images to be referenced during the
-build process or to be installed manually after deployment.
-
-The required system extension image references are:
-
-- ghcr.io/siderolabs/nvme-cli:v2.11
-- ghcr.io/siderolabs/util-linux-tools:2.40.4
-
-```bash title="Adding the required system extension image to Talos"
-demo@demo ~> docker run --rm -t \
-    -v $PWD/_out:/out ghcr.io/siderolabs/imager:v1.9.2 iso \
-    --system-extension-image ghcr.io/siderolabs/nvme-cli:v2.11
-    --system-extension-image ghcr.io/siderolabs/util-linux-tools:2.40.4
-```
 
 ## Required Kernel Modules (Worker Node)
+On Kubernetes worker nodes, simplyblock requires few kernel modules to be loaded.
 
+```yaml title="Content of kernel-module-config.yaml"
+machine:
+  kernel:
+    modules:
+      - name: nbd 
+      - name: uio_pci_generic
+      - name: vfio_pci
+      - name: vfio_iommu_type1
+```
 
 ## Huge Pages Reservations
 
@@ -45,8 +39,9 @@ To apply the change to Talos' worker nodes, a YAML configuration file with the f
 of pages is to be replaced with the number calculated above.
 
 ```yaml title="Content of huge-pages-config.yaml"
-sysctls:
-   vm.nr_hugepages: "<number-of-pages>"
+machine:
+  sysctls:
+     vm.nr_hugepages: "<number-of-pages>"
 ```
 
 To activate the huge pages, the `talosctl` command should be used.
