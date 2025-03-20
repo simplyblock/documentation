@@ -78,7 +78,7 @@ metadata:
 
 To enable the required permisions, apply the `namespace` configuration.
 
-```bash title="Enabled Simplyblock Required Permissions in Talos"
+```bash title="Enabled Simplyblock Required Permissions in Talos at Namespace level"
 demo@demo ~> kubectl apply -f simplyblock-namespace.yaml
 ```
 
