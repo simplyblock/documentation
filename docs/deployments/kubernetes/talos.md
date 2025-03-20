@@ -58,34 +58,27 @@ Simyplyblock's CSI Driver requires to connect NVMe over Fabrics devices, as well
 the CSI Driver has to run as a privileged container. Hence, Talos needs to be configured to start the Simplyblock CSI
 Driver in privileged mode. 
 
-To enable privileged mode and grant the required access, the following YAML configuration has to be applied to all Talos
-worker nodes which will have the Simplyblock CSI Driver installed:
+Talos allows overriding Pod Security Admission settings at the namespace level.
+To enable privileged mode and grant the required access for the Simplyblock CSI 
+Driver, create the simplyblock namespace with the appropriate security exemptions:
 
-```yaml title="Content of required-permissions.yaml"
-admissionControl:
-  - name: PodSecurity # Name is the name of the admission controller.
-    # Configuration is an embedded configuration object to be used as the plugin's
-    configuration:
-      apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-      defaults:
-        audit: privileged
-        audit-version: latest
-        enforce: privileged
-        enforce-version: latest
-        warn: privileged
-        warn-version: latest
-      exemptions:
-        namespaces:
-          - kube-system
-        runtimeClasses: []
-        usernames: []
+```yaml title="Content of simplyblock-namespace.yaml"
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: simplyblock
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: privileged
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: privileged
+    pod-security.kubernetes.io/warn-version: latest
 ```
 
-To enable the required permisions, the `talosctl` command should be used.
+To enable the required permisions, apply the `namespace` configuration.
 
 ```bash title="Enabled Simplyblock Required Permissions in Talos"
-demo@demo ~> talosctl apply-config --nodes <worker_node_ip> \
-    --file required-permissions.yaml.yaml -m reboot
-demo@demo ~> talosctl service kubelet restart --nodes <worker_node_ip>
+demo@demo ~> kubectl apply -f simplyblock-namespace.yaml
 ```
 
