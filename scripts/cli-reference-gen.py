@@ -3,10 +3,14 @@ import yaml
 import sys
 import re
 
+def is_parameter(item):
+    return item["name"].startswith("--") or item["name"].startswith("-")
+
+
 def select_arguments(items):
     arguments = []
     for item in items:
-        if not item["name"].startswith("--"):
+        if not is_parameter(item):
             arguments.append(item)
     return arguments
 
@@ -14,7 +18,7 @@ def select_arguments(items):
 def select_parameters(items):
     parameters = []
     for item in items:
-        if item["name"].startswith("--"):
+        if is_parameter(item):
             parameters.append(item)
     return parameters
 
@@ -67,6 +71,8 @@ def param_value(item):
     name = item["name"].lower()
     if name.startswith("--"):
         name = name[2:]
+    if name.startswith("-"):
+        name = name[1:]
     return f"=<{name.replace('-', '_').upper()}>"
 
 

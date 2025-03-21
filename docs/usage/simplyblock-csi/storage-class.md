@@ -27,7 +27,7 @@ block storage directly backed by simplyblock.
 
 A typical simplyblock StorageClass contains the name of the storage class, a filesystem type to automatically format
 the logical volume (or provide a raw block device if missing), the
-[reclaim policy](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming){:target="_blank"}.
+[reclaim policy](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming){:target="_blank" rel="noopener"}.
 
 ```yaml title="Example StorageClass"
 apiVersion: storage.k8s.io/v1

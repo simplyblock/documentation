@@ -43,8 +43,6 @@ demo@worker-1 ~> sudo modprobe nvme-tcp
 demo@worker-1 ~> sudo modprobe nbd
 ```
 
-<missing>
-
 ### Firewall Configuration (SP)
 
 | Service                     | Direction | Source / Target Network | Port(s)   | Protocol(s) |
@@ -64,3 +62,6 @@ demo@worker-1 ~> sudo modprobe nbd
 | Docker Network Discovery    | egress    | storage, control        | 7946      | TCP / UDP   |
 | Graylog                     | egress    | control                 | 12202     | TCP         |
 
+### Storage Node Installation
+
+--8<-- "kubernetes-install-storage-node-helm.md"

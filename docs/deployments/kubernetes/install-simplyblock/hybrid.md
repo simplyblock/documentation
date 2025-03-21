@@ -3,9 +3,26 @@ title: "Hybrid Setup"
 weight: 50200
 ---
 
-<!-- include: install control plane documentation -->
---8<-- "install-control-plane.md"
+## Network Preparation
+
+Simplyblock recommends two individual network interfaces, one for the control plane and one for the storage plane.
+Hence, in the following installation description, we assume two separated subnets. To install simplyblock in your
+environment, you may have to adopt these commands to match your configuration.
+
+| Network interface | Network definition | Abbreviation | Subnet          |
+|-------------------|--------------------|--------------|-----------------|
+| eth0              | Control Plane      | control      | 192.168.10.0/24 |
+| eth1              | Storage Plane      | storage      | 10.10.10.0/24   |
 
 ## Storage Plane Installation
 
 ### Firewall Configuration (SP)
+
+<!-- include: install control plane documentation -->
+--8<-- "install-control-plane.md"
+
+--8<-- "install-storage-plane-bare-metal.md"
+
+### Hyper-Converged Storage Node Installation
+
+--8<-- "kubernetes-install-storage-node-helm.md"
