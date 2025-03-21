@@ -19,6 +19,7 @@ The following kernels are known to be compatible and tested. Additional kernel v
 | Amazon Linux 2023        | 2023.1.20230825.0 x86_64 HVM kernel-6.1 | modprobe nvme-tcp |
 
 !!! warning
-    Amazon Linux 2 and Amazon Linux 2024 have a bug with NVMe-oF multipathing. That means that NVMe over Fabrics on any
-    Amazon Linux operates in a degraded state. As an alternative, multipathing can be configured using the Linux Device
-    Manager (dm) via DM-MPIO.
+    Amazon Linux 2 and Amazon Linux 2023 have a bug with
+    [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics
+    on any Amazon Linux operates in a degraded state with the risk of connection outages. As an alternative,
+    multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO.
