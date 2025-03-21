@@ -3,18 +3,74 @@ title: Proxmox Integration
 weight: 20350
 ---
 
-```bash title="Install the Simplyblock Proxmox Integration"
-apt install ./simplyblock-proxmox.deb
+Proxmox Virtual Environment (Proxmox VE) is an open-source server virtualization platform that integrates KVM-based
+virtual machines and LXC containers with a web-based management interface.
+
+Simplyblock seamlessly integrates with Proxmox through its storage plugin. The storage plugin enables the automatic
+provisioning of storage volumes for Proxmox's KVM virtual machines and LXC containers. Simplyblock is fully integrated
+into the Proxmox user interface.
+
+## Install Simplyblock for Proxmox
+
+Simplyblock's Proxmox storage plugin can be installed from the simplyblock apt repository. To register the simplyblock
+apt repository, simplyblock offers a script to handle the repository registration automatically.
+
+```bash title="Register the Simplyblock Debian Repository"
+curl https://install.simplyblock.io/install-debian-repository | bash
 ```
 
-```bash title="Restart the Proxmox UI Daemon"
-systemctl restart pvedaemon 
+If a manual registration is preferred, the repository public key must be downloaded and made available to apt. This key
+is used for signature verification.
+
+```bash title="Install the Simplyblock Public Key"
+sudo curl -o /etc/apt/keyrings/simplyblock.gpg https://install.simplyblock.io/simplyblock.key
 ```
+
+Afterward, the repository needs to be registered for apt itself. The following line registers the apt repository.
+
+```bash title="Register the Simplyblock Debian Repository"
+echo 'deb [signed-by=/etc/apt/keyrings/simplyblock.gpg] https://install.simplyblock.io/debian stable main' | \
+    sudo tee /etc/apt/sources.list.d/simplyblock.list
+```
+
+### Install the Simplyblock-Proxmox Package
+
+After the registration of the repository, a `apt update` will refresh all available package information and makes the
+`simplyblock-proxmox` package available. The update must not show any errors related to the simplyblock apt repository.
+
+With the updated repository information, a `apt install simplyblock-proxmox` installed the simplyblock storage plugin.
+
+```bash title="Install the Simplyblock Proxmox Integration"
+sudo apt update
+sudo apt install simplyblock-proxmox
+```
+
+With the installation successfully finished, the Proxmox daemon must be restarted to enable the Proxmox UI to show the
+new simplyblock storage plugin.
+
+```bash title="Restart the Proxmox Daemon"
+sudo systemctl restart pvedaemon 
+```
+
+Last, register a simplyblock storage pool with Proxmox. The new Proxmox storage can have an arbitrary name and multiple
+simplyblock storage pools can be registered as long as their Proxmox names are different.
 
 ```bash title="Enable Simplyblock as a Storage Provider"
-pvesm add simplyblock <name> \
-    --entrypoint=<control_plane_addr> \
-    --cluster=<cluster_id> \
-    --secret=<cluster_secret> \
-    --pool=<storage_pool_name>
+sudo pvesm add simplyblock <NAME> \
+    --entrypoint=<CONTROL_PLANE_ADDR> \
+    --cluster=<CLUSTER_ID> \
+    --secret=<CLUSTER_SECRET> \
+    --pool=<STORAGE_POOL_NAME>
 ```
+
+| Parameter          | Description                                                                                                                                                            |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NAME               | The name of the storage pool in Proxmox.                                                                                                                               |
+| CONTROL_PLANE_ADDR | The api address of the simplyblock control plane.                                                                                                                      |
+| CLUSTER_ID         | The simplyblock storage cluster id. The cluster id can be found using [`sbcli cluster lust`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
+| CLUSTER_SECRET     | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`sbcli cluster get-secret`](../../reference/cli/cluster.md#gets-a-clusters-secret). |
+| STORAGE_POOL_NAME  | The simplyblock storage pool name to attach.                                                                                                                           | 
+
+In the Proxmox user interface, a storage of type simplyblock is now available.
+
+![](../../assets/images/simplyblock-proxmox-storage.png)
