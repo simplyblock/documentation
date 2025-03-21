@@ -20,6 +20,10 @@ through the Proxmox UI and command line interface.
 Simplyblock's Proxmox storage plugin can be installed from the simplyblock apt repository. To register the simplyblock
 apt repository, simplyblock offers a script to handle the repository registration automatically.
 
+!!! info
+    All the following commands require root permissions for execution. It is recommended to log in as root or open a
+    root shell using `sudo su`. 
+
 ```bash title="Automatically register the Simplyblock Debian Repository"
 curl https://install.simplyblock.io/install-debian-repository | bash
 ```
@@ -28,14 +32,14 @@ If a manual registration is preferred, the repository public key must be downloa
 is used for signature verification.
 
 ```bash title="Install the Simplyblock Public Key"
-sudo curl -o /etc/apt/keyrings/simplyblock.gpg https://install.simplyblock.io/simplyblock.key
+curl -o /etc/apt/keyrings/simplyblock.gpg https://install.simplyblock.io/simplyblock.key
 ```
 
 Afterward, the repository needs to be registered for apt itself. The following line registers the apt repository.
 
 ```bash title="Register the Simplyblock Debian Repository"
 echo 'deb [signed-by=/etc/apt/keyrings/simplyblock.gpg] https://install.simplyblock.io/debian stable main' | \
-    sudo tee /etc/apt/sources.list.d/simplyblock.list
+    tee /etc/apt/sources.list.d/simplyblock.list
 ```
 
 ### Install the Simplyblock-Proxmox Package
@@ -46,22 +50,22 @@ After the registration of the repository, a `apt update` will refresh all availa
 With the updated repository information, a `apt install simplyblock-proxmox` installed the simplyblock storage plugin.
 
 ```bash title="Install the Simplyblock Proxmox Integration"
-sudo apt update
-sudo apt install simplyblock-proxmox
+apt update
+apt install simplyblock-proxmox
 ```
 
 With the installation successfully finished, the Proxmox daemon must be restarted to enable the Proxmox UI to show the
 new simplyblock storage plugin.
 
 ```bash title="Restart the Proxmox Daemon"
-sudo systemctl restart pvedaemon 
+systemctl restart pvedaemon 
 ```
 
 Last, register a simplyblock storage pool with Proxmox. The new Proxmox storage can have an arbitrary name and multiple
 simplyblock storage pools can be registered as long as their Proxmox names are different.
 
 ```bash title="Enable Simplyblock as a Storage Provider"
-sudo pvesm add simplyblock <NAME> \
+pvesm add simplyblock <NAME> \
     --entrypoint=<CONTROL_PLANE_ADDR> \
     --cluster=<CLUSTER_ID> \
     --secret=<CLUSTER_SECRET> \
