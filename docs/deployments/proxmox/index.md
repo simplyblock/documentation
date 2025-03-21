@@ -54,14 +54,7 @@ apt update
 apt install simplyblock-proxmox
 ```
 
-With the installation successfully finished, the Proxmox daemon must be restarted to enable the Proxmox UI to show the
-new simplyblock storage plugin.
-
-```bash title="Restart the Proxmox Daemon"
-systemctl restart pvedaemon 
-```
-
-Last, register a simplyblock storage pool with Proxmox. The new Proxmox storage can have an arbitrary name and multiple
+Now, register a simplyblock storage pool with Proxmox. The new Proxmox storage can have an arbitrary name and multiple
 simplyblock storage pools can be registered as long as their Proxmox names are different.
 
 ```bash title="Enable Simplyblock as a Storage Provider"
