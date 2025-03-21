@@ -63,4 +63,6 @@ The following Linux distributions are considered tested and supported as NVMe-oF
 | Amazon Linux 2 (AL2)     | -             | x64, arm64   | Partially supported<sup>*1</sup> |
 | Amazon Linux 2023        | -             | x64, arm64   | Partially supported<sup>*1</sup> |
 
-<span style="font-size: small;"><sup>*1</sup> Amazon Linux does not support NVMe-oF Multipathing and should not be used for clients.</span> 
+<span markdown style="font-size: small;"><sup>*1</sup> Amazon Linux does not support
+[NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). As an alternative, multipathing can
+be configured via the Linux Device Manager (dm) using DM-MPIO.</span> 
