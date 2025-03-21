@@ -20,7 +20,7 @@ through the Proxmox UI and command line interface.
 Simplyblock's Proxmox storage plugin can be installed from the simplyblock apt repository. To register the simplyblock
 apt repository, simplyblock offers a script to handle the repository registration automatically.
 
-```bash title="Register the Simplyblock Debian Repository"
+```bash title="Automatically register the Simplyblock Debian Repository"
 curl https://install.simplyblock.io/install-debian-repository | bash
 ```
 
