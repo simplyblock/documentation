@@ -22,7 +22,7 @@ safeguarding sensitive workloads without compromising performance.
 ## Encrypted Volumes in Simplyblock
 
 Simplyblock supports the encryption of logical volumes. Internally, simplyblock utilizes the industry-proven
-[crypto bdev](https://spdk.io/doc/bdev.html){:target="_blank"} provided by SPDK to implement its encryption
+[crypto bdev](https://spdk.io/doc/bdev.html){:target="_blank" rel="noopener"} provided by SPDK to implement its encryption
 functionality.
 
 The encryption uses a AES_XTS variable length block cipher. This cipher requires two keys of 16 to 32 bytes each. The

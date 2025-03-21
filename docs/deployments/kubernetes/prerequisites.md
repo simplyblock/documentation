@@ -26,13 +26,10 @@ Minimum 8GiB
 Supported Linux distribution
 3 management nodes
 
-
-
 ```bash title="Create Management Cluster"
 sbcli cluster create
 sbcli cluster list
 ```
-
 
 ```bash title="Sample output control plane creation"
 [demo@demo ~]# sudo sbcli cluster create --ifname=ens18 --ha-type=ha
@@ -72,7 +69,6 @@ Returns cluster-id
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+---------+
 ```
 
-
 ### Get Cluster Secret
 sbcli cluster get-secret <cluster_uuid>
 
@@ -82,7 +78,6 @@ e8SQ1ElMm8Y9XIwyn8O0 # (1)
 ```
 
 1. :light_bulb: This is the cluster secret: :octicons-arrow-down-24:<br/>e8SQ1ElMm8Y9XIwyn8O0
-
 
 ### Control Plane Secondaries
 
@@ -163,7 +158,6 @@ lsblk
 nvme id-ns /dev/nvmeXnY
 nvme format --lbaf=<lbaf> --ses=0 /dev/nvmeXnY
 ```
-
 
 ### Deploy a Storage Node
 

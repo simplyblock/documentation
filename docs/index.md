@@ -55,5 +55,18 @@ the efficiency and reliability of your simplyblock deployment.
 
 </div>
 
+## Keep Updated
 
-[Subscribe to our Newsletter](#){ .md-button .md-button--primary }
+Sign up for our newsletter and keep updated on what's happening at simplyblock.
+
+<script charset="utf-8" type="text/javascript" src="//js-eu1.hsforms.net/forms/embed/v2.js"></script>
+<script>
+  hbspt.forms.create({
+    portalId: "145570463",
+    formId: "cbb58efc-4668-483b-a195-1d0ceab4bfb7",
+    region: "eu1",
+    onFormReady: function(form) {
+      form[0].style.color = "#e2e4e9";
+    }
+  });
+</script>
