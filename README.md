@@ -40,6 +40,16 @@ needs to be built using:
 ./doc-builder build-image
 ```
 
+In addition, external repositories have to be checked out, to generate the necessary documentation pages. The
+`doc-builder` simplifies this process with a specific command which either creates an initial checkout or updates the
+repositories to the latest commit.
+
+```bash
+./doc-builder update-repositories
+```
+
+The command can be run at any time to update the external repositories to the latest commit.
+
 ### Serving Content Locally
 
 When building or updating the documentation, it is useful to have a local builder with live updating. Mkdocs supports
@@ -180,7 +190,7 @@ following up the relative link the hash sign (#) and the heading id.
 [Internal Link To Heading](../internal/url.md#heading-id)
 [Heading Link](#heading-id)
 
-[External Link](https://some-external.url){:target="_blank"}
+[External Link](https://some-external.url){:target="_blank" rel="noopener"}
 ```
 
 The required heading ids are automatically generated as a full lowercase version of the heading with whitespaces and
@@ -359,7 +369,7 @@ If you find issues, typos, or have an enhancement request, please file and
 [issue](https://github.com/simplyblock-io/documentation/issues) or create a
 [pull request](https://github.com/simplyblock-io/documentation/pulls).
 
-Pull requests are automatically build to check that there is no issues in the documentation changes, such as broken
+Pull requests are automatically built to check that there is no issues in the documentation changes, such as broken
 links. After the pull request is successfully built, it will be reviewed and feedback provided or merged.
 
 Any help with the documentation is highly appreciated!

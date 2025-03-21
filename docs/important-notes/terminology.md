@@ -188,10 +188,10 @@ speeds up snapshot creation, and reduces unnecessary data duplication.
 
 ### Kubernetes
 
-[Kubernetes (K8s)](https://kubernetes.io/){:target="_blank"} is an open-source container orchestration platform that
-automates the deployment, scaling, and management of containerized applications across clusters of machines. Initially
-developed by Google and now maintained by the [Cloud Native Computing Foundation (CNCF)](https://www.cncf.io/){:
-target="_blank"},
+[Kubernetes (K8s)](https://kubernetes.io/){:target="_blank" rel="noopener"} is an open-source container orchestration
+platform that automates the deployment, scaling, and management of containerized applications across clusters of
+machines. Initially developed by Google and now maintained by
+the [Cloud Native Computing Foundation (CNCF)](https://www.cncf.io/){:target="_blank" rel="noopener"},
 Kubernetes provides a robust framework for load balancing, self-healing, storage orchestration, and automated rollouts
 and rollbacks. It manages application workloads using Pods, Deployments, Services, and Persistent Volumes (PVs),
 ensuring scalability and resilience. By abstracting underlying infrastructure, Kubernetes enables organizations to
@@ -200,7 +200,8 @@ of modern cloud-native computing.
 
 ### Kubernetes CSI (Container Storage Interface)
 
-The [Kubernetes Container Storage Interface (CSI)](https://kubernetes-csi.github.io/docs/drivers.html){:target="_blank"}
+The [Kubernetes Container Storage Interface (CSI)](https://kubernetes-csi.github.io/docs/drivers.html){:target="_blank"
+rel="noopener"}
 is a standardized API enabling external storage providers to integrate their storage solutions with Kubernetes. CSI
 allows Kubernetes to dynamically provision, attach, mount, and manage Persistent Volumes (PVs) across different storage
 backends without requiring changes to the Kubernetes core. Using a CSI driver, storage vendors can offer block and file

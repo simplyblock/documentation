@@ -115,7 +115,7 @@ further steps of the installation.
 Additionally to the cluster id, the cluster secret is required in many further steps. The following command can be used
 to retrieve it.
 
-```bash title=""
+```bash title="Get the cluster secret"
 sbcli cluster get-secret <CLUSTER_ID>
 ```
 

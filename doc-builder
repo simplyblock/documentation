@@ -23,6 +23,12 @@ if ! [[ "${JQ}" ]]; then
   exit 1
 fi
 
+GIT=$(command -v git)
+if ! [[ "${GIT}" ]]; then
+  echo "Command git not found. Please install git."
+  exit 1
+fi
+
 function ensure_docker_image() {
   echo -n "Checking docker build image... "
   local image=$(${DOCKER} image ls | ${GREP} ${IMAGE_NAME})
@@ -34,6 +40,21 @@ function ensure_docker_image() {
   exit 1
 }
 
+function update_repositories() {
+  if [ ! -d ./scripts/sbcli-repo ]; then
+    echo "Cloning sbcli repository..."
+    git clone https://github.com/simplyblock-io/sbcli.git ./scripts/sbcli-repo
+  else
+    echo "Updating sbcli repository..."
+    pushd ./scripts/sbcli-repo
+    git reset --hard
+    git pull -f
+    local ret=$?
+    popd
+    exit ${ret}
+  fi
+}
+
 function build_image() {
   docker build -t ${IMAGE_NAME} .
   exit $?
@@ -43,6 +64,16 @@ function serve() {
   ensure_docker_image
   ${DOCKER} run --rm -it -p 127.0.0.1:8000:8000 -v "${PWD}:/docs" ${IMAGE_NAME} serve --watch-theme -a 0.0.0.0:8000
   exit $?
+}
+
+function gen_sbcli_ref() {
+  if [ ! -d ./scripts/sbcli-repo ]; then
+    echo "The sbcli repository not yet available. Please run ./doc-builder update-sbcli and try again."
+    exit 1
+  fi
+
+  echo "Generating sbcli reference pages..."
+  ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/cli-reference-gen.py /docs
 }
 
 function build() {
@@ -57,8 +88,10 @@ function build() {
     terminal="-t"
   fi
 
-  echo "Generating CLI reference pages..."
-  ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/cli-reference-gen.py /docs
+  # Generates the markdown files for the sbcli reference pages
+  if ! gen_sbcli_ref; then
+    exit 1
+  fi
 
   echo "Building documentation... "
   if ! ${DOCKER} run --rm ${terminal} -v "${PWD}:/docs" ${IMAGE_NAME} build --strict "$@"; then
@@ -135,10 +168,20 @@ case "$1" in
     deploy "${@:2}"
   ;;
 
+  "update-repositories")
+    update_repositories
+  ;;
+
+  "gen-sbcli-ref")
+    gen_sbcli_ref
+  ;;
+
   *)
     echo "Simplyblock Documentation Builder"
     echo "Available commands:"
     echo "  ./doc-builder build-image              Building required docker image"
+    echo "  ./doc-builder update-repositories      Initialized or updated external repository"
+    echo "  ./doc-builder gen-sbcli-ref            Generates the sbcli reference pages"
     echo "  ./doc-builder serve                    Live serving content changes"
     echo "  ./doc-builder build                    Building static documentation"
     echo "  ./doc-builder deploy {version-name}    Preparing new version deployment "

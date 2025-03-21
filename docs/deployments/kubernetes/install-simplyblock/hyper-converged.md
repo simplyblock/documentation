@@ -25,11 +25,13 @@ demo@worker-1 ~> sudo systemctl restart kubelet
 ```
 
 ```bash
-demo@worker-1 ~> kubectl describe node worker-1.kubernetes-cluster.local | grep hugepages-2Mi
+demo@worker-1 ~> kubectl describe node worker-1.kubernetes-cluster.local | \
+    grep hugepages-2Mi
 ```
 
 ```plain
-demo@demo ~> kubectl describe node worker-1.kubernetes-cluster.local | grep hugepages-2Mi
+demo@demo ~> kubectl describe node worker-1.kubernetes-cluster.local | \
+    grep hugepages-2Mi
   hugepages-2Mi:      9440Mi
   hugepages-2Mi:      9440Mi
   hugepages-2Mi      0 (0%)    0 (0%)
@@ -40,8 +42,6 @@ demo@worker-1 ~> sudo yum install -y nvme-cli
 demo@worker-1 ~> sudo modprobe nvme-tcp
 demo@worker-1 ~> sudo modprobe nbd
 ```
-
-<missing>
 
 ### Firewall Configuration (SP)
 
@@ -62,3 +62,6 @@ demo@worker-1 ~> sudo modprobe nbd
 | Docker Network Discovery    | egress    | storage, control        | 7946      | TCP / UDP   |
 | Graylog                     | egress    | control                 | 12202     | TCP         |
 
+### Storage Node Installation
+
+--8<-- "kubernetes-install-storage-node-helm.md"

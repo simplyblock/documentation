@@ -3,10 +3,14 @@ import yaml
 import sys
 import re
 
+def is_parameter(item):
+    return item["name"].startswith("--") or item["name"].startswith("-")
+
+
 def select_arguments(items):
     arguments = []
     for item in items:
-        if not item["name"].startswith("--"):
+        if not is_parameter(item):
             arguments.append(item)
     return arguments
 
@@ -14,7 +18,7 @@ def select_arguments(items):
 def select_parameters(items):
     parameters = []
     for item in items:
-        if item["name"].startswith("--"):
+        if is_parameter(item):
             parameters.append(item)
     return parameters
 
@@ -28,7 +32,13 @@ def required(item):
         return False
     elif "default" in item:
         return False
-    return True
+    elif "private" in item and item["private"]:
+        return False
+    elif "required" in item and item["required"]:
+        return True
+    elif not item["name"].startswith("--"):
+        return True
+    return False
 
 
 def data_type_name(item):
@@ -46,6 +56,13 @@ def data_type_name(item):
 
 
 def arg_value(item):
+    name = item["name"].lower()
+    if name.startswith("--"):
+        raise f"Parameter cannot be used as argument: {name}"
+    return f"<{name.replace('-', '_').upper()}>"
+
+
+def param_value(item):
     if "action" in item:
         action = item["action"]
         if action == "store_true" or action == "store_false":
@@ -54,7 +71,9 @@ def arg_value(item):
     name = item["name"].lower()
     if name.startswith("--"):
         name = name[2:]
-    return "=<%s>" % name.replace("-", "_")
+    if name.startswith("-"):
+        name = name[1:]
+    return f"=<{name.replace('-', '_').upper()}>"
 
 
 def get_description(item):
@@ -69,32 +88,31 @@ def get_description(item):
 
 
 base_path = sys.argv[1]
-with open("%s/scripts/cli-reference.yaml" % base_path) as stream:
+with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
     try:
         reference = yaml.safe_load(stream)
 
         for command in reference["commands"]:
             for subcommand in command["subcommands"]:
                 if "arguments" in subcommand:
-                    for argument in subcommand["arguments"]:
-                        argument["required"] = False if "default" not in argument else True
                     arguments = select_arguments(subcommand["arguments"])
                     parameters = select_parameters(subcommand["arguments"])
                     subcommand["arguments"] = arguments
                     subcommand["parameters"] = parameters
 
-            templateLoader = jinja2.FileSystemLoader(searchpath="%s/scripts/templates/" % base_path)
+            templateLoader = jinja2.FileSystemLoader(searchpath=f"{base_path}/scripts/templates/")
             environment = jinja2.Environment(loader=templateLoader)
 
             environment.filters["no_newline"] = no_newline
             environment.filters["data_type_name"] = data_type_name
             environment.filters["arg_value"] = arg_value
+            environment.filters["param_value"] = param_value
             environment.filters["required"] = required
             environment.filters["get_description"] = get_description
 
             template = environment.get_template("cli-reference-group.jinja2")
             output = template.render({"command": command})
-            with open("%s/docs/reference/cli/%s.md" % (base_path, command["name"]), "t+w") as target:
+            with open(f"{base_path}/docs/reference/cli/{command['name']}.md", "t+w") as target:
                 target.write(output)
 
     except yaml.YAMLError as exc:

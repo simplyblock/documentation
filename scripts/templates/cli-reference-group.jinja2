@@ -23,12 +23,12 @@ sbcli {{ command.name }} --help
 sbcli {{ command.name }} {{ subcommand.name }}
 {%- for argument in subcommand.arguments -%}
 {%- if not argument.private %}
-    {{ argument.name }}{{ argument | arg_value }}
+    {{ argument | arg_value }}
 {%- endif -%}
 {% endfor -%}
 {%- for parameter in subcommand.parameters -%}
 {%- if not parameter.private %}
-    {{ parameter.name }}{{ parameter | arg_value }}
+    {{ parameter.name }}{{ parameter | param_value }}
 {%- endif %}
 {%- endfor %}
 ```
@@ -38,7 +38,7 @@ sbcli {{ command.name }} {{ subcommand.name }}
 | -------- | ----------- | --------- | -------- |
 {% for argument in subcommand.arguments -%}
 {% if not argument.private -%}
-| {{ argument.name }} | {{ argument | get_description }} | {{ argument | data_type_name }} | {{ argument | required }} |
+| {{ argument.name | upper }} | {{ argument | get_description }} | {{ argument | data_type_name }} | {{ argument | required }} |
 {% endif -%}
 {% endfor -%}
 {% endif -%}
@@ -48,7 +48,13 @@ sbcli {{ command.name }} {{ subcommand.name }}
 | --------- | ----------- | --------- | -------- | ------- |
 {% for parameter in subcommand.parameters -%}
 {% if not parameter.private -%}
-| {{ parameter.name }} | {{ parameter | get_description }}
+| {{ parameter.name }}
+{%- if parameter.aliases -%}
+{%- for alias in parameter.aliases -%}
+, {{ alias }}
+{%- endfor -%}
+{%- endif -%}
+| {{ parameter | get_description }}
 {%- if parameter.choices %}<br/><br/>Available Options:{% for choice in parameter.choices %}<br/>- {{ choice }}{% endfor %}{% endif %}
 {%- if parameter.value_range %}<br/><br/>Available Value Range: {{ parameter.value_range }}{% endif %} | {{ parameter | data_type_name }} | {{  parameter | required }} | {{ parameter.default | default("-") }} |
 {% endif -%}
