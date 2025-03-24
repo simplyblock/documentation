@@ -36,9 +36,9 @@ weight: 20600
    du -sh /var/lib/docker/volumes
    ```
 2. Delete the old Graylog indices via the Graylog UI.
-   - Go to _System_ -> _Indices_
-   - Select your index set
-   - Adjust the _Max Number of Indices_ to a lower number
+       * Go to _System_ -> _Indices_
+       * Select your index set
+       * Adjust the _Max Number of Indices_ to a lower number
 3. Reduce Docker disk usage by removing unused Docker volumes and images, as well as old containers.
    ```bash title="Remove old Docker entities"
    docker volume prune -f
