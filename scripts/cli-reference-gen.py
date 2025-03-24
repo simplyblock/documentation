@@ -78,7 +78,7 @@ def param_value(item):
 
 def get_description(item):
     if "description" in item:
-        return no_newline(item["description"])
+        return item["description"]
     elif "usage" in item:
         return no_newline(item["usage"])
     elif "help" in item:
