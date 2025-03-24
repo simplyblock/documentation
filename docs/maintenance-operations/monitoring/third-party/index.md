@@ -7,7 +7,7 @@ Simplyblock provides robust native monitoring capabilities but also supports int
 third-party observability platforms to enable centralized monitoring, alerting, and analytics across your
 infrastructure.
 
-While simplyblock provides Prometheus, Grafana, and Greylog, existing monitoring and observability tools, such
+While simplyblock provides Prometheus, Grafana, and Graylog, existing monitoring and observability tools, such
 as Datadog, AppDynamics, or Dynatrace, might be the preferred way to maintain visibility into cluster performance,
 health, and resource usage.
 
