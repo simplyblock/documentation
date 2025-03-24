@@ -17,7 +17,7 @@ the cluster to ensure equal usage distribution.
 
 If a storage node failed and cannot be recovered, adding a new storage node is perfectly fine, though.
 
-To start a new storage node, follow the storage node installation according to your chosen set up:
+To start a new storage node, follow the storage node installation according to your chosen set-up:
 
 - [Kubernetes](../deployments/kubernetes/install-simplyblock/index.md)
 - [Bare Metal Linux](../deployments/baremetal/index.md)
