@@ -13,7 +13,7 @@ full utilization.
 
 To start a new storage node, follow the storage node installation according to your chosen set-up:
 
-- [Kubernetes](../deployments/kubernetes/install-simplyblock/index.md)
-- [Bare Metal Linux](../deployments/baremetal/index.md)
-- [AWS EC2](../deployments/aws-ec2/index.md)
+- [Kubernetes](../../deployments/kubernetes/install-simplyblock/index.md)
+- [Bare Metal Linux](../../deployments/baremetal/index.md)
+- [AWS EC2](../../deployments/aws-ec2/index.md)
 
