@@ -13,7 +13,7 @@ detailed insight into system behavior.
 
 To access a logical volume's performance and I/O statistics, the `sbcli` command line tool can be used:
 
-```bash title="Accessing statistics of a logical volume"
+```bash title="Accessing the statistics of a logical volume"
 sbcli volume get-io-stats <VOLUME_ID>
 ```
 
@@ -26,7 +26,7 @@ The information is also available through Grafana in the logical volume's dashbo
 
 To access a logical volume's health status, the `sbcli` command line tool can be used:
 
-```bash title="Accessing health status of a logical volume"
+```bash title="Accessing the health status of a logical volume"
 sbcli volume check <VOLUME_ID>
 ```
 
