@@ -96,3 +96,5 @@ validation:
     anchors: warn
     unrecognized_links: warn
     absolute_links: warn
+watch:
+  - ./snippets
