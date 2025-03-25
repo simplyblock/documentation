@@ -8,7 +8,7 @@ _High Performance_, a _High Density_, and one _Standard_ setup, with the former 
 lowest latency, the second providing highest storage capacity, and the latter providing a great compromise between the
 other two.
 
-### Standard Setup
+## Standard Setup
 
 Per storage server:
 
@@ -20,7 +20,7 @@ Per storage server:
 
 One of the NVMe devices per CPU socket could be implemented as a SLC NVMe, while all other should be TLC.
 
-### High Performance Setup
+## High Performance Setup
 
 Per storage server:
 
@@ -32,7 +32,7 @@ Per storage server:
 
 One of the NVMe devices per CPU socket could be implemented as a SLC NVMe, while all other should be TLC.
 
-### High Density Setup
+## High Density Setup
 
 Per storage server:
 
@@ -44,7 +44,7 @@ Per storage server:
 - 16x PCIe 4.0 NVMe devices, up to 120 TB capacity each.
 - Dual 100 GBit/s NIC per socket configured as a LAG. Preferably Mellanox Connect-X for RoCEv2.
 
-### Considerations
+## Considerations
 
 For throughput-heavy workloads, the network bandwidth is the bottleneck. Increasing the network bandwidth will
 provide better performance.
