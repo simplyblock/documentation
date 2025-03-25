@@ -12,6 +12,7 @@ inside and outside of Kubernetes.
 
     ---
 
+    [:octicons-arrow-right-24: Systems Recommendations](deployment-planning/recommendations.md)<br/>
     [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
     [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
     [:octicons-arrow-right-24: Prerequisites](kubernetes/prerequisites.md)<br/>
