@@ -25,7 +25,7 @@ The following hardware sizing specifications are recommended:
 
 | Hardware        |                                                                                                                             |
 |-----------------|-----------------------------------------------------------------------------------------------------------------------------|
-| CPU             | Minimum 2 physical cores, plus<ul><li>1 vCPU per 5 storage nodes</li><li>1 vCPU 500 logical volumes</li></ul>               |
+| CPU             | Minimum 4 vCPUs, plus<ul><li>1 vCPU per 5 storage nodes</li><li>1 vCPU 500 logical volumes</li></ul>                        |
 | RAM             | Minimum 8 GiB, plus:<ul><li>1 GiB RAM per 5 storage nodes</li><li>1 GiB per 500 logical volumes</li></ul>                   |
 | Disk            | Minimum 35 GiB, plus:<ul><li>500 MiB per 100 cluster objects (storage nodes, devices, logical volumes, snapshots)</li></ul> |
 | Node type       | Bare metal or virtual machine with a supported Linux distribution                                                           |
@@ -38,11 +38,11 @@ responsible for handling all I/O operations and data services for logical volume
 
 The following hardware sizing specifications are recommended:
 
-| Hardware |                                                                                                                                                                                                                                                                                                   |
-|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| CPU      | Minimum 4 physical cores.<br/>3 cores are dedicated to service threads.<br/>Additionally, available cores are allocated to worker threads. Each additional core contributes about 200.000 IOPS to the node's performance profile (disregarding other limiting factors such as network bandwidth). |
-| RAM      | Minimum 4 GiB (for operating system)                                                                                                                                                                                                                                                              |
-| Disk     | Minimum 5 GiB boot volume                                                                                                                                                                                                                                                                         |
+| Hardware |                                                                                                                                                                                                                                                                                          |
+|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CPU      | Minimum 8 vCPUs.<br/>3 cores are dedicated to service threads.<br/>Additionally, available cores are allocated to worker threads. Each additional core contributes about 200.000 IOPS to the node's performance profile (disregarding other limiting factors such as network bandwidth). |
+| RAM      | Minimum 4 GiB (for operating system)                                                                                                                                                                                                                                                     |
+| Disk     | Minimum 5 GiB boot volume                                                                                                                                                                                                                                                                |
 
 ### Memory Requirements
 
