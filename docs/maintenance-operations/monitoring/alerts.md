@@ -16,13 +16,19 @@ based on events from the cluster event log.
 
 The following pre-defined alerts are available:
 
-| Alert              | Trigger                                                       |
-|--------------------|---------------------------------------------------------------|
-| device-unavailable | Device Status changed from online to unavailable              |
-| device-read-only   | Device Status changed from online to read-only                |
-| sn-offline         | Storage node status changed from online to offline            |
-| crit-cap-reached   | Critical absolute capacity utilization in cluster was reached |
-| crit-prov-reached  | Critical absolute capacity utilization in cluster was reached |
+| Alert                                  | Trigger                                                                                                                                                                                                                    |
+|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| device-unavailable                     | Storage device became unavailable.                                                                                                                                                                                         |
+| device-read-only                       | Storage device changed to status: read-only.                                                                                                                                                                               |
+| cluster-status-degraded                | Storage node changed to status: degraded.                                                                                                                                                                                  |
+| cluster-status-suspended               | Storage node changed to status: suspended.                                                                                                                                                                                 |
+| storage-node-unreachable               | Storage node became unreachable.                                                                                                                                                                                           |
+| storage-node-offline                   | Storage node became unavailable.                                                                                                                                                                                           |
+| storage-node-healthcheck-failure       | Storage node with negative healthcheck.                                                                                                                                                                                    |
+| logical-volume-offline                 | Logical volume became unavailable.                                                                                                                                                                                         |
+| critical-capacity-reached              | Critical absolute capacity utilization in cluster was reached. The threshold value can be configured at [cluster creation](../../reference/cli/cluster.md#creates-a-new-cluster) time using `--cap-crit`.                  |
+| critical-provisioning-capacity-reached | Critical absolute provisioned capacity utilization in cluster was reached. The threshold value can be configured at [cluster creation](../../reference/cli/cluster.md#creates-a-new-cluster) time using `--prov-cap-crit`. |
+| root-fs-low-disk-space                 | Root filesystem free disk space is below 20%.                                                                                                                                                                              |
 
 It is possible to configure the Slack webhook for alerting during cluster creation or to modify it at a later point in
 time.
