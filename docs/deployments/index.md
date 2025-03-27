@@ -6,6 +6,11 @@ weight: 10300
 Simplyblock is a highly flexible storage solution. It can be installed in a variety of different deployment models
 inside and outside of Kubernetes.
 
+!!! info
+    Bare Metal Linux installation can be installed on dedicated machines, virtual machines, on-premises or on private
+    and public clouds. For AWS EC2-based installation, there is a specific installation guide which is recommended to
+    follow if an AWS EC2 installation is planned.
+
 <div class="grid cards" markdown>
 
 -   :material-kubernetes:{ .lg .middle } __Kubernetes__
