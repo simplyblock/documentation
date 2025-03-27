@@ -1,5 +1,5 @@
 ---
-title: "AWS EC2 (Amazon Linux 2)"
+title: "AWS EC2 (Amazon Linux)"
 weight: 20300
 ---
 

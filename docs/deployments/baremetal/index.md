@@ -1,5 +1,5 @@
 ---
-title: "Bare Metal Linux"
+title: "Bare Metal or VM-based"
 weight: 20200
 ---
 

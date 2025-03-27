@@ -10,8 +10,8 @@ Storage Interface (CSI) driver.
 ## What makes Simplyblock Special?
 
 - **Environment Agnostic:** Simplyblock operates seamlessly across major cloud providers, regional and specialized
-  providers, bare-metal provisioners, and private clouds, including both virtualized and bare-metal Kubernetes
-  environments.
+  providers, bare-metal and virtual provisioners, and private clouds, including both virtualized and bare-metal
+- Kubernetes environments.
 
 - **Containerized Architecture:** The solution comprises:
     - *Storage Nodes:* Container stacks delivering distributed data services via NVMe over Fabrics (NVMe over TCP),
