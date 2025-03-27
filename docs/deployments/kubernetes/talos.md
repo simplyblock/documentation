@@ -54,13 +54,13 @@ demo@demo ~> talosctl service kubelet restart --nodes <worker_node_ip>
 
 ## Required Talos Permissions
 
-Simyplyblock's CSI Driver requires to connect NVMe over Fabrics devices, as well as mount and format them. Therefore,
-the CSI Driver has to run as a privileged container. Hence, Talos needs to be configured to start the Simplyblock CSI
-Driver in privileged mode. 
+Simyplyblock's CSI driver requires to connect NVMe over Fabrics devices, as well as mount and format them. Therefore,
+the CSI driver has to run as a privileged container. Hence, Talos needs to be configured to start the simplyblock's CSI
+driver in privileged mode. 
 
-Talos allows overriding Pod Security Admission settings at the namespace level.
-To enable privileged mode and grant the required access for the Simplyblock CSI 
-Driver, create the simplyblock namespace with the appropriate security exemptions:
+Talos allows overriding the pod security admission settings at a Kubernetes namespace level. To enable privileged mode
+and grant the required access to the simplyblock CSI driver, a specific simplyblock namespace with the appropriate
+security exemptions must be created:
 
 ```yaml title="Content of simplyblock-namespace.yaml"
 apiVersion: v1
@@ -76,9 +76,9 @@ metadata:
     pod-security.kubernetes.io/warn-version: latest
 ```
 
-To enable the required permisions, apply the `namespace` configuration.
+To enable the required permissions, apply the namespace configuration using `kubectl`.
 
-```bash title="Enabled Simplyblock Required Permissions in Talos at Namespace level"
+```bash title="Enabled privileged mode for simplyblock"
 demo@demo ~> kubectl apply -f simplyblock-namespace.yaml
 ```
 
