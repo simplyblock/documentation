@@ -20,5 +20,5 @@ container download locations to point to your local container repository.
 Learn more about the deployment options:
 
  - [Deploy into Kubernetes](../kubernetes/index.md)
- - [Deploy on Bare Metal (or VM) Linux](../baremetal/index.md)
+ - [Deploy on Bare Metal (or virtualized) Linux](../baremetal/index.md)
  - [Deploy on AWS EC2](../aws-ec2/index.md)

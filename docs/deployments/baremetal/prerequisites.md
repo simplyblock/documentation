@@ -5,8 +5,8 @@ weight: 30000
 
 When installing simplyblock control planes and storage planes, a number of prerequisites are important to understand.
 
-Simplyblock uses Docker Swarm for the control plane cluster. In case of a bare metal installation, it will also use
-Docker Swarm for the storage plane. Hence, Docker has to be installed.
+Simplyblock uses Docker Swarm for the control plane cluster. In case of a bare metal or virtualized installation, it
+will also use Docker Swarm for the storage plane. Hence, Docker has to be installed.
 
 Furthermore, simplyblock requires the installation of the `sbcli` command line tool. This tool is written in Python.
 Therefore, Python (3.5 or later) has to be installed. Likewise, pip, the Python package manager, has to be installed

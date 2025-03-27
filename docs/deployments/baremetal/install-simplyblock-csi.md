@@ -58,10 +58,11 @@ The last line of a successful storage pool creation returns the new pool id.
 ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
-The last item necessary before deploying the CSI driver is the control plane address. On a standard bare metal
-installation it is any of the API addresses. Meaning, if the primary management node has the IP of `192.168.10.1`, the
-control plane address is `http://192.168.0.1`. It is, however, recommended to front all management nodes, with a load
-balancing proxy, such as HAproxy. In the latter case, the load balancer URL would be the address of the control plane.
+The last item necessary before deploying the CSI driver is the control plane address. On a standard bare metal or
+virtualized installation it is any of the API addresses. Meaning, if the primary management node has the IP of
+`192.168.10.1`, the control plane address is `http://192.168.0.1`. It is, however, recommended to front all management
+nodes, with a load balancing proxy, such as HAproxy. In the latter case, the load balancer URL would be the address of
+the control plane.
 
 Anyhow, deploying the Simplyblock CSI Driver using the provided helm chart comes down to providing the four necessary
 values, adding the helm chart repository, and installing the driver.

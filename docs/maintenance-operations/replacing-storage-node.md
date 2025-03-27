@@ -20,7 +20,7 @@ If a storage node failed and cannot be recovered, adding a new storage node is p
 To start a new storage node, follow the storage node installation according to your chosen set-up:
 
 - [Kubernetes](../deployments/kubernetes/install-simplyblock/index.md)
-- [Bare Metal Linux](../deployments/baremetal/index.md)
+- [Bare Metal or Virtualized Linux](../deployments/baremetal/index.md)
 - [AWS EC2](../deployments/aws-ec2/index.md)
 
 ## Remove the old Storage Node

@@ -64,8 +64,8 @@ amount of storage available in the cluster and the maximum amount of logical vol
 | Per TB of max. cluster storage | 256 MiB            |
 
 !!! recommendation
-    For bare metal or disaggregated deployments, simplyblock recommends allocating around 75% of the available memory
-    as huge pages, minimizing memory overhead.<br/><br/>
+    For bare metal, virtualized, or disaggregated deployments, simplyblock recommends allocating around 75% of the
+    available memory as huge pages, minimizing memory overhead.<br/><br/>
     For hyper-converged deployments, please use the [huge pages calculator](../../reference/huge-pages-calculator.md). 
 
 If not enough huge pages memory is available, the node will refuse to start. In this case, you may check

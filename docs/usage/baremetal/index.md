@@ -1,5 +1,5 @@
 ---
-title: "Bare Metal (Linux)"
+title: "Command Line Interface"
 weight: 20100
 ---
 
