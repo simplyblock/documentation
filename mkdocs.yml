@@ -46,10 +46,11 @@ markdown_extensions:
   - pymdownx.blocks.caption
   - pymdownx.details
   - pymdownx.smartsymbols
-  - pymdownx.tabbed
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.snippets:
       base_path: ["./snippets"]
   - pymdownx.arithmatex:
@@ -76,6 +77,7 @@ theme:
     - navigation.indexes
     - navigation.top
     - navigation.tabs
+    - navigation.tabs.link
     - navigation.tabs.sticky
     - toc.follow
     - search.suggest

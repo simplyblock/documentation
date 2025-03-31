@@ -273,12 +273,12 @@ Content tabs can be used to provide the same content (such as API call) in multi
 use three equal signs to define the different tabs and four spaces of indentation to define the tabs content.
 
 ```markdown
-=== curl
+=== "curl"
     ```plain
     curl -L ...
     ```
     
-=== PHP
+=== "PHP"
     ```php
     $foo = file_get_contents(...);
     ```
