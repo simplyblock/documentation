@@ -22,7 +22,7 @@ Simplyblock protects data using distributed erasure coding, which ensures that d
 storage nodes along with parity fragments. This provides:
 
 - **Redundancy**: Data can be reconstructed even if one or more nodes fail, depending on the configured erasure coding
-  scheme (such as _1+1_ or _1+2_).
+  scheme (such as _1+1_, _1+2_, _2+1_, or _2+2_).
 - **Efficiency**: Storage overhead is minimized compared to full replication while maintaining strong fault tolerance.
 - **Automatic Rebuilds**: In the event of node or disk failures, missing data is rebuilt automatically using parity
   information stored across the cluster.
