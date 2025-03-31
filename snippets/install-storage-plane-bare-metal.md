@@ -123,7 +123,9 @@ Sending format operation ...
 Success formatting namespace:1
 ```
 
-With all NVMe devices prepared, the storage node software can be deployed.
+--8<-- "prepare-nvme-tcp.md"
+
+With all NVMe devices prepared and the NVMe/TCP driver loaded, the storage node software can be deployed.
 
 ```bash title="Deploy the storage node"
 sudo sbcli sn deploy --ifname eth0
@@ -150,8 +152,12 @@ for all storage nodes, as it is required in the next step to attach the storage 
 A secondary node is a storage node without additional storage disks to contribute to the distributed storage pool.
 Apart from that, it is the same as a normal storage node.
 
-However, due to the missing storage devices, preparing a secondary node on requires deploying the storage node
-software.
+However, due to the missing storage devices, preparing a secondary node only requires the NVMe/TCP driver to be loaded
+and the storage node software first-stage to be deployed.
+
+--8<-- "prepare-nvme-tcp.md"
+
+To deploy the first stage of the storage node, the following command must be executed.
 
 ```bash title="Deploy the secondary node"
 sudo sbcli sn deploy --ifname eth0

@@ -5,6 +5,8 @@ weight: 30200
 
 Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver.
 
+--8<-- "prepare-nvme-tcp.md"
+
 To install the Simplyblock CSI Driver, a helm chart is provided. While it can be installed manually, the helm chart is
 strongly recommended. If a manual installation is preferred, see the
 [CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank" rel="noopener"}.
