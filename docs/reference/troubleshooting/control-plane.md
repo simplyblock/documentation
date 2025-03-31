@@ -1,15 +1,13 @@
 ---
-title: "Troubleshooting"
-weight: 20600
+title: "Control Plane"
+weight: 30100
 ---
 
-## Control Plane
-
-### FoundationDB Error
+## FoundationDB Error
 
 **Symptom:** FoundationDB error. All services that rely upon the FoundationDB key-value storage are offline or refuse to start.
 
-1. Ensure that IPv6 is disabled. [To disable IPv6 follow these steps](../deployments/baremetal/prerequisites.md#network-configuration).
+1. Ensure that IPv6 is disabled. [To disable IPv6 follow these steps](../../deployments/baremetal/prerequisites.md#network-configuration).
 2. Ensure sufficient disk space on the root partition on all control plane nodes. Free disk space can be checked with `df -h`.
    1. If not enough free disk space is available, start by checking the Graylog, MongoDB, Elasticsearch containers. If those consume the majority of the disk space, old indices (2-3) can be deleted.
    2. Increase the root partition size.
@@ -17,7 +15,7 @@ weight: 20600
 3. Restart the Docker daemon: `systemctl restart docker`
 4. Reboot the node
 
-### Graylog Service Is Unresponsive
+## Graylog Service Is Unresponsive
 
 **Symptom:** The Graylog service cannot be reached anymore or is unresponsive.
 
@@ -25,7 +23,7 @@ weight: 20600
 2. If short on available memory, stop services non-relevant to the simplyblock control plane.
 3. If that doesn't help, reboot the host.
 
-### Graylog Storage is Full 
+## Graylog Storage is Full 
 **Symptom:** The Graylog service cannot start or is unresponsive and the storage disk is full.
 
 1. Identify the cause of the disk running full. Run the following commands to find the largest files on the Graylog disk.
@@ -62,34 +60,3 @@ weight: 20600
    docker service update monitoring_opensearch --replicas=1
    docker service update monitoring_graylog --replicas=1
    ```
-
-## Storage Plane
-
-### Fresh Cluster Cannot Be Activated
-
-**Symptom:** After a fresh deployment, the cluster cannot be activated. The activation process hangs or fails and the
-storage nodes show `n/0` disks available in the disks column (`sbcli storage-node list`).
-
-1. Shutdown all storage nodes: `sbcli storage-node shutdown --force`
-2. Force remove all storage nodes: `sbcli storage-node remove --force`
-3. Delete all storage nodes: `sbcli storage-node delete`
-4. Re-add all storage nodes. The disks should become active.
-5. Try to activate the cluster.
-
-### Storage Node Health Check Shows Health=False
-
-**Symptom:** The storage node health check returns _health=false_ (`sbcli storage-node list`).
-
-1. First run `sbcli storage-node check`.
-2. If the command keeps showing an unhealthy storage node, _suspend_, _shutdown_, and restart the storage node.
-
-!!! danger
-    Never shutdown or restart a storage node while the cluster is in **rebalancing** state. This can lead to potential
-    I/O operation. This is independent of the high-availability status of the cluster.<br/><br/>
-    Check the cluster status with any of the following commands:
-
-    ```bash
-    sbcli cluster list
-    sbcli cluster get <cluster-id>
-    sbcli cluster show <cluster-id>
-    ```
