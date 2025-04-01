@@ -3,6 +3,4 @@ title: "Introduction to Simplyblock"
 weight: 20000
 ---
 
-![type:video](https://www.youtube.com/embed/nirVcevVW0U?si=z7WbXZJbaEv31hSF)
-
-<div class="video-wrapper" data-service="youtube" data-id="nirVcevVW0U"></div>
+<div data-service="YouTube" data-id="nirVcevVW0U" data-iframe-loading="lazy" data-iframe-frameborder="0" data-autoscale></div>
