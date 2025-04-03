@@ -38,7 +38,7 @@ sbcli {{ command.name }} {{ subcommand.name }}
 | -------- | ----------- | --------- | -------- |
 {% for argument in subcommand.arguments -%}
 {% if not argument.private -%}
-| {{ argument.name | upper }} | {{ argument | get_description }} | {{ argument | data_type_name }} | {{ argument | required }} |
+| {{ argument.name | upper }} | {{ argument | get_description | trim }} | {{ argument | data_type_name }} | {{ argument | required }} |
 {% endif -%}
 {% endfor -%}
 {% endif -%}
@@ -54,7 +54,7 @@ sbcli {{ command.name }} {{ subcommand.name }}
 , {{ alias }}
 {%- endfor -%}
 {%- endif -%}
-| {{ parameter | get_description }}
+| {{ parameter | get_description | trim }}
 {%- if parameter.choices %}<br/><br/>Available Options:{% for choice in parameter.choices %}<br/>- {{ choice }}{% endfor %}{% endif %}
 {%- if parameter.value_range %}<br/><br/>Available Value Range: {{ parameter.value_range }}{% endif %} | {{ parameter | data_type_name }} | {{  parameter | required }} | {{ parameter.default | default("-") }} |
 {% endif -%}

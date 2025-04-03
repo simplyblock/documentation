@@ -23,8 +23,12 @@ def select_parameters(items):
     return parameters
 
 
-def no_newline(text):
+def no_newlines(text):
     return re.sub("\n", "", text)
+
+
+def trim(text):
+    return text.rstrip()
 
 
 def required(item):
@@ -80,9 +84,9 @@ def get_description(item):
     if "description" in item:
         return item["description"]
     elif "usage" in item:
-        return no_newline(item["usage"])
+        return no_newlines(item["usage"])
     elif "help" in item:
-        return no_newline(item["help"])
+        return no_newlines(item["help"])
     else:
         return "<missing documentation>"
 
@@ -103,7 +107,7 @@ with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
             templateLoader = jinja2.FileSystemLoader(searchpath=f"{base_path}/scripts/templates/")
             environment = jinja2.Environment(loader=templateLoader)
 
-            environment.filters["no_newline"] = no_newline
+            environment.filters["trim"] = trim
             environment.filters["data_type_name"] = data_type_name
             environment.filters["arg_value"] = arg_value
             environment.filters["param_value"] = param_value
