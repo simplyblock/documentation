@@ -1,11 +1,16 @@
 ---
 title: "Replacing a Storage Node"
-weight: 20000
+weight: 20050
 ---
 
 A simplyblock storage cluster is designed to be always up. Hence, operations such as extending a cluster or
 replacing a storage node are online operations and don't require a system downtime. However, there are a few
 things to keep in mind when replacing a storage node.
+
+!!! danger
+    If a storage node should be migrated, [Migrating a Storage Node](migrating-storage-node.md) must be followed.
+    Removing a storage node from a simplyblock cluster without migrating it, will make the logical volumes owned by this
+    storage node inaccessible!
 
 ## Starting the new Storage Node
 
@@ -24,6 +29,9 @@ To start a new storage node, follow the storage node installation according to y
 - [AWS EC2](../deployments/aws-ec2/index.md)
 
 ## Remove the old Storage Node
+
+!!! danger
+    All volumes on this storage node, which aren't migrated before the removal will become inaccessible!
 
 To remove the old storage node, use the `sbcli` command line tool. 
 

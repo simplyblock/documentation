@@ -1,6 +1,6 @@
 ---
 title: "Scaling"
-weight: 20000
+weight: 20100
 ---
 
 Simplyblock is designed with a scale-out architecture that enables seamless growth of both storage capacity and

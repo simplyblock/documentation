@@ -1,6 +1,6 @@
 ---
 title: "Security"
-weight: 20100
+weight: 20200
 ---
 
 Security is a core pillar of the simplyblock platform, designed to protect data across every layer of the storage
