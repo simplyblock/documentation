@@ -83,6 +83,10 @@ function gen_sbcli_ref() {
   ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/cli-reference-gen.py /docs
 }
 
+function build_css() {
+  ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/docs/scripts/build-css.sh" ${IMAGE_NAME}
+}
+
 function build() {
   ensure_docker_image
   echo -n "Cleaning site directory... "
@@ -171,6 +175,10 @@ case "$1" in
     build
   ;;
 
+  "build-css")
+    build_css
+  ;;
+
   "deploy")
     deploy "${@:2}"
   ;;
@@ -191,6 +199,7 @@ case "$1" in
     echo "  ./doc-builder gen-sbcli-ref            Generates the sbcli reference pages"
     echo "  ./doc-builder serve                    Live serving content changes"
     echo "  ./doc-builder build                    Building static documentation"
+    echo "  ./doc-builder build-css                Building static CSS"
     echo "  ./doc-builder deploy {version-name}    Preparing new version deployment "
   ;;
 esac
