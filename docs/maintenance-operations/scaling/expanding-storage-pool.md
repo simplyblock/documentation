@@ -19,4 +19,4 @@ sbcli storage-pool set <POOL_ID> --pool-max=<NEW_SIZE>
 The value of _NEW_SIZE_ must be given as `20G`, `20T`, etc.
 
 All valid parameters can be found in the 
-[Storage Pool CLI Reference](../../reference/cli/storage-node.md#sets-a-storage-pools-attributes). 
+[Storage Pool CLI Reference](../../reference/cli/storage-pool.md#sets-a-storage-pools-attributes). 
