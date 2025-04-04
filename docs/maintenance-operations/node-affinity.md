@@ -10,7 +10,7 @@ latency-sensitive workloads, node affinity enables smarter, faster, and more eff
 and hybrid environments.
 
 !!! info
-Node affinity is only available with hyper-converged or hybrid setups.
+    Node affinity is only available with hyper-converged or hybrid setups.
 
 Node affinity does not sacrifice fault tolerance as parity data will still be distributed to other storage cluster nodes
 enabling transparent fail over in case of a failure, or spill over in the situation where the locally available storage
