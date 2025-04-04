@@ -44,6 +44,13 @@ function update_repositories() {
   if [ ! -d ./scripts/sbcli-repo ]; then
     echo "Cloning sbcli repository..."
     git clone https://github.com/simplyblock-io/sbcli.git ./scripts/sbcli-repo
+
+    if [ -f ./scripts/sbcli.lock ]; then
+      echo "Found sbcli.lock, checking out locked reference..."
+      pushd ./scripts/sbcli-repo
+      git reset --hard "$(cat ../sbcli.lock)"
+      popd
+    fi
   else
     echo "Updating sbcli repository..."
     pushd ./scripts/sbcli-repo
