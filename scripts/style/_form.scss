@@ -11,7 +11,7 @@ select {
   border: 2px solid $form-select-border-color;
   border-radius: 4px;
   background: $form-select-background-color
-    url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M13.418 7.859c.271-.268.709-.268.978 0 .27.268.272.701 0 .969l-3.908 3.83c-.27.268-.707.268-.979 0l-3.908-3.83c-.27-.267-.27-.701 0-.969.271-.268.709-.268.978 0L10 11l3.418-3.141z"/></svg>')
+    url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path style="fill: rgba(226, 228, 233, 0.82);" d="M13.418 7.859c.271-.268.709-.268.978 0 .27.268.272.701 0 .969l-3.908 3.83c-.27.268-.707.268-.979 0l-3.908-3.83c-.27-.267-.27-.701 0-.969.271-.268.709-.268.978 0L10 11l3.418-3.141z"/></svg>')
     right 10px center no-repeat;
   background-size: 20px;
   box-shadow: 0 1px 2px 0 rgba($form-select-box-shadow-color, 0.25);

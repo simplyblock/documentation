@@ -49,7 +49,7 @@ table {
 
         &:first-of-type {
           min-width: 6em;
-          padding: 10px 0;
+          padding: 10px 0 10px 10px;
         }
 
         &:has(.model-box) {
@@ -66,6 +66,7 @@ table {
         font-size: 12px;
         font-weight: bold;
 
+        background-color: revert;
         padding: 12px 0;
 
         text-align: left;
@@ -73,6 +74,10 @@ table {
         border-bottom: 1px solid rgba($table-thead-td-border-bottom-color, 0.2);
 
         @include type.text_body();
+
+        &:first-of-type {
+          padding: 12px 0 12px 10px;
+        }
       }
     }
   }
@@ -84,6 +89,13 @@ table {
   input {
     width: 100%;
     max-width: 340px;
+    background-color: rgba(255,255,255,0.05);
+    border: none;
+    color: rgba(226, 228, 233, 0.82);
+
+    &::placeholder {
+      color: rgba(226, 228, 233, 0.5);
+    }
   }
 
   select {
@@ -112,7 +124,7 @@ table {
     font-weight: bold;
 
     span {
-      color: red;
+      color: #F03535;
     }
 
     &:after {
@@ -125,7 +137,7 @@ table {
 
       content: "required";
 
-      color: rgba($table-parameter-name-required-font-color, 0.6);
+      color: #F03535;
     }
   }
 }
