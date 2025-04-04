@@ -1,5 +1,5 @@
 ---
-title: "Node Affinity"
+title: "Configure Node Affinity"
 weight: 20060
 ---
 
