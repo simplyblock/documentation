@@ -1,0 +1,14 @@
+[
+  {
+    "version": "25.3-PRE",
+    "title": "25.3-PRE",
+    "aliases": [
+      "latest"
+    ]
+  },
+  {
+    "version": "dev",
+    "title": "development",
+    "aliases": []
+  }
+]
