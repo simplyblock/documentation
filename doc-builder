@@ -48,7 +48,7 @@ function update_repositories() {
     if [ -f ./scripts/sbcli.lock ]; then
       echo "Found sbcli.lock, checking out locked reference..."
       pushd ./scripts/sbcli-repo
-      git reset --hard "$(cat ../sbcli.lock)"
+      git checkout "$(cat ../sbcli.lock)"
       popd
     fi
   else
