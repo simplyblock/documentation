@@ -32,31 +32,38 @@ def trim(text):
 
 
 def required(item):
-    if "action" in item:
-        return False
-    elif "default" in item:
-        return False
-    elif "private" in item and item["private"]:
-        return False
-    elif "required" in item and item["required"]:
+    if not is_parameter(item):
         return True
-    elif not item["name"].startswith("--"):
-        return True
-    return False
+    return item.get('required', False)
 
 
-def data_type_name(item):
+def argument_type(item):
     if "action" in item:
         return "marker"
-    text = item["type"]
-    if text == "str":
+
+    spec = item["type"]
+    if isinstance(spec, dict) and ((regex := spec.get('regex')) is not None):
+        return f"regex({regex})"
+
+    if isinstance(spec, dict) and ((size := spec.get('size')) is not None):
+        min = "utils.parse_size('{}')".format(size['min']) if 'min' in size else ''
+        max = "utils.parse_size('{}')".format(size['max']) if 'max' in size else ''
+        return f"size({min}..{max})"
+
+    if isinstance(spec, dict) and ((range := spec.get('range')) is not None):
+        return f"range({range['min']}..{range['max']})"
+
+    if spec == 'size':
+        return "size"
+    elif spec == "str":
         return "string"
-    elif text == "int":
-        return "integer"
-    elif text == "bool":
+    elif spec == "bool":
         return "boolean"
-    else:
-        return "unknown"
+    elif spec == "int":
+        return "integer"
+
+    return "unknown"
+
 
 
 def arg_value(item):
@@ -108,7 +115,7 @@ with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
             environment = jinja2.Environment(loader=templateLoader)
 
             environment.filters["trim"] = trim
-            environment.filters["data_type_name"] = data_type_name
+            environment.filters["argument_type"] = argument_type
             environment.filters["arg_value"] = arg_value
             environment.filters["param_value"] = param_value
             environment.filters["required"] = required
