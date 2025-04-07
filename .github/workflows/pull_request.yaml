@@ -27,9 +27,23 @@ defaults:
     shell: bash
 
 jobs:
+  build-test:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      - name: "Build Documentation Test"
+        run: |
+          ./doc-builder update-repositories
+          ./doc-builder build
   build-deploy-pr:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    needs: build-test
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
