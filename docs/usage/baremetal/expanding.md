@@ -8,20 +8,20 @@ weight: 30300
 ## Overview
 
 Resizing a logical Volume (LV) in simplyblock allows additional capacity to be allocated without downtime, ensuring
-workloads have sufficient storage as demand grows. The `sbcli` command line interface is used to expand the size of an
+workloads have sufficient storage as demand grows. The `sbcli-pre` command line interface is used to expand the size of an
 existing Logical Volume in a simple and efficient manner.
 
 ## Prerequisites
 
 - A running simplyblock cluster with a valid logical volume.
-- `sbcli` installed and configured with access to the simplyblock management API.
+- `sbcli-pre` installed and configured with access to the simplyblock management API.
 
 ## Expanding a Logical Volume
 
 To increase the size of an existing logical volume:
 
 ```bash
-sbcli volume resize \
+sbcli-pre volume resize \
   <VOLUME_UUID> \
   <NEW_SIZE>
 ```
@@ -31,7 +31,7 @@ sbcli volume resize \
 After resizing, confirm the new volume size:
 
 ```bash
-sbcli volume get <VOLUME_UUID>
+sbcli-pre volume get <VOLUME_UUID>
 ```
 
 ## Resize the Filesystem (If Required)

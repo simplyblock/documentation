@@ -54,22 +54,22 @@ sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 
 Now that the network is configured, the management node software can be installed.
 
-Simplyblock provides a command line interface called `sbcli`. It's built in Python and required Python 3 and Pip (the
+Simplyblock provides a command line interface called `sbcli-pre`. It's built in Python and required Python 3 and Pip (the
 Python package manager) installed on the machine. This can be achieved with `yum`.
 
 ```bash title="Install Python and Pip"
 sudo yum -y install python3-pip
 ```
 
-Afterward, the `sbcli` command line interface can be installed. Upgrading the CLI later on, uses the same command.
+Afterward, the `sbcli-pre` command line interface can be installed. Upgrading the CLI later on, uses the same command.
 
 ```bash title="Install Simplyblock CLI"
-sudo pip install sbcli --upgrade
+sudo pip install sbcli-pre --upgrade
 ```
 
 !!! recommendation
-    Simplyblock recommends to only upgrade `sbcli` if a system upgrade is executed to prevent potential
-    incompatibilities between the running simplyblock cluster and the version of `sbcli`.
+    Simplyblock recommends to only upgrade `sbcli-pre` if a system upgrade is executed to prevent potential
+    incompatibilities between the running simplyblock cluster and the version of `sbcli-pre`.
 
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 
@@ -80,13 +80,13 @@ curl -L https://sblk.xyz/prerequisites | bash
 If the check succeeds, it's time to set up the primary management node:
 
 ```bash title="Deploy the primary management node"
-sbcli cluster create --ifname=<IF_NAME> --ha-type=ha
+sbcli-pre cluster create --ifname=<IF_NAME> --ha-type=ha
 ```
 
 The output should look something like this:
 
 ```plain title="Example output of control plane deployment"
-[root@vm11 ~]# sbcli cluster create --ifname=eth0 --ha-type=ha
+[root@vm11 ~]# sbcli-pre cluster create --ifname=eth0 --ha-type=ha
 2025-02-26 12:37:06,097: INFO: Installing dependencies...
 2025-02-26 12:37:13,338: INFO: Installing dependencies > Done
 2025-02-26 12:37:13,358: INFO: Node IP: 192.168.10.1
@@ -116,11 +116,11 @@ Additionally to the cluster id, the cluster secret is required in many further s
 to retrieve it.
 
 ```bash title="Get the cluster secret"
-sbcli cluster get-secret <CLUSTER_ID>
+sbcli-pre cluster get-secret <CLUSTER_ID>
 ```
 
 ```plain title="Example output get cluster secret"
-[root@vm11 ~]# sbcli cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
+[root@vm11 ~]# sbcli-pre cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
 e8SQ1ElMm8Y9XIwyn8O0
 ```
 
@@ -132,24 +132,24 @@ nodes need to be added.
 On the secondary nodes, the network requires the same configuration as on the primary. Executing the commands under
 [Firewall Configuration (CP)](#firewall-configuration-cp) will get the node prepared.
 
-Afterward, Python, Pip, and `sbcli` need to be installed.
+Afterward, Python, Pip, and `sbcli-pre` need to be installed.
 
 ```bash title="Deployment preparation"
 sudo yum -y install python3-pip
-pip install sbcli --upgrade
+pip install sbcli-pre --upgrade
 ```
 
 Finally, we deploy the management node software and join the control plane cluster.
 
 ```bash title="Secondary management node deployment"
-sbcli mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
+sbcli-pre mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
 ```
 
 Running against the primary management node in the control plane should create an output similar to the following
 example:
 
 ```plain title="Example output joining a control plane cluster"
-[demo@demo ~]# sbcli mgmt add 192.168.10.1 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 eth0
+[demo@demo ~]# sbcli-pre mgmt add 192.168.10.1 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 eth0
 2025-02-26 12:40:17,815: INFO: Cluster found, NQN:nqn.2023-02.io.simplyblock:7bef076c-82b7-46a5-9f30-8c938b30e655
 2025-02-26 12:40:17,816: INFO: Installing dependencies...
 2025-02-26 12:40:25,606: INFO: Installing dependencies > Done

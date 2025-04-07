@@ -3,21 +3,21 @@ title: "Provisioning a Logical Volume"
 weight: 30000
 ---
 
-A logical volume (LV) in simplyblock can be provisioned using the `sbcli` command line interface. This allows
+A logical volume (LV) in simplyblock can be provisioned using the `sbcli-pre` command line interface. This allows
 administrators to create virtual NVMe block devices backed by simplyblock’s distributed storage, enabling
 high-performance and fault-tolerant storage for workloads.
 
 ## Prerequisites
 
 - A running simplyblock cluster with healthy management and storage nodes.
-- `sbcli` installed and configured with access to the simplyblock management API.
+- `sbcli-pre` installed and configured with access to the simplyblock management API.
 
 ## Provisioning a New Logical Volume
 
 To create a new logical volume:
 
 ```bash
-sbcli lvol add \
+sbcli-pre lvol add \
   --max-rw-iops <IOPS> \
   --max-r-mbytes <THROUGHPUT> \
   --max-w-mbytes <THROUGHPUT> \
@@ -46,11 +46,11 @@ sbcli lvol add \
 After creation, the Logical Volume can be listed and verified:
 
 ```bash
-sbcli volume list
+sbcli-pre volume list
 ```
 
 Details of the volume can be retrieved using:
 
 ```bash
-sbcli lvol get <VOLUME_UUID>
+sbcli-pre lvol get <VOLUME_UUID>
 ```

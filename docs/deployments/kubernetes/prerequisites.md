@@ -27,12 +27,12 @@ Supported Linux distribution
 3 management nodes
 
 ```bash title="Create Management Cluster"
-sbcli cluster create
-sbcli cluster list
+sbcli-pre cluster create
+sbcli-pre cluster list
 ```
 
 ```bash title="Sample output control plane creation"
-[demo@demo ~]# sudo sbcli cluster create --ifname=ens18 --ha-type=ha
+[demo@demo ~]# sudo sbcli-pre cluster create --ifname=ens18 --ha-type=ha
 2025-02-26 12:37:06,097: INFO: Installing dependencies...
 2025-02-26 12:37:13,338: INFO: Installing dependencies > Done
 2025-02-26 12:37:13,358: INFO: Node IP: 192.168.10.151
@@ -61,7 +61,7 @@ Returns cluster-id
 
 
 ```plain title="Example output for listing available clusters"
-[demo@demo ~]# sudo sbcli cluster list
+[demo@demo ~]# sudo sbcli-pre cluster list
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+---------+
 | UUID                                 | NQN                                                             | ha_type | tls   | mgmt nodes | storage nodes | Mod | Status  |
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+---------+
@@ -70,10 +70,10 @@ Returns cluster-id
 ```
 
 ### Get Cluster Secret
-sbcli cluster get-secret <cluster_uuid>
+sbcli-pre cluster get-secret <cluster_uuid>
 
 ```bash title="Example output get cluster secret"
-[demo@demo ~]# sudo sbcli cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
+[demo@demo ~]# sudo sbcli-pre cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
 e8SQ1ElMm8Y9XIwyn8O0 # (1)
 ```
 
@@ -83,7 +83,7 @@ e8SQ1ElMm8Y9XIwyn8O0 # (1)
 
 ```bash title="Adding a management node to the control plane"
 sudo yum -y install python3-pip
-pip install sbcli --upgrade
+pip install sbcli-pre --upgrade
 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 sbcli mgmt add 192.168.10.151 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 ens18

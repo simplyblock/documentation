@@ -4,7 +4,7 @@ weight: 10800
 ---
 
 Simplyblock provides multiple interfaces for managing and interacting with its distributed storage system, including the
-`sbcli` command-line interface (CLI) and Management API. The `sbcli` CLI offers a powerful, scriptable way to perform
+`sbcli-pre` command-line interface (CLI) and Management API. The `sbcli-pre` CLI offers a powerful, scriptable way to perform
 essential operations such as provisioning, expanding, snapshotting, and cloning logical volumes, making it ideal for
 administrators who prefer direct command-line access.
 

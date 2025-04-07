@@ -16,13 +16,13 @@ Either way, the installation requires a few values to be available.
 First we need the unique cluster id. Note down the cluster uuid of the cluster to access.
 
 ```bash title="Retrieving the Cluster UUID"
-sudo sbcli cluster list
+sudo sbcli-pre cluster list
 ```
 
 An example of the output is below.
 
 ```plain title="Example output of a cluster listing"
-[demo@demo ~]# sbcli cluster list
+[demo@demo ~]# sbcli-pre cluster list
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
 | UUID                                 | NQN                                                             | ha_type | tls   | mgmt nodes | storage nodes | Mod | Status |
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
@@ -33,13 +33,13 @@ An example of the output is below.
 In addition, we need the cluster secret. Note down the cluster secret.
 
 ```bash title="Retrieve the Cluster Secret"
-sbcli cluster get-secret <CLUSTER_UUID>
+sbcli-pre cluster get-secret <CLUSTER_UUID>
 ```
 
 Retrieving the cluster secret will look somewhat like that.
 
 ```plain title="Example output of retrieving a cluster secret"
-[demo@demo ~]# sbcli cluster get-secret 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+[demo@demo ~]# sbcli-pre cluster get-secret 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
 oal4PVNbZ80uhLMah2Bs
 ```
 
@@ -47,13 +47,13 @@ Additionally, a storage pool is required. If a pool already exists, it can be re
 pool can be created as following:
 
 ```bash title="Create a Storage Pool"
-sbcli pool add <POOL_NAME> <CLUSTER_UUID>
+sbcli-pre pool add <POOL_NAME> <CLUSTER_UUID>
 ```
 
 The last line of a successful storage pool creation returns the new pool id.
 
 ```plain title="Example output of creating a storage pool"
-[demo@demo ~]# sbcli pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+[demo@demo ~]# sbcli-pre pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
 2025-03-05 06:36:06,093: INFO: Adding pool
 2025-03-05 06:36:06,098: INFO: {"cluster_id": "4502977c-ae2d-4046-a8c5-ccc7fa78eb9a", "event": "OBJ_CREATED", "object_name": "Pool", "message": "Pool created test", "caused_by": "cli"}
 2025-03-05 06:36:06,100: INFO: Done

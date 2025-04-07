@@ -3,7 +3,7 @@ title: "Supported Linux Distributions"
 weight: 20200
 ---
 
-Simplyblock requires a Linux Kernel 5.19 or later with NVMe over Fabrics and NVMe over TCP enabled. However, `sbcli`,
+Simplyblock requires a Linux Kernel 5.19 or later with NVMe over Fabrics and NVMe over TCP enabled. However, `sbcli-pre`,
 the simplyblock commandline interface, requires some additional tools and expects certain conventions for configuration
 files and locations. Therefore, simplyblock officially only supports Red Hat-based Linux distribution as of now.
 

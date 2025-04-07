@@ -4,7 +4,7 @@ weight: 30400
 ---
 
 Removing a logical Volume (LV) in simplyblock permanently deletes the volume and its associated data from the cluster.
-This operation is performed using the `sbcli` command line interface. Care should be taken to verify that the volume
+This operation is performed using the `sbcli-pre` command line interface. Care should be taken to verify that the volume
 is no longer in use and that backups are in place if needed.
 
 While deleting a logical volume is a straightforward operation, but it must be executed carefully to avoid accidental
@@ -16,7 +16,7 @@ data loss. Always ensure that the volume is no longer needed before removal.
 
 ## Prerequisites
 
-- A running simplyblock cluster with `sbcli` configured.
+- A running simplyblock cluster with `sbcli-pre` configured.
 - Ensure the Logical Volume is not mounted or in active use.
 - Verify that data stored on the volume is no longer required or has been backed up.
 
@@ -25,7 +25,7 @@ data loss. Always ensure that the volume is no longer needed before removal.
 To remove a Logical Volume:
 
 ```bash
-sbcli lvol delete <VOLUME_UUID> [--force]
+sbcli-pre lvol delete <VOLUME_UUID> [--force]
 ```
 
 ### Parameters
@@ -37,7 +37,7 @@ sbcli lvol delete <VOLUME_UUID> [--force]
 To confirm that the volume has been successfully deleted:
 
 ```bash
-sbcli volume list
+sbcli-pre volume list
 ```
 
 Verify that the volume no longer appears in the list of active logical volumes.

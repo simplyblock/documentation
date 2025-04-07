@@ -11,7 +11,7 @@ help administrators proactively detect issues and maintain system stability.
 
 ## Accessing Cluster Status
 
-To access a cluster's status, the `sbcli` command line tool can be used:
+To access a cluster's status, the `sbcli-pre` command line tool can be used:
 
 ```bash title="Accessing the status of a cluster"
 sbcli cluster status <CLUSTER_ID>
