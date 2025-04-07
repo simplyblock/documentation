@@ -1,0 +1,90 @@
+name: Pull Request Builder
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - auto_merge_enabled
+      - auto_merge_disabled
+      - closed
+    branches:
+      - 'main'
+
+permissions:
+  actions: write
+  contents: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: "documentation"
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-deploy-pr:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      - name: "Build Documentation"
+        run: |
+          ./doc-builder update-repositories
+          ./doc-builder build
+      - name: "Creating Deployment Artifact"
+        run: |
+          mv site "${{ github.head_ref }}"
+          ls -lah
+          zip -r "${{ github.head_ref }}.zip" . -i "${{ github.head_ref }}/*"
+      - name: "Uploading Pull Request Deployment"
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ssh_server }}
+          port: ${{ secrets.ssh_port }}
+          username: ${{ secrets.ssh_username }}
+          key: ${{ secrets.ssh_key }}
+          source: "${{ github.head_ref }}.zip"
+          target: .
+      - name: "Deploying Pull Request Deployment"
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.ssh_server }}
+          port: ${{ secrets.ssh_port }}
+          username: ${{ secrets.ssh_username }}
+          key: ${{ secrets.ssh_key }}
+          script: |
+            ./pull_request_helper.sh deploy ${{ github.head_ref }}
+      - name: Add Pull Request Deployment Comment"
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🤖: Deployment available as https://docstest.simplyblock.io/${{ github.head_ref }}'
+            })
+
+  remove-closed-pr:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Removing Pull Request Deployment"
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.ssh_server }}
+          port: ${{ secrets.ssh_port }}
+          username: ${{ secrets.ssh_username }}
+          key: ${{ secrets.ssh_key }}
+          script: |
+            ./pull_request_helper.sh remove ${{ github.head_ref }}
