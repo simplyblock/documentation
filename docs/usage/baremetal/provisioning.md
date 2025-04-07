@@ -46,7 +46,7 @@ sbcli lvol add \
 After creation, the Logical Volume can be listed and verified:
 
 ```bash
-sbcli volume list
+sbcli lvol list
 ```
 
 Details of the volume can be retrieved using:
