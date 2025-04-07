@@ -128,7 +128,6 @@ Defined networks:
 | ingress   | mgmt                | 9000  | tcp      |
 | egress    | all                 | all   | all      |
 
-<figure markdown>
 | Service         | Direction | Source Network    | Port      | Protocol(s) |
 |-----------------|-----------|-------------------|-----------|-------------|
 | API (HTTPS)     | ingress   | loadbalancer      | 80        | TCP         |
@@ -144,8 +143,6 @@ Defined networks:
 | FoundationDB    | ingress   | storage           | 4500      | TCP         |
 | Cluster Control | ingress   | storage           | 4420      | TCP         |
 | Cluster Control | ingress   | storage           | 9090-9099 | TCP         |
-<figcaption>Test</figcaption>
-</figure>
 
 | Service     | Direction | Target Network | Port | Protocol(s) |
 |-------------|-----------|----------------|------|-------------|
@@ -159,65 +156,7 @@ nvme id-ns /dev/nvmeXnY
 nvme format --lbaf=<lbaf> --ses=0 /dev/nvmeXnY
 ```
 
-### Deploy a Storage Node
-
-```bash
-sbcli -d sn deploy --ifname ens18
-```
-
-```plain title="Example output deploying storage node"
-[demo@demo-sn-1 ~]# sbcli sn deploy --ifname ens18
-2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
-2025-02-26 13:35:07,038: INFO: Installing dependencies...
-2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.153
-2025-02-26 13:35:13,623: INFO: Pulling image public.ecr.aws/simply-block/simplyblock:hmdi
-2025-02-26 13:35:15,219: INFO: Recreating SNodeAPI container
-2025-02-26 13:35:15,543: INFO: Pulling image public.ecr.aws/simply-block/ultra:main-latest
-192.168.10.153:5000
-```
-
-### Add Storage Node (from Management Node)
-
-```plain title="Example output for adding a storage node"
-[root@vm11 ~]# sbcli sn add-node 3196b77c-e6ee-46c3-8291-736debfe2472 192.168.10.152:5000 ens18 --max-lvol 100 --max-prov 5000 --number-of-devices 3 --partitions 0
-2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.152:5000
-2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
-2025-02-26 14:55:17,341: INFO: Instance cloud: None
-2025-02-26 14:55:17,341: INFO: Instance type: None
-2025-02-26 14:55:17,342: INFO: Instance privateIp: 192.168.10.152
-2025-02-26 14:55:17,342: INFO: Instance public_ip: 192.168.10.152
-2025-02-26 14:55:17,347: INFO: Node Memory info
-2025-02-26 14:55:17,347: INFO: Total: 24.3 GB
-2025-02-26 14:55:17,348: INFO: Free: 23.2 GB
-2025-02-26 14:55:17,348: INFO: Minimum required huge pages memory is : 14.8 GB
-2025-02-26 14:55:17,349: INFO: Joining docker swarm...
-2025-02-26 14:55:21,060: INFO: Deploying SPDK
-2025-02-26 14:55:31,969: INFO: adding alceml_2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
-2025-02-26 14:55:32,010: INFO: creating subsystem nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
-2025-02-26 14:55:32,022: INFO: adding listener for nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4 on IP 192.168.10.152
-2025-02-26 14:55:32,303: INFO: Connecting to remote devices
-2025-02-26 14:55:32,321: INFO: Connecting to remote JMs
-2025-02-26 14:55:32,342: INFO: Make other nodes connect to the new devices
-2025-02-26 14:55:32,346: INFO: Setting node status to Active
-2025-02-26 14:55:32,357: INFO: {"cluster_id": "3196b77c-e6ee-46c3-8291-736debfe2472", "event": "STATUS_CHANGE", "object_name": "StorageNode", "message": "Storage node status changed from: in_creation to: online", "caused_by": "monitor"}
-2025-02-26 14:55:32,361: INFO: Sending event updates, node: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5, status: online
-2025-02-26 14:55:32,368: INFO: Sending to: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5
-2025-02-26 14:55:32,389: INFO: Connecting to remote devices
-2025-02-26 14:55:32,442: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
-2025-02-26 14:55:32,443: INFO: Done
-```
+### Kubernetes Requirements
 
 - Kubernetes v1.25 or higher
 - Privileged container
-
-
-```plain title="Example output of a storage node listing"
-[root@vm11 ~]# sbcli sn list
-+--------------------------------------+----------+----------------+---------+-------+--------+--------+-----------+--------------------------------------+------------+----------------+
-| UUID                                 | Hostname | Management IP  | Devices | LVols | Status | Health | Up time   | Cloud ID                             | Cloud Type | Ext IP         |
-+--------------------------------------+----------+----------------+---------+-------+--------+--------+-----------+--------------------------------------+------------+----------------+
-| 37b404b9-36aa-40b3-8b74-7f3af86bd5a5 | vm12     | 192.168.10.152 | 3/3     | 0     | online | True   | 1h 8m 11s | 0b0c825e-3d16-4d91-a237-51e55c6ffefe | None       | 192.168.10.152 |
-| 1a5d4106-1bc8-4d68-91e5-ac6e93fb0549 | vm13     | 192.168.10.153 | 3/3     | 0     | online | True   | 45m 27s   | de45504a-d36b-42e6-996d-133ec79f4d47 | None       | 192.168.10.153 |
-| 01b1caa0-b94a-4863-a735-832250faee61 | vm14     | 192.168.10.154 | 3/3     | 0     | online | True   | 43m 24s   | 1d20291f-3ca9-4aac-81e9-7d3e3e33e553 | None       | 192.168.10.154 |
-+--------------------------------------+----------+----------------+---------+-------+--------+--------+-----------+--------------------------------------+------------+----------------+
-```

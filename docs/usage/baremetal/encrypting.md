@@ -46,7 +46,7 @@ openssl rand -hex 32
 To provision a new Logical Volume with encryption enabled:
 
 ```bash
-sbcli lvol add \
+sbcli volume add \
   --encrypt \
   --crypto-key1 <HEX_KEY_1> \
   --crypto-key2 <HEX_KEY_2> \
@@ -70,7 +70,7 @@ To see all available parameters when creating a logical volume, see [Provisionin
 Check encryption status with:
 
 ```bash
-sbcli lvol get <VOLUME_UUID>
+sbcli volume get <VOLUME_UUID>
 ```
 
 Look for the encryption field to confirm that encryption is active.

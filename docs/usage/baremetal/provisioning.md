@@ -17,7 +17,7 @@ high-performance and fault-tolerant storage for workloads.
 To create a new logical volume:
 
 ```bash
-sbcli lvol add \
+sbcli volume add \
   --max-rw-iops <IOPS> \
   --max-r-mbytes <THROUGHPUT> \
   --max-w-mbytes <THROUGHPUT> \
@@ -52,5 +52,5 @@ sbcli volume list
 Details of the volume can be retrieved using:
 
 ```bash
-sbcli lvol get <VOLUME_UUID>
+sbcli volume get <VOLUME_UUID>
 ```

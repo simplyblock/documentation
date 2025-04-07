@@ -25,7 +25,7 @@ data loss. Always ensure that the volume is no longer needed before removal.
 To remove a Logical Volume:
 
 ```bash
-sbcli lvol delete <VOLUME_UUID> [--force]
+sbcli volume delete <VOLUME_UUID> [--force]
 ```
 
 ### Parameters

@@ -28,11 +28,11 @@ sbcli snapshot clone \
 After cloning, the new Logical Volume can be listed:
 
 ```bash
-sbcli lvol list
+sbcli volume list
 ```
 
 Details of the cloned volume can be retrieved using:
 
 ```bash
-sbcli lvol get <VOLUME_UUID>
+sbcli volume get <VOLUME_UUID>
 ```
