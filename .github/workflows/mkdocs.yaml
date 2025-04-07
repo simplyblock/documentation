@@ -120,7 +120,7 @@ jobs:
         uses: mtanzi/action-automerge@v1
         with:
           github_token: "${{ github.token }}"
-          source: "refs/tags/${{ env.RELEASE_NAME }}"
+          source: ${{ github.ref_name }}
           target: "main"
           webhook_url: ""
       - name: "Remove Release Branch"
