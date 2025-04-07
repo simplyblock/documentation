@@ -1,19 +1,8 @@
-name: Build or Deploy Simplyblock Documentation
+name: Release Builder
 on:
   push:
     branches:
-      - 'main'
       - 'release/**'
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - edited
-      - auto_merge_enabled
-      - auto_merge_disabled
-    branches:
-      - 'main'
 
 permissions:
   actions: write
@@ -29,47 +18,7 @@ defaults:
     shell: bash
 
 jobs:
-  build-test:
-    if: ${{ !startsWith(github.ref, 'refs/heads/release/') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout Repository"
-        uses: actions/checkout@v4
-      - name: "Prepare Documentation Builder"
-        run: |
-          ./doc-builder build-image
-      - name: "Build Documentation Test"
-        run: |
-          ./doc-builder update-repositories
-          ./doc-builder build
-  dev-deployment:
-    if: ${{ github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
-    needs: build-test
-    steps:
-      - name: "Checkout Repository"
-        uses: actions/checkout@v4
-        with:
-          token: '${{ github.token }}'
-      - name: "Prepare Documentation Builder"
-        run: |
-          ./doc-builder build-image
-      - name: "Prepare Documentation Dev Deployment"
-        run: |
-          sed -i -r "s|(site_url: .*)|\1dev/|g" ./mkdocs.yml
-          cat ./mkdocs.yml
-          ./doc-builder update-repositories
-          ./doc-builder build
-      - name: "Upload Documentation"
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.ftp_server }}
-          username: ${{ secrets.ftp_username }}
-          password: ${{ secrets.ftp_password }}
-          server-dir: /dev/
-          local-dir: ./site/
   deployment:
-    if: ${{ startsWith(github.ref, 'refs/heads/release/') }}
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout Repository"
