@@ -20,7 +20,7 @@ sbcli-pre {{ command.name }} --help
 {{ subcommand | get_description }}
 
 ```bash
-sbcli {{ command.name }} {{ subcommand.name }}
+sbcli-pre {{ command.name }} {{ subcommand.name }}
 {%- for argument in subcommand.arguments -%}
 {%- if not argument.private %}
     {{ argument | arg_value }}
