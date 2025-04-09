@@ -27,6 +27,7 @@ plugins:
   - social
   - glightbox
   - mkdocs-video
+  - link-marker
   - mkdocs-nav-weight:
       section_renamed: true
   - git-revision-date-localized:
