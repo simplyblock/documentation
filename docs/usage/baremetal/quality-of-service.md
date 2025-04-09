@@ -5,7 +5,7 @@ weight: 30600
 
 Simplyblock allows Quality of Service (QoS) limits to be applied to logical volumes (LVs) to control performance by
 defining maximum IOPS and throughput. QoS settings can be configured during volume creation or adjusted on an
-active Logical Volume using the `sbcli` command line interface.
+active Logical Volume using the `{{ variables.cliname }}` command line interface.
 
 Configuring QoS allows simplyblock logical volumes to deliver predictable performance by limiting resource consumption
 and ensuring balanced workload distribution across the storage cluster.
@@ -15,7 +15,7 @@ and ensuring balanced workload distribution across the storage cluster.
 QoS can be applied when creating a new logical volume:
 
 ```sh
-sbcli volume create \
+{{ variables.cliname }} volume create \
   --max-rw-iops MAX_RW_IOPS 3500 \
   --max-rw-mbytes MAX_RW_MBYTES 125 \
   <VOLUME_NAME> \
@@ -39,7 +39,7 @@ To see all available parameters when creating a logical volume, see [Provisionin
 QoS settings can also be updated on an existing logical volume:
 
 ```sh
-sbcli volume qos-set \
+{{ variables.cliname }} volume qos-set \
   --max-rw-iops MAX_RW_IOPS 5000 \
   --max-rw-mbytes MAX_RW_MBYTES 250 \
   <VOLUME_UUID>
@@ -50,7 +50,7 @@ sbcli volume qos-set \
 To check the current QoS settings:
 
 ```sh
-sbcli volume get <VOLUME_UUID>
+{{ variables.cliname }} volume get <VOLUME_UUID>
 ```
 
 Review the output for the active QoS configuration.

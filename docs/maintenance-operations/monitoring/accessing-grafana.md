@@ -22,7 +22,7 @@ http://<MGMT_NODE_IP>:3000
 To retrieve the endpoint address from the cluster itself, use the following command:
 
 ```bash title="Retrieving the Grafana endpoint"
-sbcli cluster get <CLUSTER_ID> | grep grafana_endpoint
+{{ variables.cliname }} cluster get <CLUSTER_ID> | grep grafana_endpoint
 ```
 
 ### Credentials
@@ -31,7 +31,7 @@ The Grafana installation uses the cluster secret as its password for the user _a
 the following command should be used:
 
 ```bash title="Get the cluster secret"
-sbcli cluster get-secret <CLUSTER_ID>
+{{ variables.cliname }} cluster get-secret <CLUSTER_ID>
 ```
 
 **Credentials**<br/>

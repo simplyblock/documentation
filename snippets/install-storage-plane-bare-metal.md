@@ -18,7 +18,7 @@ Now that the network is configured, the storage node software can be installed.
     All storage nodes can be prepared at this point, as they are added to the cluster in the next step. Therefore, it
     is recommended to execute this step on all storage nodes, before moving to the next step.
 
-Simplyblock provides a command line interface called `sbcli`. It's built in Python and required Python 3 and Pip
+Simplyblock provides a command line interface called `{{ variables.cliname }}`. It's built in Python and required Python 3 and Pip
 (the Python package manager) installed on the machine. This can be achieved with `yum`.
 
 
@@ -26,15 +26,15 @@ Simplyblock provides a command line interface called `sbcli`. It's built in Pyth
 sudo yum -y install python3-pip
 ```
 
-Afterward, the `sbcli` command line interface can be installed. Upgrading the CLI later on, uses the same command.
+Afterward, the `{{ variables.cliname }}` command line interface can be installed. Upgrading the CLI later on, uses the same command.
 
 ```bash title="Install Simplyblock CLI"
-sudo pip install sbcli --upgrade
+sudo pip install {{ variables.cliname }} --upgrade
 ```
 
 !!! recommendation
-    Simplyblock recommends to only upgrade `sbcli` if a system upgrade is executed to prevent potential
-    incompatibilities between the running simplyblock cluster and the version of `sbcli`.
+    Simplyblock recommends to only upgrade `{{ variables.cliname }}` if a system upgrade is executed to prevent potential
+    incompatibilities between the running simplyblock cluster and the version of `{{ variables.cliname }}`.
 
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 
@@ -128,13 +128,13 @@ Success formatting namespace:1
 With all NVMe devices prepared and the NVMe/TCP driver loaded, the storage node software can be deployed.
 
 ```bash title="Deploy the storage node"
-sudo sbcli storage-node deploy --ifname eth0
+sudo {{ variables.cliname }} storage-node deploy --ifname eth0
 ```
 
 The output will look something like the following example:
 
 ```plain title="Example output of a storage node deployment"
-[demo@demo-3 ~]# sudo sbcli storage-node deploy --ifname eth0
+[demo@demo-3 ~]# sudo {{ variables.cliname }} storage-node deploy --ifname eth0
 2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
 2025-02-26 13:35:07,038: INFO: Installing dependencies...
 2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.2
@@ -160,13 +160,13 @@ and the storage node software first-stage to be deployed.
 To deploy the first stage of the storage node, the following command must be executed.
 
 ```bash title="Deploy the secondary node"
-sudo sbcli storage-node deploy --ifname eth0
+sudo {{ variables.cliname }} storage-node deploy --ifname eth0
 ```
 
 The output will look something like the following example:
 
 ```plain title="Example output of a secondary node deployment"
-[demo@demo-4 ~]# sudo sbcli storage-node deploy --ifname eth0
+[demo@demo-4 ~]# sudo {{ variables.cliname }} storage-node deploy --ifname eth0
 2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
 2025-02-26 13:35:07,038: INFO: Installing dependencies...
 2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.4
@@ -188,7 +188,7 @@ When all storage nodes are prepared, they can be added to the storage cluster.
     from a management node.
 
 ```bash title="Attaching a storage node to the storage plane"
-sudo sbcli storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+sudo {{ variables.cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
   --max-lvol <MAX_LOGICAL_VOLUMES> \
   --max-prov <MAX_PROVISIONING_CAPACITY> \
   --number-of-devices <NUM_STOR_NVME> \
@@ -205,7 +205,7 @@ sudo sbcli storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
 The output will look something like the following example:
 
 ```plain title="Example output of adding a storage node to the storage plane"
-[demo@demo ~]# sudo sbcli storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
+[demo@demo ~]# sudo {{ variables.cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
 2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
 2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
 2025-02-26 14:55:17,341: INFO: Instance cloud: None
@@ -240,7 +240,7 @@ Repeat this process for all prepared storage nodes to add them to the storage pl
 Afterward, the secondary node needs to be added to the cluster.
 
 ```bash title="Attaching a secondary node to the storage plane"
-sudo sbcli storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+sudo {{ variables.cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
   --data-nics <DATA_IF>
   --is-secondary-node
 ```
@@ -248,7 +248,7 @@ sudo sbcli storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
 The output will look something like the following example:
 
 ```plain title="Example output of a secondary node to the storage plane"
-[demo@demo ~]# sudo sbcli storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.5:5000 ens18 --data-nics=ens16 --is-secondary-node
+[demo@demo ~]# sudo {{ variables.cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.5:5000 ens18 --data-nics=ens16 --is-secondary-node
 2025-02-28 13:34:57,877: INFO: Adding Storage node: 192.168.10.115:5000
 2025-02-28 13:34:57,952: INFO: Node found: vm5
 2025-02-28 13:34:57,953: INFO: Instance id: 5d679365-1361-40b0-bac0-3de949057bbc
@@ -283,13 +283,13 @@ On a successful response, it's finally time to activate the storage plane.
 The last step after all nodes are added to the storage cluster, the storage plane can be activated.
 
 ```bash title="Storage cluster activation"
-sudo sbcli cluster activate <CLUSTER_ID>
+sudo {{ variables.cliname }} cluster activate <CLUSTER_ID>
 ```
 
 The command output should look like this and respond with a successful activation of the storage cluster
 
 ```plain title="Example output of a storage cluster activation"
-[demo@demo ~]# sbcli cluster activate 7bef076c-82b7-46a5-9f30-8c938b30e655
+[demo@demo ~]# {{ variables.cliname }} cluster activate 7bef076c-82b7-46a5-9f30-8c938b30e655
 2025-02-28 13:35:26,053: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from unready to in_activation", "caused_by": "cli"}
 2025-02-28 13:35:26,322: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to 2f4dafb1-d610-42a7-9a53-13732459523e
 2025-02-28 13:35:31,133: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to b7db725a-96e2-40d1-b41b-738495d97093

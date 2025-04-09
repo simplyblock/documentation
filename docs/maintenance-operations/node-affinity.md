@@ -24,7 +24,7 @@ enabled for a logical volume, it will influence how the data distribution algori
 To enable node affinity at creation time of the cluster, the `--enable-node-affinity` parameter needs to be added:
 
 ```bash title="Enabling node affinity when the cluster is created"
-sbcli cluster create \
+{{ variables.cliname }} cluster create \
     --ifname=<IF_NAME> \
     --ha-type=ha \
     --enable-node-affinity # <- this is important
@@ -45,7 +45,7 @@ node affinity enabled.
 To create a co-located logical volume, the parameter `--host-id` needs to be added to the creation command:
 
 ```bash title="Create a node affine logical volume"
-sbcli volume add <NAME> <SIZE> <POOL> \
+{{ variables.cliname }} volume add <NAME> <SIZE> <POOL> \
     --host-id=<HOST_ID> \
     ... # other parameters
 ```
@@ -53,8 +53,8 @@ sbcli volume add <NAME> <SIZE> <POOL> \
 To see all available parameters for a logical volume creation, see
 [Logical Volume Creation](../reference/cli/volume.md#adds-a-new-logical-volume).
 
-The storage node uuid (or host id) can be found using the `sbcli storage-node list` command.
+The storage node uuid (or host id) can be found using the `{{ variables.cliname }} storage-node list` command.
 
 ```bash title="List all storage nodes in a storage cluster"
-sbcli storage-node list --cluster-id=<CLUSTER_ID>
+{{ variables.cliname }} storage-node list --cluster-id=<CLUSTER_ID>
 ```

@@ -28,6 +28,7 @@ plugins:
   - glightbox
   - mkdocs-video
   - link-marker
+  - markdownextradata
   - mkdocs-nav-weight:
       section_renamed: true
   - git-revision-date-localized:
@@ -101,3 +102,4 @@ validation:
     absolute_links: warn
 watch:
   - ./snippets
+  - ./_data

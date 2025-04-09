@@ -33,16 +33,16 @@ To start a new storage node, follow the storage node installation according to y
 !!! danger
     All volumes on this storage node, which aren't migrated before the removal will become inaccessible!
 
-To remove the old storage node, use the `sbcli` command line tool. 
+To remove the old storage node, use the `{{ variables.cliname }}` command line tool. 
 
 ```bash title="Remove a storage node"
-sbcli storage-node remove <NODE_ID>
+{{ variables.cliname }} storage-node remove <NODE_ID>
 ```
 
 Wait until the operation has successfully finished. Afterward, the storage node is removed from the cluster.
 
-This can be checked again with the `sbcli` command line tool.
+This can be checked again with the `{{ variables.cliname }}` command line tool.
 
 ```bash title="List storage nodes"
-sbcli storage-node list --cluster-id=<CLUSTER_ID>
+{{ variables.cliname }} storage-node list --cluster-id=<CLUSTER_ID>
 ```

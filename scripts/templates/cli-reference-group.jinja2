@@ -4,7 +4,7 @@ title: {{ command.help }}
 ---
 
 ```bash
-sbcli {{ command.name }} --help
+{{ cliname }} {{ command.name }} --help
 ```
 
 {% if command.aliases %}
@@ -20,7 +20,7 @@ sbcli {{ command.name }} --help
 {{ subcommand | get_description }}
 
 ```bash
-sbcli {{ command.name }} {{ subcommand.name }}
+{{ cliname }} {{ command.name }} {{ subcommand.name }}
 {%- for argument in subcommand.arguments -%}
 {%- if not argument.private %}
     {{ argument | arg_value }}
