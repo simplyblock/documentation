@@ -200,8 +200,7 @@ of modern cloud-native computing.
 
 ### Kubernetes CSI (Container Storage Interface)
 
-The [Kubernetes Container Storage Interface (CSI)](https://kubernetes-csi.github.io/docs/drivers.html){:target="_blank"
-rel="noopener"}
+The [Kubernetes Container Storage Interface (CSI)](https://kubernetes-csi.github.io/docs/drivers.html){:target="_blank" rel="noopener"}
 is a standardized API enabling external storage providers to integrate their storage solutions with Kubernetes. CSI
 allows Kubernetes to dynamically provision, attach, mount, and manage Persistent Volumes (PVs) across different storage
 backends without requiring changes to the Kubernetes core. Using a CSI driver, storage vendors can offer block and file
