@@ -10,10 +10,10 @@ When expanding a storage pool, its capacity will be extended, offering an extend
 
 ## Storage Pool Expansion
 
-To expand a storage pool, the `sbcli` command line interface:
+To expand a storage pool, the `{{ variables.cliname }}` command line interface:
 
 ```bash title="Expanding the storage pool"
-sbcli storage-pool set <POOL_ID> --pool-max=<NEW_SIZE>
+{{ variables.cliname }} storage-pool set <POOL_ID> --pool-max=<NEW_SIZE>
 ```
 
 The value of _NEW_SIZE_ must be given as `20G`, `20T`, etc.

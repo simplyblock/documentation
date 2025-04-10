@@ -1,5 +1,5 @@
 ---
-title: "sbcli (CLI)"
+title: "CLI / Command-line interface"
 weight: 20000
 ---
 

@@ -114,8 +114,12 @@ with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
             environment.filters["required"] = required
             environment.filters["get_description"] = get_description
 
+            context = {"command": command}
+            with open(f"{base_path}/_data/variables.yml") as stream2:
+                context["variables"] = yaml.safe_load(stream2)
+
             template = environment.get_template("cli-reference-group.jinja2")
-            output = template.render({"command": command})
+            output = template.render(context)
             with open(f"{base_path}/docs/reference/cli/{command['name']}.md", "t+w") as target:
                 target.write(output)
 
