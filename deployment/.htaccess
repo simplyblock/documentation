@@ -1,5 +1,19 @@
 Options +FollowSymlinks
 RewriteEngine On
+
+# Old documentation redirects
+RewriteRule ^deployment/deployment/?$ /latest/deployments/ [L,R=301]
+RewriteRule ^deployment/requirements/?$ /latest/deployments/deployment-planning/ [L,R=301]
+RewriteRule ^usage/linux/?$ /latest/deployments/baremetal/ [L,R=301]
+RewriteRule ^operation/maintenance/?$ /latest/maintenance-operations/ [L,R=301]
+RewriteRule ^known_issues/?$ /latest/important-notes/known-issues/ [L,R=301]
+RewriteRule ^cli_reference/?$ /latest/reference/cli/ [L,R=301]
+RewriteRule ^api_reference/?$ /latest/reference/api-sdk/ [L,R=301]
+RewriteRule ^operation/monitoring/?$ /latest/maintenance-operations/monitoring/ [L,R=301]
+RewriteRule ^important_concepts/?$ /latest/architecture/concepts/ [L,R=301]
+RewriteRule ^usage/storagepools_volumes/?$ /latest/usage/baremetal/ [L,R=301]
+
+# New internal redirects
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/latest/
