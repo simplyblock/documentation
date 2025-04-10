@@ -116,8 +116,7 @@ with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
 
             context = {"command": command}
             with open(f"{base_path}/_data/variables.yml") as stream2:
-                variables = yaml.safe_load(stream2)
-                context |= variables
+                context["variables"] = yaml.safe_load(stream2)
 
             template = environment.get_template("cli-reference-group.jinja2")
             output = template.render(context)

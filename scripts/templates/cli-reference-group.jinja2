@@ -4,7 +4,7 @@ title: {{ command.help }}
 ---
 
 ```bash
-{{ cliname }} {{ command.name }} --help
+{{ variables.cliname }} {{ command.name }} --help
 ```
 
 {% if command.aliases %}
@@ -20,7 +20,7 @@ title: {{ command.help }}
 {{ subcommand | get_description }}
 
 ```bash
-{{ cliname }} {{ command.name }} {{ subcommand.name }}
+{{ variables.cliname }} {{ command.name }} {{ subcommand.name }}
 {%- for argument in subcommand.arguments -%}
 {%- if not argument.private %}
     {{ argument | arg_value }}
