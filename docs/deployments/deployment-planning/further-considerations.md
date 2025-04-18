@@ -16,8 +16,12 @@ Simplyblock contains two major components, the control plane and the storage pla
     a mixed CPU architecture should be limited to one CPU architecture for the disaggregated portion of the storage
     cluster and one architecture for the Kubernetes worker nodes.
 
-In terms of operating system, simplyblock supports Red Hat-based Linux distribution and recommends a Linux kernel 5.9
-or later.
+In terms of operating system, simplyblock requires a Red Hat-based Linux distribution version 9 (including Rocky Linux and Alma Linux) 
+for the control plane nodes and disaggregated storage nodes (docker-swarm) and recommends a Linux kernel 5.9 or later. 
+
+For storage nodes under kubernetes, any linux distribution (RHEL-based, Debian-based, Talos) can be used. 
+
+For any client hosts, the nvmf-tcp module must be loaded and it must support nvme multipathing.
 
 ## Storage Considerations
 
