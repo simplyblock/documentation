@@ -15,7 +15,7 @@ Per storage server:
 - 2U server with 2 CPU sockets.
 - Each socket supplied with 128 GB RAM.
 - Each CPU offering 32 physical cores.
-- 11-12x PCIe 4.0 NVMe devices, up to 8 TB each.
+- 24x PCIe 4.0 NVMe devices, up to 8 TB each.
 - Dual 100 GBit/s NIC per socket configured as a LAG. Preferably Mellanox Connect-X for RoCEv2.
 
 One of the NVMe devices per CPU socket could be implemented as a SLC NVMe, while all other should be TLC.
@@ -27,7 +27,7 @@ Per storage server:
 - 1U server with 2 CPU sockets.
 - Each socket supplied with 128 GB RAM.
 - Each CPU offering 32 physical cores.
-- 4-5x PCIe 4.0 NVMe devices with 3-4 TB capacity each.
+- 8-10x PCIe 4.0 NVMe devices with 3-4 TB capacity each.
 - Dual 100 GBit/s NIC per socket configured as a LAG. Preferably Mellanox Connect-X for RoCEv2.
 
 One of the NVMe devices per CPU socket could be implemented as a SLC NVMe, while all other should be TLC.
