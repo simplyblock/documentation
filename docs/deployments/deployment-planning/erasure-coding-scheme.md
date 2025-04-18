@@ -5,8 +5,9 @@ weight: 30100
 
 Choosing the appropriate **erasure coding scheme** is crucial when deploying a simplyblock storage cluster, as it
 directly impacts **data redundancy, storage efficiency, and overall system performance**. Simplyblock currently supports
-the following erasure coding schemes: **1+1**, **2+1**, **1+2**, and **2+2**. Understanding the trade-offs between
-redundancy and storage utilization will help determine the best option for your workload.
+the following erasure coding schemes: **1+1**, **2+1**, **4+1**,  **1+2**, **2+2** and **4+2**. Understanding the trade-offs between
+redundancy and storage utilization will help determine the best option for your workload. All schemas have been 
+performance-optimized by optimized algorithms, but there is still a remaining capacity-to-performance trade-off.
 
 ## Erasure Coding Schemes
 
@@ -23,7 +24,7 @@ If you need more information on erasure coding, see the dedicated concept page f
 
 - **Description:** In the _1+1 scheme_, data is mirrored, effectively creating an exact copy of every data block.
 - **Redundancy Level:** Can tolerate the failure of **one** storage node.
-- **Storage Efficiency:** **50%** (since each piece of data is fully duplicated, requiring double the storage capacity).
+- **Raw-to-effective ratio:** **200%** 
 - **Performance Considerations:** Offers **fast recovery and high read performance** due to data mirroring.
 - **Best Use Cases:**
     - Workloads requiring **high availability and minimal recovery time**.
@@ -35,22 +36,38 @@ If you need more information on erasure coding, see the dedicated concept page f
 - **Description:** In the _2+1 scheme_, data is divided into two fragments with one parity fragment, offering a
   balance between redundancy and storage efficiency.
 - **Redundancy Level:** Can tolerate the failure of **one** storage node.
-- **Storage Efficiency:** **66%** (since one-third of the total capacity is used for parity).
+- **Raw-to-effective ratio:** **150%** 
 - **Performance Considerations:** **Lower write amplification** compared to **1+1**, as data is distributed across multiple nodes.
 - **Best Use Cases:**
     - Deployments where **storage efficiency is a priority** without significantly compromising redundancy.
-    - Applications that can tolerate slightly **higher recovery times** compared to **1+1**.
+    - Slight degradation of read performance compared to **1+1**
+    - Degradation of write IOPS performance compared to **1+1** only in the case of small writes (4K). Latency can degrade by about 50% in that case.
+    - Both read and write performance are impacted in case of degraded cluster (node outage).   
+    - Larger storage clusters where **balanced resource utilization** is necessary.
+
+### Scheme: 4+1
+
+- **Description:** In the _2+1 scheme_, data is divided into four fragments with one parity fragment, offering
+  optimal storage efficiency.
+- **Redundancy Level:** Can tolerate the failure of **one** storage node.
+- **Raw-to-effective ratio:** **125%** 
+- **Performance Considerations:** **Lower write amplification** compared to **1+1**, as data is distributed across multiple nodes.
+- **Best Use Cases:**
+    - Deployments where **storage efficiency is a priority** without significantly compromising redundancy.
+    - Degradation of write IOPS performance compared to **1+1** only in the case of smaller writes (<16K). Latency can degrade by about 50% in that case.
+    - Both read and write performance are more strongly impacted in case of degraded cluster (node outage).   
     - Larger storage clusters where **balanced resource utilization** is necessary.
 
 ### Scheme: 1+2
 
 - **Description:** In the _1+2 scheme_, data is replicated twice, effectively creating multiple copies of every data block.
 - **Redundancy Level:** Can tolerate the failure of **two** storage nodes.
-- **Storage Efficiency:** **33%** (since each piece of data is fully duplicated twice, requiring triples the storage capacity).
+- **Raw-to-effective ratio:** **300%** 
 - **Performance Considerations:** Offers **fast recovery and high read performance** due to data replication.
 - **Best Use Cases:**
-    - Workloads requiring **high availability and minimal recovery time**.
+    - Workloads requiring **highest availability and minimal recovery time**.
     - Applications where **performance is prioritized over storage efficiency**.
+    - Read performance comparable to **1+1**, write performance reduced by 1/3 (three times write amplifiction instead of 2).
     - Small to mid-sized deployments with less perspective on **storage requirements**.
 
 ### Scheme: 2+2
@@ -58,12 +75,25 @@ If you need more information on erasure coding, see the dedicated concept page f
 - **Description:** In the _2+1 scheme_, data is divided into two fragments with two parity fragments, offering a great
   balance between redundancy and storage efficiency.
 - **Redundancy Level:** Can tolerate the failure of **two** storage nodes.
-- **Storage Efficiency:** **50%** (since half of the total capacity is used for parity).
+- **Raw-to-effective ratio:** **200%**
 - **Performance Considerations:** **Lower write amplification** compared to **1+2**, as data is distributed across multiple nodes.
 - **Best Use Cases:**
     - Deployments where **storage efficiency is a priority** without compromising redundancy.
     - Applications that can tolerate slightly **higher recovery times** compared to **1+2**.
     - Larger storage clusters where **resource utilization** is necessary.
+ 
+  ### Scheme: 4+2
+
+- **Description:** In the _2+1 scheme_, data is divided into four fragments with two parity fragments, offering a great
+  balance between redundancy and storage efficiency.
+- **Redundancy Level:** Can tolerate the failure of **two** storage nodes.
+- **Raw-to-effective ratio:** **150%**
+- **Performance Considerations:** **Lower write amplification** compared to **1+2**, as data is distributed across multiple nodes.
+- **Best Use Cases:**
+    - Deployments where **high redundancy and storage efficiency is a priority**.
+    - Degradation of write IOPS performance compared to **1+1** only in the case of smaller writes (<16K). Latency can degrade by about 50% in that case.
+    - Both read and write performance are more strongly impacted in case of degraded cluster (node outage).   
+    - Larger storage clusters where **balanced resource utilization** is necessary.
 
 ## Choosing the Scheme
 
