@@ -19,14 +19,14 @@ For data transmission, simplyblock provides
 
 ## Network Infrastructure
 
-In terms of bandwidth, simplyblock recommends at least 40GBit/s per second interconnects, but higher is better.
+In terms of bandwidth, simplyblock recommends at least 10GBit/s per second interconnects, but higher is better.
 Especially with a high number of cluster nodes and logical volumes, simplyblock can easily saturate 200 GBit/s and
 more interconnects.
 
 !!! recommendation
     Simplyblock recommends NVIDIA Mellanox network adapters. However, every network adapter, including virtual
     ones will work. If using virtual machines, the physical network adapter should be made available to the VM
-    using PCI-e passthrough (IOMMU).
+    using PCI-e passthrough (IOSRV).
 
 Additionally, simplyblock recommends a physically separated storage network or using a VLAN to create a virtually
 separated network. This can improve performance and minimize network contention.
@@ -48,10 +48,7 @@ script to pre-test the most important requirements to ensure a smooth installati
 
 Additionally, simplyblock strongly recommends to design any network interconnect as a fully redundant connection. All
 commonly found solutions to achieve that are supported, including but not limited to LACP and Static LAG configurations,
-stacked switches, bonded NICs.
-
-!!! danger
-    Simplyblock, internally, always assumes the interconnect to be reliable, failing to provide such an interconnect
-    may lead to data loss in failure situations.
-
+stacked switches, bonded NICs. Depending on the erasure coding schema chosen and the number of nodes in a cluster, Simplyblock 
+supports either single or conccurent dual node outage, including network outages. If the network fails entirely 
+for more than one node (two nodes), this will cause a cluster-down and io suspension event.
 
