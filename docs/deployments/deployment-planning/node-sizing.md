@@ -41,11 +41,11 @@ responsible for handling all I/O operations and data services for logical volume
 
 The following hardware sizing specifications are recommended:
 
-| Hardware |                                                                                                                                                                                                                                                                                          |
-|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| CPU      | Minimum 8 vCPUs.<br/>3 cores are dedicated to service threads.<br/>Additionally, available cores are allocated to worker threads. |
-| RAM      | Minimum 8 GiB (for operating system)                                                                                                                                                                                                                                                     |
-| Disk     | Minimum 7 GiB free space on boot volume                                                                                                                                                                                                                                                                |
+| Hardware |                                                                                                           |
+|----------|-----------------------------------------------------------------------------------------------------------|
+| CPU      | Minimum 5 vCPU                                                                                            |
+| RAM      | Minimum 4 GiB                                                                                             |
+| Disk     | Minimum 10 GiB free space on boot volume                                                                  |
 
 ### Memory Requirements
 
@@ -55,38 +55,34 @@ capacity.
 While a certain amount of ram is pre-reserved for spdk, another part is dynamically pre-allocated. Users should ensure that
 the the full amount of required RAM is available (reserved) on the system as long as simplyblock is running.
 
-#### Huge Pages
-
-The exact amount of huge page memory is calculated when adding or restarting a node based on two parameters: the maximum
+The exact amount of memory is calculated when adding or restarting a node based on two parameters: the maximum
 amount of storage available in the cluster and the maximum amount of logical volumes which can be created on the node:
 
 | Unit                                  | Memory Requirement |
 |---------------------------------------|--------------------|
-| Min. amount                          | 2 GiB              |
-| Per logical volume                   | 25 MiB             |
-| Per TB of max. node utilized storage | 512 MiB            |
-| Per CPU core used for sb             | 100 MiB            |
-| Per TB of raw local disk space       | 256 MiB            |
+| Fixed amount                          | 2 GiB              |
+| Per logical volume                    | 25 MiB             |
+| % of max. utilized capacity on node   | 0.05               |
+| % of local node nvme capacity         | 0.025              |
+
+Example: Your node has 10 nvme with 8TB each, your cluster has 3 nodes with 240TB in total capacity,
+logial volumes are equally distributed across nodes and you plan to use up to 1.000 logical volumes on the node.
+This gives you (2 + 0.025*1.000 + 0.05 * 240.000/3 + 0.025 * 80.000) = 64.5GB.
 
 If not enough memory is available, the node will refuse to start. In this case, you may check
-`/proc/meminfo` for total, reserved, and available huge page memory on a corresponding node. 
+`/proc/meminfo` for total, reserved, and available system and huge page memory on a corresponding node. 
 
-!!! warning
+!!! info
     Part of the memory will be allocated as huge-page memory. In case of a high degree of memory fragmentation, a system
     may not be able to allocate enough of huge-page memory even if there is enough of system memory available. Reboot 
-    your system if you run into an error at node start time. 
-    Even if a node starts, this does not mean that enough of system memory is available for all operations, as parts of the 
-    memory are allocated dynamically.
- 
+    your system if you run into an error at node start time.  
+    Execute the following command to allocate temporary huge pages while the system is already running. It will allocate
+    8 GiB in huge pages. Please adjust the number of huge pages depending on your requirements.
 
-Example: Execute the following command to allocate temporary huge pages while the system is already running. It will allocate
-8 GiB in huge pages. Please adjust the number of huge pages depending on your requirements.
-
-```bash title="Allocate temporary huge pages"
-sudo sysctl vm.nr_hugepages=4096
-```
-
-Since the allocation is temporary, it will disappear after a system reboot.
+    ```bash title="Allocate temporary huge pages"
+    sudo sysctl vm.nr_hugepages=4096
+    ```
+    Since the allocation is temporary, it will disappear after a system reboot.
 
 ### Storage Planning
 
