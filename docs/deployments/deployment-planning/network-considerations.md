@@ -11,7 +11,7 @@ performance and reliability of its virtual block storage devices (logical volume
 Protocol-wise, simplyblock implements
 [NVMe over Fabrics (NVMe-oF)](../../important-notes/terminology.md#nvme-of-nvme-over-fabrics), meaning that simplyblock
 does not require any specific network infrastructure such as Fibre Channel or Infiniband, but works over any
-Ethernet interconnects.
+Ethernet interconnect.
 
 For data transmission, simplyblock provides
 [NVMe over TCP (NVMe/TCP)](../../important-notes/terminology.md#nvmetcp-nvme-over-tcp) and
@@ -19,7 +19,7 @@ For data transmission, simplyblock provides
 
 ## Network Infrastructure
 
-In terms of bandwidth, simplyblock recommends at least 10GBit/s per second interconnects, but higher is better.
+In terms of bandwidth, simplyblock recommends at least 10GBit/s interconnects, but higher is better.
 Especially with a high number of cluster nodes and logical volumes, simplyblock can easily saturate 200 GBit/s and
 more interconnects.
 
@@ -48,7 +48,7 @@ script to pre-test the most important requirements to ensure a smooth installati
 
 Additionally, simplyblock strongly recommends to design any network interconnect as a fully redundant connection. All
 commonly found solutions to achieve that are supported, including but not limited to LACP and Static LAG configurations,
-stacked switches, bonded NICs. Depending on the erasure coding schema chosen and the number of nodes in a cluster, Simplyblock 
-supports either single or conccurent dual node outage, including network outages. If the network fails  
-for more than one node (two nodes), this will cause a cluster-down and io suspension event.
+stacked switches, bonded NICs. Depending on the erasure coding schema chosen and the number of nodes in a cluster,
+simplyblock supports either single or concurrent dual node outage, including network outages. If the network fails  
+for more than one node (two nodes), this will cause a cluster-down and I/O suspension event.
 
