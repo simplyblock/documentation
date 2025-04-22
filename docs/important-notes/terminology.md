@@ -30,9 +30,9 @@ The data stored on such a volume is distributed within the cluster following a d
 
 ### Storage Pool
 
-A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, iops and 
-r/w throughput. Storage pools are defined on a cluster-level and can span logical volumes across multiple storage nodes.
-Therefore storage pools implement a tenant-concept.   
+A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, IOPS and 
+read-write throughput. Storage pools are defined on a cluster-level and can span logical volumes across multiple
+storage nodes. Therefore, storage pools implement a tenant-concept.   
 
 ### Storage Device
 
@@ -104,8 +104,10 @@ fragments using mathematical algorithms. These k + m fragments are then distribu
 allowing the system to reconstruct lost or corrupted data from any k available fragments. Compared to traditional
 replication, erasure coding offers greater storage efficiency while maintaining high availability, making it ideal for
 cloud storage, object storage, and high-performance computing (HPC) environments where durability and cost-effectiveness
-are critical.  Simplyblock supports all combinations of n=1,2 and 4 and k=1,2; Algorithms used are highly performance-optimized
-for these schemas.
+are critical.
+
+Simplyblock supports all combinations of k = 1,2,4 and m = 1,2. The erasure coding implementation uses highly
+performance-optimized algorithms specific to the selected schema.
 
 ### Replication
 
@@ -115,7 +117,7 @@ synchronously, where data is copied in real-time to ensure consistency, or async
 optimize performance. It is commonly used in distributed storage systems, cloud storage, and database management to
 protect against hardware failures and data loss. By maintaining redundant copies, replication enhances data resilience,
 load balancing, and accessibility, making it a fundamental technique for enterprise and cloud-scale storage solutions.
-In Simplyblock, we support synchronous replication.
+Simplyblock supports synchronous replication.
 
 ### RAID (Redundant Array of Independent Disks)
 
@@ -135,9 +137,9 @@ different applications receive appropriate levels of performance, preventing res
 environments. By setting limits and priorities for Logical Volumes (LVs), Simplyblock allows administrators to allocate
 storage resources efficiently, ensuring critical workloads maintain consistent performance even under high demand.
 This capability is essential for optimizing storage operations, improving reliability, and meeting service-level
-agreements (SLAs) in distributed cloud-native environments. In Simplyblock it is possible to limit (cap) iops or throughput
+agreements (SLAs) in distributed cloud-native environments. In simplyblock it is possible to limit (cap) IOPS or throughput
 of individual logical volumes or entire storage pools and additionally to create QoS classes and provide a fair 
-relative ressource allocation (iops and/or throughput) to each class. Logical volumes can then be assigned to classes.
+relative resource allocation (IOPS and/or throughput) to each class. Logical volumes can be assigned to classes.
 
 ### SPDK (Storage Performance Development Kit)
 
