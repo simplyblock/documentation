@@ -10,25 +10,35 @@ type: "docs"
 
 ## Storage Related Terms
 
+### Storage Cluster
+
+A simplyblock storage cluster is a group of interconnected storage nodes that work together to provide a scalable, fault-tolerant,
+and high-performance storage system. Unlike traditional single-node storage solutions, storage clusters distribute data
+across multiple nodes, ensuring redundancy, load balancing, and resilience against hardware failures. To optimize data
+availability and efficiency, these clusters can be configured using different architectures, including replication and
+erasure coding. Storage clusters are commonly used in cloud storage, high-performance
+computing (HPC), and enterprise data centers, enabling seamless scalability and improved data accessibility across
+distributed environments.
+
+### Storage Node
+
+A storage node in a simplyblock distributed storage cluster is a physical or virtual machine that contributes storage resources to
+the cluster, providing a portion of the overall storage capacity and participating in data distribution, redundancy, and
+retrieval processes. In simplyblock, each logical volume is attached to particular primary and secondary storage nodes via nmvf. The nodes
+run the in-memory data services for this volume on the hot data path and provide access to underlying data. 
+The data stored on such a volume is distributed within the cluster following a defined placement logic. 
+
 ### Storage Pool
 
-A storage pool is a logical aggregation of multiple physical storage devices that provides a flexible and scalable
-foundation for managing storage resources. By pooling storage from different drives or nodes, a storage pool enables
-efficient capacity management, redundancy, and performance optimization through techniques such as thin provisioning,
-replication, and erasure coding. Storage pools are commonly used in software-defined storage (SDS), hyper-converged
-infrastructure (HCI), and enterprise storage systems to simplify storage provisioning and dynamically allocate space
-based on workload demands. This abstraction layer improves fault tolerance, scalability, and resource utilization in
-modern storage architectures.
+A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, IOPS and 
+read-write throughput. Storage pools are defined on a cluster-level and can span logical volumes across multiple
+storage nodes. Therefore, storage pools implement a tenant-concept.   
 
 ### Storage Device
 
-A storage device is a hardware component or system that stores and retrieves digital data in computing environments.
-Storage devices can be classified into different types based on technology and access speed, including hard disk
-drives (HDDs), solid-state drives (SSDs), NVMe drives, and optical or tape storage. They can be locally attached to a
-single machine or shared across multiple systems in networked storage architectures such as Storage Area Networks (SANs)
-and Network-Attached Storage (NAS). Modern distributed and cloud environments leverage software-defined storage (SDS) to
-manage multiple storage devices efficiently, ensuring scalability, redundancy, and optimized data access for various
-applications.
+A storage device is a physical or virtualized nvme drive in simplyblock, but not a partition. 
+It is identified by its PCIe address. Simplyblock currently supports different a wide range of different 
+types of nvme drives with different performance characteristics, features and capacity. 
 
 ### NVMe (Non-Volatile Memory Express)
 
@@ -77,15 +87,6 @@ reliability by using multiple connections, ensuring continuous access to storage
 implemented in Fibre Channel (FC), iSCSI, and NVMe-oF (including NVMe/TCP and NVMe/RoCE) environments, where high
 availability and optimized data transfer are critical.
 
-### Storage Node
-
-A storage node in a distributed storage cluster is a physical or virtual machine that contributes storage resources to
-the cluster, providing a portion of the overall storage capacity and participating in data distribution, redundancy, and
-retrieval processes. Each storage node typically runs specialized storage software to manage data placement,
-replication, and access, ensuring high availability and fault tolerance. In modern distributed storage architectures,
-storage nodes communicate with one another to maintain data consistency, balance workloads, and optimize performance,
-often using techniques such as erasure coding or replication to safeguard against node failures.
-
 ### Management Node
 
 A management node is a containerized component that orchestrates, monitors, and controls the distributed storage
@@ -95,25 +96,18 @@ storage nodes and client applications, enforcing policies such as access control
 They also provide an interface for administrators to interact with the storage system via the Simplyblock CLI or API,
 enabling seamless deployment, scaling, and maintenance of the storage infrastructure.
 
-### Storage Cluster
+### Distributed Erasure Coding
 
-A storage cluster is a group of interconnected storage nodes that work together to provide a scalable, fault-tolerant,
-and high-performance storage system. Unlike traditional single-node storage solutions, storage clusters distribute data
-across multiple nodes, ensuring redundancy, load balancing, and resilience against hardware failures. To optimize data
-availability and efficiency, these clusters can be configured using different architectures, such as replication,
-erasure coding, or software-defined storage (SDS). Storage clusters are commonly used in cloud storage, high-performance
-computing (HPC), and enterprise data centers, enabling seamless scalability and improved data accessibility across
-distributed environments.
-
-### Erasure Coding
-
-Erasure coding is a data protection technique used in distributed storage systems to provide fault tolerance and
+Distributed Erasure coding is a data protection technique used in distributed storage systems to provide fault tolerance and
 redundancy while minimizing storage overhead. It works by breaking data into k data fragments and generating m parity
 fragments using mathematical algorithms. These k + m fragments are then distributed across multiple storage nodes,
 allowing the system to reconstruct lost or corrupted data from any k available fragments. Compared to traditional
 replication, erasure coding offers greater storage efficiency while maintaining high availability, making it ideal for
 cloud storage, object storage, and high-performance computing (HPC) environments where durability and cost-effectiveness
 are critical.
+
+Simplyblock supports all combinations of k = 1,2,4 and m = 1,2. The erasure coding implementation uses highly
+performance-optimized algorithms specific to the selected schema.
 
 ### Replication
 
@@ -123,6 +117,7 @@ synchronously, where data is copied in real-time to ensure consistency, or async
 optimize performance. It is commonly used in distributed storage systems, cloud storage, and database management to
 protect against hardware failures and data loss. By maintaining redundant copies, replication enhances data resilience,
 load balancing, and accessibility, making it a fundamental technique for enterprise and cloud-scale storage solutions.
+Simplyblock supports synchronous replication.
 
 ### RAID (Redundant Array of Independent Disks)
 
@@ -142,7 +137,9 @@ different applications receive appropriate levels of performance, preventing res
 environments. By setting limits and priorities for Logical Volumes (LVs), Simplyblock allows administrators to allocate
 storage resources efficiently, ensuring critical workloads maintain consistent performance even under high demand.
 This capability is essential for optimizing storage operations, improving reliability, and meeting service-level
-agreements (SLAs) in distributed cloud-native environments.
+agreements (SLAs) in distributed cloud-native environments. In simplyblock it is possible to limit (cap) IOPS or throughput
+of individual logical volumes or entire storage pools and additionally to create QoS classes and provide a fair 
+relative resource allocation (IOPS and/or throughput) to each class. Logical volumes can be assigned to classes.
 
 ### SPDK (Storage Performance Development Kit)
 
