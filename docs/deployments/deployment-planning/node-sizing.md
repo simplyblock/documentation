@@ -52,37 +52,49 @@ The following hardware sizing specifications are recommended:
 In addition to the above RAM requirements, the storage node requires additional memory based on the managed storage
 capacity.
 
-While a certain amount of ram is pre-reserved for spdk, another part is dynamically pre-allocated. Users should ensure that
-the the full amount of required RAM is available (reserved) on the system as long as simplyblock is running.
+While a certain amount of RAM is pre-reserved for [SPDK](../../important-notes/terminology.md#spdk-storage-performance-development-kit),
+another part is dynamically pre-allocated. Users should ensure that the full amount of required RAM is available
+(reserved) from the system as long as simplyblock is running.
 
-The exact amount of memory is calculated when adding or restarting a node based on two parameters: the maximum
-amount of storage available in the cluster and the maximum amount of logical volumes which can be created on the node:
+The exact amount of memory is calculated when adding or restarting a node based on two parameters:
 
-| Unit                                  | Memory Requirement |
-|---------------------------------------|--------------------|
-| Fixed amount                          | 2 GiB              |
-| Per logical volume                    | 25 MiB             |
-| % of max. utilized capacity on node   | 0.05               |
-| % of local node nvme capacity         | 0.025              |
+- The maximum amount of storage available in the cluster
+- The maximum amount of logical volumes which can be created on the node
 
-Example: Your node has 10 nvme with 8TB each, your cluster has 3 nodes with 240TB in total capacity,
-logial volumes are equally distributed across nodes and you plan to use up to 1.000 logical volumes on the node.
-This gives you (2 + 0.025*1.000 + 0.05 * 240.000/3 + 0.025 * 80.000) = 64.5GB.
+| Unit                                | Memory Requirement |
+|-------------------------------------|--------------------|
+| Fixed amount                        | 2 GiB              |
+| Per logical volume                  | 25 MiB             |
+| % of max. utilized capacity on node | 0.05               |
+| % of NVMe capacity on node          | 0.025              |
 
-If not enough memory is available, the node will refuse to start. In this case, you may check
-`/proc/meminfo` for total, reserved, and available system and huge page memory on a corresponding node. 
+!!! info
+    Example: A node has 10 NVMe devices with 8TB each. The cluster has 3 nodes and total capacity of 240 TB.
+    Logical volumes are equally distributed across nodes, and it is planned to use up to 1,000 logical volumes on
+    each node. Hence, the following formula:
+    ```plain
+    (2 + (0.025 * 1,000) + (0.05 * 240,000 GB / 3) + (0.025 * 80,000 GB) = 64.5 GB
+    ```
+
+If not enough memory is available, the node will refuse to start. In this case, `/proc/meminfo` may be checked for
+total, reserved, and available system and huge page memory on a corresponding node. 
 
 !!! info
     Part of the memory will be allocated as huge-page memory. In case of a high degree of memory fragmentation, a system
-    may not be able to allocate enough of huge-page memory even if there is enough of system memory available. Reboot 
-    your system if you run into an error at node start time.  
-    Execute the following command to allocate temporary huge pages while the system is already running. It will allocate
-    8 GiB in huge pages. Please adjust the number of huge pages depending on your requirements.
+    may not be able to allocate enough of huge-page memory even if there is enough of system memory available. If the
+    node fails to start-up, a system reboot may ensure enough free memory.  
+    
+    The following command can be executed to temporarily allocate huge pages while the system is already running. It
+    will allocate 8 GiB in huge pages. The number of huge pages must be adjusted depending on the requirements. The
+    [Huge Pages Calculator](../../reference/huge-pages-calculator.md) helps with calculating the required number of
+    huge pages.
 
     ```bash title="Allocate temporary huge pages"
     sudo sysctl vm.nr_hugepages=4096
     ```
-    Since the allocation is temporary, it will disappear after a system reboot.
+
+    Since the allocation is temporary, it will disappear after a system reboot. It must be ensured that either the
+    setting is re-applied after each system reboot or persisted to be automatically applied on systemm boot up.
 
 ### Storage Planning
 
@@ -95,9 +107,11 @@ persisted into their final position. This helps with write performance and trans
 write-ahead log structure and replaying the journal in case of a issue.
 
 !!! warning
-   Simplyblock does not work with device partitions or claimed (mounted) devices. Make sure all of your nvme devices
-   are unmounted and not busy. Remove any partitions from devices prior to installing simplyblock. Low-level format
-   nvme devices with 4KB block size (lbaf: 12). 
+    Simplyblock does not work with device partitions or claimed (mounted) devices. It must be ensured that all NVMe
+    devices to be used by simplyblock are unmounted and not busy.
+
+    Any partition must be removed from the NVMe devices prior to installing simplyblock. Furthermore, NVMe devices must
+    be low-level formatted with 4KB block size (lbaf: 12). More information can be found in [NVMe Low-Level Format](../../reference/nvme-low-level-format.md).
 
 !!! info
     Secondary nodes don't need NVMe storage disks.
