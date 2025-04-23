@@ -21,7 +21,7 @@ for the control plane nodes and disaggregated storage nodes (docker-swarm) and r
 For storage nodes running in Kubernetes, any Linux distribution (RHEL-based, Debian-based, Talos) can be used. For more
 information, see the supported [Linux Distributions Matrix](../../reference/supported-linux-distributions.md).
 
-For any client host, the `nvmf-tcp` module must be loaded and support [NVMe Multipathing](https://docs.kernel.org/admin-guide/nvme-multipath.html){:target="_blank" rel="noopener"}.
+For any client host, the `nvme-tcp` module must be loaded and support [NVMe Multipathing](https://docs.kernel.org/admin-guide/nvme-multipath.html){:target="_blank" rel="noopener"}.
 
 ## Storage Considerations
 
