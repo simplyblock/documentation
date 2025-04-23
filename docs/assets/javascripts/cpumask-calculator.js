@@ -9,22 +9,29 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function calculate_cpu_mask() {
-        const numCores = elNumCores.value;
         const cores = [...elCoresWrapper.querySelectorAll("input[type=checkbox]")].map(checkbox => {
             return checkbox.checked ? 1 : 0
         });
 
-        let cpumask = 0;
-        for (let i = 0; i < cores.length; i++) {
+        let cpumask_low = 0;
+        let cpumask_high = 0;
+        for (let i = 0; i < Math.min(cores.length, 32); i++) {
             if (cores[i] === 0) continue;
-            cpumask |= cores[i] << i;
+            cpumask_low |= cores[i] << i;
         }
-        const hex = long2hex(cpumask);
-        elResult.innerText = `0x${hex.toUpperCase()}`;
+        if (cores.length > 32) {
+            for (let i = 32; i < cores.length; i++) {
+                if (cores[i] === 0) continue;
+                cpumask_high |= cores[i] << i;
+            }
+        }
+        const hex = long2hex(cpumask_high) + long2hex(cpumask_low);
+        const cut = hex.replace(/^0+(?=\d\d\d\d)/, '')
+        elResult.innerText = `0x${cut.toUpperCase()}`;
     }
 
     function pad0(num, width) {
-        let zeros;
+        let zeros = "";
         for (let i = 0; i < width; i++) {
             zeros += "0";
         }
@@ -39,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function render_checkboxes() {
-        const value = parseInt(elNumCores.value);
+        let value = parseInt(elNumCores.value);
         if (value < 0) value = 0;
         if (value > 64) value = 64;
 
