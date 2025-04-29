@@ -51,7 +51,8 @@ demo@worker-1 ~> sudo modprobe nbd
 | bdts                        | ingress   | storage                 | 4420      | TCP         |
 | Cluster Control             | ingress   | control                 | 5000      | TCP         |
 | spdk-http-proxy             | ingress   | storage, control        | 8080      | TCP         |
-| lvol-proxy                  | ingress   | storage, control        | 9090-9900 | TCP         |
+| hub-lvol                    | ingress   | storage, control        | 9060-9099 | TCP         |
+| lvol-proxy                  | ingress   | storage, control        | 9100-9900 | TCP         |
 | SSH                         | ingress   | storage, control, admin | 22        | TCP         |
 | Docker Daemon Remote Access | ingress   | storage, control        | 2375      | TCP         |
 |                             |           |                         |           |             |
