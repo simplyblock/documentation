@@ -52,14 +52,26 @@ ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 
 The last item necessary before deploying simplyblock is the control plane address. This is any of the API addresses of a
 management node. Meaning, if the primary management node has the IP of `192.168.10.1`, the control plane address is
-`http://192.168.0.1`. It is, however, recommended to front all management nodes, with a load balancing proxy, such as
+`http://192.168.0.1`. It is, however, recommended to front all management nodes with a load balancing proxy, such as
 HAproxy. In the latter case, the load balancer URL would be the address of the control plane.
 
 Anyhow, deploying simplyblock using the provided helm chart comes down to providing the four necessary
 values, adding the helm chart repository, and installing the driver. In addition to the storage nodes, this will also
 install the Simplyblock CSI driver for seamless integration with the Kubernetes CSI persistent storage subsystem.
 
-```bash
+To enable Kubernetes to decide where to install storage nodes, the helm chart uses a Kubernetes node label. This can be
+used to mark only specific nodes to act as storage nodes, or to use all nodes for the hyper-converged or hybrid setup. 
+
+```bash title="Label the Kubernetes Worker Node"
+kubectl label nodes <NODE_NAME> type=simplyblock-storage-plane
+```
+
+!!! warning
+    The label must be applied to all nodes meant to operate as part of the storage plane.
+
+After labeling the nodes, the helm chart can be deployed.
+
+```bash title="Install the helm chart"
 CLUSTER_UUID="<UUID>"
 CLUSTER_SECRET="<SECRET>"
 CNTR_ADDR="<CONTROL-PLANE-ADDR>"
