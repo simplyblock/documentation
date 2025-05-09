@@ -32,11 +32,15 @@ storage nodes along with parity fragments. This provides:
 Simplyblock supports NVMe-over-Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
 storage:
 
-- **Primary and Secondary Paths**: Each Logical Volume (LV) is accessible through both a primary node and one or
-  more secondary nodes.
+- **Primary and Secondary Paths**: Each Logical Volume (LV) is accessible through both a primary node and one secondary node.
 - **Automatic Failover**: If the primary node becomes unavailable, traffic is automatically redirected to a secondary
   node with minimal disruption.
-- **Load Balancing**: Multipathing also distributes I/O across available paths to optimize performance and reliability.
+
+Multipathing is based on ANA (asynchronous namespace access), an concept defined in the nvme standard, which allows the
+definition of optimized and non-optimized paths.
+
+Simplyblock also supports multipathing via the older Linux DM (Device Mapper) MPIO. This can be useful, if the operating system 
+does not have nvme multipathing compiled into its kernel, as it is the case with Amazon Linux 2 and Amazon Linux 2023.
 
 ### 3. Redundant Control Plane and Storage Plane
 
