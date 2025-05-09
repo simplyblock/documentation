@@ -22,4 +22,31 @@ The following kernels are known to be compatible and tested. Additional kernel v
     Amazon Linux 2 and Amazon Linux 2023 have a bug with
     [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics
     on any Amazon Linux operates in a degraded state with the risk of connection outages. As an alternative,
-    multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO.
+    multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO. Use the following DM-MPIO configuration:
+
+    cat /etc/multipath.conf 
+    defaults {
+        polling_interval 1
+        user_friendly_names yes
+        find_multipaths yes
+        enable_foreign nvme
+        checker_timeout 3
+        failback followoverimmediate
+        max_polling_interval 3
+        detect_checker yes
+    }
+
+    devices {
+        device {
+            vendor "NVMe"
+            product ".*"
+            path_grouping_policy group_by_prio
+            path_selector "service-time 0"
+            failback "immediate"
+            no_path_retry "queue"
+            hardware_handler "1 ana"
+        }
+    }
+    
+    blacklist {
+    }
