@@ -31,7 +31,7 @@ The following kernels are known to be compatible and tested. Additional kernel v
         find_multipaths yes
         enable_foreign nvme
         checker_timeout 3
-        failback followoverimmediate
+        failback immediate
         max_polling_interval 3
         detect_checker yes
     }
