@@ -9,9 +9,9 @@
 | SSH                         | ingress   | storage, control, admin | 22        | TCP         |
 | Docker Daemon Remote Access | ingress   | storage, control        | 2375      | TCP         |
 | Docker Swarm Remote Access  | ingress   | storage, control        | 2377      | TCP         |
+| FoundationDB                | ingress   | control                 | 4500      | TCP         |
 | Docker Overlay Network      | ingress   | storage, control        | 4789      | UDP         |
 | Docker Network Discovery    | ingress   | storage, control        | 7946      | TCP / UDP   |
-| FoundationDB                | ingress   | control                 | 4500      | TCP         |
 | Graylog                     | ingress   | control                 | 12202     | TCP         |
 |                             |           |                         |           |             |
 | FoundationDB                | egress    | storage                 | 4500      | TCP         |
