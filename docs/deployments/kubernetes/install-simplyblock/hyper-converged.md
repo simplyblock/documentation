@@ -48,10 +48,11 @@ demo@worker-1 ~> sudo modprobe nbd
 | Service                     | Direction | Source / Target Network | Port(s)   | Protocol(s) |
 |-----------------------------|-----------|-------------------------|-----------|-------------|
 | ICMP                        | ingress   | control                 | -         | ICMP        |
-| bdts                        | ingress   | storage                 | 4420      | TCP         |
-| Cluster Control             | ingress   | control                 | 5000      | TCP         |
-| spdk-http-proxy             | ingress   | storage, control        | 8080      | TCP         |
-| lvol-proxy                  | ingress   | storage, control        | 9090-9900 | TCP         |
+| Storage node API            | ingress   | storage                 | 5000      | TCP         |
+| spdk-http-proxy             | ingress   | storage, control        | 8080-8180 | TCP         |
+| hublvol-nvmf-subsys-port    | ingress   | storage, control        | 9030-9059 | TCP         |
+| internal-nvmf-subsys-port   | ingress   | storage, control        | 9060-9099 | TCP         |
+| lvol-nvmf-subsys-port       | ingress   | storage, control        | 9100-9200 | TCP         |
 | SSH                         | ingress   | storage, control, admin | 22        | TCP         |
 | Docker Daemon Remote Access | ingress   | storage, control        | 2375      | TCP         |
 |                             |           |                         |           |             |
