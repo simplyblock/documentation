@@ -24,6 +24,7 @@ The following kernels are known to be compatible and tested. Additional kernel v
     on any Amazon Linux operates in a degraded state with the risk of connection outages. As an alternative,
     multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO. Use the following DM-MPIO configuration:
 
+    ```plain
     cat /etc/multipath.conf 
     defaults {
         polling_interval 1
@@ -50,3 +51,4 @@ The following kernels are known to be compatible and tested. Additional kernel v
     
     blacklist {
     }
+    ```
