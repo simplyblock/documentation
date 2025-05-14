@@ -63,17 +63,16 @@ The exact amount of memory is calculated when adding or restarting a node based 
 
 | Unit                                | Memory Requirement |
 |-------------------------------------|--------------------|
-| Fixed amount                        | 2 GiB              |
-| Per logical volume                  | 25 MiB             |
-| % of max. utilized capacity on node | 0.05               |
-| % of NVMe capacity on node          | 0.025              |
+| Fixed amount                        | 3 GiB              |
+| Per logical volume                  | 15 MiB             |
+| % of max. utilized capacity on node | 0.2%               |
 
 !!! info
     Example: A node has 10 NVMe devices with 8TB each. The cluster has 3 nodes and total capacity of 240 TB.
     Logical volumes are equally distributed across nodes, and it is planned to use up to 1,000 logical volumes on
     each node. Hence, the following formula:
     ```plain
-    (2 + (0.025 * 1,000) + (0.05 * 240,000 GB / 3) + (0.025 * 80,000 GB) = 64.5 GB
+    3 + (2 * 80) + (0.015 * 1000) = 164.5 GB
     ```
 
 If not enough memory is available, the node will refuse to start. In this case, `/proc/meminfo` may be checked for
