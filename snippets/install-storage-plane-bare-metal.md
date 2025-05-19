@@ -144,7 +144,17 @@ sudo {{ variables.cliname }} storage-node configure \
 ```
 
 ```plain title="Example output of storage node configure"
-<missing>
+[demo@demo-3 ~]# sudo {{ variables.cliname }} sn configure --nodes-per-socket=2 --max-lvol=50 --max-size=1T
+2025-05-14 10:40:17,460: INFO: 0000:00:04.0 is already bound to nvme.
+0000:00:1e.0
+0000:00:1e.0
+0000:00:1f.0
+0000:00:1f.0
+0000:00:1e.0
+0000:00:1f.0
+2025-05-14 10:40:17,841: INFO: JSON file successfully written to /etc/simplyblock/sn_config_file
+2025-05-14 10:40:17,905: INFO: JSON file successfully written to /etc/simplyblock/system_info
+True
 ```
 
 A full set of the parameters for the configure subcommand can be found in the
