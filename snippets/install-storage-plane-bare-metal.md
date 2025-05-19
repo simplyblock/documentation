@@ -125,7 +125,32 @@ Success formatting namespace:1
 
 --8<-- "prepare-nvme-tcp.md"
 
+#### Configuration and Deployment
+
 With all NVMe devices prepared and the NVMe/TCP driver loaded, the storage node software can be deployed.
+
+The actual deployment process happens in three steps:
+- Creating the storage node configuration
+- Deploy the first stage (the storage node API)
+- Deploy the second stage (add the storage node to the cluster), happening from a management node
+
+The configuration process creates the configuration file which contains all the assignments of NVMe devices, NICs, and
+potentially available [NUMA nodes](/deployments/deployment-planning/numa-considerations.md). Per default, simplyblock will configure one storage node per NUMA node.
+
+```bash title="Configure the storage node"
+sudo {{ variables.cliname }} storage-node configure \
+  --max-lvol <MAX_LOGICAL_VOLUMES> \
+  --max-size <MAX_PROVISIONING_CAPACITY>
+```
+
+```plain title="Example output of storage node configure"
+<missing>
+```
+
+A full set of the parameters for the configure subcommand can be found in the
+[CLI reference](/reference/cli/storage-node.md#prepare-a-configuration-file-to-be-used-when-adding-the-storage-node). 
+
+After the configuration has been created, the first stage deployment can be executed 
 
 ```bash title="Deploy the storage node"
 sudo {{ variables.cliname }} storage-node deploy --ifname eth0
