@@ -30,6 +30,10 @@
           mask-image: var(--md-admonition-icon--tip);
 }
 
+.md-header__topic {
+  opacity: revert !important;
+}
+
 .md-tabs__link {
   font-weight: 600;
 }
