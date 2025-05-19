@@ -20,10 +20,10 @@ preparation phase to find missing configuration during the process.
 
 ```bash title="Automatically check your configuration"
 # Configuration check for the control plane (management nodes)
-curl -s -L http://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
+curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 
 # Configuration check for the storage plane (storage nodes)
-curl -s -L http://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
+curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 ```
 
 ## Before We Start
