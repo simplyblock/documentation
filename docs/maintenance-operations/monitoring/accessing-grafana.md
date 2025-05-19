@@ -3,7 +3,7 @@ title: "Accessing Grafana"
 weight: 30000
 ---
 
-Simplyblock's control plane include a Prometheus and Grafana installation.
+Simplyblock's control plane include a Prometheus, Grafana, and Graylog installation.
 
 Grafana retrieves metric data from Prometheus, including capacity, io statistics, the cluster event log. Additionally,
 Grafana is used for alerting via Slack or email.
@@ -12,11 +12,11 @@ The standard retention period for metrics is 7 days. This, however, can be chang
 
 ## How to access Grafana
 
-Grafana can be accessed through all management nodes via port 3000. It is recommended to set up a load balancer with
-session stickyness in front of the Grafana installation(s).
+Grafana can be accessed through all management node API. It is recommended to set up a load balancer with session
+stickyness in front of the Grafana installation(s).
 
 ```plain title="Grafana URLs"
-http://<MGMT_NODE_IP>:3000
+http://<MGMT_NODE_IP>/grafana
 ```
 
 To retrieve the endpoint address from the cluster itself, use the following command:
