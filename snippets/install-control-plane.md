@@ -74,7 +74,7 @@ sudo pip install {{ variables.cliname }} --upgrade
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 
 ```bash title="Automatically check your configuration"
-curl -L https://sblk.xyz/prerequisites | bash
+curl -s -L http://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 ```
 
 If the check succeeds, it's time to set up the primary management node:
