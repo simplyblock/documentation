@@ -1,12 +1,16 @@
 Installing simplyblock for production, requires a few components to be installed, as well as a couple of configurations
 to secure the network, ensure the performance and data protection in the case of hardware or software failures.
 
-Simplyblock provides a test script to automatically check your system's configuration. While it may not catch all
-edge cases, it can help to streamline the configuration check. This script can be run multiple times during the
+Simplyblock provides two test scripts to automatically check your system's configuration. While those may not catch all
+edge cases, they can help to streamline the configuration check. This script can be run multiple times during the
 preparation phase to find missing configuration during the process.
 
 ```bash title="Automatically check your configuration"
-curl -L https://sblk.xyz/prerequisites | bash
+# Configuration check for the control plane (management nodes)
+curl -s -L http://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
+
+# Configuration check for the storage plane (storage nodes)
+curl -s -L http://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 ```
 
 ## Before We Start

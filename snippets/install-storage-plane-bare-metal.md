@@ -39,7 +39,7 @@ sudo pip install {{ variables.cliname }} --upgrade
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 
 ```bash title="Automatically check your configuration"
-curl -L https://sblk.xyz/prerequisites | bash
+curl -s -L http://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 ```
 
 Once the check is complete, the NVMe devices in each storage node can be prepared. To prevent data loss in case of a
