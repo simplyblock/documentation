@@ -102,7 +102,7 @@ validation:
     not_found: warn
     anchors: warn
     unrecognized_links: warn
-    absolute_links: warn
+    absolute_links: relative_to_docs
 watch:
   - ./snippets
   - ./_data
