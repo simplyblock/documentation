@@ -32,6 +32,9 @@
 
 .md-header__topic {
   opacity: revert !important;
+  transform: revert !important;
+  pointer-events: revert !important;
+  transition: revert !important;
 }
 
 .md-tabs__link {
