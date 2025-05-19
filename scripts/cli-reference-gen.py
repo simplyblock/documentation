@@ -2,6 +2,7 @@ import jinja2
 import yaml
 import sys
 import re
+import os
 
 def is_parameter(item):
     return item["name"].startswith("--") or item["name"].startswith("-")
@@ -92,7 +93,11 @@ def get_description(item):
 
 
 base_path = sys.argv[1]
-with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
+reference_file = f"{base_path}/scripts/sbcli-repo/simplyblock_cli/cli-reference.yaml"
+if os.path.exists(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml"):
+    reference_file = f"{base_path}/scripts/sbcli-repo/cli-reference.yaml"
+
+with open(reference_file) as stream:
     try:
         reference = yaml.safe_load(stream)
 
