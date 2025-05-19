@@ -40,5 +40,5 @@ multipathing.
 ## Secondary Node
 
 A secondary node is a node of the storage plane cluster. The secondary node provides automatic fail over and high
-availability for logical volumes using NVMe-oF multipathing. Simplyblock requires additional secondary nodes for
-a fully high available cluster to minimize performance impact in case of a storage node failure.
+availability for logical volumes using NVMe-oF multipathing. In a highly available cluster, simplyblock automatically
+provisions secondary nodes alongside primary nodes and assigns one secondary node per primary.

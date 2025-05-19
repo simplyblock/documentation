@@ -12,25 +12,26 @@ type: "docs"
 
 ### Storage Cluster
 
-A simplyblock storage cluster is a group of interconnected storage nodes that work together to provide a scalable, fault-tolerant,
-and high-performance storage system. Unlike traditional single-node storage solutions, storage clusters distribute data
-across multiple nodes, ensuring redundancy, load balancing, and resilience against hardware failures. To optimize data
-availability and efficiency, these clusters can be configured using different architectures, including replication and
-erasure coding. Storage clusters are commonly used in cloud storage, high-performance
-computing (HPC), and enterprise data centers, enabling seamless scalability and improved data accessibility across
-distributed environments.
+A simplyblock storage cluster is a group of interconnected storage nodes that work together to provide a scalable,
+fault-tolerant, and high-performance storage system. Unlike traditional single-node storage solutions, storage clusters
+distribute data across multiple nodes, ensuring redundancy, load balancing, and resilience against hardware failures. To
+optimize data availability and efficiency, these clusters can be configured using different architectures, including
+replication and erasure coding. Storage clusters are commonly used in cloud storage, high-performance computing (HPC),
+and enterprise data centers, enabling seamless scalability and improved data accessibility across distributed
+environments.
 
 ### Storage Node
 
-A storage node in a simplyblock distributed storage cluster is a physical or virtual machine that contributes storage resources to
-the cluster, providing a portion of the overall storage capacity and participating in data distribution, redundancy, and
-retrieval processes. In simplyblock, each logical volume is attached to particular primary and secondary storage nodes via nmvf. The nodes
-run the in-memory data services for this volume on the hot data path and provide access to underlying data. 
-The data stored on such a volume is distributed within the cluster following a defined placement logic. 
+A storage node in a simplyblock distributed storage cluster is a physical or virtual machine that contributes storage
+resources to the cluster. It provides a portion of the overall storage capacity and participates in the data
+distribution, redundancy, and retrieval processes. In simplyblock, each logical volume is attached to particular primary
+and secondary storage nodes via the nmvf protocol. The nodes run the in-memory data services for this volume on the hot
+data path and provide access to underlying data. The data stored on such a volume is distributed within the cluster
+following a defined placement logic. 
 
 ### Storage Pool
 
-A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, IOPS and 
+A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, IOPS, and 
 read-write throughput. Storage pools are defined on a cluster-level and can span logical volumes across multiple
 storage nodes. Therefore, storage pools implement a tenant-concept.   
 
@@ -38,7 +39,7 @@ storage nodes. Therefore, storage pools implement a tenant-concept.
 
 A storage device is a physical or virtualized nvme drive in simplyblock, but not a partition. 
 It is identified by its PCIe address. Simplyblock currently supports different a wide range of different 
-types of nvme drives with different performance characteristics, features and capacity. 
+types of nvme drives with different performance characteristics, features, and capacity. 
 
 ### NVMe (Non-Volatile Memory Express)
 
