@@ -9,10 +9,17 @@ storage nodes. A single control plane can be used to manage for multiple storage
 The control plane and storage planes can be updated independently. It is, however, not recommended to run an upgraded
 control plane without upgrading the storage planes.
 
+!!! recommendation
+    If multiple storage planes are connected to a single control plane, it is recommended to upgrade the control plane
+    first.
+
+Upgrading the control plane and storage cluster is an online operation and does not require downtime. Planning an
+upgrade as part of a maintenance window is recommended, though.
+
 ## Upgrading a Control Plane
 
-If multiple storage planes are connected to a single control plane, it is recommended to upgrade the control plane
-first.
+This section outlines the process of upgrading the control plane. An upgrade introduces new versions of the management
+and monitoring services.
 
 To upgrade a control plane, the following command must be executed:
 
@@ -24,9 +31,9 @@ After issuing the command, the individual management services will be upgraded a
 
 ## Upgrading a Storage Plane
 
-!!! info
-    If multiple storage planes are connected to a single control plane, it is recommended to upgrade the control plane
-    first.
+This section outlines the process of upgrading the storage plane, which is essential for maintaining data integrity,
+performance, and compatibility with newer system components. A well-executed upgrade ensures continued reliability and
+access to the latest features and fixes.
 
 To upgrade a storage plane, the following command must be executed:
 
