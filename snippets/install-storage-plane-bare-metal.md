@@ -3,7 +3,7 @@
 The installation of a storage plane requires a functioning control plane. If no control plane cluster is available yet,
 it must be installed beforehand. Jump right to the [Control Plane Installation](#control-plane-installation).
 
-The following examples assume two subnets to be available. These subnets are defined as shown in
+The following examples assume two subnets are available. These subnets are defined as shown in
 [Network Preparation](#network-preparation).
 
 ### Firewall Configuration (SP)
@@ -16,17 +16,18 @@ Now that the network is configured, the storage node software can be installed.
 
 !!! info
     All storage nodes can be prepared at this point, as they are added to the cluster in the next step. Therefore, it
-    is recommended to execute this step on all storage nodes, before moving to the next step.
+    is recommended to execute this step on all storage nodes before moving to the next step.
 
-Simplyblock provides a command line interface called `{{ variables.cliname }}`. It's built in Python and required Python 3 and Pip
-(the Python package manager) installed on the machine. This can be achieved with `yum`.
+Simplyblock provides a command line interface called `{{ variables.cliname }}`. It's built in Python and requires
+Python 3 and Pip (the Python package manager) are installed on the machine. This can be achieved with `yum`.
 
 
 ```bash title="Install Python and Pip"
 sudo yum -y install python3-pip
 ```
 
-Afterward, the `{{ variables.cliname }}` command line interface can be installed. Upgrading the CLI later on, uses the same command.
+Afterward, the `{{ variables.cliname }}` command line interface can be installed. Upgrading the CLI later on uses the
+same command.
 
 ```bash title="Install Simplyblock CLI"
 sudo pip install {{ variables.cliname }} --upgrade
@@ -67,7 +68,7 @@ nvme0n1     259:3    0   70G  0 disk
 
 In the example, we see four NVMe devices. Three devices of 70GiB and one device with 6.5GiB storage capacity.
 
-To find the correct LBA format (_lbaf_) for each of the devices, the `nvme` cli can be used.
+To find the correct LBA format (_lbaf_) for each of the devices, the `nvme` CLI can be used.
 
 ```bash title="Show NVMe namespace information"
 sudo nvme id-ns /dev/nvmeXnY
@@ -98,8 +99,8 @@ values:
 | lbads    | 12    |
 | rp       | 0     |
 
-In the example, the required LBA format is 4. If a NVMe device doesn't have that combination, any other lbads=12
-combination will work. However, simplyblock recommends to ask for the best available combination.
+In the example, the required LBA format is 4. If an NVMe device doesn't have that combination, any other _lbads=12_
+combination will work. However, simplyblock recommends asking for the best available combination.
 
 In our example, the device is already formatted with the correct _lbaf_ (see the "in use"). It is, however,
 recommended to always format the device before use.
@@ -110,7 +111,7 @@ To format the drive, the `nvme` cli is used again.
 sudo nvme format --lbaf=<lbaf> --ses=0 /dev/nvmeXnY
 ```
 
-The output of the command should give a successful response when executing similar to the below example.
+The output of the command should give a successful response when executed similarly to the example below.
 
 ```plain title="Example output of NVMe device formatting"
 [demo@demo-3 ~]# sudo nvme format --lbaf=4 --ses=0 /dev/nvme0n1
@@ -134,8 +135,9 @@ The actual deployment process happens in three steps:
 - Deploy the first stage (the storage node API)
 - Deploy the second stage (add the storage node to the cluster), happening from a management node
 
-The configuration process creates the configuration file which contains all the assignments of NVMe devices, NICs, and
-potentially available [NUMA nodes](/deployments/deployment-planning/numa-considerations.md). Per default, simplyblock will configure one storage node per NUMA node.
+The configuration process creates the configuration file, which contains all the assignments of NVMe devices, NICs, and
+potentially available [NUMA nodes](/deployments/deployment-planning/numa-considerations.md). By default, simplyblock
+will configure one storage node per NUMA node.
 
 ```bash title="Configure the storage node"
 sudo {{ variables.cliname }} storage-node configure \
@@ -219,7 +221,7 @@ noted, as it is required in the next step to attach the secondary node to the si
 When all storage nodes are prepared, they can be added to the storage cluster.
 
 !!! warning
-    The following command are executed from a management node. Attaching a storage node to a control plane is executed
+    The following commands are executed from a management node. Attaching a storage node to a control plane is executed
     from a management node.
 
 ```bash title="Attaching a storage node to the storage plane"
@@ -232,10 +234,10 @@ sudo {{ variables.cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <M
 ```
 
 !!! info
-    The number of partitions (_&lt;NUM_OF_PARTITIONS&gt;_) depends on the storage node setup. If a storage node has a
+    The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
     separate journaling device (which is strongly recommended), the value should be zero (_0_) to prevent the storage
-    devices to be partitioned. This improves the performance and prevents device sharing between the journal and
-    actual data storage location.
+    devices from being partitioned. This improves the performance and prevents device sharing between the journal and
+    the actual data storage location.
 
 The output will look something like the following example:
 
@@ -315,13 +317,13 @@ On a successful response, it's finally time to activate the storage plane.
 
 ### Activate the Storage Cluster
 
-The last step after all nodes are added to the storage cluster, the storage plane can be activated.
+The last step, after all nodes are added to the storage cluster, is to activate the storage plane.
 
 ```bash title="Storage cluster activation"
 sudo {{ variables.cliname }} cluster activate <CLUSTER_ID>
 ```
 
-The command output should look like this and respond with a successful activation of the storage cluster
+The command output should look like this, and respond with a successful activation of the storage cluster
 
 ```plain title="Example output of a storage cluster activation"
 [demo@demo ~]# {{ variables.cliname }} cluster activate 7bef076c-82b7-46a5-9f30-8c938b30e655

@@ -3,11 +3,11 @@ title: "Accessing Graylog"
 weight: 30049
 ---
 
-Simplyblock's control plane include a Prometheus, Grafana, and Graylog installation.
+Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation.
 
-Graylog retrieves logs for all control plane and storage nodes services.
+Graylog retrieves logs for all control plane and storage node services.
 
-The standard retention period for metrics is 7 days. This, however, can be changed while creating a cluster.
+The standard retention period for metrics is 7 days. However, this can be changed when creating a cluster.
 
 ## How to access Graylog
 

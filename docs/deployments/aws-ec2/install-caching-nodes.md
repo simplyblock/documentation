@@ -3,9 +3,9 @@ title: "Install Caching Nodes (Kubernetes)"
 weight: 30300
 ---
 
-Caching nodes are simplyblock storage containers that are co-located with the workloads on Kubernetes workers. They
-utilize directly attached NVMe disks on the worker nodes to provide an ultra-low latency write-through cache for
-disaggregated or hybrid simplyblock clusters.
+Caching nodes are simplyblock storage containers co-located with the workloads on Kubernetes workers. They utilize
+directly attached NVMe disks on the worker nodes to provide an ultra-low-latency write-through cache for disaggregated
+or hybrid simplyblock clusters.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ disaggregated or hybrid simplyblock clusters.
 | Graylog                     | egress    | control                 | 12202   | TCP         |
 
 Caching nodes, like storage nodes, require huge page memory to hold the internal state. Huge pages should be 2MiB in
-size and a minimum of 4096 huge pages should be allocated at boot time of the operating system.
+size, and a minimum of 4096 huge pages should be allocated at boot time of the operating system.
 
 ```bash
 demo@worker-1 ~> sudo sysctl -w vm.nr_hugepages=4096

@@ -3,7 +3,7 @@ title: "Install Simplyblock"
 weight: 30140
 ---
 
-Simplyblock is a highly flexible solution when it comes to Kubernetes related deployment strategies. Each of the
+Simplyblock is a highly flexible solution when it comes to Kubernetes-related deployment strategies. Each of the
 deployment methods have their own pros and cons. 
 
 
@@ -32,7 +32,7 @@ deployment methods have their own pros and cons.
     ---
 
     <p>A hybrid storage cluster combines the best of both worlds. Using a disaggregated storage cluster for infinite
-    scalability and joining it with a hyper-converged part for lowest latency and highest throughput workloads.</p><p>
+    scalability and joining it with a hyper-converged part for the lowest latency and highest throughput workloads.</p><p>
     [:octicons-arrow-right-24: Hybrid Installation](hybrid.md)</p>
 </div>
 

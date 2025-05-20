@@ -10,7 +10,7 @@ performance and reliability of its virtual block storage devices (logical volume
 
 Protocol-wise, simplyblock implements
 [NVMe over Fabrics (NVMe-oF)](../../important-notes/terminology.md#nvme-of-nvme-over-fabrics), meaning that simplyblock
-does not require any specific network infrastructure such as Fibre Channel or Infiniband, but works over any
+does not require any specific network infrastructure, such as Fibre Channel or Infiniband, but works over any
 Ethernet interconnect.
 
 For data transmission, simplyblock provides
@@ -25,7 +25,7 @@ more interconnects.
 
 !!! recommendation
     Simplyblock recommends NVIDIA Mellanox network adapters. However, every network adapter, including virtual
-    ones will work. If using virtual machines, the physical network adapter should be made available to the VM
+    ones, will work. If using virtual machines, the physical network adapter should be made available to the VM
     using PCI-e passthrough (IOSRV).
 
 Additionally, simplyblock recommends a physically separated storage network or using a VLAN to create a virtually
@@ -43,12 +43,12 @@ script to pre-test the most important requirements to ensure a smooth installati
 
 !!! recommendation
     Simplyblock strongly recommends two separate NICs, one for the control plane traffic and one for the storage plane.
-    These can be implemented via VLAN. However, we recommend to port-based VLANs configured in the switch over virtual
+    These can be implemented via VLAN. However, we recommend port-based VLANs configured in the switch over virtual
     VLAN interfaces in Linux.
 
-Additionally, simplyblock strongly recommends to design any network interconnect as a fully redundant connection. All
+Additionally, simplyblock strongly recommends designing any network interconnect as a fully redundant connection. All
 commonly found solutions to achieve that are supported, including but not limited to LACP and Static LAG configurations,
-stacked switches, bonded NICs. Depending on the erasure coding schema chosen and the number of nodes in a cluster,
-simplyblock supports either single or concurrent dual node outage, including network outages. If the network fails  
-for more than one node (two nodes), this will cause a cluster-down and I/O suspension event.
+stacked switches, and bonded NICs. Depending on the erasure coding schema chosen and the number of nodes in a cluster,
+simplyblock supports either single or concurrent dual-node outages, including network outages. If the network fails  
+for more than one node (two nodes), this will cause a cluster-down and an I/O suspension event.
 

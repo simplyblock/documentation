@@ -3,7 +3,7 @@ title: "Disaggregated Setup"
 weight: 50100
 ---
 
-A disaggregated setup on Kubernetes is very similar to a bare metal or virtualized installation.
+A disaggregated setup on Kubernetes is very similar to a bare-metal or virtualized installation.
 
 !!! danger
     Simplyblock requires a fully redundant network interconnect, implemented via a solution such as LACP or Static
@@ -11,12 +11,12 @@ A disaggregated setup on Kubernetes is very similar to a bare metal or virtualiz
     see the [Network Considerations](../../../deployments/deployment-planning/network-considerations.md)
     section.
 
-Installing simplyblock for production, requires a few components to be installed, as well as a couple of configurations
-to secure the network, ensure the performance and data protection in the case of hardware or software failures.
+Installing simplyblock for production requires a few components to be installed, as well as a couple of configurations
+to secure the network, ensure the performance, and data protection in the case of hardware or software failures.
 
 Simplyblock provides two test scripts to automatically check your system's configuration. While those may not catch all
 edge cases, they can help to streamline the configuration check. This script can be run multiple times during the
-preparation phase to find missing configuration during the process.
+preparation phase to find missing configurations during the process.
 
 ```bash title="Automatically check your configuration"
 # Configuration check for the control plane (management nodes)
@@ -38,13 +38,13 @@ A single control plane can manage one or more clusters. If started afresh, a con
 creating a storage cluster. If there is a preexisting control plane, an additional storage cluster can be added
 to it directly.
 
-More information on the control plane, storage plane, as well as the different node types is available under
+More information on the control plane, storage plane, and the different node types is available under
 [Simplyblock Cluster](../../../architecture/concepts/simplyblock-cluster.md) in the architecture section.
 
 ## Network Preparation
 
 Simplyblock recommends two individual network interfaces, one for the control plane and one for the storage plane.
-Hence, in the following installation description, we assume two separated subnets. To install simplyblock in your
+Hence, in the following installation description, we assume two separate subnets. To install simplyblock in your
 environment, you may have to adopt these commands to match your configuration.
 
 | Network interface | Network definition | Abbreviation | Subnet          |
@@ -62,13 +62,13 @@ environment, you may have to adopt these commands to match your configuration.
 
 Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver.
 
-To install the Simplyblock CSI Driver, a helm chart is provided. While it can be installed manually, the helm chart is
+To install the Simplyblock CSI Driver, a Helm chart is provided. While it can be installed manually, the Helm chart is
 strongly recommended. If a manual installation is preferred, see the
 [CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank" rel="noopener"}.
 
 Either way, the installation requires a few values to be available.
 
-First we need the unique cluster id. Note down the cluster uuid of the cluster to access.
+First, we need the unique cluster id. Note down the cluster UUID of the cluster to access.
 
 ```bash title="Retrieving the Cluster UUID"
 sudo {{ variables.cliname }} cluster list
@@ -116,9 +116,9 @@ ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
 The last item necessary before deploying the CSI driver is the control plane address. On a standard bare metal or
-virtualized installation it is any of the API addresses. Meaning, if the primary management node has the IP of
+virtualized installation, it is any of the API addresses. Meaning, if the primary management node has the IP of
 `192.168.10.1`, the control plane address is `http://192.168.0.1`. It is, however, recommended to front all management
-nodes, with a load balancing proxy, such as HAproxy. In the latter case, the load balancer URL would be the address of
+nodes with a load-balancing proxy, such as HAProxy. In the latter case, the load balancer URL would be the address of
 the control plane.
 
 Anyhow, deploying the Simplyblock CSI Driver using the provided helm chart comes down to providing the four necessary

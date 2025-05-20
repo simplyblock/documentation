@@ -6,7 +6,7 @@ weight: 30200
 A simplyblock cluster consists of interconnected management nodes (control plane) and storage nodes (storage plane)
 working together to deliver a resilient, distributed storage platform. Monitoring the overall health, availability, and
 performance of the cluster is essential for ensuring data integrity, fault tolerance, and optimal operation under
-varying workloads. Simplyblock provides detailed metrics and status indicators at both the node and cluster level to
+varying workloads. Simplyblock provides detailed metrics and status indicators at both the node and cluster levels to
 help administrators proactively detect issues and maintain system stability.
 
 ## Accessing Cluster Status

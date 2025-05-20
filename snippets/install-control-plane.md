@@ -9,7 +9,7 @@ can be skipped. Jump right to the [Storage Plane Installation](#storage-plane-in
 Simplyblock requires a number of TCP and UDP ports to be opened from certain networks. Additionally, it requires IPv6
 to be disabled on management nodes.
 
-Following is a list of all ports (TCP and UDP) required for operation as a management node. Attention is required, as
+The following is a list of all ports (TCP and UDP) required to operate as a management node. Attention is required, as
 this list is for management nodes only. Storage nodes have a different port configuration. See the
 [Firewall Configuration](#firewall-configuration-sp) section for the storage plane.
 
@@ -54,14 +54,15 @@ sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 
 Now that the network is configured, the management node software can be installed.
 
-Simplyblock provides a command line interface called `{{ variables.cliname }}`. It's built in Python and required Python 3 and Pip (the
-Python package manager) installed on the machine. This can be achieved with `yum`.
+Simplyblock provides a command line interface called `{{ variables.cliname }}`. It's built in Python and requires
+Python 3 and Pip (the Python package manager) installed on the machine. This can be achieved with `yum`.
 
 ```bash title="Install Python and Pip"
 sudo yum -y install python3-pip
 ```
 
-Afterward, the `{{ variables.cliname }}` command line interface can be installed. Upgrading the CLI later on, uses the same command.
+Afterward, the `{{ variables.cliname }}` command line interface can be installed. Upgrading the CLI later on uses the
+same command.
 
 ```bash title="Install Simplyblock CLI"
 sudo pip install {{ variables.cliname }} --upgrade
@@ -126,7 +127,7 @@ e8SQ1ElMm8Y9XIwyn8O0
 
 ### Secondary Management Nodes
 
-A production cluster, requires at least three management nodes in the control plane. Hence, additional management
+A production cluster requires at least three management nodes in the control plane. Hence, additional management
 nodes need to be added.
 
 On the secondary nodes, the network requires the same configuration as on the primary. Executing the commands under

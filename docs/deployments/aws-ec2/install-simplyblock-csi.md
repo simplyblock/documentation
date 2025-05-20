@@ -7,13 +7,13 @@ Simplyblock provides a seamless integration with Kubernetes through its Kubernet
 
 --8<-- "prepare-nvme-tcp.md"
 
-To install the Simplyblock CSI Driver, a helm chart is provided. While it can be installed manually, the helm chart is
+To install the Simplyblock CSI Driver, a Helm chart is provided. While it can be installed manually, the Helm chart is
 strongly recommended. If a manual installation is preferred, see the
 [CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank" rel="noopener"}.
 
 Either way, the installation requires a few values to be available.
 
-First we need the unique cluster id. Note down the cluster uuid of the cluster to access.
+First, we need the unique cluster id. Note down the cluster UUID of the cluster to access.
 
 ```bash title="Retrieving the Cluster UUID"
 sudo {{ variables.cliname }} cluster list

@@ -11,6 +11,6 @@ carefully evaluated to match workload requirements. This section provides guidan
 storage nodes, helping administrators allocate adequate CPU, memory, and disk resources for optimal cluster performance.
 
 Additionally, it explores selectable erasure coding schemes, detailing how different configurations impact storage
-efficiency, redundancy, and recovery performance. Other critical considerations, such as network infrastructure, high
-availability strategies, and workload-specific optimizations, are also covered to assist in designing a simplyblock
+efficiency, redundancy, and recovery performance. Other critical considerations, such as network infrastructure,
+high-availability strategies, and workload-specific optimizations, are also covered to assist in designing a simplyblock
 deployment that meets both operational and business needs.

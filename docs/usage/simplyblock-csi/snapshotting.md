@@ -6,9 +6,9 @@ weight: 40100
 Kubernetes PersistentVolumes backed by simplyblock can be instantly snapshotted. Snapshots are almost free due to
 simplyblock's [copy-on-write](../../important-notes/terminology.md#cow-copy-on-write) nature.
 
-In simplyblock, a snapshot is comparable to the table of contents in a book, meaning, the snapshot refers to the same
+In simplyblock, a snapshot is comparable to the table of contents in a book, meaning that the snapshot refers to the same
 data as the original volume. If the volume diverges from the snapshot, the mutated data segment is duplicated, changed,
-and stored as a new data block. Now the volume refers to the new block, while the snapshot to the old one.
+and stored as a new data block. Now the volume refers to the new block, while the snapshot refers to the old one.
 
 A deeper explanation can be found here:
 
@@ -35,7 +35,7 @@ spec:
 ## Restore a Volume from a Snapshot
 
 After a snapshot was created, it can be used as a source (_dataSource_) of a new persistent volume. In this case, the
-new persistent volume claim refers to the snapshot which is automatically restored into the new persistent volume.
+new persistent volume claim refers to the snapshot, which is automatically restored into the new persistent volume.
 
 ```yaml title="Restoring a snapshot"
 apiVersion: v1

@@ -7,13 +7,13 @@ Simplyblock provides a seamless integration with Kubernetes through its Kubernet
 
 --8<-- "prepare-nvme-tcp.md"
 
-To install the Simplyblock CSI Driver, a helm chart is provided. While it can be installed manually, the helm chart is
+To install the Simplyblock CSI Driver, a Helm chart is provided. While it can be installed manually, the Helm chart is
 strongly recommended. If a manual installation is preferred, see the
 [CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank" rel="noopener"}. 
 
 Either way, the installation requires a few values to be available.
 
-First we need the unique cluster id. Note down the cluster uuid of the cluster to access.
+First, we need the unique cluster id. Note down the cluster UUID of the cluster to access.
 
 ```bash title="Retrieving the Cluster UUID"
 sudo {{ variables.cliname }} cluster list
@@ -61,9 +61,9 @@ ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
 The last item necessary before deploying the CSI driver is the control plane address. On a standard bare metal or
-virtualized installation it is any of the API addresses. Meaning, if the primary management node has the IP of
+virtualized installation, it is any of the API addresses. Meaning, if the primary management node has the IP of
 `192.168.10.1`, the control plane address is `http://192.168.0.1`. It is, however, recommended to front all management
-nodes, with a load balancing proxy, such as HAproxy. In the latter case, the load balancer URL would be the address of
+nodes with a load balancing proxy, such as HAProxy. In the latter case, the load balancer URL would be the address of
 the control plane.
 
 Anyhow, deploying the Simplyblock CSI Driver using the provided helm chart comes down to providing the four necessary

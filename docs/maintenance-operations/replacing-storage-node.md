@@ -9,7 +9,7 @@ things to keep in mind when replacing a storage node.
 
 !!! danger
     If a storage node should be migrated, [Migrating a Storage Node](migrating-storage-node.md) must be followed.
-    Removing a storage node from a simplyblock cluster without migrating it, will make the logical volumes owned by this
+    Removing a storage node from a simplyblock cluster without migrating it will make the logical volumes owned by this
     storage node inaccessible!
 
 ## Starting the new Storage Node
@@ -22,7 +22,7 @@ the cluster to ensure equal usage distribution.
 
 If a storage node failed and cannot be recovered, adding a new storage node is perfectly fine, though.
 
-To start a new storage node, follow the storage node installation according to your chosen set-up:
+To start a new storage node, follow the storage node installation according to your chosen setup:
 
 - [Kubernetes](../deployments/kubernetes/install-simplyblock/index.md)
 - [Bare Metal or Virtualized Linux](../deployments/baremetal/index.md)
@@ -31,7 +31,7 @@ To start a new storage node, follow the storage node installation according to y
 ## Remove the old Storage Node
 
 !!! danger
-    All volumes on this storage node, which aren't migrated before the removal will become inaccessible!
+    All volumes on this storage node, which haven't been migrated before the removal, will become inaccessible!
 
 To remove the old storage node, use the `{{ variables.cliname }}` command line tool. 
 

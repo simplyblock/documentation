@@ -3,8 +3,8 @@ title: "Migrating a Storage Node"
 weight: 20000
 ---
 
-Simplyblock storage clusters are designed as always on. That means that a storage node migration is an online operation
-which doesn't require explicit maintenance windows or storage downtime.
+Simplyblock storage clusters are designed as always-on. That means that a storage node migration is an online operation
+that doesn't require explicit maintenance windows or storage downtime.
 
 ## Storage Node Migration
 
@@ -13,18 +13,17 @@ will be restarted with the new node address, and finally, the new storage node w
 
 !!! warning
     Between each process step, it is required to wait for storage node migration tasks to complete. Otherwise, there
-    may be impact to the system's performance or worse, may lead to data loss.
+    may have an impact on the system's performance or, worse, may lead to data loss.
 
 As part of the process, the existing storage node id will be moved to the new host machine. All logical volumes
-allocated on the old storage node will be moved to the new storage node and automatically be reconnected.
+allocated on the old storage node will be moved to the new storage node and will automatically be reconnected.
 
 ### First-Stage Storage Node Deployment
 
-To install the first stage of a storage node, the installation guide according to the selected environment should be
-followed.
+To install the first stage of a storage node, the installation guide for the selected environment should be followed.
 
-The process will diverge after the initial deployment command `{{ variables.cliname }} storage-node deploy` has been executed. If the
-command finishes successfully, resume from the next section of this page.
+The process will diverge after executing the initial deployment command `{{ variables.cliname }} storage-node deploy`.
+If the command finishes successfully, resume from the next section of this page.
 
 - [Kubernetes](../deployments/kubernetes/install-simplyblock/index.md)
 - [Bare Metal or Virtualized Linux](../deployments/baremetal/index.md)
@@ -35,8 +34,8 @@ command finishes successfully, resume from the next section of this page.
 To start the migration process of logical volumes, the old storage node needs to be restarted with the new storage
 node's API address.
 
-In this example, it is assumed the new storage node's IP address to be _192.168.10.100_. The IP address must be changed
-according to the real-world setup.
+In this example, it is assumed that the new storage node's IP address is _192.168.10.100_. The IP address must be
+changed according to the real-world setup.
 
 !!! danger
     Providing the wrong IP address can lead to service interruption and data loss.
@@ -97,7 +96,7 @@ This can be initiated using the following command:
 {{ variables.cliname }} storage-node make-primary <NODE_ID>
 ```
 
-Following is the example output.
+The following is the example output.
 
 ```plain title="Example output of primary change"
 demo@cp-1 ~> {{ variables.cliname }} storage-node make-primary 788c3686-9d75-4392-b0ab-47798fd4a3c1
@@ -158,5 +157,5 @@ demo@cp-1 ~> {{ variables.cliname }} storage-node make-primary 788c3686-9d75-439
 True
 ```
 
-At this point the old storage node is automatically removed from the cluster and the storage node id is taken over by
+At this point, the old storage node is automatically removed from the cluster, and the storage node id is taken over by
 the new storage node. Any operation on the old storage node, such as an OS reinstall, can be safely executed.

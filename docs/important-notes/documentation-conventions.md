@@ -11,9 +11,9 @@ documentation accordingly. Features without a specific label are considered read
 
 The documentation uses the following feature stage labels:
 
-- **General Availability:** This is the default stage, if nothing else is defined on the feature. In this stage the
+- **General Availability:** This is the default stage if nothing else is defined for the feature. In this stage, the
   feature is **considered ready for production**.
-- **Technical Preview:** The feature is provided for testing and feedback acquisition. It is not considered stable
+- **Technical Preview:** The feature is provided for testing and feedback acquisition. It is not regarded as stable
   or complete. Breaking changes may occur, which could break backward compatibility. Features
   in this stage are **not considered ready for production**. Features in this stage need to
   be specifically enabled before use.
@@ -22,7 +22,7 @@ The documentation uses the following feature stage labels:
 
 ### Notes
 
-Notes include additional information which may be interesting but not crucial.
+Notes include additional information that may be interesting but not crucial.
 
 !!! note
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla et euismod
@@ -49,8 +49,7 @@ Information boxes include background and links to additional information.
 
 ### Warnings
 
-Warnings contain crucial information that contain crucial information be considered
-before proceeding.
+Warnings contain crucial information that should be considered before proceeding.
 
 !!! warning
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla et euismod

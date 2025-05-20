@@ -7,7 +7,7 @@ weight: 30100
 --8<-- "bare-metal-intro.md"
 
 !!! warning
-    Simplyblock strongly recommends to set up individual networks for the storage plane and control plane traffic.  
+    Simplyblock strongly recommends setting up individual networks for the storage plane and control plane traffic.  
 
 ## Amazon Elastic Kubernetes Service (EKS)
 

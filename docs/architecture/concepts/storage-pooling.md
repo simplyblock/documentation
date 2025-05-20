@@ -14,11 +14,8 @@ based on demand.
 
 Key characteristics of storage pooling include:
 
-- **Resource Aggregation:** Multiple physical storage devices, such as HDDs, SSDs, or NVMe drives, are combined into a
-  single logical storage entity.
+- **Resource Aggregation:** Multiple physical storage devices, such as HDDs, SSDs, or NVMe drives, are combined into a single logical storage entity.
 - **Dynamic Allocation:** Storage capacity can be allocated dynamically to workloads based on usage patterns and demand.
-- **Improved Efficiency:** By eliminating the constraints of static storage assignments, storage pooling optimizes
-  resource utilization and reduces wasted capacity.
-- **Scalability:** Additional storage devices or nodes can be seamlessly integrated into the storage pool without
-  disrupting operations.
+- **Improved Efficiency:** By eliminating the constraints of static storage assignments, storage pooling optimizes resource utilization and reduces wasted capacity.
+- **Scalability:** Additional storage devices or nodes can seamlessly integrate into the storage pool without disrupting operations.
 - **Simplified Management:** Centralized control and monitoring enable streamlined administration of storage resources.

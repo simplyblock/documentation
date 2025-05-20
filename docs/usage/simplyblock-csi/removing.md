@@ -3,10 +3,10 @@ title: "Removing"
 weight: 40400
 ---
 
-A simplyblock-managed logical volume which is connected to a Kubernetes PersistentVolumeClaim is target to Kubernetes'
+A simplyblock-managed logical volume which is connected to a Kubernetes PersistentVolumeClaim is targeted to Kubernetes'
 automatic lifecycle management. Therefore, if the PVC is removed, the logical volume is removed as well.
 
-If the storage class is defined with a reclaim policy that keeps the volume around after it's claim has been deleted,
+If the storage class is defined with a reclaim policy that keeps the volume around after its claim has been deleted,
 it has to be removed specifically.
 
 ## Removing a Persistent Volume

@@ -10,10 +10,10 @@ Simplyblock seamlessly integrates with Proxmox through its storage plugin. The s
 provisioning of storage volumes for Proxmox's KVM virtual machines and LXC containers. Simplyblock is fully integrated
 into the Proxmox user interface.
 
-After being deployed, virtual machine and container images can be provisioned to simplyblock logical volumes inheriting
+After being deployed, virtual machine and container images can be provisioned to simplyblock logical volumes, inheriting
 all performance and reliability characteristics. Volumes provisioned using the simplyblock Proxmox integration are
-automatically managed and provided to the hypervisor in an ad-hoc fashion and the volume lifecycle can be managed
-through the Proxmox UI and command line interface.
+automatically managed and provided to the hypervisor in an ad-hoc fashion. The Proxmox UI and command line interface can
+manage the volume lifecycle.
 
 ## Install Simplyblock for Proxmox
 
@@ -44,10 +44,10 @@ echo 'deb [signed-by=/etc/apt/keyrings/simplyblock.gpg] https://install.simplybl
 
 ### Install the Simplyblock-Proxmox Package
 
-After the registration of the repository, a `apt update` will refresh all available package information and makes the
+After the registration of the repository, an `apt update` will refresh all available package information and make the
 `simplyblock-proxmox` package available. The update must not show any errors related to the simplyblock apt repository.
 
-With the updated repository information, a `apt install simplyblock-proxmox` installed the simplyblock storage plugin.
+With the updated repository information, an `apt install simplyblock-proxmox` installed the simplyblock storage plugin.
 
 ```bash title="Install the Simplyblock Proxmox Integration"
 apt update

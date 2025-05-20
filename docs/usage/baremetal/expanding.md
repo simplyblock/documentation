@@ -52,5 +52,5 @@ xfs_growfs /mount/point
 
 ## Shrinking a Volume
 
-Theoretically it is possible to shrink a volume. It can, however, create issues with certain filesystems. When a volume
+Theoretically, it is possible to shrink a volume. It can, however, create issues with certain filesystems. When a volume
 needs to be shrunk, it is recommended to create a snapshot and restore it onto a new volume.

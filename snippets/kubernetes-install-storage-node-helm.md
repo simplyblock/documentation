@@ -1,9 +1,9 @@
 --8<-- "prepare-nvme-tcp.md"
 
-To install the simplyblock in Kubernetes, a helm chart is provided. While it can be installed manually, the helm chart
+To install the simplyblock in Kubernetes, a Helm chart is provided. While it can be installed manually, the Helm chart
 is strongly recommended.  The installation requires a few values to be available.
 
-First we need the unique cluster id. Note down the cluster uuid of the cluster to access.
+First, we need the unique cluster id. Note down the cluster UUID of the cluster to access.
 
 ```bash title="Retrieving the Cluster UUID"
 sudo {{ variables.cliname }} cluster list
@@ -67,9 +67,9 @@ kubectl label nodes <NODE_NAME> type=simplyblock-storage-plane
 ```
 
 !!! warning
-    The label must be applied to all nodes meant to operate as part of the storage plane.
+    The label must be applied to all nodes that operate as part of the storage plane.
 
-After labeling the nodes, the helm chart can be deployed.
+After labeling the nodes, the Helm chart can be deployed.
 
 ```bash title="Install the helm chart"
 CLUSTER_UUID="<UUID>"

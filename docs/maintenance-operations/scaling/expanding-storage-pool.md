@@ -3,7 +3,7 @@ title: "Expanding a Storage Pool"
 weight: 30000
 ---
 
-Simplyblock is designed as on always-on storage system. Therefore, expanding a storage pool is an online operation and
+Simplyblock is designed as on always-on a storage system. Therefore, expanding a storage pool is an online operation and
 does not require a maintenance window or system downtime.
 
 When expanding a storage pool, its capacity will be extended, offering an extended quota of the overall storage cluster. 

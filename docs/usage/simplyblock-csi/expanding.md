@@ -3,12 +3,12 @@ title: "Expanding"
 weight: 40300
 ---
 
-Expanding a Persistent Volume (PV) in Kubernetes allows to increase the size of a volume without downtime, ensuring
+Expanding a Persistent Volume (PV) in Kubernetes allows for increasing the size of a volume without downtime, ensuring
 applications continue running with sufficient storage. Simplyblock supports online expansion of Logical Volumes (LVs)
 through its CSI driver, making it possible to resize volumes dynamically as storage requirements grow.
 
 !!! info
-    To enable volume expansion Kubernetes 1.16 or later is required.
+    To enable volume expansion, Kubernetes 1.16 or later is required.
 
 ## Enable Volume Expansion
 
@@ -59,5 +59,5 @@ the pod.
 
 ## Shrinking a Volume
 
-Theoretically it is possible to shrink a volume. It can, however, create issues with certain filesystems. When a volume
+Theoretically, it is possible to shrink a volume. It can, however, create issues with certain filesystems. When a volume
 needs to be shrunk, it is recommended to create a snapshot and restore it onto a new volume.

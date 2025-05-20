@@ -118,7 +118,7 @@ Defined networks:
 
 - _internal:_ The subnet for communication with the control plane
 - _storage:_ The subnet for communication with and between the storage plane
-- _loadbalancer:_ The subnet between the load balancer and control plane
+- _loadbalancer:_ The subnet between the load balancer and the control plane
 - _management:_ Valid IPs or IP ranges for direct management access
 
 | Direction | Source or target nw | ports | protocol |

@@ -3,7 +3,7 @@ title: Simplyblock Cluster
 weight: 30000
 ---
 
-The simplyblock storage platform consists of three different types of cluster nodes and belong to the control plane
+The simplyblock storage platform consists of three different types of cluster nodes and belongs to the control plane
 or storage plane.
 
 ## Control Plane

@@ -4,45 +4,45 @@ weight: 29999
 ---
 
 Simplyblock provides system recommendations for three general types of cluster setups. These types are a
-_High Performance_, a _High Density_, and one _Standard_ setup, with the former offering the highest throughput and
-lowest latency, the second providing highest storage capacity, and the latter providing a great compromise between the
-other two.
+_High Performance_, a _High Density_, and one _Standard_ setup, with the former offering the highest throughput and the
+lowest latency, the second providing the highest storage capacity, and the latter providing a great compromise between
+the other two.
 
 ## Standard Setup
 
 Per storage server:
 
 - 2U server with 2 CPU sockets.
-- Each socket supplied with 128 GB RAM.
-- Each CPU offering 32 physical cores.
+- Each socket is supplied with 128 GB RAM.
+- Each CPU offers 32 physical cores.
 - 11-12x PCIe 4.0 NVMe devices, up to 8 TB each.
-- Dual 100 GBit/s NIC per socket configured as a LAG. Preferably Mellanox Connect-X for RoCEv2.
+- Dual 100 GBit/s NIC per socket configured as a LAG. Preferably, Mellanox Connect-X for RoCEv2.
 
-One of the NVMe devices per CPU socket could be implemented as a SLC NVMe, while all other should be TLC.
+One of the NVMe devices per CPU socket could be implemented as an SLC NVMe, while all others should be TLC.
 
-## High Performance Setup
+## High-Performance Setup
 
 Per storage server:
 
 - 1U server with 2 CPU sockets.
-- Each socket supplied with 128 GB RAM.
-- Each CPU offering 32 physical cores.
+- Each socket is supplied with 128 GB of RAM.
+- Each CPU offers 32 physical cores.
 - 4-5x PCIe 4.0 NVMe devices with 3-4 TB capacity each.
-- Dual 100 GBit/s NIC per socket configured as a LAG. Preferably Mellanox Connect-X for RoCEv2.
+- Dual 100 GBit/s NIC per socket configured as a LAG. Preferably, Mellanox Connect-X for RoCEv2.
 
-One of the NVMe devices per CPU socket could be implemented as a SLC NVMe, while all other should be TLC.
+One of the NVMe devices per CPU socket could be implemented as an SLC NVMe, while all others should be TLC.
 
-## High Density Setup
+## High-Density Setup
 
 Per storage server:
 
 - 2U server with 2 CPU sockets.
-- Each socket supplied with 128 GB RAM.
-- Each CPU offering 32 physical cores.
+- Each socket is supplied with 128 GB of RAM.
+- Each CPU offers 32 physical cores.
 - 2x PCIe 4.0 SLC NVMe devices with 1 TB capacity each.
 - 6x PCIe 4.0 TLC NVMe devices with 4 TB capacity each.
 - 16x PCIe 4.0 NVMe devices, up to 120 TB capacity each.
-- Dual 100 GBit/s NIC per socket configured as a LAG. Preferably Mellanox Connect-X for RoCEv2.
+- Dual 100 GBit/s NIC per socket configured as a LAG. Preferably, Mellanox Connect-X for RoCEv2.
 
 ## Considerations
 

@@ -27,7 +27,7 @@ the efficiency and reliability of your simplyblock deployment.
 
     ---
 
-    Before start deploying simplyblock, take a moment to make yourself
+    Before starting to deploy simplyblock, take a moment to make yourself
     familiar with the required node sizing and other considerations for
     a performant and stable cluster operation.
 
@@ -47,7 +47,7 @@ the efficiency and reliability of your simplyblock deployment.
 
     ---
 
-    After installation of a simplyblock cluster, learn how to
+    After the installation of a simplyblock cluster, learn how to
     operate and maintain it.
 
     [:octicons-arrow-right-24: Simplyblock Usage](usage/index.md)<br/>

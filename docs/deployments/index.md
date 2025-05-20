@@ -9,7 +9,7 @@ inside and outside of Kubernetes.
 !!! info
     Bare Metal and VM-based installations refer to installations onto a dedicated or virtual machine running Linux
     deployed on premises, or in a private or public cloud.<br><br>
-    For AWS EC2-based installation, there is a specific installation guide which is recommended to follow if an AWS
+    For AWS EC2-based installation, there is a specific installation guide that is recommended to follow if an AWS
     EC2 installation is planned.
 
 <div class="grid cards" markdown>

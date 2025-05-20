@@ -174,7 +174,7 @@ added later.
 mdadm: array /dev/md/migration built and started.
 ```
 
-To ensure the that the RAID was created successfully, all device files with _/dev/md*_ can be listed. In this case,
+To ensure that the RAID was created successfully, all device files with _/dev/md*_ can be listed. In this case,
 _/dev/md127_ is the actual RAID device, while _/dev/md/migration_ is the device mapper file.
 
 ```plain title="Finding the new device mapper device files"
@@ -204,7 +204,7 @@ This is again done using `mdadm` tool.
 mdadm <RAID_DEVICE_MAPPER_FILE> --add <NEW_DEVICE_FILE>
 ```
 
-In the example, we add _/dev/nvme0n1_ (the simplyblock logical volume) to the RAID named "migration".
+In the example, we add _/dev/nvme0n1_ (the simplyblock logical volume) to the RAID named "migration."
 
 ```plain title="Example output of mdadm --add"
 [root@demo ~]# mdadm /dev/md/migration --add /dev/nvme0n1
@@ -293,9 +293,9 @@ Consistency Policy : resync
        2     259        0        1      active sync   /dev/nvme0n1
 ```
 
-To fully switch to the new simplyblock logical volume, a second minimal downtime is required.
+To fully switch to the new simplyblock logical volume, a second, minimal, downtime is required.
 
-The RAID device needs to unmounted and the device mapper stopped.
+The RAID device needs to be unmounted and the device mapper stopped.
 
 ```bash title="Stopping the device mapper RAID-1"
 umount <MOUNT_POINT>

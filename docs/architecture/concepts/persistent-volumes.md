@@ -13,13 +13,8 @@ provisioned in the cluster, while a **Persistent Volume Claim (PVC)** is a reque
 
 Key characteristics of Persistent Volumes include:
 
-- **Decoupled Storage Management:** PVs exist independently of Pods, allowing storage to persist even when Pods are
-  deleted or rescheduled.
-- **Dynamic and Static Provisioning:** Storage can be provisioned manually by administrators (static provisioning) or
-  automatically by storage classes (dynamic provisioning).
-- **Access Modes:** PVs support multiple access modes, such as ReadWriteOnce (RWO), ReadOnlyMany (ROX), and
-  ReadWriteMany (RWX), defining how storage can be accessed by Pods.
-- **Reclaim Policies:** When a PV is no longer needed, it can be retained, recycled, or deleted based on its configured
-  reclaim policy.
-- **Storage Classes:** Kubernetes allows administrators to define different types of storage using StorageClasses,
-  enabling automated provisioning of PVs based on workload requirements.
+- **Decoupled Storage Management:** PVs exist independently of Pods, allowing storage to persist even when Pods are deleted or rescheduled.
+- **Dynamic and Static Provisioning:** Storage can be provisioned manually by administrators (static provisioning) or automatically by storage classes (dynamic provisioning).
+- **Access Modes:** PVs support multiple access modes, such as ReadWriteOnce (RWO), ReadOnlyMany (ROX), and ReadWriteMany (RWX), defining how storage can be accessed by Pods.
+- **Reclaim Policies:** When a PV is no longer needed, it can be retained, recycled, or deleted based on its configured reclaim policy.
+- **Storage Classes:** Kubernetes allows administrators to define different types of storage using StorageClasses, enabling automated provisioning of PVs based on workload requirements.

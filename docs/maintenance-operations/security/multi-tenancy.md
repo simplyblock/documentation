@@ -10,19 +10,19 @@ across internal departments or external customers.
 
 ## Storage Isolation
 
-Simplyblock provides multiple layers of isolation between multiple tenants depending on requirements and how tenants
+Simplyblock provides multiple layers of isolation between multiple tenants, depending on requirements and how tenants
 are defined.
 
 ### Storage Pool Isolation
 
-If tenants are expected to have multiple volumes, it might be required to define the overall available storage quota
-a tenant can access and assign to volumes. Hence, simplyblock enables to create one storage pool with a maximum capacity
+If tenants are expected to have multiple volumes, defining the overall available storage quota a tenant can access and
+assign to volumes might be required. Hence, simplyblock enables the creation of a storage pool with a maximum capacity
 per tenant. All volumes for this tenant should be created in their respective storage pool and automatically count
 towards the storage quota.
 
 ### Logical Volume Isolation
 
-If a tenant is expected to have only one volume or strong isolation between volumes is required, each logical volume,
+If a tenant is expected to have only one volume or strong isolation between volumes is required, each logical volume
 can be seen as fully isolated at the storage layer. Access to volumes is tightly controlled, and each LV is only exposed
 to the workloads explicitly granted access.
 
@@ -39,7 +39,7 @@ Quality of service is available for
 ## Encryption and Data Security
 
 All data is protected with encryption at rest, using strong AES-based cryptographic algorithms. Encryption is applied at
-the volume level, ensuring that tenant data remains secure and inaccessible to other users—even at the physical storage
+the volume level, ensuring that tenant data remains secure and inaccessible to other users, even at the physical storage
 layer. Encryption keys are logically separated between tenants to support strong cryptographic isolation.
 
 Encryption is available for [Kubernetes-based installation encryption](../../usage/simplyblock-csi/encrypting.md) and

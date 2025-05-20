@@ -5,7 +5,7 @@ weight: 30200
 
 ## Fresh Cluster Cannot Be Activated
 
-**Symptom:** After a fresh deployment, the cluster cannot be activated. The activation process hangs or fails and the
+**Symptom:** After a fresh deployment, the cluster cannot be activated. The activation process hangs or fails, and the
 storage nodes show `n/0` disks available in the disks column (`{{ variables.cliname }} storage-node list`).
 
 1. Shutdown all storage nodes: `{{ variables.cliname }} storage-node shutdown --force`
@@ -23,7 +23,7 @@ storage nodes show `n/0` disks available in the disks column (`{{ variables.clin
 
 !!! danger
     Never shutdown or restart a storage node while the cluster is in **rebalancing** state. This can lead to potential
-    I/O operation. This is independent of the high-availability status of the cluster.<br/><br/>
+    I/O operation. This is independent of the cluster's high-availability status.<br/><br/ >
     Check the cluster status with any of the following commands:
 
     ```bash

@@ -7,7 +7,7 @@ Removing a logical Volume (LV) in simplyblock permanently deletes the volume and
 This operation is performed using the `{{ variables.cliname }}` command line interface. Care should be taken to verify
 that the volume is no longer in use and that backups are in place if needed.
 
-While deleting a logical volume is a straightforward operation, but it must be executed carefully to avoid accidental
+While deleting a logical volume is a straightforward operation, it must be executed carefully to avoid accidental
 data loss. Always ensure that the volume is no longer needed before removal.
 
 !!! danger
