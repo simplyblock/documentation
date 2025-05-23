@@ -27,13 +27,7 @@ machine:
 ## Huge Pages Reservations
 
 Simplyblock requires huge pages memory to operate. The storage engine expects to find huge pages of 2 MiB page size. The
-required amount of huge pages depends on a number of factors. To calculate the number of required huge pages,
-simplyblock provides a [Huge Pages Calculator](../../reference/huge-pages-calculator.md).
-
-!!! info
-    The number of huge pages calculated by the huge pages calculator is the minimum required number. A higher number of
-    huge pages can always be allocated. The storage engine, however, will refuse to start up without the required number
-    of huge pages.
+required amount of huge pages depends on a number of factors.
 
 To apply the change to Talos' worker nodes, a YAML configuration file with the following content is required. The number
 of pages is to be replaced with the number calculated above.

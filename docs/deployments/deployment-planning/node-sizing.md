@@ -85,9 +85,7 @@ total, reserved, and available system and huge page memory on a corresponding no
     node fails to start up, a system reboot may ensure enough free memory.  
     
     The following command can be executed to temporarily allocate huge pages while the system is already running. It
-    will allocate 8 GiB in huge pages. The number of huge pages must be adjusted depending on the requirements. The
-    [Huge Pages Calculator](../../reference/huge-pages-calculator.md) helps with calculating the required number of
-    huge pages.
+    will allocate 8 GiB in huge pages. The number of huge pages must be adjusted depending on the requirements.
 
     ```bash title="Allocate temporary huge pages"
     sudo sysctl vm.nr_hugepages=4096
