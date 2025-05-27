@@ -9,6 +9,11 @@ weight: 30100
 !!! warning
     Simplyblock strongly recommends setting up individual networks for the storage plane and control plane traffic.  
 
+!!! recommendation
+    Simplyblock recommends using AlmaLinux, Rocky, or Red Hat Enterprise Linux on Amazon EC2 machines. Amazon Linux
+    does not support native NVMe-oF Multipathing. While it is possible to use DM-MPIO (device manager multipathing)
+    usage is not as straight forward as possible.
+
 ## Amazon Elastic Kubernetes Service (EKS)
 
 !!! info
