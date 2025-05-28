@@ -18,6 +18,8 @@ inside and outside of Kubernetes.
 
     ---
 
+    Kubernetes deployments include AWS' EKS and GCP's GKE.
+
     [:octicons-arrow-right-24: Systems Recommendations](deployment-planning/recommendations.md)<br/>
     [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
     [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
@@ -29,6 +31,8 @@ inside and outside of Kubernetes.
 -   :material-linux:{ .lg .middle } __Bare-Metal & VM-based Linux__
 
     ---
+
+    Bare-Metal deployments are either virtualized or physical host.
 
     [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
     [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
@@ -45,6 +49,16 @@ inside and outside of Kubernetes.
     [:octicons-arrow-right-24: Prerequisites](aws-ec2/prerequisites.md)<br/>
     [:octicons-arrow-right-24: Install Storage Cluster](aws-ec2/install-simplyblock.md)<br/>
     [:octicons-arrow-right-24: Install Kubernetes CSI Driver](aws-ec2/install-simplyblock-csi.md)<br/>
+
+-   :material-aws:{ .lg .middle } __Google Compute Engine__
+
+    ---
+
+    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
+    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
+    [:octicons-arrow-right-24: Prerequisites](gcp/prerequisites.md)<br/>
+    [:octicons-arrow-right-24: Install Storage Cluster](gcp/install-simplyblock.md)<br/>
+    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](gcp/install-simplyblock-csi.md)<br/>
 
 -   :material-hvac-off:{ .lg .middle } __Air Gapped__
 
