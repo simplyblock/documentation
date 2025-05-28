@@ -24,7 +24,7 @@ The Graylog installation uses the cluster secret as its password for the user _a
 the following command should be used:
 
 ```bash title="Get the cluster secret"
-{{ variables.cliname }} cluster get-secret <CLUSTER_ID>
+{{ cliname }} cluster get-secret <CLUSTER_ID>
 ```
 
 **Credentials**<br/>

@@ -26,10 +26,10 @@ Authorization: <CLUSTER_UUID> <CLUSTER_SECRET>
 ```
 
 The cluster id is provided during the initial cluster installation. The cluster secret can be obtained using
-the simplyblock commandline interface tool `{{ variables.cliname }}`.
+the simplyblock commandline interface tool `{{ cliname }}`.
 
 ```bash
-{{ variables.cliname }} cluster get-secret CLUSTER_UUID
+{{ cliname }} cluster get-secret CLUSTER_UUID
 ```
 
 ## PUT and POST Requests 

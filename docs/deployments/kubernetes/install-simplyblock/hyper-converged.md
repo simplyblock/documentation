@@ -4,7 +4,7 @@ weight: 50000
 ---
 
 <!-- include: install control plane documentation -->
---8<-- "install-control-plane.md"
+{% include 'install-control-plane.md' %}
 
 ## Storage Plane Installation
 
@@ -65,4 +65,4 @@ demo@worker-1 ~> sudo modprobe nbd
 
 ### Storage Node Installation
 
---8<-- "kubernetes-install-storage-node-helm.md"
+{% include 'kubernetes-install-storage-node-helm.md' %}

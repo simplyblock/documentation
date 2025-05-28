@@ -120,8 +120,11 @@ with open(reference_file) as stream:
             environment.filters["get_description"] = get_description
 
             context = {"command": command}
-            with open(f"{base_path}/_data/variables.yml") as stream2:
-                context["variables"] = yaml.safe_load(stream2)
+            with open(f"{base_path}/mkdocs.yml") as stream2:
+                yaml.add_constructor(u"tag:yaml.org,2002:python/name:material.extensions.emoji.twemoji", lambda loader, node: node.value, Loader=yaml.SafeLoader)
+                yaml.add_constructor(u"tag:yaml.org,2002:python/name:material.extensions.emoji.to_svg", lambda loader, node: node.value, Loader=yaml.SafeLoader)
+                config = yaml.safe_load(stream2)
+                context["variables"] = config["extra"]
 
             template = environment.get_template("cli-reference-group.jinja2")
             output = template.render(context)

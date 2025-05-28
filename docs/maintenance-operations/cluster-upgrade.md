@@ -24,7 +24,7 @@ and monitoring services.
 To upgrade a control plane, the following command must be executed:
 
 ```bash
-sudo {{ variables.cliname }} cluster update <CLUSTER_ID> --cp-only=true --restart=true
+sudo {{ cliname }} cluster update <CLUSTER_ID> --cp-only=true --restart=true
 ```
 
 After issuing the command, the individual management services will be upgraded and restarted on all management nodes. 
@@ -38,5 +38,5 @@ access to the latest features and fixes.
 To upgrade a storage plane, the following command must be executed:
 
 ```bash
-sudo {{ variables.cliname }} cluster update <CLUSTER_ID>
+sudo {{ cliname }} cluster update <CLUSTER_ID>
 ```

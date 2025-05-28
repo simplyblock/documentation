@@ -11,10 +11,10 @@ help administrators proactively detect issues and maintain system stability.
 
 ## Accessing Cluster Status
 
-To access a cluster's status, the `{{ variables.cliname }}` command line tool can be used:
+To access a cluster's status, the `{{ cliname }}` command line tool can be used:
 
 ```bash title="Accessing the status of a cluster"
-{{ variables.cliname }} cluster status <CLUSTER_ID>
+{{ cliname }} cluster status <CLUSTER_ID>
 ```
 
 All details of the command are available in the
@@ -22,10 +22,10 @@ All details of the command are available in the
 
 ## Accessing Cluster Statistics 
 
-To access a cluster's performance and I/O statistics, the `{{ variables.cliname }}` command line tool can be used:
+To access a cluster's performance and I/O statistics, the `{{ cliname }}` command line tool can be used:
 
 ```bash title="Accessing the statistics of a cluster"
-{{ variables.cliname }} cluster show <CLUSTER_ID>
+{{ cliname }} cluster show <CLUSTER_ID>
 ```
 
 All details of the command are available in the
@@ -35,10 +35,10 @@ The information is also available through Grafana in the cluster's dashboard.
 
 ## Accessing Cluster I/O Statistics 
 
-To access a cluster's performance and I/O statistics, the `{{ variables.cliname }}` command line tool can be used:
+To access a cluster's performance and I/O statistics, the `{{ cliname }}` command line tool can be used:
 
 ```bash title="Accessing the I/O statistics of a cluster"
-{{ variables.cliname }} cluster get-io-stats <CLUSTER_ID>
+{{ cliname }} cluster get-io-stats <CLUSTER_ID>
 ```
 
 All details of the command are available in the
@@ -48,10 +48,10 @@ The information is also available through Grafana in the cluster's dashboard.
 
 ## Accessing Cluster Capacity Information
 
-To access a cluster's capacity information, the `{{ variables.cliname }}` command line tool can be used:
+To access a cluster's capacity information, the `{{ cliname }}` command line tool can be used:
 
 ```bash title="Accessing the capcity information of a cluster"
-{{ variables.cliname }} cluster get-capacity <CLUSTER_ID>
+{{ cliname }} cluster get-capacity <CLUSTER_ID>
 ```
 
 All details of the command are available in the
@@ -59,10 +59,10 @@ All details of the command are available in the
 
 ## Accessing Cluster Health Information
 
-To access a cluster's health status, the `{{ variables.cliname }}` command line tool can be used:
+To access a cluster's health status, the `{{ cliname }}` command line tool can be used:
 
 ```bash title="Accessing the health status of a cluster"
-{{ variables.cliname }} cluster check <CLUSTER_ID>
+{{ cliname }} cluster check <CLUSTER_ID>
 ```
 
 All details of the command are available in the
