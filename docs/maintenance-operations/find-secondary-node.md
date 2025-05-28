@@ -10,9 +10,9 @@ The secondary connection will be used in case of issues or failures of the prima
 volume.
 
 For debugging purposes, sometimes it is useful to find out which host is used as the secondary for a specific primary
-storage node. This can be achieved using the command line tool `{{ variables.cliname }}` by asking for the details of
+storage node. This can be achieved using the command line tool `{{ cliname }}` by asking for the details of
 the primary storage node and grepping for the secondary id.
 
 ```bash title="Find secondary for a primary"
-{{ variables.cliname }} storage-node get <NODE_ID> | grep secondary_node_id
+{{ cliname }} storage-node get <NODE_ID> | grep secondary_node_id
 ```

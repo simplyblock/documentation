@@ -8,14 +8,14 @@ When installing simplyblock control planes and storage planes, a number of prere
 Simplyblock uses Docker Swarm for the control plane cluster. In case of a bare metal or virtualized installation, it
 will also use Docker Swarm for the storage plane. Hence, Docker has to be installed.
 
-Furthermore, simplyblock requires installing the `{{ variables.cliname }}` command line tool. This tool is written in
+Furthermore, simplyblock requires installing the `{{ cliname }}` command line tool. This tool is written in
 Python. Therefore, Python (3.5 or later) has to be installed. Likewise, pip, the Python package manager, has to be
 installed with version 20 or later.
 
-To install `{{ variables.cliname }}` run:
+To install `{{ cliname }}` run:
 
 ```bash
-sudo pip install {{ variables.cliname }} --upgrade
+sudo pip install {{ cliname }} --upgrade
 ```
 
 ## Node Sizing
@@ -37,11 +37,11 @@ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
 ### Network Ports for Control Plane
 
---8<-- "control-plane-network-port-table.md"
+{% include 'control-plane-network-port-table.md' %}
 
 ### Network Ports for Storage Plane
 
---8<-- "storage-plane-network-port-table.md"
+{% include 'storage-plane-network-port-table.md' %}
 
 ## Storage Configuration
 

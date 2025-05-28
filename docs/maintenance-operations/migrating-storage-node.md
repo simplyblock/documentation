@@ -22,7 +22,7 @@ allocated on the old storage node will be moved to the new storage node and will
 
 To install the first stage of a storage node, the installation guide for the selected environment should be followed.
 
-The process will diverge after executing the initial deployment command `{{ variables.cliname }} storage-node deploy`.
+The process will diverge after executing the initial deployment command `{{ cliname }} storage-node deploy`.
 If the command finishes successfully, resume from the next section of this page.
 
 - [Kubernetes](../deployments/kubernetes/install-simplyblock/index.md)
@@ -43,7 +43,7 @@ changed according to the real-world setup.
 To restart the node, the following command must be run:
 
 ```bash title="Restarting a storage node to initiate the migration"
-{{ variables.cliname }} storage-node restart <NODE_ID> --node-addr=<NEW_NODE_IP>:5000
+{{ cliname }} storage-node restart <NODE_ID> --node-addr=<NEW_NODE_IP>:5000
 ```
 
 !!! warning
@@ -51,7 +51,7 @@ To restart the node, the following command must be run:
     It must be ensured that the given parameter is the new IP address and the port, separated by a colon.
 
 ```plain title="Example output of the node restart"
-demo@cp-1 ~> {{ variables.cliname }} storage-node restart 788c3686-9d75-4392-b0ab-47798fd4a3c1 --node-addr 192.168.10.64:5000
+demo@cp-1 ~> {{ cliname }} storage-node restart 788c3686-9d75-4392-b0ab-47798fd4a3c1 --node-addr 192.168.10.64:5000
 2025-04-02 13:24:26,785: INFO: Restarting storage node
 2025-04-02 13:24:26,796: INFO: Setting node state to restarting
 2025-04-02 13:24:26,807: INFO: {"cluster_id": "a84537e2-62d8-4ef0-b2e4-8462b9e8ea96", "event": "STATUS_CHANGE", "object_name": "StorageNode", "message": "Storage node status changed from: unreachable to: in_restart", "caused_by": "monitor"}
@@ -93,13 +93,13 @@ set of logical volumes.
 This can be initiated using the following command:
 
 ```bash title="Make the new storage node the primary"
-{{ variables.cliname }} storage-node make-primary <NODE_ID>
+{{ cliname }} storage-node make-primary <NODE_ID>
 ```
 
 The following is the example output.
 
 ```plain title="Example output of primary change"
-demo@cp-1 ~> {{ variables.cliname }} storage-node make-primary 788c3686-9d75-4392-b0ab-47798fd4a3c1
+demo@cp-1 ~> {{ cliname }} storage-node make-primary 788c3686-9d75-4392-b0ab-47798fd4a3c1
 2025-04-02 13:25:02,220: INFO: Adding device 65965029-4ab3-44b9-a9d4-29550e6c14ae
 2025-04-02 13:25:02,251: INFO: bdev already exists alceml_65965029-4ab3-44b9-a9d4-29550e6c14ae
 2025-04-02 13:25:02,252: INFO: bdev already exists alceml_65965029-4ab3-44b9-a9d4-29550e6c14ae_PT

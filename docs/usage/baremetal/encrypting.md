@@ -5,7 +5,7 @@ weight: 30500
 
 Simplyblock supports encryption of logical volumes (LVs) to protect data at rest, ensuring that sensitive
 information remains secure across the distributed storage cluster. Encryption is applied during volume creation using
-the `{{ variables.cliname }}` command line interface, and encrypted volumes are handled transparently during regular operation.
+the `{{ cliname }}` command line interface, and encrypted volumes are handled transparently during regular operation.
 
 Encrypting Logical Volumes ensures that simplyblock storage meets data protection and compliance requirements,
 safeguarding sensitive workloads without compromising performance.
@@ -17,7 +17,7 @@ safeguarding sensitive workloads without compromising performance.
 ## Prerequisites
 
 - A running simplyblock cluster with encryption support enabled.
-- `{{ variables.cliname }}` installed and configured with access to the Simplyblock management API.
+- `{{ cliname }}` installed and configured with access to the Simplyblock management API.
 
 ## Encrypted Volumes in Simplyblock
 
@@ -46,7 +46,7 @@ openssl rand -hex 32
 To provision a new Logical Volume with encryption enabled:
 
 ```bash
-{{ variables.cliname }} volume add \
+{{ cliname }} volume add \
   --encrypt \
   --crypto-key1 <HEX_KEY_1> \
   --crypto-key2 <HEX_KEY_2> \
@@ -70,7 +70,7 @@ To see all available parameters when creating a logical volume, see [Provisionin
 Check encryption status with:
 
 ```bash
-{{ variables.cliname }} volume get <VOLUME_UUID>
+{{ cliname }} volume get <VOLUME_UUID>
 ```
 
 Look for the encryption field to confirm that encryption is active.

@@ -4,7 +4,7 @@ weight: 20200
 ---
 
 Simplyblock requires a Linux Kernel 5.19 or later with NVMe over Fabrics and NVMe over TCP enabled. However,
-`{{ variables.cliname }}`, the simplyblock commandline interface, requires some additional tools and expects certain
+`{{ cliname }}`, the simplyblock commandline interface, requires some additional tools and expects certain
 conventions for configuration files and locations. Therefore, simplyblock officially only supports Red Hat-based Linux
 distributions as of now.
 

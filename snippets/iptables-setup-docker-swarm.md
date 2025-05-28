@@ -6,7 +6,7 @@ Following is a list of all ports (TCP and UDP) required for operation as a stora
 list is for storage nodes only. Management nodes have a different port configuration. See the
 [Firewall Configuration](#firewall-configuration-cp) section for the control plane.
 
---8<-- "storage-plane-network-port-table.md"
+{% include 'storage-plane-network-port-table.md' %}
 
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 

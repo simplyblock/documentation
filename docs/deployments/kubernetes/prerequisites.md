@@ -27,12 +27,12 @@ Supported Linux distribution
 3 management nodes
 
 ```bash title="Create Management Cluster"
-{{ variables.cliname }} cluster create
-{{ variables.cliname }} cluster list
+{{ cliname }} cluster create
+{{ cliname }} cluster list
 ```
 
 ```bash title="Sample output control plane creation"
-[demo@demo ~]# sudo {{ variables.cliname }} cluster create --ifname=ens18 --ha-type=ha
+[demo@demo ~]# sudo {{ cliname }} cluster create --ifname=ens18 --ha-type=ha
 2025-02-26 12:37:06,097: INFO: Installing dependencies...
 2025-02-26 12:37:13,338: INFO: Installing dependencies > Done
 2025-02-26 12:37:13,358: INFO: Node IP: 192.168.10.151
@@ -61,7 +61,7 @@ Returns cluster-id
 
 
 ```plain title="Example output for listing available clusters"
-[demo@demo ~]# sudo {{ variables.cliname }} cluster list
+[demo@demo ~]# sudo {{ cliname }} cluster list
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+---------+
 | UUID                                 | NQN                                                             | ha_type | tls   | mgmt nodes | storage nodes | Mod | Status  |
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+---------+
@@ -70,10 +70,10 @@ Returns cluster-id
 ```
 
 ### Get Cluster Secret
-{{ variables.cliname }} cluster get-secret <cluster_uuid>
+{{ cliname }} cluster get-secret <cluster_uuid>
 
 ```bash title="Example output get cluster secret"
-[demo@demo ~]# sudo {{ variables.cliname }} cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
+[demo@demo ~]# sudo {{ cliname }} cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
 e8SQ1ElMm8Y9XIwyn8O0 # (1)
 ```
 
@@ -83,15 +83,15 @@ e8SQ1ElMm8Y9XIwyn8O0 # (1)
 
 ```bash title="Adding a management node to the control plane"
 sudo yum -y install python3-pip
-pip install {{ variables.cliname }} --upgrade
+pip install {{ cliname }} --upgrade
 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-{{ variables.cliname }} mgmt add 192.168.10.151 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 ens18
-{{ variables.cliname }} mgmt add <CTR_PLANE_PRI_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
+{{ cliname }} mgmt add 192.168.10.151 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 ens18
+{{ cliname }} mgmt add <CTR_PLANE_PRI_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
 ```
 
 ```plain title="Example output joining a control plane cluster"
-[root@vm12 ~]# {{ variables.cliname }} mgmt add 192.168.10.151 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 ens18
+[root@vm12 ~]# {{ cliname }} mgmt add 192.168.10.151 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 ens18
 2025-02-26 12:40:17,815: INFO: Cluster found, NQN:nqn.2023-02.io.simplyblock:7bef076c-82b7-46a5-9f30-8c938b30e655
 2025-02-26 12:40:17,816: INFO: Installing dependencies...
 2025-02-26 12:40:25,606: INFO: Installing dependencies > Done

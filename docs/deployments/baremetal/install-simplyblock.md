@@ -4,7 +4,7 @@ weight: 30100
 ---
 
 <!-- include: install intro -->
---8<-- "bare-metal-intro.md"
+{% include 'bare-metal-intro.md' %}
 
 !!! danger
     Simplyblock requires a fully redundant network interconnect, implemented via a solution such as LACP or Static
@@ -13,10 +13,10 @@ weight: 30100
     section.
 
 <!-- include: install control plane documentation -->
---8<-- "install-control-plane.md"
+{% include 'install-control-plane.md' %}
 
 <!-- include: install storage plane (bare metal) documentation -->
---8<-- "install-storage-plane-bare-metal.md"
+{% include 'install-storage-plane-bare-metal.md' %}
 
 Now that the cluster is ready, it is time to install the [Kubernetes CSI Driver](install-simplyblock-csi.md) or learn
 how to use the simplyblock storage cluster to
