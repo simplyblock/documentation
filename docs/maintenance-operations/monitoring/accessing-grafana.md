@@ -51,7 +51,8 @@ All dashboards are stored in per-cluster folders. Each cluster contains the foll
 - Device
 - Logical Volume
 - Storage Pool
-- Node Dashoboard (both control plane and storage node system monitoring)
+- Storage Plane node(s) system monitoring
+- Control Plane node(s) system monitoring
 
 Dashboard widgets are designed to be self-explanatory.
 
