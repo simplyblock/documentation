@@ -158,15 +158,23 @@ commands:
     apt install tuned
     ```
 
+!!! info
+    On Amazon Linux, the _tuned_ package is not available. Please use the AlmaLinux version instead.
+    
+    ```bash
+    yum install https://repo.almalinux.org/almalinux/9/BaseOS/x86_64/os/Packages/tuned-2.25.1-1.el9.noarch.rpm
+    ```
+    
 Following the installation of _tuned_, the tuning profile file must be created. The following snippet automates the
 creation based on the generated configuration file.
 
 ```bash title="Generate the core isolation tuning profile"
+sudo -i
 SIMPLYBLOCK_CONFIG="/var/simplyblock/sn_config_file"
 pip install -y yq jq
-ISOLATED=$(yq '.isolated_cores' ${SIMPLYBLOCK_CONFIG} | jq -r '. | $ join(",")'); echo "isolcpus=${ISOLATED}"
+ISOLATED=$(yq '.isolated_cores' ${SIMPLYBLOCK_CONFIG} | jq -r '. | join(",")'); echo "isolcpus=${ISOLATED}"
 mkdir -p /etc/tuned/realtime
-cat << EOF > /etc/tuned/realtimme/tuned.conf
+cat << EOF > /etc/tuned/realtime/tuned.conf
 [main]
 include=latency-performance
 [bootloader]
@@ -180,8 +188,8 @@ Now the profile file must be applied and the worker node restarted.
     Remember to drain potentially remaining services on the Kubernetes worker node before rebooting.
 
 ```bash title="Apply the profile and reboot"
-tuned-adm profile realtime
-reboot 
+sudo tuned-adm profile realtime
+sudo reboot 
 ```
 
 #### Changing the Number of Utilized CPU Cores
