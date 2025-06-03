@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+document$.subscribe(function() {
     const elNumCores = document.getElementById("cpuc-cores");
     const elCoresWrapper = document.getElementById("cpuc-cores-wrapper");
     const elResult = document.getElementById("cpuc-result");
