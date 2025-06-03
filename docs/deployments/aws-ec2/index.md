@@ -3,10 +3,10 @@ title: "AWS EC2 (Amazon Linux)"
 weight: 20300
 ---
 
-An installation on Amazon EC2 is mostly comparable with a bare metal or virtualized installation. There are however a
-few small differences. Hence, we decided to give it a separate documentation section.
+An installation on Amazon EC2 is mostly comparable to a bare-metal or virtualized installation. There are, however, a
+few minor differences. Hence, we decided to give it a separate documentation section.
 
-An installation on Amazon EKS is comparable with a standard Kubernetes installation. The differences between an Amazon
+An installation on Amazon EKS is comparable to a standard Kubernetes installation. The differences between an Amazon
 EKS installation and a basic Kubernetes
 
 !!! warning

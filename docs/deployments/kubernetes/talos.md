@@ -4,7 +4,7 @@ weight: 30050
 ---
 
 [Talos Linux](https://www.talos.dev/) is a minimal Linux distribution optimized for Kubernetes. Built as an immutable
-distribution image, it provides minimal attack surface but requires some changes to the image to run simplyblock.
+distribution image, it provides a minimal attack surface but requires some changes to the image to run simplyblock.
 
 Simplyblock requires a set of additional Linux kernel modules, as well as tools being available in the Talos image.
 That means that a custom Talos image has to be built to run simplyblock. The following section explains the required
@@ -27,13 +27,7 @@ machine:
 ## Huge Pages Reservations
 
 Simplyblock requires huge pages memory to operate. The storage engine expects to find huge pages of 2 MiB page size. The
-required amount of huge pages depends on a number of factors. To calculate the number of required huge pages,
-simplyblock provides a [Huge Pages Calculator](../../reference/huge-pages-calculator.md).
-
-!!! info
-    The number of huge pages calculated by the huge pages calculator is the minimum required number. A higher number of
-    huge pages can always be allocated. The storage engine, however, will refuse to start up without the required number
-    of huge pages.
+required amount of huge pages depends on a number of factors.
 
 To apply the change to Talos' worker nodes, a YAML configuration file with the following content is required. The number
 of pages is to be replaced with the number calculated above.
@@ -54,9 +48,9 @@ demo@demo ~> talosctl service kubelet restart --nodes <worker_node_ip>
 
 ## Required Talos Permissions
 
-Simyplyblock's CSI driver requires to connect NVMe over Fabrics devices, as well as mount and format them. Therefore,
-the CSI driver has to run as a privileged container. Hence, Talos needs to be configured to start the simplyblock's CSI
-driver in privileged mode. 
+Simyplyblock's CSI driver requires connecting NVMe over Fabrics devices, as well as mounting and formatting them.
+Therefore, the CSI driver has to run as a privileged container. Hence, Talos must be configured to start the
+simplyblock's CSI driver in privileged mode. 
 
 Talos allows overriding the pod security admission settings at a Kubernetes namespace level. To enable privileged mode
 and grant the required access to the simplyblock CSI driver, a specific simplyblock namespace with the appropriate

@@ -15,7 +15,7 @@ cards (NICs).
 Simplyblock highly recommends a NUMA-aware configuration in multi-socket systems. To ensure optimal performance, each
 CPU socket should have a dedicated NIC and dedicated NVMe devices. These NICs and NVMe devices must be installed in
 PCI-e slots that are physically connected to their respective CPUs. This setup ensures low-latency, high-bandwidth data
-paths between the backing storage devices, the storage software and the network.
+paths between the backing storage devices, the storage software, and the network.
 
 ## Checking NUMA Configuration
 
@@ -36,8 +36,8 @@ NUMA node1 CPU(s):                    32-63
 In the example above, the system has two NUMA nodes.
 
 !!! recommendation
-    In the case that the system consists of multiple NUMA nodes, it is recommended to configure simplyblock with
-    multiple storage nodes per storage host. The number of storage nodes should match the number of NUMA nodes.
+    If the system consists of multiple NUMA nodes, it is recommended to configure simplyblock with multiple storage
+    nodes per storage host. The number of storage nodes should match the number of NUMA nodes.
 
 ## Ensuring NUMA-Aware Devices 
 

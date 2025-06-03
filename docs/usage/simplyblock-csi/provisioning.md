@@ -3,7 +3,7 @@ title: "Provisioning"
 weight: 40000
 ---
 
-Provisioning a new PersistentVolume using simplyblock's Kubernetes CSI driver integration, requires at least one
+Provisioning a new PersistentVolume using simplyblock's Kubernetes CSI driver integration requires at least one
 [StorageClass](storage-class.md) to be set up.
 
 ## Create a new Volume
@@ -62,7 +62,7 @@ To create a new persistent volume claim from an existing and live volume, see th
 
 !!! warning
     Simplyblock discourages the static provisioning of Kubernetes Persistent Volumes. Only do it if you know what you
-    do. We highly recommend to use the dynamic provisioning through the Simplyblock CSI driver.
+    are doing. We highly recommend using the dynamic provisioning through the Simplyblock CSI driver.
 
 ### NVMe over Fabrics Target
 
@@ -115,7 +115,7 @@ persistentvolume/pv-static created
 ```
 
 !!! warning
-    Simplyblock's CSI driver does not supports logical volume deletion for static persistent volumes. Hence,
+    Simplyblock's CSI driver does not support logical volume deletion for static persistent volumes. Hence,
     `persistentVolumeReclaimPolicy` in persistent volume specification must be set to `Retain` to avoid persistent
     volume delete attempt in csi-provisioner.
 
@@ -164,7 +164,7 @@ persistentvolume/pv-static created
 ```
 
 !!! warning
-    Simplyblock's CSI driver does not supports logical volume deletion for static persistent volumes. Hence,
+    Simplyblock's CSI driver does not support logical volume deletion for static persistent volumes. Hence,
     `persistentVolumeReclaimPolicy` in persistent volume specification must be set to `Retain` to avoid persistent
     volume delete attempt in csi-provisioner.
 

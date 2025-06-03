@@ -9,7 +9,7 @@ Storage Interface (CSI) driver.
 
 ## What makes Simplyblock Special?
 
-- **Environment Agnostic:** Simplyblock operates seamlessly across major cloud providers, regional and specialized
+- **Environment Agnostic:** Simplyblock operates seamlessly across major cloud providers, regional, and specialized
   providers, bare-metal and virtual provisioners, and private clouds, including both virtualized and bare-metal
 - Kubernetes environments.
 
@@ -38,7 +38,7 @@ Simplyblock offers tailored advantages to various sectors:
 - **Technology and SaaS Companies:** Provides cost savings and performance enhancements, simplifying storage management
   and improving application performance without significant infrastructure changes.
 
-- **Telecommunications:** Offers ultra-low latency access to data, enhances security, and simplifies complex storage
+- **Telecommunications:** Offers ultra-low-latency access to data, enhances security, and simplifies complex storage
   infrastructures, aiding in the efficient management of customer records and network telemetry.
 
 - **Blockchain and Cryptocurrency:** Delivers cost efficiency, enhanced performance, scalability, and robust data

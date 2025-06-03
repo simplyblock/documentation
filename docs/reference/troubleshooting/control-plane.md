@@ -9,9 +9,9 @@ weight: 30100
 
 1. Ensure that IPv6 is disabled. [To disable IPv6 follow these steps](../../deployments/baremetal/prerequisites.md#network-configuration).
 2. Ensure sufficient disk space on the root partition on all control plane nodes. Free disk space can be checked with `df -h`.
-   1. If not enough free disk space is available, start by checking the Graylog, MongoDB, Elasticsearch containers. If those consume the majority of the disk space, old indices (2-3) can be deleted.
+   1. If not enough free disk space is available, start by checking the Graylog, MongoDB, and Elasticsearch containers. If those consume most of the disk space, old indices (2-3) can be deleted.
    2. Increase the root partition size.
-   3. If you cannot increase the root partition size, remove any data or service non-relevant to the simplyblock control plane and run a `docker system prune`.
+   3. If you cannot increase the root partition size, remove any data or service not relevant to the simplyblock control plane and run a `docker system prune`.
 3. Restart the Docker daemon: `systemctl restart docker`
 4. Reboot the node
 
@@ -24,7 +24,7 @@ weight: 30100
 3. If that doesn't help, reboot the host.
 
 ## Graylog Storage is Full 
-**Symptom:** The Graylog service cannot start or is unresponsive and the storage disk is full.
+**Symptom:** The Graylog service cannot start or is unresponsive, and the storage disk is full.
 
 1. Identify the cause of the disk running full. Run the following commands to find the largest files on the Graylog disk.
    ```bash title="Find the largest files"
@@ -43,8 +43,8 @@ weight: 30100
    docker image prune -f
    docker rm $(sudo docker ps -aq --filter "status=exited")
    ```
-4. Cleanup OpenSearch, Graylog and MongoDB volumes paths and restart the services.
-   ```bash title="Cleaning up adjecent services"
+4. Cleanup OpenSearch, Graylog, and MongoDB volume paths and restart the services.
+   ```bash title="Cleaning up adjacent services"
    # Scale services down
    docker service update monitoring_graylog --replicas=0
    docker service update monitoring_opensearch --replicas=0

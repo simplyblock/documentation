@@ -11,10 +11,10 @@ detailed insight into system behavior.
 
 ## Accessing Logical Volume Statistics 
 
-To access a logical volume's performance and I/O statistics, the `{{ variables.cliname }}` command line tool can be used:
+To access a logical volume's performance and I/O statistics, the `{{ cliname }}` command line tool can be used:
 
 ```bash title="Accessing the statistics of a logical volume"
-{{ variables.cliname }} volume get-io-stats <VOLUME_ID>
+{{ cliname }} volume get-io-stats <VOLUME_ID>
 ```
 
 All details of the command are available in the
@@ -24,10 +24,10 @@ The information is also available through Grafana in the logical volume's dashbo
 
 ## Accessing Logical Volume Health Information
 
-To access a logical volume's health status, the `{{ variables.cliname }}` command line tool can be used:
+To access a logical volume's health status, the `{{ cliname }}` command line tool can be used:
 
 ```bash title="Accessing the health status of a logical volume"
-{{ variables.cliname }} volume check <VOLUME_ID>
+{{ cliname }} volume check <VOLUME_ID>
 ```
 
 All details of the command are available in the

@@ -4,12 +4,12 @@ weight: 50000
 ---
 
 <!-- include: install control plane documentation -->
---8<-- "install-control-plane.md"
+{% include 'install-control-plane.md' %}
 
 ## Storage Plane Installation
 
 Caching nodes, like storage nodes, require huge page memory to hold the internal state. Huge pages should be 2MiB in
-size and a minimum of 4096 huge pages should be allocated at boot time of the operating system.
+size, and a minimum of 4096 huge pages should be allocated at boot time of the operating system.
 
 ```bash
 demo@worker-1 ~> sudo sysctl -w vm.nr_hugepages=4096
@@ -65,4 +65,4 @@ demo@worker-1 ~> sudo modprobe nbd
 
 ### Storage Node Installation
 
---8<-- "kubernetes-install-storage-node-helm.md"
+{% include 'kubernetes-install-storage-node-helm.md' %}

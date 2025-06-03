@@ -4,7 +4,7 @@ weight: 20100
 ---
 
 Simplyblock offers a comprehensive API to manage and automate cluster operations. This includes all cluster-wide
-operations, logical volume specific operations, health information, and 
+operations, logical volume-specific operations, health information, and 
 
  - Retrieve information about the cluster and its health status
  - Automatically manage a logical volume lifecycle
@@ -17,7 +17,7 @@ Any request to the simplyblock API requires authorization information to be prov
 return an HTTP status 401 (Unauthorized).
 
 To provide authorization information, the simplyblock API uses the _Authorization_ HTTP header with a
-combination of the cluster uuid and the cluster secret.
+combination of the cluster UUID and the cluster secret.
 
 HTTP Authorization header:
 
@@ -26,15 +26,15 @@ Authorization: <CLUSTER_UUID> <CLUSTER_SECRET>
 ```
 
 The cluster id is provided during the initial cluster installation. The cluster secret can be obtained using
-the simplyblock commandline interface tool `{{ variables.cliname }}`.
+the simplyblock commandline interface tool `{{ cliname }}`.
 
 ```bash
-{{ variables.cliname }} cluster get-secret CLUSTER_UUID
+{{ cliname }} cluster get-secret CLUSTER_UUID
 ```
 
 ## PUT and POST Requests 
 
-For requests that send JSON payload to the backend endpoint, it is important to set the Content-Type header
+For requests that send a JSON payload to the backend endpoint, it is important to set the Content-Type header
 accordingly. Requests that require this header to be set are of type HTTP PUT or HTTP POST.
 
 The expected content type is `application/json`:

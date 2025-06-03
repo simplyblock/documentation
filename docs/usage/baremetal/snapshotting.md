@@ -4,20 +4,20 @@ weight: 30100
 ---
 
 Snapshots in simplyblock provide point-in-time copies of logical Volumes (LVs), allowing for backup, recovery, or
-cloning operations without impacting the active workload. Snapshots can be created using the `{{ variables.cliname }}`
+cloning operations without impacting the active workload. Snapshots can be created using the `{{ cliname }}`
 command line interface to protect critical data or enable development and testing environments based on production data.
 
 ## Prerequisites
 
 - A running simplyblock cluster with an existing logical volume.
-- `{{ variables.cliname }}` installed and configured with access to the simplyblock management API.
+- `{{ cliname }}` installed and configured with access to the simplyblock management API.
 
 ## Creating a Snapshot
 
 To create a snapshot of an existing Logical Volume:
 
 ```bash
-{{ variables.cliname }} snapshot add \
+{{ cliname }} snapshot add \
   <VOLUME_UUID> \
   <SNAPSHOT_NAME>
 ```
@@ -27,5 +27,5 @@ To create a snapshot of an existing Logical Volume:
 After creation, the snapshot can be listed:
 
 ```bash
-{{ variables.cliname }} snapshot list
+{{ cliname }} snapshot list
 ```

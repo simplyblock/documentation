@@ -7,7 +7,7 @@ Simplyblock is a cloud-native, distributed block storage platform designed to de
 resilient storage through a software-defined architecture. Centered around NVMe-over-Fabrics (NVMe-oF), simplyblock
 separates compute and storage to enable scale-out elasticity, high availability, and low-latency operations in modern,
 containerized environments. The architecture is purpose-built to support Kubernetes-native deployments with seamless
-integration but supports virtual and even physical machines as clients as well.
+integration, but supports virtual and even physical machines as clients as well.
 
 ## Control Plane
 
@@ -24,7 +24,7 @@ The control plane provides the following functionality:
 - Lifecycle management of clusters:
     - Deploy storage clusters
     - Manages nodes and devices
-    - Resize and re-configure clusters
+    - Resize and reconfigure clusters
 - Lifecycle management of logical volumes and pools
     - For Kubernetes, the Simplyblock CSI driver integrates with the persistent volume lifecycle management
 - Cluster operations
@@ -34,22 +34,23 @@ The control plane provides the following functionality:
     - Logging
     - others
 
-The control plane also provides real-time collection and aggregation of io stats (performance, capacity,
+The control plane also provides real-time collection and aggregation of I/O stats (performance, capacity,
 utilization), proactive cluster monitoring and health checks, monitoring dashboards, alerting, a log file repository
-with a management interface, data migration and automated node and device restart services.
+with a management interface, data migration, and automated node and device restart services.
 
 For monitoring dashboards and alerting, the simplyblock control plane provides Grafana and Prometheus. Both systems are
-configured to provide a set of standard alerts which can be delivered via Slack or email. Additionally, customers
+configured to provide a set of standard alerts that can be delivered via Slack or email. Additionally, customers
 are free to define their own custom alerts.
 
 For log management, simplyblock uses Graylog. For a comprehensive insight, Graylog is configured to collect container
-logs from control plane and storage plane services, the RPC communication between the control plane and storage cluster
-and the data services logs ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"} or Storage Performance Development Kit).
+logs from the control plane and storage plane services, the RPC communication between the control plane and storage
+cluster and the data services logs ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"} or Storage Performance
+Development Kit).
 
 ### Control Plane State Storage
 
 The control plane is implemented as a stack of containers running on one or more management nodes. For production
-environments, simplyblock requires at least 3 management nodes for high availability. The management nodes run as
+environments, simplyblock requires at least three management nodes for high availability. The management nodes run as
 a set of replicated, stateful services.
 
 For internal state storage, the control plane uses ([FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"}) as
@@ -79,10 +80,10 @@ nodes. This improves throughput by parallelizing the access to data through mult
 
 Simplyblock's storage engine implements erasure coding, a RAID-like system, which uses parity information to protect
 data and restore it in case of a failure. Due to the fully distributed nature of simplyblock's erasure coding
-implementation, parity information is not only stored on other disks than the original data chunk, but even other nodes.
-This improves the data protection and enables higher fault tolerance over typical implementations. While most erasure
-coding implementation provide a Maximum Tolerable Failure (MFT) in terms of how many disks can fail, simplyblock defines
-it as the number of nodes that can fail.
+implementation, parity information is not only stored on disks other than the original data chunk, but also on other
+nodes. This improves data protection and enables higher fault tolerance than typical implementations. While most
+erasure coding implementations provide a Maximum Tolerable Failure (MFT) in terms of how many disks can fail,
+simplyblock defines it as the number of nodes that can fail.
 
 As a second layer, simplyblock leverages NVMe-oF multipathing to ensure continuous access to logical volumes by
 automatically handling failover between primary and secondary nodes. Each volume is presented with multiple active
@@ -103,7 +104,7 @@ shared environments where security, compliance, and tenant separation are critic
 ## Technologies in Simplyblock
 
 Building strong and reliable distributed storage technology has to build on a strong foundation. That's why simplyblock
-uses a variety of open source key technologies as its basis.
+uses a variety of open-source key technologies as its basis.
 
 | Component        | Technologies                                                                                                                                                                                                                                                                                             |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

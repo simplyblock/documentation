@@ -10,7 +10,7 @@ NVMe over Fabrics (nvme-of), and NVMe over TCP (nvme-tcp) are available. In most
 modules need to be loaded manually or persisted. Please see
 the [Bare Metal or Virtualized (Linux) installation section](../deployments/baremetal/index.md) on how to do this.
 
-The following kernels are known to be compatible and tested. Additional kernel versions may work but are untested.
+The following kernels are known to be compatible and tested. Additional kernel versions may work, but are untested.
 
 | OS                       | Linux Kernel                            | Prerequisite      |
 |--------------------------|-----------------------------------------|-------------------|
@@ -20,9 +20,9 @@ The following kernels are known to be compatible and tested. Additional kernel v
 
 !!! warning
     Amazon Linux 2 and Amazon Linux 2023 have a bug with
-    [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics
-    on any Amazon Linux operates in a degraded state with the risk of connection outages. As an alternative,
-    multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO. Use the following DM-MPIO configuration:
+    [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics on any Amazon Linux operates in a degraded
+    state with the risk of connection outages. As an alternative, multipathing must be configured using the Linux Device
+    Manager (dm) via DM-MPIO. Use the following DM-MPIO configuration:
 
     ```plain
     cat /etc/multipath.conf 

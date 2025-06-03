@@ -9,11 +9,11 @@ can be skipped. Jump right to the [Storage Plane Installation](#storage-plane-in
 Simplyblock requires a number of TCP and UDP ports to be opened from certain networks. Additionally, it requires IPv6
 to be disabled on management nodes.
 
-Following is a list of all ports (TCP and UDP) required for operation as a management node. Attention is required, as
+The following is a list of all ports (TCP and UDP) required to operate as a management node. Attention is required, as
 this list is for management nodes only. Storage nodes have a different port configuration. See the
 [Firewall Configuration](#firewall-configuration-sp) section for the storage plane.
 
---8<-- "control-plane-network-port-table.md"
+{% include 'control-plane-network-port-table.md' %}
 
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 
@@ -54,22 +54,23 @@ sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 
 Now that the network is configured, the management node software can be installed.
 
-Simplyblock provides a command line interface called `{{ variables.cliname }}`. It's built in Python and required Python 3 and Pip (the
-Python package manager) installed on the machine. This can be achieved with `yum`.
+Simplyblock provides a command line interface called `{{ cliname }}`. It's built in Python and requires
+Python 3 and Pip (the Python package manager) installed on the machine. This can be achieved with `yum`.
 
 ```bash title="Install Python and Pip"
 sudo yum -y install python3-pip
 ```
 
-Afterward, the `{{ variables.cliname }}` command line interface can be installed. Upgrading the CLI later on, uses the same command.
+Afterward, the `{{ cliname }}` command line interface can be installed. Upgrading the CLI later on uses the
+same command.
 
 ```bash title="Install Simplyblock CLI"
-sudo pip install {{ variables.cliname }} --upgrade
+sudo pip install {{ cliname }} --upgrade
 ```
 
 !!! recommendation
-    Simplyblock recommends to only upgrade `{{ variables.cliname }}` if a system upgrade is executed to prevent potential
-    incompatibilities between the running simplyblock cluster and the version of `{{ variables.cliname }}`.
+    Simplyblock recommends to only upgrade `{{ cliname }}` if a system upgrade is executed to prevent potential
+    incompatibilities between the running simplyblock cluster and the version of `{{ cliname }}`.
 
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 
@@ -80,13 +81,13 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 If the check succeeds, it's time to set up the primary management node:
 
 ```bash title="Deploy the primary management node"
-{{ variables.cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha
+{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha
 ```
 
 The output should look something like this:
 
 ```plain title="Example output of control plane deployment"
-[root@vm11 ~]# {{ variables.cliname }} cluster create --ifname=eth0 --ha-type=ha
+[root@vm11 ~]# {{ cliname }} cluster create --ifname=eth0 --ha-type=ha
 2025-02-26 12:37:06,097: INFO: Installing dependencies...
 2025-02-26 12:37:13,338: INFO: Installing dependencies > Done
 2025-02-26 12:37:13,358: INFO: Node IP: 192.168.10.1
@@ -116,40 +117,40 @@ Additionally to the cluster id, the cluster secret is required in many further s
 to retrieve it.
 
 ```bash title="Get the cluster secret"
-{{ variables.cliname }} cluster get-secret <CLUSTER_ID>
+{{ cliname }} cluster get-secret <CLUSTER_ID>
 ```
 
 ```plain title="Example output get cluster secret"
-[root@vm11 ~]# {{ variables.cliname }} cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
+[root@vm11 ~]# {{ cliname }} cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
 e8SQ1ElMm8Y9XIwyn8O0
 ```
 
 ### Secondary Management Nodes
 
-A production cluster, requires at least three management nodes in the control plane. Hence, additional management
+A production cluster requires at least three management nodes in the control plane. Hence, additional management
 nodes need to be added.
 
 On the secondary nodes, the network requires the same configuration as on the primary. Executing the commands under
 [Firewall Configuration (CP)](#firewall-configuration-cp) will get the node prepared.
 
-Afterward, Python, Pip, and `{{ variables.cliname }}` need to be installed.
+Afterward, Python, Pip, and `{{ cliname }}` need to be installed.
 
 ```bash title="Deployment preparation"
 sudo yum -y install python3-pip
-pip install {{ variables.cliname }} --upgrade
+pip install {{ cliname }} --upgrade
 ```
 
 Finally, we deploy the management node software and join the control plane cluster.
 
 ```bash title="Secondary management node deployment"
-{{ variables.cliname }} mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
+{{ cliname }} mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
 ```
 
 Running against the primary management node in the control plane should create an output similar to the following
 example:
 
 ```plain title="Example output joining a control plane cluster"
-[demo@demo ~]# {{ variables.cliname }} mgmt add 192.168.10.1 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 eth0
+[demo@demo ~]# {{ cliname }} mgmt add 192.168.10.1 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 eth0
 2025-02-26 12:40:17,815: INFO: Cluster found, NQN:nqn.2023-02.io.simplyblock:7bef076c-82b7-46a5-9f30-8c938b30e655
 2025-02-26 12:40:17,816: INFO: Installing dependencies...
 2025-02-26 12:40:25,606: INFO: Installing dependencies > Done

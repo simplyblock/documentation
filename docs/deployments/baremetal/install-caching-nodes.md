@@ -4,7 +4,7 @@ weight: 30300
 ---
 
 Caching nodes are simplyblock storage containers that are co-located with the workloads on Kubernetes workers. They
-utilize directly attached NVMe disks on the worker nodes to provide an ultra-low latency write-through cache for
+utilize directly attached NVMe disks on the worker nodes to provide an ultra-low-latency write-through cache for
 disaggregated or hybrid simplyblock clusters.
 
 ## Prerequisites

@@ -3,11 +3,12 @@ title: "Supported Linux Distributions"
 weight: 20200
 ---
 
-Simplyblock requires a Linux Kernel 5.19 or later with NVMe over Fabrics and NVMe over TCP enabled. However, `{{ variables.cliname }}`,
-the simplyblock commandline interface, requires some additional tools and expects certain conventions for configuration
-files and locations. Therefore, simplyblock officially only supports Red Hat-based Linux distribution as of now.
+Simplyblock requires a Linux Kernel 5.19 or later with NVMe over Fabrics and NVMe over TCP enabled. However,
+`{{ cliname }}`, the simplyblock commandline interface, requires some additional tools and expects certain
+conventions for configuration files and locations. Therefore, simplyblock officially only supports Red Hat-based Linux
+distributions as of now.
 
-While others may work, manual intervention may be required and simplyblock cannot support those as of now.
+While others may work, manual intervention may be required, and simplyblock cannot support those.
 
 ## Control Plane
 
@@ -65,5 +66,5 @@ The following Linux distributions are considered tested and supported as NVMe-oF
 
 <span markdown style="font-size: small;"><sup>1</sup> Amazon Linux 2 and Amazon Linux 2023 have a bug with
 [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics
-on any Amazon Linux operates in a degraded state with the risk of connection outages. As an alternative,
+on any Amazon Linux operates in a degraded state with the risk of connection outages. Alternatively,
 multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO.</span> 

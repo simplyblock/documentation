@@ -10,10 +10,10 @@ Simplyblock seamlessly integrates with Proxmox through its storage plugin. The s
 provisioning of storage volumes for Proxmox's KVM virtual machines and LXC containers. Simplyblock is fully integrated
 into the Proxmox user interface.
 
-After being deployed, virtual machine and container images can be provisioned to simplyblock logical volumes inheriting
+After being deployed, virtual machine and container images can be provisioned to simplyblock logical volumes, inheriting
 all performance and reliability characteristics. Volumes provisioned using the simplyblock Proxmox integration are
-automatically managed and provided to the hypervisor in an ad-hoc fashion and the volume lifecycle can be managed
-through the Proxmox UI and command line interface.
+automatically managed and provided to the hypervisor in an ad-hoc fashion. The Proxmox UI and command line interface can
+manage the volume lifecycle.
 
 ## Install Simplyblock for Proxmox
 
@@ -44,10 +44,10 @@ echo 'deb [signed-by=/etc/apt/keyrings/simplyblock.gpg] https://install.simplybl
 
 ### Install the Simplyblock-Proxmox Package
 
-After the registration of the repository, a `apt update` will refresh all available package information and makes the
+After the registration of the repository, an `apt update` will refresh all available package information and make the
 `simplyblock-proxmox` package available. The update must not show any errors related to the simplyblock apt repository.
 
-With the updated repository information, a `apt install simplyblock-proxmox` installed the simplyblock storage plugin.
+With the updated repository information, an `apt install simplyblock-proxmox` installed the simplyblock storage plugin.
 
 ```bash title="Install the Simplyblock Proxmox Integration"
 apt update
@@ -69,8 +69,8 @@ pvesm add simplyblock <NAME> \
 |--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | NAME               | The name of the storage pool in Proxmox.                                                                                                                                                 |
 | CONTROL_PLANE_ADDR | The api address of the simplyblock control plane.                                                                                                                                        |
-| CLUSTER_ID         | The simplyblock storage cluster id. The cluster id can be found using [`{{ variables.cliname }} cluster lust`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
-| CLUSTER_SECRET     | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ variables.cliname }} cluster get-secret`](../../reference/cli/cluster.md#gets-a-clusters-secret). |
+| CLUSTER_ID         | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster lust`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
+| CLUSTER_SECRET     | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ cliname }} cluster get-secret`](../../reference/cli/cluster.md#gets-a-clusters-secret). |
 | STORAGE_POOL_NAME  | The simplyblock storage pool name to attach.                                                                                                                                             | 
 
 In the Proxmox user interface, a storage of type simplyblock is now available.

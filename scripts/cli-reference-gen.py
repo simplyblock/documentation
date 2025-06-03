@@ -2,6 +2,7 @@ import jinja2
 import yaml
 import sys
 import re
+import os
 
 def is_parameter(item):
     return item["name"].startswith("--") or item["name"].startswith("-")
@@ -92,7 +93,11 @@ def get_description(item):
 
 
 base_path = sys.argv[1]
-with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
+reference_file = f"{base_path}/scripts/sbcli-repo/simplyblock_cli/cli-reference.yaml"
+if os.path.exists(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml"):
+    reference_file = f"{base_path}/scripts/sbcli-repo/cli-reference.yaml"
+
+with open(reference_file) as stream:
     try:
         reference = yaml.safe_load(stream)
 
@@ -115,8 +120,11 @@ with open(f"{base_path}/scripts/sbcli-repo/cli-reference.yaml") as stream:
             environment.filters["get_description"] = get_description
 
             context = {"command": command}
-            with open(f"{base_path}/_data/variables.yml") as stream2:
-                context["variables"] = yaml.safe_load(stream2)
+            with open(f"{base_path}/mkdocs.yml") as stream2:
+                yaml.add_constructor(u"tag:yaml.org,2002:python/name:material.extensions.emoji.twemoji", lambda loader, node: node.value, Loader=yaml.SafeLoader)
+                yaml.add_constructor(u"tag:yaml.org,2002:python/name:material.extensions.emoji.to_svg", lambda loader, node: node.value, Loader=yaml.SafeLoader)
+                config = yaml.safe_load(stream2)
+                context["variables"] = config["extra"]
 
             template = environment.get_template("cli-reference-group.jinja2")
             output = template.render(context)

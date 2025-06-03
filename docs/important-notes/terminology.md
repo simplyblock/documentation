@@ -32,14 +32,14 @@ following a defined placement logic.
 ### Storage Pool
 
 A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, IOPS, and 
-read-write throughput. Storage pools are defined on a cluster-level and can span logical volumes across multiple
-storage nodes. Therefore, storage pools implement a tenant-concept.   
+read-write throughput. Storage pools are defined on a cluster level and can span logical volumes across multiple
+storage nodes. Therefore, storage pools implement a tenant concept.   
 
 ### Storage Device
 
-A storage device is a physical or virtualized nvme drive in simplyblock, but not a partition. 
-It is identified by its PCIe address. Simplyblock currently supports different a wide range of different 
-types of nvme drives with different performance characteristics, features, and capacity. 
+A storage device is a physical or virtualized NVMe drive in simplyblock, but not a partition. It is identified by its
+PCIe address and serial number. Simplyblock currently supports a wide range of different types of NVMe drives with
+varying characteristics of performance, features, and capacities. 
 
 ### NVMe (Non-Volatile Memory Express)
 
@@ -124,7 +124,7 @@ Simplyblock supports synchronous replication.
 
 RAID (Redundant Array of Independent Disks) is a data storage technology that combines multiple physical drives into a
 single logical unit to improve performance, fault tolerance, or both. RAID configurations vary based on their purpose:
-RAID 0 (striping) enhances speed but offers no redundancy, RAID 1 (mirroring) duplicates data for high availability and
+RAID 0 (striping) enhances speed but offers no redundancy, RAID 1 (mirroring) duplicates data for high availability, and
 RAID 5, 6, and 10 use combinations of striping and parity to balance performance and fault tolerance. RAID is widely
 used in enterprise storage, servers, and high-performance computing to protect against drive failures and optimize data
 access. It can be implemented in hardware controllers or software-defined storage solutions, depending on system
@@ -138,8 +138,8 @@ different applications receive appropriate levels of performance, preventing res
 environments. By setting limits and priorities for Logical Volumes (LVs), Simplyblock allows administrators to allocate
 storage resources efficiently, ensuring critical workloads maintain consistent performance even under high demand.
 This capability is essential for optimizing storage operations, improving reliability, and meeting service-level
-agreements (SLAs) in distributed cloud-native environments. In simplyblock it is possible to limit (cap) IOPS or throughput
-of individual logical volumes or entire storage pools and additionally to create QoS classes and provide a fair 
+agreements (SLAs) in distributed cloud-native environments. In simplyblock, it is possible to limit (cap) IOPS or throughput
+of individual logical volumes or entire storage pools, and additionally to create QoS classes and provide a fair 
 relative resource allocation (IOPS and/or throughput) to each class. Logical volumes can be assigned to classes.
 
 ### SPDK (Storage Performance Development Kit)
@@ -147,8 +147,7 @@ relative resource allocation (IOPS and/or throughput) to each class. Logical vol
 Storage Performance Development Kit (SPDK) is an open-source set of libraries and tools designed to optimize
 high-performance, low-latency storage applications by bypassing traditional kernel-based I/O processing. SPDK leverages
 user-space and polled-mode drivers to eliminate context switching and interrupts, significantly reducing CPU overhead
-and
-improving throughput. It is particularly suited for NVMe storage, NVMe-over-Fabrics (NVMe-oF), and iSCSI target
+and improving throughput. It is particularly suited for NVMe storage, NVMe-over-Fabrics (NVMe-oF), and iSCSI target
 acceleration, making it a key technology in software-defined storage solutions. By providing a highly efficient
 framework for storage processing, SPDK enables modern storage architectures to achieve high IOPS, reduced latency, and
 better resource utilization in cloud and enterprise environments.
@@ -219,7 +218,7 @@ diverse infrastructure environments.
 ### Persistent Volume
 
 A Persistent Volume (PV) is a cluster-wide Kubernetes storage resource that provides durable and independent storage for
-Pods, allowing data to persist beyond the lifecycle of individual containers. Unlike ephemeral storage, which is tied to
+Pods allow data to persist beyond the lifecycle of individual containers. Unlike ephemeral storage, which is tied to
 a Pod’s runtime, a PV is provisioned either statically by an administrator or dynamically using StorageClasses.
 Applications request storage by creating Persistent Volume Claims (PVCs), which Kubernetes binds to an available PV
 based on capacity and access requirements. Persistent Volumes support different access modes, such as ReadWriteOnce (
@@ -293,7 +292,7 @@ traditional class-based system. CIDR uses variable-length subnet masking (VLSM) 
 flexible subnet sizes, reducing wasted addresses and improving routing efficiency. CIDR notation represents an IP
 address followed by a slash (/) and a number indicating the number of significant bits in the subnet mask (e.g.,
 `192.168.1.0/24` means the first 24 bits define the network, leaving 8 bits for host addresses). Widely used in modern
-networking and the internet, CIDR helps optimize IP address distribution and enhances routing aggregation, reducing the
+networking and the internet, CIDR helps optimize IP address distribution and enhance routing aggregation, reducing the
 size of global routing tables.
 
 ### Hyper-Converged
@@ -302,14 +301,14 @@ Hyper-converged refers to an IT infrastructure model that integrates compute, st
 software-defined system. Unlike traditional architectures that rely on separate hardware components for each function,
 hyper-converged infrastructure (HCI) leverages virtualization and centralized management to streamline operations,
 improve scalability, and reduce complexity. This approach enhances performance, fault tolerance, and resource efficiency
-by distributing workloads across multiple nodes, allowing seamless scaling by simply adding more nodes. HCI is widely
+by distributing workloads across multiple nodes, allowing seamless scaling by adding more nodes. HCI is widely
 used in cloud environments, virtual desktop infrastructure (VDI), and enterprise data centers for its ease of
 deployment, automation capabilities, and cost-effectiveness.
 
 ### Disaggregated
 
 Disaggregated refers to an IT architecture approach where compute, storage, and networking resources are separated into
-independent components rather than being tightly integrated within the same physical system. In disaggregated storage,
+independent components rather than tightly integrated within the same physical system. In disaggregated storage,
 for example, storage resources are managed independently of compute nodes, allowing for flexible scaling, improved
 resource utilization, and reduced hardware dependencies. This contrasts with traditional or hyper-converged
 architectures, where these resources are combined. Disaggregated architectures are widely used in cloud computing,

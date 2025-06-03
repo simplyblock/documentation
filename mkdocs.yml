@@ -21,6 +21,7 @@ extra:
       link: https://bsky.app/profile/simplyblock.io
     - icon: fontawesome/brands/mastodon
       link: https://mastodon.social/deck/@simplyblock
+  cliname: sbctl
 plugins:
   - search
   - mike
@@ -28,7 +29,9 @@ plugins:
   - glightbox
   - mkdocs-video
   - link-marker
-  - markdownextradata
+  - macros:
+      on_undefined: strict
+      include_dir: ./snippets
   - render_swagger:
       allow_arbitrary_locations: true
       css: ../../../assets/stylesheets/swagger-ui.css
@@ -56,8 +59,6 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
-  - pymdownx.snippets:
-      base_path: ["./snippets"]
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.emoji:
@@ -102,7 +103,6 @@ validation:
     not_found: warn
     anchors: warn
     unrecognized_links: warn
-    absolute_links: warn
+    absolute_links: relative_to_docs
 watch:
   - ./snippets
-  - ./_data

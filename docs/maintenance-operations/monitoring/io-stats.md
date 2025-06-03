@@ -1,10 +1,11 @@
 ---
-title: "Accessing I/O Stats ({{ variables.cliname }})"
+title: "Accessing I/O Stats ({{ cliname }})"
 weight: 30300
 ---
 
-Simplyblock's `{{ variables.cliname }}` tool provides the option to retrieve some extensive I/O statistics. Those contain a number of
-relevant metrics of historic and current I/O activities per device, storage node, logical volume and cluster.
+Simplyblock's `{{ cliname }}` tool provides the option to retrieve some extensive I/O statistics. Those
+contain a number of relevant metrics of historic and current I/O activities per device, storage node, logical volume,
+and cluster.
 
 These metrics include:
 
@@ -20,10 +21,10 @@ These metrics include:
 To access cluster-wide statistics, use the following command:
 
 ```bash title="Accessing cluster-wide I/O statistics"
-{{ variables.cliname }} cluster get-io-stats <CLUSTER_ID>
+{{ cliname }} cluster get-io-stats <CLUSTER_ID>
 ```
 
-More information about the command are available in the
+More information about the command is available in the
 [CLI reference section](../../reference/cli/cluster.md#gets-a-clusters-io-statistics).
 
 ## Accessing Storage Node Statistics
@@ -31,39 +32,39 @@ More information about the command are available in the
 To access the I/O statistics of a storage node (which includes all physical NVMe devices), use the following command:
 
 ```bash title="Accessing storage node I/O statistics"
-{{ variables.cliname }} storage-node get-io-stats <NODE_ID>
+{{ cliname }} storage-node get-io-stats <NODE_ID>
 ```
 
-More information about the command are available in the
+More information about the command is available in the
 [CLI reference section](../../reference/cli/storage-node.md#gets-storage-node-io-statistics).
 
 To access the I/O statistics of a specific device in a storage node, use the following command:
 
 ```bash title="Accessing storage node device I/O statistics"
-{{ variables.cliname }} storage-node get-io-stats-device <DEVICE_ID>
+{{ cliname }} storage-node get-io-stats-device <DEVICE_ID>
 ```
 
-More information about the command are available in the
+More information about the command is available in the
 [CLI reference section](../../reference/cli/storage-node.md#gets-a-devices-io-statistics).
 
 ## Accessing Storage Pool Statistics
 
-To access logical volume specific statistics, use the following command:
+To access logical volume-specific statistics, use the following command:
 
 ```bash title="Accessing storage pool I/O statistics"
-{{ variables.cliname }} storage-pool get-io-stats <POOL_ID>
+{{ cliname }} storage-pool get-io-stats <POOL_ID>
 ```
 
-More information about the command are available in the
+More information about the command is available in the
 [CLI reference section](../../reference/cli/storage-pool.md#gets-a-storage-pools-io-statistics).
 
 ## Accessing Logical Volume Statistics
 
-To access logical volume specific statistics, use the following command:
+To access logical volume-specific statistics, use the following command:
 
 ```bash title="Accessing logical volume I/O statistics"
-{{ variables.cliname }} volume get-io-stats <VOLUME_ID>
+{{ cliname }} volume get-io-stats <VOLUME_ID>
 ```
 
-More information about the command are available in the
+More information about the command is available in the
 [CLI reference section](../../reference/cli/volume.md#gets-a-logical-volumes-io-statistics).

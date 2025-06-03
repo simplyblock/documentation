@@ -4,10 +4,15 @@ weight: 30100
 ---
 
 <!-- include: install intro -->
---8<-- "bare-metal-intro.md"
+{% include 'bare-metal-intro.md' %}
 
 !!! warning
-    Simplyblock strongly recommends to set up individual networks for the storage plane and control plane traffic.  
+    Simplyblock strongly recommends setting up individual networks for the storage plane and control plane traffic.  
+
+!!! recommendation
+    Simplyblock recommends using AlmaLinux, Rocky, or Red Hat Enterprise Linux on Amazon EC2 machines. Amazon Linux
+    does not support native NVMe-oF Multipathing. While it is possible to use DM-MPIO (device manager multipathing)
+    usage is not as straight forward as possible.
 
 ## Amazon Elastic Kubernetes Service (EKS)
 
@@ -16,10 +21,10 @@ weight: 30100
     has the necessary step-by-step guide.
 
 <!-- include: install control plane documentation -->
---8<-- "install-control-plane.md"
+{% include 'install-control-plane.md' %}
 
 <!-- include: install storage plane (bare metal) documentation -->
---8<-- "install-storage-plane-bare-metal.md"
+{% include 'install-storage-plane-bare-metal.md' %}
 
 Now that the cluster is ready, it is time to install the [Kubernetes CSI Driver](install-simplyblock-csi.md) or learn
 how to use the simplyblock storage cluster to

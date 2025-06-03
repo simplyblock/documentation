@@ -6,7 +6,7 @@ Following is a list of all ports (TCP and UDP) required for operation as a stora
 list is for storage nodes only. Management nodes have a different port configuration. See the
 [Firewall Configuration](#firewall-configuration-cp) section for the control plane.
 
---8<-- "storage-plane-network-port-table.md"
+{% include 'storage-plane-network-port-table.md' %}
 
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 
@@ -19,11 +19,11 @@ sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 ```
 
-Docker Swarm, by default creates iptables entries open to the world. If no external firewall is available, the created
+Docker Swarm, by default, creates iptables entries open to the world. If no external firewall is available, the created
 iptables configuration needs to be restricted.
 
 The following script will create additional iptables rules prepended to Docker's forwarding rules and only enabling
-access from internal networks. This script should be stored to _/usr/local/sbin/simplyblock-iptables.sh_.
+access from internal networks. This script should be stored in _/usr/local/sbin/simplyblock-iptables.sh_.
 
 ```bash title="Configuration script for Iptables"
 #!/usr/bin/env bash
@@ -69,7 +69,7 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 ```
 
-After both files are stored in their respective locations, the bash script needs to be made executable and the Systemd
+After both files are stored in their respective locations, the bash script needs to be made executable, and the Systemd
 service needs to be enabled to start automatically.
 
 ```bash title="Enabling service file"

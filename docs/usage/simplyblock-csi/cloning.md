@@ -5,7 +5,7 @@ weight: 40200
 
 Kubernetes PersistentVolumes, backed by simplyblock, can be instantly cloned. A clone refers back to the same data, as
 simplyblock is a full [copy-on-write](../../important-notes/terminology.md#cow-copy-on-write) storage engine. That
-enables instant database forks which act independently after cloning.
+enables instant database forks that act independently after cloning.
 
 ## Create a Volume Clone
 

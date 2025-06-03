@@ -3,7 +3,7 @@ Simplyblock supports encryption of logical volumes (LVs) to protect data at rest
 information remains secure across the distributed storage cluster. Encryption is applied during volume creation as
 part of the storage class specification.
 
-Encrypting Logical Volumes ensure that simplyblock storage meets data protection and compliance requirements,
+Encrypting Logical Volumes ensures that simplyblock storage meets data protection and compliance requirements,
 safeguarding sensitive workloads without compromising performance.
 
 !!! warning
@@ -16,8 +16,8 @@ Simplyblock supports the encryption of logical volumes. Internally, simplyblock 
 [crypto bdev](https://spdk.io/doc/bdev.html){:target="_blank" rel="noopener"} provided by SPDK to implement its encryption
 functionality.
 
-The encryption uses a AES_XTS variable length block cipher. This cipher requires two keys of 16 to 32 bytes each. The
-keys need to have the same length, meaning, if one key is 32 bytes long, the other one has to be 32 bytes, too.
+The encryption uses an AES_XTS variable-length block cipher. This cipher requires two keys of 16 to 32 bytes each. The
+keys need to have the same length, meaning that if one key is 32 bytes long, the other one has to be 32 bytes, too.
 
 !!! recommendation
     Simplyblock strongly recommends two keys of 32 bytes.
@@ -25,18 +25,18 @@ keys need to have the same length, meaning, if one key is 32 bytes long, the oth
 
 ## Generate Random Keys
 
-Simplyblock does not provide an integrated way to generate encryption keys but recommends using the OpenSSL tool chain.
-For Kubernetes, the encryption key needs to be provided as base64, hence it's encoded right away.
+Simplyblock does not provide an integrated way to generate encryption keys, but recommends using the OpenSSL tool chain.
+For Kubernetes, the encryption key needs to be provided as base64. Hence, it's encoded right away.
 
 To generate the two keys, the following command is run twice. The result must be stored for later.
 
-```bash title="Create en Encryption Key"
+```bash title="Create an Encryption Key"
 openssl rand -hex 32 | base64 -w0
 ```
 
 ## Create the Kubernetes Secret
 
-Next up, a Kubernetes Secret is created, providing the just created two encryption keys.
+Next up, a Kubernetes Secret is created, providing the two just-created encryption keys.
 
 ```yaml title="Create a Kubernetes Secret Resource"
 apiVersion: v1
@@ -73,7 +73,7 @@ allowVolumeExpansion: true
 ## Create a PersistentVolumeClaim
 
 When requesting a logical volume through a Kubernetes PersistentVolumeClaim, the storage class and the secret resources
-have to be connected to the PVC. When picked up, simplyblock will automatically collect the keys and creates the logical
+have to be connected to the PVC. When picked up, simplyblock will automatically collect the keys and create the logical
 volumes as a fully encrypted logical volume.
 
 ```yaml title="Create an encrypting PersistentVolumeClaim"
