@@ -28,14 +28,18 @@ To retrieve the endpoint address from the cluster itself, use the following comm
 ### Credentials
 
 The Grafana installation uses the cluster secret as its password for the user _admin_. To retrieve the cluster secret,
-the following command should be used:
+the following commands should be used:
+
+```bash title="Get the cluster uuid"
+{{ cliname }} cluster list
+```
 
 ```bash title="Get the cluster secret"
 {{ cliname }} cluster get-secret <CLUSTER_ID>
 ```
 
 **Credentials**<br/>
-Username: **admin**<br/>
+Username: **<CLUSTER UUID>**<br/>
 Password: **<CLUSTER_SECRET>**
 
 ## Grafana Dashboards
@@ -47,6 +51,8 @@ All dashboards are stored in per-cluster folders. Each cluster contains the foll
 - Device
 - Logical Volume
 - Storage Pool
+- Storage Plane node(s) system monitoring
+- Control Plane node(s) system monitoring
 
 Dashboard widgets are designed to be self-explanatory.
 
