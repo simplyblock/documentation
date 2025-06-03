@@ -101,7 +101,7 @@ of a storage cluster.
 
 Furthermore, simplyblock storage nodes require one additional NVMe device with less capacity as a journaling device.
 The journaling device becomes part of the distributed record journal, keeping track of all changes before being
-persisted into their final position. This helps with write performance and transactional behavior by using a
+persisted into their final position. This helps with write-performance and transactional behavior by using a
 write-ahead log structure and replaying the journal in case of an issue.
 
 !!! warning
@@ -110,9 +110,6 @@ write-ahead log structure and replaying the journal in case of an issue.
 
     Any partition must be removed from the NVMe devices prior to installing simplyblock. Furthermore, NVMe devices must
     be low-level formatted with a 4KB block size (lbaf: 12). More information can be found in [NVMe Low-Level Format](../../reference/nvme-low-level-format.md).
-
-!!! info
-    Secondary nodes don't need NVMe storage disks.
 
 ## Caching Nodes (K8s only)
 

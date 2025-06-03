@@ -43,6 +43,8 @@ At this point, a quick check with the simplyblock provided system check can reve
 curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 ```
 
+#### NVMe Device Preparation
+
 Once the check is complete, the NVMe devices in each storage node can be prepared. To prevent data loss in case of a
 sudden power outage, NVMe devices need to be formatted for a specific LBA format.
 
@@ -184,136 +186,7 @@ The output will look something like the following example:
 On a successful deployment, the last line will provide the storage node's control channel address. This should be noted
 for all storage nodes, as it is required in the next step to attach the storage node to the simplyblock storage cluster.
 
-### Secondary Node Installation
-
-A secondary node is a storage node without additional storage disks to contribute to the distributed storage pool.
-Apart from that, it is the same as a normal storage node.
-
-However, due to the missing storage devices, preparing a secondary node only requires the NVMe/TCP driver to be loaded
-and the storage node software first-stage to be deployed.
-
-{% include 'prepare-nvme-tcp.md' %}
-
-To deploy the first stage of the storage node, the following command must be executed.
-
-```bash title="Deploy the secondary node"
-sudo {{ cliname }} storage-node deploy --ifname eth0
-```
-
-The output will look something like the following example:
-
-```plain title="Example output of a secondary node deployment"
-[demo@demo-4 ~]# sudo {{ cliname }} storage-node deploy --ifname eth0
-2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
-2025-02-26 13:35:07,038: INFO: Installing dependencies...
-2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.4
-2025-02-26 13:35:13,623: INFO: Pulling image public.ecr.aws/simply-block/simplyblock:hmdi
-2025-02-26 13:35:15,219: INFO: Recreating SNodeAPI container
-2025-02-26 13:35:15,543: INFO: Pulling image public.ecr.aws/simply-block/ultra:main-latest
-192.168.10.4:5000
-```
-
-On a successful deployment, the last line will provide the secondary node's control channel address. This should be
-noted, as it is required in the next step to attach the secondary node to the simplyblock storage cluster.
-
-### Attach the Storage Node to the Control Plane
-
-When all storage nodes are prepared, they can be added to the storage cluster.
-
-!!! warning
-    The following commands are executed from a management node. Attaching a storage node to a control plane is executed
-    from a management node.
-
-```bash title="Attaching a storage node to the storage plane"
-sudo {{ cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
-  --max-lvol <MAX_LOGICAL_VOLUMES> \
-  --max-prov <MAX_PROVISIONING_CAPACITY> \
-  --number-of-devices <NUM_STOR_NVME> \
-  --partitions <NUM_OF_PARTITIONS> \
-  --data-nics <DATA_IF>
-```
-
-!!! info
-    The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
-    separate journaling device (which is strongly recommended), the value should be zero (_0_) to prevent the storage
-    devices from being partitioned. This improves the performance and prevents device sharing between the journal and
-    the actual data storage location.
-
-The output will look something like the following example:
-
-```plain title="Example output of adding a storage node to the storage plane"
-[demo@demo ~]# sudo {{ cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
-2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
-2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
-2025-02-26 14:55:17,341: INFO: Instance cloud: None
-2025-02-26 14:55:17,341: INFO: Instance type: None
-2025-02-26 14:55:17,342: INFO: Instance privateIp: 192.168.10.2
-2025-02-26 14:55:17,342: INFO: Instance public_ip: 192.168.10.2
-2025-02-26 14:55:17,347: INFO: Node Memory info
-2025-02-26 14:55:17,347: INFO: Total: 24.3 GB
-2025-02-26 14:55:17,348: INFO: Free: 23.2 GB
-2025-02-26 14:55:17,348: INFO: Minimum required huge pages memory is : 14.8 GB
-2025-02-26 14:55:17,349: INFO: Joining docker swarm...
-2025-02-26 14:55:21,060: INFO: Deploying SPDK
-2025-02-26 14:55:31,969: INFO: adding alceml_2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
-2025-02-26 14:55:32,010: INFO: creating subsystem nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
-2025-02-26 14:55:32,022: INFO: adding listener for nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4 on IP 10.10.10.2
-2025-02-26 14:55:32,303: INFO: Connecting to remote devices
-2025-02-26 14:55:32,321: INFO: Connecting to remote JMs
-2025-02-26 14:55:32,342: INFO: Make other nodes connect to the new devices
-2025-02-26 14:55:32,346: INFO: Setting node status to Active
-2025-02-26 14:55:32,357: INFO: {"cluster_id": "3196b77c-e6ee-46c3-8291-736debfe2472", "event": "STATUS_CHANGE", "object_name": "StorageNode", "message": "Storage node status changed from: in_creation to: online", "caused_by": "monitor"}
-2025-02-26 14:55:32,361: INFO: Sending event updates, node: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5, status: online
-2025-02-26 14:55:32,368: INFO: Sending to: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5
-2025-02-26 14:55:32,389: INFO: Connecting to remote devices
-2025-02-26 14:55:32,442: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
-2025-02-26 14:55:32,443: INFO: Done
-```
-
-Repeat this process for all prepared storage nodes to add them to the storage plane.
-
-### Attach the Secondary Node to the Control Plane
-
-Afterward, the secondary node needs to be added to the cluster.
-
-```bash title="Attaching a secondary node to the storage plane"
-sudo {{ cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
-  --data-nics <DATA_IF>
-  --is-secondary-node
-```
-
-The output will look something like the following example:
-
-```plain title="Example output of a secondary node to the storage plane"
-[demo@demo ~]# sudo {{ cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.5:5000 ens18 --data-nics=ens16 --is-secondary-node
-2025-02-28 13:34:57,877: INFO: Adding Storage node: 192.168.10.115:5000
-2025-02-28 13:34:57,952: INFO: Node found: vm5
-2025-02-28 13:34:57,953: INFO: Instance id: 5d679365-1361-40b0-bac0-3de949057bbc
-2025-02-28 13:34:57,953: INFO: Instance cloud: None
-2025-02-28 13:34:57,954: INFO: Instance type: None
-2025-02-28 13:34:57,954: INFO: Instance privateIp: 192.168.10.5
-2025-02-28 13:34:57,955: INFO: Instance public_ip: 192.168.10.5
-2025-02-28 13:34:57,977: WARNING: Unsupported instance-type None for deployment
-2025-02-28 13:34:57,977: INFO: Node Memory info
-...
-025-02-28 13:35:08,068: INFO: Connecting to remote devices
-2025-02-28 13:35:08,111: INFO: Connecting to node 2f4dafb1-d610-42a7-9a53-13732459523e
-2025-02-28 13:35:08,111: INFO: bdev found remote_alceml_378cf3b5-1959-4415-87bf-392fa1bbed6c_qosn1
-2025-02-28 13:35:08,112: INFO: bdev found remote_alceml_c4c4011a-8f82-4c9d-8349-b4023a20b87c_qosn1
-2025-02-28 13:35:08,112: INFO: bdev found remote_alceml_d27388b9-bbd8-4e82-8880-d8811aa45383_qosn1
-2025-02-28 13:35:08,113: INFO: Connecting to node b7db725a-96e2-40d1-b41b-738495d97093
-2025-02-28 13:35:08,113: INFO: bdev found remote_alceml_7f5ade89-53c6-440b-9614-ec24db3afbd9_qosn1
-2025-02-28 13:35:08,114: INFO: bdev found remote_alceml_8d160125-f095-43ae-9781-16d841ae9719_qosn1
-2025-02-28 13:35:08,114: INFO: bdev found remote_alceml_b0691372-1a4b-4fa9-a805-c2c1f311541c_qosn1
-2025-02-28 13:35:08,114: INFO: Connecting to node 43560b0a-f966-405f-b27a-2c571a2bb4eb
-2025-02-28 13:35:08,115: INFO: bdev found remote_alceml_29e74188-5efa-47d9-9282-84b4e46b77db_qosn1
-2025-02-28 13:35:08,115: INFO: bdev found remote_alceml_a1efcbbf-328c-4f86-859f-fcfceae1c7a8_qosn1
-2025-02-28 13:35:08,116: INFO: bdev found remote_alceml_cf2d3d24-e244-4a45-a71d-6383db07806f_qosn1
-2025-02-28 13:35:08,274: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
-2025-02-28 13:35:08,274: INFO: Done
-```
-
-On a successful response, it's finally time to activate the storage plane.
+When all storage nodes are added, it's finally time to activate the storage plane.
 
 ### Activate the Storage Cluster
 
