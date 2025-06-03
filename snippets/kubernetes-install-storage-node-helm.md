@@ -84,7 +84,7 @@ helm repo add simplyblock-csi https://install.simplyblock.io/helm/csi
 helm repo add simplyblock-controller https://install.simplyblock.io/helm/controller
 helm repo update
 
-# Install Simplyblock CSI Driver
+# Install Simplyblock CSI Driver and Storage Node API
 helm install -n simplyblock \
     --create-namespace simplyblock \
     simplyblock-csi/spdk-csi \
@@ -92,11 +92,6 @@ helm install -n simplyblock \
     --set csiConfig.simplybk.ip=<CNTR_ADDR> \
     --set csiSecret.simplybk.secret=<CLUSTER_SECRET> \
     --set logicalVolume.pool_name=<POOL_NAME> \
-    --set storagenode.create=true
-
-# Install Simplyblock Storage Controller
-helm install -n simplyblock \
-    simplyblock-controller/sb-controller \
     --set storagenode.create=true
 ```
 
@@ -137,8 +132,8 @@ spdkcsi-controller-0   6/6     Running   0          30s
 spdkcsi-node-tzclt     2/2     Running   0          30s
 ```
 
-As a last step, when the storage cluster nodes are deployed, it is recommended to apply CPU core isolation for highest
-performance to the Kubernetes worker nodes that act as storage node hosts.
+When the storage cluster nodes are deployed, it is recommended to apply CPU core isolation for highest performance to
+the Kubernetes worker nodes that act as storage node hosts.
 
 During the installation of the simplyblock controller, a configuration file with the system configuration has been
 created. To apply core isolation to the Kubernetes worker, an SSH login to the worker node is required.
@@ -188,11 +183,27 @@ Now the profile file must be applied and the worker node restarted.
     Remember to drain potentially remaining services on the Kubernetes worker node before rebooting.
 
 ```bash title="Apply the profile and reboot"
+sudo systemctl enable tuned
+sudo systemctl start tuned
 sudo tuned-adm profile realtime
 sudo reboot 
 ```
 
+#### Install the Storage Nodes
+
+Last but not least, install the actual storage nodes into Kubernetes via Helm.
+
+```bash
+helm install -n simplyblock \
+    simplyblock-controller/sb-controller \
+    --set storagenode.create=true
+```
+
 #### Changing the Number of Utilized CPU Cores
+
+!!! info
+    The following section is optional and only required if additional services share the same machine, as happens in
+    a hyper-converged setup.
 
 By default, simplyblock assumes that the whole host is available to it and will configure itself to use everything
 but 20% of the host. In hyper-converged setups, this assumption is not true and the number of utilized CPU cores must
