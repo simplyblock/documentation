@@ -128,9 +128,9 @@ CLUSTER_UUID="<cluster_uuid>"
 CLUSTER_SECRET="<cluster_secret>"
 CNTR_ADDR="<control_plane_api_addr>"
 POOL_NAME="<pool_name>"
-helm repo add simplyblock-csi https://install.simplyblock.io/helm
+helm repo add simplyblock-csi https://install.simplyblock.io/helm/csi
 helm repo update
-helm install -n simplyblock-csi --create-namespace simplyblock-csi simplyblock-csi/spdk-csi \
+helm install -n simplyblock --create-namespace simplyblock simplyblock-csi/spdk-csi \
     --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
     --set csiConfig.simplybk.ip=${CNTR_ADDR} \
     --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
@@ -142,21 +142,20 @@ demo@demo ~> export CLUSTER_UUID="4502977c-ae2d-4046-a8c5-ccc7fa78eb9a"
 demo@demo ~> export CLUSTER_SECRET="oal4PVNbZ80uhLMah2Bs"
 demo@demo ~> export CNTR_ADDR="http://192.168.10.1/"
 demo@demo ~> export POOL_NAME="test"
-demo@demo ~> helm repo add simplyblock-csi https://install.simplyblock.io/helm
+demo@demo ~> helm repo add simplyblock-csi https://install.simplyblock.io/helm/csi
 "simplyblock-csi" has been added to your repositories
 demo@demo ~> helm repo update
 Hang tight while we grab the latest from your chart repositories...
 ...Successfully got an update from the "simplyblock-csi" chart repository
-...Successfully got an update from the "kasten" chart repository
 Update Complete. ⎈Happy Helming!⎈
-demo@demo ~> helm install -n simplyblock-csi --create-namespace simplyblock-csi simplyblock-csi/spdk-csi \
+demo@demo ~> helm install -n simplyblock --create-namespace simplyblock simplyblock-csi/spdk-csi \
   --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
   --set csiConfig.simplybk.ip=${CNTR_ADDR} \
   --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
   --set logicalVolume.pool_name=${POOL_NAME}
 NAME: simplyblock-csi
 LAST DEPLOYED: Wed Mar  5 15:06:02 2025
-NAMESPACE: simplyblock-csi
+NAMESPACE: simplyblock
 STATUS: deployed
 REVISION: 1
 TEST SUITE: None
@@ -165,8 +164,8 @@ The Simplyblock SPDK Driver is getting deployed to your cluster.
 
 To check CSI SPDK Driver pods status, please run:
 
-  kubectl --namespace=simplyblock-csi get pods --selector="release=simplyblock-csi" --watch
-demo@demo ~> kubectl --namespace=simplyblock-csi get pods --selector="release=simplyblock-csi" --watch
+  kubectl --namespace=simplyblock get pods --selector="release=simplyblock-csi" --watch
+demo@demo ~> kubectl --namespace=simplyblock get pods --selector="release=simplyblock-csi" --watch
 NAME                   READY   STATUS    RESTARTS   AGE
 spdkcsi-controller-0   6/6     Running   0          30s
 spdkcsi-node-tzclt     2/2     Running   0          30s
