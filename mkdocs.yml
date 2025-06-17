@@ -77,7 +77,6 @@ theme:
     text: Inter
     code: Roboto Mono
   features:
-    - navigation.instant
     - navigation.tracking
     - navigation.path
     - navigation.indexes
