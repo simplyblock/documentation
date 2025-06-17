@@ -5,7 +5,7 @@ Simplyblock provides two test scripts to automatically check your system's confi
 edge cases, they can help to streamline the configuration check. This script can be run multiple times during the
 preparation phase to find missing configurations during the process.
 
-```bash title="Automatically check your configuration"
+```bash title="Automatically check your configurations"
 # Configuration check for the control plane (management nodes)
 curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 
