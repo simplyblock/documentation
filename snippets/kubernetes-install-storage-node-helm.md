@@ -159,6 +159,12 @@ commands:
     ```bash
     yum install https://repo.almalinux.org/almalinux/9/BaseOS/x86_64/os/Packages/tuned-2.25.1-1.el9.noarch.rpm
     ```
+
+!!! notes
+    Potentially, the number of CPU cores, assigned to simplyblock, should be adjusted. This is especially true for
+    hyper-converged setups. Simplyblock, by default, will take all CPUs but 20% for itself. To change number of CPUs,
+    the [Change the number of CPUs](#changing-the-number-of-utilized-cpu-cores) section explains the necessary steps
+    which should be executed before following up here.
     
 Following the installation of _tuned_, the tuning profile file must be created. The following snippet automates the
 creation based on the generated configuration file.
