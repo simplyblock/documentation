@@ -3,10 +3,10 @@
 | ICMP                        | ingress   | control                 | -         | ICMP        |
 | Cluster API                 | ingress   | storage, control, admin | 80        | TCP         |
 | SSH                         | ingress   | storage, control, admin | 22        | TCP         |
-| Graylog                     | ingress   | storage, control        | 12201     | TCP / UDP   |
-| Graylog                     | ingress   | storage, control        | 12202     | TCP         |
-| Graylog                     | ingress   | storage, control        | 13201     | TCP         |
-| Graylog                     | ingress   | storage, control        | 13202     | TCP         |
+| Greylog                     | ingress   | storage, control        | 12201     | TCP / UDP   |
+| Greylog                     | ingress   | storage, control        | 12202     | TCP         |
+| Greylog                     | ingress   | storage, control        | 13201     | TCP         |
+| Greylog                     | ingress   | storage, control        | 13202     | TCP         |
 | Docker Daemon Remote Access | ingress   | storage, control        | 2375      | TCP         |
 | Docker Swarm Remote Access  | ingress   | storage, control        | 2377      | TCP         |
 | Docker Overlay Network      | ingress   | storage, control        | 4789      | UDP         |
