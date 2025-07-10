@@ -69,7 +69,7 @@ pvesm add simplyblock <NAME> \
 |--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | NAME               | The name of the storage pool in Proxmox.                                                                                                                                                 |
 | CONTROL_PLANE_ADDR | The api address of the simplyblock control plane.                                                                                                                                        |
-| CLUSTER_ID         | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster lust`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
+| CLUSTER_ID         | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster list`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
 | CLUSTER_SECRET     | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ cliname }} cluster get-secret`](../../reference/cli/cluster.md#gets-a-clusters-secret). |
 | STORAGE_POOL_NAME  | The simplyblock storage pool name to attach.                                                                                                                                             | 
 
