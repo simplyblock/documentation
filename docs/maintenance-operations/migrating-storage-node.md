@@ -9,7 +9,7 @@ that doesn't require explicit maintenance windows or storage downtime.
 ## Storage Node Migration
 
 Migrating a storage node is a three-step process. First, the new storage node will be pre-deployed, then the old node
-will be restarted with the new node address, and finally, the new storage node will become the primary storage node.
+must be shutdown properly and will be restarted with the new node address, and finally, the new storage node will become the primary storage node.
 
 !!! warning
     Between each process step, it is required to wait for storage node migration tasks to complete. Otherwise, there
@@ -30,6 +30,13 @@ If the command finishes successfully, resume from the next section of this page.
 - [AWS EC2](../deployments/aws-ec2/index.md)
 
 ### Restart Old Storage Node
+
+!!! warning
+    Before restarting the storage node on a node instance, it must be in offline state on the old one.
+    If this is not the case, use:
+    ```bash title="Shutdown storage node on old instance"
+    {{ cliname }} storage-node shutdown <NODE_ID> --force
+    ```
 
 To start the migration process of logical volumes, the old storage node needs to be restarted with the new storage
 node's API address.
