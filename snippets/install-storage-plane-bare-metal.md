@@ -188,6 +188,62 @@ for all storage nodes, as it is required in the next step to attach the storage 
 
 When all storage nodes are added, it's finally time to activate the storage plane.
 
+### Attach the Storage Node to the Control Plane
+
+When all storage nodes are prepared, they can be added to the storage cluster.
+
+!!! warning
+    The following commands are executed from a management node. Attaching a storage node to a control plane is executed
+    from a management node.
+
+```bash title="Attaching a storage node to the storage plane"
+sudo {{ variables.cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+  --max-lvol <MAX_LOGICAL_VOLUMES> \
+  --max-prov <MAX_PROVISIONING_CAPACITY> \
+  --number-of-devices <NUM_STOR_NVME> \
+  --partitions <NUM_OF_PARTITIONS> \
+  --data-nics <DATA_IF>
+```
+
+!!! info
+    The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
+    separate journaling device (which is strongly recommended), the value should be zero (_0_) to prevent the storage
+    devices from being partitioned. This improves the performance and prevents device sharing between the journal and
+    the actual data storage location.
+
+The output will look something like the following example:
+
+```plain title="Example output of adding a storage node to the storage plane"
+[demo@demo ~]# sudo {{ variables.cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
+2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
+2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
+2025-02-26 14:55:17,341: INFO: Instance cloud: None
+2025-02-26 14:55:17,341: INFO: Instance type: None
+2025-02-26 14:55:17,342: INFO: Instance privateIp: 192.168.10.2
+2025-02-26 14:55:17,342: INFO: Instance public_ip: 192.168.10.2
+2025-02-26 14:55:17,347: INFO: Node Memory info
+2025-02-26 14:55:17,347: INFO: Total: 24.3 GB
+2025-02-26 14:55:17,348: INFO: Free: 23.2 GB
+2025-02-26 14:55:17,348: INFO: Minimum required huge pages memory is : 14.8 GB
+2025-02-26 14:55:17,349: INFO: Joining docker swarm...
+2025-02-26 14:55:21,060: INFO: Deploying SPDK
+2025-02-26 14:55:31,969: INFO: adding alceml_2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
+2025-02-26 14:55:32,010: INFO: creating subsystem nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
+2025-02-26 14:55:32,022: INFO: adding listener for nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4 on IP 10.10.10.2
+2025-02-26 14:55:32,303: INFO: Connecting to remote devices
+2025-02-26 14:55:32,321: INFO: Connecting to remote JMs
+2025-02-26 14:55:32,342: INFO: Make other nodes connect to the new devices
+2025-02-26 14:55:32,346: INFO: Setting node status to Active
+2025-02-26 14:55:32,357: INFO: {"cluster_id": "3196b77c-e6ee-46c3-8291-736debfe2472", "event": "STATUS_CHANGE", "object_name": "StorageNode", "message": "Storage node status changed from: in_creation to: online", "caused_by": "monitor"}
+2025-02-26 14:55:32,361: INFO: Sending event updates, node: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5, status: online
+2025-02-26 14:55:32,368: INFO: Sending to: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5
+2025-02-26 14:55:32,389: INFO: Connecting to remote devices
+2025-02-26 14:55:32,442: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
+2025-02-26 14:55:32,443: INFO: Done
+```
+
+Repeat this process for all prepared storage nodes to add them to the storage plane.
+
 ### Activate the Storage Cluster
 
 The last step, after all nodes are added to the storage cluster, is to activate the storage plane.
