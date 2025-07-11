@@ -30,6 +30,18 @@ If the command finishes successfully, resume from the next section of this page.
 - [Bare Metal or Virtualized Linux](../deployments/baremetal/index.md)
 - [AWS EC2](../deployments/aws-ec2/index.md)
 
+### Preparing the new host (instance)
+
+The new instance must fullfill pre-requisites for a storage node. You need to first prepare it:
+
+```bash title="Preparing the configuration"
+{{ cliname }} storage-node configure --max-lvol $MAXLVOL --max-size $SIZE 
+```
+
+```bash title="Preparing the instance"
+{{ cliname }} storage-node deploy [--isolate-cores] --ifname $IFNAME 
+```
+
 ### Restart Old Storage Node
 
 !!! warning
