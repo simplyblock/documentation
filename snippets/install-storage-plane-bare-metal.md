@@ -118,7 +118,7 @@ When all storage nodes are prepared, they can be added to the storage cluster.
     from a management node.
 
 ```bash title="Attaching a storage node to the storage plane"
-sudo {{ variables.cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+sudo {{ cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
   --max-lvol <MAX_LOGICAL_VOLUMES> \
   --max-prov <MAX_PROVISIONING_CAPACITY> \
   --number-of-devices <NUM_STOR_NVME> \
@@ -135,7 +135,7 @@ sudo {{ variables.cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <M
 The output will look something like the following example:
 
 ```plain title="Example output of adding a storage node to the storage plane"
-[demo@demo ~]# sudo {{ variables.cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
+[demo@demo ~]# sudo {{ cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
 2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
 2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
 2025-02-26 14:55:17,341: INFO: Instance cloud: None
