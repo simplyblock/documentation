@@ -30,17 +30,27 @@ If the command finishes successfully, resume from the next section of this page.
 - [Bare Metal or Virtualized Linux](../deployments/baremetal/index.md)
 - [AWS EC2](../deployments/aws-ec2/index.md)
 
-### Preparing the new host (instance)
+### Preparing the New Storage Host
 
-The new instance must fullfill pre-requisites for a storage node. You need to first prepare it:
+The new storage host must be prepared before a storage node can be migrated. It must fulfill the 
+pre-requisites for a storage node according to the installation documentation for the selected
+installation method.
+
+To prepare the new storage host, the following commands must be executed.
 
 ```bash title="Preparing the configuration"
-{{ cliname }} storage-node configure --max-lvol $MAXLVOL --max-size $SIZE 
+{{ cliname }} storage-node configure \
+    --max-lvol=<MAX_LVOL> \
+    --max-size=<MAX_SIZE> \
+    [--nodes-per-socket=<NUM_OF_NODES>] 
 ```
 
 ```bash title="Preparing the instance"
-{{ cliname }} storage-node deploy [--isolate-cores] --ifname $IFNAME 
+{{ cliname }} storage-node deploy [--isolate-cores --ifname=<IFNAME>] 
 ```
+
+The full list of parameters for either command can be found in the 
+[CLI documentation](../reference/cli/storage-node.md).
 
 ### Restart Old Storage Node
 
