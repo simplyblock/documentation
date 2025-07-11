@@ -16,6 +16,17 @@ control plane without upgrading the storage planes.
 Upgrading the control plane and storage cluster is an online operation and does not require downtime. Planning an
 upgrade as part of a maintenance window is recommended, though.
 
+## Upgrading the CLI
+
+Before starting a cluster upgrade, all storage and control plane nodes must update the CLI ({{ cliname }}).
+
+This can be achieved using the same command used during the intial installation. It is important, though, to provide
+the `--upgrade` parameter to pip to ensure an upgrade to happen.
+
+```bash
+sudo pip install {{ cliname }} --upgrade
+```
+
 ## Upgrading a Control Plane
 
 This section outlines the process of upgrading the control plane. An upgrade introduces new versions of the management
@@ -31,12 +42,48 @@ After issuing the command, the individual management services will be upgraded a
 
 ## Upgrading a Storage Plane
 
-This section outlines the process of upgrading the storage plane, which is essential for maintaining data integrity,
-performance, and compatibility with newer system components. A well-executed upgrade ensures continued reliability and
-access to the latest features and fixes.
+Now to upgrade the storage plane, the following steps are performed for each of the storage nodes. From the control plane, 
+issue the following commands.
 
-To upgrade a storage plane, the following command must be executed:
+!!! warning
+    Ensure not all storage nodes are offline at the same time. Storage nodes must be updated in a round-robin fashion. In
+    between, it is important to wait until the cluster has stabilized again and potential rebalancing operations have
+    finished before starting to upgrade the next storage node.
 
 ```bash
-sudo {{ cliname }} cluster update <CLUSTER_ID>
+sudo {{ cliname }} storage-node suspend <NODE_ID>
+sudo {{ cliname }} storage-node shutdown <NODE_ID> 
 ```
+
+If the shutdown doesn't work by itself, you may savely force a shutdown using the `--force` parameter.
+
+```bash
+sudo {{ cliname }} storage-node shutdown <NODE_ID> --force 
+```
+
+Ensure the node has become offline before continuing.
+
+```bash
+sudo {{ cliname }} storage-node list 
+```
+
+Next up, on the storage node itself, a redployment must be executed. To achieve that, ssh into the storage node and run the following command.
+
+```bash
+sudo {{ cliname }} storage-node deploy [--isolate-cores] --if-name <IFNAME>
+```
+
+Finally, the new storage node deployment can be restarted from the control plane.
+
+```bash
+sudo {{ cliname }} storage-node restart <NODE-ID> 
+```
+
+Once the node is restarted, wait until the cluster is stabilized. Depending on the capacity of a storage node, this can take a few minutes.
+The status of the cluster can be checked via the cluster listing.
+
+```bash
+sudo {{ cliname }} cluster list
+```
+
+
