@@ -223,7 +223,7 @@ vi /var/simplyblock/sn_config_file
 ```
 
 Inside the configuration file, the _cpu_mask_ value must be updated to represent the number and assignment of cores to
-be used by simplyblock. To create the required CPU mask, the [CPU Mask Calculator](../../../reference/cpumask-calculator.md)
+be used by simplyblock. To create the required CPU mask, the [CPU Mask Calculator](../../reference/cpumask-calculator.md)
 can be used. 
 
 ```json title="Updating the CPU Mask configuration"

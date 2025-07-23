@@ -1,5 +1,5 @@
 ---
-title: Proxmox Integration
+title: Proxmox
 weight: 20350
 ---
 

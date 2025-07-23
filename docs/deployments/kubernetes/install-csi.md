@@ -3,15 +3,33 @@ title: "Install Simplyblock CSI"
 weight: 30200
 ---
 
-Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver.
+Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver. 
 
-{% include 'prepare-nvme-tcp.md' %}
+Before installing the Kubernetes CSI Driver, a control plane must be present and an (empty) storage cluster must have been added to the control plane.
+
+In this section we explain how to install a CSI driver and connect it to a disaggregated storage cluster, which must already exist prior to the CSI driver installation. The disaggregated cluster can be installed on [plain linux hosts](../install-simplyblock/install-sn.md) or into an [existing kubernetes cluster](k8s-disaggregated.md), but it is not co-located on the same k8s worker nodes with the CSI driver installation. 
+
+If you are interested in co-located (hyper-converged) deployment of CSI driver and storage nodes, please [see here](k8s-hyperconverged.md).
+
+## CSI Driver System Requirements 
+
+The CSI driver consists of two parts, a controller part, which communicates to the control plane via the control plane api endpoint, and the node part, which is deployed to and must be present on all nodes with pods attaching simplyblock storage.
+
+The worker node of the node part must fullfill the following requirements:
+
+[Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
+
+[Linux Kernel Versions](../../reference/supported-linux-kernels.md)
+
+## Installation Options
 
 To install the Simplyblock CSI Driver, a Helm chart is provided. While it can be installed manually, the Helm chart is
 strongly recommended. If a manual installation is preferred, see the
 [CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank" rel="noopener"}.
 
-Either way, the installation requires a few values to be available.
+## Getting Credentials
+
+Credentials are available via cli from any of the control plane nodes.
 
 First, we need the unique cluster id. Note down the cluster UUID of the cluster to access.
 
@@ -64,6 +82,8 @@ The last item necessary before deploying the CSI driver is the control plane add
 simplyblock API with an AWS load balancer service. Hence, your control plane address is the "public" endpoint of this
 load balancer.
 
+## Deploying the helm chart
+
 Anyhow, deploying the Simplyblock CSI Driver using the provided helm chart comes down to providing the four necessary
 values, adding the helm chart repository, and installing the driver.
 
@@ -114,3 +134,97 @@ NAME                   READY   STATUS    RESTARTS   AGE
 spdkcsi-controller-0   6/6     Running   0          30s
 spdkcsi-node-tzclt     2/2     Running   0          30s
 ```
+
+There are a lot of additional parameters for the helm deployment. You will usually not need them any many relate to the storage node deployment under kubernetes ([hyper-converged](k8s-hyperconverged.md) or [disaggregated](k8s-disaggregated.md)), not the CSI driver itself.
+
+The full list of parameters can be found [here](https://github.com/simplyblock-io/simplyblock-csi/tree/master/charts).
+
+Please note that the _storagenode.create_ parameter has to be set to _false_ (it's default) to deploy the CSI driver only.
+
+## Multi Cluster Support
+
+The Simplyblock CSI driver now offers **multi-cluster support**, allowing it to connect with multiple Simplyblock clusters. Previously, the CSI driver could only connect to a single cluster.
+
+To enable interaction with multiple clusters, we've introduced two key changes:
+
+1.  **`cluster_id` Parameter in Storage Class:** A new parameter, `cluster_id`, has been added to the storage class. This parameter specifies which Simplyblock cluster a given request should be directed to.
+2.  **`simplyblock-csi-secret-v2` Secret:** A new Kubernetes secret, `simplyblock-csi-secret-v2`, is now used to store credentials for all configured Simplyblock clusters.
+
+
+### Adding new cluster
+
+When the Simplyblock CSI driver is initially installed, typically using Helm:
+```
+helm install simplyblock-csi ./ \
+    --set csiConfig.simplybk.uuid=${CLUSTER_ID} \
+    --set csiConfig.simplybk.ip=${CLUSTER_IP} \
+    --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
+```
+
+The `CLUSTER_ID` (UUID), Gateway Endpoint (`CLUSTER_IP`), and Secret (`CLUSTER_SECRET`) of the initial cluster must be provided. This command automatically creates the `simplyblock-csi-secret-v2` secret.
+
+The structure of the simplyblock-csi-secret-v2 secret looks like this:
+
+```yaml
+apiVersion: v1
+data:
+  secret.json: <base64 encoded secret>
+kind: Secret
+metadata:
+  name: simplyblock-csi-secret-v2
+type: Opaque
+```
+
+and the decoded secret looks something like this
+```
+{
+   "clusters": [
+     {
+       "cluster_id": "4ec308a1-61cf-4ec6-bff9-aa837f7bc0ea",
+       "cluster_endpoint": "http://127.0.0.1",
+       "cluster_secret": "super_secret"
+     }
+   ]
+}
+```
+
+To add a new cluster, we will need to edit this secret and add a new cluster
+
+
+```sh
+# save cluster secret to a file
+kubectl get secret simplyblock-csi-secret-v2 -o jsonpath='{.data.secret\.json}' | base64 --decode > secret.yaml
+
+# edit the clusters and add the new cluster's cluster_id, cluster_endpoint, cluster_secret
+# vi secret.json 
+
+cat secret.json | base64 | tr -d '\n' > secret-encoded.json
+
+# Replace data.secret.json with the content of secret-encoded.json
+# kubectl -n simplyblock edit secret simplyblock-csi-secret-v2
+```
+
+
+```yaml
+apiVersion: v1
+data:
+  secret.json: <new content of the secret-encoded.json>
+kind: Secret
+metadata:
+  name: simplyblock-csi-secret-v2
+type: Opaque
+```
+
+## using multi cluster
+
+With multi-cluster support enabled, it's highly recommended to create a separate storage class for each Simplyblock cluster. This provides clear segregation and management.
+
+For example:
+
+* `simplyblock-csi-sc-cluster1` (for `cluster_id: 4ec308a1-...`)
+
+* `simplyblock-csi-sc-cluster2` (for `cluster_id: YOUR_NEW_CLUSTER_ID`)
+
+
+
+

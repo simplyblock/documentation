@@ -3,31 +3,11 @@ title: "Kubernetes"
 weight: 20100
 ---
 
-Installing simplyblock into and using it with Kubernetes requires two or more components to be installed. The number
-of components depends on your deployment strategy and requirements.
+Before installing Simplyblock for Kubernetes, the [control plane](../install-simplyblock/install-cp.md) must be installed and ready-to-use.
 
-For Kubernetes-related installations, simplyblock provides three deployment models: [hyper-converged (also known as
-co-located)](../../architecture/concepts/hyper-converged.md),
-[disaggregated](../../architecture/concepts/disaggregated.md), and a hybrid model which combines the best of the former
-two.
+The Simplyblock CSI driver can be [installed](install-csi.md) used with an existing dissaggregated cluster. 
 
-## Prerequisites
+However, it is also possible to install a Simplyblock storage cluster into an existing kubernetes cluster together with the CSI driver (supporting both [hyperconverged deployment](k8s-hyperconverged.md) and [disaggregated deployment on kubernetes](k8s-disaggregated.md)) - or to install a Simplyblock storage cluster into another kubernetes cluster, which is dedicated to the storage - [disaggregated deployment on kubernetes](k8s-disaggregated.md) - and then install and connect the CSI driver from other kubernetes clusters only consuming the storage.
 
-Before starting with the installation of simplyblock, make yourself familiar with the requirements and prerequisites
-of simplyblock. You can find all necessary information under the [Prerequisites](prerequisites.md) section specific to
-Kubernetes deployments.
 
-## Installation
 
-After making sure that all requirements are fulfilled, you can start with the installation. Follow the necessary
-section depending on your chosen deployment model:
-
-- [Hyper-Converged Setup](install-simplyblock/hyper-converged.md)
-- [Disaggregated Setup](install-simplyblock/disaggregated.md)
-- [Hybrid Setup](install-simplyblock/hybrid.md)
-
-In either case, you start with installing the control plane, before going over to the actual storage cluster and
-the Kubernetes CSI driver.
-
-As a last step, you may want to install caching nodes on your Kubernetes workers to improve access latency. See the
-installation steps in the [Install Caching Nodes](install-caching-nodes.md) section.

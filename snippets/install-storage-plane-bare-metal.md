@@ -1,10 +1,9 @@
 ## Storage Plane Installation
 
 The installation of a storage plane requires a functioning control plane. If no control plane cluster is available yet,
-it must be installed beforehand. Jump right to the [Control Plane Installation](#control-plane-installation).
+it must be installed beforehand. Jump right to the [Control Plane Installation](install-cp.md).
 
-The following examples assume two subnets are available. These subnets are defined as shown in
-[Network Preparation](#network-preparation).
+The following examples assume two subnets are available. 
 
 ### Firewall Configuration (SP)
 

@@ -8,14 +8,18 @@ Modern multi-socket servers use a memory architecture called
 In a NUMA system, each CPU socket has its own local memory and I/O paths. Accessing local resources is faster than
 reaching across sockets to remote memory or devices.
 
-Linux is NUMA-aware, but performance can still degrade if workloads or I/O devices aren't correctly aligned with the CPU
-topology. This matters especially when working with high-throughput components like NVMe devices and network interface
-cards (NICs).
+Simplyblock is NUMA-aware. On a host with more than one socket, it will per default deploy one or two storage nodes per socket. 
+Two nodes per socket are deployed if: more than 32 vcpu (cores) are dedicated to Simplyblock per socket and/or if more than
+10 NVME are connected to the socket.   
 
-Simplyblock highly recommends a NUMA-aware configuration in multi-socket systems. To ensure optimal performance, each
-CPU socket should have a dedicated NIC and dedicated NVMe devices. These NICs and NVMe devices must be installed in
-PCI-e slots that are physically connected to their respective CPUs. This setup ensures low-latency, high-bandwidth data
-paths between the backing storage devices, the storage software, and the network.
+Users can change this behaviour either by setting the appropriate helm chart parameters (in case of kubernetes-based storage node deployment)
+or by manually modifying the configuration file created by the first step of the deployment on the storage node (after running _sbctl sn configure_).
+
+It is critical for performance that all NVME devices of a storage node are directly connected to the socket to which the storage node is deployed.
+If a socket has no NVME devices connected, it is not qualified to run a Simplyblock Storage Node.
+
+It is also important that the NIC(s) used by Simplyblock for storage traffic are connected to the same socket. However, Simplyblock does not auto-assign a NIC 
+and users have to take care of that.
 
 ## Checking NUMA Configuration
 

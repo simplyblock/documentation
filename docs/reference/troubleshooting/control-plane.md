@@ -7,7 +7,11 @@ weight: 30100
 
 **Symptom:** FoundationDB error. All services that rely upon the FoundationDB key-value storage are offline or refuse to start.
 
-1. Ensure that IPv6 is disabled. [To disable IPv6 follow these steps](../../deployments/baremetal/prerequisites.md#network-configuration).
+1. Ensure that IPv6 is disabled:
+```plain title="Network Configuration"
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+```
 2. Ensure sufficient disk space on the root partition on all control plane nodes. Free disk space can be checked with `df -h`.
    1. If not enough free disk space is available, start by checking the Graylog, MongoDB, and Elasticsearch containers. If those consume most of the disk space, old indices (2-3) can be deleted.
    2. Increase the root partition size.

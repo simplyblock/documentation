@@ -3,8 +3,7 @@ Simplyblock requires a number of TCP and UDP ports to be opened from certain net
 to be disabled on management nodes.
 
 Following is a list of all ports (TCP and UDP) required for operation as a storage node. Attention is required, as this
-list is for storage nodes only. Management nodes have a different port configuration. See the
-[Firewall Configuration](#firewall-configuration-cp) section for the control plane.
+list is for storage nodes only. Management nodes have a different port configuration. 
 
 {% include 'storage-plane-network-port-table.md' %}
 

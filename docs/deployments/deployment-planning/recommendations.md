@@ -3,121 +3,134 @@ title: System Requirements
 weight: 29999
 ---
 
-The Simplyblock storage nodes run on systems with both _ARM64_ and _x86_64_ (_Intel_, _AMD_) processors and on bare metal as
-well as virtual machines (compute instances). In the case of a virtualized environment, PCIe virtualization pass-through is
-required for both NVMEs and NICs. They can be deployed both hyper-converged (combined with other workloads) or
-disaggregated (dedicated hosts or vms for storage).
+!!! info
+    In cloud environments including gcp and aws, instance types are pre-configured. In general,  
+    there are no restrictions on instance types as long as these system  requirements and 
+    [node sizing requirements](node-sizing.md) are 
+    fullfilled by these instance types. For [hyper-converged](../../architecture/concepts/hyper-
+    converged.md) deployments,  it is important that node sizing applies to the dedicated 
+    resources consumed by Simplyblock. Hyper-converged instances must provide enough of resources 
+    to satisfy both Simplyblock and other compute demand including the k8s worker itself and the 
+    operating system.
 
-For production, simplyblock control plane requires three management nodes on _x86_64_ with a minimum of 4 vCPU (2 cores)
-and 16 GiB RAM for each of them. Currently, the control plane requires _RHEL/Alma/Rocky 9_.
+## Hardware Architecture Support
 
-Simplyblock requires a minimum of 8 dedicated (not shared) vcpu, 32 GiB of dedicated RAM (not shared with other
-applications) and 2 x 10 gb/s of network bandwidth per node, which is preferably dedicated to the storage (separate
-storage _VLAN_). In production, Simplyblock requires a HA network for storage traffic (e.g., via LACP, Stacked Switches,
-MLAG, active/active or active/passive NICs, STP or MSTP) and it is recommended to use a separate network interface, which should also
-be highly available, for network traffic. Simplyblock requires a TCP/IP network, and all storage nodes in a cluster and
-hosts connected should reside in the same _VLAN_ for performance reasons.
+- For the control plane, simplyblock **requires** x86-64 (AMD64 / Intel 64) compatible CPUs.
+- For the storage plane, simplyblock **supports** x86-64 (AMD64 / Intel 64) or ARM64 (AArch64) compatible CPUs.
 
-Simplyblock is numa-aware and can run on one or two socket systems. A minimum of one storage node per numa socket has to
-be deployed per host for production use cases.
-Therefore, if more than one socket is present on a host, they can only be used for simplyblock storage if each of
-them has a separate NIC and directly connected NVMe devices.
+## Virtualization Support
 
-For dedicated storage hosts with 32 or more vCPU (16 or more physical cores) per socket, it is highly recommended to
-turn off hyper-threading for performance reasons.
+Both Simplyblock storage nodes and control plane nodes can run on virtualization. It has been tested on plain kvm, proxmox, nitro (aws ec2) and gcp. 
+For production and storage nodes, _SR-IOV_ is required for NVMEs and NICs and dedicated cores must be exclusively assigned to the VMs (no over-provisioning).
 
-NVMe must support 4KB native block size and should be sized in between 1.9 TiB and 7.68 TiB. While larger NVMe devices (32 and
-64 TiB) are generally supported, their performance profile and rebuild time are typically not in alignment with
-high-performance storage, and rebuild times are higher. Within a single cluster, all NVMEs must be of the same size.
-Simplyblock is SSD-vendor agnostic but recommends NVMe devices of the same model within a cluster. This is not a hard
-requirement, in particular if new (replacement) devices are faster than the installed ones.
+## Deployment Models
+
+Simplyblock allows deployment of storage nodes in [disaggregated](../../architecture/concepts/disaggregated.md) and a [hyper-converged](../../architecture/concepts/hyper-converged.md) setups. The disaggregated setup requires dedicated hosts (bare metal or vm) for the storage nodes. In hyper-converged setup within kubernetes, simplyblock storage nodes are co-located with other workloads on kubernetes workers.
+The minimum system requirements below concern simplyblock only and must be dedicated to simplyblock. 
+
+## Minimum System Requirements
+
+The required resources (vcpu, ram, locally attached     
+virtual or physical nvme devices, network bandwidth, free space on boot disk) must be exclusively reserved for and dedicated to simplyblock and are not  
+available to the underlying operating system or other processes. 
+
+| Node Type       | vCPU(s) | RAM    | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
+|-----------------|---------|--------|--------------------------|---------------------|----------------|-----------------|
+| Storage Node    | 8       | 32 GB  | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 3               | 
+| Control Plane   | 2       | 16 GB  | NA                       | 1 GBit/s            | 50 GB          | 3               | 
+
+*disaggregated mode
+
+!!! Warning
+    On Storage Nodes, the vcpus must be dedicated to Simplyblock and will be isolated from the operating system so that no kernel-space or user-space 
+    processes or interrupt handlers can be scheduled on these vcpu. 
+
+!!! Info
+    It is possible and recommended to deploy multiple storage nodes per host, if the node has more than one NUMA socket or if there are more than 32 cores  
+    available per socket. During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the recommended deployment, 
+    including the recommended amount of storage nodes per host based on the detected configuration. This file is later processed when adding the nodes to the host; 
+    it can be edited, if the proposed configuration is not applicable.
+
+## Hyperthreading
+
+If 16 or more physical cores are available per storage node, it is highly recommended to turn off hyperthreading in the UEFI.
+
+## NVMEs
+
+NVMe must support 4KB native block size and should be sized in between 1.9 TiB and 7.68 TiB. 
+Within a single cluster, all NVMEs must be of the same size.
+Simplyblock is SSD-vendor agnostic but recommends NVMe devices of the same vendor and model within a cluster. This is not a hard
+requirement, in particular if new (replacement) devices are faster than existing installed ones, but cluster performance converges to devices with lowest performance.
+
+!!! Warning
+    Simplyblock only works with non-partitioned entire NVMe devices (virtual via SRV-IO or physical) as back-storage. 
+    Individual NVME namespaces or partitions cannot be claimed by Simplyblock, only entire devices! 
+    Devices are not allowed to be mounted under Linux and entire devices will be low-level formatted and re-partioned during deployment.
+    Devices will be removed from the operating system control and will not show up any longer in _lsblk_ once Simplyblock storage nodes are running.
+
+!!! Info
+    It is required to [low-level format devices](../../reference/nvme-low-level-format.md) with 4KB block size before deploying Simplyblock.
+
+## Network
+
+In production, Simplyblock requires a __HA network__ for storage traffic (e.g. via LACP, Stacked Switches, MLAG, active/active or active/passive NICs, STP or MSTP).
+
+Simplyblock implements NVMe over Fabrics (NVMe-oF) working over any Ethernet interconnect.
+
+!!! recommendation
+    Simplyblock recommends NVIDIA Mellanox network adapters (ConnectX-6 or higher). 
+
+For production, do not use software-defined switches such as Linux Bridge or OVS. Create an interface on top of a Linux bond over two ports of the NIC(s)  or using SRV-IO. 
+
+Also it is recommended to use a separate physical NIC with two ports (bonded) and a HA network for management traffic; A 1 gb/s network is sufficient and Linux Bridge may be used. 
+
+!!! warning
+    All storage nodes within a cluster and all hosts accessing storage  shall reside within the same hardware vlan. Avoid any gateways or proxies higher than L2 on 
+    the network path. 
+
+## PCIe Version
 
 PCIe 3.0 is a minimum requirement, and if possible, PCIe 4.0 or higher is recommended.
 
-For maximum performance and depending on the capacity of the NVMEs, a dedicated storage network bandwidth of at least 10
-gb/s is recommended per NVMe and not more than 10 NVMe are recommended per socket.
+## NUMA
 
-A maximum of 10 NVMe is currently supported per storage node.
+Simplyblock is numa-aware and can run on one or two socket systems. A minimum of one storage node per NUMA socket has to
+be deployed per host for production use cases. Each NUMA socket requires directly attached NVMe and NIC to deploy a storage node.
 
-RAM requirements per node are:
+## Operating System Requirements (control plane, storage nodes)
 
-| VM Type                     | RAM      |
-|-----------------------------|----------|
-| Base*                       | 3 GB     |
-| Per lvol*                   | 0.025 GB |
-| Per TB of cluster storage** | 2 GB     |
+__control plane nodes__ as well as __storage nodes__ in disaggregated setup require one of the following: __rocky__, __rhel__ or __alma__, all in version __9__ (latest patch-level).
 
-*consumed as huge page memory
-*consumed as combined huge page and system memory requirements
+The storage nodes require rocky, rhel or alma 9 in the disaggregated setup.
 
-## AWS Amazon EC2 Recommendations
+In the hyper-converged setup, the following operating systems are supported:
 
-Simplyblock can work with local instance storage (local NVMe devices) and Amazon EBS volumes. For performance reasons,
-Amazon EBS is not recommended for high-performance clusters.
+| Operating System           | Versions |
+|----------------------------|----------|
+| Rocky                      | 9, 10    |
+| RHEL                       | 9, 10    |
+| Alma                       | 9, 10    |
 
-!!! critical
-    If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of type
-    _Spread_!
+We are planning to support more operating systems, including multiple versions of Ubuntu, Talos and Debian with the next minor release.
 
-Generally, with AWS, there are three considerations when selecting virtual machine types:
+# Operating System Requirements (Initiator)
 
-- Minimum requirements of vCPU and RAM
-- Locally attached NVMe devices
-- Network performance (dedicated and "up to")
+Initiator is the operating system to which Simplyblock nvme volumes is attached over the network (the nvme-tcp client). The following requirements concern initiators:
 
-Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes:
+[Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
 
-| VM Type         | vCPU(s) | RAM    | Locally Attached Storage | Network Performance |
-|-----------------|---------|--------|--------------------------|---------------------|
-| _i4g.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.5 GBit/s         |
-| _i4g.16xlarge_  | 64      | 512 GB | 4x 3750 GB               | 37.5 GBit/s         |
-| _i3en.6xlarge_  | 24      | 192 GB | 2x 7500 GB               | 25 GBit/s           |
-| _i3en.12xlarge_ | 48      | 384 GB | 4x 7500 GB               | 50 GBit/s           |
-| _i3en.24xlarge_ | 96      | 768 GB | 8x 7500 GB               | 100 GBit/s          |
-| _m5d.4xlarge_   | 16      | 64 GB  | 2x 300 GB                | 10 GBit/s           |
-| _i4i.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.75 GBit/s        |
-| _i4i.12xlarge_  | 48      | 384 GB | 3x 3750 GB               | 28.12 GBit/s        |
+[Linux Kernel Versions](../../reference/supported-linux-kernels.md)
 
-## Google Compute Engine Recommendations
+# Kubernetes Requirements
 
-In GCP, physical hosts are highly-shared and sliced into virtual machines. This isn't only true for network CPU, RAM,
-and network bandwidth, but also virtualized NVMe devices. Google Compute Engine NVMe devices provide a specific number
-of queue pairs (logical connections between the virtual machine and physical NVMe device) depending on the size of the
-disk. Hence, separately attached NVMe devices are highly recommended to achieve the required number of queue pairs of
-simplyblock.
+| Distribution               | Versions       |
+|----------------------------|----------------|
+| eks                        | 1.28 and higher|
+| gks                        | 1.28 and higher|
+| k3s                        | 1.29 and higher|
+| k8s (vanilla)              | 1.28 and higher|
+| openshift                  | 4.15 and higher|
 
-!!! critical
-    If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of
-    type _Spread_!
+# ProxMox Requirements
 
-Generally, with GCP, there are three considerations when selecting virtual machine types:
-
-- Minimum requirements of vCPU and RAM
-- The size of the locally attached NVMe devices (SSD Storage)
-- Network performance
-
-Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes:
-
-| VM Type          | vCPU(s) | RAM    | Additional Local SSD Storage | Network Performance |
-|------------------|---------|--------|------------------------------|---------------------|
-| _n2-standard-8_  | 8       | 32 GB  | 2x 2500 GB                   | 16 GBit/s           |
-| _n2-standard-16_ | 16      | 64 GB  | 2x 2500 GB                   | 32 GBit/s           |
-| _n2-standard-32_ | 32      | 128 GB | 4x 2500 GB                   | 32 GBit/s           |
-| _n2-standard-48_ | 48      | 192 GB | 4x 2500 GB                   | 50 GBit/s           |
-| _n2-standard-48_ | 48      | 192 GB | 4x 2500 GB                   | 50 GBit/s           |
-| _n2-standard-64_ | 64      | 256 GB | 6x 2500 GB                   | 75 GBit/s           |
-| _n2-standard-80_ | 64      | 320 GB | 8x 2500 GB                   | 100 GBit/s          |
-
-### Attaching an additional Local SSD on Google Compute Engine
-
-The above recommended instance types do not provide NVMe storage by default. It has to specifically be added to the
-virtual machine at creation time. It cannot be changed after the virtual machine is created.
-
-To add additional Local SSD Storage to a virtual machine, the operating system section must be selected in the wizard,
-then "Add local SSD" must be clicked. Now an additional disk can be added.
-
-!!! warning
-    It is important that NVMe is selected as the interface type. SCSI will not work!
-
-![Google Compute Engine wizard screenshot for adding additional local SSDs to a virtual machine](../../assets/images/gcp-wizard-local-ssd.png)
-
+ProxMox is supported from version 8.0 and higher.
