@@ -5,7 +5,7 @@ weight: 20000
 
 Simplyblock is a high-performance, distributed storage orchestration layer designed for cloud-native environments. It
 provides NVMe over TCP (NVMe/TCP) block storage to hosts and offers block storage to containers through its Container
-Storage Interface (CSI) driver.
+Storage Interface (CSI) and ProxMox drivers.
 
 ## What makes Simplyblock Special?
 
