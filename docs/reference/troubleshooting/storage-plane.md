@@ -22,7 +22,7 @@ storage nodes show `n/0` disks available in the disks column (`{{ cliname }} sto
 2. If the command keeps showing an unhealthy storage node, _suspend_, _shutdown_, and restart the storage node.
 
 !!! danger
-    Never shutdown or restart a storage node while the cluster is in **rebalancing** state. This can lead to potential
+    Never shutdown or restart a storage node while the cluster is in **degraded** state. This can lead to potential
     I/O operation. This is independent of the cluster's high-availability status.<br/><br/ >
     Check the cluster status with any of the following commands:
 
