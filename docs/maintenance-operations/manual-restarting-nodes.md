@@ -8,7 +8,7 @@ There are a few reasons to manually restart a storage node:
 - A cluster upgrade
 - A planned storage node maintenance
 
-!!! warning
+!!! critical
     There is an auto-restart functionality, which restarts a storage node in case the monitoring service detects
     an issue with that specific node. This can be the case if one of the containers exited, after a reboot 
     of the host, or because of an internal node error which causes the management interface to become 
@@ -28,7 +28,7 @@ There are a few reasons to manually restart a storage node:
     Nodes can only be restarted from `offline` state!
     
     It is important to ensure that the cluster is not in `degraded` state and all other nodes are `online` 
-    before shutting down a storage node for maintainance or upgrades!
+    before shutting down a storage node for maintainance or upgrades! Otherwise loss of availability - io interrupt - may occur!
 
 Suspending a storage node and then shutting it down: 
 
