@@ -17,10 +17,3 @@ weight: 20500
 
 - In a highly available control plane cluster, Graylog currently runs only on the primary (first) node. Availability
   is lost in case of an outage of the primary control plane node.
-  
-## Storage Plane 
-
-- During background deletion of large volumes, if the storage node at which the deleted volume resides goes offline
-  or becomes unreachable before the delete completes, possible storage garbage may be left.
-
-
