@@ -67,7 +67,7 @@ To enable Kubernetes to decide where to install storage nodes, the helm chart us
 used to mark only specific nodes to act as storage nodes, or to use all nodes for the hyper-converged or hybrid setup. 
 
 ```bash title="Label the Kubernetes Worker Node"
-kubectl label nodes <NODE_NAME> type=simplyblock-storage-plane
+kubectl label nodes <NODE_NAME> io.simplyblock.node-type=simplyblock-storage-plane
 ```
 
 !!! warning
