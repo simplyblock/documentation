@@ -3,14 +3,62 @@ title: "Deployments"
 weight: 10300
 ---
 
-Simplyblock is a highly flexible storage solution. It can be installed in a variety of different deployment models
+Simplyblock is a highly flexible storage solution. It can be installed in a variety of different deployment models 
 inside and outside of Kubernetes.
 
-!!! info
-    Bare Metal and VM-based installations refer to installations onto a dedicated or virtual machine running Linux
-    deployed on premises, or in a private or public cloud.<br><br>
-    For AWS EC2-based installation, there is a specific installation guide that is recommended to follow if an AWS
-    EC2 installation is planned.
+## Control Plane Installation
+
+Each storage cluster requires a control plane to run. Multiple storage clusters may be connected to a single control 
+plane. The deployment of the control plane must happen before a storage cluster deployment. For details, see the
+[Control Plane Deployment](install-simplyblock/install-cp.md).
+
+For a production deployment, the control plane requires three management nodes. For fault tolerance, these instances
+must be operated in separate failure domains from each other and the storage nodes (e.g., independent hosts or racks).
+
+## Storage Node Installation
+
+Storage nodes can be installed directly under any Linux Rocky, Alma or RHEL version 9 (or later). A Kubernetes cluster
+is no requirement. A minimal OS image is sufficient. For details on how to install the storage cluster, see
+[Install Simplyblock Storage Nodes](install-simplyblock/install-sp.md).
+
+The above setup is not suitable for Kubernetes [hyper-converged](../architecture/concepts/hyper-converged.md) deployments.
+
+Alternatively, it is possible to install simplyblock storage nodes into an existing Kubernetes cluster. This allows for
+both, hyper-converged, and disaggregated setups. It is also possible to run a hybrid deployment, with some nodes running
+hyper-converged and others running disaggregated. For more information, see the Kubernetes section below.
+
+This alternative can be chosen if storage is mainly provisioned via CSI driver (Kubernetes workloads).
+
+## Initiator-Side Installation
+
+Simplyblock logical volumes are NVMe over TCP volumes. They are attached to the Linux kernel via the provided `nvme-tcp`
+module.
+
+The initiator-side installation (or client-side) depends on the client environment.
+
+- On Kubernetes, the[Simplyblock CSI Driver](kubernetes/install-csi.md) takes care of attaching, reconnecting, and
+  disconnecting the logical volumes.
+- On Proxmox, the [Proxmox Integration](proxmox/index.md) handles the same situations.
+- On plain Linux hosts, a logical volume is connected via the `nvme-cli` tool. For more information, see
+  [Bare-Metal Attach](baremetal/index.md).
+
+## System Requirements and Sizing
+
+Simplyblock is designed for high-performance storage operations. Therefore, it has specific system requirements that
+must be met. The following sections describe the system and node sizing requirements. 
+
+- [System Requirements](deployment-preparation/system-requirements.md)
+- [Node Sizing](deployment-preparation/node-sizing.md)
+- [Erasure Coding Configuration](deployment-preparation/erasure-coding-scheme.md)
+- [Air Gapped Installation](air-gap/index.md)
+
+For deployments on hyper-scalers, like Amazon AWS and Google GCP, there are instance type recommendations. While other
+instance types may work, it is highly recommended to use the instance type recommendations.
+
+- [Amazon EC2](deployment-preparation/cloud-instance-recommendations.md#aws-amazon-ec2-recommendations)
+- [Google Compute Engine](deployment-preparation/cloud-instance-recommendations.md#google-compute-engine-recommendations)
+
+## Related Articles
 
 <div class="grid cards" markdown>
 
@@ -18,51 +66,29 @@ inside and outside of Kubernetes.
 
     ---
 
-    Kubernetes deployments include AWS' EKS and GCP's GKE.
+    Kubernetes deployments, including Amazon EKS and Google Kubernetes Engine (GKE).
 
-    [:octicons-arrow-right-24: Systems Recommendations](deployment-planning/recommendations.md)<br/>
-    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
-    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
-    [:octicons-arrow-right-24: Prerequisites](kubernetes/prerequisites.md)<br/>
-    [:octicons-arrow-right-24: Hyper-Converged Setup](kubernetes/install-simplyblock/hyper-converged.md)<br/>
-    [:octicons-arrow-right-24: Disaggregated Setup](kubernetes/install-simplyblock/disaggregated.md)<br/>
-    [:octicons-arrow-right-24: Hybrid Setup](kubernetes/install-simplyblock/hybrid.md)
+    [:octicons-arrow-right-24: Install CSI Driver](kubernetes/install-csi.md)<br/>
+    [:octicons-arrow-right-24: Hyper-Converged Setup](kubernetes/k8s-hyperconverged.md)<br/>
+    [:octicons-arrow-right-24: Kubernetes Disaggregated Setup](kubernetes/k8s-disaggregated.md)
 
--   :material-linux:{ .lg .middle } __Bare-Metal & VM-based Linux__
+-   :material-linux:{ .lg .middle } __Plain Linux__
 
     ---
 
-    Bare-Metal deployments are either virtualized or physical host.
+    Plain Linux deployments, including the control plane, the storage plane, and
+    bare-metal attaching.
 
-    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
-    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
-    [:octicons-arrow-right-24: Prerequisites](baremetal/prerequisites.md)<br/>
-    [:octicons-arrow-right-24: Install Storage Cluster](baremetal/install-simplyblock.md)<br/>
-    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](baremetal/install-simplyblock-csi.md)<br/>
+    [:octicons-arrow-right-24: Install Control Plane](install-simplyblock/install-cp.md)<br/>
+    [:octicons-arrow-right-24: Install Storage Plane](install-simplyblock/install-sp.md)<br/>
+    [:octicons-arrow-right-24: Attach storage to Linux](baremetal/index.md)
 
--   :material-aws:{ .lg .middle } __AWS EC2__
-
-    ---
-
-    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
-    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
-    [:octicons-arrow-right-24: Prerequisites](aws-ec2/prerequisites.md)<br/>
-    [:octicons-arrow-right-24: Install Storage Cluster](aws-ec2/install-simplyblock.md)<br/>
-    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](aws-ec2/install-simplyblock-csi.md)<br/>
-
--   :material-aws:{ .lg .middle } __Google Compute Engine__
+-   :material-cloud-circle:{ .lg .middle } __Proxmox__
 
     ---
 
-    [:octicons-arrow-right-24: Node Sizing](deployment-planning/node-sizing.md)<br/>
-    [:octicons-arrow-right-24: Erasure Coding Configuration](deployment-planning/erasure-coding-scheme.md)<br/>
-    [:octicons-arrow-right-24: Prerequisites](gcp/prerequisites.md)<br/>
-    [:octicons-arrow-right-24: Install Storage Cluster](gcp/install-simplyblock.md)<br/>
-    [:octicons-arrow-right-24: Install Kubernetes CSI Driver](gcp/install-simplyblock-csi.md)<br/>
+    The Proxmox integration is provided as a Debian (.deb) package.
 
--   :material-hvac-off:{ .lg .middle } __Air Gapped__
+    [:octicons-arrow-right-24: Install Proxmox Integration](proxmox/index.md)
 
-    ---
-
-    [:octicons-arrow-right-24: General Information](air-gap/index.md)
 </div>

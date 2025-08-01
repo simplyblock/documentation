@@ -100,7 +100,8 @@ Additional, uncommonly configured CSI driver parameters:
 | `storagenode.pciAllowed`                         | Sets the list of allowed NVMe PCIe addresses.                                               | `<empty>`                           | 
 | `storagenode.pciBlocked`                         | Sets the list of blocked NVMe PCIe addresses.                                               | `<empty>`                           | 
 | `storagenode.socketsToUse`                       | Sets the list of sockets to use.                                                            | `<empty>`                           | 
-| `storagenode.nodesPerSocket`                     | Sets the number of nodes to use per socket.                                                 | `<empty>`                           | 
+| `storagenode.nodesPerSocket`                     | Sets the number of nodes to use per socket.                                                 | `<empty>`                           |
+| `storagenode.coresPercentage`                    | Sets the percentage of total cores (vCPUs) available to simplyblock storage node services.  | `<empty>`                           |
 
 ## Caching Node Parameters
 

@@ -1,5 +1,5 @@
 ---
-title: "Deployment Planning"
+title: "Deployment Preparation"
 weight: 20000
 ---
 

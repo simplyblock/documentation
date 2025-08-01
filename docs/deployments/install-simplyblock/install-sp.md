@@ -1,35 +1,14 @@
 ---
-title: "Install Simplyblock Storage Cluster"
-weight: 30100
+title: "Install Storage Plane"
+weight: 34000
 ---
-
-<!-- include: install intro -->
-{% include 'bare-metal-intro.md' %}
-
-!!! warning
-    Simplyblock strongly recommends setting up individual networks for the storage plane and control plane traffic.  
-
-!!! recommendation
-    Simplyblock recommends using AlmaLinux, Rocky, or Red Hat Enterprise Linux on Amazon EC2 machines. Amazon Linux
-    does not support native NVMe-oF Multipathing. While it is possible to use DM-MPIO (device manager multipathing)
-    usage is not as straight forward as possible.
-
-## Amazon Elastic Kubernetes Service (EKS)
-
-!!! info
-    If simplyblock is to be installed into Amazon EKS, the [Kubernetes documentation](../kubernetes/index.md) section
-    has the necessary step-by-step guide.
-
-<!-- include: install control plane documentation -->
-{% include 'install-control-plane.md' %}
 
 ## Storage Plane Installation
 
 The installation of a storage plane requires a functioning control plane. If no control plane cluster is available yet,
-it must be installed beforehand. Jump right to the [Control Plane Installation](#control-plane-installation).
+it must be installed beforehand. Jump right to the [Control Plane Installation](install-cp.md).
 
-The following examples assume two subnets are available. These subnets are defined as shown in
-[Network Preparation](#network-preparation).
+The following examples assume two subnets are available. 
 
 ### Firewall Configuration (SP)
 
@@ -68,6 +47,12 @@ At this point, a quick check with the simplyblock provided system check can reve
 curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 ```
 
+#### NVMe Device Preparation
+
+{% include 'nvme-format.md' %}
+
+#### Load the NVMe over Fabrics Kernel Modules 
+
 {% include 'prepare-nvme-tcp.md' %}
 
 #### Configuration and Deployment
@@ -80,7 +65,7 @@ The actual deployment process happens in three steps:
 - Deploy the second stage (add the storage node to the cluster), happening from a management node
 
 The configuration process creates the configuration file, which contains all the assignments of NVMe devices, NICs, and
-potentially available [NUMA nodes](/deployments/deployment-planning/numa-considerations.md). By default, simplyblock
+potentially available [NUMA nodes](../deployment-preparation/numa-considerations.md). By default, simplyblock
 will configure one storage node per NUMA node.
 
 ```bash title="Configure the storage node"
@@ -130,6 +115,62 @@ for all storage nodes, as it is required in the next step to attach the storage 
 
 When all storage nodes are added, it's finally time to activate the storage plane.
 
+### Attach the Storage Node to the Control Plane
+
+When all storage nodes are prepared, they can be added to the storage cluster.
+
+!!! warning
+    The following commands are executed from a management node. Attaching a storage node to a control plane is executed
+    from a management node.
+
+```bash title="Attaching a storage node to the storage plane"
+sudo {{ cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+  --max-lvol <MAX_LOGICAL_VOLUMES> \
+  --max-prov <MAX_PROVISIONING_CAPACITY> \
+  --number-of-devices <NUM_STOR_NVME> \
+  --partitions <NUM_OF_PARTITIONS> \
+  --data-nics <DATA_IF>
+```
+
+!!! info
+    The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
+    separate journaling device (which is strongly recommended), the value should be zero (_0_) to prevent the storage
+    devices from being partitioned. This improves the performance and prevents device sharing between the journal and
+    the actual data storage location.
+
+The output will look something like the following example:
+
+```plain title="Example output of adding a storage node to the storage plane"
+[demo@demo ~]# sudo {{ cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --max-lvol 50 --max-prov 500g --number-of-devices 3 --partitions 0 --data-nics eth1
+2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
+2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
+2025-02-26 14:55:17,341: INFO: Instance cloud: None
+2025-02-26 14:55:17,341: INFO: Instance type: None
+2025-02-26 14:55:17,342: INFO: Instance privateIp: 192.168.10.2
+2025-02-26 14:55:17,342: INFO: Instance public_ip: 192.168.10.2
+2025-02-26 14:55:17,347: INFO: Node Memory info
+2025-02-26 14:55:17,347: INFO: Total: 24.3 GB
+2025-02-26 14:55:17,348: INFO: Free: 23.2 GB
+2025-02-26 14:55:17,348: INFO: Minimum required huge pages memory is : 14.8 GB
+2025-02-26 14:55:17,349: INFO: Joining docker swarm...
+2025-02-26 14:55:21,060: INFO: Deploying SPDK
+2025-02-26 14:55:31,969: INFO: adding alceml_2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
+2025-02-26 14:55:32,010: INFO: creating subsystem nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
+2025-02-26 14:55:32,022: INFO: adding listener for nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4 on IP 10.10.10.2
+2025-02-26 14:55:32,303: INFO: Connecting to remote devices
+2025-02-26 14:55:32,321: INFO: Connecting to remote JMs
+2025-02-26 14:55:32,342: INFO: Make other nodes connect to the new devices
+2025-02-26 14:55:32,346: INFO: Setting node status to Active
+2025-02-26 14:55:32,357: INFO: {"cluster_id": "3196b77c-e6ee-46c3-8291-736debfe2472", "event": "STATUS_CHANGE", "object_name": "StorageNode", "message": "Storage node status changed from: in_creation to: online", "caused_by": "monitor"}
+2025-02-26 14:55:32,361: INFO: Sending event updates, node: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5, status: online
+2025-02-26 14:55:32,368: INFO: Sending to: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5
+2025-02-26 14:55:32,389: INFO: Connecting to remote devices
+2025-02-26 14:55:32,442: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
+2025-02-26 14:55:32,443: INFO: Done
+```
+
+Repeat this process for all prepared storage nodes to add them to the storage plane.
+
 ### Activate the Storage Cluster
 
 The last step, after all nodes are added to the storage cluster, is to activate the storage plane.
@@ -146,9 +187,4 @@ The command output should look like this, and respond with a successful activati
 2025-02-28 13:35:26,322: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to 2f4dafb1-d610-42a7-9a53-13732459523e
 2025-02-28 13:35:31,133: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to b7db725a-96e2-40d1-b41b-738495d97093
 2025-02-28 13:35:55,791: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from in_activation to active", "caused_by": "cli"}
-2025-02-28 13:35:55,794: INFO: Cluster activated successfully
 ```
-
-Now that the cluster is ready, it is time to install the [Kubernetes CSI Driver](install-simplyblock-csi.md) or learn
-how to use the simplyblock storage cluster to
-[manually provision logical volumes](../../usage/baremetal/provisioning.md).

@@ -6,16 +6,25 @@ weight: 30300
 Modern multi-socket servers use a memory architecture called
 [NUMA (Non-Uniform Memory Access)](https://en.wikipedia.org/wiki/Non-uniform_memory_access){:target="_blank" rel="noopener"}.
 In a NUMA system, each CPU socket has its own local memory and I/O paths. Accessing local resources is faster than
-reaching across sockets to remote memory or devices.
+reaching across sockets to remote memory or devices. Simplyblock is fully NUMA-aware.
 
-Linux is NUMA-aware, but performance can still degrade if workloads or I/O devices aren't correctly aligned with the CPU
-topology. This matters especially when working with high-throughput components like NVMe devices and network interface
-cards (NICs).
+On a host with more than one socket, by default one or two storage nodes are deployed per socket.
 
-Simplyblock highly recommends a NUMA-aware configuration in multi-socket systems. To ensure optimal performance, each
-CPU socket should have a dedicated NIC and dedicated NVMe devices. These NICs and NVMe devices must be installed in
-PCI-e slots that are physically connected to their respective CPUs. This setup ensures low-latency, high-bandwidth data
-paths between the backing storage devices, the storage software, and the network.
+Two storage nodes per socket are deployed if:
+- more than 32 vCPUs (cores) per NUMA socket are dedicated to simplyblock per socket
+- more than 10 NVMe devices are connected to the NUMA socket   
+
+Users can change this behavior. Either by setting the appropriate Helm Chart parameters (in case of Kubernetes-based
+storage node deployment) or by manually modifying the initially created configuration file on the storage node
+(after running `{{ cliname }} sn configure`).
+
+It is critical for performance that all NVMe devices of a storage node are directly connected to the NUMA socket to
+which the storage node is deployed.
+
+If a socket has no NVMe devices connected, it will not qualify to run a simplyblock storage node.
+
+It is also important that the NIC(s) used by simplyblock for storage traffic are connected to the same NUMA socket.
+However, simplyblock does not auto-assign a NIC and users have manually to take care of that.
 
 ## Checking NUMA Configuration
 

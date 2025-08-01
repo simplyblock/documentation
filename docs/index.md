@@ -31,7 +31,7 @@ the efficiency and reliability of your simplyblock deployment.
     familiar with the required node sizing and other considerations for
     a performant and stable cluster operation.
 
-    [:octicons-arrow-right-24: Deployment Planning](deployments/deployment-planning/index.md)
+    [:octicons-arrow-right-24: Deployment Planning](deployments/deployment-preparation/index.md)
 
 - :material-database-arrow-up:{ .lg .middle } __Deploy Simplyblock__
 

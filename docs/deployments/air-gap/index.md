@@ -1,6 +1,6 @@
 ---
 title: "Air Gap Installation"
-weight: 20999
+weight: 30000
 ---
 
 Simplyblock can be installed in an air-gapped environment. However, the necessary images must be downloaded to
@@ -16,9 +16,3 @@ container images in air-gapped environments.
 
 The general installation instructions are similar to non-air-gapped installations, with the need to update the
 container download locations to point to your local container repository.
-
-Learn more about the deployment options:
-
- - [Deploy into Kubernetes](../kubernetes/index.md)
- - [Deploy on Bare Metal (or virtualized) Linux](../baremetal/index.md)
- - [Deploy on AWS EC2](../aws-ec2/index.md)
