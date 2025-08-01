@@ -22,9 +22,12 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 
 A simplyblock production cluster consists of three different types of nodes:
 
-1. _Management nodes_ are part of the control plane which managed the cluster(s). A production cluster requires at least **three nodes**.
-2. _Storage nodes_ are part of a specific storage cluster and provide capacity to the distributed storage pool. A production cluster requires at least **three nodes**.
-3. _Secondary nodes_ are part of a specific storage cluster and enable automatic fail over for NVMe-oF connections. In a high-availability cluster, every primary storage node automatically provides a secondary storage node. 
+1. _Management nodes_ are part of the control plane which managed the cluster(s). A production cluster requires at least
+   **three nodes**.
+2. _Storage nodes_ are part of a specific storage cluster and provide capacity to the distributed storage pool. A
+   production cluster requires at least **three nodes**.
+3. _Secondary nodes_ are part of a specific storage cluster and enable automatic fail over for NVMe-oF connections. In a
+   high-availability cluster, every primary storage node automatically provides a secondary storage node.
 
 A single control plane can manage one or more clusters. If started afresh, a control plane must be set up before
 creating a storage cluster. If there is a preexisting control plane, an additional storage cluster can be added
@@ -35,7 +38,8 @@ More information on the control plane, storage plane, and the different node typ
 
 ## Network Preparation
 
-For network requirements, see [system requirements](../deployment-planning/recommendations.md)
+For network requirements,
+see [System Requirements](../deployment-preparation/system-requirements.md#network-requirements).
 
 Simplyblock recommends two individual network interfaces, one for the control plane and one for the storage plane.
 Hence, in the following installation description, we assume two separate subnets. To install simplyblock in your

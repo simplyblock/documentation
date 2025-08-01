@@ -25,7 +25,7 @@ If a storage node failed and cannot be recovered, adding a new storage node is p
 To start a new storage node, follow the storage node installation according to your chosen setup:
 
 - [storage nodes in kubernetes](../deployments/kubernetes/index.md)
-- [storage nodes on Bare Metal or Virtualized Linux](../deployments/install-simplyblock/install-sn.md)
+- [storage nodes on Bare Metal or Virtualized Linux](../deployments/install-simplyblock/install-sp.md)
 
 ## Remove the old Storage Node
 

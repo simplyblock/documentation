@@ -1,3 +1,8 @@
+---
+title: "Install Storage Plane"
+weight: 34000
+---
+
 ## Storage Plane Installation
 
 The installation of a storage plane requires a functioning control plane. If no control plane cluster is available yet,
@@ -46,6 +51,8 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 
 {% include 'nvme-format.md' %}
 
+#### Load the NVMe over Fabrics Kernel Modules 
+
 {% include 'prepare-nvme-tcp.md' %}
 
 #### Configuration and Deployment
@@ -58,7 +65,7 @@ The actual deployment process happens in three steps:
 - Deploy the second stage (add the storage node to the cluster), happening from a management node
 
 The configuration process creates the configuration file, which contains all the assignments of NVMe devices, NICs, and
-potentially available [NUMA nodes](/deployments/deployment-planning/numa-considerations.md). By default, simplyblock
+potentially available [NUMA nodes](../deployment-preparation/numa-considerations.md). By default, simplyblock
 will configure one storage node per NUMA node.
 
 ```bash title="Configure the storage node"
@@ -180,5 +187,4 @@ The command output should look like this, and respond with a successful activati
 2025-02-28 13:35:26,322: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to 2f4dafb1-d610-42a7-9a53-13732459523e
 2025-02-28 13:35:31,133: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to b7db725a-96e2-40d1-b41b-738495d97093
 2025-02-28 13:35:55,791: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from in_activation to active", "caused_by": "cli"}
-2025-02-28 13:35:55,794: INFO: Cluster activated successfully
 ```

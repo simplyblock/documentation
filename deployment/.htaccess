@@ -3,8 +3,8 @@ RewriteEngine On
 
 # Old documentation redirects
 RewriteRule ^deployment/deployment/?$ /latest/deployments/ [L,R=301]
-RewriteRule ^deployment/requirements/?$ /latest/deployments/deployment-planning/ [L,R=301]
-RewriteRule ^usage/linux/?$ /latest/deployments/baremetal/ [L,R=301]
+RewriteRule ^deployment/requirements/?$ /latest/deployments/deployment-preparation/ [L,R=301]
+RewriteRule ^usage/linux/?$ /latest/deployments/install-simplyblock/ [L,R=301]
 RewriteRule ^operation/maintenance/?$ /latest/maintenance-operations/ [L,R=301]
 RewriteRule ^known_issues/?$ /latest/important-notes/known-issues/ [L,R=301]
 RewriteRule ^cli_reference/?$ /latest/reference/cli/ [L,R=301]

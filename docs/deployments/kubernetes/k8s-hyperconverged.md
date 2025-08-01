@@ -3,52 +3,120 @@ title: "Hyper-Converged Setup"
 weight: 50000
 ---
 
-In the hyper-converged or hybrid deployment, csi driver (node-part) and storage nodes are at least partially co-located on the same hosts (k8s worker nodes). 
+In the hyper-converged or hybrid deployment, the CSI driver (node-part) and storage nodes are at least partially
+co-located with other workloads on the same hosts (Kubernetes worker nodes).
 
 !!! info
-    However, this does not mean that each worker node with the csi driver node-part has to become a storage node. This is  
-    rather defined by a node label. Also, it is possible to add dedicated storage worker nodes to the same kubernetes cluster 
-    for a hybrid deployment model. 
+    In a hyper-converged or hybrid deployment, not each Kubernetes worker node has to become of the storage cluster.
+    Simplyblock uses node labels to identify Kubernetes workers that are deemed as storage hosting instances.
 
- As for the plain CSI driver installation, the control plane must be present and a storage cluster must have been created. 
-The storage cluster will however not have any storage nodes attached yet.
+    Specifically in hybrid deployments, it is common to add dedicated Kubernetes worker nodes for storage to the same
+    Kubernetes cluster, often separated into a different node pool, and using a different type of host. In this case,
+    it is important to remember to taint the Kubernetes worker accordingly to prevent other services from being
+    scheduled on this worker.
+
+As for the plain CSI driver installation, the control plane must be present and a storage cluster must have been
+created.
+
+However, no storage nodes have to be attached to the cluster yet.
 
 ## CSI Driver and Storage Node System Requirements
 
-System requirements for CSI-only (node part) installation can be found [here](install-csi.md#csi-driver-system-requirements).
-However, for nodes, which serve as storage nodes, the [following requirements](../deployment-planning/recommendations.md) apply. 
+System requirements for CSI-only (node part) installation can be found
+in [Install CSI Driver](install-csi.md#csi-driver-system-requirements).
+However, for nodes, which serve as storage nodes, must meet the
+following [System Requirements](../deployment-preparation/system-requirements.md).
 
-## Retrieving credentials and creating a pool
+## Retrieving Credentials
 
-[see here](install-csi.md#getting-credentials) 
+Credentials are available via `{{ cliname }} cluster get-secret` from any of the control plane nodes. For further
+information on the command, see [Retrieving a Cluster Secret](../../reference/cli/cluster.md#gets-a-clusters-secret).
+
+First, the unique cluster id must be retrieved. Note down the cluster UUID of the cluster to access.
+
+```bash title="Retrieving the Cluster UUID"
+sudo {{ cliname }} cluster list
+```
+
+An example of the output is below.
+
+```plain title="Example output of a cluster listing"
+[demo@demo ~]# {{ cliname }} cluster list
++--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
+| UUID                                 | NQN                                                             | ha_type | tls   | mgmt nodes | storage nodes | Mod | Status |
++--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
+| 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a | nqn.2023-02.io.simplyblock:4502977c-ae2d-4046-a8c5-ccc7fa78eb9a | ha      | False | 1          | 4             | 1x1 | active |
++--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
+```
+
+In addition, the cluster secret must be retrieved. Note down the cluster secret.
+
+```bash title="Retrieve the Cluster Secret"
+{{ cliname }} cluster get-secret <CLUSTER_UUID>
+```
+
+Retrieving the cluster secret will look somewhat like that.
+
+```plain title="Example output of retrieving a cluster secret"
+[demo@demo ~]# {{ cliname }} cluster get-secret 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+oal4PVNbZ80uhLMah2Bs
+```
+
+## Creating a Storage Pool
+
+Additionally, a storage pool is required. If a pool already exists, it can be reused. Otherwise, creating a storage
+pool can be created as follows:
+
+```bash title="Create a Storage Pool"
+{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID>
+```
+
+The last line of a successful storage pool creation returns the new pool id.
+
+```plain title="Example output of creating a storage pool"
+[demo@demo ~]# {{ cliname }} pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+2025-03-05 06:36:06,093: INFO: Adding pool
+2025-03-05 06:36:06,098: INFO: {"cluster_id": "4502977c-ae2d-4046-a8c5-ccc7fa78eb9a", "event": "OBJ_CREATED", "object_name": "Pool", "message": "Pool created test", "caused_by": "cli"}
+2025-03-05 06:36:06,100: INFO: Done
+ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
+```
 
 ## Labeling Nodes
 
-Before the helm chart is installed, it is required to label all nodes, which shall be added as storage nodes (it is possible to label additional nodes later on to add them to the storage cluster, but cluster expansion in an HA model always requires two nodes to be added in pairs).  
+Before the Helm Chart can be installed, it is required to label all Kubernetes worker nodes deemed as storage nodes.
 
-```bash title="Label the Kubernetes Worker Node"
+It is also possible to label additional nodes at a later stage to add them to the storage cluster. However, expanding
+a storage cluster always requires at least two new nodes to be added as part of the same expansion operation.
+
+```bash title="Label the Kubernetes worker node"
 kubectl label nodes <NODE_NAME> type=simplyblock-storage-plane
 ```
 
 ## Networking Configuration
 
-Multiple ports are required to be opened on storage node hosts. ports used with the same source and target networks (vlans) will not require firewall settings. port openings may be required between control plane and storage network as those will be frequently on different vlans. 
+Multiple ports are required to be opened on storage node hosts.
 
-| Service                     | Direction | Source / Target Network | Port(s)   | Protocol(s) |
-|-----------------------------|-----------|-------------------------|-----------|-------------|
-| ICMP                        | ingress   | control / storage       | -         | ICMP        |
-| Storage node API            | ingress   | control / storage mgmt  | 5000      | TCP         |
-| spdk-http-proxy             | ingress   | control / storage mgmt  | 8080-8180 | TCP         |
-| hublvol-nvmf-subsys-port    | ingress   | storage / storage       | 9030-9059 | TCP         |
-| internal-nvmf-subsys-port   | ingress   | storage / storage       | 9060-9099 | TCP         |
-| lvol-nvmf-subsys-port       | ingress   | csi-node / storage      | 9100-9200 | TCP         |
-| SSH                         | ingress   | admin / storage         | 22        | TCP         |
-| FoundationDB                | egress    | storage mgmt / control  | 4500      | TCP         |
-| Graylog                     | egress    | storage mgmt / control  | 12202     | TCP         |
+Ports using the same source and target networks (VLANs) will not require any additional firewall settings.
+
+Opening ports may be required between the control plane and storage networks as those typically reside on different
+VLANs.
+
+| Service                   | Direction | Source => Target Network | Port(s)   | Protocol(s) |
+|---------------------------|-----------|--------------------------|-----------|-------------|
+| ICMP                      | ingress   | control => storage       | -         | ICMP        |
+| Storage node API          | ingress   | control => storage mgmt  | 5000      | TCP         |
+| spdk-http-proxy           | ingress   | control => storage mgmt  | 8080-8180 | TCP         |
+| hublvol-nvmf-subsys-port  | ingress   | storage => storage       | 9030-9059 | TCP         |
+| internal-nvmf-subsys-port | ingress   | storage => storage       | 9060-9099 | TCP         |
+| lvol-nvmf-subsys-port     | ingress   | csi-client => storage    | 9100-9200 | TCP         |
+| SSH                       | ingress   | admin => storage         | 22        | TCP         |
+| FoundationDB              | egress    | storage mgmt => control  | 4500      | TCP         |
+| Graylog                   | egress    | storage mgmt => control  | 12202     | TCP         |
 
 ## Installing CSI Driver and Storage Nodes via Helm
 
-In the easiest version, compared to the [installation of the csi driver only](install-csi.md) the installation of a storage node via helm  requires only one one additional parameter  _--set storagenode.create=true_:
+In the simplest deployment, compared to a pure [Simplyblock CSI Driver](install-csi.md) installation, the deployment of
+a storage node via the Helm Chart requires only one additional parameter  `--set storagenode.create=true`:
 
 ```bash title="Install the helm chart"
 CLUSTER_UUID="<UUID>"
@@ -107,62 +175,37 @@ spdkcsi-controller-0   6/6     Running   0          30s
 spdkcsi-node-tzclt     2/2     Running   0          30s
 ```
 
-There are a number of other helm parameters, which are very important for storage node deployment in hyper-converged mode. The most important ones are:
+There are a number of other Helm Chart parameters that are important for storage node deployment in hyper-converged
+mode. The most important ones are:
 
-| Parameter                      | Description                                            | Default  | 
-|--------------------------------|--------------------------------------------------------|----------|
-| _storagenode.ifname_           | the interface name of the mgmt ifc (traffic btw.       | eth0     | 
-|                                | storage nodes and control plane, see storage mgmt vlan |          |
-|                                | above). HA ports and nw are required in prd, but can   |          |                        |                                | low bw (e.g. 1 gb/s).                                  |          |   |_storagenode.maxLogicalVolumes_ | Max. number of lvols allowed to connect to sn.         | 10       |                        |                                | Each lvol requires about 25MiB of RAM. Can be          |          |
-|                                | changed later only on node restart.                    |          |
-|_storagenode.maxSize_           | Maximum utilized storage capacity through this sn.     | 150g     | 
-|                                | A conservative setting is the exp. cluster capacity.   |          |
-|                                | This setting has significant impact on RAM demand:     |          |
-|                                | 0.02% of maxSixe is required in add. RAM.              |          |
-|_storagenode.isolateCores_      | isolation of cores used by simplyblock from other      | false    | 
-|                                | processes and system, including IRQs, can significantly|          |
-|                                | increase performance. core isolation requires worker   |          |
-|                                | node reboot after deployment is completed. changes are |          |
-|                                | performed via privileged container on OS-level (grub). |          |              
-|_storagenode.dataNics_          | Optional. name of ifc for storage nw. (traffic inside  |          |
-|                                | of storage cluster and btw. csi-nodes and storage nodes|          |
-|                                | HA ports and nw are required for prd.                  |          |
-|_storagenode.pciAllowed_        |                                                        |          |       
-|_storagenode.pciBlocked_        |                                                        |          |       
-|_storagenode.socketsToUse_      | Simplyblock is NUMA aware. If your worker node has     |    1     |
-|                                | more than 1 socket, it is possible to deploy more      |          |
-|                                | than one simplyblock storage node per host             |          |
-|                                | (typically one per socket), depending on the           |          |
-|                                | distribution of nvme and nic across sockets and the    |          |
-|                                | resource demand of other workloads.                    |          |
-|_storagenode.nodesPerSocket_    | It is possible to deploy 1 or 2                        |    1     |  
-|                                | storage nodes per socket. 2 sense if one               |          |
-|                                | each socket has a cpu with more than 32 cores.         |          | 
-|_storagenode.coresPercentage_   | This is the percentage of total cores (vcpu), which    |          | 
-|                                |will be reserved for the Simplyblock Storage            |          | 
-|                                |Node Services. Make sure that the percentage            |          | 
-|                                |leads to at least 8 vcpu per storage node.              |          | 
-|                                |For example, if a host has 128 vcpu on two sockets      |          | 
-|                                |(64 per socket) and socketsToUse=2 and nodesPerSocket=1,|          | 
-|                                |you need to specify at least 13% (as 13%*64>8 and 8 is  |          | 
-|                                |the minimum amount of vcpu required). Simplyblock       |          | 
-|                                | does not use more than 32 vcpu per node efficiently.   |          | 
-
+| Parameter                     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                | Default   | 
+|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|
+| `storagenode.ifname`          | Sets the interface name of the management interface (traffic between storage nodes and control plane, see storage mgmt VLAN). Highly available ports and networks are required in production. While this value can be changed at a later point in time, it requires a storage node restart.                                                                                                                                                                | eth0      | 
+| `storagenode.maxSize`         | Sets the maximum utilized storage capacity of this storage node. A conservative setting is the expected cluster capacity. This setting has significant impact on RAM demand with 0.02% of `maxSixe` is required in additional RAM.                                                                                                                                                                                                                         | 150g      | 
+| `storagenode.isolateCores`    | Enabled core isolation of cores used by simplyblock from other processes and system, including IRQs, can significantly increase performance. Core isolation requires a Kubernetes worker node restart after the deployment is completed. Changes are performed via a privileged container on the OS-level (grub).                                                                                                                                          | false     | 
+| `storagenode.dataNics`        | Sets the interface name of the storage network(s). This includes traffic inside the storage cluster and between csi-nodes and storage nodes. Highly available ports and networks are required for production.                                                                                                                                                                                                                                              |           |
+| `storagenode.pciAllowed`      | Sets the list of allowed NVMe PCIe addresses.                                                                                                                                                                                                                                                                                                                                                                                                              | `<empty>` | 
+| `storagenode.pciBlocked`      | Sets the list of blocked NVMe PCIe addresses.                                                                                                                                                                                                                                                                                                                                                                                                              | `<empty>` | 
+| `storagenode.socketsToUse`    | Sets the list of NUMA sockets to use. If a worker node has more than 1 NUMA socket, it is possible to deploy more than one simplyblock storage node per host, depending on the distribution of NVMe devices and NICs across NUMA sockets and the resource demand of other workloads.                                                                                                                                                                       | 1         |
+| `storagenode.nodesPerSocket`  | Sets the number of storage nodes to be deployed per NUMA socket. It is possible to deploy one or two storage nodes per socket. This improves performance if one each NUMA socket has more than 32 cores.                                                                                                                                                                                                                                                   | 1         |  
+| `storagenode.coresPercentage` | Sets the percentage of total cores (vCPUs) available to simplyblock storage node services. It must be ensured that the configured percentage yields at least 8 vCPUs per storage node. For example, if a host has 128 vCPUs on two NUMA sockets (64 each) and `--storagenode.socketsToUse=2` and `--storagenode.nodesPerSocket=1`, at least 13% (as `13% * 64 > 8`) must be set. Simplyblock does not use more than 32 vCPUs per storage node efficiently. | `<empty>` | 
 
 !!! warning
-    The resources consumed by Simplyblock are dedicated and have to be aligned with resources required
-    by other workloads. The minimum requirements are described [here](../deployment-planning/recommendations.md) and a sizing 
-    guide (vcpu, ram) per storage node can be found [here](../deployment-planning/node-sizing.md). Minimum requirements as 
-    well as vcpu sizing guidelines contain resources for the containers used by Simplyblock and a minimal system itself, but 
-    no other user or system processes. 
+    The resources consumed by simplyblock are exclusively used and have to be aligned with resources required by other
+    workloads. For further information, see [Minimum System Requirements](../deployment-preparation/system-requirements.md#minimum-system-requirements).
     
+    To calculate the required storage node size, there is a dedicated [Node Sizing](../deployment-preparation/node-sizing.md)
+    guide.
+
+    Minimum requirements, as well as vCPU sizing guidelines contain resources for the containers used by simplyblock and
+    a minimal operating system itself. No other user or system processes are part of the given sizing recommendations.
+
 !!! info
-    The RAM requirement itself is split in between huge page memory and system memory. However, this is transparent for
-    users, Simplyblock takes care of allocating, reserving and freeing huge pages as part of the overall ram it 
-    uses. The total amount of ram required depends on the number of vcpu used, the number of active lvols (pvcs) and the
-    utilized virtual storage on this node (this is not the storage provided on the node, but the storage connected to via 
-    this node!).
+    The RAM requirement itself is split in between huge page memory and system memory. However, this is transparent to
+    users.
 
+    Simplyblock takes care of allocating, reserving, and freeing huge pages as part of its overall RAM management.
 
-
-
+    The total amount of RAM required depends on the number of vCPUs used, the number of active logical volumes
+    (Persistent Volume Claims or PVCs) and the utilized virtual storage on this node. This doesn't mean the physical
+    storage provided on the storage host, but the storage connected to via this storage node.

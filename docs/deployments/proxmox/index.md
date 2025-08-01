@@ -1,5 +1,5 @@
 ---
-title: Proxmox
+title: Proxmox Integration
 weight: 20350
 ---
 
@@ -42,7 +42,7 @@ echo 'deb [signed-by=/etc/apt/keyrings/simplyblock.gpg] https://install.simplybl
     tee /etc/apt/sources.list.d/simplyblock.list
 ```
 
-### Install the Simplyblock-Proxmox Package
+## Install the Simplyblock-Proxmox Package
 
 After the registration of the repository, an `apt update` will refresh all available package information and make the
 `simplyblock-proxmox` package available. The update must not show any errors related to the simplyblock apt repository.
@@ -72,6 +72,8 @@ pvesm add simplyblock <NAME> \
 | CLUSTER_ID         | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster list`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
 | CLUSTER_SECRET     | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ cliname }} cluster get-secret`](../../reference/cli/cluster.md#gets-a-clusters-secret). |
 | STORAGE_POOL_NAME  | The simplyblock storage pool name to attach.                                                                                                                                             | 
+
+## After Installation
 
 In the Proxmox user interface, a storage of type simplyblock is now available.
 

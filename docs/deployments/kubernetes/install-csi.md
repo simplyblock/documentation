@@ -5,21 +5,28 @@ weight: 30200
 
 Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver. 
 
-Before installing the Kubernetes CSI Driver, a control plane must be present and an (empty) storage cluster must have been added to the control plane.
+Before installing the Kubernetes CSI Driver, a control plane must be present, a (empty) storage cluster must have
+been added to the control plane, and a storage pool must have been created.
 
-In this section we explain how to install a CSI driver and connect it to a disaggregated storage cluster, which must already exist prior to the CSI driver installation. The disaggregated cluster can be installed on [plain linux hosts](../install-simplyblock/install-sn.md) or into an [existing kubernetes cluster](k8s-disaggregated.md), but it is not co-located on the same k8s worker nodes with the CSI driver installation. 
+This section explains how to install a CSI driver and connect it to a disaggregated storage cluster, which must already
+exist prior to the CSI driver installation. The disaggregated cluster must be installed onto
+[Plain Linux Hosts](../install-simplyblock/install-sp.md) or into an [Existing Kubernetes Cluster](k8s-disaggregated.md).
+It must not be co-located on the same Kubernetes worker nodes as the CSI driver installation. 
 
-If you are interested in co-located (hyper-converged) deployment of CSI driver and storage nodes, please [see here](k8s-hyperconverged.md).
+For co-located (hyper-converged) deployment (which includes the CSI driver and storage node deployment), see
+[Hyper-Converged Deployment](k8s-hyperconverged.md).
 
-## CSI Driver System Requirements 
+## CSI Driver System Requirements
 
-The CSI driver consists of two parts, a controller part, which communicates to the control plane via the control plane api endpoint, and the node part, which is deployed to and must be present on all nodes with pods attaching simplyblock storage.
+The CSI driver consists of two parts: 
 
-The worker node of the node part must fullfill the following requirements:
+- A controller part, which communicates to the control plane via the control plane API
+- A node part, which is deployed to and must be present on all nodes with pods attaching simplyblock storage (Daemonset)
 
-[Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
+The worker node of the node part must satisfy the following requirements:
 
-[Linux Kernel Versions](../../reference/supported-linux-kernels.md)
+- [Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
+- [Linux Kernel Versions](../../reference/supported-linux-kernels.md)
 
 ## Installation Options
 
@@ -27,11 +34,12 @@ To install the Simplyblock CSI Driver, a Helm chart is provided. While it can be
 strongly recommended. If a manual installation is preferred, see the
 [CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank" rel="noopener"}.
 
-## Getting Credentials
+## Retrieving Credentials
 
-Credentials are available via cli from any of the control plane nodes.
+Credentials are available via `{{ cliname }} cluster get-secret` from any of the control plane nodes. For further
+information on the command, see [Retrieving a Cluster Secret](../../reference/cli/cluster.md#gets-a-clusters-secret).
 
-First, we need the unique cluster id. Note down the cluster UUID of the cluster to access.
+First, the unique cluster id must be retrieved. Note down the cluster UUID of the cluster to access.
 
 ```bash title="Retrieving the Cluster UUID"
 sudo {{ cliname }} cluster list
@@ -48,7 +56,7 @@ An example of the output is below.
 +--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
 ```
 
-In addition, we need the cluster secret. Note down the cluster secret.
+In addition, the cluster secret must be retrieved. Note down the cluster secret.
 
 ```bash title="Retrieve the Cluster Secret"
 {{ cliname }} cluster get-secret <CLUSTER_UUID>
@@ -61,8 +69,10 @@ Retrieving the cluster secret will look somewhat like that.
 oal4PVNbZ80uhLMah2Bs
 ```
 
+## Creating a Storage Pool
+
 Additionally, a storage pool is required. If a pool already exists, it can be reused. Otherwise, creating a storage
-pool can be created as following:
+pool can be created as follows:
 
 ```bash title="Create a Storage Pool"
 {{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID>
@@ -79,12 +89,12 @@ ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
 The last item necessary before deploying the CSI driver is the control plane address. It is recommended to front the
-simplyblock API with an AWS load balancer service. Hence, your control plane address is the "public" endpoint of this
-load balancer.
+simplyblock API with an AWS load balancer, HAproxy, or similar service. Hence, your control plane address is the
+"public" endpoint of this load balancer.
 
-## Deploying the helm chart
+## Deploying the Helm Chart
 
-Anyhow, deploying the Simplyblock CSI Driver using the provided helm chart comes down to providing the four necessary
+Anyhow, deploying the Simplyblock CSI Driver using the provided Helm Chart comes down to providing the four necessary
 values, adding the helm chart repository, and installing the driver.
 
 ```bash title="Install Simplyblock's CSI Driver"
@@ -135,25 +145,29 @@ spdkcsi-controller-0   6/6     Running   0          30s
 spdkcsi-node-tzclt     2/2     Running   0          30s
 ```
 
-There are a lot of additional parameters for the helm deployment. You will usually not need them any many relate to the storage node deployment under kubernetes ([hyper-converged](k8s-hyperconverged.md) or [disaggregated](k8s-disaggregated.md)), not the CSI driver itself.
+There are a lot of additional parameters for the Helm Chart deployment. Most parameters, however, aren't required in
+real-world CSI driver deployments and should only be used on request of simplyblock.
 
-The full list of parameters can be found [here](https://github.com/simplyblock-io/simplyblock-csi/tree/master/charts).
+The full list of parameters is available here: [Kubernetes Helm Chart Parameters](../../reference/kubernetes/index.md).
 
-Please note that the _storagenode.create_ parameter has to be set to _false_ (it's default) to deploy the CSI driver only.
+Please note that the `storagenode.create? parameter must be set to `false` (the default) to deploy only the CSI driver.
 
 ## Multi Cluster Support
 
-The Simplyblock CSI driver now offers **multi-cluster support**, allowing it to connect with multiple Simplyblock clusters. Previously, the CSI driver could only connect to a single cluster.
+The Simplyblock CSI driver now offers **multi-cluster support**, allowing to connect with multiple simplyblock clusters.
+Previously, the CSI driver could only connect to a single cluster.
 
-To enable interaction with multiple clusters, we've introduced two key changes:
+To enable interaction with multiple clusters, there are two key changes:
 
-1.  **`cluster_id` Parameter in Storage Class:** A new parameter, `cluster_id`, has been added to the storage class. This parameter specifies which Simplyblock cluster a given request should be directed to.
-2.  **`simplyblock-csi-secret-v2` Secret:** A new Kubernetes secret, `simplyblock-csi-secret-v2`, is now used to store credentials for all configured Simplyblock clusters.
+1.  Parameter **`cluster_id` in a storage class:** A new parameter, `cluster_id`, has been added to the storage class. 
+    This parameter specifies which Simplyblock cluster a given request should be directed to.
+2.  Secret **`simplyblock-csi-secret-v2`:** A new Kubernetes secret, `simplyblock-csi-secret-v2`, has been added to
+    store credentials for all configured simplyblock clusters.
 
+### Adding a Cluster
 
-### Adding new cluster
+When the Simplyblock CSI driver is initially installed, only a single cluster can be referenced.
 
-When the Simplyblock CSI driver is initially installed, typically using Helm:
 ```
 helm install simplyblock-csi ./ \
     --set csiConfig.simplybk.uuid=${CLUSTER_ID} \
@@ -161,9 +175,10 @@ helm install simplyblock-csi ./ \
     --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
 ```
 
-The `CLUSTER_ID` (UUID), Gateway Endpoint (`CLUSTER_IP`), and Secret (`CLUSTER_SECRET`) of the initial cluster must be provided. This command automatically creates the `simplyblock-csi-secret-v2` secret.
+The `CLUSTER_ID` (UUID), gateway endpoint (`CLUSTER_IP`), and secret (`CLUSTER_SECRET`) of the initial cluster must be
+provided. This command automatically creates the `simplyblock-csi-secret-v2` secret.
 
-The structure of the simplyblock-csi-secret-v2 secret looks like this:
+The structure of the `simplyblock-csi-secret-v2` secret is as following:
 
 ```yaml
 apiVersion: v1
@@ -175,8 +190,10 @@ metadata:
 type: Opaque
 ```
 
-and the decoded secret looks something like this
-```
+The decoded secret must be valid JSON content and contain an array of JSON items, one per cluster. Each items consists
+of three properties, `cluster_id`, `cluster_endpoint`, and `cluster_secret`.
+
+```json
 {
    "clusters": [
      {
@@ -188,43 +205,29 @@ and the decoded secret looks something like this
 }
 ```
 
-To add a new cluster, we will need to edit this secret and add a new cluster
+To add a new cluster, the current secret must be retrieved from Kubernetes, edited (adding the new cluster information),
+and uploaded to the Kubernetes cluster.  
 
 
 ```sh
-# save cluster secret to a file
+# Save cluster secret to a file
 kubectl get secret simplyblock-csi-secret-v2 -o jsonpath='{.data.secret\.json}' | base64 --decode > secret.yaml
 
-# edit the clusters and add the new cluster's cluster_id, cluster_endpoint, cluster_secret
+# Edit the clusters and add the new cluster's cluster_id, cluster_endpoint, cluster_secret
 # vi secret.json 
 
 cat secret.json | base64 | tr -d '\n' > secret-encoded.json
 
 # Replace data.secret.json with the content of secret-encoded.json
-# kubectl -n simplyblock edit secret simplyblock-csi-secret-v2
+kubectl -n simplyblock edit secret simplyblock-csi-secret-v2
 ```
 
+### Using Multi Cluster
 
-```yaml
-apiVersion: v1
-data:
-  secret.json: <new content of the secret-encoded.json>
-kind: Secret
-metadata:
-  name: simplyblock-csi-secret-v2
-type: Opaque
-```
-
-## using multi cluster
-
-With multi-cluster support enabled, it's highly recommended to create a separate storage class for each Simplyblock cluster. This provides clear segregation and management.
+With multi-cluster support enabled, a separate storage class per simplyblock cluster is required which defines the
+individual cluster references. This provides clear segregation and management.
 
 For example:
 
-* `simplyblock-csi-sc-cluster1` (for `cluster_id: 4ec308a1-...`)
-
-* `simplyblock-csi-sc-cluster2` (for `cluster_id: YOUR_NEW_CLUSTER_ID`)
-
-
-
-
+- `simplyblock-csi-sc-cluster1` (for `cluster_id: 4ec308a1-...`)
+- `simplyblock-csi-sc-cluster2` (for `cluster_id: YOUR_NEW_CLUSTER_ID`)

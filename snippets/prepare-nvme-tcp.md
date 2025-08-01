@@ -1,5 +1,3 @@
-#### NVMe over Fabrics Modules 
-
 Simplyblock is built upon the NVMe over Fabrics standard and uses NVMe over TCP (NVMe/TCP) by default.
 
 While the driver is part of the Linux kernel with kernel versions 5.x and later, it is not enabled by default. Hence,

@@ -1,26 +1,38 @@
 ---
-title: "baremetal-attach"
+title: "Plain Linux Initiators"
 weight: 20200
 ---
 
-Simplyblock storage can be  attached over the network to linux hosts not running kubernetes or proxmox. 
+Simplyblock storage can be attached over the network to Linux hosts which are not running Kubernetes or Proxmox. 
 
-While no Simplyblock components are installed on those hosts, os-level configuration steps, which are otherwise taken care of by csi or proxmox, have to be performed manually on each host to which simplyblock storage is to be attached.
+While no simplyblock components must be installed on these hosts, some OS-level configuration steps are required.
+Those manual steps are typically taken care of by the CSI driver or Proxmox integration.
 
-### Install nvme client package
+On plain Linux initiators, those steps have to be performed manually on each host that will connect simplyblock logical
+volumes.
 
-```bash title="Install nvme client package"
-sudo yum install nvme-cli
-```
+### Install Nvme Client Package
 
-### Load the kernel module
+    === "RHEL / Alma / Rocky"
+    
+        ```bash
+        sudo dnf install -y nvme-cli
+        ```
+    
+    === "Debian / Ubuntu"
+    
+        ```bash
+        sudo apt install -y nvme-cli
+        ```
+
+### Load the NVMe over Fabrics Kernel Modules 
 
 {% include 'prepare-nvme-tcp.md' %}
 
-### Create a pool (via cli on one of the mgmt nodes)
+### Create a Storage Pool
 
-Before lvols can be created and connected, a storage pool is required. If a pool already exists, it can be reused. Otherwise, creating a storage
-pool can be created as following:
+Before logical volumes can be created and connected, a storage pool is required. If a pool already exists, it can be
+reused. Otherwise, creating a storage pool can be created on any control plane node as follows:
 
 ```bash title="Create a Storage Pool"
 {{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID>
@@ -36,18 +48,42 @@ The last line of a successful storage pool creation returns the new pool id.
 ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
-### create and connect an lvol (via cli on one of the mgmt nodes)
-```plain title="Example lvol create"
-{{ cliname }} lvol add lvol01 1000G test  
+### Create and Connect a Logical Volume
+
+To create a new logical volume, the following command can be run on any control plane node.
+
+```bash
+{{ cliname }} volume add \
+  --max-rw-iops <IOPS> \
+  --max-r-mbytes <THROUGHPUT> \
+  --max-w-mbytes <THROUGHPUT> \
+  <VOLUME_NAME> \
+  <VOLUME_SIZE> \
+  <POOL_NAME>
 ```
-In this example, an lvol with name lvol01 and 1TB of thinly provisioned capacity is created in the pool of name _test_. The uuid of the lvol is returned. Now run:
-```plain title="Example lvol create"
-{{ cliname }} lvol connect <LVOL-UUID>
+
+```plain title="Example of creating a logical volume"
+{{ cliname }} volume add lvol01 1000G test  
 ```
-Copy-Paste the output of this command to the host to which you want to attach the volume and run it.
 
+In this example, a logical volume with the name `lvol01` and 1TB of thinly provisioned capacity is created in the pool
+named `test`. The uuid of the logical volume is returned at the end of the operation.
 
+For additional parameters, see [Add a new Logical Volume](../../reference/cli/volume.md#adds-a-new-logical-volume).
 
+To connect a logical volume on the initiator (or Linux client), execute the following command on a any control plane
+node. This command returns one or more connection commands to be executed on the client.
 
+```bash
+{{ cliname }} volume connect \
+  <VOLUME_ID>
+```
 
+```plain title="Example of retrieving the connection strings of a logical volume"
+{{ cliname }} volume connect a898b44d-d7ee-41bb-bc0a-989ad4711780
 
+sudo nvme connect --reconnect-delay=2 --ctrl-loss-tmo=3600 --nr-io-queues=32 --keep-alive-tmo=5 --transport=tcp --traddr=10.10.20.2 --trsvcid=9101 --nqn=nqn.2023-02.io.simplyblock:fa66b0a0-477f-46be-8db5-b1e3a32d771a:lvol:a898b44d-d7ee-41bb-bc0a-989ad4711780
+sudo nvme connect --reconnect-delay=2 --ctrl-loss-tmo=3600 --nr-io-queues=32 --keep-alive-tmo=5 --transport=tcp --traddr=10.10.20.3 --trsvcid=9101 --nqn=nqn.2023-02.io.simplyblock:fa66b0a0-477f-46be-8db5-b1e3a32d771a:lvol:a898b44d-d7ee-41bb-bc0a-989ad4711780
+```
+
+The output can be copy-pasted to the host to which the volumes should be attached.

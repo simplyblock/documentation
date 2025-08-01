@@ -11,7 +11,7 @@ changes to make Talos compliant.
 
 
 ## Required Kernel Modules (Worker Node)
-On Kubernetes worker nodes, simplyblock requires few kernel modules to be loaded.
+On Kubernetes worker nodes, simplyblock requires a few kernel modules to be loaded.
 
 ```yaml title="Content of kernel-module-config.yaml"
 machine:
@@ -74,4 +74,3 @@ To enable the required permissions, apply the namespace configuration using `kub
 ```bash title="Enabled privileged mode for simplyblock"
 demo@demo ~> kubectl apply -f simplyblock-namespace.yaml
 ```
-

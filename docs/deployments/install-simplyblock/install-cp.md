@@ -7,7 +7,7 @@ weight: 32000
 
 The first step when installing simplyblock, is to install the control plane. The control plane manages one or more
 storage clusters. If an existing control plane is available and the new cluster should be added to it, this section
-can be skipped. Jump right to the [Storage Plane Installation](install-sn.md).
+can be skipped. Jump right to the [Storage Plane Installation](install-sp.md).
 
 ### Firewall Configuration (CP)
 
