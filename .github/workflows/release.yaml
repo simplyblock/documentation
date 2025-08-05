@@ -42,6 +42,7 @@ jobs:
           git config --global --add safe.directory $PWD
           git config user.name github-actions
           git config user.email github-actions@github.com
+          git rm scripts/sbcli.lock
           git add deployment
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
