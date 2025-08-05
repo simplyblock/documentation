@@ -46,7 +46,7 @@ jobs:
           git add deployment
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
-          git push --tags
+          git push --all --tags
           rm ./deployment/versions.json
           rm ./deployment/latest
       - name: "Upload Documentation"
@@ -70,7 +70,7 @@ jobs:
         uses: mtanzi/action-automerge@v1
         with:
           github_token: "${{ github.token }}"
-          source: ${{ github.ref_name }}
+          source: ${{ env.RELEASE_NAME }}
           target: "main"
           webhook_url: ""
       - name: "Remove Release Branch"
