@@ -16,6 +16,8 @@ RewriteRule ^usage/storagepools_volumes/?$ /latest/usage/baremetal/ [L,R=301]
 # New internal redirects
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_URI} !^/latest/
+Header set Cache-Control "no-cache, no-store, must-revalidate"
+Header set Pragma "no-cache"
+Header set Expires 0RewriteCond %{REQUEST_URI} !^/latest/
 RewriteRule (.+) /latest/$1 [L,R=301]
 RewriteRule ^$ /latest/ [L,R=301]
