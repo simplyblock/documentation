@@ -2,16 +2,25 @@ Options +FollowSymlinks
 RewriteEngine On
 
 # Old documentation redirects
-RewriteRule ^deployment/deployment/?$ /latest/deployments/ [L,R=301]
-RewriteRule ^deployment/requirements/?$ /latest/deployments/deployment-preparation/ [L,R=301]
-RewriteRule ^usage/linux/?$ /latest/deployments/install-simplyblock/ [L,R=301]
-RewriteRule ^operation/maintenance/?$ /latest/maintenance-operations/ [L,R=301]
-RewriteRule ^known_issues/?$ /latest/important-notes/known-issues/ [L,R=301]
-RewriteRule ^cli_reference/?$ /latest/reference/cli/ [L,R=301]
-RewriteRule ^api_reference/?$ /latest/reference/api-sdk/ [L,R=301]
-RewriteRule ^operation/monitoring/?$ /latest/maintenance-operations/monitoring/ [L,R=301]
-RewriteRule ^important_concepts/?$ /latest/architecture/concepts/ [L,R=301]
-RewriteRule ^usage/storagepools_volumes/?$ /latest/usage/baremetal/ [L,R=301]
+RewriteRule ^deployment/deployment /latest/deployments/ [L,R=301]
+RewriteRule ^deployment/requirements /latest/deployments/deployment-preparation/ [L,R=301]
+RewriteRule ^usage/linux /latest/deployments/install-simplyblock/ [L,R=301]
+RewriteRule ^operation/maintenance /latest/maintenance-operations/ [L,R=301]
+RewriteRule ^known_issues /latest/important-notes/known-issues/ [L,R=301]
+RewriteRule ^cli_reference /latest/reference/cli/ [L,R=301]
+RewriteRule ^api_reference /latest/reference/api-sdk/ [L,R=301]
+RewriteRule ^operation/monitoring /latest/maintenance-operations/monitoring/ [L,R=301]
+RewriteRule ^important_concepts /latest/architecture/concepts/ [L,R=301]
+RewriteRule ^usage/storagepools_volumes /latest/usage/baremetal/ [L,R=301]
+RewriteRule ^latest/deployments/deployment-planning/recommendations /latest/deployments/deployment-preparation/ [L,R=301]
+RewriteRule ^latest/deployments/baremetal/install-simplyblock-csi /latest/deployments/kubernetes/install-csi/ [L,R=301]
+RewriteRule ^latest/deployments/kubernetes/install-simplyblock/hyper-converged /latest/deployments/kubernetes/k8s-hyperconverged/ [L,R=301]
+RewriteRule ^latest/deployments/aws-ec2 /latest/deployments/install-simplyblock/ [L,R=301]
+RewriteRule ^latest/deployments/deployment-planning/network-considerations /latest/deployments/deployment-preparation/system-requirements/#network-requirements [L,R=301]
+RewriteRule ^latest/deployments/kubernetes/data-migration /latest/deployments/data-migration/ [L,R=301]
+RewriteRule ^latest/deployments/kubernetes/install-simplyblock /latest/deployments/install-simplyblock/ [L,R=301]
+RewriteRule ^latest/deployments/deployment-planning/node-sizing /latest/deployments/deployment-preparation/node-sizing/ [L,R=301]
+RewriteRule ^latest/deployments/deployment-planning/erasure-coding-scheme /latest/deployments/deployment-preparation/erasure-coding-scheme/ [L,R=301]
 
 # New internal redirects
 RewriteCond %{REQUEST_FILENAME} !-f
