@@ -13,8 +13,8 @@ control plane without upgrading the storage planes.
     If multiple storage planes are connected to a single control plane, it is recommended to upgrade the control plane
     first.
 
-Upgrading the control plane and storage cluster is an online operation and does not require downtime. Planning an
-upgrade as part of a maintenance window is recommended, though.
+Upgrading the control plane and storage cluster is currently not an online operation and requires downtime. Planning an
+upgrade as part of a maintenance window is recommended. They should be an online operation from next release.
 
 ## Upgrading the CLI
 
@@ -35,7 +35,7 @@ and monitoring services.
 To upgrade a control plane, the following command must be executed:
 
 ```bash
-sudo {{ cliname }} cluster update <CLUSTER_ID> --cp-only=true --restart=true
+sudo {{ cliname }} cluster update <CLUSTER_ID> --cp-only true
 ```
 
 After issuing the command, the individual management services will be upgraded and restarted on all management nodes. 
@@ -70,20 +70,24 @@ sudo {{ cliname }} storage-node list
 Next up, on the storage node itself, a redployment must be executed. To achieve that, ssh into the storage node and run the following command.
 
 ```bash
-sudo {{ cliname }} storage-node deploy [--isolate-cores] --if-name <IFNAME>
+sudo {{ cliname }} storage-node deploy
 ```
 
 Finally, the new storage node deployment can be restarted from the control plane.
 
 ```bash
-sudo {{ cliname }} storage-node restart <NODE-ID> 
+sudo {{ cliname }} --dev storage-node restart <NODE-ID> --spdk-image <UPGRADE SPDK IMAGE>
 ```
 
+!!! note
+    One can find the upgrade spdk image from env_var file on storage node, location: /usr/local/lib/python3.9/site-packages/simplyblock_core/env_var
+
 Once the node is restarted, wait until the cluster is stabilized. Depending on the capacity of a storage node, this can take a few minutes.
-The status of the cluster can be checked via the cluster listing.
+The status of the cluster can be checked via the cluster listing or listing the tasks and checkking their progress.
 
 ```bash
 sudo {{ cliname }} cluster list
+sudo {{ cliname }} cluster list-tasks <CLUSTER_ID>
 ```
 
 
