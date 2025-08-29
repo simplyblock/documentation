@@ -1,14 +1,33 @@
 # Simplyblock Documentation
 
+Simplyblock is a high-performance, ultra-low-latency storage solution. It enables enterprise-grade, NVMe/TCP-powered block
+storage directly inside Proxmox, offering high performance, scalability, and resilience without the need for specialized
+hardware or vendor lock-in.
+
+With simplyblock, you can seamlessly integrate **software-defined storage (SDS)** into your Proxmox environment, enabling support for advanced features like:
+
+- ⚡ **Ultra-low latency**: Unlock performance with NVMe-over-TCP
+- 🧩 **Native Proxmox integration**: Manage volumes directly in Proxmox
+- 🛡️ **Enterprise data services**: Snapshots, clones, erasure coding, multi-tenancy
+- 🔒 **Secure & robust**: Cluster authentication and Quality of Service (QoS)
+- ☁️ **Cloud & on-prem flexibility**: Deploy anywhere Proxmox runs
+
+👉 The deployed documentation is available at [https://docs.simplyblock.io](https://docs.simplyblock.io/latest/).
+
+![](assets/simplyblock-logo.svg)
+
+## How To Extend The Documentation
+
 This repository contains the [simplyblock documentation](https://docs.simpylblock.io). It is built using
 [mkdocs](https://www.mkdocs.org/) and uses a provided shell script `doc-builder` to ease the process of working with it.
 
 - [Simplyblock Documentation](#simplyblock-documentation)
-    * [Docs Builder](#docs-builder)
+    * [How To Extends The Documentation](#how-to-extend-the-documentation)
+    * [Docs Builder](#-docs-builder)
         + [Serving Content Locally](#serving-content-locally)
         + [Building a Static Version of the Documentation](#building-a-static-version-of-the-documentation)
         + [Preparing the Deployment of a New Version](#preparing-the-deployment-of-a-new-version)
-    * [Structure of the Documentation](#structure-of-the-documentation)
+    * [Structure of the Documentation](#-structure-of-the-documentation)
         + [Folder Structure](#folder-structure)
         + [Writing a Documentation Page](#writing-a-documentation-page)
         + [Documentation Features](#documentation-features)
@@ -25,10 +44,10 @@ This repository contains the [simplyblock documentation](https://docs.simpylbloc
             - [Diagrams](#diagrams)
             - [Footnotes](#footnotes)
             - [Icons and Emojis](#icons-and-emojis)
-  * [Contributing](#contributing)
-  * [Release Process](#release-process)
+  * [Contributing](#-contributing)
+  * [Release Process](#-release-process)
 
-## Docs Builder
+## 🛠️ Docs Builder
 
 The `doc-builder` tool uses Docker and a customized mkdocs Docker image to serve and build the documentation. The
 image contains all required plugins.
@@ -88,7 +107,7 @@ command.
 The given _version-name_ will be used as a directory name and name of the version in the dropdown selector. Hence, it
 is recommended that it only contains lowercase letters, numbers, and underscores or dashes.
 
-## Structure of the Documentation
+## 📚 Structure of the Documentation
 
 The simplyblock documentation uses [mkdocs](https://www.mkdocs.org/) as the underlying framework. As the theme, the
 simplyblock documentation uses [mkdocs-material](https://squidfunk.github.io/mkdocs-material/).
@@ -363,7 +382,7 @@ The icon names can be looked up in the corresponding collection's search feature
 Be aware that some of the collections have premium icons which are not included with the documentation builder. Only
 free icons are available.
 
-## Contributing
+## 🤝 Contributing
 
 If you find issues, typos, or have an enhancement request, please file and
 [issue](https://github.com/simplyblock-io/documentation/issues) or create a
@@ -374,7 +393,7 @@ links. After the pull request is successfully built, it will be reviewed and fee
 
 Any help with the documentation is highly appreciated!
 
-## Release Process
+## ⚙️ Release Process
 
 The `main` branch is rebuild on any push and automatically deployed to the live documentation as the
 [_development_ branch](https://docstest.simplyblock.io/dev/).
