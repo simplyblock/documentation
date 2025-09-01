@@ -124,8 +124,10 @@ function deploy() {
   fi
 
   if [[ -d "./deployment/${version}" ]]; then
-    echo "Version ${version} already exists."
-    exit 1
+    if [[ "$2" != "--force" ]]; then
+      echo "Version ${version} already exists."
+      exit 1
+    fi
   fi
 
   echo "Adjusting canonical url..."
@@ -142,19 +144,25 @@ function deploy() {
   fi
 
   echo -n "Prepare version for deployment..."
-  mv "./site" "./deployment/${version}"
-
-  if [ -d ./deployment/latest ]; then
-    ${JQ} '.[].aliases=[]' ./deployment/latest/versions.json | ${JQ} --arg version "${version}" \
-          '. |= [{"version":$version, "title":$version, "aliases":["latest"]}] + .' > ./deployment/versions-temp.json
-    rm "./deployment/latest"
+  if [[ "$2" != "--force" ]]; then
+    mv "./site" "./deployment/${version}"
   else
-    printf "[{\"version\":\"${version}\",\"title\":\"${version}\",\"aliases\":[\"latest\"]},{\"version\":\"dev\",\"title\":\"development\",\"aliases\":[]}]" | ${JQ} . > ./deployment/versions-temp.json
+    cp -R "./site/" "./deployment/${version}/"
   fi
 
-  ln -s "./${version}" "./deployment/latest"
+  if [[ "$2" != "--force" ]]; then
+    if [ -d ./deployment/latest ]; then
+      ${JQ} '.[].aliases=[]' ./deployment/latest/versions.json | ${JQ} --arg version "${version}" \
+            '. |= [{"version":$version, "title":$version, "aliases":["latest"]}] + .' > ./deployment/versions-temp.json
+      rm "./deployment/latest"
+    else
+      printf "[{\"version\":\"${version}\",\"title\":\"${version}\",\"aliases\":[\"latest\"]},{\"version\":\"dev\",\"title\":\"development\",\"aliases\":[]}]" | ${JQ} . > ./deployment/versions-temp.json
+    fi
 
-  mv ./deployment/versions-temp.json ./deployment/latest/versions.json
+    ln -s "./${version}" "./deployment/latest"
+
+    mv ./deployment/versions-temp.json ./deployment/latest/versions.json
+  fi
 
   if [ ! -f ./deployment/versions.json ]; then
     ln -s ./latest/versions.json ./deployment/versions.json
