@@ -4080,11 +4080,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../release-notes/25-7-3/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-4/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    25.7.3
+    25.7.4
     
   </span>
   
@@ -4102,11 +4102,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../release-notes/25-7-4/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-3/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    25.7.4
+    25.7.3
     
   </span>
   
@@ -4299,7 +4299,9 @@
 <span class="w">    </span>&lt;CLUSTER_IP&gt;
 <span class="w">    </span>&lt;CLUSTER_ID&gt;
 <span class="w">    </span>&lt;CLUSTER_SECRET&gt;
-<span class="w">    </span>&lt;IFNAME&gt;
+<span class="w">    </span>--ifname<span class="o">=</span>&lt;IFNAME&gt;
+<span class="w">    </span>--mgmt-ip<span class="o">=</span>&lt;MGMT_IP&gt;
+<span class="w">    </span>--mode<span class="o">=</span>&lt;MODE&gt;
 </code></pre></div>
 <table>
 <thead>
@@ -4329,11 +4331,39 @@
 <td>string</td>
 <td>True</td>
 </tr>
+</tbody>
+</table>
+<table>
+<thead>
 <tr>
-<td>IFNAME</td>
+<th>Parameter</th>
+<th>Description</th>
+<th>Data Type</th>
+<th>Required</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>--ifname</td>
 <td>Management interface name</td>
 <td>string</td>
-<td>True</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--mgmt-ip</td>
+<td>Management IP address to use for the node (e.g., 192.168.1.10)</td>
+<td>string</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--mode</td>
+<td>Environment to deploy management services, default: docker<br><br>Available Options:<br>- docker<br>- kubernetes</td>
+<td>string</td>
+<td>False</td>
+<td>docker</td>
 </tr>
 </tbody>
 </table>
@@ -4405,7 +4435,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2025 07:18:53 UTC">2025-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2025 07:33:25 UTC">2025-09-01</span>
   </span>
 
     

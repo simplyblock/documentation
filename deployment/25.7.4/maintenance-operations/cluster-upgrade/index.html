@@ -4078,11 +4078,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../release-notes/25-7-3/" class="md-nav__link">
+      <a href="../../release-notes/25-7-4/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    25.7.3
+    25.7.4
     
   </span>
   
@@ -4100,11 +4100,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../release-notes/25-7-4/" class="md-nav__link">
+      <a href="../../release-notes/25-7-3/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    25.7.4
+    25.7.3
     
   </span>
   
@@ -4296,8 +4296,8 @@ control plane without upgrading the storage planes.</p>
 <p>If multiple storage planes are connected to a single control plane, it is recommended to upgrade the control plane
 first.</p>
 </div>
-<p>Upgrading the control plane and storage cluster is an online operation and does not require downtime. Planning an
-upgrade as part of a maintenance window is recommended, though.</p>
+<p>Upgrading the control plane and storage cluster is currently not an online operation and requires downtime. Planning an
+upgrade as part of a maintenance window is recommended. They should be an online operation from next release.</p>
 <h2 id="upgrading-the-cli">Upgrading the CLI</h2>
 <p>Before starting a cluster upgrade, all storage and control plane nodes must update the CLI (sbctl).</p>
 <p>This can be achieved using the same command used during the intial installation. It is important, though, to provide
@@ -4308,7 +4308,7 @@ the <code>--upgrade</code> parameter to pip to ensure an upgrade to happen.</p>
 <p>This section outlines the process of upgrading the control plane. An upgrade introduces new versions of the management
 and monitoring services.</p>
 <p>To upgrade a control plane, the following command must be executed:</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>cluster<span class="w"> </span>update<span class="w"> </span>&lt;CLUSTER_ID&gt;<span class="w"> </span>--cp-only<span class="o">=</span><span class="nb">true</span><span class="w"> </span>--restart<span class="o">=</span><span class="nb">true</span>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>cluster<span class="w"> </span>update<span class="w"> </span>&lt;CLUSTER_ID&gt;<span class="w"> </span>--cp-only<span class="w"> </span><span class="nb">true</span>
 </code></pre></div>
 <p>After issuing the command, the individual management services will be upgraded and restarted on all management nodes. </p>
 <h2 id="upgrading-a-storage-plane">Upgrading a Storage Plane</h2>
@@ -4330,14 +4330,19 @@ sudo<span class="w"> </span>sbctl<span class="w"> </span>storage-node<span class
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>storage-node<span class="w"> </span>list<span class="w"> </span>
 </code></pre></div>
 <p>Next up, on the storage node itself, a redployment must be executed. To achieve that, ssh into the storage node and run the following command.</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>storage-node<span class="w"> </span>deploy<span class="w"> </span><span class="o">[</span>--isolate-cores<span class="o">]</span><span class="w"> </span>--if-name<span class="w"> </span>&lt;IFNAME&gt;
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>storage-node<span class="w"> </span>deploy
 </code></pre></div>
 <p>Finally, the new storage node deployment can be restarted from the control plane.</p>
-<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>storage-node<span class="w"> </span>restart<span class="w"> </span>&lt;NODE-ID&gt;<span class="w"> </span>
+<div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>--dev<span class="w"> </span>storage-node<span class="w"> </span>restart<span class="w"> </span>&lt;NODE-ID&gt;<span class="w"> </span>--spdk-image<span class="w"> </span>&lt;UPGRADE<span class="w"> </span>SPDK<span class="w"> </span>IMAGE&gt;
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>One can find the upgrade spdk image from env_var file on storage node, location: /usr/local/lib/python3.9/site-packages/simplyblock_core/env_var</p>
+</div>
 <p>Once the node is restarted, wait until the cluster is stabilized. Depending on the capacity of a storage node, this can take a few minutes.
-The status of the cluster can be checked via the cluster listing.</p>
+The status of the cluster can be checked via the cluster listing or listing the tasks and checkking their progress.</p>
 <div class="highlight"><pre><span></span><code>sudo<span class="w"> </span>sbctl<span class="w"> </span>cluster<span class="w"> </span>list
+sudo<span class="w"> </span>sbctl<span class="w"> </span>cluster<span class="w"> </span>list-tasks<span class="w"> </span>&lt;CLUSTER_ID&gt;
 </code></pre></div></div>
 
 
@@ -4359,7 +4364,7 @@ The status of the cluster can be checked via the cluster listing.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2025 07:17:57 UTC">2025-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="August 7, 2025 15:54:31 UTC">2025-08-07</span>
   </span>
 
     

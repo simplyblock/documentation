@@ -131,7 +131,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#deploys-a-storage-nodes" class="md-skip">
+        <a href="#creates-a-new-cluster" class="md-skip">
           Skip to content
         </a>
       
@@ -3456,15 +3456,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#deploys-a-storage-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Deploys a storage nodes
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#creates-a-new-cluster" class="md-nav__link">
     <span class="md-ellipsis">
       Creates a new cluster
@@ -3630,6 +3621,15 @@
   <a href="#deletes-a-cluster" class="md-nav__link">
     <span class="md-ellipsis">
       Deletes a cluster
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assigns-or-changes-a-name-to-a-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Assigns or changes a name to a cluster
     </span>
   </a>
   
@@ -4233,11 +4233,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../release-notes/25-7-3/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-4/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    25.7.3
+    25.7.4
     
   </span>
   
@@ -4255,11 +4255,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../release-notes/25-7-4/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-3/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    25.7.4
+    25.7.3
     
   </span>
   
@@ -4388,15 +4388,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#deploys-a-storage-nodes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Deploys a storage nodes
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#creates-a-new-cluster" class="md-nav__link">
@@ -4569,6 +4560,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#assigns-or-changes-a-name-to-a-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Assigns or changes a name to a cluster
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4598,215 +4598,6 @@
 <div><div class="highlight"><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>--help
 </code></pre></div>
 <p>Cluster commands</p>
-<h2 id="deploys-a-storage-nodes">Deploys a storage nodes</h2>
-<p>Deploys a storage nodes</p>
-<div class="highlight"><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>deploy
-<span class="w">    </span>--storage-nodes<span class="o">=</span>&lt;STORAGE_NODES&gt;
-<span class="w">    </span>--test
-<span class="w">    </span>--ha-type<span class="o">=</span>&lt;HA_TYPE&gt;
-<span class="w">    </span>--data-chunks-per-stripe<span class="o">=</span>&lt;DATA_CHUNKS_PER_STRIPE&gt;
-<span class="w">    </span>--parity-chunks-per-stripe<span class="o">=</span>&lt;PARITY_CHUNKS_PER_STRIPE&gt;
-<span class="w">    </span>--ifname<span class="o">=</span>&lt;IFNAME&gt;
-<span class="w">    </span>--cap-warn<span class="o">=</span>&lt;CAP_WARN&gt;
-<span class="w">    </span>--cap-crit<span class="o">=</span>&lt;CAP_CRIT&gt;
-<span class="w">    </span>--prov-cap-warn<span class="o">=</span>&lt;PROV_CAP_WARN&gt;
-<span class="w">    </span>--prov-cap-crit<span class="o">=</span>&lt;PROV_CAP_CRIT&gt;
-<span class="w">    </span>--log-del-interval<span class="o">=</span>&lt;LOG_DEL_INTERVAL&gt;
-<span class="w">    </span>--metrics-retention-period<span class="o">=</span>&lt;METRICS_RETENTION_PERIOD&gt;
-<span class="w">    </span>--contact-point<span class="o">=</span>&lt;CONTACT_POINT&gt;
-<span class="w">    </span>--chunk-size-in-bytes<span class="o">=</span>&lt;CHUNK_SIZE_IN_BYTES&gt;
-<span class="w">    </span>--enable-node-affinity
-<span class="w">    </span>--qpair-count<span class="o">=</span>&lt;QPAIR_COUNT&gt;
-<span class="w">    </span>--strict-node-anti-affinity
-<span class="w">    </span>--journal-partition<span class="o">=</span>&lt;JOURNAL_PARTITION&gt;
-<span class="w">    </span>--data-nics<span class="o">=</span>&lt;DATA_NICS&gt;
-<span class="w">    </span>--max-lvol<span class="o">=</span>&lt;MAX_LVOL&gt;
-<span class="w">    </span>--max-size<span class="o">=</span>&lt;MAX_SIZE&gt;
-<span class="w">    </span>--namespace<span class="o">=</span>&lt;NAMESPACE&gt;
-<span class="w">    </span>--id-device-by-nqn
-<span class="w">    </span>--host-id<span class="o">=</span>&lt;HOST_ID&gt;
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Description</th>
-<th>Data Type</th>
-<th>Required</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>--storage-nodes</td>
-<td>comma separated ip addresses</td>
-<td>string</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--test</td>
-<td>Test Cluster</td>
-<td>marker</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--ha-type</td>
-<td>Logical volume HA type (single, ha), default is cluster HA type<br><br>Available Options:<br>- single<br>- ha</td>
-<td>string</td>
-<td>False</td>
-<td>ha</td>
-</tr>
-<tr>
-<td>--data-chunks-per-stripe</td>
-<td>Erasure coding schema parameter k (distributed raid), default: 1</td>
-<td>integer</td>
-<td>False</td>
-<td>1</td>
-</tr>
-<tr>
-<td>--parity-chunks-per-stripe</td>
-<td>Erasure coding schema parameter n (distributed raid), default: 1</td>
-<td>integer</td>
-<td>False</td>
-<td>1</td>
-</tr>
-<tr>
-<td>--ifname</td>
-<td>Management interface name, e.g. eth0</td>
-<td>string</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--cap-warn</td>
-<td>Capacity warning level in percent, default: 89</td>
-<td>integer</td>
-<td>False</td>
-<td>89</td>
-</tr>
-<tr>
-<td>--cap-crit</td>
-<td>Capacity critical level in percent, default: 99</td>
-<td>integer</td>
-<td>False</td>
-<td>99</td>
-</tr>
-<tr>
-<td>--prov-cap-warn</td>
-<td>Capacity warning level in percent, default: 250</td>
-<td>integer</td>
-<td>False</td>
-<td>250</td>
-</tr>
-<tr>
-<td>--prov-cap-crit</td>
-<td>Capacity critical level in percent, default: 500</td>
-<td>integer</td>
-<td>False</td>
-<td>500</td>
-</tr>
-<tr>
-<td>--log-del-interval</td>
-<td>Logging retention period, default: 3d</td>
-<td>string</td>
-<td>False</td>
-<td>3d</td>
-</tr>
-<tr>
-<td>--metrics-retention-period</td>
-<td>Retention period for I/O statistics (Prometheus), default: 7d</td>
-<td>string</td>
-<td>False</td>
-<td>7d</td>
-</tr>
-<tr>
-<td>--contact-point</td>
-<td>Email or slack webhook url to be used for alerting</td>
-<td>string</td>
-<td>False</td>
-<td></td>
-</tr>
-<tr>
-<td>--chunk-size-in-bytes</td>
-<td>(Dev) distrb bdev chunk block size, default: 4096</td>
-<td>integer</td>
-<td>False</td>
-<td>4096</td>
-</tr>
-<tr>
-<td>--enable-node-affinity</td>
-<td>Enable node affinity for storage nodes</td>
-<td>marker</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--qpair-count</td>
-<td>Increase for clusters with few but very large logical volumes or decrease for clusters with a large number of very small logical volumes.</td>
-<td>range(1..128)</td>
-<td>False</td>
-<td>3</td>
-</tr>
-<tr>
-<td>--strict-node-anti-affinity</td>
-<td>Enable strict node anti affinity for storage nodes. Never more than one chunk is placed on a node. This requires a minimum of <em>data-chunks-in-stripe + parity-chunks-in-stripe + 1</em> nodes in the cluster."</td>
-<td>marker</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--journal-partition</td>
-<td>1: auto-partition nvme devices for journal. 0: use a separate nvme device for journal. The smallest NVMe device available on the host will be chosen as a journal. It should provide about 3% of the entire node’s NVMe capacity. If set to false, partitions on other devices will be auto-created to store the journal.</td>
-<td>string</td>
-<td>False</td>
-<td>True</td>
-</tr>
-<tr>
-<td>--data-nics</td>
-<td>Storage network interface name(s). Can be more than one. Comma-separated list: e.g. eth0,eth1</td>
-<td>string</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--max-lvol</td>
-<td>Max logical volume per storage node</td>
-<td>integer</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--max-size</td>
-<td>Maximum amount of GB to be provisioned via all storage nodes</td>
-<td>string</td>
-<td>False</td>
-<td></td>
-</tr>
-<tr>
-<td>--namespace</td>
-<td>k8s namespace to deploy on</td>
-<td>string</td>
-<td>False</td>
-<td>-</td>
-</tr>
-<tr>
-<td>--id-device-by-nqn</td>
-<td>Use device nqn to identify it instead of serial number</td>
-<td>marker</td>
-<td>False</td>
-<td>False</td>
-</tr>
-<tr>
-<td>--host-id</td>
-<td>Primary storage node id or hostname</td>
-<td>string</td>
-<td>False</td>
-<td>-</td>
-</tr>
-</tbody>
-</table>
 <h2 id="creates-a-new-cluster">Creates a new cluster</h2>
 <p>Created a new control plane cluster with the current node as the primary control plane node.</p>
 <div class="highlight"><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>create
@@ -4815,6 +4606,8 @@
 <span class="w">    </span>--prov-cap-warn<span class="o">=</span>&lt;PROV_CAP_WARN&gt;
 <span class="w">    </span>--prov-cap-crit<span class="o">=</span>&lt;PROV_CAP_CRIT&gt;
 <span class="w">    </span>--ifname<span class="o">=</span>&lt;IFNAME&gt;
+<span class="w">    </span>--mgmt-ip<span class="o">=</span>&lt;MGMT_IP&gt;
+<span class="w">    </span>--tls-secret-name<span class="o">=</span>&lt;TLS_SECRET_NAME&gt;
 <span class="w">    </span>--log-del-interval<span class="o">=</span>&lt;LOG_DEL_INTERVAL&gt;
 <span class="w">    </span>--metrics-retention-period<span class="o">=</span>&lt;METRICS_RETENTION_PERIOD&gt;
 <span class="w">    </span>--contact-point<span class="o">=</span>&lt;CONTACT_POINT&gt;
@@ -4822,9 +4615,13 @@
 <span class="w">    </span>--data-chunks-per-stripe<span class="o">=</span>&lt;DATA_CHUNKS_PER_STRIPE&gt;
 <span class="w">    </span>--parity-chunks-per-stripe<span class="o">=</span>&lt;PARITY_CHUNKS_PER_STRIPE&gt;
 <span class="w">    </span>--ha-type<span class="o">=</span>&lt;HA_TYPE&gt;
+<span class="w">    </span>--mode<span class="o">=</span>&lt;MODE&gt;
+<span class="w">    </span>--ingress-host-source<span class="o">=</span>&lt;INGRESS_HOST_SOURCE&gt;
+<span class="w">    </span>--dns-name<span class="o">=</span>&lt;DNS_NAME&gt;
 <span class="w">    </span>--enable-node-affinity
 <span class="w">    </span>--qpair-count<span class="o">=</span>&lt;QPAIR_COUNT&gt;
 <span class="w">    </span>--strict-node-anti-affinity
+<span class="w">    </span>--name<span class="o">=</span>&lt;NAME&gt;
 </code></pre></div>
 <table>
 <thead>
@@ -4868,6 +4665,20 @@
 <tr>
 <td>--ifname</td>
 <td>Management interface name, e.g. eth0</td>
+<td>string</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--mgmt-ip</td>
+<td>Management IP address to use for the node (e.g., 192.168.1.10)</td>
+<td>string</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--tls-secret-name</td>
+<td>Name of the Kubernetes TLS Secret to be used by the Ingress for HTTPS termination (e.g., my-tls-secret)</td>
 <td>string</td>
 <td>False</td>
 <td>-</td>
@@ -4922,6 +4733,27 @@
 <td>ha</td>
 </tr>
 <tr>
+<td>--mode</td>
+<td>Environment to deploy management services, default: docker<br><br>Available Options:<br>- docker<br>- kubernetes</td>
+<td>string</td>
+<td>False</td>
+<td>docker</td>
+</tr>
+<tr>
+<td>--ingress-host-source</td>
+<td>Ingress host source: 'hostip' for node IP, 'loadbalancer' for external LB, or 'dns' for custom domain<br><br>Available Options:<br>- hostip<br>- loadbalancer<br>- dns</td>
+<td>string</td>
+<td>False</td>
+<td>hostip</td>
+</tr>
+<tr>
+<td>--dns-name</td>
+<td>Fully qualified DNS name to use as the Ingress host (required if --ingress-host-source=dns)</td>
+<td>string</td>
+<td>False</td>
+<td></td>
+</tr>
+<tr>
 <td>--enable-node-affinity</td>
 <td>Enable node affinity for storage nodes</td>
 <td>marker</td>
@@ -4942,6 +4774,13 @@
 <td>False</td>
 <td>-</td>
 </tr>
+<tr>
+<td>--name, -n</td>
+<td>Assigns a name to the newly created cluster.</td>
+<td>string</td>
+<td>False</td>
+<td>-</td>
+</tr>
 </tbody>
 </table>
 <h2 id="adds-a-new-cluster">Adds a new cluster</h2>
@@ -4957,6 +4796,7 @@
 <span class="w">    </span>--enable-node-affinity
 <span class="w">    </span>--qpair-count<span class="o">=</span>&lt;QPAIR_COUNT&gt;
 <span class="w">    </span>--strict-node-anti-affinity
+<span class="w">    </span>--name<span class="o">=</span>&lt;NAME&gt;
 </code></pre></div>
 <table>
 <thead>
@@ -5036,6 +4876,13 @@
 <td>--strict-node-anti-affinity</td>
 <td>Enable strict node anti affinity for storage nodes. Never more than one chunk is placed on a node. This requires a minimum of <em>data-chunks-in-stripe + parity-chunks-in-stripe + 1</em> nodes in the cluster."</td>
 <td>marker</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--name, -n</td>
+<td>Assigns a name to the newly created cluster.</td>
+<td>string</td>
 <td>False</td>
 <td>-</td>
 </tr>
@@ -5622,6 +5469,36 @@
 <td>True</td>
 </tr>
 </tbody>
+</table>
+<h2 id="assigns-or-changes-a-name-to-a-cluster">Assigns or changes a name to a cluster</h2>
+<p>Assigns or changes a name to a cluster</p>
+<div class="highlight"><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>change-name
+<span class="w">    </span>&lt;CLUSTER_ID&gt;
+<span class="w">    </span>&lt;NAME&gt;
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+<th>Data Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLUSTER_ID</td>
+<td>Cluster id</td>
+<td>string</td>
+<td>True</td>
+</tr>
+<tr>
+<td>NAME</td>
+<td>Name</td>
+<td>string</td>
+<td>True</td>
+</tr>
+</tbody>
 </table></div>
 
 
@@ -5643,7 +5520,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2025 07:18:53 UTC">2025-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2025 07:33:25 UTC">2025-09-01</span>
   </span>
 
     
