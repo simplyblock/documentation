@@ -66,13 +66,19 @@ jobs:
           key: ${{ secrets.ssh_key }}
           script: |
             ./update-docs.sh ${{ env.RELEASE_NAME }}
-      - name: "Merge Tag to Main"
-        uses: mtanzi/action-automerge@v1
+      - name: "Create Pull Request for ${{ github.event.repository.default_branch }}"
+        id: open-pr
+        uses: repo-sync/pull-request@v2
         with:
-          github_token: "${{ github.token }}"
-          source: ${{ env.RELEASE_NAME }}
-          target: "main"
-          webhook_url: ""
-      - name: "Remove Release Branch"
-        run: |
-          git push origin :${{ github.ref_name }}
+          github_token: ${{ github.token }}
+          destination_branch: ${{ github.event.repository.default_branch }}
+          pr_title: "[Automated] Merge ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}"
+          pr_body: "Merge ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}"
+          pr_assignee: ${{ github.actor }}
+          pr_reviewer: ${{ github.actor }}
+      - name: "Enable Auto-Merge PR to ${{ github.event.repository.default_branch }}"
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: "${{ github.token }}"
+          pull-request-number: ${{ steps.open-pr.outputs.pr_number }}
+          merge-method: merge
