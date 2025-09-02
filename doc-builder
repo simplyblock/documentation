@@ -69,7 +69,11 @@ function build_image() {
 
 function serve() {
   ensure_docker_image
-  ${DOCKER} run --rm -it -p 127.0.0.1:8000:8000 -v "${PWD}:/docs" ${IMAGE_NAME} serve --watch-theme -a 0.0.0.0:8000
+  local dirty=""
+  if [[ "$1" == "--dirty" ]]; then
+    dirty="--dirty"
+  fi
+  ${DOCKER} run --rm -it -p 127.0.0.1:8000:8000 -v "${PWD}:/docs" ${IMAGE_NAME} serve ${dirty} --watch-theme -a 0.0.0.0:8000
   exit $?
 }
 
@@ -170,32 +174,116 @@ function deploy() {
   echo "ok."
 }
 
+function isHelp() {
+  if [[ "$1" == "--help" ]]; then
+    echo 0
+  fi
+  echo 1
+}
+
+function run_help() {
+  local help="$(isHelp "$2")"
+  if [[ "${help}" == "1" ]]; then
+    return
+  fi
+
+  case "$1" in
+    "build-image")
+      echo "Builds the docker image, required for building the documentation"
+      echo "./doc-builder build-image"
+    ;;
+    "serve")
+      echo "Starts the development server with automatic rebuild and reload"
+      echo "./doc-builder serve [--dirty]"
+      echo
+      echo "  [--dirty]             Activates incremental rebuilds, which have some"
+      echo "                        caveats. While they speed up the build extensively,"
+      echo "                        they break certain elements, like search or navigation"
+      echo "                        updates. Use with caution!"
+    ;;
+    "build")
+      echo "Builds the documentation for local testing"
+      echo "./doc-builder build"
+    ;;
+    "build-css")
+      echo "Creates the theme css style"
+      echo "./doc-builder build-css"
+    ;;
+    "deploy")
+      echo "Creates a deployable version of the documentation"
+      echo "./doc-builder deploy {version-name} [--force]"
+      echo
+      echo "  {release-name}        Name of the version and deployment subdirectory"
+      echo "  [--force]             Force creation of override of an existing version"
+      echo "                        with the same name."
+    ;;
+    "update-repositories")
+      echo "Updates the sbcli repository"
+      echo "./doc-builder update-repositories"
+      echo
+      echo "If a scripts/sbcli.lock file, with a specific tag name or git hash reference"
+      echo "exists, the sbcli git subrepository will be checked out to this specific"
+      echo "reference. Otherwise, it will be the latest HEAD."
+    ;;
+    "gen-sbcli-ref")
+      echo "Generates the sbcli / sbctl reference documentation"
+      echo "./doc-builder gen-sbcli-ref"
+    ;;
+    *)
+      echo "Unknown command. No help available."
+    ;;
+  esac
+
+  exit 0
+}
+
 case "$1" in
   "build-image")
+    # Test for help requested
+    run_help "$1" "$2"
+
     build_image
   ;;
 
   "serve")
-    serve
+    # Test for help requested
+    run_help "$1" "$2"
+
+    serve "${@:2}"
   ;;
 
   "build")
+    # Test for help requested
+    run_help "$1" "$2"
+
     build
   ;;
 
   "build-css")
+    # Test for help requested
+    run_help "$1" "$2"
+
     build_css
   ;;
 
   "deploy")
+    # Test for help requested
+    run_help "$1" "$2"
+
     deploy "${@:2}"
   ;;
 
   "update-repositories")
+    # Test for help requested
+    run_help "$1" "$2"
+
     update_repositories
   ;;
 
   "gen-sbcli-ref")
+    # Test for help requested
+    run_help "$1" "$2"
+
     gen_sbcli_ref
   ;;
 
