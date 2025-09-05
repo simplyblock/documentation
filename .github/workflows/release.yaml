@@ -46,7 +46,8 @@ jobs:
           git add deployment
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
-          git push --all --tags
+          git push --all
+          git push --tags
           rm ./deployment/versions.json
           rm ./deployment/latest
       - name: "Upload Documentation"
