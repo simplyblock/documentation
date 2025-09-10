@@ -23,7 +23,7 @@ This repository contains the [simplyblock documentation](https://docs.simpylbloc
 
 - [Simplyblock Documentation](#simplyblock-documentation)
     * [How To Extends The Documentation](#how-to-extend-the-documentation)
-    * [Docs Builder](#-docs-builder)
+    * [Docs Builder](#%EF%B8%8F-docs-builder)
         + [Serving Content Locally](#serving-content-locally)
         + [Building a Static Version of the Documentation](#building-a-static-version-of-the-documentation)
         + [Preparing the Deployment of a New Version](#preparing-the-deployment-of-a-new-version)
@@ -45,7 +45,7 @@ This repository contains the [simplyblock documentation](https://docs.simpylbloc
             - [Footnotes](#footnotes)
             - [Icons and Emojis](#icons-and-emojis)
   * [Contributing](#-contributing)
-  * [Release Process](#-release-process)
+  * [Release Process](#%EF%B8%8F-release-process)
 
 ## 🛠️ Docs Builder
 
