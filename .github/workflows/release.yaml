@@ -34,6 +34,9 @@ jobs:
           name: "${{ github.ref_name }}"
         run: |
           echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
+      - name: "Lock sbcli/sbcli version"
+        run: |
+          echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
       - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
         run: |
           ./doc-builder update-repositories
@@ -44,6 +47,7 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add deployment
+          git add scripts/sbcli.lock
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
           git rm scripts/sbcli.lock

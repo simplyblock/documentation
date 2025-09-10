@@ -398,12 +398,24 @@ Any help with the documentation is highly appreciated!
 The `main` branch is rebuild on any push and automatically deployed to the live documentation as the
 [_development_ branch](https://docstest.simplyblock.io/dev/).
 
-To create a new full version of the documentation, create a new branch from `main` and the naming pattern
-`release/{version-name}`. The _version-name_ will be used as the folder name and title of the version. It is required
-to only use lowercase letters, number, underscores, and dashes.
+To create a new full version of the documentation, create a new branch from `main` or a previously tagged version (like
+25.5.1) and the naming pattern `release/{version-number}`. The _version-number_ will be used as the folder name and title of
+the version and as the tag name to lock the `sbcli` repository against. It is required to only use lowercase letters,
+number, underscores, and dashes.
+
+If your `sbcli` tag is named as `25.5.1`, the branch name MUST be named `release/25.5.1`.
+
+In the branch, the following changes have to be performed:
+
+- `docs/release-notes`
+  - Create a new release notes file (best to duplicate the previous one).
+  - Update the release version number in the frontmatter and the introduction sentence.
+  - Decrement the weight in the frontmatter.
+- Commit the changes to the release branch.
+- Push the release branch and ensure the name is according to the pattern: `release/{version-number}` (e.g., `release/25.5.1`).
 
 After pushing the new release branch, the GitHub action builder kicks in, builds the version, deploys it to the live
-website and updates the latest symlink, creates the necessary tag for history reasons, merges the built documentation
-into main (folder `deployment`), and finally deletes the release branch. 
+website and updates the latest symlink, creates the necessary tag for history reasons, and merges the built
+documentation back into the `main` branch (folder `deployment`) using an auto-generated and auto-merged pull request. 
 
 No further action is required.
