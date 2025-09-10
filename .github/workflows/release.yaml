@@ -43,10 +43,11 @@ jobs:
           git config --global --add safe.directory $PWD
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git rm scripts/sbcli.lock
           git add deployment
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
+          git rm scripts/sbcli.lock
+          git commit -m "Auto-Build: Post ${RELEASE_NAME}"
           git push --all
           git push --tags
           rm ./deployment/versions.json
@@ -72,7 +73,7 @@ jobs:
         id: open-pr
         run: |
           gh pr create --title "[Automated] Merge ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}" --body "Merge ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}" --assignee ${{ github.actor }} --reviewer ${{ github.actor }} --base ${{ github.event.repository.default_branch }}
-          echo "::set-output name=pr_number::$(gh pr list --state open --json number --limit 1 | jq -r '.[0].number')"
+          echo "pr_number=$(gh pr list --state open --json number --limit 1 | jq -r '.[0].number')" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: "Enable Auto-Merge PR to ${{ github.event.repository.default_branch }}"
