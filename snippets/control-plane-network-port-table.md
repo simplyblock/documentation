@@ -16,6 +16,7 @@
 |                             |           |                         |           |             |
 | Cluster Control             | egress    | storage, control        | 8080-8890 | TCP         |
 | spdk-http-proxy             | egress    | storage, control        | 5000      | TCP         |
+| spdk-firewall-proxy         | egress    | storage, control        | 5001      | TCP         |
 | Docker Daemon Remote Access | egress    | storage, control        | 2375      | TCP         |
 | Docker Swarm Remote Access  | egress    | storage, control        | 2377      | TCP         |
 | Docker Overlay Network      | egress    | storage, control        | 4789      | UDP         |
