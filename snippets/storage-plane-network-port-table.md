@@ -2,6 +2,7 @@
 |-----------------------------|-----------|-------------------------|-----------|-------------|
 | ICMP                        | ingress   | control                 | -         | ICMP        |
 | Storage node API            | ingress   | storage                 | 5000      | TCP         |
+| spdk-firewall-proxy         | ingress   | storage                 | 5001      | TCP         |
 | spdk-http-proxy             | ingress   | storage, control        | 8080-8180 | TCP         |
 | hublvol-nvmf-subsys-port    | ingress   | storage, control        | 9030-9059 | TCP         |
 | internal-nvmf-subsys-port   | ingress   | storage, control        | 9060-9099 | TCP         |
