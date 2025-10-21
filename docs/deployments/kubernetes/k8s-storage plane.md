@@ -1,31 +1,19 @@
 ---
-title: "Hyper-Converged Setup"
+title: "Install Simplyblock Storage Plane on Kubernetes"
 weight: 50000
 ---
 
-In the hyper-converged or hybrid deployment, the CSI driver (node-part) and storage nodes are at least partially
-co-located with other workloads on the same hosts (Kubernetes worker nodes).
+As described earlier, Simplyblock on Kubernetes installs in the following sequence: control plane, storage nodes 
+and CSI driver.
 
 !!! info
-    In a hyper-converged or hybrid deployment, not each Kubernetes worker node has to become of the storage cluster.
+    In a Kubernetes deployment, not each Kubernetes worker node has to become part of the storage cluster.
     Simplyblock uses node labels to identify Kubernetes workers that are deemed as storage hosting instances.
 
-    Specifically in hybrid deployments, it is common to add dedicated Kubernetes worker nodes for storage to the same
-    Kubernetes cluster, often separated into a different node pool, and using a different type of host. In this case,
+    It is common to add dedicated Kubernetes worker nodes for storage to the same
+    Kubernetes cluster. They can be separated into a different node pool, and using a different type of host. In this case,
     it is important to remember to taint the Kubernetes worker accordingly to prevent other services from being
     scheduled on this worker.
-
-As for the plain CSI driver installation, the control plane must be present and a storage cluster must have been
-created.
-
-However, no storage nodes have to be attached to the cluster yet.
-
-## CSI Driver and Storage Node System Requirements
-
-System requirements for CSI-only (node part) installation can be found
-in [Install CSI Driver](install-csi.md#csi-driver-system-requirements).
-However, for nodes, which serve as storage nodes, must meet the
-following [System Requirements](../deployment-preparation/system-requirements.md).
 
 ## Retrieving Credentials
 
@@ -79,6 +67,17 @@ The last line of a successful storage pool creation returns the new pool id.
 2025-03-05 06:36:06,098: INFO: {"cluster_id": "4502977c-ae2d-4046-a8c5-ccc7fa78eb9a", "event": "OBJ_CREATED", "object_name": "Pool", "message": "Pool created test", "caused_by": "cli"}
 2025-03-05 06:36:06,100: INFO: Done
 ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
+```
+
+!!! info
+    It is possible to configure qos limits on a storage pool. All volumes assigned to this pool will collectively be capped
+    by this limit, but do not have to be limited individually. In fact, if pool-level qos is active, it is not 
+    allowed to set volume-level qos in the storage class!
+
+Example:
+
+```bash title="Create a Storage Pool with QoS Limits"
+{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID> --max-iops 10000 --max-rw-mb 500 --max-w-mb 100
 ```
 
 ## Labeling Nodes

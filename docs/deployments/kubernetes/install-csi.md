@@ -10,11 +10,11 @@ been added to the control plane, and a storage pool must have been created.
 
 This section explains how to install a CSI driver and connect it to a disaggregated storage cluster, which must already
 exist prior to the CSI driver installation. The disaggregated cluster must be installed onto
-[Plain Linux Hosts](../install-simplyblock/install-sp.md) or into an [Existing Kubernetes Cluster](k8s-disaggregated.md).
+[Plain Linux Hosts](../install-on-linux/install-sp.md) or into an [Existing Kubernetes Cluster](k8s-control plane.md).
 It must not be co-located on the same Kubernetes worker nodes as the CSI driver installation. 
 
 For co-located (hyper-converged) deployment (which includes the CSI driver and storage node deployment), see
-[Hyper-Converged Deployment](k8s-hyperconverged.md).
+[Hyper-Converged Deployment](k8s-storage plane.md).
 
 ## CSI Driver System Requirements
 

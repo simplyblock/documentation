@@ -27,7 +27,7 @@ The process will diverge after executing the initial deployment command `{{ clin
 If the command finishes successfully, resume from the next section of this page.
 
 - [storage nodes in kubernetes](../deployments/kubernetes/index.md)
-- [storage nodes on Bare Metal or Virtualized Linux](../deployments/install-simplyblock/install-sp.md)
+- [storage nodes on Bare Metal or Virtualized Linux](../deployments/install-on-linux/install-sp.md)
 
 ### Preparing the New Storage Host
 

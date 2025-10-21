@@ -30,16 +30,24 @@ dedicated cores must be assigned exclusively to the virtual machines running sto
 
 ## Deployment Models
 
-Simplyblock allows the deployment of storage nodes inside Kubernetes. Three deployment models are supported:
-[Disaggregated](../../architecture/concepts/disaggregated.md),
-[Hyper-Converged](../../architecture/concepts/hyper-converged.md), and a hybrid of the two.
+Two deployment option are supported:
 
-The disaggregated setup requires dedicated hosts (bare-metal or virtualized) for the storage nodes. With hyper-converged
-setup, simplyblock storage nodes are co-located with other workloads onto the same Kubernetes workers.
+- **Plain Linx**: In plain Linux mode, Storage Nodes are currently only deployed dis-aggregated (to separate storage hosts or VMs).
+  To operate Simplyblock under Plain Linux Deployment, basic knowledge on Docker is required, but all
+  management is performed within the system via its CLI or API. This deployment option requires 
+  separate VMs for the control plane and a Rocky/RHEL/Alma-based Linux.
+- **Kubernetes**: In Kubernetes, both dis-aggregated deployments (dedicated workers or even clusters for storage nodes) or hyper-converged 
+  deployments (combined with compute) are supported. A wide range of Kubernetes distros and OSes are supported.
+  Knowledge on administration of Kubernetes is required.
 
+  
 The minimum system requirements below concern simplyblock only and must be dedicated to simplyblock.
 
 ## Minimum System Requirements
+
+!!! Info
+    If the use of erasure coding is intended, DDR5 RAM is recommended for maximum performance. 
+    CPUs with large L1 caches will perform better too.
 
 The following minimum system requirements resources must be exclusive to simplyblock and are not available to the host
 operating system or other processes. This includes vCPUs, RAM, locally attached virtual or physical NVMe devices,
@@ -47,8 +55,24 @@ network bandwidth, and free space on the boot disk.
 
 | Node Type     | vCPU(s) | RAM   | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
 |---------------|---------|-------|--------------------------|---------------------|----------------|-----------------|
-| Storage Node  | 8       | 32 GB | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 3               | 
-| Control Plane | 2       | 16 GB | -                        | 1 GBit/s            | 50 GB          | 3               | 
+| Storage Node  | 8       | 32 GB | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (2 for HA)    | 
+| Control Plane | 2       | 16 GB | -                        | 1 GBit/s            | 50 GB          | 1 (3 for HA)    | 
+
+ Control Plane can also be co-deployed with storage nodes to the same workers or hosts in Kubernetes.
+ In such a deployment, resource requirements spread out across multiple workers in the cluster.
+ If you have at least three worker nodes, assume a minimum of 6 GB of extra RAM per worker and 25GB of 
+ free disk space per worker for the control plane. Minimum requirements per replica:
+
+| Service                       | vCPU | RAM (GB) | Disk (GB) |                                                                                                                      |
+|-------------------------------|------|----------|-----------|
+| Key-Value Store               |  1   |    4     |  5        |
+| Observability Stack           |  4   |    8     |  25       | 
+| Web-API (daemonset)           |  1   |    2     |  0.5      |
+| sb-services                   |  1   |    2     |  0.5      |
+
+!!! Info
+    3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
+    The Observability Stack can optionally be replicated and the sb-services run without replication.  
 
 !!! Warning
     On storage nodes, the vCPUs must be dedicated to simplyblock and will be isolated from the operating system. No
@@ -106,7 +130,8 @@ Simplyblock implements NVMe over Fabrics (NVMe-oF), specifically NVMe over TCP, 
 interconnect.
 
 !!! recommendation
-    Simplyblock recommends NVIDIA Mellanox network adapters (ConnectX-6 or higher).
+    Simplyblock highly recommends NICs with RDMA/ROCEv2 support such as NVIDIA Mellanox network adapters (ConnectX-6 or higher).
+    NVIDIA, INTEL and BROADCOM ship those. 
 
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux
 bond over two ports of the NIC(s) or using SRV-IO must be created.
@@ -134,7 +159,7 @@ For more information on simplyblock on NUMA, see [NUMA Considerations](numa-cons
 
 ## Operating System Requirements (Control Plane, Storage Plane)
 
-__Control plane nodes__, as well as storage nodes in a __disaggregated__ deployment, require one of the following
+__Control plane nodes__, as well as storage nodes in a __plain linux__ deployment, require one of the following
 operating systems:
 
 | Operating System               | Versions |
@@ -143,24 +168,26 @@ operating systems:
 | Rocky Linux                    | 9        |
 | Redhat Enterprise Linux (RHEL) | 9        |
 
-Storage nodes in a __hyper-converged__ deployment setup require the following operating systems:
+In a Hyper-Converged Deployment a broad range of operating systems, which also depend on the kubernetes
+distribution, are supported: 
 
-| Operating System               | Versions |
-|--------------------------------|----------|
-| Alma Linux                     | 9, 10    |
-| Rocky Linux                    | 9, 10    |
-| Redhat Enterprise Linux (RHEL) | 9, 10    |
+| Operating System               | Versions     |
+|--------------------------------|--------------|
+| Alma Linux                     | 9, 10        |
+| Rocky Linux                    | 9, 10        |
+| Redhat Enterprise Linux (RHEL) | 9, 10        |
+| Ubuntu                         | 22.04, 24.04 |   
+| Debian                         | 12, 13       |
+| Talos                          | from 1.6.7   |
 
 The operating system must be on the latest patch-level.
 
-We are planning to support more operating systems, including multiple versions of Ubuntu, Debian, and Talos with the
-next minor release.
 
 # Operating System Requirements (Initiator)
 
 An initiator is the operating system to which simplyblock logical volumes are attached over the network (NVMe/TCP).
 
-For further information on the requirements of the initiator-side, see:
+For further information on the requirements of the initiator-side (client-only), see:
 
 - [Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
 - [Linux Kernel Versions](../../reference/supported-linux-kernels.md)
@@ -175,8 +202,16 @@ For Kubernetes-based deployments, the following Kubernetes environments and dist
 | Google GKE           | 1.28 and higher |
 | K3s                  | 1.29 and higher |
 | Kubernetes (vanilla) | 1.28 and higher |
+| Talos                | 1.6.7 and higher|
 | Openshift            | 4.15 and higher |
 
 # Proxmox Requirements
 
 The Proxmox integration supports any Proxmox installation of version 8.0 and higher.
+
+# OpenStack Requirements
+
+Officially supported is OpenStack from version 25.1 (Epoxy), but support for older versions may
+be available on request.
+
+

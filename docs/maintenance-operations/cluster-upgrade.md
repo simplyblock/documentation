@@ -47,8 +47,8 @@ issue the following commands.
 
 !!! warning
     Ensure not all storage nodes are offline at the same time. Storage nodes must be updated in a round-robin fashion. In
-    between, it is important to wait until the cluster has stabilized again and potential rebalancing operations have
-    finished before starting to upgrade the next storage node.
+    between, it is important to wait until the cluster is in ACTIVE state again and not any more
+    REBALANCING.
 
 ```bash
 sudo {{ cliname }} storage-node suspend <NODE_ID>

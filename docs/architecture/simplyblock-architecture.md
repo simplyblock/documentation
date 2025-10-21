@@ -57,6 +57,9 @@ For internal state storage, the control plane uses ([FoundationDB](https://www.f
 its key-value store. FoundationDB, by itself, operates in a replicated high-available cluster across all management
 nodes.
 
+Within Kubernetes Deployments, the control plane can now also be co-deployed with storage nodes to same workers.
+It runs in separate pods.
+
 ## Storage Plane
 
 The storage plane consists of distributed storage nodes that run on Linux-based systems and provide logical volumes (

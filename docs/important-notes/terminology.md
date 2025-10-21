@@ -152,14 +152,18 @@ acceleration, making it a key technology in software-defined storage solutions. 
 framework for storage processing, SPDK enables modern storage architectures to achieve high IOPS, reduced latency, and
 better resource utilization in cloud and enterprise environments.
 
-### Volume Snapshot
+### Volume Snapshot (copy-on-write, reverse)
 
 A volume snapshot is a point-in-time copy of a storage volume, file system, or virtual machine that captures its state
 without duplicating the entire data set. Snapshots enable rapid data recovery, backup, and versioning by preserving only
-the changes made since the last snapshot, often using copy-on-write (COW) or redirect-on-write (ROW) techniques to
-minimize storage overhead. They are commonly used in enterprise storage, cloud environments, and virtualized systems to
-ensure data consistency, quick rollback capabilities, and protection against accidental deletions or system failures.
-Unlike full backups, snapshots are lightweight and allow near-instantaneous recovery of data.
+the changes made since the last snapshot.
+
+Different snapshot concepts exist. Simplyblock uses copy-on-write snapshots, which means that taking the 
+snapshot is instant (no data movement). 
+
+Later on, volumes can be instantly reversed to a snapshot. Also, copy-on-write volumes can be instantly
+created on top of a snapshot. Due to the entirely distributed nature of the underlying storage in Simplyblock,
+dependant snapshots and copy-on-write clones do not affect the performance of the originating volume or each other.
 
 ### Volume Clone
 

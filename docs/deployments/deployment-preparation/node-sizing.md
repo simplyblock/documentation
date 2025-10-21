@@ -30,11 +30,17 @@ The following sizing information is meant for production environments.
 
 ## Management Nodes (Control Plane)
 
+There are now two types of deployments for the management cluster:
+- standalone (on separate VMs): this deployment is recommended if you are not managing
+  kubernetes yourself.
+- Into kubernetes cluster. This can be either a dedicated storage cluster or a mixed
+  (hyper-converged with compute) cluster.  
+
 An appropriately sized management node cluster is required to ensure optimal performance and scalability. The management
 plane oversees critical functions such as cluster topology management, health monitoring, statistics collection,
 and automated maintenance tasks.
 
-The following hardware sizing specifications are recommended:
+The following hardware sizing specifications are recommended for a standalone deployment:
 
 | Hardware        |                                                                                                                             |
 |-----------------|-----------------------------------------------------------------------------------------------------------------------------|
@@ -44,6 +50,23 @@ The following hardware sizing specifications are recommended:
 | Node type       | Bare metal or virtual machine with a supported Linux distribution                                                           |
 | Number of nodes | For a production environment, a minimum of 3 management nodes is required.                                                  |
 
+In case of a kubernetes-based deployment, the key-value store is always replicated (clustered)
+across a minimum of three nodes. The observability stack is optionally replicated (min. 3
+replicas) and the WebAPI runs as a daemon set. The stateless sb-services-pod runs as a single
+replica.
+
+| Service                       | vCPU | RAM (GB) | Disk (GB) |                                                                                                                      |
+|-------------------------------|------|----------|-----------|
+| Key-Value Store               |  1   |    4     |  5        |
+| Observability Stack           |  4   |    8     |  25       | 
+| Web-API (daemonset)           |  1   |    2     |  0.5      |
+| sb-services                   |  1   |    2     |  0.5      |
+
+This configuration is for up to 10 storage nodes and 5.000 lvols and one week of full statistics and log retention. 
+
+The other services (CLI, health monitoring and reconciliation, statistics and event collectors, task runners) are 
+stateless and have moderate resource consumption. 
+                                                                                                                     
 ## Storage Nodes (Storage Plane)
 
 !!! warning
@@ -80,15 +103,15 @@ The exact amount of memory is calculated when adding or restarting a node based 
 | Unit                               | Memory Requirement |
 |------------------------------------|--------------------|
 | Fixed amount                       | 3 GiB              |
-| Per logical volume                 | 25 MiB             |
-| % of max. cluster storage capacity | 0.02%              |
+| Per logical volume                 | 15 MiB             |
+| % of max. cluster storage capacity | 300 MiB / TiB      |
 
 !!! info
     Example: A node has 10 NVMe devices with 8TB each. The cluster has 3 nodes and a total capacity of 240 TB.
     Logical volumes are equally distributed across nodes, and it is planned to use up to 1,000 logical volumes on
     each node. Hence, the following formula:
     ```plain
-    3 + (2 * 80) + (0.015 * 1000) = 164.5 GB
+    3 + (0.5 * 80) + (0.015 * 1000) = 58 GB
     ```
 
 If not enough memory is available, the node will refuse to start. In this case, `/proc/meminfo` may be checked for

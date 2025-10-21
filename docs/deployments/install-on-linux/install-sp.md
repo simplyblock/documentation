@@ -51,18 +51,16 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 
 {% include 'nvme-format.md' %}
 
-#### Load the NVMe over Fabrics Kernel Modules 
-
-{% include 'prepare-nvme-tcp.md' %}
-
 #### Configuration and Deployment
 
-With all NVMe devices prepared and the NVMe/TCP driver loaded, the storage node software can be deployed.
+The low-level format of the devices is required only once. 
+
+With all NVMe devices prepared, the storage node software can be deployed.
 
 The actual deployment process happens in three steps:
 - Creating the storage node configuration
 - Deploy the first stage (the storage node API)
-- Deploy the second stage (add the storage node to the cluster), happening from a management node
+- Deploy the second stage (add the storage node to the cluster), happening from a control plane (management) node
 
 The configuration process creates the configuration file, which contains all the assignments of NVMe devices, NICs, and
 potentially available [NUMA nodes](../deployment-preparation/numa-considerations.md). By default, simplyblock
@@ -91,7 +89,8 @@ True
 A full set of the parameters for the configure subcommand can be found in the
 [CLI reference](/reference/cli/storage-node.md#prepare-a-configuration-file-to-be-used-when-adding-the-storage-node). 
 
-After the configuration has been created, the first stage deployment can be executed 
+It is also possible to adjust the configuration file manually, e.g. to remove nvme drives.
+After the configuration has been created, the first stage deployment can be executed. 
 
 ```bash title="Deploy the storage node"
 sudo {{ cliname }} storage-node deploy --ifname eth0
@@ -129,11 +128,15 @@ sudo {{ cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
   --data-nics <DATA_IF>
 ```
 
+If a separate NIC (e.g. BOND device) is used for storage traffic (in the cluster and between hosts and
+cluster nodes), the ```--data-nics``` parameter must be specified. In R25.10, zero or one data NICs are supported.
+
 !!! info
     The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
-    separate journaling device (which is strongly recommended), the value should be zero (_0_) to prevent the storage
+    separate journaling device (for example a SLC NVME), the value should be zero (_0_) to prevent the storage
     devices from being partitioned. This improves the performance and prevents device sharing between the journal and
-    the actual data storage location.
+    the actual data storage location. However, in most cases, a separate journaling device is not available or required
+    and the value of ```--partitions``` has to be 1.
 
 The output will look something like the following example:
 
