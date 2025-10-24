@@ -7,7 +7,7 @@ Simplyblock is a cloud-native, distributed block storage platform designed to de
 resilient storage through a software-defined architecture. Centered around NVMe-over-Fabrics (NVMe-oF), simplyblock
 separates compute and storage to enable scale-out elasticity, high availability, and low-latency operations in modern,
 containerized environments. The architecture is purpose-built to support Kubernetes-native deployments with seamless
-integration, but supports virtual and even physical machines as clients as well.
+integration but supports virtual and even physical machines as clients as well.
 
 ## Control Plane
 
@@ -54,11 +54,11 @@ environments, simplyblock requires at least three management nodes for high avai
 a set of replicated, stateful services.
 
 For internal state storage, the control plane uses ([FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"}) as
-its key-value store. FoundationDB, by itself, operates in a replicated high-available cluster across all management
+its key-value store. FoundationDB, by itself, operates in a replicated highly-available cluster across all management
 nodes.
 
-Within Kubernetes Deployments, the control plane can now also be co-deployed with storage nodes to same workers.
-It runs in separate pods.
+Within Kubernetes deployments, the control plane can now also be deployed alongside the storage nodes on the same k8s
+workers. It will, however, run in separate pods.
 
 ## Storage Plane
 

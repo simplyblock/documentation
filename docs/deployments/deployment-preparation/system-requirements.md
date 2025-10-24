@@ -5,8 +5,8 @@ weight: 29999
 
 !!! info
     In cloud environments including GCP and AWS, instance types are pre-configured. In general,  
-    there are no restrictions on instance types as long as these system requirements are met. However, it is highly recommended to
-    stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
+    there are no restrictions on instance types as long as these system requirements are met. However, it is highly
+    recommended to stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
 
     For [hyper-converged](../../architecture/concepts/hyper-
     converged.md) deployments, it is important that node sizing applies to the dedicated 
@@ -29,14 +29,17 @@ dedicated cores must be assigned exclusively to the virtual machines running sto
 
 ## Deployment Models
 
-Two deployment option are supported:
+Two deployment options are supported:
 
-- **Plain Linux**: In this mode (we call it also docker mode), all nodes are deployed to 
-  separate hosts (storage nodes: usually bare-metal, control plane: usually VMs).
-  Basic Docker knowledge is helpful, but all management is performed within the system via its CLI or API. 
+- **Plain Linux**: In this mode, which also called Docker mode, all nodes are deployed to separate hosts. Storage nodes
+  are usually bare-metal and control plane nodes are usually VMs.
 
-- **Kubernetes**: In Kubernetes, both dis-aggregated deployments (dedicated workers or even clusters for storage nodes) or hyper-converged 
-  deployments (combined with compute) are supported. A wide range of Kubernetes distros and OSes are supported.
+  Basic Docker knowledge is helpful, but all management can be performed within the system via its CLI or API. 
+
+- **Kubernetes**: In Kubernetes, both disaggregated deployments with dedicated workers or clusters for storage nodes,
+  or hyper-converged deployments (co-located with compute workloads) are supported. A wide range of Kubernetes distros
+  and operating systems are supported.
+
   Kubernetes Knowledge is required.
 
 The minimum system requirements below concern simplyblock only and must be dedicated to simplyblock.
@@ -44,8 +47,8 @@ The minimum system requirements below concern simplyblock only and must be dedic
 ## Minimum System Requirements
 
 !!! Info
-    If the use of erasure coding is intended, DDR5 RAM is recommended for maximum performance. 
-    CPUs with large L1 caches will perform better too.
+    If the use of erasure coding is intended, DDR5 RAM is recommended for maximum performance. In addition, it is
+    recommended to use CPUs with large L1 caches, as those will perform better.
 
 The following minimum system requirements resources must be exclusive to simplyblock and are not available to the host
 operating system or other processes. This includes vCPUs, RAM, locally attached virtual or physical NVMe devices,
@@ -57,7 +60,8 @@ network bandwidth, and free space on the boot disk.
 |----------------|---------|----------|--------------------------|---------------------|----------------|-----------------|
 | Storage Node   | 8+      | 6+       | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (2 for HA)    | 
 | Control Plane* | 4       | 16       | -                        | 1 GBit/s            | 35 GB          | 1 (3 for HA)    | 
-*Plain Linux Deployment, up to 5 nodes, 1.000 logical volumes, 2.500 snapshots
+
+*Plain Linux Deployment, up to 5 nodes, 1,000 logical volumes, 2,500 snapshots
 
 ### Storage Nodes
 
@@ -66,37 +70,39 @@ IOPS performance depends on Storage Node vCPU. The maximum performance will be r
 Simplyblock Data Plane (spdk_80xx containers) and the rest will remain under control of Linux.
 
 !!! Info
-    Simplyblock auto-detects NUMA nodes and configures and configures and deploys storage nodes per NUMA node.
-    Each NUMA socket requires directly attached NVMe and NIC to deploy a storage node.
+    Simplyblock auto-detects NUMA nodes. It will configure and deploy storage nodes per NUMA node. 
+
+    Each NUMA socket requires directly attached NVMe devices and NICs to deploy a storage node.
     For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
 
 !!! Info
-    It is recommended to deploy multiple storage nodes per storage host if
-    there are more than 32 cores available per socket.
+    It is recommended to deploy multiple storage nodes per storage host if there are more than 32 cores available
+    per socket.
+
     During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the
     recommended deployment strategy, including the recommended amount of storage nodes per storage host based on the
     detected configuration. This file is later processed when adding the storage nodes to the storage host.
     Manual changes to the configuration are possible if the proposed configuration is not applicable.
 
-As hyper-converged deployments have to share vCPU, it is recommended to dedicate 8 vCPU per socket
-to Simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to 
-12.5% of vCPU capacity on the host. For very IO-intensive applications, this amount could be increased.
+As hyper-converged deployments have to share vCPUs, it is recommended to dedicate 8 vCPU per socket
+to simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to 
+12.5% of vCPU capacity per host. For very IO-intensive applications, this amount should be increased.
 
 !!! Warning
     On storage nodes, required vCPUs will be automatically isolated from the operating system. No
     kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs.
 
 !!! Info
-    For RAM, it is required to estimate the expected average logical volumes per node and 
+    For RAM, it is required to estimate the expected average number of logical volumes per node, as well as the 
     average raw storage capacity, which can be utilized per node. For example, if each node in 
-    a cluster has 100 TiB of raw capacity, this would be the average too. If in a 5 node cluster
-    you expect a maximum of 2.500 volumes, the average per node would be 500.
+    a cluster has 100 TiB of raw capacity, this would be the average too. In a 5-node cluster,
+    with a maximum of 2,500 logical volumes, the average per node would be 500.
 
-| Unit                                                  | Memory Requirement |
-|-------------------------------------------------------|--------------------|
-| Fixed amount                                          | 3 GiB              |
-| Per logical volume (cluster average per node)         | 25 MiB             |
-| % of max. storage capacity (cluster average per node) | 1.5 GiB / TiB      |
+| Unit                                                     | Memory Requirement |
+|----------------------------------------------------------|--------------------|
+| Fixed amount                                             | 3 GiB              |
+| Per logical volume (cluster average per node)            | 25 MiB             |
+| % of maximum storage capacity (cluster average per node) | 1.5 GiB / TiB      |
 
 !!! Info
     For disaggregated setups, it is recommended to add 50% to these numbers as a reserve. In 
@@ -104,19 +110,19 @@ to Simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, thi
 
 ### Control Plane
 
- General Control Plane requirements provided above apply to the Plain Linux Deployment.
- For a kubernetes-based control plane, the minimum requirements per replica are:
+General control plane requirements provided above apply to the plain linux deployment.
+For a Kubernetes-based control plane, the minimum requirements per replica are:
 
-| Service             | vCPU(s) | RAM (GB) | Disk (GB) |  
-|---------------------|---------|----------|-----------|
-| Sb-Meta-Database    | 1       | 4        | 5         |  
-| Observability Stack | 4       | 8        | 25        | 
-| Sb-Web-API          | 1       | 2        | 0.5       | 
-| Sb-Services         | 1       | 2        | 0.5       | 
+| Service                    | vCPU(s) | RAM (GB) | Disk (GB) |  
+|----------------------------|---------|----------|-----------|
+| Simplyblock Meta-Database  | 1       | 4        | 5         |  
+| Observability Stack        | 4       | 8        | 25        | 
+| Simplyblock Web-API        | 1       | 2        | 0.5       | 
+| Other Simplyblock Services | 1       | 2        | 0.5       | 
 
-If more than 2.500 volumes or more than 5 storage nodes are attached to the control plane, additional RAM and vCPU
-is advised. Also, the disk space for observability should be increased in such a scenario or if
-retention of logs and statistics for more than 7 days is required. 
+If more than 2,500 volumes or more than 5 storage nodes are attached to the control plane, additional RAM and vCPU
+are advised. Also, the required observability disk space must be increased, if retention of logs and statistics for
+more than 7 days is required. 
 
 !!! Info
     3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
@@ -134,11 +140,11 @@ NVMe devices must support 4KB native block size and are recommended to be sized 
 Large NVMe devices are supported, but performance per TiB is lower and rebalancing can take longer.
 
 In general, all NVMe used in a single cluster should exhibit a similar performance profile per TB.
-Therefore within a single cluster, all NVMe devices are recommended to be of the same size,
+Therefore, within a single cluster, all NVMe devices are recommended to be of the same size,
 but this is not a hard requirement.
 
-Clusters are lightweight, and it is recommended to use different clusters for different type of 
-hardware (NVMe, Networking, Compute) with a different performance profile per TiB of Raw Storage. 
+Clusters are lightweight, and it is recommended to use different clusters for different types of 
+hardware (NVMe, networking, compute) or with a different performance profile per TiB of raw storage. 
 
 !!! Warning
     Simplyblock only works with non-partitioned, exclusive NVMe devices (virtual via SRV-IO or physical) as its backing
@@ -164,9 +170,9 @@ active/active or active/passive NICs, STP or MSTP).
 Simplyblock implements NVMe over Fabrics (NVMe-oF), specifically NVMe over TCP, and works over any Ethernet
 interconnect.
 
-!!! recommendation
+!!! Recommendation
     Simplyblock highly recommends NICs with RDMA/ROCEv2 support such as NVIDIA Mellanox network adapters (ConnectX-6 or higher).
-    NVIDIA, INTEL and BROADCOM ship those. 
+    Those network adapters are available from brands such as NVIDIA, Intel and Broadcom.
 
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux
 bond over two ports of the NIC(s) or using SRV-IO must be created.
@@ -174,7 +180,7 @@ bond over two ports of the NIC(s) or using SRV-IO must be created.
 Also, it is recommended to use a separate physical NIC with two ports (bonded) and a highly available network for
 management traffic. For management traffic, a 1 GBit/s network is sufficient and a Linux Bridge may be used.
 
-!!! warning
+!!! Warning
     All storage nodes within a cluster and all hosts accessing storage shall reside within the same hardware VLAN.
 
     Avoid any gateways, firewalls, or proxies higher than L2 on the network path.
@@ -194,8 +200,8 @@ operating systems:
 | Rocky Linux                    | 9        |
 | Redhat Enterprise Linux (RHEL) | 9        |
 
-In a Hyper-Converged Deployment a broad range of operating systems, which also depend on the kubernetes
-distribution, are supported: 
+In a hyper-converged deployment a broad range of operating systems are supported. The availability also depends on the
+utilized Kubernetes distribution.
 
 | Operating System               | Versions     |
 |--------------------------------|--------------|
@@ -237,7 +243,5 @@ The Proxmox integration supports any Proxmox installation of version 8.0 and hig
 
 # OpenStack Requirements
 
-Officially supported is OpenStack from version 25.1 (Epoxy), but support for older versions may
-be available on request.
-
-
+The OpenStack integration supports any OpenStack installation of version 25.1 (Epoxy) or higher. Support for older
+versions may be available on request.

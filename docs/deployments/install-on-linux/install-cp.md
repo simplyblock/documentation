@@ -5,11 +5,11 @@ weight: 32000
 
 ## Control Plane Installation
 
-The first step when installing simplyblock on Plain Linux (Docker), is to install the control plane. The control plane manages one or more
-storage clusters. If an existing control plane is available and the new cluster should be added to it, this section
-can be skipped. 
+The first step when installing simplyblock on plain linux (Docker), is to install the control plane. The control
+plane manages one or more storage clusters. If an existing control plane is available and the new cluster should be
+added to it, this section can be skipped. 
 
-Jump right to the [Storage Plane Installation](install-sp.md).
+In this case, the following section can be skipped to [Storage Plane Installation](install-sp.md).
 
 ### Firewall Configuration (CP)
 
@@ -90,7 +90,7 @@ If the check succeeds, it's time to set up the primary management node:
 {{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha
 ```
 
-Additional cluster deployment options can be found [here](../cluster-deployment-options.md).
+Additional cluster deployment options can be found in the [Cluster Deployment Options](../cluster-deployment-options.md).
 
 The output should look something like this:
 
