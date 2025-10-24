@@ -69,7 +69,7 @@ To create a new logical volume, the following command can be run on any control 
 
 ```
 !!! info
-    ```ndcs``` and ```npcs``` define the erasure coding schema (e.g. ```--ndcs=4 --npcs=2```). The settings are optional, if
+    ``ndcs`` and ```npcs``` define the erasure coding schema (e.g. ```--ndcs=4 --npcs=2```). The settings are optional, if
     not specified the cluster default is chosen. Valid for ```ndcs``` are 1,2 and 4 and for ```npcs``` 0,1 and 2, but
     consider that the number of cluster nodes must be equal to or larger than (```ndcs``` + ```npcs```)
     ```--fabric``` defines the fabric by which the volume is connected to the cluster. It is optional, default is ```tcp```. ```rdma``` can only be chosen for hosts

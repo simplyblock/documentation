@@ -5,14 +5,14 @@ weight: 20100
 
 ## Storage Performance Indicators
 
-Storage performance can be categorized by latency,the aggregate response time of an io request from the host to the storage
-system, and throughput. throughput can be broken down into random IOPS throughput and sequential throughput.
+Storage performance can be categorized by latency - the aggregate response time of an io request from the host to the storage
+system - and Throughput. throughput can be broken down into random IOPS throughput and Sequential Throughput.
 
 IOPS and Sequential Throughput must be measured in relation to the capacity (i.e. IOPS per TB).
 
 Latency and IOPS throughput depend heavily on the io operation (read, write, unmap)
-and the block size (4K, 8K, 16K, 32K, ...). For comparability, it is typically tested
-with 4K io size, but tests with 8K to 128K are common too. 
+and the IO size (4K, 8K, 16K, 32K, ...). For comparability, it is typically tested
+with 4K IO size, but tests with 8K to 128K are common too. 
 
 Latency is strongly influenced by the overall load on the overall storage system.
 If there is strong io pressure, queues build up and response times go up. This is no
@@ -33,8 +33,8 @@ high storage performance in such an environment.
 
 These challenges are increased by mixed io patterns from different workloads.
 
-This can cause strong variability of latency IOPS throughput and high tail latency will all of the 
-negative effects on workloads.
+This can cause strong variability of latency IOPS throughput and high tail latency with 
+negative impact on workloads.
 
 ## Simplyblock: How we ensure ultra-low latency in the 99 percentile
 
@@ -48,28 +48,32 @@ Simplyblock is a fully distributed solution. Back-storage is balanced across
 all nodes in the cluster on a very granular level. Relative to their capacity and
 performance, each device and node in the cluster receives the same amount and size of io.
 This feature ensures entirely equal distribution of load accross the network, compute and 
-and nvme drives. 
+and NVMe drives. 
 
-In case of drive or node failures, re-distribution and re-balancing is again fully equalized.
-In case of adding drives and nodes, performance can increase linearily. This mechanism
+In case of drive or node failures, distributed re-balancing occurs to convert to the fully
+balanced state as quick as possible.
+In case of adding drives and nodes, performance increases in **linear manner**. This mechanism
 avoids local overload and keeps latency and iops throughput consistent across the cluster,
 independent of which node is accessed.
 
-### built end-to-end on and for nvme and nvmf
+### built end-to-end on and for NVMe
 
-Storage access is entirely based on nvme (local back-storage) and nvmf (hosts to storage nodes and 
+Storage access is entirely based on NVMe (local back-storage) and NVMe over Fabric (hosts to storage nodes and 
 storage nodes to storage nodes). This protocol is inherently asynchronous and supports highly parallel processing,
-eliminating bottlenecks specific to mixed io patterns on other protocols (such as iscsi) 
+eliminating bottlenecks specific to mixed io patterns on other protocols (such as iSCSI) 
 and ensuring consistently low latency.
 
 ### Support for ROCEv2
 
-In particular, Simplyblock also supports nvmf/rdma (rocev2), which as an L3/L4 networking protocol
-comes with a significantly lower latency and particularly tail latency than TCP.
+Simplyblock also supports now NVMe over RDMA (ROCEv2). RDMA as a transport layer
+has significant latency and tail latency advantages of TCP. Today, RDMA can be used in
+most data center environments, as it only requires specific hardware features from NICs, which
+are available on a broad range of models. It runs over UDP/IP and as such does not require any
+changes to the networking.
 
 ### Full Core Isolation and Numa-Node Awareness/Affinity
 
-Next, Simplyblock implements full cpu core isolation and numa-socket affinity.
+Simplyblock implements full cpu core isolation and numa-socket affinity.
 Simplyblock Storage Nodes are auto-deployed per Numa-Socket and only use Socket-specific resources
 (compute, ram, NICs, NVMe).
 
@@ -84,9 +88,9 @@ the entire chain of storage processing on the data plane, the linux vfio driver
 and the entirely non-locking, asynchronous dpdk threading model (full avoidance of linux p-threads and any inter-thread
 synchronization), gives much higher predictibility of latency and lower baseline latency.
 
-### Advanced Qos
+### Advanced QoS
 
-On top of those, Simplyblock implements two independent, critical QoS mechanisms:
+Simplyblock implements two independent, critical QoS mechanisms:
 
 #### Volume and Pool-Level Caps
 
@@ -98,13 +102,14 @@ protect more critical workloads.
 
 #### QoS Service Classes for full isolation of performance
 
-A second QoS feature is based on service classes. On each cluster, up to 7 service
+On each cluster, up to 7 service
 classes can be defined (class 0 is the default class). 
-For each class, a relative allocation of resources (a combination of IOPS and
-throughput) can be defined using weights. 
+For each class, cluster performance (a combination of IOPS and
+throughput) can be allocated in relative terms (e.g. 20%) for performance
+guarantees. 
+
 General-purpose volumes can be allocated in the default class
 while more critical workloads can be split across other service classes.
-These are guarantees and not limits! 
 If other classes do not use up their quotas, the
 default class can still allocate all available resources. 
 
@@ -113,12 +118,15 @@ default class can still allocate all available resources.
 Why is a limit not sufficient? Imagine a heavily mixed workload in the cluster. Some
 workloads are read-intensive, while others are write-intensive. Some workloads require 
 a lot of small-sized random IO, while other workloads read and write large 
-sequential io. There is no absolute number of IOPS or throughput a cluster can
+sequential IO. There is no absolute number of IOPS or throughput a cluster can
 provide considering the dynamics of workloads. 
+
 Therefore, using absolute limits on one pool of volumes is good to protect others
 from spill-over effects and undesired behaviour, but it does not give you 
-a guarantee on what is really left. Service classes provide a much 
-better degree of isolation under the consideration of dynamic workloads.
+a performance guarantee for a particular class of volumes. 
+
+Service classes provide a much better degree of isolation under the 
+consideration of dynamic workloads.
 As long as you do not overload a particular service class, the general io pressure
 on the cluster will not matter for the performance of volumes in that class.
 

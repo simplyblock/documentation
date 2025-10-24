@@ -10,11 +10,10 @@ Storage Interface (CSI) and ProxMox drivers.
 ## What makes Simplyblock Special?
 
 - **Environment Agnostic:** Simplyblock operates seamlessly across major cloud providers, regional, and specialized
-  providers, bare-metal and virtual provisioners, and private clouds, including both virtualized and bare-metal
-- Kubernetes environments.
+  providers, bare-metal and virtual provisioners, and private clouds, including both virtualized and bare-metal  Kubernetes environments.
 
-- **NVMe/f-optimized:** Simplyblock is built from the scratch around NVMe. 
-  All internal and external storage access is entirely based on NVMe and NVMf (tcp and/or rdma).
+- **NVMe-optimized:** Simplyblock is built from the scratch around NVMe. 
+  All internal and external storage access is entirely based on NVMe and NVMe over Fabric (TCP, RDMA).
   This includes storage node local back-storage, host-to-cluster and node-to-node traffic.
   Together with the user-space data plane, distributed data placement and 
   advanced QoS and other characterists, this makes Simplyblock the storage platform with most advanced performance guarantees in
