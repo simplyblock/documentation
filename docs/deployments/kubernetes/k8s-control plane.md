@@ -17,4 +17,4 @@ pip install sbctl --upgrade
 {{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --mode=kubernetes
 ```
 
-Additional parameters for the cluster create command can be found [here](../install-on-linux/install-sp.md)
+Additional parameters for the cluster create command can be found [here](../cluster-deployment-options.md).
