@@ -45,7 +45,6 @@ Simplyblock is designed for high-performance storage operations. Therefore, it h
 must be met. The following sections describe the system and node sizing requirements. 
 
 - [System Requirements](deployment-preparation/system-requirements.md)
-- [Node Sizing](deployment-preparation/node-sizing.md)
 - [Erasure Coding Configuration](deployment-preparation/erasure-coding-scheme.md)
 - [Air Gapped Installation](air-gap/index.md)
 

@@ -5,9 +5,8 @@ weight: 29999
 
 !!! info
     In cloud environments including GCP and AWS, instance types are pre-configured. In general,  
-    there are no restrictions on instance types as long as these system requirements and
-    [Node Sizing Requirements](node-sizing.md) are met. However, it is highly recommended to
-    stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md).
+    there are no restrictions on instance types as long as these system requirements are met. However, it is highly recommended to
+    stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
 
     For [hyper-converged](../../architecture/concepts/hyper-
     converged.md) deployments, it is important that node sizing applies to the dedicated 
@@ -32,16 +31,15 @@ dedicated cores must be assigned exclusively to the virtual machines running sto
 
 Two deployment option are supported:
 
-- **Plain Linx**: In plain Linux mode, Storage Nodes are currently only deployed dis-aggregated (to separate storage hosts or VMs).
-  To operate Simplyblock under Plain Linux Deployment, basic Docker knowledge is helpful, but all
-  management is performed within the system via its CLI or API. This deployment option requires 
-  separate VMs for the control plane and a Rocky/RHEL/Alma-based Linux (current version: 9).
+- **Plain Linx**: In plain Linux mode (also called Docker mode), 
+  All nodes are deployed to separate hosts (storage nodes: usually bare-metal, control plane: usually VMs)
+  running Rocky/RHEL/Alma-based Linux (current version: 9).
+  Basic Docker knowledge is helpful, but all management is performed within the system via its CLI or API. 
 
 - **Kubernetes**: In Kubernetes, both dis-aggregated deployments (dedicated workers or even clusters for storage nodes) or hyper-converged 
   deployments (combined with compute) are supported. A wide range of Kubernetes distros and OSes are supported.
   Kubernetes Knowledge is required.
 
-  
 The minimum system requirements below concern simplyblock only and must be dedicated to simplyblock.
 
 ## Minimum System Requirements
@@ -54,20 +52,61 @@ The following minimum system requirements resources must be exclusive to simplyb
 operating system or other processes. This includes vCPUs, RAM, locally attached virtual or physical NVMe devices,
 network bandwidth, and free space on the boot disk.
 
-| Node Type     | vCPU(s) | RAM (GB) | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
-|---------------|---------|----------|--------------------------|---------------------|----------------|-----------------|
-| Storage Node  | 8       | 6        | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (2 for HA)    | 
-| Control Plane | 2       | 16       | -                        | 1 GBit/s            | 35 GB          | 1 (3 for HA)    | 
+### Overview
+
+| Node Type      | vCPU(s) | RAM (GB) | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
+|----------------|---------|----------|--------------------------|---------------------|----------------|-----------------|
+| Storage Node   | 8+      | 6+       | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (2 for HA)    | 
+| Control Plane* | 4       | 16       | -                        | 1 GBit/s            | 35 GB          | 1 (3 for HA)    | 
+*Plain Linux Deployment, up to 5 nodes, 1.000 logical volumes, 2.500 snapshots
+
+### Storage Nodes
+
+IOPS performance depends on Storage Node vCPU. The maximum performance will be reached with
+32 physical cores per socket. In such a scenario, the deployment will dedicate (isolate) 24 cores to
+Simplyblock Data Plane (spdk_80xx containers) and the rest will remain under control of Linux.
+
+!!! Info
+    Simplyblock auto-detects NUMA nodes and configures and configures and deploys storage nodes per NUMA node.
+    Each NUMA socket requires directly attached NVMe and NIC to deploy a storage node.
+    For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
+
+!!! Info
+    It is recommended to deploy multiple storage nodes per storage host if the host has more than one NUMA socket, or if
+    there are more than 32 cores available per socket.
+    During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the
+    recommended deployment strategy, including the recommended amount of storage nodes per storage host based on the
+    detected configuration. This file is later processed when adding the storage nodes to the storage host.
+    Manual changes to the configuration are possible if the proposed configuration is not applicable.
+
+As hyper-converged deployments have to share vCPU, it is recommended to dedicate 8 vCPU per socket
+to Simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to 
+12.5% of vCPU capacity on the host. For very IO-intensive applications, this amount could be increased.
 
 !!! Warning
-    Most of the disk storage used for the Control Plane is for the Observability Stack and Statistics.
-    The exact amount of disk storage depends on the number of storage nodes, the number of volumes and
-    the retention period chosen. The default retention period is 7 days.
+    On storage nodes, required vCPUs will be automatically isolated from the operating system. No
+    kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs.
 
- Control Plane can also be co-deployed with storage nodes to the same workers or hosts in Kubernetes.
- In such a deployment, resource requirements spread out across multiple workers in the cluster.
- If you have at least three worker nodes, assume a minimum of 6 GB of extra RAM per worker and 25GB of 
- free disk space per worker for the control plane. Minimum requirements per replica:
+!!! Info
+    For RAM, it is required to estimate the expected average logical volumes per node and 
+    average raw storage capacity, which can be utilized per node. For example, if each node in 
+    a cluster has 100 TiB of raw capacity, this would be the average too. If in a 5 node cluster
+    you expect a maximum of 2.500 volumes, the average per node would be 500.
+
+| Unit                                                  | Memory Requirement |
+|-------------------------------------------------------|--------------------|
+| Fixed amount                                          | 3 GiB              |
+| Per logical volume (cluster average per node)         | 25 MiB             |
+| % of max. storage capacity (cluster average per node) | 1.5 GiB / TiB      |
+
+!!! Info
+    For disaggregated setups, it is recommended to add 50% to these numbers as a reserve. In 
+    a purely hyper-converged setup, stay at the requirement.
+
+### Control Plane
+
+ General Control Plane requirements provided above apply to the Plain Linux Deployment.
+ For a kubernetes-based control plane, the minimum requirements per replica are:
 
 | Service             | vCPU(s) | RAM (GB) | Disk (GB) |  
 |---------------------|---------|----------|-----------|
@@ -76,23 +115,14 @@ network bandwidth, and free space on the boot disk.
 | Sb-Web-API          | 1       | 2        | 0.5       | 
 | Sb-Services         | 1       | 2        | 0.5       | 
 
+If more than 2.500 volumes or more than 5 storage nodes are attached to the control plane, additional RAM and vCPU
+is advised. Also, the disk space for observability should be increased in such a scenario or if
+retention of logs and statistics for more than 7 days is required. 
+
 !!! Info
     3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
     The Observability Stack can optionally be replicated and the sb-services run without replication.  
 
-!!! Warning
-    On storage nodes, required vCPUs will be automatically isolated from the operating system. No
-    kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs.
-
-!!! Info
-    It is recommended to deploy multiple storage nodes per storage host if the host has more than one NUMA socket, or if
-    there are more than 32 cores available per socket.
-
-    During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the
-    recommended deployment strategy, including the recommended amount of storage nodes per storage host based on the
-    detected configuration. This file is later processed when adding the storage nodes to the storage host. 
-    
-    Manual changes to the configuration are possible if the proposed configuration is not applicable.
 
 ## Hyperthreading
 
@@ -153,15 +183,6 @@ management traffic. For management traffic, a 1 GBit/s network is sufficient and
 ## PCIe Version
 
 The minimum required PCIe standard for NVMe devices is PCIe 3.0. However, PCIe 4.0 or higher is strongly recommended.
-
-## NUMA
-
-Simplyblock is NUMA-aware and can run on one or more NUMA socket systems. A minimum of one storage node per NUMA socket
-has to be deployed per host for production use cases.
-
-Each NUMA socket requires directly attached NVMe and NIC to deploy a storage node.
-
-For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
 
 ## Operating System Requirements (Control Plane, Storage Plane)
 
