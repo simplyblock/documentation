@@ -39,6 +39,9 @@ life cycle automation is performed by the orchestrator-specific Simplyblock driv
 - On Proxmox: [Proxmox Integration](proxmox/index.md) 
 - On OpenStack: [Cinder Driver]()  
 
+Generally, before creating volumes it is important to understand the difference btw. an
+[NVMe-oF Subsystem and a Namespace](../NVMf Namespaces and Subsystems.md). 
+
 ## System Requirements and Sizing
 
 Simplyblock is designed for high-performance storage operations. Therefore, it has specific system requirements that
