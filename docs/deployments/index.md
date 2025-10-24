@@ -5,8 +5,8 @@ weight: 10300
 
 Simplyblock is a highly flexible storage solution. 
 
-Different Initiator (Host) Drivers (Kubernetes CSI, ProxMox, OpenStack) are available, and the cluster 
-deployment itself can be performed either into Kubernetes (disaggregated or [hyper-converged](../architecture/concepts/hyper-converged.md)) 
+Different initiator (host) drivers (Kubernetes CSI, Proxmox, OpenStack) are available. The storage cluster 
+deployment can be installed into Kubernetes (disaggregated or [hyper-converged](../architecture/concepts/hyper-converged.md)) 
 or via Docker (also called "Plain Linux" deployment). The Docker-based deployment is fully 
 deployed and managed via the Simplyblock CLI or API, minimal Docker knowledge is required. 
 
@@ -15,16 +15,13 @@ deployed and managed via the Simplyblock CLI or API, minimal Docker knowledge is
 Each storage cluster requires a control plane to run. Multiple storage clusters may be connected to a single control 
 plane. The deployment of the control plane must happen before a storage cluster deployment. 
 The control plane can be installed into a Kubernetes Cluster or on Plain Linux VMs (using Docker internally).
-For details, see the
-[Control Plane Deployment on VM](install-on-linux/install-cp.md) or 
-[Install Control Plane on Kubernetes](kubernetes/k8s-storage plane.md)
+For details, see the [Control Plane Deployment on VM](install-on-linux/install-cp.md) or [Install Control Plane on Kubernetes](kubernetes/k8s-storage-plane.md)
 
 ## Storage Node Installation
 
-For details on how to install the storage cluster into Plain Linux, see
-[Install Simplyblock Storage Nodes on Linux](install-on-linux/install-sp.md). 
-For installation of Storage Nodes into Kubernetes, see here:
-[Install Storage Nodes on Kubernetes](kubernetes/k8s-control plane.md)
+For details on how to install the storage cluster into Plain Linux, see [Install Simplyblock Storage Nodes on Linux](install-on-linux/install-sp.md).
+
+For installation of Storage Nodes into Kubernetes, see here: [Install Storage Nodes on Kubernetes](kubernetes/k8s-control-plane.md)
 
 ## Installation of Drivers
 
@@ -37,7 +34,7 @@ life cycle automation is performed by the orchestrator-specific Simplyblock driv
 
 - On Kubernetes: [Simplyblock CSI Driver](kubernetes/install-csi.md) 
 - On Proxmox: [Proxmox Integration](proxmox/index.md) 
-- On OpenStack: [Cinder Driver]()  
+- On OpenStack: [Cinder Driver](openstack/index.md)
 
 ## System Requirements and Sizing
 
