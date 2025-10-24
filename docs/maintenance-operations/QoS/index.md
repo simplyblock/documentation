@@ -1,6 +1,6 @@
 ---
-title: "Qos Definitions"
-weight: 10300
+title: "QoS Setup"
+weight: 15000
 ---
 
 QoS instruments are critical to organize, divide and control the overall cluster performance. 
