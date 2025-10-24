@@ -11,7 +11,6 @@ modprobe nvme-tcp
 modprobe nvme-rdma
 ```
 
-
 When loading the NVMe/TCP or NVMe/RDMA driver, the NVMe over Fabrics driver automatically get loaded too, as the former depends on its
 provided foundations.
 
