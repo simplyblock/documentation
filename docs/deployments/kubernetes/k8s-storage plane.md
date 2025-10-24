@@ -192,12 +192,6 @@ mode. The most important ones are:
 !!! warning
     The resources consumed by simplyblock are exclusively used and have to be aligned with resources required by other
     workloads. For further information, see [Minimum System Requirements](../deployment-preparation/system-requirements.md#minimum-system-requirements).
-    
-    To calculate the required storage node size, there is a dedicated [Node Sizing](../deployment-preparation/node-sizing.md)
-    guide.
-
-    Minimum requirements, as well as vCPU sizing guidelines contain resources for the containers used by simplyblock and
-    a minimal operating system itself. No other user or system processes are part of the given sizing recommendations.
 
 !!! info
     The RAM requirement itself is split in between huge page memory and system memory. However, this is transparent to
