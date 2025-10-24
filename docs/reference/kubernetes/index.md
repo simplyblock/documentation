@@ -69,7 +69,7 @@ Additional, uncommonly configured CSI driver parameters:
 | `node.nodeSelector.value`           | Sets the value of nodeSelector for the CSI driver node.                                                        | `<empty>`             | 
 | `storageclass.volumeBindingMode`    | Sets when PersistentVolumes are bound and provisioned.                                                         | `WaitForFirstConsumer`| 
 | `storageclass.zoneClusterMap`       | Sets the mapping between Kubernetes zones and SimplyBlock clusters for multi-cluster or multi-zone deployments.| `{}`                  | 
-| `storageclass.allowedTopologyZones` | Sets the list of topology zones where the StorageClass is allowed to provision volumes.                        | `<empty>`             | 
+| `storageclass.allowedTopologyZones` | Sets the list of topology zones where the StorageClass is allowed to provision volumes.                        | `[]`                  | 
 
 ## Storage Node Parameters
 
