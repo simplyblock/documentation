@@ -20,14 +20,18 @@ Key characteristics of Logical Volumes include:
   workloads.
 - **Fault Tolerance:** Data is distributed across multiple nodes to prevent data loss and improve reliability.
 
-Two basic types of logical volumes are supported by Simplyblock:
+Two basic types of logical volumes are supported by simplyblock:
 
-- **NVMe-oF subsystems**: Each volume is backed by a separate set of queue pairs (3 per default) and each qpair has one network connections.
-  Volumes show up in Linux using ``lsblk`` as ``/dev/nvme0n2``, ``/dev/nvme1n1`` ...
+- **NVMe-oF Subsystems**: Each logical volume is backed by a separate set of queue pairs. By default, each subsystem 
+  provides three queue parts and one network connection.
 
-- **NVMe-oF Namespaces**: An nvme namespace is a feature similar to a logical partition of a drive, although
-  it is defined on the NVMe level (device or target).
-  Multiple (up to 32) namespaces can share a single subsystem and its queue pairs and connections.
-  This is more resource-efficient, but limits performance of individual volumes. It is useful, if many,
+  Volumes show up in Linux using `lsblk` as `/dev/nvme0n2`, `/dev/nvme1n1`, `/dev/nvmeXn1`, ...
+
+- **NVMe-oF Namespaces**: Each logical volume is backed by an NVMe namespace. A namespace is a feature similar to a
+  logical partition of a drive, although it is defined on the NVMe level (device or target). Up to 32 namespaces share
+  a single NVMe subsystem and its queue pairs and connections.
+
+  This is a more resource-efficient, but performance-limited, version of an individual volume. It is useful, if many,
   small volumes are required. Both methods can be combined in a single cluster.
-  Volumes show up in Linux using ``lsblk`` as ``/dev/nvme0n1``, ``/dev/nvme0n2`` ...
+
+  Volumes show up in Linux using `lsblk` as `/dev/nvme0n1`, `/dev/nvme0n2`, `/dev/nvme0nX`, ...
