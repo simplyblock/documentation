@@ -33,12 +33,13 @@ dedicated cores must be assigned exclusively to the virtual machines running sto
 Two deployment option are supported:
 
 - **Plain Linx**: In plain Linux mode, Storage Nodes are currently only deployed dis-aggregated (to separate storage hosts or VMs).
-  To operate Simplyblock under Plain Linux Deployment, basic knowledge on Docker is required, but all
+  To operate Simplyblock under Plain Linux Deployment, basic Docker knowledge is helpful, but all
   management is performed within the system via its CLI or API. This deployment option requires 
-  separate VMs for the control plane and a Rocky/RHEL/Alma-based Linux.
+  separate VMs for the control plane and a Rocky/RHEL/Alma-based Linux (current version: 9).
+
 - **Kubernetes**: In Kubernetes, both dis-aggregated deployments (dedicated workers or even clusters for storage nodes) or hyper-converged 
   deployments (combined with compute) are supported. A wide range of Kubernetes distros and OSes are supported.
-  Knowledge on administration of Kubernetes is required.
+  Kubernetes Knowledge is required.
 
   
 The minimum system requirements below concern simplyblock only and must be dedicated to simplyblock.
@@ -53,29 +54,34 @@ The following minimum system requirements resources must be exclusive to simplyb
 operating system or other processes. This includes vCPUs, RAM, locally attached virtual or physical NVMe devices,
 network bandwidth, and free space on the boot disk.
 
-| Node Type     | vCPU(s) | RAM   | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
-|---------------|---------|-------|--------------------------|---------------------|----------------|-----------------|
-| Storage Node  | 8       | 32 GB | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (2 for HA)    | 
-| Control Plane | 2       | 16 GB | -                        | 1 GBit/s            | 50 GB          | 1 (3 for HA)    | 
+| Node Type     | vCPU(s) | RAM (GB) | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
+|---------------|---------|----------|--------------------------|---------------------|----------------|-----------------|
+| Storage Node  | 8       | 6        | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (2 for HA)    | 
+| Control Plane | 2       | 16       | -                        | 1 GBit/s            | 35 GB          | 1 (3 for HA)    | 
+
+!!! Warning
+    Most of the disk storage used for the Control Plane is for the Observability Stack and Statistics.
+    The exact amount of disk storage depends on the number of storage nodes, the number of volumes and
+    the retention period chosen. The default retention period is 7 days.
 
  Control Plane can also be co-deployed with storage nodes to the same workers or hosts in Kubernetes.
  In such a deployment, resource requirements spread out across multiple workers in the cluster.
  If you have at least three worker nodes, assume a minimum of 6 GB of extra RAM per worker and 25GB of 
  free disk space per worker for the control plane. Minimum requirements per replica:
 
-| Service                       | vCPU | RAM (GB) | Disk (GB) |                                                                                                                      |
-|-------------------------------|------|----------|-----------|
-| Key-Value Store               |  1   |    4     |  5        |
-| Observability Stack           |  4   |    8     |  25       | 
-| Web-API (daemonset)           |  1   |    2     |  0.5      |
-| sb-services                   |  1   |    2     |  0.5      |
+| Service             | vCPU(s) | RAM (GB) | Disk (GB) |  
+|---------------------|---------|----------|-----------|
+| Sb-Meta-Database    | 1       | 4        | 5         |  
+| Observability Stack | 4       | 8        | 25        | 
+| Sb-Web-API          | 1       | 2        | 0.5       | 
+| Sb-Services         | 1       | 2        | 0.5       | 
 
 !!! Info
     3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
     The Observability Stack can optionally be replicated and the sb-services run without replication.  
 
 !!! Warning
-    On storage nodes, the vCPUs must be dedicated to simplyblock and will be isolated from the operating system. No
+    On storage nodes, required vCPUs will be automatically isolated from the operating system. No
     kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs.
 
 !!! Info
@@ -95,15 +101,15 @@ BIOS or UEFI setup services.
 
 ## NVMe Devices
 
-NVMe devices must support 4KB native block size and should be sized between 1.9 TiB and 7.68 TiB.
+NVMe devices must support 4KB native block size and are recommended to be sized between 1.9 TiB and 7.68 TiB.
+Large NVMe devices are supported, but performance per TiB is lower and rebalancing can take longer.
 
-Within a single cluster, all NVMe devices must be of the same size.
+In general, all NVMe used in a single cluster should exhibit a similar performance profile per TB.
+Therefore within a single cluster, all NVMe devices are recommended to be of the same size,
+but this is not a hard requirement.
 
-Simplyblock is SSD-vendor agnostic but recommends using NVMe devices of the only one vendor and model within a single
-cluster. While this is not a hard requirement, it is highly recommended.
-
-If new (replacement) devices are faster than existing installed ones, cluster performance converges to devices with the
-lowest performance.
+Clusters are lightweight, and it is recommended to use different clusters for different type of 
+hardware (NVMe, Networking, Compute) with a different performance profile per TiB of Raw Storage. 
 
 !!! Warning
     Simplyblock only works with non-partitioned, exclusive NVMe devices (virtual via SRV-IO or physical) as its backing
