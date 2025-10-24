@@ -3,11 +3,11 @@ title: "Install Simplyblock Storage Plane on Kubernetes"
 weight: 50000
 ---
 
-As described earlier, Simplyblock on Kubernetes installs in the following sequence: control plane, storage nodes 
-and CSI driver.
+When installed on Kubernetes, simplyblock installations consist of three parts, the control plane, the storage nodes 
+and the CSI driver.
 
 !!! info
-    In a Kubernetes deployment, not each Kubernetes worker node has to become part of the storage cluster.
+    In a Kubernetes deployment, not all Kubernetes workers have to become part of the storage cluster.
     Simplyblock uses node labels to identify Kubernetes workers that are deemed as storage hosting instances.
 
     It is common to add dedicated Kubernetes worker nodes for storage to the same
@@ -70,9 +70,9 @@ ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
 !!! info
-    It is possible to configure qos limits on a storage pool. All volumes assigned to this pool will collectively be capped
-    by this limit, but do not have to be limited individually. In fact, if pool-level qos is active, it is not 
-    allowed to set volume-level qos in the storage class!
+    It is possible to configure QoS limits on a storage pool level. This limit will collectively cap all volumes
+    assigned to this pool without being limited individually. In fact, if pool-level QoS is active, it is not 
+    allowed to set volume-level QoS in the storage class!
 
 Example:
 
