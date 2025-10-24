@@ -12,3 +12,7 @@ requested version, an upgrade to a further supported version must be executed fi
 | Requested Version | Installed Version | 
 |-------------------|-------------------|
 | 25.5.x            | 25.5.x, 25.3-PRE  |
+| 25.7.7            | 25.7.5.           | 
+| 25.10.1           | 25.7.5., 25.7.7.  |
+
+
