@@ -25,7 +25,7 @@ Stripe-size is an optional erasure coding schema. Each cluster has a default sch
 can optionally use an alternative schema. However, the schema must "fit" into the cluster: 
 n+k must be equal to (or better smaller) than the number of nodes in the cluster.
 
-See [Erasure Coding Configuration](deployment-preparation/erasure-coding-scheme.md) for details.
+See [Erasure Coding Configuration](../deployment-preparation/erasure-coding-scheme.md) for details.
 
 See here how to configure [Service Classes] and [Qos Limits](../../maintenance-operations/QoS/Limiting%20IOPS%20and%20Throughput.md). 
 
