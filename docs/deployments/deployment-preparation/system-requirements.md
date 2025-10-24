@@ -31,9 +31,8 @@ dedicated cores must be assigned exclusively to the virtual machines running sto
 
 Two deployment option are supported:
 
-- **Plain Linx**: In plain Linux mode (also called Docker mode), 
-  All nodes are deployed to separate hosts (storage nodes: usually bare-metal, control plane: usually VMs)
-  running Rocky/RHEL/Alma-based Linux (current version: 9).
+- **Plain Linux**: In this mode (we call it also docker mode), all nodes are deployed to 
+  separate hosts (storage nodes: usually bare-metal, control plane: usually VMs).
   Basic Docker knowledge is helpful, but all management is performed within the system via its CLI or API. 
 
 - **Kubernetes**: In Kubernetes, both dis-aggregated deployments (dedicated workers or even clusters for storage nodes) or hyper-converged 
@@ -72,7 +71,7 @@ Simplyblock Data Plane (spdk_80xx containers) and the rest will remain under con
     For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
 
 !!! Info
-    It is recommended to deploy multiple storage nodes per storage host if the host has more than one NUMA socket, or if
+    It is recommended to deploy multiple storage nodes per storage host if
     there are more than 32 cores available per socket.
     During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the
     recommended deployment strategy, including the recommended amount of storage nodes per storage host based on the

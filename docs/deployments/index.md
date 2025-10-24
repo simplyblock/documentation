@@ -31,7 +31,7 @@ For installation of Storage Nodes into Kubernetes, see here:
 Simplyblock logical volumes are NVMe over TCP or RDMA (ROCEv2) volumes. 
 They are attached to the Linux kernel via the provided `nvme-tcp` or `nvme-rdma`
 modules and managed via the `nvme-cli` tool. For more information, see
-  [Bare-Metal Attach](baremetal/index.md).
+  [Linux NVMe-oF Attach](baremetal/index.md).
 On top of the NVMe-oF devices, which show up as linux block devices such as `/dev/nvme1n1`,  
 life cycle automation is performed by the orchestrator-specific Simplyblock drivers: 
 
