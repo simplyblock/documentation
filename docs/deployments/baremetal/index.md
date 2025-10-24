@@ -3,7 +3,8 @@ title: "Plain Linux Initiators"
 weight: 20200
 ---
 
-Simplyblock storage can be attached over the network to Linux hosts which are not running Kubernetes or Proxmox. 
+Simplyblock storage can be attached over the network to Linux hosts which are not running Kubernetes, Proxmox or
+OpenStack.
 
 While no simplyblock components must be installed on these hosts, some OS-level configuration steps are required.
 Those manual steps are typically taken care of by the CSI driver or Proxmox integration.
@@ -25,7 +26,9 @@ volumes.
         sudo apt install -y nvme-cli
         ```
 
-### Load the NVMe over Fabrics Kernel Modules 
+### Load the NVMe over Fabrics Kernel Modules
+
+For NVMe over TCP and NVMe over RoCE:
 
 {% include 'prepare-nvme-tcp.md' %}
 
@@ -57,13 +60,28 @@ To create a new logical volume, the following command can be run on any control 
   --max-rw-iops <IOPS> \
   --max-r-mbytes <THROUGHPUT> \
   --max-w-mbytes <THROUGHPUT> \
+  --ndcs <DATA CHUNKS IN STRIPE> \
+  --npcs <PARITY CHUNKS IN STRIPE>
+  --fabric {tcp, rdma}
+  --lvol-priority-class <1-6>
   <VOLUME_NAME> \
   <VOLUME_SIZE> \
   <POOL_NAME>
 ```
 
+!!! info
+    The parameters `ndcs` and `npcs` define the erasure-coding schema (e.g., `--ndcs=4 --npcs=2`). The settings are
+    optional. If not specified, the cluster default is chosen. Valid for `ndcs` are 1, 2, and 4, and for `npcs` 0,1,
+    and 2. However, it must be considered that the number of cluster nodes must be equal to or larger than (`ndcs` +
+    `npcs`).
+
+    The parameter `--fabric` defines the fabric by which the volume is connected to the cluster. It is optional and the
+    default is `tcp`. The fabric type `rdma` can only be chosen for hosts with an RDMA-capable NIC and for clusters that
+    support RDMA. A priority class is optional as well and can be selected only if the cluster defines it. A cluster can
+    define 0-6 priority classes. The default is 0.
+
 ```plain title="Example of creating a logical volume"
-{{ cliname }} volume add lvol01 1000G test  
+{{ cliname }} volume add --ndcs 2 --ndcs 1 --fabric tcp lvol01 1000G test  
 ```
 
 In this example, a logical volume with the name `lvol01` and 1TB of thinly provisioned capacity is created in the pool
