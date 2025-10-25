@@ -88,7 +88,7 @@ It is also possible to label additional nodes at a later stage to add them to th
 a storage cluster always requires at least two new nodes to be added as part of the same expansion operation.
 
 ```bash title="Label the Kubernetes worker node"
-kubectl label nodes <NODE_NAME> type=simplyblock-storage-plane
+kubectl label nodes <NODE_NAME> io.simplyblock.node-type=simplyblock-storage-plane
 ```
 
 ## Networking Configuration
