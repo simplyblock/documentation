@@ -51,7 +51,7 @@ Each cluster has a default schema, but each volume can optionally use an alterna
 
 See the [Erasure Coding Configuration](../../deployments/deployment-preparation/erasure-coding-scheme.md) for more details.
 
-See here how to configure [Service Classes] and [Qos Limits](../../maintenance-operations/qos/Limiting%20IOPS%20and%20Throughput.md). 
+See here how to configure [Service Classes] and [Qos Limits](../../usage/qos/limiting-iops-and-throughput.md). 
 
 ##Namespace Volumes
 

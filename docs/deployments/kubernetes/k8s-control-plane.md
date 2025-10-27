@@ -35,4 +35,4 @@ kubectl -n simplyblock exec -it simplyblock-admin-control-<uuid> -- bash
 {{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --mode=kubernetes
 ```
 
-Additional parameters for the cluster create command can be found [here](../cluster-deployment-options.md).
+Additional parameters for the cluster create command can be found at [Cluster Deployment Options](../cluster-deployment-options.md).
