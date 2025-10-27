@@ -240,7 +240,7 @@ metadata:
 provisioner: csi.simplyblock.io
 parameters:
   cluster_id: "luster-uuid-1"
-  ...
+  ... other parameters
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
@@ -255,7 +255,7 @@ metadata:
 provisioner: csi.simplyblock.io
 parameters:
   cluster_id: "cluster-uuid-2"
-  ...
+  ... other parameters
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
@@ -289,7 +289,7 @@ provisioner: csi.simplyblock.io
 parameters:
   zone_cluster_map: |
     {"us-east-1a":"cluster-uuid-1","us-east-1b":"cluster-uuid-2"}
-  ...
+  ... other parameters
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
