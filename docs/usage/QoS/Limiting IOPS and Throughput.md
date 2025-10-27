@@ -1,6 +1,6 @@
 ---
 title: "QoS  Limits"
-weight: 10300
+weight: 35000
 ---
 
 QoS Limits (IOPS, R,W and RW limits) can be chosen on both volume and pool level.
@@ -17,9 +17,9 @@ all volumes will be relatively throttled.
 In Kubernetes, storage class-level QoS Settings are not allowed if the storage class is connected
 to a pool with QoS settings.
 
-Therefore, in kubernetes, if the [storage class](../../deployments/kubernetes/csi-features.md) references any pool, 
+Therefore, in kubernetes, if the [storage class](../simplyblock-csi/storage-class.md) references any pool, 
 which has Qos limits attached, it is not allowed to add them to the storage class as well. 
-The same applies to [Openstack](../../deployments/OpenStack/index.md) QoS Settings on the Volume Type.
+The same applies to [Openstack](../../deployments/openstack/index.md) QoS Settings on the Volume Type.
 
 !!! Warning  
     Volumes for which pool-level QoS is active must be located on the same storage node 
