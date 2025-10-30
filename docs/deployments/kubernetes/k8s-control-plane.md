@@ -23,7 +23,7 @@ helm upgrade --install sbcli --namespace simplyblock --create-namespace ./
 Before running the Helm install, you can edit the ``values.yaml`` file to match your specific configuration —
 for example, to set cluster parameters, storage options, or node selectors according to your environment.
 
-{% include 'control-plane-network-port-table.md' %}
+{% include 'control-plane-network-port-table-k8s.md' %}
 
 Find and exec into the admin control pod (replace the pod name if different):
 
