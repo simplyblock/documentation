@@ -100,17 +100,7 @@ Ports using the same source and target networks (VLANs) will not require any add
 Opening ports may be required between the control plane and storage networks as those typically reside on different
 VLANs.
 
-| Service                   | Direction | Source => Target Network | Port(s)   | Protocol(s) |
-|---------------------------|-----------|--------------------------|-----------|-------------|
-| ICMP                      | ingress   | control => storage       | -         | ICMP        |
-| Storage node API          | ingress   | control => storage mgmt  | 5000      | TCP         |
-| spdk-http-proxy           | ingress   | control => storage mgmt  | 8080-8180 | TCP         |
-| hublvol-nvmf-subsys-port  | ingress   | storage => storage       | 9030-9059 | TCP         |
-| internal-nvmf-subsys-port | ingress   | storage => storage       | 9060-9099 | TCP         |
-| lvol-nvmf-subsys-port     | ingress   | csi-client => storage    | 9100-9200 | TCP         |
-| SSH                       | ingress   | admin => storage         | 22        | TCP         |
-| FoundationDB              | egress    | storage mgmt => control  | 4500      | TCP         |
-| Graylog                   | egress    | storage mgmt => control  | 12202     | TCP         |
+{% include 'storage-plane-network-port-table-k8s.md' %}
 
 ## Installing CSI Driver and Storage Nodes via Helm
 
