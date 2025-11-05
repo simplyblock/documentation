@@ -20,7 +20,7 @@ upgrade as part of a maintenance window is recommended. They should be an online
 
 Before starting a cluster upgrade, all storage and control plane nodes must update the CLI ({{ cliname }}).
 
-This can be achieved using the same command used during the intial installation. It is important, though, to provide
+This can be achieved using the same command used during the initial installation. It is important, though, to provide
 the `--upgrade` parameter to pip to ensure an upgrade to happen.
 
 ```bash
@@ -47,8 +47,7 @@ issue the following commands.
 
 !!! warning
     Ensure not all storage nodes are offline at the same time. Storage nodes must be updated in a round-robin fashion. In
-    between, it is important to wait until the cluster has stabilized again and potential rebalancing operations have
-    finished before starting to upgrade the next storage node.
+    between, it is important to wait until the cluster is in `ACTIVE` state again and finished with the `REBALANCING` task.
 
 ```bash
 sudo {{ cliname }} storage-node suspend <NODE_ID>

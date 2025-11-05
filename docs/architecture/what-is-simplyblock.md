@@ -11,7 +11,24 @@ Storage Interface (CSI) and ProxMox drivers.
 
 - **Environment Agnostic:** Simplyblock operates seamlessly across major cloud providers, regional, and specialized
   providers, bare-metal and virtual provisioners, and private clouds, including both virtualized and bare-metal
-- Kubernetes environments.
+  Kubernetes environments.
+
+- **NVMe-Optimized:** Simplyblock is built from scratch around NVMe. All internal and external storage access is
+  entirely based on NVMe and NVMe over Fabric (TCP, RDMA). This includes local back-storage on storage nodes,
+  host-to-cluster, and node-to-node traffic. Together with the user-space data plane, distributed data placement, and
+  advanced quality of service (QoS) and other characteristics, this makes simplyblock the storage platform with the most
+  advanced performance guarantees in hyperconverged solutions available today.
+
+- **User-Space Data Plane:** Simplyblock data plane is built entirely in user-space with an interrupt-free, lockless,
+  zero-copy architecture with thread-to-core pinning. The hot data path entirely avoids Linux kernel involvement, data
+  copies, dynamic thread scheduling, and inter-thread synchronization. Its deployment is fully numa-node-aware.
+
+- **Advanced QoS:** Simplyblock provides not only IOPS or throughput-based caps, but also true QoS service classes,
+  effectively isolating IO traffic.
+
+- **Distributed Data Placement:** Simplyblock's advanced data placement, which is based on small, fixed-size data
+  chunks, ensures a perfectly balanced utilization of storage, compute, and network bandwidth, avoiding any performance
+  bottlenecks local to specific nodes. This provides almost linear performance scalability for the cluster.
 
 - **Containerized Architecture:** The solution comprises:
     - *Storage Nodes:* Container stacks delivering distributed data services via NVMe over Fabrics (NVMe over TCP),

@@ -10,11 +10,11 @@ been added to the control plane, and a storage pool must have been created.
 
 This section explains how to install a CSI driver and connect it to a disaggregated storage cluster, which must already
 exist prior to the CSI driver installation. The disaggregated cluster must be installed onto
-[Plain Linux Hosts](../install-simplyblock/install-sp.md) or into an [Existing Kubernetes Cluster](k8s-disaggregated.md).
+[Plain Linux Hosts](../install-on-linux/install-sp.md) or into an [Existing Kubernetes Cluster](k8s-control-plane.md).
 It must not be co-located on the same Kubernetes worker nodes as the CSI driver installation. 
 
 For co-located (hyper-converged) deployment (which includes the CSI driver and storage node deployment), see
-[Hyper-Converged Deployment](k8s-hyperconverged.md).
+[Hyper-Converged Deployment](k8s-storage-plane.md).
 
 ## CSI Driver System Requirements
 
@@ -154,7 +154,8 @@ Please note that the `storagenode.create? parameter must be set to `false` (the 
 
 ## Multi Cluster Support
 
-The Simplyblock CSI driver now offers **multi-cluster support**, allowing to connect with multiple simplyblock clusters.
+The Simplyblock CSI driver now offers **multi-cluster support** and **zone-aware configurations**, allowing to connect with multiple simplyblock clusters based on ClusterID 
+or based on their topology zone.
 Previously, the CSI driver could only connect to a single cluster.
 
 To enable interaction with multiple clusters, there are two key changes:
@@ -224,10 +225,82 @@ kubectl -n simplyblock edit secret simplyblock-csi-secret-v2
 
 ### Using Multi Cluster
 
-With multi-cluster support enabled, a separate storage class per simplyblock cluster is required which defines the
-individual cluster references. This provides clear segregation and management.
+#### Option 1: Cluster ID–Based Method (One StorageClass per Cluster)
+
+In this approach, each SimplyBlock cluster has its own dedicated StorageClass that specifies which cluster to use for provisioning.
+This is ideal for setups where workloads are manually directed to specific clusters.
 
 For example:
 
-- `simplyblock-csi-sc-cluster1` (for `cluster_id: 4ec308a1-...`)
-- `simplyblock-csi-sc-cluster2` (for `cluster_id: YOUR_NEW_CLUSTER_ID`)
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simplyblock-csi-sc-cluster1
+provisioner: csi.simplyblock.io
+parameters:
+  cluster_id: "luster-uuid-1"
+  ... other parameters
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+```
+
+You can define another StorageClass for a different cluster:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simplyblock-csi-sc-cluster2
+provisioner: csi.simplyblock.io
+parameters:
+  cluster_id: "cluster-uuid-2"
+  ... other parameters
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+```
+
+Each StorageClass references a unique cluster_id.
+The CSI driver uses that ID to determine which SimplyBlock cluster to connect to.
+
+#### Option 2: Zone-Aware Method (Automatic Multi-Cluster Selection)
+
+This approach allows a single StorageClass to automatically select the appropriate SimplyBlock cluster based on the Kubernetes zone where the workload runs.
+It is recommended for multi-zone Kubernetes deployments that span multiple SimplyBlock clusters.
+
+`storageclass.zoneClusterMap`
+
+Sets the mapping between Kubernetes zones and SimplyBlock cluster IDs.
+Each zone is associated with one cluster.
+
+`storageclass.allowedTopologyZones`
+
+Sets the list of zones where the StorageClass is permitted to provision volumes.
+This ensures that scheduling aligns with the clusters defined in `zoneClusterMap`.
+
+example:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simplyblock-csi-sc
+provisioner: csi.simplyblock.io
+parameters:
+  zone_cluster_map: |
+    {"us-east-1a":"cluster-uuid-1","us-east-1b":"cluster-uuid-2"}
+  ... other parameters
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+allowedTopologies:
+- matchLabelExpressions:
+  - key: topology.kubernetes.io/zone
+    values:
+      - us-east-1a
+      - us-east-1b
+```
+
+This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling zone.

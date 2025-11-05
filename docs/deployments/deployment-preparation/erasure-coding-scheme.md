@@ -10,6 +10,11 @@ trade-offs between redundancy and storage utilization will help determine the be
 have been performance-optimized by specialized algorithms. There is, however, a remaining capacity-to-performance
 trade-off.
 
+!!! Info
+    Starting from 25.10.1, it is possible to select alternative erasure coding schemas per volume. However, this feature
+    is still experimental (technical preview) and not recommended for production. A cluster must provide sufficient
+    nodes for the largest schema used in any of the volumes (e.g., 4+2: min. 6 nodes, recommended 7 nodes).
+
 ## Erasure Coding Schemes
 
 Erasure coding (EC) is a **data protection mechanism** that distributes data and parity across multiple storage nodes,

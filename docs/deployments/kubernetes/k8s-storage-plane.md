@@ -1,31 +1,19 @@
 ---
-title: "Hyper-Converged Setup"
+title: "Install Simplyblock Storage Plane on Kubernetes"
 weight: 50000
 ---
 
-In the hyper-converged or hybrid deployment, the CSI driver (node-part) and storage nodes are at least partially
-co-located with other workloads on the same hosts (Kubernetes worker nodes).
+When installed on Kubernetes, simplyblock installations consist of three parts, the control plane, the storage nodes 
+and the CSI driver.
 
 !!! info
-    In a hyper-converged or hybrid deployment, not each Kubernetes worker node has to become of the storage cluster.
+    In a Kubernetes deployment, not all Kubernetes workers have to become part of the storage cluster.
     Simplyblock uses node labels to identify Kubernetes workers that are deemed as storage hosting instances.
 
-    Specifically in hybrid deployments, it is common to add dedicated Kubernetes worker nodes for storage to the same
-    Kubernetes cluster, often separated into a different node pool, and using a different type of host. In this case,
+    It is common to add dedicated Kubernetes worker nodes for storage to the same
+    Kubernetes cluster. They can be separated into a different node pool, and using a different type of host. In this case,
     it is important to remember to taint the Kubernetes worker accordingly to prevent other services from being
     scheduled on this worker.
-
-As for the plain CSI driver installation, the control plane must be present and a storage cluster must have been
-created.
-
-However, no storage nodes have to be attached to the cluster yet.
-
-## CSI Driver and Storage Node System Requirements
-
-System requirements for CSI-only (node part) installation can be found
-in [Install CSI Driver](install-csi.md#csi-driver-system-requirements).
-However, for nodes, which serve as storage nodes, must meet the
-following [System Requirements](../deployment-preparation/system-requirements.md).
 
 ## Retrieving Credentials
 
@@ -81,6 +69,17 @@ The last line of a successful storage pool creation returns the new pool id.
 ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
+!!! info
+    It is possible to configure QoS limits on a storage pool level. This limit will collectively cap all volumes
+    assigned to this pool without being limited individually. In fact, if pool-level QoS is active, it is not 
+    allowed to set volume-level QoS in the storage class!
+
+Example:
+
+```bash title="Create a Storage Pool with QoS Limits"
+{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID> --max-iops 10000 --max-rw-mb 500 --max-w-mb 100
+```
+
 ## Labeling Nodes
 
 Before the Helm Chart can be installed, it is required to label all Kubernetes worker nodes deemed as storage nodes.
@@ -89,7 +88,7 @@ It is also possible to label additional nodes at a later stage to add them to th
 a storage cluster always requires at least two new nodes to be added as part of the same expansion operation.
 
 ```bash title="Label the Kubernetes worker node"
-kubectl label nodes <NODE_NAME> type=simplyblock-storage-plane
+kubectl label nodes <NODE_NAME> io.simplyblock.node-type=simplyblock-storage-plane
 ```
 
 ## Networking Configuration
@@ -101,17 +100,7 @@ Ports using the same source and target networks (VLANs) will not require any add
 Opening ports may be required between the control plane and storage networks as those typically reside on different
 VLANs.
 
-| Service                   | Direction | Source => Target Network | Port(s)   | Protocol(s) |
-|---------------------------|-----------|--------------------------|-----------|-------------|
-| ICMP                      | ingress   | control => storage       | -         | ICMP        |
-| Storage node API          | ingress   | control => storage mgmt  | 5000      | TCP         |
-| spdk-http-proxy           | ingress   | control => storage mgmt  | 8080-8180 | TCP         |
-| hublvol-nvmf-subsys-port  | ingress   | storage => storage       | 9030-9059 | TCP         |
-| internal-nvmf-subsys-port | ingress   | storage => storage       | 9060-9099 | TCP         |
-| lvol-nvmf-subsys-port     | ingress   | csi-client => storage    | 9100-9200 | TCP         |
-| SSH                       | ingress   | admin => storage         | 22        | TCP         |
-| FoundationDB              | egress    | storage mgmt => control  | 4500      | TCP         |
-| Graylog                   | egress    | storage mgmt => control  | 12202     | TCP         |
+{% include 'storage-plane-network-port-table-k8s.md' %}
 
 ## Installing CSI Driver and Storage Nodes via Helm
 
@@ -193,12 +182,6 @@ mode. The most important ones are:
 !!! warning
     The resources consumed by simplyblock are exclusively used and have to be aligned with resources required by other
     workloads. For further information, see [Minimum System Requirements](../deployment-preparation/system-requirements.md#minimum-system-requirements).
-    
-    To calculate the required storage node size, there is a dedicated [Node Sizing](../deployment-preparation/node-sizing.md)
-    guide.
-
-    Minimum requirements, as well as vCPU sizing guidelines contain resources for the containers used by simplyblock and
-    a minimal operating system itself. No other user or system processes are part of the given sizing recommendations.
 
 !!! info
     The RAM requirement itself is split in between huge page memory and system memory. However, this is transparent to

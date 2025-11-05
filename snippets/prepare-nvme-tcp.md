@@ -7,7 +7,11 @@ when using simplyblock, the driver needs to be loaded.
 modprobe nvme-tcp
 ```
 
-When loading the NVMe/TCP driver, the NVMe over Fabrics driver automatically get loaded to, as the former depends on its
+```bash title="Loading the NVMe/RDMA driver"
+modprobe nvme-rdma
+```
+
+When loading the NVMe/TCP or NVMe/RDMA driver, the NVMe over Fabrics driver automatically get loaded too, as the former depends on its
 provided foundations.
 
 It is possible to check for successful loading of both drivers with the following command:
