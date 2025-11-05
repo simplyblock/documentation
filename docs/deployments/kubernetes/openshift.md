@@ -19,4 +19,5 @@ Before deploying Simplyblock components, grant the required SCC permissions:
 ```bash
 oc adm policy add-scc-to-group privileged system:serviceaccounts
 ```
+
 This step is mandatory to allow SPDK and storage-related containers to run with the privileges required for NVMe device access.

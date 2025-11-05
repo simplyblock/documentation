@@ -13,63 +13,63 @@ or upgrade.
 
 Commonly configured CSI driver parameters:
 
-| Parameter                               | Description                                                                                  | Default                                                     |
-|-----------------------------------------|----------------------------------------------------------------------------------------------|-------------------------------------------------------------|
-| `csiConfig.simplybk.uuid`               | Sets the simplyblock cluster id on which the volumes are provisioned.                        | ``                                                          | 
-| `csiConfig.simplybk.ip`                 | Sets the HTTP(S) API Gateway endpoint connected to the management node.                      | `https://o5ls1ykzbb.execute-api.eu-central-1.amazonaws.com` | 
-| `csiSecret.simplybk.secret`             | Sets the cluster secret associated with the cluster.                                         | ``                                                          | 
-| `logicalVolume.encryption`              | Specifies whether logical volumes should be encrypted.                                       | `False`                                                     | 
-| `csiSecret.simplybkPvc.crypto_key1`     | Sets the first encryption key.                                                               | ``                                                          | 
-| `csiSecret.simplybkPvc.crypto_key2`     | Sets the second encryption key.                                                              | ``                                                          | 
-| `logicalVolume.pool_name`               | Sets the storage pool name where logical volumes are created. This storage pool needs exist. | `testing1`                                                  | 
-| `logicalVolume.qos_rw_iops`             | Sets the maximum read-write IOPS. Zero means unlimited.                                      | `0`                                                         | 
-| `logicalVolume.qos_rw_mbytes`           | Sets the maximum read-write Mbps. Zero means unlimited.                                      | `0`                                                         | 
-| `logicalVolume.qos_r_mbytes`            | Sets the maximum read Mbps. Zero means unlimited.                                            | `0`                                                         | 
-| `logicalVolume.qos_w_mbytes`            | Sets the maximum write Mbps. Zero means unlimited.                                           | `0`                                                         | 
-| `logicalVolume.numDataChunks`           | Sets the number of Erasure coding schema parameter k (distributed raid).                     | `1`                                                         | 
-| `logicalVolume.numParityChunks`         | Sets the number of Erasure coding schema parameter n (distributed raid).                     | `1`                                                         | 
-| `logicalVolume.lvol_priority_class`     | Sets the logical volume priority class.                                                      | `0`                                                         | 
-| `logicalVolume.fabric`                  | Sets the NVMe-oF transport type.                                                             | `tcp`                                                       |
-| `logicalVolume.tune2fs_reserved_blocks` | Sets the percentage of disk blocks reserved for system.                                      | `0`                                                         | 
-| `logicalVolume.max_namespace_per_subsys`| Sets the maximum namespace per subsystem.                                                    | `1`                                                         | 
-| `storageclass.create`                   | Specifies whether to create a StorageClass.                                                  | `true`                                                      | 
-| `snapshotclass.create`                  | Specifies whether to create a SnapshotClass.                                                 | `true`                                                      | 
-| `snapshotcontroller.create`             | Specifies whether to create a snapshot controller and CRD for snapshot support it.           | `true`                                                      | 
+| Parameter                                | Description                                                                                  | Default                                                     |
+|------------------------------------------|----------------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| `csiConfig.simplybk.uuid`                | Sets the simplyblock cluster id on which the volumes are provisioned.                        |                                                             | 
+| `csiConfig.simplybk.ip`                  | Sets the HTTP(S) API Gateway endpoint connected to the management node.                      | `https://o5ls1ykzbb.execute-api.eu-central-1.amazonaws.com` | 
+| `csiSecret.simplybk.secret`              | Sets the cluster secret associated with the cluster.                                         |                                                             | 
+| `logicalVolume.encryption`               | Specifies whether logical volumes should be encrypted.                                       | `False`                                                     | 
+| `csiSecret.simplybkPvc.crypto_key1`      | Sets the first encryption key.                                                               |                                                             | 
+| `csiSecret.simplybkPvc.crypto_key2`      | Sets the second encryption key.                                                              |                                                             | 
+| `logicalVolume.pool_name`                | Sets the storage pool name where logical volumes are created. This storage pool needs exist. | `testing1`                                                  | 
+| `logicalVolume.qos_rw_iops`              | Sets the maximum read-write IOPS. Zero means unlimited.                                      | `0`                                                         | 
+| `logicalVolume.qos_rw_mbytes`            | Sets the maximum read-write Mbps. Zero means unlimited.                                      | `0`                                                         | 
+| `logicalVolume.qos_r_mbytes`             | Sets the maximum read Mbps. Zero means unlimited.                                            | `0`                                                         | 
+| `logicalVolume.qos_w_mbytes`             | Sets the maximum write Mbps. Zero means unlimited.                                           | `0`                                                         | 
+| `logicalVolume.numDataChunks`            | Sets the number of Erasure coding schema parameter k (distributed raid).                     | `1`                                                         | 
+| `logicalVolume.numParityChunks`          | Sets the number of Erasure coding schema parameter n (distributed raid).                     | `1`                                                         | 
+| `logicalVolume.lvol_priority_class`      | Sets the logical volume priority class.                                                      | `0`                                                         | 
+| `logicalVolume.fabric`                   | Sets the NVMe-oF transport type.                                                             | `tcp`                                                       |
+| `logicalVolume.tune2fs_reserved_blocks`  | Sets the percentage of disk blocks reserved for system.                                      | `0`                                                         | 
+| `logicalVolume.max_namespace_per_subsys` | Sets the maximum namespace per subsystem.                                                    | `1`                                                         | 
+| `storageclass.create`                    | Specifies whether to create a StorageClass.                                                  | `true`                                                      | 
+| `snapshotclass.create`                   | Specifies whether to create a SnapshotClass.                                                 | `true`                                                      | 
+| `snapshotcontroller.create`              | Specifies whether to create a snapshot controller and CRD for snapshot support it.           | `true`                                                      | 
 
 Additional, uncommonly configured CSI driver parameters:
 
-| Parameter                           | Description                                                                                                    | Default               |
-|-------------------------------------|----------------------------------------------------------------------------------------------------------------|-----------------------|
-| `driverName`                        | Sets an alternative driver name.                                                                               | `csi.simplyblock.io`  |
-| `serviceAccount.create`             | Specifies whether to create service account for spdkcsi-controller.                                            | `true`                |
-| `rbac.create`                       | Specifies whether to create RBAC permissions for the spdkcsi-controller.                                       | `true`                |
-| `controller.replicas`               | Sets the replica number of the spdkcsi-controller.                                                             | `1`                   |
-| `serviceAccount.create`             | Specifies whether to create service account for the csi controller.                                            | `true`                |
-| `rbac.create`                       | Specifies whether to create RBAC permissions for the csi controller.                                           | `true`                |
-| `controller.replicas`               | Sets the replica number of the csi controller.                                                                 | `1`                   |
-| `controller.tolerations.create`     | Specifies whether to create tolerations for the csi controller.                                                | `false`               | 
-| `controller.tolerations.effect`     | Sets the effect of tolerations on the csi controller.                                                          | `<empty>`             | 
-| `controller.tolerations.key`        | Sets the key of tolerations for the csi controller.                                                            | `<empty>`             | 
-| `controller.tolerations.operator`   | Sets the operator for the csi controller tolerations.                                                          | `Exists`              | 
-| `controller.tolerations.value`      | Sets the value of tolerations for the csi controller.                                                          | `<empty>`             | 
-| `controller.nodeSelector.create`    | Specifies whether to create nodeSelector for the csi controller.                                               | `false`               | 
-| `controller.nodeSelector.key`       | Sets the key of nodeSelector for the csi controller.                                                           | `<empty>`             | 
-| `controller.nodeSelector.value`     | Sets the value of nodeSelector for the csi controller.                                                         | `<empty>`             | 
-| `externallyManagedConfigmap.create` | Specifies whether a externallyManagedConfigmap should be created.                                              | `true`                | 
-| `externallyManagedSecret.create`    | Specifies whether a externallyManagedSecret should be created.                                                 | `true`                | 
-| `podAnnotations`                    | Annotations to apply to all pods in the chart.                                                                 | `{}`                  | 
-| `simplyBlockAnnotations`            | Annotations to apply to simplyblock Kubernetes resources like DaemonSets, Deployments, or StatefulSets.        | `{}`                  | 
-| `node.tolerations.create`           | Specifies whether to create tolerations for the CSI driver node.                                               | `false`               |  
-| `node.tolerations.effect`           | Sets the effect of tolerations on the CSI driver node.                                                         | `<empty>`             | 
-| `node.tolerations.key`              | Sets the key of tolerations for the CSI driver node.                                                           | `<empty>`             | 
-| `node.tolerations.operator`         | Sets the operator for the csi node tolerations.                                                                | `Exists`              | 
-| `node.tolerations.value`            | Sets the value of tolerations for the CSI driver node.                                                         | `<empty>`             | 
-| `node.nodeSelector.create`          | Specifies whether to create nodeSelector for the CSI driver node.                                              | `false`               | 
-| `node.nodeSelector.key`             | Sets the key of nodeSelector for the CSI driver node.                                                          | `<empty>`             | 
-| `node.nodeSelector.value`           | Sets the value of nodeSelector for the CSI driver node.                                                        | `<empty>`             | 
-| `storageclass.volumeBindingMode`    | Sets when PersistentVolumes are bound and provisioned.                                                         | `WaitForFirstConsumer`| 
-| `storageclass.zoneClusterMap`       | Sets the mapping between Kubernetes zones and SimplyBlock clusters for multi-cluster or multi-zone deployments.| `{}`                  | 
-| `storageclass.allowedTopologyZones` | Sets the list of topology zones where the StorageClass is allowed to provision volumes.                        | `[]`                  | 
+| Parameter                           | Description                                                                                                     | Default                |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------|------------------------|
+| `driverName`                        | Sets an alternative driver name.                                                                                | `csi.simplyblock.io`   |
+| `serviceAccount.create`             | Specifies whether to create service account for spdkcsi-controller.                                             | `true`                 |
+| `rbac.create`                       | Specifies whether to create RBAC permissions for the spdkcsi-controller.                                        | `true`                 |
+| `controller.replicas`               | Sets the replica number of the spdkcsi-controller.                                                              | `1`                    |
+| `serviceAccount.create`             | Specifies whether to create service account for the csi controller.                                             | `true`                 |
+| `rbac.create`                       | Specifies whether to create RBAC permissions for the csi controller.                                            | `true`                 |
+| `controller.replicas`               | Sets the replica number of the csi controller.                                                                  | `1`                    |
+| `controller.tolerations.create`     | Specifies whether to create tolerations for the csi controller.                                                 | `false`                | 
+| `controller.tolerations.effect`     | Sets the effect of tolerations on the csi controller.                                                           | `<empty>`              | 
+| `controller.tolerations.key`        | Sets the key of tolerations for the csi controller.                                                             | `<empty>`              | 
+| `controller.tolerations.operator`   | Sets the operator for the csi controller tolerations.                                                           | `Exists`               | 
+| `controller.tolerations.value`      | Sets the value of tolerations for the csi controller.                                                           | `<empty>`              | 
+| `controller.nodeSelector.create`    | Specifies whether to create nodeSelector for the csi controller.                                                | `false`                | 
+| `controller.nodeSelector.key`       | Sets the key of nodeSelector for the csi controller.                                                            | `<empty>`              | 
+| `controller.nodeSelector.value`     | Sets the value of nodeSelector for the csi controller.                                                          | `<empty>`              | 
+| `externallyManagedConfigmap.create` | Specifies whether a externallyManagedConfigmap should be created.                                               | `true`                 | 
+| `externallyManagedSecret.create`    | Specifies whether a externallyManagedSecret should be created.                                                  | `true`                 | 
+| `podAnnotations`                    | Annotations to apply to all pods in the chart.                                                                  | `{}`                   | 
+| `simplyBlockAnnotations`            | Annotations to apply to simplyblock Kubernetes resources like DaemonSets, Deployments, or StatefulSets.         | `{}`                   | 
+| `node.tolerations.create`           | Specifies whether to create tolerations for the CSI driver node.                                                | `false`                |  
+| `node.tolerations.effect`           | Sets the effect of tolerations on the CSI driver node.                                                          | `<empty>`              | 
+| `node.tolerations.key`              | Sets the key of tolerations for the CSI driver node.                                                            | `<empty>`              | 
+| `node.tolerations.operator`         | Sets the operator for the csi node tolerations.                                                                 | `Exists`               | 
+| `node.tolerations.value`            | Sets the value of tolerations for the CSI driver node.                                                          | `<empty>`              | 
+| `node.nodeSelector.create`          | Specifies whether to create nodeSelector for the CSI driver node.                                               | `false`                | 
+| `node.nodeSelector.key`             | Sets the key of nodeSelector for the CSI driver node.                                                           | `<empty>`              | 
+| `node.nodeSelector.value`           | Sets the value of nodeSelector for the CSI driver node.                                                         | `<empty>`              | 
+| `storageclass.volumeBindingMode`    | Sets when PersistentVolumes are bound and provisioned.                                                          | `WaitForFirstConsumer` | 
+| `storageclass.zoneClusterMap`       | Sets the mapping between Kubernetes zones and SimplyBlock clusters for multi-cluster or multi-zone deployments. | `{}`                   | 
+| `storageclass.allowedTopologyZones` | Sets the list of topology zones where the StorageClass is allowed to provision volumes.                         | `[]`                   | 
 
 ## Storage Node Parameters
 
@@ -129,8 +129,8 @@ Additional, uncommonly configured CSI driver parameters:
 ## Image Overrides
 
 !!! danger
-    Overriding pinned image tags can result in an unusable state.
-    The following parameters should only be used after an explicit request from simplyblock.  
+Overriding pinned image tags can result in an unusable state.
+The following parameters should only be used after an explicit request from simplyblock.
 
 | Parameter                              | Description                                               | Default                                                                 |
 |----------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------------------|

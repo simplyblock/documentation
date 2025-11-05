@@ -245,6 +245,7 @@ reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
+
 You can define another StorageClass for a different cluster:
 
 ```yaml
@@ -260,6 +261,7 @@ reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
+
 Each StorageClass references a unique cluster_id.
 The CSI driver uses that ID to determine which SimplyBlock cluster to connect to.
 
@@ -268,15 +270,15 @@ The CSI driver uses that ID to determine which SimplyBlock cluster to connect to
 This approach allows a single StorageClass to automatically select the appropriate SimplyBlock cluster based on the Kubernetes zone where the workload runs.
 It is recommended for multi-zone Kubernetes deployments that span multiple SimplyBlock clusters.
 
-``storageclass.zoneClusterMap``
+`storageclass.zoneClusterMap`
 
 Sets the mapping between Kubernetes zones and SimplyBlock cluster IDs.
 Each zone is associated with one cluster.
 
-``storageclass.allowedTopologyZones``
+`storageclass.allowedTopologyZones`
 
 Sets the list of zones where the StorageClass is permitted to provision volumes.
-This ensures that scheduling aligns with the clusters defined in ``zoneClusterMap``.
+This ensures that scheduling aligns with the clusters defined in `zoneClusterMap`.
 
 example:
 
@@ -300,4 +302,5 @@ allowedTopologies:
       - us-east-1a
       - us-east-1b
 ```
+
 This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling zone.
