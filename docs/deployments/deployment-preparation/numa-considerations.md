@@ -11,6 +11,7 @@ reaching across sockets to remote memory or devices. Simplyblock is fully NUMA-a
 On a host with more than one socket, by default one or two storage nodes are deployed per socket.
 
 Two storage nodes per socket are deployed if:
+
 - more than 32 vCPUs (cores) per NUMA socket are dedicated to simplyblock per socket
 - more than 10 NVMe devices are connected to the NUMA socket   
 
