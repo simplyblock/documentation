@@ -14,6 +14,6 @@ Three simplyblock components can be installed into existing Kubernetes environme
   In general, all Kubernetes deployments follow the same procedure. However, here are some specifics worth to mention around [openshift](./openshift.md) and [talos](./talos.md).
   Also, if you want to use volume-based e2e encryption with customer-managed keys, please see [here](./volume-encryption.md). 
   
-The Simplyblock [**CSI Driver**](./install-csi/md) can also be separately installed to connect to any external storage cluster
+The Simplyblock [**CSI Driver**](./install-csi.md) can also be separately installed to connect to any external storage cluster
 (this can be another hyperconverged or disaggregated cluster under Kubernetes or a Linux-based disaggregated deployment), see: [Install Simplyblock CSI](install-csi.md).
  
