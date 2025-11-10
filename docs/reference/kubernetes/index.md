@@ -108,6 +108,8 @@ Additional, uncommonly configured CSI driver parameters:
 | `storagenode.socketsToUse`                       | Sets the list of sockets to use.                                                            | `<empty>`                           | 
 | `storagenode.nodesPerSocket`                     | Sets the number of nodes to use per socket.                                                 | `<empty>`                           |
 | `storagenode.coresPercentage`                    | Sets the percentage of total cores (vCPUs) available to simplyblock storage node services.  | `<empty>`                           |
+| `storagenode.ubuntuHost`                         | Set to true if the worker node runs Ubuntu and needs the nvme-tcp kernel module installed.  | `false`                             |
+| `storagenode.openShiftCluster`                   | Set to true if it an OpenShift Cluster and needs core isolation.                            | `false`                             |
 
 ## Caching Node Parameters
 
