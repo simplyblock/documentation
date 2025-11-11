@@ -167,8 +167,12 @@ hardware (NVMe, networking, compute) or with a different performance profile per
 In production, simplyblock requires a __redundant network__ for storage traffic (e.g., via LACP, Stacked Switches, MLAG,
 active/active or active/passive NICs, STP or MSTP).
 
-Simplyblock implements NVMe over Fabrics (NVMe-oF), specifically NVMe over TCP, and works over any Ethernet
+Simplyblock implements NVMe over Fabrics (NVMe-oF), specifically NVMe over TCP, as well as NVMe over RDMA (ROcEv2) and works over any Ethernet
 interconnect.
+
+!!! Warning
+    For NVMe over TCP, use Jumbo-Frames whenever possible! The system is optimized for large frames and smaller MTU may cause performance issues, ACK timeouts and 
+    other network issues.
 
 !!! Recommendation
     Simplyblock highly recommends NICs with RDMA/ROCEv2 support such as NVIDIA Mellanox network adapters (ConnectX-6 or higher).
