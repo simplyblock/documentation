@@ -3,7 +3,9 @@ title: "OpenShift"
 weight: 40100
 ---
 
-When installing simplyblock on OpenShift, the process is very similar to Kubernetes, with one key difference — OpenShift requires explicitly granting the privileged Security Context Constraint (SCC) to service accounts to enable storage and SPDK operations.
+When installing simplyblock on OpenShift, the process is very similar to Kubernetes, with one key difference,
+OpenShift requires explicitly granting the privileged Security Context Constraint (SCC) to service accounts to enable
+storage and SPDK operations.
 
 !!! info
     In OpenShift deployments, not all worker nodes must host storage components.
@@ -16,8 +18,9 @@ Ensure your OpenShift cluster is operational and that you have administrator pri
 
 Before deploying Simplyblock components, grant the required SCC permissions:
 
-```bash
+```bash title="Grant SCC permissions"
 oc adm policy add-scc-to-group privileged system:serviceaccounts
 ```
 
-This step is mandatory to allow SPDK and storage-related containers to run with the privileges required for NVMe device access.
+This step is mandatory to allow SPDK and storage-related containers to run with the privileges required for NVMe device
+access.
