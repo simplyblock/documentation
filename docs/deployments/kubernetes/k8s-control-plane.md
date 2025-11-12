@@ -32,7 +32,9 @@ kubectl -n simplyblock exec -it simplyblock-admin-control-<uuid> -- bash
 ```
 
 ```bash title="Install Control Plane"
-{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --mode=kubernetes
+{{ cliname }} cluster create --mgmt-ip <WORKER_IP> --ha-type ha --mode kubernetes
 ```
+
+NB: You need to add additional parameter when using a Loadbalancer `--ingress-host-source loadbalancer` and `--dns-name <LB_INGRESS_DNS>`
 
 Additional parameters for the cluster create command can be found at [Cluster Deployment Options](../cluster-deployment-options.md).
