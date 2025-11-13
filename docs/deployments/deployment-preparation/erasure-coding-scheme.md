@@ -88,7 +88,7 @@ If you need more information on erasure coding, see the dedicated concept page f
     - Applications that can tolerate slightly **higher recovery times** compared to **1+2**.
     - Requires 5 or more nodes for full redundancy.
  
-  ### Scheme: 4+2
+### Scheme: 4+2
 
 - **Description:** In the _4+2 scheme_, data is divided into four fragments with two parity fragments, offering a great
   balance between redundancy and storage efficiency.
