@@ -1,6 +1,6 @@
 ---
 title: "Install Simplyblock Control Plane on Kubernetes"
-weight: 50000
+weight: 30000
 ---
 
 ```bash title="Install CLI"

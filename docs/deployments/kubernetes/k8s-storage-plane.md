@@ -1,6 +1,6 @@
 ---
 title: "Install Simplyblock Storage Plane on Kubernetes"
-weight: 50000
+weight: 30100
 ---
 
 When installed on Kubernetes, simplyblock installations consist of three parts, the control plane, the storage nodes 

@@ -1,6 +1,6 @@
 ---
 title: "Volume Encryption"
-weight: 40100
+weight: 40000
 ---
 
 {% include 'kubernetes-csi-encryption.md' %}
