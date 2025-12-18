@@ -59,19 +59,19 @@ simplyblock storage pools can be registered as long as their Proxmox names are d
 
 ```bash title="Enable Simplyblock as a Storage Provider"
 pvesm add simplyblock <NAME> \
-    --entrypoint=<CONTROL_PLANE_ADDR> \
+    --entrypoint=<CONTROL_PLANE_API_ENDPOINT> \
     --cluster=<CLUSTER_ID> \
     --secret=<CLUSTER_SECRET> \
     --pool=<STORAGE_POOL_NAME>
 ```
 
-| Parameter          | Description                                                                                                                                                                              |
-|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| NAME               | The name of the storage pool in Proxmox.                                                                                                                                                 |
-| CONTROL_PLANE_ADDR | The api address of the simplyblock control plane.                                                                                                                                        |
-| CLUSTER_ID         | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster list`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
-| CLUSTER_SECRET     | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ cliname }} cluster get-secret`](../../reference/cli/cluster.md#gets-a-clusters-secret). |
-| STORAGE_POOL_NAME  | The simplyblock storage pool name to attach.                                                                                                                                             | 
+| Parameter                   | Description                                                                                                                                                                    |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NAME                        | The name of the storage pool in Proxmox.                                                                                                                                       |
+| CONTROL_PLANE_API_ENDPOINT  | The API endpoint URL of the simplyblock control plane (e.g., `http://1.2.3.4/api/v1` or `https://controlplane.example.com/api/v1`).                                            |
+| CLUSTER_ID                  | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster list`](../../reference/cli/cluster.md#shows-the-cluster-list).                   |
+| CLUSTER_SECRET              | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ cliname }} cluster get-secret`](../../reference/cli/cluster.md#gets-a-clusters-secret). |
+| STORAGE_POOL_NAME           | The simplyblock storage pool name to attach.                                                                                                                                   |
 
 ## After Installation
 
