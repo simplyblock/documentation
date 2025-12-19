@@ -62,7 +62,8 @@ pvesm add simplyblock <NAME> \
     --entrypoint=<CONTROL_PLANE_API_ENDPOINT> \
     --cluster=<CLUSTER_ID> \
     --secret=<CLUSTER_SECRET> \
-    --pool=<STORAGE_POOL_NAME>
+    --pool=<STORAGE_POOL_NAME> \
+    --shared=1
 ```
 
 | Parameter                   | Description                                                                                                                                                                    |
