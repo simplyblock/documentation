@@ -36,7 +36,7 @@ function ensure_docker_image() {
     echo "ok."
     return
   fi
-  echo "failed. Please run ./doc-builder.sh build-image"
+  echo "failed. Please run ./doc-builder build-image"
   exit 1
 }
 
@@ -123,7 +123,7 @@ function build() {
 function deploy() {
   local version="$1"
   if [[ "${version}" == "" ]]; then
-    echo "Version missing. Please run as /doc-builder.sh build {version-name}"
+    echo "Version missing. Please run as /doc-builder build {version-name}"
     exit 1
   fi
 
