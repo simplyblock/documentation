@@ -36,7 +36,7 @@ jobs:
           echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
       - name: "Lock sbcli/sbcli version"
         run: |
-          echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
+          [ -f ./scripts/sbcli.lock ] || echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
       - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
         run: |
           ./doc-builder update-repositories
