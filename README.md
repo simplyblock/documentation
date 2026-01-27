@@ -385,8 +385,8 @@ free icons are available.
 ## 🤝 Contributing
 
 If you find issues, typos, or have an enhancement request, please file and
-[issue](https://github.com/simplyblock-io/documentation/issues) or create a
-[pull request](https://github.com/simplyblock-io/documentation/pulls).
+[issue](https://github.com/simplyblock/documentation/issues) or create a
+[pull request](https://github.com/simplyblock/documentation/pulls).
 
 Pull requests are automatically built to check that there is no issues in the documentation changes, such as broken
 links. After the pull request is successfully built, it will be reviewed and feedback provided or merged.

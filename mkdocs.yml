@@ -1,6 +1,6 @@
 site_name: Simplyblock Documentation
 site_url: https://docs.simplyblock.io/
-repo_url: https://github.com/simplyblock-io/documentation
+repo_url: https://github.com/simplyblock/documentation
 edit_uri: edit/main/docs/
 copyright: "&copy; 2024-2025 Simplyblock GmbH"
 extra:
@@ -12,7 +12,7 @@ extra:
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/company/simplyblock-io
     - icon: fontawesome/brands/github
-      link: https://github.com/simplyblock-io
+      link: https://github.com/simplyblock
     - icon: fontawesome/brands/x-twitter
       link: https://x.com/simplyblock_io
     - icon: fontawesome/brands/youtube
