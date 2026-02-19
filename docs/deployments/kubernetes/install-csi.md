@@ -169,7 +169,7 @@ To enable interaction with multiple clusters, there are two key changes:
 
 When the Simplyblock CSI driver is initially installed, only a single cluster can be referenced.
 
-```
+```bash title="Install the Simplyblock CSI driver via Helm"
 helm install simplyblock-csi ./ \
     --set csiConfig.simplybk.uuid=${CLUSTER_ID} \
     --set csiConfig.simplybk.ip=${CLUSTER_IP} \
@@ -210,7 +210,7 @@ To add a new cluster, the current secret must be retrieved from Kubernetes, edit
 and uploaded to the Kubernetes cluster.  
 
 
-```sh
+```bash
 # Save cluster secret to a file
 kubectl get secret simplyblock-csi-secret-v2 -o jsonpath='{.data.secret\.json}' | base64 --decode > secret.yaml
 
@@ -280,9 +280,7 @@ Each zone is associated with one cluster.
 Sets the list of zones where the StorageClass is permitted to provision volumes.
 This ensures that scheduling aligns with the clusters defined in `zoneClusterMap`.
 
-example:
-
-```yaml
+```yaml title="Example of zoneClusterMap usage"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -326,9 +324,7 @@ Each region is associated with one cluster.
 Sets the list of regions where the StorageClass is permitted to provision volumes.
 This ensures scheduling aligns with the clusters defined in `regionClusterMap`.
 
-example:
-
-```yaml
+```yaml title="Example of regionClusterMap usage"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -351,6 +347,7 @@ allowedTopologies:
 
 This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling region.
 
-> **Tip:** The keys inside `region_cluster_map` must match the region labels present on your Kubernetes nodes  
-> (typically `topology.kubernetes.io/region`). You can include as many regions as needed, each pointing to  
-> the cluster ID defined in `simplyblock-csi-secret-v2`.
+!!! tip
+    The keys inside `region_cluster_map` must match the region labels present on your Kubernetes nodes
+    (typically `topology.kubernetes.io/region`). You can include as many regions as needed, each pointing to
+    the cluster ID defined in `simplyblock-csi-secret-v2`.
