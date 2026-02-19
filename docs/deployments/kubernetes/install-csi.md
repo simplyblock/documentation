@@ -304,3 +304,53 @@ allowedTopologies:
 ```
 
 This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling zone.
+
+#### Option 3: Region-Aware Method (Automatic Multi-Cluster Selection)
+
+This approach allows a single StorageClass to automatically select the appropriate SimplyBlock cluster based on the Kubernetes region where the workload runs.
+It’s recommended when:
+
+- your cluster spans multiple regions, and
+
+- each region maps to a different SimplyBlock backend, or
+
+- you want coarser placement than zones (region-level policy).
+
+`storageclass.regionClusterMap`
+
+Sets the mapping between Kubernetes regions and SimplyBlock cluster IDs.
+Each region is associated with one cluster.
+
+`storageclass.allowedTopologyRegions`
+
+Sets the list of regions where the StorageClass is permitted to provision volumes.
+This ensures scheduling aligns with the clusters defined in `regionClusterMap`.
+
+example:
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simplyblock-csi-sc
+provisioner: csi.simplyblock.io
+parameters:
+  region_cluster_map: |
+    {"us-east-1":"cluster-uuid-a","us-west-2":"cluster-uuid-b"}
+  ... other parameters
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+allowedTopologies:
+- matchLabelExpressions:
+  - key: topology.kubernetes.io/region
+    values:
+      - us-east-1
+      - us-east-1
+```
+
+This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling region.
+
+> **Tip:** The keys inside `region_cluster_map` must match the region labels present on your Kubernetes nodes  
+> (typically `topology.kubernetes.io/region`). You can include as many regions as needed, each pointing to  
+> the cluster ID defined in `simplyblock-csi-secret-v2`.
