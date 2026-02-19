@@ -58,6 +58,7 @@ The low-level format of the devices is required only once.
 With all NVMe devices prepared, the storage node software can be deployed.
 
 The actual deployment process happens in three steps:
+
 - Creating the storage node configuration
 - Deploy the first stage (the storage node API)
 - Deploy the second stage (the actual storage node services). Remember that this step is performed from a control plane node.
