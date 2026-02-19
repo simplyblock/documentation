@@ -179,6 +179,10 @@ mode. The most important ones are:
 | `storagenode.nodesPerSocket`  | Sets the number of storage nodes to be deployed per NUMA socket. It is possible to deploy one or two storage nodes per socket. This improves performance if one each NUMA socket has more than 32 cores.                                                                                                                                                                                                                                                   | 1         |  
 | `storagenode.coresPercentage` | Sets the percentage of total cores (vCPUs) available to simplyblock storage node services. It must be ensured that the configured percentage yields at least 8 vCPUs per storage node. For example, if a host has 128 vCPUs on two NUMA sockets (64 each) and `--storagenode.socketsToUse=2` and `--storagenode.nodesPerSocket=1`, at least 13% (as `13% * 64 > 8`) must be set. Simplyblock does not use more than 32 vCPUs per storage node efficiently. | `<empty>` | 
 
+| `storagenode.deviceNames` | List of block **device names** to be used by the storage node (for example `nvme0n1`, `nvme1n1`). Do **not** include the `/dev/` prefix. | `<empty>` |
+
+| `storagenode.format4k`    | If set to `true`, the specified devices will be formatted with a 4K sector size. Recommended for modern NVMe drives when supported. | `false` |
+
 | `storagenode.multiCluster.enable`                      | Enable multi-cluster storage node support. When enabled, a single Kubernetes cluster can host storage nodes connected to multiple Simplyblock clusters. | `false`   |
 
 | `storagenode.multiCluster.clusters[].cluster_id`       | UUID of the Simplyblock cluster this storage node should connect to.                                          | `<empty>` |
