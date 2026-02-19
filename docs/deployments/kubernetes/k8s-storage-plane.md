@@ -179,6 +179,36 @@ mode. The most important ones are:
 | `storagenode.nodesPerSocket`  | Sets the number of storage nodes to be deployed per NUMA socket. It is possible to deploy one or two storage nodes per socket. This improves performance if one each NUMA socket has more than 32 cores.                                                                                                                                                                                                                                                   | 1         |  
 | `storagenode.coresPercentage` | Sets the percentage of total cores (vCPUs) available to simplyblock storage node services. It must be ensured that the configured percentage yields at least 8 vCPUs per storage node. For example, if a host has 128 vCPUs on two NUMA sockets (64 each) and `--storagenode.socketsToUse=2` and `--storagenode.nodesPerSocket=1`, at least 13% (as `13% * 64 > 8`) must be set. Simplyblock does not use more than 32 vCPUs per storage node efficiently. | `<empty>` | 
 
+| `storagenode.multiCluster.enable`                      | Enable multi-cluster storage node support. When enabled, a single Kubernetes cluster can host storage nodes connected to multiple Simplyblock clusters. | `false`   |
+
+| `storagenode.multiCluster.clusters[].cluster_id`       | UUID of the Simplyblock cluster this storage node should connect to.                                          | `<empty>` |
+
+| `storagenode.multiCluster.clusters[].secret`           | Secret used to authenticate against the specified Simplyblock cluster.                                       | `<empty>` |
+
+| `storagenode.multiCluster.clusters[].workers`          | List of Kubernetes worker node names assigned to this Simplyblock cluster. Storage nodes will only be scheduled on these workers. | `<empty>` |
+
+
+### Multi-Cluster Storage Node Support 
+
+example:
+
+```yaml
+storagenode:
+  multiCluster:
+    enable: true
+    clusters:
+      - cluster_id: cluster-uuid-1
+        secret: cluster-secret-id-1
+        workers:
+          - worker-a-1
+          - worker-a-2
+      - cluster_id: cluster-uuid-2
+        secret: cluster-secret-id-2
+        workers:
+          - worker-b-1
+          - worker-b-2
+```
+
 !!! warning
     The resources consumed by simplyblock are exclusively used and have to be aligned with resources required by other
     workloads. For further information, see [Minimum System Requirements](../deployment-preparation/system-requirements.md#minimum-system-requirements).
