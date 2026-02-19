@@ -312,7 +312,7 @@ It’s recommended when:
 
 - each region maps to a different simplyblock backend, or
 
-- you want coarser placement than zones (region-level policy).
+- you want region-scoped placement rather than zone-scoped placement
 
 `storageclass.regionClusterMap`
 
