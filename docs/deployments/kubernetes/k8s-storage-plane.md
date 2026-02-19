@@ -176,26 +176,19 @@ mode. The most important ones are:
 | `storagenode.pciAllowed`      | Sets the list of allowed NVMe PCIe addresses.                                                                                                                                                                                                                                                                                                                                                                                                              | `<empty>` | 
 | `storagenode.pciBlocked`      | Sets the list of blocked NVMe PCIe addresses.                                                                                                                                                                                                                                                                                                                                                                                                              | `<empty>` | 
 | `storagenode.socketsToUse`    | Sets the list of NUMA sockets to use. If a worker node has more than 1 NUMA socket, it is possible to deploy more than one simplyblock storage node per host, depending on the distribution of NVMe devices and NICs across NUMA sockets and the resource demand of other workloads.                                                                                                                                                                       | 1         |
-| `storagenode.nodesPerSocket`  | Sets the number of storage nodes to be deployed per NUMA socket. It is possible to deploy one or two storage nodes per socket. This improves performance if one each NUMA socket has more than 32 cores.                                                                                                                                                                                                                                                   | 1         |  
+| `storagenode.nodesPerSocket`  | Sets the number of storage nodes to be deployed per NUMA socket. It is possible to deploy one or two storage nodes per socket. This improves performance if one each NUMA socket has more than 32 cores.| 1         |  
 | `storagenode.coresPercentage` | Sets the percentage of total cores (vCPUs) available to simplyblock storage node services. It must be ensured that the configured percentage yields at least 8 vCPUs per storage node. For example, if a host has 128 vCPUs on two NUMA sockets (64 each) and `--storagenode.socketsToUse=2` and `--storagenode.nodesPerSocket=1`, at least 13% (as `13% * 64 > 8`) must be set. Simplyblock does not use more than 32 vCPUs per storage node efficiently. | `<empty>` | 
 | `storagenode.deviceNames` | Comma separated list of nvme namespace names to be used by the storage node (for example `nvme0n1`, `nvme1n1`). Do **not** include the `/dev/` prefix. | `<empty>` |
-
 | `storagenode.format4k`    | If set to `true`, the specified devices will be formatted with a 4K sector size. Recommended for modern NVMe drives when supported. | `false` |
-
 | `storagenode.multiCluster.enable`                      | Enable multi-cluster storage node support. When enabled, a single Kubernetes cluster can host storage nodes connected to multiple Simplyblock clusters. | `false`   |
-
 | `storagenode.multiCluster.clusters[].cluster_id`       | UUID of the Simplyblock cluster this storage node should connect to.                                          | `<empty>` |
-
 | `storagenode.multiCluster.clusters[].secret`           | Secret used to authenticate against the specified Simplyblock cluster.                                       | `<empty>` |
-
 | `storagenode.multiCluster.clusters[].workers`          | List of Kubernetes worker node names assigned to this Simplyblock cluster. Storage nodes will only be scheduled on these workers. | `<empty>` |
 
 
 ### Multi-Cluster Storage Node Support 
 
-example:
-
-```yaml
+```yaml title="Multi-Cluster definition"
 storagenode:
   multiCluster:
     enable: true
