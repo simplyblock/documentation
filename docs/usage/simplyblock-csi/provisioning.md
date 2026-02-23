@@ -110,7 +110,7 @@ spec:
 ```
 
 ```plain title="Example output of applying the statically persistent volume"
-demo@demo ~> kubectl create -f pv-static.yaml
+[demo@demo ~]# kubectl create -f pv-static.yaml
 persistentvolume/pv-static created
 ```
 
@@ -159,7 +159,7 @@ spec:
 ```
 
 ```plain title="Example output of applying the statically persistent volume"
-demo@demo ~> kubectl create -f pv-static.yaml
+[demo@demo ~]# kubectl create -f pv-static.yaml
 persistentvolume/pv-static created
 ```
 
@@ -187,7 +187,7 @@ spec:
 ```
 
 ```bash
-demo@demo ~> kubectl create -f pvc-static.yaml
+[demo@demo ~]# kubectl create -f pvc-static.yaml
 persistentvolumeclaim/pvc-static created
 ```
 

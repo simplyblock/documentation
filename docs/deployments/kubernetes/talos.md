@@ -42,7 +42,7 @@ The following flags also affect the huge page calculation:
 - `--cores-percentage (default: 0 / unset)`
 
 ```bash title="Example output of huge pages calculator"
-demo@demo ~> {{ cliname }} storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
+[demo@demo ~]# {{ cliname }} storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
 2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
 True
 ```
@@ -59,9 +59,9 @@ machine:
 To activate the huge pages, the `talosctl` command should be used.
 
 ```bash title="Enable Huge Pages in Talos"
-demo@demo ~> talosctl apply-config --nodes <worker_node_ip> \
+[demo@demo ~]# talosctl apply-config --nodes <worker_node_ip> \
     --file huge-pages-config.yaml -m reboot
-demo@demo ~> talosctl service kubelet restart --nodes <worker_node_ip>
+[demo@demo ~]# talosctl service kubelet restart --nodes <worker_node_ip>
 ```
 
 ## Required Talos Permissions
@@ -91,5 +91,5 @@ metadata:
 To enable the required permissions, apply the namespace configuration using `kubectl`.
 
 ```bash title="Enabled privileged mode for simplyblock"
-demo@demo ~> kubectl apply -f simplyblock-namespace.yaml
+[demo@demo ~]# kubectl apply -f simplyblock-namespace.yaml
 ```
