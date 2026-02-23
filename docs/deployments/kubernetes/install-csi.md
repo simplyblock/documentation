@@ -169,7 +169,7 @@ To enable interaction with multiple clusters, there are two key changes:
 
 When the Simplyblock CSI driver is initially installed, only a single cluster can be referenced.
 
-```
+```bash title="Install the Simplyblock CSI driver via Helm"
 helm install simplyblock-csi ./ \
     --set csiConfig.simplybk.uuid=${CLUSTER_ID} \
     --set csiConfig.simplybk.ip=${CLUSTER_IP} \
@@ -210,12 +210,14 @@ To add a new cluster, the current secret must be retrieved from Kubernetes, edit
 and uploaded to the Kubernetes cluster.  
 
 
-```sh
+```bash
 # Save cluster secret to a file
-kubectl get secret simplyblock-csi-secret-v2 -o jsonpath='{.data.secret\.json}' | base64 --decode > secret.yaml
+kubectl get secret simplyblock-csi-secret-v2 \
+    -o jsonpath='{.data.secret\.json}' |\
+    base64 --decode > secret.yaml
 
-# Edit the clusters and add the new cluster's cluster_id, cluster_endpoint, cluster_secret
-# vi secret.json 
+# Edit the clusters and add the new cluster's cluster_id,
+# cluster_endpoint, cluster_secret vi secret.json 
 
 cat secret.json | base64 | tr -d '\n' > secret-encoded.json
 
@@ -227,12 +229,10 @@ kubectl -n simplyblock edit secret simplyblock-csi-secret-v2
 
 #### Option 1: Cluster ID–Based Method (One StorageClass per Cluster)
 
-In this approach, each SimplyBlock cluster has its own dedicated StorageClass that specifies which cluster to use for provisioning.
+In this approach, each simplyblock cluster has its own dedicated StorageClass that specifies which cluster to use for provisioning.
 This is ideal for setups where workloads are manually directed to specific clusters.
 
-For example:
-
-```yaml
+```yaml title="Example of Cluster ID-Based Selection"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -248,7 +248,7 @@ allowVolumeExpansion: true
 
 You can define another StorageClass for a different cluster:
 
-```yaml
+```yaml title="Example of selecting another cluster"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -263,16 +263,16 @@ allowVolumeExpansion: true
 ```
 
 Each StorageClass references a unique cluster_id.
-The CSI driver uses that ID to determine which SimplyBlock cluster to connect to.
+The CSI driver uses that ID to determine which simplyblock cluster to connect to.
 
 #### Option 2: Zone-Aware Method (Automatic Multi-Cluster Selection)
 
-This approach allows a single StorageClass to automatically select the appropriate SimplyBlock cluster based on the Kubernetes zone where the workload runs.
-It is recommended for multi-zone Kubernetes deployments that span multiple SimplyBlock clusters.
+This approach allows a single StorageClass to automatically select the appropriate simplyblock cluster based on the Kubernetes zone where the workload runs.
+It is recommended for multi-zone Kubernetes deployments that span multiple simplyblock clusters.
 
 `storageclass.zoneClusterMap`
 
-Sets the mapping between Kubernetes zones and SimplyBlock cluster IDs.
+Sets the mapping between Kubernetes zones and simplyblock cluster IDs.
 Each zone is associated with one cluster.
 
 `storageclass.allowedTopologyZones`
@@ -280,9 +280,7 @@ Each zone is associated with one cluster.
 Sets the list of zones where the StorageClass is permitted to provision volumes.
 This ensures that scheduling aligns with the clusters defined in `zoneClusterMap`.
 
-example:
-
-```yaml
+```yaml title="Example of zoneClusterMap usage"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -304,3 +302,52 @@ allowedTopologies:
 ```
 
 This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling zone.
+
+#### Option 3: Region-Aware Method (Automatic Multi-Cluster Selection)
+
+This approach allows a single StorageClass to automatically select the appropriate simplyblock cluster based on the Kubernetes region where the workload runs.
+It’s recommended when:
+
+- your cluster spans multiple regions, and
+
+- each region maps to a different simplyblock backend, or
+
+- you want region-scoped placement rather than zone-scoped placement
+
+`storageclass.regionClusterMap`
+
+Sets the mapping between Kubernetes regions and simplyblock cluster IDs.
+Each region is associated with one cluster.
+
+`storageclass.allowedTopologyRegions`
+
+Sets the list of regions where the StorageClass is permitted to provision volumes.
+This ensures scheduling aligns with the clusters defined in `regionClusterMap`.
+
+```yaml title="Example of regionClusterMap usage"
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simplyblock-csi-sc
+provisioner: csi.simplyblock.io
+parameters:
+  region_cluster_map: |
+    {"us-east-1":"cluster-uuid-a","us-west-2":"cluster-uuid-b"}
+  ... other parameters
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+allowedTopologies:
+- matchLabelExpressions:
+  - key: topology.kubernetes.io/region
+    values:
+      - us-east-1
+      - us-east-1
+```
+
+This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling region.
+
+!!! tip
+    The keys inside `region_cluster_map` must match the region labels present on your Kubernetes nodes
+    (typically `topology.kubernetes.io/region`). You can include as many regions as needed, each pointing to
+    the cluster ID defined in `simplyblock-csi-secret-v2`.
