@@ -45,16 +45,13 @@ So the namespace is the thing you actually read and write data to.
 
 To manually create volumes with multiple namespaces per subsystem, use:
 
-```sbctl lvol add lvol01 100G pool01 --max-namespace-per-subsys 10```
+```bash
+{{ cliname }} volume add lvol01 100G pool01 --max-namespace-per-subsys 10
+```
 
 This adds a new subsystem with a namespace and allows up to 9 more namespaces on this volume.
 To add new namespaces to the same subsystem, use:
 
-```sbctl lvol add lvol02 100G --uuid <UUID>```
-
-
-
-
-
-
-
+```bash
+{{ cliname }} volume add lvol02 100G --uuid <UUID>
+```

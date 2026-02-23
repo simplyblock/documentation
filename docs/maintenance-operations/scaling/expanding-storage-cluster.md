@@ -13,6 +13,6 @@ full utilization.
 
 To start a new storage node, follow the storage node installation according to your chosen set-up:
 
-- [storage nodes in kubernetes](../../deployments/kubernetes/index.md)
-- [storage nodes on Bare Metal or Virtualized Linux](../../deployments/install-on-linux/install-sp.md)
+- [Storage nodes in Kubernetes](../../deployments/kubernetes/index.md)
+- [Storage nodes on Linux](../../deployments/install-on-linux/install-sp.md)
 

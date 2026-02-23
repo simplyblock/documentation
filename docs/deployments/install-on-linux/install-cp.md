@@ -95,7 +95,7 @@ Additional cluster deployment options can be found in the [Cluster Deployment Op
 The output should look something like this:
 
 ```plain title="Example output of control plane deployment"
-[root@vm11 ~]# {{ cliname }} cluster create --ifname=eth0 --ha-type=ha
+[root@demo ~]# {{ cliname }} cluster create --ifname=eth0 --ha-type=ha
 2025-02-26 12:37:06,097: INFO: Installing dependencies...
 2025-02-26 12:37:13,338: INFO: Installing dependencies > Done
 2025-02-26 12:37:13,358: INFO: Node IP: 192.168.10.1
@@ -129,7 +129,7 @@ to retrieve it.
 ```
 
 ```plain title="Example output get cluster secret"
-[root@vm11 ~]# {{ cliname }} cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
+[root@demo ~]# {{ cliname }} cluster get-secret 7bef076c-82b7-46a5-9f30-8c938b30e655
 e8SQ1ElMm8Y9XIwyn8O0
 ```
 

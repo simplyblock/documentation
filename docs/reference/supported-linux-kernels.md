@@ -8,7 +8,7 @@ Simplyblock is built upon NVMe over Fabrics. Hence, it requires a Linux kernel w
 As a general rule, every Linux kernel 5.19 or later is expected to work, as long as the kernel modules for NVMe (nvme),
 NVMe over Fabrics (nvme-of), and NVMe over TCP (nvme-tcp) are available. In most cases, the latter two kernel
 modules need to be loaded manually or persisted. Please see
-the [Bare Metal or Virtualized (Linux) installation section](../deployments/baremetal/index.md) on how to do this.
+the [Linux installation section](../deployments/baremetal/index.md) on how to do this.
 
 The following kernels are known to be compatible and tested. Additional kernel versions may work, but are untested.
 

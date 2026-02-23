@@ -17,7 +17,7 @@ Two storage nodes per socket are deployed if:
 
 Users can change this behavior. Either by setting the appropriate Helm Chart parameters (in case of Kubernetes-based
 storage node deployment) or by manually modifying the initially created configuration file on the storage node
-(after running `{{ cliname }} sn configure`).
+(after running `{{ cliname }} storage-node configure`).
 
 It is critical for performance that all NVMe devices of a storage node are directly connected to the NUMA socket to
 which the storage node is deployed.
@@ -37,7 +37,7 @@ lscpu | grep -i numa
 ```
 
 ```plain title="Example output of the NUMA configuration"
-root@demo:~# lscpu | grep -i numa
+[root@demo ~]# lscpu | grep -i numa
 NUMA node(s):                         2
 NUMA node0 CPU(s):                    0-31
 NUMA node1 CPU(s):                    32-63

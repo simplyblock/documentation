@@ -15,11 +15,11 @@ To reconnect the NVMe controllers for the logical volume, the normal _nvme conne
 will immediately reconnect missing controllers and connection paths.
 
 ```bash title="Retrieve connection strings"
-{cliname} volume connect <VOLUME_ID>
+{{ cliname }} volume connect <VOLUME_ID>
 ```
 
 ```plain title="Example output for connection string retrieval"
-[demo@demo ~]# {cliname} volume connect 82e587c5-4a94-42a1-86e5-a5b8a6a75fc4
+[demo@demo ~]# {{ cliname }} volume connect 82e587c5-4a94-42a1-86e5-a5b8a6a75fc4
 sudo nvme connect --reconnect-delay=2 --ctrl-loss-tmo=60 --nr-io-queues=6 --keep-alive-tmo=5 --transport=tcp --traddr=192.168.10.112 --trsvcid=9100 --nqn=nqn.2023-02.io.simplyblock:0f2c4cb0-a71c-4830-bcff-11112f0ee51a:lvol:82e587c5-4a94-42a1-86e5-a5b8a6a75fc4
 sudo nvme connect --reconnect-delay=2 --ctrl-loss-tmo=60 --nr-io-queues=6 --keep-alive-tmo=5 --transport=tcp --traddr=192.168.10.113 --trsvcid=9100 --nqn=nqn.2023-02.io.simplyblock:0f2c4cb0-a71c-4830-bcff-11112f0ee51a:lvol:82e587c5-4a94-42a1-86e5-a5b8a6a75fc4
 ```
