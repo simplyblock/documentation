@@ -232,9 +232,7 @@ kubectl -n simplyblock edit secret simplyblock-csi-secret-v2
 In this approach, each simplyblock cluster has its own dedicated StorageClass that specifies which cluster to use for provisioning.
 This is ideal for setups where workloads are manually directed to specific clusters.
 
-For example:
-
-```yaml
+```yaml title="Example of Cluster ID-Based Selection"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -250,7 +248,7 @@ allowVolumeExpansion: true
 
 You can define another StorageClass for a different cluster:
 
-```yaml
+```yaml title="Example of selecting another cluster"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
