@@ -41,7 +41,7 @@ The following flags also affect the huge page calculation:
 - `--sockets-to-use (default: 0)`
 - `--cores-percentage (default: 0 / unset)`
 
-```bash
+```plain title="Example output of huge pages calculator
 sbctl storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
 2026-02-22 22:27:47,017: 140705369632256: INFO: The minimum required huge pages on this host is: 11552 MB
 True
