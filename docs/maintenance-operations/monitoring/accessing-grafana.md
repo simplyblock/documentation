@@ -27,8 +27,13 @@ To retrieve the endpoint address from the cluster itself, use the following comm
 
 ### Credentials
 
-The Grafana installation uses the cluster secret as its password for the user _admin_. To retrieve the cluster secret,
-the following commands should be used:
+The Grafana installation uses the cluster secret as its password for the user _admin_.
+
+Depending on the selected installation method for the simplyblock control plane, there are two ways to retrieve the
+Grafana password.
+
+If the simplyblock control plane is installed outside Kubernetes, to retrieve the cluster secret, the following
+commands should be used:
 
 ```bash title="Get the cluster uuid"
 {{ cliname }} cluster list
@@ -38,9 +43,24 @@ the following commands should be used:
 {{ cliname }} cluster get-secret <CLUSTER_ID>
 ```
 
+When installed inside Kubernetes, the Grafana password can be retrieved using `kubectl` as follows:
+
+```bash title="Retrieve the Grafana password"
+kubectl get secret -n simplyblock simplyblock-grafana-secrets \
+    -o jsonpath="{.data.MONITORING_SECRET}" | base64 --decode
+```
+
+The resulting password can be used to log in to Grafana.
+
+```plain title="Example output for Grafana password"
+[root@demo ~]# kubectl get secret -n simplyblock simplyblock-grafana-secrets \
+    -o jsonpath="{.data.MONITORING_SECRET}" | base64 --decode
+sWbpOgbe3bKnCfcnfaDi
+```
+
 **Credentials**<br/>
-Username: **<CLUSTER UUID>**<br/>
-Password: **<CLUSTER_SECRET>**
+Username: `admin`<br/>
+Password: `<PASSWORD>`
 
 ## Grafana Dashboards
 
