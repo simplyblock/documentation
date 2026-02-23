@@ -43,7 +43,7 @@ The following flags also affect the huge page calculation:
 
 ```bash title="Example output of huge pages calculator"
 demo@demo ~> sbctl storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
-2026-02-22 22:27:47,017: 140705369632256: INFO: The minimum required huge pages on this host is: 11552 MB
+2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
 True
 ```
 
