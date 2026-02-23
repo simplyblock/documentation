@@ -28,6 +28,25 @@ machine:
 Simplyblock requires huge pages memory to operate. The storage engine expects to find huge pages of 2 MiB page size. The
 required amount of huge pages depends on a number of factors.
 
+After installing the Kubernetes control plane, you can calculate the required huge pages from the admin control pod (see the [Kubernetes Control Plane installation guide](./k8s-control-plane.md) for how to find and exec into the pod).
+
+Run the following command on the admin control pod to calculate the huge pages required on the host:
+
+```bash title="Run the huge memory calculator"
+sbctl storage-node configure --calculate-hp-only --max-lvol <MAX_LVOL> --number-of-devices <NUMBER_OF_DEVICES>
+```
+The following flags also affect the huge page calculation:
+
+- `--nodes-per-socket (default: 1)`
+- `--sockets-to-use (default: 0)`
+- `--cores-percentage (default: 0 / unset)`
+
+```bash title="Example output of huge pages calculator"
+demo@demo ~> sbctl storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
+2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
+True
+```
+
 To apply the change to Talos' worker nodes, a YAML configuration file with the following content is required. The number
 of pages is to be replaced with the number calculated above.
 
