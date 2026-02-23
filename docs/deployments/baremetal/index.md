@@ -12,19 +12,19 @@ Those manual steps are typically taken care of by the CSI driver or Proxmox inte
 On plain Linux initiators, those steps have to be performed manually on each host that will connect simplyblock logical
 volumes.
 
-### Install Nvme Client Package
+### Install NVMe Client Package
 
-    === "RHEL / Alma / Rocky"
-    
-        ```bash
-        sudo dnf install -y nvme-cli
-        ```
-    
-    === "Debian / Ubuntu"
-    
-        ```bash
-        sudo apt install -y nvme-cli
-        ```
+=== "RHEL / Alma / Rocky"
+
+    ```bash
+    sudo dnf install -y nvme-cli
+    ```
+
+=== "Debian / Ubuntu"
+
+    ```bash
+    sudo apt install -y nvme-cli
+    ```
 
 ### Load the NVMe over Fabrics Kernel Modules
 

@@ -12,9 +12,7 @@ and stored as a new data block. Now the volume refers to the new block, while th
 
 A deeper explanation can be found here:
 
-![type:video](https://www.youtube.com/embed/wMy1r8RVTz8?si=kNpI8FJuiifS6Pwt)
-
-<div class="video-wrapper" data-service="youtube" data-id="wMy1r8RVTz8"></div>
+<div data-service="YouTube" data-id="wMy1r8RVTz8" data-autoscale></div>
 
 ## Snapshotting a PersistentVolume
 

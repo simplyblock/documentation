@@ -26,8 +26,8 @@ To install the first stage of a storage node, the installation guide for the sel
 The process will diverge after executing the initial deployment command `{{ cliname }} storage-node deploy`.
 If the command finishes successfully, resume from the next section of this page.
 
-- [storage nodes in kubernetes](../deployments/kubernetes/index.md)
-- [storage nodes on Bare Metal or Virtualized Linux](../deployments/install-on-linux/install-sp.md)
+- [Storage nodes in Kubernetes](../deployments/kubernetes/index.md)
+- [Storage nodes on Linux](../deployments/install-on-linux/install-sp.md)
 
 ### Preparing the New Storage Host
 

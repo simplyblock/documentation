@@ -74,7 +74,7 @@ sudo {{ cliname }} storage-node configure \
 ```
 
 ```plain title="Example output of storage node configure"
-[demo@demo-3 ~]# sudo {{ cliname }} sn configure --nodes-per-socket=2 --max-lvol=50 --max-size=1T
+[demo@demo-3 ~]# sudo {{ cliname }} storage-node configure --nodes-per-socket=2 --max-lvol=50 --max-size=1T
 2025-05-14 10:40:17,460: INFO: 0000:00:04.0 is already bound to nvme.
 0000:00:1e.0
 0000:00:1e.0

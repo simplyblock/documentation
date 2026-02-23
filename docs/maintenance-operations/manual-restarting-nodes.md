@@ -4,6 +4,7 @@ weight: 10700
 ---
 
 There are a few reasons to manually restart a storage node:
+
 - After a storage node became unavailable, the auto-restart did not work
 - A cluster upgrade
 - A planned storage node maintenance

@@ -11,6 +11,7 @@ weight: 20350
 ### Features Supported
 
 The following list of features is supported:
+
 - Thin provisioning 
 - Creating a volume
 - Resizing (extend) a volume
@@ -21,7 +22,7 @@ The following list of features is supported:
 - Extending an attached volume
 - Multi-attaching a volume
 - Volume migration (driver-supported)
-- QoS
+- QoS (Quality of Service)
 - Active/active HA support
 
 ### Deployment
