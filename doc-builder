@@ -79,7 +79,7 @@ function serve() {
 
 function gen_sbcli_ref() {
   if [ ! -d ./scripts/sbcli-repo ]; then
-    echo "The sbcli repository not yet available. Please run ./doc-builder update-sbcli and try again."
+    echo "The sbcli repository not yet available. Please run ./doc-builder update-repositories and try again."
     exit 1
   fi
 
