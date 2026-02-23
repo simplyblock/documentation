@@ -26,3 +26,4 @@ Once all newly added nodes are healthy/ready, finalize the expansion:
 
 ```bash title="Finalize cluster expansion"
 {{ cliname }} complete-expand <CLUSTER_ID>
+```
