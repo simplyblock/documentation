@@ -212,10 +212,12 @@ and uploaded to the Kubernetes cluster.
 
 ```bash
 # Save cluster secret to a file
-kubectl get secret simplyblock-csi-secret-v2 -o jsonpath='{.data.secret\.json}' | base64 --decode > secret.yaml
+kubectl get secret simplyblock-csi-secret-v2 \
+    -o jsonpath='{.data.secret\.json}' |\
+    base64 --decode > secret.yaml
 
-# Edit the clusters and add the new cluster's cluster_id, cluster_endpoint, cluster_secret
-# vi secret.json 
+# Edit the clusters and add the new cluster's cluster_id,
+# cluster_endpoint, cluster_secret vi secret.json 
 
 cat secret.json | base64 | tr -d '\n' > secret-encoded.json
 
