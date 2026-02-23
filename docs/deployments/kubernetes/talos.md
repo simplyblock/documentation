@@ -32,8 +32,8 @@ After installing the Kubernetes control plane, you can calculate the required hu
 
 Run the following command on the admin control pod to calculate the huge pages required on the host:
 
-```bash
-sbctl sn configure --calculate-hp-only --max-lvol <MAX_LVOL> --number-of-devices <NUMBER_OF_DEVICES>
+```bash title="Run the huge memory calculator"
+sbctl storage-node configure --calculate-hp-only --max-lvol <MAX_LVOL> --number-of-devices <NUMBER_OF_DEVICES>
 ```
 The following flags also affect the huge page calculation:
 
@@ -42,7 +42,7 @@ The following flags also affect the huge page calculation:
 - `--cores-percentage (default: 0 / unset)`
 
 ```bash
-sbctl sn configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
+sbctl storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
 2026-02-22 22:27:47,017: 140705369632256: INFO: The minimum required huge pages on this host is: 11552 MB
 True
 ```
