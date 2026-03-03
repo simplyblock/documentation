@@ -3646,6 +3646,8 @@
       
         
       
+        
+      
     
     
       
@@ -3810,6 +3812,28 @@
   
   <span class="md-ellipsis">
     Snapshot commands
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/cli/caching-node/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Caching node commands
     
   </span>
   
@@ -4260,6 +4284,8 @@
       
         
       
+        
+      
     
     
       
@@ -4314,6 +4340,28 @@
   
   <span class="md-ellipsis">
     25.10.5
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../release-notes/25-10-4/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    25.10.4
     
   </span>
   
@@ -4648,7 +4696,10 @@ changes to make Talos compliant.</p>
 required amount of huge pages depends on a number of factors.</p>
 <p>After installing the Kubernetes control plane, you can calculate the required huge pages from the admin control pod (see the <a href="../k8s-control-plane/">Kubernetes Control Plane installation guide</a> for how to find and exec into the pod).</p>
 <p>Run the following command on the admin control pod to calculate the huge pages required on the host:</p>
-<p></p><div class="highlight"><span class="filename">Run the huge memory calculator</span><pre><span></span><code>sbctl<span class="w"> </span>storage-node<span class="w"> </span>configure<span class="w"> </span>--calculate-hp-only<span class="w"> </span>--max-lvol<span class="w"> </span>&lt;MAX_LVOL&gt;<span class="w"> </span>--number-of-devices<span class="w"> </span>&lt;NUMBER_OF_DEVICES&gt;
+<p></p><div class="highlight"><span class="filename">Run the huge memory calculator</span><pre><span></span><code>sbctl<span class="w"> </span>storage-node<span class="w"> </span>configure<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--calculate-hp-only<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-lvol<span class="w"> </span>&lt;MAX_LVOL&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--number-of-devices<span class="w"> </span>&lt;NUMBER_OF_DEVICES&gt;
 </code></pre></div>
 The following flags also affect the huge page calculation:<p></p>
 <ul>
@@ -4656,8 +4707,8 @@ The following flags also affect the huge page calculation:<p></p>
 <li><code>--sockets-to-use (default: 0)</code></li>
 <li><code>--cores-percentage (default: 0 / unset)</code></li>
 </ul>
-<div class="highlight"><span class="filename">Example output of huge pages calculator</span><pre><span></span><code><span class="o">[</span>demo@demo<span class="w"> </span>~<span class="o">]</span><span class="c1"># sbctl storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4</span>
-<span class="m">2026</span>-02-22<span class="w"> </span><span class="m">22</span>:27:47,017:<span class="w"> </span><span class="m">140705369632256</span>:<span class="w"> </span>INFO:<span class="w"> </span>The<span class="w"> </span>required<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>huge<span class="w"> </span>pages<span class="w"> </span>on<span class="w"> </span>this<span class="w"> </span>host<span class="w"> </span>is:<span class="w"> </span><span class="m">5776</span><span class="w"> </span><span class="o">(</span><span class="m">11552</span><span class="w"> </span>MB<span class="o">)</span>
+<div class="highlight"><span class="filename">Example output of huge pages calculator</span><pre><span></span><code>[demo@demo ~]# sbctl storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
+2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
 True
 </code></pre></div>
 <p>To apply the change to Talos' worker nodes, a YAML configuration file with the following content is required. The number
@@ -4667,9 +4718,9 @@ of pages is to be replaced with the number calculated above.</p>
 <span class="w">     </span><span class="nt">vm.nr_hugepages</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;number-of-pages&gt;"</span>
 </code></pre></div>
 <p>To activate the huge pages, the <code>talosctl</code> command should be used.</p>
-<div class="highlight"><span class="filename">Enable Huge Pages in Talos</span><pre><span></span><code><span class="o">[</span>demo@demo<span class="w"> </span>~<span class="o">]</span><span class="c1"># talosctl apply-config --nodes &lt;worker_node_ip&gt; \</span>
-<span class="w">    </span>--file<span class="w"> </span>huge-pages-config.yaml<span class="w"> </span>-m<span class="w"> </span>reboot
-<span class="o">[</span>demo@demo<span class="w"> </span>~<span class="o">]</span><span class="c1"># talosctl service kubelet restart --nodes &lt;worker_node_ip&gt;</span>
+<div class="highlight"><span class="filename">Enable Huge Pages in Talos</span><pre><span></span><code><span class="o">[</span>demo@demo<span class="w"> </span>~<span class="o">]</span><span class="c1"># talosctl patch mc --nodes &lt;worker_node_ip&gt; \</span>
+<span class="w">    </span>--path<span class="w"> </span>@huge-pages-config.yaml
+<span class="o">[</span>demo@demo<span class="w"> </span>~<span class="o">]</span><span class="c1"># talosctl reboot --nodes &lt;worker_node_ip&gt;</span>
 </code></pre></div>
 <h2 id="required-talos-permissions">Required Talos Permissions</h2>
 <p>Simyplyblock's CSI driver requires connecting NVMe over Fabrics devices, as well as mounting and formatting them.
@@ -4713,7 +4764,7 @@ security exemptions must be created:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="February 23, 2026 15:39:11 UTC">2026-02-23</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="March 3, 2026 11:01:15 UTC">2026-03-03</span>
   </span>
 
     
