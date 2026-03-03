@@ -33,7 +33,10 @@ After installing the Kubernetes control plane, you can calculate the required hu
 Run the following command on the admin control pod to calculate the huge pages required on the host:
 
 ```bash title="Run the huge memory calculator"
-{{ cliname }} storage-node configure --calculate-hp-only --max-lvol <MAX_LVOL> --number-of-devices <NUMBER_OF_DEVICES>
+{{ cliname }} storage-node configure \
+  --calculate-hp-only \
+  --max-lvol <MAX_LVOL> \
+  --number-of-devices <NUMBER_OF_DEVICES>
 ```
 The following flags also affect the huge page calculation:
 
@@ -41,7 +44,7 @@ The following flags also affect the huge page calculation:
 - `--sockets-to-use (default: 0)`
 - `--cores-percentage (default: 0 / unset)`
 
-```bash title="Example output of huge pages calculator"
+```plain title="Example output of huge pages calculator"
 [demo@demo ~]# {{ cliname }} storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
 2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
 True
@@ -59,9 +62,9 @@ machine:
 To activate the huge pages, the `talosctl` command should be used.
 
 ```bash title="Enable Huge Pages in Talos"
-[demo@demo ~]# talosctl apply-config --nodes <worker_node_ip> \
-    --file huge-pages-config.yaml -m reboot
-[demo@demo ~]# talosctl service kubelet restart --nodes <worker_node_ip>
+[demo@demo ~]# talosctl patch mc --nodes <worker_node_ip> \
+    --path @huge-pages-config.yaml
+[demo@demo ~]# talosctl reboot --nodes <worker_node_ip>
 ```
 
 ## Required Talos Permissions
