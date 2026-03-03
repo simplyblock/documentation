@@ -113,7 +113,6 @@ CLUSTER_SECRET="<SECRET>"
 CNTR_ADDR="<CONTROL-PLANE-ADDR>"
 POOL_NAME="<POOL-NAME>"
 helm repo add simplyblock-csi https://install.simplyblock.io/helm/csi
-helm repo add simplyblock-controller https://install.simplyblock.io/helm/controller
 helm repo update
 
 # Install Simplyblock CSI Driver and Storage Node API
