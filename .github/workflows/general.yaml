@@ -45,13 +45,27 @@ jobs:
         run: |
           sed -i -r "s|(site_url: .*)|\1dev/|g" ./mkdocs.yml
           cat ./mkdocs.yml
-          ./doc-builder update-repositories
           ./doc-builder build
-      - name: "Upload Documentation"
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: "Creating Deployment Artifact"
+        run: |
+          mv site "${{ github.ref_name }}"
+          ls -lah
+          zip -r "${{ github.ref_name }}.zip" "${{ github.ref_name }}" -i "${{ github.ref_name }}/*"
+      - name: "Uploading Dev Deployment"
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.ftp_server }}
-          username: ${{ secrets.ftp_username }}
-          password: ${{ secrets.ftp_password }}
-          server-dir: /dev/
-          local-dir: ./site/
+          host: ${{ secrets.ssh_server }}
+          port: ${{ secrets.ssh_port }}
+          username: ${{ secrets.ssh_username }}
+          key: ${{ secrets.ssh_key }}
+          source: "${{ github.ref_name }}.zip"
+          target: .
+      - name: "Deploying Dev Deployment"
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.ssh_server }}
+          port: ${{ secrets.ssh_port }}
+          username: ${{ secrets.ssh_username }}
+          key: ${{ secrets.ssh_key }}
+          script: |
+            ./simplyblock_docs_dev_request_helper.sh ${{ github.ref_name }}
