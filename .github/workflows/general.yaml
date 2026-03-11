@@ -45,6 +45,7 @@ jobs:
         run: |
           sed -i -r "s|(site_url: .*)|\1dev/|g" ./mkdocs.yml
           cat ./mkdocs.yml
+          ./doc-builder update-repositories
           ./doc-builder build
       - name: "Creating Deployment Artifact"
         run: |
