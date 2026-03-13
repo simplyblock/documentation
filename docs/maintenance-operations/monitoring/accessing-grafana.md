@@ -32,7 +32,7 @@ The Grafana installation uses the cluster secret as its password for the user _a
 Depending on the selected installation method for the simplyblock control plane, there are two ways to retrieve the
 Grafana password.
 
-If the simplyblock control plane is installed outside Kubernetes, to retrieve the cluster secret, the following
+If the simplyblock control plane is installed outside Kubernetes, to retrieve the cluster secret (the first cluster that has been created with cluster create command), the following
 commands should be used:
 
 ```bash title="Get the cluster uuid"
@@ -43,7 +43,7 @@ commands should be used:
 {{ cliname }} cluster get-secret <CLUSTER_ID>
 ```
 
-When installed inside Kubernetes, the Grafana password can be retrieved using `kubectl` as follows:
+When installed inside Kubernetes, either we can log in with (CLUSTER_ID/CLUSTER_SECRET) as an unprivileged user or the Grafana password can be retrieved using `kubectl` as follows for the admin user:
 
 ```bash title="Retrieve the Grafana password"
 kubectl get secret -n simplyblock simplyblock-grafana-secrets \
