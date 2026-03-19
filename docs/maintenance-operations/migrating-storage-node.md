@@ -6,7 +6,65 @@ weight: 20000
 Simplyblock storage clusters are designed as always-on. That means that a storage node migration is an online operation
 that doesn't require explicit maintenance windows or storage downtime.
 
+## Volume Migration
+
+Simplyblock supports live migration of individual logical volumes between storage nodes. This is useful for capacity
+rebalancing, targeted maintenance, or moving specific workloads to different hardware.
+
+### Initiating a Volume Migration
+
+To migrate a single logical volume to a different storage node:
+
+```bash title="Migrate a volume to a target node"
+{{ cliname }} lvol migrate <LVOL_ID> <TARGET_NODE_ID>
+```
+
+### Monitoring Migration Progress
+
+To check the status of active migrations:
+
+```bash title="List active migrations"
+{{ cliname }} lvol migration-list [--cluster-id <CLUSTER_ID>]
+```
+
+```bash title="Get migration details"
+{{ cliname }} lvol migration-get <MIGRATION_ID>
+```
+
+### Migration Phases
+
+Each volume migration progresses through the following phases:
+
+1. **SNAP_COPY:** All snapshots in the volume's ancestry chain are transferred to the target node.
+2. **LVOL_MIGRATE:** The active volume data is transferred to the target node.
+3. **CLEANUP_SOURCE:** The source volume and snapshots are removed from the source node, and database records are
+   updated.
+4. **COMPLETED:** The migration has finished successfully.
+
+If a failure occurs during migration, the system cleans up any partially created artifacts on the target node and the
+source volume remains intact.
+
+### Migration Constraints
+
+- Only one volume migration can run per source node at a time.
+- Volumes undergoing migration are protected from deletion and resizing.
+- Snapshots belonging to a migrating volume cannot be deleted until migration completes.
+
+### Cancelling a Migration
+
+To cancel an in-progress migration:
+
+```bash title="Cancel a migration"
+{{ cliname }} lvol migration-cancel <MIGRATION_ID>
+```
+
+For the conceptual overview of volume migration, see
+[Volume Migration](../architecture/concepts/volume-migration.md).
+
 ## Storage Node Migration
+
+In addition to migrating individual volumes, simplyblock supports full storage node migration, which moves all volumes
+from one storage node to another. This is typically used for hardware replacement.
 
 Migrating a storage node is a three-step process. First, the new storage node will be pre-deployed, after that the old
 storage node must be shutdown properly. It will be restarted (migrated) with the new storage node's storage node api address,

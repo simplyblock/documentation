@@ -38,3 +38,27 @@ Key characteristics of volume clones include:
   after cloning.
 - **Immediate Availability:** A clone provides an instant copy of the original volume, avoiding long data copying
   processes.
+
+## Snapshot Chains
+
+Simplyblock organizes snapshots into ordered chains that represent the history of a volume over time. Each snapshot
+references its parent (the previous snapshot in the chain), forming an ancestry chain from the most recent snapshot back
+to the original volume state.
+
+Key aspects of snapshot chains:
+
+- **Ancestry Tracking:** Each snapshot maintains a reference to its parent via a `snap_ref_id`, enabling the system to
+  reconstruct the complete history of changes.
+- **Shared Snapshots:** When a volume is cloned from a snapshot, that snapshot becomes shared between the original
+  volume and the clone. Shared snapshots are protected from deletion as long as any volume depends on them.
+- **Reference Counting:** Simplyblock tracks how many clones depend on each snapshot. A snapshot cannot be deleted while
+  it has active references.
+
+Snapshot chains are central to several advanced features:
+
+- **Backup to S3:** Backups follow the snapshot ancestry chain, ensuring incremental backups only transfer data changed
+  since the last backed-up snapshot. See [Backup and Recovery](backup-recovery.md).
+- **Volume Migration:** During live migration, the entire snapshot chain is transferred to the target node to preserve
+  full data lineage. See [Volume Migration](volume-migration.md).
+- **Replication:** Snapshot-based replication sends snapshots to remote clusters, maintaining the chain structure across
+  sites. See [Replication](replication.md).

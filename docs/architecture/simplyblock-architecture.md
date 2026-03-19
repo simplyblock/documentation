@@ -27,6 +27,14 @@ The control plane provides the following functionality:
     - Resize and reconfigure clusters
 - Lifecycle management of logical volumes and pools
     - For Kubernetes, the Simplyblock CSI driver integrates with the persistent volume lifecycle management
+- Data protection
+    - Snapshot-based backup and recovery to S3-compatible object storage
+    - Incremental backup chains with policy-driven retention and scheduling
+    - Cross-cluster backup import/export for disaster recovery
+- Data mobility
+    - Live volume migration between storage nodes (online, non-disruptive)
+    - Asynchronous and synchronous replication between clusters
+    - Controlled failover and failback for multi-site disaster recovery
 - Cluster operations
     - I/O Statistics
     - Capacity Statistics
@@ -95,6 +103,11 @@ to failure, maintenance, or network disruption. This multipath configuration is 
 subsystem, providing path redundancy, eliminating single points of failure, and maintaining high availability without
 requiring manual intervention. The system continuously monitors path health, and when the primary path is restored, it
 can be automatically reintegrated, ensuring optimal performance and reliability.
+
+Simplyblock supports dual fault tolerance (FT=2), which assigns two secondary nodes per volume instead of one. Using
+Asymmetric Namespace Access (ANA) state tiering, the system manages path priorities across the primary and both
+secondaries, enabling the cluster to survive two simultaneous node failures. See
+[High Availability and Fault Tolerance](high-availability-fault-tolerance.md) for details.
 
 Last, simplyblock provides robust encryption for data-at-rest, ensuring that all data stored on logical volumes is
 protected using industry-standard AES_XTS encryption with minimal performance overhead. This encryption is applied at

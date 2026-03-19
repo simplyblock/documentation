@@ -231,3 +231,78 @@ For example:
 
 - `simplyblock-csi-sc-cluster1` (for `cluster_id: 4ec308a1-...`)
 - `simplyblock-csi-sc-cluster2` (for `cluster_id: YOUR_NEW_CLUSTER_ID`)
+
+### Topology-Aware Cluster Selection
+
+For deployments spanning multiple availability zones, the CSI driver supports automatic cluster selection based on
+Kubernetes node topology. Instead of specifying a fixed `cluster_id` per storage class, you can map zones or regions
+to clusters:
+
+- **`zone_cluster_map`:** Maps Kubernetes zones (`topology.kubernetes.io/zone`) to simplyblock cluster UUIDs.
+- **`region_cluster_map`:** Maps Kubernetes regions (`topology.kubernetes.io/region`) to cluster UUIDs for coarser
+  placement policies.
+
+When combined with `volumeBindingMode: WaitForFirstConsumer`, the CSI driver delays volume creation until a pod is
+scheduled, then selects the cluster that matches the pod's node topology. This enables a single StorageClass to work
+transparently across multiple backend clusters.
+
+## Kubernetes Operator Features
+
+The Simplyblock CSI driver includes several operator-level features for managing storage infrastructure directly from
+Kubernetes.
+
+### Storage Node Management
+
+Storage nodes can be deployed and managed as Kubernetes DaemonSets using the Helm chart. This enables fully
+Kubernetes-native storage node lifecycle management:
+
+- Set `storagenode.create=true` in the Helm values to deploy storage nodes as DaemonSets on labeled worker nodes.
+- Nodes are labeled with `io.simplyblock.node-type=simplyblock-storage-plane` to target storage node scheduling.
+- The **Storage Node Controller** (a Kubernetes Deployment) orchestrates node initialization, configuration, and
+  health monitoring.
+- Configuration options include huge page memory allocation, network interface selection, PCI device filtering, and
+  CPU core isolation.
+
+### NUMA Topology Support
+
+For performance-sensitive deployments, the CSI driver includes an optional NUMA Resource Plugin:
+
+- Deployed as a DaemonSet on storage nodes when `enableCpuTopology=true` is set.
+- Exposes NUMA node capacity as a Kubernetes device resource for topology-aware scheduling.
+- Ensures storage workloads are placed on the correct NUMA domain for optimal memory and PCIe locality.
+
+### Guardian (Automatic Volume Recovery)
+
+The Guardian is a daemon embedded in the CSI node component that automatically detects and recovers from broken NVMe
+volume connections:
+
+- Monitors NVMe-oF path health for all attached volumes.
+- When both primary and secondary paths are lost, marks the volume as broken.
+- After the cluster recovers (transitions to active or degraded state), automatically restarts affected pods to
+  re-establish volume connections.
+- Pods must opt in to automatic restart via the label `simplyblock.io/auto-restart-on-pathloss=true` on the pod or
+  in the StorageClass.
+- Includes configurable backoff periods to prevent restart storms during extended outages.
+
+### Backup and Recovery CRDs
+
+The CSI driver provides Custom Resource Definitions for managing backups from Kubernetes:
+
+- **`Backup`:** Creates a backup of a PVC's snapshot to S3. Supports specifying the S3 target, retention, and
+  snapshot selection.
+- **`BackupSchedule`:** Defines recurring backup schedules for automated data protection.
+- Restores can create new PVCs from backups or replace existing bound PVCs in place.
+- Cross-cluster restore is supported by providing an imported backup metadata file.
+
+### Replication CRDs
+
+Replication between simplyblock clusters is managed through Kubernetes CRDs:
+
+- **`Replication`:** Configures asynchronous replication between two clusters. Supports pool-level or PVC-level scope,
+  configurable frequency (minimum 60 seconds), and status monitoring (running, stopped, delayed, failed).
+- **`SyncReplication`:** Configures synchronous (real-time) replication for zero-RPO requirements.
+- **Failover/Failback:** Both CRDs support `fail-over` and `fail-back` actions for controlled site switching. Failback
+  uses iterative delta synchronization to minimize the final cutover window.
+
+For operational details, see [Replication Operations](../../maintenance-operations/replication.md) and
+[Backup and Recovery Operations](../../maintenance-operations/backup-recovery.md).

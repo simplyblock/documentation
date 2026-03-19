@@ -10,9 +10,9 @@ advanced data management features, simplyblock ensures low-latency access, high 
 This documentation section provides detailed explanations of key storage concepts within simplyblock, helping users
 understand how its storage components function and interact within a distributed system.
 
-The concepts covered in this section include Logical Volumes (LVs), Snapshots, Clones, Hyper-Convergence,
-Disaggregation, and more. Each concept plays is crucial in optimizing storage performance, ensuring data durability,
-and enabling efficient resource allocation. Whether you are deploying simplyblock in a Kubernetes environment, a
+The concepts covered in this section include Logical Volumes (LVs), Snapshots, Clones, Backup and Recovery, Volume
+Migration, Replication, Hyper-Convergence, Disaggregation, and more. Each concept is crucial in optimizing storage
+performance, ensuring data durability, and enabling efficient resource allocation. Whether you are deploying simplyblock in a Kubernetes environment, a
 virtualized infrastructure, or a bare-metal setup, understanding these core principles will help you design, configure,
 and manage your storage clusters effectively.
 
