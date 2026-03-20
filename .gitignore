@@ -5,3 +5,4 @@ venv
 .idea
 docs/reference/cli
 scripts/sbcli-repo
+.venv/

@@ -246,30 +246,24 @@ When combined with `volumeBindingMode: WaitForFirstConsumer`, the CSI driver del
 scheduled, then selects the cluster that matches the pod's node topology. This enables a single StorageClass to work
 transparently across multiple backend clusters.
 
-## Kubernetes Operator Features
+## Kubernetes Operator
 
-The Simplyblock CSI driver includes several operator-level features for managing storage infrastructure directly from
-Kubernetes.
+In addition to the CSI driver, simplyblock provides a Kubernetes operator
+([simplyblock-manager](https://github.com/simplyblock/simplyblock-manager)) for declarative management of the entire
+storage infrastructure. The operator manages clusters, storage nodes, pools, replication, and more through Custom
+Resource Definitions (CRDs).
+
+For the full CRD reference, see [Kubernetes CRD Reference](../../reference/kubernetes/crds.md).
 
 ### Storage Node Management
 
-Storage nodes can be deployed and managed as Kubernetes DaemonSets using the Helm chart. This enables fully
-Kubernetes-native storage node lifecycle management:
+Storage nodes can be deployed and managed declaratively using the `SimplyBlockStorageNode` CRD:
 
-- Set `storagenode.create=true` in the Helm values to deploy storage nodes as DaemonSets on labeled worker nodes.
-- Nodes are labeled with `io.simplyblock.node-type=simplyblock-storage-plane` to target storage node scheduling.
-- The **Storage Node Controller** (a Kubernetes Deployment) orchestrates node initialization, configuration, and
-  health monitoring.
-- Configuration options include huge page memory allocation, network interface selection, PCI device filtering, and
-  CPU core isolation.
-
-### NUMA Topology Support
-
-For performance-sensitive deployments, the CSI driver includes an optional NUMA Resource Plugin:
-
-- Deployed as a DaemonSet on storage nodes when `enableCpuTopology=true` is set.
-- Exposes NUMA node capacity as a Kubernetes device resource for topology-aware scheduling.
-- Ensures storage workloads are placed on the correct NUMA domain for optimal memory and PCIe locality.
+- Specify Kubernetes worker nodes to deploy SPDK on via the `workerNodes` field.
+- The operator deploys SPDK DaemonSets, registers nodes with the cluster, and monitors readiness.
+- Configuration options include CPU core isolation, NUMA topology, data NIC selection, PCI device filtering, and
+  huge page memory allocation.
+- Node lifecycle actions (shutdown, restart, suspend, resume, remove) are triggered via the CRD's `action` field.
 
 ### Guardian (Automatic Volume Recovery)
 
@@ -284,25 +278,19 @@ volume connections:
   in the StorageClass.
 - Includes configurable backoff periods to prevent restart storms during extended outages.
 
-### Backup and Recovery CRDs
+### Snapshot Replication
 
-The CSI driver provides Custom Resource Definitions for managing backups from Kubernetes:
+Cross-cluster snapshot replication is managed through the `SimplyBlockSnapshotReplication` CRD:
 
-- **`Backup`:** Creates a backup of a PVC's snapshot to S3. Supports specifying the S3 target, retention, and
-  snapshot selection.
-- **`BackupSchedule`:** Defines recurring backup schedules for automated data protection.
-- Restores can create new PVCs from backups or replace existing bound PVCs in place.
-- Cross-cluster restore is supported by providing an imported backup metadata file.
+- Configures periodic snapshot transfer from a source cluster to a target cluster.
+- Automatic failover detection when the source cluster becomes unavailable.
+- Manual failback with selective volume filtering after source recovery.
 
-### Replication CRDs
+For operational details, see [Replication Operations](../../maintenance-operations/replication.md).
 
-Replication between simplyblock clusters is managed through Kubernetes CRDs:
+### Backup and Recovery
 
-- **`Replication`:** Configures asynchronous replication between two clusters. Supports pool-level or PVC-level scope,
-  configurable frequency (minimum 60 seconds), and status monitoring (running, stopped, delayed, failed).
-- **`SyncReplication`:** Configures synchronous (real-time) replication for zero-RPO requirements.
-- **Failover/Failback:** Both CRDs support `fail-over` and `fail-back` actions for controlled site switching. Failback
-  uses iterative delta synchronization to minimize the final cutover window.
+Backup operations can be managed via the CLI or REST API. Simplyblock supports snapshot-based backup to S3 with
+policy-driven retention, cross-cluster restore, and scheduled backups.
 
-For operational details, see [Replication Operations](../../maintenance-operations/replication.md) and
-[Backup and Recovery Operations](../../maintenance-operations/backup-recovery.md).
+For operational details, see [Backup and Recovery Operations](../../maintenance-operations/backup-recovery.md).

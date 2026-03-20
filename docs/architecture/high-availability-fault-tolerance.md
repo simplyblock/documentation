@@ -38,6 +38,32 @@ storage:
   node with minimal disruption.
 - **Load Balancing**: Multipathing also distributes I/O across available paths to optimize performance and reliability.
 
+#### In-Cluster Multipathing
+
+In simplyblock's architecture, each storage node maintains NVMe-oF initiator connections (SPDK NVMe controllers) to
+the devices on all other storage nodes in the cluster. Simplyblock now supports **dual-path device connections**,
+where each inter-node device connection uses two separate IP addresses instead of one. This doubles the number of
+internal data paths between nodes.
+
+Additionally, simplyblock supports **dual-path client connections**, where clients connect to each storage node via
+two separate IP addresses. Combined with primary and secondary node access, this increases the number of client-visible
+paths:
+
+| Configuration                | Paths per volume (FT=1) | Paths per volume (FT=2) |
+|------------------------------|-------------------------|-------------------------|
+| Single path (previous)       | 2                       | 3                       |
+| Dual path (in-cluster)       | 4                       | 6                       |
+
+Dual-path connections provide:
+
+- **Higher aggregate bandwidth**: Two independent network paths can carry I/O in parallel.
+- **Network-level redundancy**: If one network interface or path fails, the other continues to serve I/O without
+  interruption.
+- **Improved failover speed**: With more active paths, failover to a surviving path is faster and more seamless.
+
+In-cluster multipathing is configured by specifying multiple data NICs per storage node (via the `dataNIC` parameter
+in the storage node configuration or Kubernetes CRD).
+
 #### Dual Fault Tolerance (FT=2)
 
 Simplyblock supports configuring clusters with **dual fault tolerance**, which assigns **two secondary nodes** per
@@ -91,14 +117,31 @@ Restoring from backup creates a new volume with the full data lineage reconstruc
 
 For more details, see [Backup and Recovery](concepts/backup-recovery.md).
 
-### 6. Cross-Cluster Replication
+### 6. Cross-Cluster Snapshot Replication
 
-Simplyblock supports both asynchronous and synchronous replication between clusters for multi-site disaster recovery.
-Asynchronous replication periodically transfers snapshots to a remote cluster, while synchronous replication mirrors
-writes in real time. Both modes support controlled failover and failback workflows to switch primary access between
-sites.
+Simplyblock supports snapshot-based replication between clusters for multi-site disaster recovery. Snapshots are
+periodically transferred from a source cluster to a target cluster at configurable intervals. The system provides
+automatic failover detection (when the source cluster becomes unavailable) and controlled manual failback after
+recovery.
 
 For more details, see [Replication](concepts/replication.md).
+
+### 7. Inline Data Integrity Checksums
+
+Simplyblock implements inline 64-bit hash checksums on the hot data path to detect and repair silent data corruption
+(bit rot) in real time. Every block of data written to storage is checksummed, and the checksum is verified on every
+read. If corruption is detected, the system automatically repairs the data using redundant copies from erasure coding.
+
+The checksum storage strategy is adaptive:
+
+- **NVMe per-block metadata**: If the underlying NVMe device supports the optional per-block metadata feature (as
+  defined in the NVMe specification), checksums are stored in the device's native metadata area alongside each block.
+  This provides zero-overhead checksum storage.
+- **Fallback storage**: If the device does not support per-block metadata, checksums are stored together with header
+  blocks of chunked data extents on disk. Extensive caching is used to minimize the performance impact of this
+  fallback approach.
+
+Data integrity checking can be enabled or disabled at the cluster level.
 
 ## Benefits of Simplyblock’s High Availability Design
 
@@ -109,5 +152,7 @@ For more details, see [Replication](concepts/replication.md).
 - Dual fault tolerance (FT=2) for environments requiring survival of two simultaneous node failures.
 - Live volume migration for non-disruptive hardware maintenance and cluster rebalancing.
 - Off-cluster backup to S3 for disaster recovery beyond the storage cluster.
-- Cross-cluster replication for multi-site availability and disaster recovery.
+- Cross-cluster snapshot replication for multi-site availability and disaster recovery.
+- In-cluster dual-path multipathing for network redundancy and higher aggregate bandwidth.
+- Inline data integrity checksums for detection and automatic repair of silent data corruption.
 
