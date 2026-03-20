@@ -1,5 +1,6 @@
 ---
 title: Storage Plane
+description: "Storage Plane: Symptom: After a fresh deployment, the cluster cannot be activated."
 weight: 30200
 ---
 

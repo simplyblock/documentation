@@ -1,5 +1,6 @@
 ---
 title: "Air Gap Installation"
+description: "Air Gap Installation: Simplyblock can be installed in an air-gapped environment."
 weight: 30000
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: NUMA Considerations
+description: "NUMA Considerations: Modern multi-socket servers use a memory architecture called NUMA (Non-Uniform Memory Access){:target=\"_blank\" rel=\"noopener\"}."
 weight: 30300
 ---
 

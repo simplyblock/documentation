@@ -1,5 +1,6 @@
 ---
 title: "Deployments"
+description: "Deployments: Simplyblock is a highly flexible storage solution Different initiator (host) drivers (Kubernetes CSI, Proxmox, OpenStack) are available."
 weight: 10300
 ---
 

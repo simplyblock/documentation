@@ -1,5 +1,6 @@
 ---
 title: "What is Simplyblock?"
+description: "What is Simplyblock?: Simplyblock is a high-performance, distributed storage orchestration layer designed for cloud-native environments."
 weight: 20000
 ---
 

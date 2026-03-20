@@ -1,5 +1,6 @@
 ---
 title: "Command Line Interface"
+description: "is the official command line interface (CLI) for managing simplyblock management and storage clusters."
 weight: 20100
 ---
 

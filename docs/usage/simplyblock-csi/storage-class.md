@@ -1,5 +1,6 @@
 ---
 title: "Storage Class"
+description: "Storage Class: A Kubernetes StorageClass defines the way dynamic storage provisioning is handled within a cluster."
 weight: 30400
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Control Plane"
+description: "Control Plane: Symptom: FoundationDB error. All services that rely upon the FoundationDB key-value storage are offline or refuse to start."
 weight: 30100
 ---
 

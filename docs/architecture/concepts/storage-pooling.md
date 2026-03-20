@@ -1,5 +1,6 @@
 ---
 title: "Storage Pooling"
+description: "Storage pooling is a technique used in distributed data storage systems to aggregate multiple storage devices into a single, unified storage resource."
 weight: 30000
 ---
 

@@ -1,3 +1,8 @@
+---
+title: Cluster Deployment Options
+description: "Cluster Deployment Options: The following options can be set when creating a cluster. This applies to both plain linux and kubernetes deployments."
+---
+
 The following options can be set when creating a cluster. This applies to both plain linux and kubernetes deployments.
 Most cannot be changed later on, so careful planning is recommended.
 

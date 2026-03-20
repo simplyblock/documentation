@@ -1,5 +1,6 @@
 ---
 title: "Supported Linux Distributions"
+description: "Supported Linux Distributions: Simplyblock requires a Linux Kernel 5.19 or later with NVMe over Fabrics and NVMe over TCP enabled."
 weight: 20200
 ---
 

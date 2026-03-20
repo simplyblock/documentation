@@ -1,3 +1,7 @@
+---
+title: Nvme Namespaces And Subsystems
+description: "Nvme Namespaces And Subsystems: To connect to a storage volume, both locally and via NVMe-oF, you need a subsystem and a namespace."
+---
 
 To connect to a storage volume, both locally and via NVMe-oF, you need a subsystem and a namespace.
 

@@ -1,5 +1,6 @@
 ---
 title: Simplyblock Cluster
+description: "Simplyblock Cluster: The simplyblock storage platform consists of three different types of cluster nodes and belongs to the control plane or storage plane."
 weight: 30000
 ---
 

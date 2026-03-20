@@ -1,5 +1,6 @@
 ---
 title: "Disaggregated"
+description: "Disaggregated storage represents a modern approach to distributed storage architectures, where compute and storage resources are decoupled."
 weight: 30400
 ---
 

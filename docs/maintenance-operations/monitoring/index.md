@@ -1,5 +1,6 @@
 ---
 title: "Monitoring"
+description: "Monitoring the health, performance, and resource utilization of a Simplyblock cluster is crucial for ensuring optimal operation, early issue detection, and."
 weight: 20200
 ---
 

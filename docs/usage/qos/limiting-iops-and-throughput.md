@@ -1,5 +1,6 @@
 ---
 title: "Quality of Service Limits"
+description: "Quality of Service Limits: Quality of Service (QoS) limits (IOPS, Read, Write and ReadWrite limits) can be chosen on both volume and pool level."
 weight: 10300
 ---
 

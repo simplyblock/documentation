@@ -1,5 +1,6 @@
 ---
 title: "Cloud Instance Recommendations"
+description: "Cloud Instance Recommendations: Simplyblock has been tested on and recommends the following instance types."
 weight: 30000
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Configure Node Affinity"
+description: "Configure Node Affinity: Simplyblock features node affinity, sometimes also referred to as data locality."
 weight: 20060
 ---
 

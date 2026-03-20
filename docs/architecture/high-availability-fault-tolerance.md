@@ -1,5 +1,6 @@
 ---
 title: "High Availability and Fault Tolerance"
+description: "High Availability and Fault Tolerance: Simplyblock is designed to provide enterprise-grade high availability (HA) and fault tolerance for enterprise and."
 weight: 20200
 ---
 

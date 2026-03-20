@@ -1,5 +1,6 @@
 ---
 title: "Snapshotting a Logical Volume"
+description: "Snapshotting a Logical Volume: Snapshots in simplyblock provide point-in-time copies of logical Volumes (LVs), allowing for backup, recovery, or cloning."
 weight: 30100
 ---
 

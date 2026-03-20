@@ -1,5 +1,6 @@
 ---
 title: "QoS Service Classes"
+description: "QoS Service Classes are managing cluster QUOTAS and ensure that all volumes within a class achieve their respective quota."
 weight: 10400
 ---
 

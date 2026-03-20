@@ -1,5 +1,6 @@
 ---
 title: "Reference"
+description: "Reference: Simplyblock provides multiple interfaces for managing and interacting with its distributed storage system, including the command-line interface (CLI)."
 weight: 10800
 ---
 

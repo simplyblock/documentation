@@ -1,5 +1,6 @@
 ---
 title: "Install Simplyblock Control Plane on Kubernetes"
+description: "Install Simplyblock Control Plane on Kubernetes: Before running the helm install, you can edit the values.yaml file to match your specific configuration."
 weight: 30000
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Hyper-Converged"
+description: "Hyper-converged storage is a key component of hyper-converged infrastructure (HCI), where compute, storage, and networking resources are tightly integrated into."
 weight: 30300
 ---
 

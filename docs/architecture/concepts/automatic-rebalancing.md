@@ -1,5 +1,6 @@
 ---
 title: "Automatic Rebalancing"
+description: "Automatic rebalancing is a fundamental feature of distributed data storage systems designed to maintain an even distribution of data across storage nodes."
 weight: 30700
 ---
 

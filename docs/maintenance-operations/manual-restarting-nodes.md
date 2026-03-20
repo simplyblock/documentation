@@ -1,5 +1,6 @@
 ---
 title: "Stopping and Manually Restarting a Storage Node"
+description: "Stopping and Manually Restarting a Storage Node: In these cases, a manual restart is required Nodes can only be restarted from offline state!."
 weight: 10700
 ---
 

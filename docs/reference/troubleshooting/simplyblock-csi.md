@@ -1,5 +1,6 @@
 ---
 title: Kubernetes CSI
+description: "Kubernetes CSI: Controller Plugin: Runs as a Deployment and manages volume provisioning and deletion Node Plugin: Runs as a DaemonSet and handles volume."
 weight: 30300
 ---
 

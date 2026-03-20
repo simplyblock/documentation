@@ -1,5 +1,6 @@
 ---
 title: "Alerting"
+description: "Simplyblock uses Grafana to configure and manage alerting rules By default, Grafana is configured to send alerts to Slack channels."
 weight: 30050
 ---
 

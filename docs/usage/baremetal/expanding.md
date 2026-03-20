@@ -1,5 +1,6 @@
 ---
 title: "Expanding a Logical Volume"
+description: "Expanding a Logical Volume: Resizing a logical Volume (LV) in simplyblock allows additional capacity to be allocated without downtime, ensuring workloads have."
 weight: 30300
 ---
 

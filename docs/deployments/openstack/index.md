@@ -1,5 +1,6 @@
 ---
 title: OpenStack Integration
+description: "OpenStack Integration: This driver is still not part of the official OpenStack support matrix."
 weight: 20350
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: Home
+description: "Home: Welcome to the Simplyblock Documentation, your comprehensive resource for understanding, deploying, and managing simplyblock's cloud-native."
 weight: 10000
-
 ---
 
 # Welcome to the Simplyblock Documentation

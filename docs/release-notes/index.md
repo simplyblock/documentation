@@ -1,5 +1,6 @@
 ---
 title: "Release Notes"
+description: "Release Notes: Simplyblock regularly provides new releases with new features, performance enhancements, bugfixes, and more."
 weight: 10900
 ---
 

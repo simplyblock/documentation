@@ -1,5 +1,6 @@
 ---
 title: "Expanding"
+description: "Expanding a Persistent Volume (PV) in Kubernetes allows for increasing the size of a volume without downtime, ensuring applications continue running with."
 weight: 40300
 ---
 

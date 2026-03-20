@@ -1,5 +1,6 @@
 ---
 title: Operations
+description: "Operations: Ensuring data resilience and maintaining cluster health are critical aspects of managing a simplyblock storage deployment."
 weight: 10500
 ---
 

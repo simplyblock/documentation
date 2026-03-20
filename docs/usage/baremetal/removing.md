@@ -1,5 +1,6 @@
 ---
 title: "Removing a Logical Volume"
+description: "Removing a logical Volume (LV) in simplyblock permanently deletes the volume and its associated data from the cluster."
 weight: 30400
 ---
 

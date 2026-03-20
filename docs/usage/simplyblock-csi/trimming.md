@@ -1,5 +1,6 @@
 ---
 title: "Trimming a Filesystem"
+description: "Trimming a Filesystem: Filesystem trimming is the process of informing the underlying storage system about unused blocks, allowing simplyblock to reclaim and."
 weight: 40800
 ---
 

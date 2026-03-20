@@ -1,5 +1,6 @@
 ---
 title: "Migrating a Storage Node"
+description: "Migrating a Storage Node: Simplyblock storage clusters are designed as always-on."
 weight: 20000
 ---
 

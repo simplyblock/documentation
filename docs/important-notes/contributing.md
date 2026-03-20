@@ -1,5 +1,6 @@
 ---
 title: "Contributing"
+description: "Contributing: Simplyblock's documentation is publicly available, and we welcome contributions from the community to improve clarity, fix errors, and enhance the."
 weight: 20600
 ---
 

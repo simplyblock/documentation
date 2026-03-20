@@ -1,5 +1,6 @@
 ---
 title: "Install Storage Plane"
+description: "Install Storage Plane: The installation of a storage plane requires a functioning control plane."
 weight: 34000
 ---
 

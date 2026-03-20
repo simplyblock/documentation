@@ -1,5 +1,6 @@
 ---
 title: "Removing"
+description: "Removing: A simplyblock-managed logical volume which is connected to a Kubernetes PersistentVolumeClaim is targeted to Kubernetes' automatic lifecycle."
 weight: 40400
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Cloning a Logical Volume"
+description: "Cloning a logical Volume (LV) in simplyblock creates a writable, independent copy-on-write clone of an existing volume."
 weight: 30200
 ---
 

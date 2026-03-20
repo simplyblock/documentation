@@ -1,5 +1,6 @@
 ---
 title: "Security"
+description: "Security is a core pillar of the simplyblock platform, designed to protect data across every layer of the storage stack."
 weight: 20200
 ---
 

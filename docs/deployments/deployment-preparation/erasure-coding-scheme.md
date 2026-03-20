@@ -1,5 +1,6 @@
 ---
 title: "Erasure Coding Scheme"
+description: "Choosing the appropriate erasure coding scheme is crucial when deploying a simplyblock storage cluster, as it directly impacts data redundancy, storage."
 weight: 30100
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Acronyms & Abbreviations"
+description: "Reference table of Simplyblock acronyms and abbreviations used across architecture, deployment, operations, Kubernetes, NVMe, and security documentation."
 weight: 20450
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Upgrading a Cluster"
+description: "Upgrading a Cluster: Simplyblock clusters consist of two independent parts: a control plane with management nodes, and a storage plane with storage nodes."
 weight: 10600
 ---
 

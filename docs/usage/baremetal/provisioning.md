@@ -1,5 +1,6 @@
 ---
 title: "Provisioning a Logical Volume"
+description: "Provisioning a Logical Volume: A logical volume (LV) in simplyblock can be provisioned using the command line interface."
 weight: 30000
 ---
 

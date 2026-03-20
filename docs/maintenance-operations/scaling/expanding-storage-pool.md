@@ -1,5 +1,6 @@
 ---
 title: "Expanding a Storage Pool"
+description: "Expanding a Storage Pool: Simplyblock is designed as on always-on a storage system."
 weight: 30000
 ---
 

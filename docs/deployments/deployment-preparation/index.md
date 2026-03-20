@@ -1,5 +1,6 @@
 ---
 title: "Deployment Preparation"
+description: "Deployment Preparation: Proper deployment planning is essential for ensuring the performance, scalability, and resilience of a simplyblock storage cluster."
 weight: 20000
 ---
 

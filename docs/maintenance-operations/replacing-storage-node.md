@@ -1,5 +1,6 @@
 ---
 title: "Replacing a Storage Node"
+description: "Replacing a Storage Node: A simplyblock storage cluster is designed to be always up."
 weight: 20050
 ---
 

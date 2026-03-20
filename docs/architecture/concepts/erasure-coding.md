@@ -1,5 +1,6 @@
 ---
 title: "Erasure Coding"
+description: "Erasure coding is a data protection mechanism used in distributed storage systems to enhance fault tolerance and optimize storage efficiency."
 weight: 30600
 ---
 

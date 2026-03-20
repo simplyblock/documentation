@@ -1,5 +1,6 @@
 ---
 title: "Kubernetes CSI"
+description: "Kubernetes CSI: Simplyblock integrates seamlessly with Kubernetes through its Container Storage Interface (CSI) driver, enabling dynamic provisioning and."
 weight: 30300
 ---
 

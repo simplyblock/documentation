@@ -1,5 +1,6 @@
 ---
 title: "Cloning"
+description: "Cloning: Kubernetes PersistentVolumes, backed by simplyblock, can be instantly cloned."
 weight: 40200
 ---
 

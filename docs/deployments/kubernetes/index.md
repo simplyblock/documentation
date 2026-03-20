@@ -1,5 +1,6 @@
 ---
 title: "Install Simplyblock on Kubernetes"
+description: "Install Simplyblock on Kubernetes: cluster. This is always the first step. clusters once the control plane is ready."
 weight: 20100
 ---
 

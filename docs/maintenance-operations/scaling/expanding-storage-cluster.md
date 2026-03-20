@@ -1,5 +1,6 @@
 ---
 title: "Expanding a Storage Cluster"
+description: "Expanding a Storage Cluster: Simplyblock is designed as an always-on storage solution."
 weight: 29001
 ---
 

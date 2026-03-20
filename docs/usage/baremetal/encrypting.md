@@ -1,5 +1,6 @@
 ---
 title: "Encrypting a Logical Volume"
+description: "Encrypting a Logical Volume: Simplyblock supports encryption of logical volumes (LVs) to protect data at rest, ensuring that sensitive information remains."
 weight: 30500
 ---
 

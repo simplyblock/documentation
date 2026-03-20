@@ -1,5 +1,6 @@
 ---
 title: "Performance and QoS"
+description: "Performance and QoS: Storage performance can be categorized by latency (the aggregate response time of an IO request from the host to the storage system) and."
 weight: 20100
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Troubleshooting"
+description: "Troubleshooting: Simplyblock is designed as a system for minimal manual intervention."
 weight: 20600
 ---
 

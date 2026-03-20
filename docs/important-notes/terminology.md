@@ -1,5 +1,6 @@
 ---
 title: "Terminology"
+description: "Terminology: A simplyblock storage cluster is a group of interconnected storage nodes that work together to provide a scalable, fault-tolerant, and."
 weight: 20400
 params:
 sidebar:

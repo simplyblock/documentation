@@ -1,5 +1,6 @@
 ---
 title: "Defining Quality of Service"
+description: "Defining Quality of Service: Simplyblock's Kubernetes CSI driver supports Quality of Service (QoS) to define minimum guaranteed performance characteristics of a."
 weight: 40600
 ---
 

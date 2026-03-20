@@ -1,5 +1,6 @@
 ---
 title: "Defining Quality of Service"
+description: "Defining Quality of Service: Simplyblock allows Quality of Service (QoS) limits to be applied to logical volumes (LVs) to control performance by defining."
 weight: 30600
 ---
 

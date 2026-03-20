@@ -1,5 +1,6 @@
 ---
 title: "Concepts"
+description: "Understanding the fundamental concepts behind simplyblock is essential for effectively utilizing its distributed storage architecture."
 weight: 20300
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Persistent Volumes"
+description: "Persistent Volumes (PVs) in Kubernetes provide a mechanism for managing storage resources independently of individual Pods."
 weight: 30200
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Introduction to Simplyblock"
+description: "Video introduction to Simplyblock architecture, platform capabilities, and core concepts for building high-performance cloud-native storage."
 weight: 20000
 ---
 

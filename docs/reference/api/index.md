@@ -1,5 +1,6 @@
 ---
 title: "API / Developer SDK"
+description: "API / Developer SDK: Simplyblock offers a comprehensive API to manage and automate cluster operations."
 weight: 20100
 ---
 

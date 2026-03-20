@@ -1,5 +1,6 @@
 ---
 title: "Accessing Grafana"
+description: "Accessing Grafana: Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation Grafana retrieves metric data from Prometheus, including."
 weight: 30000
 ---
 

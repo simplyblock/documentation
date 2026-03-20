@@ -1,5 +1,6 @@
 ---
 title: "Provisioning"
+description: "Provisioning a new PersistentVolume using simplyblock's Kubernetes CSI driver integration requires at least one StorageClass to be set up."
 weight: 40000
 ---
 

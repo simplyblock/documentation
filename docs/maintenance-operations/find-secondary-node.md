@@ -1,5 +1,6 @@
 ---
 title: "Finding the Secondary Node"
+description: "Finding the Secondary Node: Simplyblock, in high-availability mode, creates two connections per logical volume: a primary and a secondary connection."
 weight: 20070
 ---
 

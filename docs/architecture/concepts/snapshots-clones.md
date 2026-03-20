@@ -1,5 +1,6 @@
 ---
 title: "Snapshots and Clones"
+description: "Snapshots and Clones: Volume snapshots and volume clones are essential data management features in distributed storage systems that enable data protection."
 weight: 30500
 ---
 

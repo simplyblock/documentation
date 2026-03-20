@@ -1,5 +1,6 @@
 ---
 title: "Install Control Plane"
+description: "Install Control Plane: The first step when installing simplyblock on plain linux (Docker), is to install the control plane."
 weight: 32000
 ---
 

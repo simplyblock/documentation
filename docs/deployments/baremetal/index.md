@@ -1,5 +1,6 @@
 ---
 title: "Plain Linux Initiators"
+description: "Plain Linux Initiators: Simplyblock storage can be attached over the network to Linux hosts which are not running Kubernetes, Proxmox or OpenStack."
 weight: 20200
 ---
 

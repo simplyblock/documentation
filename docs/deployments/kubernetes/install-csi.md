@@ -1,5 +1,6 @@
 ---
 title: "Install Simplyblock CSI"
+description: "Install Simplyblock CSI: Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver."
 weight: 30200
 ---
 

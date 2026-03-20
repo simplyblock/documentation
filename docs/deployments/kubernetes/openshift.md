@@ -1,5 +1,6 @@
 ---
 title: "OpenShift"
+description: "When installing simplyblock on OpenShift, the process is very similar to Kubernetes, with one key difference, OpenShift requires explicitly granting the."
 weight: 40100
 ---
 

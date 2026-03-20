@@ -1,5 +1,6 @@
 ---
 title: "Logical Volumes"
+description: "Logical Volumes (LVs) in Simplyblock are virtual NVMe devices that provide scalable, high-performance storage within a distributed storage cluster."
 weight: 30100
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Upgrade Matrix"
+description: "Upgrade Matrix: Simplyblock supports in-place upgrades of existing clusters. However, not all versions can be upgraded straight to the latest versions."
 weight: 20150
 ---
 

@@ -1,5 +1,6 @@
 ---
 title: "Documentation Conventions"
+description: "Documentation Conventions: Features in simplyblock are released when reaching general availability."
 weight: 20500
 ---
 

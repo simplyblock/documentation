@@ -1,5 +1,6 @@
 ---
 title: "Supported Linux Kernels"
+description: "Supported Linux Kernels: Simplyblock is built upon NVMe over Fabrics. Hence, it requires a Linux kernel with NVMe and NVMe-oF support."
 weight: 20300
 ---
 

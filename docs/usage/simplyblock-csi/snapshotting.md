@@ -1,5 +1,6 @@
 ---
 title: "Snapshotting"
+description: "Snapshotting: Kubernetes PersistentVolumes backed by simplyblock can be instantly snapshotted."
 weight: 40100
 ---
 

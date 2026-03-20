@@ -1,5 +1,6 @@
 ---
 title: Proxmox Integration
+description: "Proxmox Integration: Proxmox Virtual Environment (Proxmox VE) is an open-source server virtualization platform that integrates KVM-based virtual machines and."
 weight: 20350
 ---
 

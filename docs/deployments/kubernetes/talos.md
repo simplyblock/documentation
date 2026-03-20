@@ -1,5 +1,6 @@
 ---
 title: "Talos"
+description: "Talos: Talos Linux is a minimal Linux distribution optimized for Kubernetes."
 weight: 40200
 ---
 [Talos Linux](https://www.talos.dev/) is a minimal Linux distribution optimized for Kubernetes. Built as an immutable

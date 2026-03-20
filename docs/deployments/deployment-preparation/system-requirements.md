@@ -1,5 +1,6 @@
 ---
 title: System Requirements
+description: "System Requirements: In cloud environments including GCP and AWS, instance types are pre-configured."
 weight: 29999
 ---
 
