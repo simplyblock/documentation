@@ -28,6 +28,9 @@ Alternatively, back up an existing snapshot:
 The backup runs asynchronously in the background. Simplyblock automatically resolves the snapshot's ancestry chain
 and backs up any parent snapshots that have not yet been backed up.
 
+!!! Important
+    Once a snapshot or it's chain is backed up (completed), it can be deleted without impact on the backup itself.
+
 ### Listing Backups
 
 To list all backups in the cluster:
@@ -35,6 +38,8 @@ To list all backups in the cluster:
 ```bash title="List backups"
 {{ cliname }} backup list [--cluster-id <CLUSTER_ID>]
 ```
+
+This may also reference imported (external) backups taken on another cluster.
 
 ### Restoring from a Backup
 
@@ -96,6 +101,8 @@ Policies can be attached to individual volumes or entire storage pools:
 {{ cliname }} backup policy-detach <POLICY_ID> lvol <LVOL_ID>
 ```
 
+Detaching a policy does not impact existing backups!
+
 #### Listing and Removing Policies
 
 ```bash title="List backup policies"
@@ -122,13 +129,7 @@ This produces a JSON file containing backup metadata (not the actual data, which
 
 #### Importing Backup Metadata
 
-On the target cluster, import the metadata:
-
-```bash title="Import backup metadata"
-{{ cliname }} backup import <METADATA_FILE> [--cluster-id <CLUSTER_ID>]
-```
-
-#### Switching Backup Source
+##### Switching Backup Source
 
 Before restoring imported backups, switch the cluster's S3 source to read from the original cluster's bucket:
 
@@ -147,6 +148,15 @@ To list available backup sources:
     Switch back to the local source after completing restore operations.
 
 After switching the source, use the standard `backup restore` command to restore from the imported backups.
+
+On the target cluster, import the metadata:
+
+```bash title="Import backup metadata"
+{{ cliname }} backup import <METADATA_FILE> [--cluster-id <CLUSTER_ID>]
+```
+
+!!! Warning
+    Do not forget to switch back the source to the internal cluster to resume normal backup operations.
 
 ## Kubernetes CRD Operations
 

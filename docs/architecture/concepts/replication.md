@@ -31,6 +31,10 @@ Snapshot replication is suitable for disaster recovery scenarios where a recover
 acceptable. It can also be used for local and global CDN-like data distribution processes or for the site migration of
 clusters.
 
+!!! info
+    Basic remote snapshot replication is available on any platform via CLI/API, but full asynchronous replication 
+    with fail-over and fail-back is only available on Kubernetes.
+
 ## Replication Architecture
 
 The replication system involves three components:
@@ -49,12 +53,13 @@ The replication system involves three components:
 
 Failover is triggered **automatically** when the operator detects that the source cluster is in a failure state:
 
-- The source cluster status is `suspended`, **and**
+- The source cluster status is `suspended`, **or**
 - All storage nodes in the source cluster are `unreachable`.
 
-When both conditions are met, the operator initiates a one-time volume replication (`replicate_lvol`) for each
-replicated volume, effectively migrating the full volume to the target cluster. The target volumes become primary and
-begin serving I/O.
+When both conditions are met, the operator initiates a one-time volume switch (`replicate_lvol`) for each
+replicated volume, effectively providing access to the full volume on the target cluster via new nvme-OF paths. 
+The RPO is based on the latest completed snapshot replication.
+The target volumes become primary and begin serving I/O.
 
 No manual action is required to trigger failover -- the operator detects the conditions and acts automatically.
 
@@ -64,6 +69,13 @@ No manual action is required to trigger failover -- the operator detects the con
     schedule.
 
 ## Failback
+
+In case the source cluster is entirely lost, it is possible to replicate all data back to a fresh cluster at the origin or
+any other site by setting up the replication path towards this new cluster. This is not a true "failback" but handled
+as a new replication.
+
+Failback refers to the option to replicate the delta accumulated in the target cluster back to the source in case the
+source cluster can be recovered at origin (e.g. after temporary outage or maintainance action). 
 
 Failback is triggered **manually** by setting `action: failback` on the `SimplyBlockSnapshotReplication` CRD after the
 source cluster has been restored.

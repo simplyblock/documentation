@@ -7,6 +7,9 @@ Volume migration in simplyblock enables the online relocation of logical volumes
 interruption. This is essential for planned maintenance, hardware replacement, capacity rebalancing, and infrastructure
 modernization.
 
+As simplyblock back storage is entirely distributed, volume migration does not require actual data movement! In fact, only
+meta-data and extent headers are updated. 
+
 ## How Volume Migration Works
 
 When a volume migration is initiated, simplyblock transfers the volume's complete data lineage -- including its entire
