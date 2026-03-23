@@ -88,7 +88,7 @@ To create a new logical volume, the following command can be run on any control 
 In this example, a logical volume with the name `lvol01` and 1TB of thinly provisioned capacity is created in the pool
 named `test`. The uuid of the logical volume is returned at the end of the operation.
 
-For additional parameters, see [Add a new Logical Volume](../../reference/cli/volume.md#adds-a-new-logical-volume).
+For additional parameters, see [the CLI reference](../../reference/cli/index.md).
 
 To connect a logical volume on the initiator (or Linux client), execute the following command on a any control plane
 node. This command returns one or more connection commands to be executed on the client.

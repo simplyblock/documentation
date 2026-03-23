@@ -89,7 +89,7 @@ True
 ```
 
 A full set of the parameters for the `configure` subcommand can be found in the
-[CLI reference](/reference/cli/storage-node.md#prepare-a-configuration-file-to-be-used-when-adding-the-storage-node). 
+[CLI reference](../../reference/cli/index.md). 
 
 It is also possible to adjust the configuration file manually, e.g., to remove NVMe devices.
 After the configuration has been created, the first stage deployment can be executed. 

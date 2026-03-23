@@ -50,7 +50,7 @@ To prepare the new storage host, the following commands must be executed.
 ```
 
 The full list of parameters for either command can be found in the 
-[CLI documentation](../reference/cli/storage-node.md).
+[CLI documentation](../reference/cli/index.md).
 
 ### Restart Old Storage Node
 

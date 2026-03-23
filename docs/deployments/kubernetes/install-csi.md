@@ -38,7 +38,7 @@ strongly recommended. If a manual installation is preferred, see the
 ## Retrieving Credentials
 
 Credentials are available via `{{ cliname }} cluster get-secret` from any of the control plane nodes. For further
-information on the command, see [Retrieving a Cluster Secret](../../reference/cli/cluster.md#gets-a-clusters-secret).
+information on the command, see [the CLI reference](../../reference/cli/index.md).
 
 First, the unique cluster id must be retrieved. Note down the cluster UUID of the cluster to access.
 

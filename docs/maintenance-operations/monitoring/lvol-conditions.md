@@ -19,7 +19,7 @@ To access a logical volume's performance and I/O statistics, the `{{ cliname }}`
 ```
 
 All details of the command are available in the
-[CLI reference](../../reference/cli/volume.md#gets-a-logical-volumes-io-statistics).
+[CLI reference](../../reference/cli/index.md).
 
 The information is also available through Grafana in the logical volume's dashboard.
 
@@ -32,4 +32,4 @@ To access a logical volume's health status, the `{{ cliname }}` command line too
 ```
 
 All details of the command are available in the
-[CLI reference](../../reference/cli/volume.md#checks-a-logical-volumes-health).
+[CLI reference](../../reference/cli/index.md).

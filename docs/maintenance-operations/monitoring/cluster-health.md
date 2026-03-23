@@ -19,7 +19,7 @@ To access a cluster's status, the `{{ cliname }}` command line tool can be used:
 ```
 
 All details of the command are available in the
-[CLI reference](../../reference/cli/cluster.md#shows-a-clusters-status).
+[CLI reference](../../reference/cli/index.md).
 
 ## Accessing Cluster Statistics 
 
@@ -30,7 +30,7 @@ To access a cluster's performance and I/O statistics, the `{{ cliname }}` comman
 ```
 
 All details of the command are available in the
-[CLI reference](../../reference/cli/cluster.md#shows-a-clusters-statistics).
+[CLI reference](../../reference/cli/index.md).
 
 The information is also available through Grafana in the cluster's dashboard.
 
@@ -43,7 +43,7 @@ To access a cluster's performance and I/O statistics, the `{{ cliname }}` comman
 ```
 
 All details of the command are available in the
-[CLI reference](../../reference/cli/cluster.md#gets-a-clusters-io-statistics).
+[CLI reference](../../reference/cli/index.md).
 
 The information is also available through Grafana in the cluster's dashboard.
 
@@ -56,7 +56,7 @@ To access a cluster's capacity information, the `{{ cliname }}` command line too
 ```
 
 All details of the command are available in the
-[CLI reference](../../reference/cli/cluster.md#gets-a-clusters-capacity).
+[CLI reference](../../reference/cli/index.md).
 
 ## Accessing Cluster Health Information
 
@@ -67,4 +67,4 @@ To access a cluster's health status, the `{{ cliname }}` command line tool can b
 ```
 
 All details of the command are available in the
-[CLI reference](../../reference/cli/cluster.md#checks-a-clusters-health).
+[CLI reference](../../reference/cli/index.md).

@@ -20,4 +20,4 @@ To expand a storage pool, the `{{ cliname }}` command line interface:
 The value of _NEW_SIZE_ must be given as `20G`, `20T`, etc.
 
 All valid parameters can be found in the 
-[Storage Pool CLI Reference](../../reference/cli/storage-pool.md#sets-a-storage-pools-attributes). 
+[Storage Pool CLI Reference](../../reference/cli/index.md). 

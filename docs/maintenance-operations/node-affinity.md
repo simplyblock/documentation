@@ -32,7 +32,7 @@ To enable node affinity at creation time of the cluster, the `--enable-node-affi
 ```
 
 To see all available parameters for cluster creation, see
-[Cluster Create](../reference/cli/cluster.md#creates-a-new-cluster).
+[CLI reference](../reference/cli/index.md).
 
 When the cluster was created with node affinity enabled, logical volumes can be created with node affinity, which will
 always try to locate data co-located with the requested storage node. 
@@ -52,7 +52,7 @@ To create a co-located logical volume, the parameter `--host-id` needs to be add
 ```
 
 To see all available parameters for a logical volume creation, see
-[Logical Volume Creation](../reference/cli/volume.md#adds-a-new-logical-volume).
+[CLI reference](../reference/cli/index.md).
 
 The storage node UUID (or host id) can be found using the `{{ cliname }} storage-node list` command.
 
