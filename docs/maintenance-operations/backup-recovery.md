@@ -6,8 +6,8 @@ weight: 20100
 Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. Backups can be
 managed via the CLI or through Kubernetes CRDs.
 
-For the conceptual overview, see [Backup and Recovery Concepts](../architecture/concepts/backup-recovery.md). For the
-full CRD field reference, see [Kubernetes CRD Reference](../reference/kubernetes/crds.md#backup).
+For Kubernetes deployment and configuration details, see
+[Kubernetes Helm Chart Parameters](../reference/kubernetes/index.md).
 
 ## CLI Operations
 

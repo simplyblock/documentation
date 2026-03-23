@@ -100,8 +100,6 @@ The failback process supports filtering volumes using `includeVolumeIDs` and `ex
 
 ## Kubernetes Integration
 
-In Kubernetes environments, replication is managed through the `SimplyBlockSnapshotReplication` CRD. For the full CRD
-specification and examples, see
-[Kubernetes CRD Reference](../../reference/kubernetes/crds.md#simplyblocksnapshotreplication).
-
-For operational procedures, see [Replication Operations](../../maintenance-operations/replication.md).
+In Kubernetes environments, replication is managed through the `SimplyBlockSnapshotReplication` CRD. For Kubernetes
+deployment and configuration details, see
+[Kubernetes Helm Chart Parameters](../../reference/kubernetes/index.md).
