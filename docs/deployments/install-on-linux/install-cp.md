@@ -91,6 +91,25 @@ If the check succeeds, it's time to set up the primary management node:
 {{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha
 ```
 
+To enable NVMe-oF transport security (DH-HMAC-CHAP authentication and TLS/PSK), provide a JSON configuration file
+with the `--host-sec` flag:
+
+```bash title="Deploy with NVMe-oF security"
+{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --host-sec=host-security-config.json
+```
+
+```json title="Example: host-security-config.json"
+{
+  "params": {
+    "dhchap_digests": ["sha256", "sha384"],
+    "dhchap_dhgroups": ["ffdhe4096", "ffdhe2048"]
+  }
+}
+```
+
+This configures the cluster-wide DH-HMAC-CHAP digest algorithms and Diffie-Hellman groups used for NVMe-oF
+authentication. For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-security.md).
+
 Additional cluster deployment options can be found in the [Cluster Deployment Options](../cluster-deployment-options.md).
 
 The output should look something like this:

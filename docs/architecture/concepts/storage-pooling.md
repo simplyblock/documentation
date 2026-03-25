@@ -20,3 +20,6 @@ Key characteristics of storage pooling include:
 - **Improved Efficiency:** By eliminating the constraints of static storage assignments, storage pooling optimizes resource utilization and reduces wasted capacity.
 - **Scalability:** Additional storage devices or nodes can seamlessly integrate into the storage pool without disrupting operations.
 - **Simplified Management:** Centralized control and monitoring enable streamlined administration of storage resources.
+- **Security Options:** Storage pools can define NVMe-oF security settings (DH-HMAC-CHAP authentication and TLS/PSK
+  encryption) that are automatically applied to all volumes created within the pool. See
+  [NVMe-oF Security](nvmf-security.md) for details.

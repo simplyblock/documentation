@@ -59,6 +59,26 @@ If you need few, very performant volumes, increase the amount, if you need a lar
 volumes decrease it. More than 12 parallel connections have limited impact on overall performance. Also, the 
 host requires at least one core per queue pair.
 
+### ```--host-sec```
+
+Path to a JSON file with NVMe-oF host security configuration. This enables DH-HMAC-CHAP authentication for NVMe-oF
+connections cluster-wide. The JSON file specifies the allowed digest algorithms and Diffie-Hellman groups.
+
+```json title="Example: host-security-config.json"
+{
+  "params": {
+    "dhchap_digests": ["sha256", "sha384"],
+    "dhchap_dhgroups": ["ffdhe4096", "ffdhe2048"]
+  }
+}
+```
+
+Supported digests: `sha256`, `sha384`, `sha512`
+
+Supported DH groups: `null`, `ffdhe2048`, `ffdhe3072`, `ffdhe4096`, `ffdhe6144`, `ffdhe8192`
+
+For more information, see [NVMe-oF Security](../architecture/concepts/nvmf-security.md).
+
 ### ```--name```
 
 A human-readable name for the cluster

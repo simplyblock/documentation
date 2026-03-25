@@ -37,6 +37,17 @@ Quality of service is available for
 [Kubernetes-based installation quality of service](../../usage/simplyblock-csi/quality-of-service.md) and
 [plain Linux installation quality of service](../../usage/baremetal/quality-of-service.md).
 
+## NVMe-oF Transport Security
+
+To enforce tenant isolation at the transport layer, simplyblock supports NVMe-oF host access control, DH-HMAC-CHAP
+authentication, and TLS/PSK encryption. By restricting which host NQNs can connect to a volume's subsystem and requiring
+authenticated connections, tenants are cryptographically isolated at the network level.
+
+Security keys are configured per storage pool and automatically generated for each allowed host, ensuring that tenants
+in different pools have distinct authentication credentials.
+
+For details on configuring NVMe-oF security, see [NVMe-oF Security](../../architecture/concepts/nvmf-security.md).
+
 ## Encryption and Data Security
 
 All data is protected with encryption at rest, using strong AES-based cryptographic algorithms. Encryption is applied at

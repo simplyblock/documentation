@@ -13,6 +13,7 @@ weight: 20450
 | COW                     | Copy On Write                        |
 | CP                      | Control Plane                        |
 | CSI                     | Container Storage Interface          |
+| DH-HMAC-CHAP            | Diffie-Hellman HMAC Challenge-Handshake Authentication Protocol |
 | DMA                     | Direct Memory Access                 |
 | EA                      | Erasure Coding                       |
 | HA                      | High Availability                    |
@@ -31,6 +32,7 @@ weight: 20450
 | NVMe/RoCE               | NVMe over RDMA on Converged Ethernet |
 | NVMe/TCP                | NVMe over TCP                        |
 | OS                      | Operating System                     |
+| PSK                     | Pre-Shared Key                       |
 | PV                      | Persistent Volume                    |
 | PVC                     | Persistent Volume Claim              |
 | QOS                     | Quality of Service                   |

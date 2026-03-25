@@ -79,6 +79,24 @@ pool can be created as follows:
 {{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID>
 ```
 
+To enable NVMe-oF security for all volumes in the pool, provide a JSON configuration file with the `--sec-options` flag.
+This configures which security keys (DH-HMAC-CHAP, TLS/PSK) are auto-generated for each allowed host. The cluster
+must have been created with `--host-sec` for authentication to work.
+
+```bash title="Create a Storage Pool with NVMe-oF Security"
+{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID> --sec-options=sec-options.json
+```
+
+```json title="Example: sec-options.json"
+{
+  "dhchap_key": true,
+  "dhchap_ctrlr_key": true,
+  "psk": true
+}
+```
+
+For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-security.md).
+
 The last line of a successful storage pool creation returns the new pool id.
 
 ```plain title="Example output of creating a storage pool"

@@ -41,6 +41,7 @@ To create a new logical volume:
 | --max-rw-mbytes MAX_RW_MBYTES | Maximum read/write throughput.                     | 0       |
 | --max-r-mbytes MAX_R_MBYTES   | Maximum read throughout.                           | 0       |
 | --max-w-mbytes MAX_W_MBYTES   | Maximum write throughput.                          | 0       |
+| --allowed-hosts               | Path to JSON file with host NQNs allowed to access this volume's subsystem. |  |
 
 ## Verification
 
