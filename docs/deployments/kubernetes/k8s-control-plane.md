@@ -1,87 +1,70 @@
 ---
-title: "Install Simplyblock Control Plane on Kubernetes"
-description: "Install Simplyblock Control Plane on Kubernetes: Before running the helm install, you can edit the values.yaml file to match your specific configuration."
+title: "Install Simplyblock Operator"
+description: "Install the simplyblock Kubernetes operator via Helm. The operator manages the full lifecycle of simplyblock clusters, storage nodes, pools, and the CSI driver."
 weight: 30000
 ---
 
-```bash title="Install CLI"
-pip install {{ cliname }} --upgrade
+The simplyblock operator is deployed via a single Helm chart. Once installed, it watches for simplyblock Custom
+Resources and manages the full lifecycle of clusters, storage nodes, pools, and the CSI driver.
+
+## Prerequisites
+
+- A Kubernetes cluster (v1.24+)
+- Helm 3 installed
+- `kubectl` configured with cluster access
+
+## Installing the Operator
+
+```bash title="Install the simplyblock operator"
+helm repo add simplyblock https://install.simplyblock.io/helm/csi
+helm repo update
+
+helm install simplyblock -n simplyblock --create-namespace simplyblock/spdk-csi
 ```
 
-After installing the CLI, navigate to the Helm chart directory within the installed package:
+After installation, verify the operator is running:
 
-```bash
-cd /usr/local/lib/python3.9/site-packages/simplyblock_core/scripts/charts/
+```bash title="Verify the operator"
+kubectl get pods -n simplyblock
 ```
 
-Then build the Helm dependencies and deploy the simplyblock control plane:
+## Creating a Storage Cluster
 
-```bash
-helm dependency build ./
-helm upgrade --install sbcli --namespace simplyblock --create-namespace ./
+Once the operator is running, create a storage cluster by applying a `SimplyBlockStorageCluster` CRD:
+
+```yaml title="Example: storage-cluster.yaml"
+apiVersion: simplyblock.simplyblock.io/v1alpha1
+kind: SimplyBlockStorageCluster
+metadata:
+  name: my-cluster
+  namespace: simplyblock
+spec:
+  clusterName: production
+  mgmtIfc: eth0
+  haType: ha
+  stripeWdata: 2
+  stripeWparity: 1
+  fabric: tcp
 ```
 
-Before running the `helm install`, you can edit the `values.yaml` file to match your specific configuration.
-For example, to set cluster parameters, storage options, monitoring secret or node selectors according to your environment.
-
-{% include 'control-plane-network-port-table-k8s.md' %}
-
-Find and exec into the admin control pod (replace the pod name if different):
-
-```bash
-kubectl -n simplyblock exec -it simplyblock-admin-control-<uuid> -- bash
+```bash title="Apply the cluster resource"
+kubectl apply -f storage-cluster.yaml
 ```
 
-```bash title="Install Control Plane"
-{{ cliname }} cluster create --mgmt-ip <WORKER_IP> --ha-type ha --mode kubernetes
+Check the cluster status:
+
+```bash title="Check cluster status"
+kubectl get simplyblockstoragecluster -n simplyblock
 ```
 
-!!! info
-    You need to add additional parameter when using a Loadbalancer `--ingress-host-source loadbalancer` and `--dns-name <LB_INGRESS_DNS>`
+### Cluster Options
 
-To enable NVMe-oF transport security (DH-HMAC-CHAP authentication and TLS/PSK), provide a JSON configuration file
-with the `--host-sec` flag:
+For NVMe-oF transport security, backup configuration, and other cluster options, see
+[Cluster Deployment Options](../cluster-deployment-options.md).
 
-```bash title="Install Control Plane with NVMe-oF Security"
-{{ cliname }} cluster create --mgmt-ip <WORKER_IP> --ha-type ha --mode kubernetes --host-sec=host-security-config.json
-```
+## Next Steps
 
-```json title="Example: host-security-config.json"
-{
-  "params": {
-    "dhchap_digests": ["sha256", "sha384"],
-    "dhchap_dhgroups": ["ffdhe4096", "ffdhe2048"]
-  }
-}
-```
+Once the cluster is created, proceed to [Deploy Storage Nodes and CSI](k8s-storage-plane.md) to add storage
+capacity and enable volume provisioning.
 
-For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-security.md).
-
-To enable S3 backup and recovery, provide a JSON configuration file with the `--use-backup` flag:
-
-```bash title="Install Control Plane with Backup"
-{{ cliname }} cluster create --mgmt-ip <WORKER_IP> --ha-type ha --mode kubernetes --use-backup=backup-config.json
-```
-
-```json title="Example: backup-config.json"
-{
-  "access_key_id": "<AWS_ACCESS_KEY>",
-  "secret_access_key": "<AWS_SECRET_KEY>",
-  "bucket_name": "simplyblock-backups"
-}
-```
-
-For MinIO or S3-compatible storage, add the `local_endpoint` field:
-
-```json title="Example: MinIO backup config"
-{
-  "access_key_id": "<MINIO_ACCESS_KEY>",
-  "secret_access_key": "<MINIO_SECRET_KEY>",
-  "bucket_name": "simplyblock-backups",
-  "local_endpoint": "http://minio.example.com:9000"
-}
-```
-
-For more information on backup operations, see [Backup and Recovery](../../usage/backup-recovery.md).
-
-Additional parameters for the cluster create command can be found at [Cluster Deployment Options](../cluster-deployment-options.md).
+For a complete reference of all CRD fields, see [Simplyblock Operator](operator.md).

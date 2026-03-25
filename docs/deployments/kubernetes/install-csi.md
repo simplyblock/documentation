@@ -4,18 +4,21 @@ description: "Install Simplyblock CSI: Simplyblock provides a seamless integrati
 weight: 30200
 ---
 
-Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver. 
+Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver.
 
-Before installing the Kubernetes CSI Driver, a control plane must be present, a (empty) storage cluster must have
-been added to the control plane, and a storage pool must have been created.
+!!! note
+    For Kubernetes-native deployments where both the storage cluster and CSI driver are managed on Kubernetes, use the
+    [simplyblock operator](k8s-control-plane.md) instead. The operator installs and manages the CSI driver
+    automatically via CRDs.
 
-This section explains how to install a CSI driver and connect it to a disaggregated storage cluster, which must already
-exist prior to the CSI driver installation. The disaggregated cluster must be installed onto
-[Plain Linux Hosts](../install-on-linux/install-sp.md) or into an [Existing Kubernetes Cluster](k8s-control-plane.md).
-It must not be co-located on the same Kubernetes worker nodes as the CSI driver installation. 
+This section explains how to install the CSI driver **standalone** to connect to an **external** simplyblock storage
+cluster. The external cluster must be installed onto
+[Plain Linux Hosts](../install-on-linux/install-sp.md) or into an
+[Existing Kubernetes Cluster](k8s-control-plane.md) and must not be co-located on the same Kubernetes worker nodes
+as the CSI driver installation.
 
-For co-located (hyper-converged) deployment (which includes the CSI driver and storage node deployment), see
-[Hyper-Converged Deployment](k8s-storage-plane.md).
+Before installing the Kubernetes CSI Driver, the external cluster must be present and a storage pool must have been
+created.
 
 ## CSI Driver System Requirements
 

@@ -1,20 +1,42 @@
 ---
 title: "Install Simplyblock on Kubernetes"
-description: "Install Simplyblock on Kubernetes: cluster. This is always the first step. clusters once the control plane is ready."
+description: "Install Simplyblock on Kubernetes using the simplyblock operator, which manages the full lifecycle of clusters, storage nodes, pools, and the CSI driver via CRDs."
 weight: 20100
 ---
 
-Three simplyblock components can be installed into existing Kubernetes environments:
+Simplyblock provides a Kubernetes operator that manages the full lifecycle of simplyblock storage infrastructure. The
+operator is installed via a single Helm chart and uses Custom Resource Definitions (CRDs) to declaratively manage
+clusters, storage nodes, storage pools, and the CSI driver.
 
-- [**Control Plane**](k8s-control-plane.md): In Kubernetes-based deployments, the simplyblock control plane can be installed into a Kubernetes
-  cluster. This is always the first step. 
-- [**Storage Plane**](k8s-storage-plane.md): In Kubernetes-based deployments, the simplyblock storage plane can be installed into Kubernetes
-  clusters once the control plane is ready. It is possible to use separate workers or even separate clusters as storage nodes or to combine them with
-  compute. The storage plane installs also installs necessary components of the CSI driver, no extra helm chart is needed.
+## Deployment Overview
 
-  In general, all Kubernetes deployments follow the same procedure. However, here are some specifics worth to mention around [openshift](./openshift.md) and [talos](./talos.md).
-  Also, if you want to use volume-based e2e encryption with customer-managed keys, please see [here](./volume-encryption.md). 
-  
-The Simplyblock [**CSI Driver**](./install-csi.md) can also be separately installed to connect to any external storage cluster
-(this can be another hyperconverged or disaggregated cluster under Kubernetes or a Linux-based disaggregated deployment), see: [Install Simplyblock CSI](install-csi.md).
- 
+A typical Kubernetes deployment follows these steps:
+
+1. **[Install the Operator](k8s-control-plane.md)**: Deploy the simplyblock operator via the Helm chart. The operator
+   watches for simplyblock CRDs and reconciles the desired state.
+2. **[Deploy Storage Nodes and CSI](k8s-storage-plane.md)**: Apply CRDs to create the storage cluster, add storage
+   nodes, create storage pools, and deploy the CSI driver.
+
+For connecting to an **external** simplyblock cluster (e.g., a disaggregated Linux-based cluster), the CSI driver
+can be installed separately: [Install Simplyblock CSI](install-csi.md).
+
+## Operator CRDs
+
+The operator manages the following resources:
+
+| CRD                           | Description                                        |
+|-------------------------------|----------------------------------------------------|
+| `SimplyBlockStorageCluster`   | Creates and manages a simplyblock storage cluster  |
+| `SimplyBlockStorageNode`      | Deploys and manages storage nodes                  |
+| `SimplyBlockPool`             | Creates and manages storage pools                  |
+| `SimplyBlockLvol`             | Views logical volume status                        |
+| `SimplyBlockDevice`           | Manages NVMe devices on storage nodes              |
+| `SimplyBlockTask`             | Monitors cluster tasks                             |
+
+For detailed CRD documentation, see [Simplyblock Operator](operator.md).
+
+## Platform-Specific Notes
+
+- [OpenShift](openshift.md) — additional configuration for OpenShift clusters.
+- [Talos](talos.md) — specifics for Talos-based OS images.
+- [Volume Encryption](volume-encryption.md) — end-to-end encryption with customer-managed keys.
