@@ -79,6 +79,39 @@ Supported DH groups: `null`, `ffdhe2048`, `ffdhe3072`, `ffdhe4096`, `ffdhe6144`,
 
 For more information, see [NVMe-oF Security](../architecture/concepts/nvmf-security.md).
 
+### ```--use-backup```
+
+Path to a JSON file with S3 or S3-compatible (MinIO) backup configuration. This enables snapshot-based backup and
+recovery for the cluster.
+
+```json title="Example: backup-config.json (AWS S3)"
+{
+  "access_key_id": "<AWS_ACCESS_KEY>",
+  "secret_access_key": "<AWS_SECRET_KEY>",
+  "bucket_name": "simplyblock-backups"
+}
+```
+
+```json title="Example: backup-config.json (MinIO / S3-compatible)"
+{
+  "access_key_id": "<MINIO_ACCESS_KEY>",
+  "secret_access_key": "<MINIO_SECRET_KEY>",
+  "bucket_name": "simplyblock-backups",
+  "local_endpoint": "http://minio.example.com:9000"
+}
+```
+
+| Key                  | Description                                                                | Required |
+|----------------------|----------------------------------------------------------------------------|----------|
+| `access_key_id`      | S3 access key ID.                                                         | Yes      |
+| `secret_access_key`  | S3 secret access key.                                                     | Yes      |
+| `bucket_name`        | S3 bucket name. Defaults to `simplyblock-backup-<CLUSTER_ID>` if omitted. | No       |
+| `local_endpoint`     | Custom S3 endpoint URL for MinIO or other S3-compatible storage.          | No       |
+| `with_compression`   | Enable compression for backup data. Default: `false`.                     | No       |
+| `snapshot_backups`   | Enable snapshot-based incremental backups. Default: `true`.               | No       |
+
+For more information on backup operations, see [Backup and Recovery](../usage/backup-recovery.md).
+
 ### ```--name```
 
 A human-readable name for the cluster

@@ -110,6 +110,33 @@ with the `--host-sec` flag:
 This configures the cluster-wide DH-HMAC-CHAP digest algorithms and Diffie-Hellman groups used for NVMe-oF
 authentication. For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-security.md).
 
+To enable S3 backup and recovery, provide a JSON configuration file with the `--use-backup` flag:
+
+```bash title="Deploy with Backup"
+{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --use-backup=backup-config.json
+```
+
+```json title="Example: backup-config.json"
+{
+  "access_key_id": "<AWS_ACCESS_KEY>",
+  "secret_access_key": "<AWS_SECRET_KEY>",
+  "bucket_name": "simplyblock-backups"
+}
+```
+
+For MinIO or S3-compatible storage, add the `local_endpoint` field:
+
+```json title="Example: MinIO backup config"
+{
+  "access_key_id": "<MINIO_ACCESS_KEY>",
+  "secret_access_key": "<MINIO_SECRET_KEY>",
+  "bucket_name": "simplyblock-backups",
+  "local_endpoint": "http://minio.example.com:9000"
+}
+```
+
+For more information on backup operations, see [Backup and Recovery](../../usage/backup-recovery.md).
+
 Additional cluster deployment options can be found in the [Cluster Deployment Options](../cluster-deployment-options.md).
 
 The output should look something like this:
