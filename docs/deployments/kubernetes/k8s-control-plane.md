@@ -16,7 +16,7 @@ Resources and manages the full lifecycle of clusters, storage nodes, pools, and 
 ## Installing the Operator
 
 ```bash title="Install the simplyblock operator"
-helm repo add simplyblock https://install.simplyblock.io/helm/csi
+helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 
 helm install simplyblock -n simplyblock --create-namespace simplyblock/spdk-csi

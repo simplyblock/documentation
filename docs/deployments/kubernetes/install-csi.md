@@ -124,7 +124,7 @@ CLUSTER_UUID="<UUID>"
 CLUSTER_SECRET="<SECRET>"
 CNTR_ADDR="<CONTROL-PLANE-ADDR>"
 POOL_NAME="<POOL-NAME>"
-helm repo add simplyblock-csi https://install.simplyblock.io/helm/csi
+helm repo add simplyblock-csi https://install.simplyblock.io/helm
 helm repo update
 helm install -n simplyblock --create-namespace simplyblock simplyblock-csi/spdk-csi \
     --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
@@ -138,7 +138,7 @@ helm install -n simplyblock --create-namespace simplyblock simplyblock-csi/spdk-
 [demo@demo ~]# export CLUSTER_SECRET="oal4PVNbZ80uhLMah2Bs"
 [demo@demo ~]# export CNTR_ADDR="http://192.168.10.1/"
 [demo@demo ~]# export POOL_NAME="test"
-[demo@demo ~]# helm repo add simplyblock-csi https://install.simplyblock.io/helm/csi
+[demo@demo ~]# helm repo add simplyblock-csi https://install.simplyblock.io/helm
 "simplyblock-csi" has been added to your repositories
 [demo@demo ~]# helm repo update
 Hang tight while we grab the latest from your chart repositories...
