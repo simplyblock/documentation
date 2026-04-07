@@ -59,7 +59,7 @@ network bandwidth, and free space on the boot disk.
 
 | Node Type                 | vCPU(s) | RAM (GB) | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
 |---------------------------|---------|----------|--------------------------|---------------------|----------------|-----------------|
-| Storage Node              | 8+      | 6+       | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (2 for HA)    | 
+| Storage Node              | 8+      | 6+       | 1x fully dedicated NVMe  | 10 GBit/s           | 10 GB          | 1 (3 for HA)    | 
 | Control Plane<sup>*</sup> | 4       | 16       | -                        | 1 GBit/s            | 35 GB          | 1 (3 for HA)    | 
 
 <sup>*</sup> Plain Linux Deployment, up to 5 nodes, 1,000 logical volumes, 2,500 snapshots
