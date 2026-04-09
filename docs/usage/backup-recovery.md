@@ -29,7 +29,7 @@ The backup runs asynchronously in the background. Simplyblock automatically reso
 and backs up any parent snapshots that have not yet been backed up.
 
 !!! Important
-    Once a snapshot or it's chain is backed up (completed), it can be deleted without impact on the backup itself.
+    Once a snapshot or its chain is backed up (completed), it can be deleted without impact on the backup itself.
 
 ### Listing Backups
 
@@ -46,7 +46,9 @@ This may also reference imported (external) backups taken on another cluster.
 Restoring a backup creates a new logical volume with the data reconstructed from the S3 backup chain:
 
 ```bash title="Restore a backup"
-{{ cliname }} backup restore <BACKUP_ID> --lvol <NEW_VOLUME_NAME> --pool <POOL_ID> [--node <TARGET_NODE_ID>] [--cluster-id <CLUSTER_ID>]
+{{ cliname }} backup restore <BACKUP_ID> \
+  --lvol <NEW_VOLUME_NAME> --pool <POOL_ID> \
+  [--node <TARGET_NODE_ID>] [--cluster-id <CLUSTER_ID>]
 ```
 
 The restore process downloads and applies each backup in the chain. The new volume is set to a restoring state during
@@ -70,7 +72,11 @@ Backup policies automate backup creation and retention management.
 #### Creating a Policy
 
 ```bash title="Create a backup policy"
-{{ cliname }} backup policy-add <CLUSTER_ID> <POLICY_NAME> [--versions <MAX_VERSIONS>] [--age <MAX_AGE>] [--schedule "<SCHEDULE>"]
+{{ cliname }} backup policy-add \
+  <CLUSTER_ID> <POLICY_NAME> \
+  [--versions <MAX_VERSIONS>] \
+  [--age <MAX_AGE>] \
+  [--schedule "<SCHEDULE>"]
 ```
 
 Parameters:
@@ -122,7 +128,10 @@ Cross-cluster backup enables restoring data on a different simplyblock cluster u
 Export backup metadata from the source cluster:
 
 ```bash title="Export backup metadata"
-{{ cliname }} backup export [--cluster-id <CLUSTER_ID>] [--lvol <VOLUME_NAME>] [-o <OUTPUT_FILE>]
+{{ cliname }} backup export \
+  [--cluster-id <CLUSTER_ID>] \
+  [--lvol <VOLUME_NAME>] \
+  [-o <OUTPUT_FILE>]
 ```
 
 This produces a JSON file containing backup metadata (not the actual data, which remains in S3).
