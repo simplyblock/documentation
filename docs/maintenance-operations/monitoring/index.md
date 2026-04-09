@@ -4,7 +4,7 @@ description: "Monitoring the health, performance, and resource utilization of a 
 weight: 20200
 ---
 
-Monitoring the health, performance, and resource utilization of a Simplyblock cluster is crucial for ensuring optimal
+Monitoring the health, performance, and resource utilization of a simplyblock cluster is crucial for ensuring optimal
 operation, early issue detection, and efficient capacity planning. The `{{ cliname }}` command line interface
 provides a comprehensive set of tools to retrieve real-time and historical metrics related to Logical Volumes (LVs),
 storage nodes, I/O performance, and system status. By leveraging `{{ cliname }}`, administrators can quickly

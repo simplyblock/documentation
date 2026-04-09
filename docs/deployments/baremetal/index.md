@@ -13,6 +13,11 @@ Those manual steps are typically taken care of by the CSI driver or Proxmox inte
 On plain Linux initiators, those steps have to be performed manually on each host that will connect simplyblock logical
 volumes.
 
+### Prerequisites
+
+Before starting the deployment, make sure that the following prerequisites as described in the
+[Prerequisites](../deployment-preparation/system-requirements.md) section are met.
+
 ### Install NVMe Client Package
 
 === "RHEL / Alma / Rocky"

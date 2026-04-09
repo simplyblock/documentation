@@ -136,7 +136,7 @@ requirements.
 Quality of Service (QoS) refers to the ability to define and enforce performance guarantees for storage workloads by
 controlling key metrics such as IOPS (Input/Output Operations Per Second), throughput, and latency. QoS ensures that
 different applications receive appropriate levels of performance, preventing resource contention in multi-tenant
-environments. By setting limits and priorities for Logical Volumes (LVs), Simplyblock allows administrators to allocate
+environments. By setting limits and priorities for Logical Volumes (LVs), simplyblock allows administrators to allocate
 storage resources efficiently, ensuring critical workloads maintain consistent performance even under high demand.
 This capability is essential for optimizing storage operations, improving reliability, and meeting service-level
 agreements (SLAs) in distributed cloud-native environments. In simplyblock, it is possible to limit (cap) IOPS or throughput

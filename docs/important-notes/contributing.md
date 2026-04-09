@@ -10,13 +10,13 @@ weight: 20600
 
 Simplyblock's documentation is publicly available, and we welcome contributions from the community to improve clarity,
 fix errors, and enhance the overall quality of our documentation. While simplyblock itself is not open source, our
-documentation is publicly hosted  [GitHub](https://github.com/simplyblock/documentation). We encourage
+documentation is publicly hosted  [GitHub](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"}. We encourage
 users to provide feedback, report typos, suggest improvements, and submit fixes for documentation inconsistencies.
 
 ## How to Contribute
 
-The simplyblock documentation is built using [mkdocs](https://www.mkdocs.org/), specifically using the
-[mkdocs-material](https://squidfunk.github.io/mkdocs-material/) variant.
+The simplyblock documentation is built using [mkdocs](https://www.mkdocs.org/){:target="_blank" rel="noopener"}, specifically using the
+[mkdocs-material](https://squidfunk.github.io/mkdocs-material/){:target="_blank" rel="noopener"} variant.
 
 Changes to the documentation can be made by changing or adding the necessary Markdown files.
 
@@ -25,7 +25,7 @@ Changes to the documentation can be made by changing or adding the necessary Mar
 If you notice any inaccuracies, typos, missing information, or outdated content, you can submit an issue on our GitHub
 repository:
 
-1. Navigate to the [Simplyblock Documentation GitHub Repository](https://github.com/simplyblock/documentation).
+1. Navigate to the [Simplyblock Documentation GitHub Repository](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"}.
 2. Click on the **Issues** tab.
 3. Click **New Issue** and provide a clear description of the problem or suggestion.
 4. Submit the issue, and our team will review it.
@@ -36,7 +36,7 @@ If you'd like to make direct changes to the documentation, follow these steps:
 
 1. **Fork the Repository**
 
-- Visit [Simplyblock Documentation GitHub](https://github.com/simplyblock/documentation) and click **Fork** to create
+- Visit [Simplyblock Documentation GitHub](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"} and click **Fork** to create
   your own copy of the repository.
 
 2. **Clone the Repository**

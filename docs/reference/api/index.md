@@ -47,4 +47,4 @@ Content-Type: application/json
 ## API Documentation
 
 The full API documentation is hosted on Postman. You can find the full API collection on the
-[Postman API project](https://documenter.getpostman.com/view/434798/2sA3QpCtzT#intro).
+[Postman API project](https://documenter.getpostman.com/view/434798/2sA3QpCtzT#intro){:target="_blank" rel="noopener"}.

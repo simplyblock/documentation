@@ -17,7 +17,7 @@ storage and SPDK operations.
 
 Ensure your OpenShift cluster is operational and that you have administrator privileges.
 
-Before deploying Simplyblock components, grant the required SCC permissions:
+Before deploying simplyblock components, grant the required SCC permissions:
 
 ```bash title="Grant SCC permissions"
 oc adm policy add-scc-to-group privileged system:serviceaccounts

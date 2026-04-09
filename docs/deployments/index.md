@@ -31,7 +31,7 @@ They are attached to the Linux kernel via the provided `nvme-tcp` or `nvme-rdma`
 modules and managed via the `nvme-cli` tool. For more information, see
   [Linux NVMe-oF Attach](baremetal/index.md).
 On top of the NVMe-oF devices, which show up as linux block devices such as `/dev/nvme1n1`,  
-life cycle automation is performed by the orchestrator-specific Simplyblock drivers: 
+life cycle automation is performed by the orchestrator-specific simplyblock drivers: 
 
 - On Kubernetes: [Simplyblock CSI Driver](kubernetes/install-csi.md) 
 - On Proxmox: [Proxmox Integration](proxmox/index.md) 
@@ -54,5 +54,4 @@ instance types may work, it is highly recommended to use the instance type recom
 
 - [Amazon EC2](deployment-preparation/cloud-instance-recommendations.md#aws-amazon-ec2-recommendations)
 - [Google Compute Engine](deployment-preparation/cloud-instance-recommendations.md#google-compute-engine-recommendations)
-
 

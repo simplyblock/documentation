@@ -19,9 +19,9 @@ queues build up and response times go up. This is no different from a traffic ja
 airline counter. Therefore, to compare latency results, it must be measured under a fixed system load (amount of
 parallel IO, its size, and IO type mix).
 
-!!! Important
+!!! important
     For latency, consistency matters. High latency variability, especially in the tail, can severely impact workloads.
-    Therefore, 99th percentile latency may be more important than the average or median.
+    Therefore, the 99th percentile latency may be more important than the average or median.
 
 ## Challenges with Hyper-Converged and Software-Defined Storage
 

@@ -41,7 +41,7 @@ storage:
 
 ### 3. Redundant Control Plane and Storage Plane
 
-To ensure cluster-wide availability, Simplyblock operates with full redundancy in both its control plane and
+To ensure cluster-wide availability, simplyblock operates with full redundancy in both its control plane and
 storage plane:
 
 - **Control Plane (Management Nodes)**:
@@ -60,4 +60,3 @@ storage plane:
 - Seamless failover and recovery from node, network, or disk failures.
 - Efficient use of storage capacity while ensuring redundancy through erasure coding.
 - Continuous operation during maintenance and upgrade procedures.
-

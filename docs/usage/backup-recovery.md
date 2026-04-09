@@ -28,7 +28,7 @@ Alternatively, back up an existing snapshot:
 The backup runs asynchronously in the background. Simplyblock automatically resolves the snapshot's ancestry chain
 and backs up any parent snapshots that have not yet been backed up.
 
-!!! Important
+!!! important
     Once a snapshot or its chain is backed up (completed), it can be deleted without impact on the backup itself.
 
 ### Listing Backups

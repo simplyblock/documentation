@@ -4,6 +4,11 @@ description: "Install Control Plane: The first step when installing simplyblock 
 weight: 32000
 ---
 
+### Prerequisites
+
+Before starting the deployment, make sure that the following prerequisites as described in the
+[Prerequisites](../deployment-preparation/system-requirements.md) section are met.
+
 ## Control Plane Installation
 
 The first step when installing simplyblock on plain linux (Docker), is to install the control plane. The control

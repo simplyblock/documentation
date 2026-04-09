@@ -6,7 +6,7 @@ weight: 40800
 
 Filesystem trimming is the process of informing the underlying storage system about unused blocks, allowing simplyblock
 to reclaim and optimize storage space. This is particularly important when using thin-provisioned Logical Volumes (LVs)
-in Simplyblock, as it helps maintain efficient resource utilization and reduces unnecessary storage consumption over
+in simplyblock, as it helps maintain efficient resource utilization and reduces unnecessary storage consumption over
 time.
 
 ## When to Trim

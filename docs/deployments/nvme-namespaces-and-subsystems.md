@@ -15,7 +15,7 @@ In Simplyblock it looks as follows (the last part behind `:lvol:<uuid>` indicate
 `qn.2023-02.io.simplyblock:136012a7-f386-4091-ae0f-4e763059e9c8:lvol:6809b758-1c73-451f-810c-210c18d6aa14`
 
 Together with the IP address, the fully qualified subsystem address has to be given to connect, but 
-In Simplyblock this process is either automated (CSI, OpenStack or Proxmox) or guided (plain linux attach).
+In simplyblock this process is either automated (CSI, OpenStack or Proxmox) or guided (plain linux attach).
 
 It’s roughly equivalent to an NVMe controller complex — a logical device that can contain one or more namespaces.
 

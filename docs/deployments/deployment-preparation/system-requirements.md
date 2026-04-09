@@ -47,7 +47,7 @@ The minimum system requirements below concern simplyblock only and must be dedic
 
 ## Minimum System Requirements
 
-!!! Info
+!!! info
     If the use of erasure coding is intended, DDR5 RAM is recommended for maximum performance. In addition, it is
     recommended to use CPUs with large L1 caches, as those will perform better.
 
@@ -70,13 +70,13 @@ IOPS performance depends on Storage Node vCPU. The maximum performance will be r
 32 physical cores per socket. In such a scenario, the deployment will dedicate (isolate) 24 cores to
 Simplyblock Data Plane (spdk_80xx containers) and the rest will remain under control of Linux.
 
-!!! Info
+!!! info
     Simplyblock auto-detects NUMA nodes. It will configure and deploy storage nodes per NUMA node. 
 
     Each NUMA socket requires directly attached NVMe devices and NICs to deploy a storage node.
     For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
 
-!!! Info
+!!! info
     It is recommended to deploy multiple storage nodes per storage host if there are more than 32 cores available
     per socket.
 
@@ -89,11 +89,11 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 to simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to 
 12.5% of vCPU capacity per host. For very IO-intensive applications, this amount should be increased.
 
-!!! Warning
+!!! warning
     On storage nodes, required vCPUs will be automatically isolated from the operating system. No
     kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs.
 
-!!! Info
+!!! info
     For RAM, it is required to estimate the expected average number of logical volumes per node, as well as the 
     average raw storage capacity, which can be utilized per node. For example, if each node in 
     a cluster has 100 TiB of raw capacity, this would be the average too. In a 5-node cluster,
@@ -105,7 +105,7 @@ to simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, thi
 | Per logical volume (cluster average per node)            | 25 MiB             |
 | % of maximum storage capacity (cluster average per node) | 1.5 GiB / TiB      |
 
-!!! Info
+!!! info
     For disaggregated setups, it is recommended to add 50% to these numbers as a reserve. In 
     a purely hyper-converged setup, stay at the requirement.
 
@@ -125,7 +125,7 @@ If more than 2,500 volumes or more than 5 storage nodes are attached to the cont
 are advised. Also, the required observability disk space must be increased, if retention of logs and statistics for
 more than 7 days is required. 
 
-!!! Info
+!!! info
     3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
     The Observability Stack can optionally be replicated and the sb-services run without replication.  
 
@@ -147,7 +147,7 @@ but this is not a hard requirement.
 Clusters are lightweight, and it is recommended to use different clusters for different types of 
 hardware (NVMe, networking, compute) or with a different performance profile per TiB of raw storage. 
 
-!!! Warning
+!!! warning
     Simplyblock only works with non-partitioned, exclusive NVMe devices (virtual via SRV-IO or physical) as its backing
     storage.
 
@@ -159,9 +159,9 @@ hardware (NVMe, networking, compute) or with a different performance profile per
     Additionally, devices will be detached from the operating system's control and will no longer show up in _lsblk_
     once simplyblock's storage nodes are running.
 
-!!! Info
+!!! info
     It is required to [Low-Level Format Devices](../../reference/nvme-low-level-format.md) with 4KB block size before
-    deploying Simplyblock.
+    deploying simplyblock.
 
 ## Network Requirements
 
@@ -171,7 +171,7 @@ active/active or active/passive NICs, STP or MSTP).
 Simplyblock implements NVMe over Fabrics (NVMe-oF), specifically NVMe over TCP, and works over any Ethernet
 interconnect.
 
-!!! Recommendation
+!!! recommendation
     Simplyblock highly recommends NICs with RDMA/ROCEv2 support such as NVIDIA Mellanox network adapters (ConnectX-6 or higher).
     Those network adapters are available from brands such as NVIDIA, Intel and Broadcom.
 
@@ -181,7 +181,7 @@ bond over two ports of the NIC(s) or using SRV-IO must be created.
 Also, it is recommended to use a separate physical NIC with two ports (bonded) and a highly available network for
 management traffic. For management traffic, a 1 GBit/s network is sufficient and a Linux Bridge may be used.
 
-!!! Warning
+!!! warning
     All storage nodes within a cluster and all hosts accessing storage shall reside within the same hardware VLAN.
 
     Avoid any gateways, firewalls, or proxies higher than L2 on the network path.

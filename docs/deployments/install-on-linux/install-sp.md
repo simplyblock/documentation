@@ -4,6 +4,11 @@ description: "Install Storage Plane: The installation of a storage plane require
 weight: 34000
 ---
 
+### Prerequisites
+
+Before starting the deployment, make sure that the following prerequisites as described in the
+[Prerequisites](../deployment-preparation/system-requirements.md) section are met.
+
 ## Storage Plane Installation
 
 The installation of a storage plane requires a functioning control plane. If no control plane cluster is available yet,
@@ -120,7 +125,7 @@ When all storage nodes are added, it's finally time to activate the storage plan
 
 When all storage nodes are prepared, they can be added to the storage cluster.
 
-!!! Warning
+!!! warning
     The following commands are executed from a management node. Attaching a storage node to a control plane is executed
     from a management node.
 
@@ -134,7 +139,7 @@ If a separate NIC (e.g., BOND device) is used for storage traffic (no matter if 
 cluster nodes), the `--data-nics` parameter must be specified. In R25.10, zero or one data NICs are supported. Zero data
 NICs will utilize the management interface for all traffic.
 
-!!! Info
+!!! info
     The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
     separate journaling device (e.g., an SLC NVMe device), the value should be zero (_0_) to prevent the storage
     devices from being partitioned. This improves the performance and prevents device sharing between the journal and

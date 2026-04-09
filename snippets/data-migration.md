@@ -1,6 +1,6 @@
 
 When migrating existing data to simplyblock, the process can be performed at the block level or the file system
-level, depending on the source system and migration requirements. Because Simplyblock provides logical Volumes (LVs)
+level, depending on the source system and migration requirements. Because simplyblock provides logical Volumes (LVs)
 as virtual block devices, data can be migrated using standard block device cloning tools such as `dd`, as well
 as file-based tools like `rsync` after the block device has been formatted.
 
@@ -19,7 +19,7 @@ dd if=/dev/source-device of=/dev/simplyblock-device bs=4M status=progress
 ```
 
 - `if=` specifies the input (source) device.
-- `of=` specifies the output (Simplyblock Logical Volume) device.
+- `of=` specifies the output (simplyblock logical volume) device.
 - `bs=4M` sets the block size for efficiency.
 - `status=progress` provides real-time progress updates.
 
@@ -36,7 +36,7 @@ on the specific environment and desired features like compression or network tra
 For scenarios where only file contents need to be migrated (for example, after creating a new file system on a
 simplyblock logical volume), `rsync` is a reliable tool.
 
-1. First, format the Simplyblock Logical Volume:
+1. First, format the simplyblock Logical Volume:
    ```bash title="Format the simplyblock block device with ext4"
    mkfs.ext4 /dev/simplyblock-device
    ```
@@ -332,4 +332,3 @@ successful, the services can be started again.
 [root@demo ~]# mount /dev/nvme0n1p1 /data/pg/
 [root@demo ~]# service postgresql start
 ```
-

@@ -39,7 +39,7 @@ clusters.
 
 The replication system involves three components:
 
-1. **Simplyblock Operator** ([simplyblock-manager](https://github.com/simplyblock/simplyblock-manager)): A Kubernetes
+1. **Simplyblock Operator** ([simplyblock-manager](https://github.com/simplyblock/simplyblock-manager){:target="_blank" rel="noopener"}): A Kubernetes
    operator that watches the `SimplyBlockSnapshotReplication` CRD and orchestrates replication cycles. It detects
    failover conditions and manages the failback process.
 

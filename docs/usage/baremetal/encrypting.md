@@ -18,7 +18,7 @@ safeguarding sensitive workloads without compromising performance.
 ## Prerequisites
 
 - A running simplyblock cluster with encryption support enabled.
-- `{{ cliname }}` installed and configured with access to the Simplyblock management API.
+- `{{ cliname }}` installed and configured with access to the simplyblock management API.
 
 ## Encrypted Volumes in Simplyblock
 

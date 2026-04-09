@@ -3,7 +3,7 @@ title: "Talos"
 description: "Talos: Talos Linux is a minimal Linux distribution optimized for Kubernetes."
 weight: 40200
 ---
-[Talos Linux](https://www.talos.dev/) is a minimal Linux distribution optimized for Kubernetes. Built as an immutable
+[Talos Linux](https://www.talos.dev/){:target="_blank" rel="noopener"} is a minimal Linux distribution optimized for Kubernetes. Built as an immutable
 distribution image, it provides a minimal attack surface but requires some changes to the image to run simplyblock.
 
 Simplyblock requires a set of additional Linux kernel modules, as well as tools being available in the Talos image.

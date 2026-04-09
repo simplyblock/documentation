@@ -183,7 +183,7 @@ Previously, the CSI driver could only connect to a single cluster.
 To enable interaction with multiple clusters, there are two key changes:
 
 1.  Parameter **`cluster_id` in a storage class:** A new parameter, `cluster_id`, has been added to the storage class. 
-    This parameter specifies which Simplyblock cluster a given request should be directed to.
+    This parameter specifies which simplyblock cluster a given request should be directed to.
 2.  Secret **`simplyblock-csi-secret-v2`:** A new Kubernetes secret, `simplyblock-csi-secret-v2`, has been added to
     store credentials for all configured simplyblock clusters.
 
