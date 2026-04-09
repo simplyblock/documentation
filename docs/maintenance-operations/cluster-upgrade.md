@@ -24,7 +24,7 @@ Before starting a cluster upgrade, all storage and control plane nodes must upda
 This can be achieved using the same command used during the initial installation. It is important, though, to provide
 the `--upgrade` parameter to pip to ensure an upgrade to happen.
 
-```bash
+```bash title="Upgrade {{ cliname }} via pip"
 sudo pip install {{ cliname }} --upgrade
 ```
 
@@ -35,7 +35,7 @@ and monitoring services.
 
 To upgrade a control plane, the following command must be executed:
 
-```bash
+```bash title="Upgrade Control Plane"
 sudo {{ cliname }} cluster update <CLUSTER_ID> --cp-only true
 ```
 
@@ -50,32 +50,32 @@ issue the following commands.
     Ensure not all storage nodes are offline at the same time. Storage nodes must be updated in a round-robin fashion. In
     between, it is important to wait until the cluster is in `ACTIVE` state again and finished with the `REBALANCING` task.
 
-```bash
+```bash title="Suspend and Shut Down Storage Node"
 sudo {{ cliname }} storage-node suspend <NODE_ID>
 sudo {{ cliname }} storage-node shutdown <NODE_ID> 
 ```
 
 If the shutdown doesn't work by itself, you may safely force a shutdown using the `--force` parameter.
 
-```bash
+```bash title="Force Shut Down Storage Node"
 sudo {{ cliname }} storage-node shutdown <NODE_ID> --force 
 ```
 
 Ensure the node has become offline before continuing.
 
-```bash
+```bash title="Verify Storage Node Offline State"
 sudo {{ cliname }} storage-node list 
 ```
 
 Next up, on the storage node itself, a redeployment must be executed. To achieve that, ssh into the storage node and run the following command.
 
-```bash
+```bash title="Redeploy Storage Node"
 sudo {{ cliname }} storage-node deploy
 ```
 
 Finally, the new storage node deployment can be restarted from the control plane.
 
-```bash
+```bash title="Restart Upgraded Storage Node"
 sudo {{ cliname }} --dev storage-node restart <NODE-ID> --spdk-image <UPGRADE SPDK IMAGE>
 ```
 
@@ -85,9 +85,8 @@ sudo {{ cliname }} --dev storage-node restart <NODE-ID> --spdk-image <UPGRADE SP
 Once the node is restarted, wait until the cluster is stabilized. Depending on the capacity of a storage node, this can take a few minutes.
 The status of the cluster can be checked via the cluster listing or listing the tasks and checking their progress.
 
-```bash
+```bash title="Verify Cluster Stabilization"
 sudo {{ cliname }} cluster list
 sudo {{ cliname }} cluster list-tasks <CLUSTER_ID>
 ```
-
 

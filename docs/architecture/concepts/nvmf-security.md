@@ -98,7 +98,7 @@ Once a pool with security options is in place, hosts can be managed per volume:
 
 When connecting a volume with host access control, the `--host-nqn` flag must be provided:
 
-```bash
+```bash title="Connect Volume with Host NQN"
 {{ cliname }} volume connect <VOLUME_ID> --host-nqn <HOST_NQN>
 ```
 

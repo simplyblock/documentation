@@ -22,14 +22,14 @@ combination of the cluster UUID and the cluster secret.
 
 HTTP Authorization header:
 
-```plain
+```plain title="HTTP Authorization header"
 Authorization: <CLUSTER_UUID> <CLUSTER_SECRET>
 ```
 
 The cluster id is provided during the initial cluster installation. The cluster secret can be obtained using
 the simplyblock commandline interface tool `{{ cliname }}`.
 
-```bash
+```bash title="Get Cluster Secret via CLI"
 {{ cliname }} cluster get-secret CLUSTER_UUID
 ```
 
@@ -40,7 +40,7 @@ accordingly. Requests that require this header to be set are of type HTTP PUT or
 
 The expected content type is `application/json`:
 
-```plain
+```plain title="Content-Type Header for JSON Requests"
 Content-Type: application/json
 ```
 

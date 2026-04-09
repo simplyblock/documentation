@@ -203,7 +203,7 @@ provided. This command automatically creates the `simplyblock-csi-secret-v2` sec
 
 The structure of the `simplyblock-csi-secret-v2` secret is as following:
 
-```yaml
+```yaml title="simplyblock-csi-secret-v2 Structure"
 apiVersion: v1
 data:
   secret.json: <base64 encoded secret>
@@ -216,7 +216,7 @@ type: Opaque
 The decoded secret must be valid JSON content and contain an array of JSON items, one per cluster. Each items consists
 of three properties, `cluster_id`, `cluster_endpoint`, and `cluster_secret`.
 
-```json
+```json title="Example secret.json Payload"
 {
    "clusters": [
      {
@@ -232,7 +232,7 @@ To add a new cluster, the current secret must be retrieved from Kubernetes, edit
 and uploaded to the Kubernetes cluster.  
 
 
-```bash
+```bash title="Update and Reapply Cluster Secret"
 # Save cluster secret to a file
 kubectl get secret simplyblock-csi-secret-v2 \
     -o jsonpath='{.data.secret\.json}' |\

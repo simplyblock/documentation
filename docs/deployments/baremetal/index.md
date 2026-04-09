@@ -79,7 +79,7 @@ ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 
 To create a new logical volume, the following command can be run on any control plane node.
 
-```bash
+```bash title="Create a Logical Volume"
 {{ cliname }} volume add \
   --max-rw-iops <IOPS> \
   --max-r-mbytes <THROUGHPUT> \
@@ -120,14 +120,14 @@ For additional parameters, see [the CLI reference](../../reference/cli/index.md)
 To connect a logical volume on the initiator (or Linux client), execute the following command on a any control plane
 node. This command returns one or more connection commands to be executed on the client.
 
-```bash
+```bash title="Get Volume Connection Commands"
 {{ cliname }} volume connect \
   <VOLUME_ID>
 ```
 
 If the volume has host access control enabled (allowed hosts configured), the `--host-nqn` flag is required:
 
-```bash
+```bash title="Get Volume Connection Command with Host NQN"
 {{ cliname }} volume connect \
   <VOLUME_ID> --host-nqn <HOST_NQN>
 ```

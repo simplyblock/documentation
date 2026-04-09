@@ -29,7 +29,7 @@ NVMe-oF security is configured at two levels:
 
 Once configured, hosts are managed per volume using the following commands:
 
-```bash
+```bash title="Manage Allowed Hosts per Volume"
 # Add an allowed host (keys are auto-generated based on pool security options)
 {{ cliname }} volume add-host <VOLUME_ID> <HOST_NQN>
 
@@ -42,7 +42,7 @@ Once configured, hosts are managed per volume using the following commands:
 
 When connecting a volume with host access control enabled, the `--host-nqn` flag is required:
 
-```bash
+```bash title="Connect Volume with Host NQN"
 {{ cliname }} volume connect <VOLUME_ID> --host-nqn <HOST_NQN>
 ```
 
