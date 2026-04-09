@@ -47,7 +47,11 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  maxLVol: 100
+  clusterImage: "public.ecr.aws/simply-block/simplyblock:26.1.2"
+  maxLogicalVolumeCount: 100
+  workerNodes:
+    - worker-1
+    - worker-2
   maxSize: "500G"
   partitions: 1
   coreIsolation: true
@@ -59,19 +63,21 @@ kubectl apply -f storage-nodes.yaml
 
 ### Storage Node Parameters
 
-| Parameter          | Description                                                                    | Default |
-|--------------------|--------------------------------------------------------------------------------|---------|
-| `clusterName`      | Name of the cluster this node belongs to. **Required**.                        |         |
-| `maxLVol`          | Maximum number of logical volumes on this node.                                | 10      |
-| `maxSize`          | Maximum utilized storage capacity (e.g., `500G`). Impacts RAM demand.          | 150g    |
-| `partitions`       | Number of partitions per device.                                               | 1       |
-| `coreIsolation`    | Enable CPU core isolation. Requires a node restart after deployment.           | false   |
-| `corePercentage`   | Percentage of total cores allocated to simplyblock.                            |         |
-| `pcieAllowList`    | List of allowed NVMe PCIe addresses.                                           |         |
-| `pcieDenyList`     | List of blocked NVMe PCIe addresses.                                           |         |
-| `dataNIC`          | Data network interface names for storage traffic.                              |         |
-| `socketsToUse`     | Number of NUMA sockets to use.                                                 |         |
-| `nodesPerSocket`   | Number of storage nodes per NUMA socket.                                       |         |
+| Parameter               | Description                                                            | Default |
+|-------------------------|------------------------------------------------------------------------|---------|
+| `clusterName`           | Name of the cluster this node belongs to. **Required**.                |         |
+| `clusterImage`          | Storage-node image. **Required when `action` is not specified**.       |         |
+| `maxLogicalVolumeCount` | Maximum number of logical volumes on this node. **Required when `action` is not specified**. | 10      |
+| `maxSize`               | Maximum utilized storage capacity (e.g., `500G`). Impacts RAM demand.  | 150g    |
+| `partitions`            | Number of partitions per device.                                       | 1       |
+| `coreIsolation`         | Enable CPU core isolation. Requires a node restart after deployment.   | false   |
+| `corePercentage`        | Percentage of total cores allocated to simplyblock.                    |         |
+| `pcieAllowList`         | List of allowed NVMe PCIe addresses.                                   |         |
+| `pcieDenyList`          | List of blocked NVMe PCIe addresses.                                   |         |
+| `dataIfname`            | Data network interface names for storage traffic.                      |         |
+| `socketsToUse`          | Number of NUMA sockets to use.                                         |         |
+| `nodesPerSocket`        | Number of storage nodes per NUMA socket.                               |         |
+| `workerNodes`           | Worker node names for deployment. **Required and must be non-empty when `action` is not specified**. |         |
 
 For a complete list of fields, see [Simplyblock Operator](operator.md).
 

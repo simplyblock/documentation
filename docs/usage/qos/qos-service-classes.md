@@ -30,9 +30,9 @@ in each class, but the relative amount stays the same.
 
 
 ```bash title="Managing QoS Service Classes with the CLI"
-{{ cliname }} cluster qos add db-ultra  10000
-{{ cliname }} cluster qos add db-std    5000
-{{ cliname }} cluster qos add test-load 5000
-{{ cliname }} cluster qos list 
-{{ cliname }} cluster qos delete test-load
+{{ cliname }} qos add db-ultra  10000
+{{ cliname }} qos add db-std    5000
+{{ cliname }} qos add test-load 5000
+{{ cliname }} qos list
+{{ cliname }} qos delete test-load
 ```

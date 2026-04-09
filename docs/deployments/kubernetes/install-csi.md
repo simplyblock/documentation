@@ -124,9 +124,9 @@ CLUSTER_UUID="<UUID>"
 CLUSTER_SECRET="<SECRET>"
 CNTR_ADDR="<CONTROL-PLANE-ADDR>"
 POOL_NAME="<POOL-NAME>"
-helm repo add simplyblock-csi https://install.simplyblock.io/helm
+helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
-helm install -n simplyblock --create-namespace simplyblock simplyblock-csi/spdk-csi \
+helm install -n simplyblock --create-namespace simplyblock simplyblock/spdk-csi \
     --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
     --set csiConfig.simplybk.ip=${CNTR_ADDR} \
     --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
@@ -138,13 +138,13 @@ helm install -n simplyblock --create-namespace simplyblock simplyblock-csi/spdk-
 [demo@demo ~]# export CLUSTER_SECRET="oal4PVNbZ80uhLMah2Bs"
 [demo@demo ~]# export CNTR_ADDR="http://192.168.10.1/"
 [demo@demo ~]# export POOL_NAME="test"
-[demo@demo ~]# helm repo add simplyblock-csi https://install.simplyblock.io/helm
-"simplyblock-csi" has been added to your repositories
+[demo@demo ~]# helm repo add simplyblock https://install.simplyblock.io/helm
+"simplyblock" has been added to your repositories
 [demo@demo ~]# helm repo update
 Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "simplyblock-csi" chart repository
+...Successfully got an update from the "simplyblock" chart repository
 Update Complete. ⎈Happy Helming!⎈
-[demo@demo ~]# helm install -n simplyblock --create-namespace simplyblock simplyblock-csi/spdk-csi \
+[demo@demo ~]# helm install -n simplyblock --create-namespace simplyblock simplyblock/spdk-csi \
   --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
   --set csiConfig.simplybk.ip=${CNTR_ADDR} \
   --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
@@ -160,8 +160,8 @@ The Simplyblock SPDK Driver is getting deployed to your cluster.
 
 To check CSI SPDK Driver pods status, please run:
 
-  kubectl --namespace=simplyblock get pods --selector="release=simplyblock-csi" --watch
-[demo@demo ~]# kubectl --namespace=simplyblock get pods --selector="release=simplyblock-csi" --watch
+  kubectl --namespace=simplyblock get pods --selector="release=simplyblock" --watch
+[demo@demo ~]# kubectl --namespace=simplyblock get pods --selector="release=simplyblock" --watch
 NAME                   READY   STATUS    RESTARTS   AGE
 spdkcsi-controller-0   6/6     Running   0          30s
 spdkcsi-node-tzclt     2/2     Running   0          30s
@@ -261,7 +261,7 @@ metadata:
   name: simplyblock-csi-sc-cluster1
 provisioner: csi.simplyblock.io
 parameters:
-  cluster_id: "luster-uuid-1"
+  cluster_id: "cluster-uuid-1"
   ... other parameters
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
@@ -364,7 +364,7 @@ allowedTopologies:
   - key: topology.kubernetes.io/region
     values:
       - us-east-1
-      - us-east-1
+      - us-west-2
 ```
 
 This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling region.

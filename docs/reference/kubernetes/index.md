@@ -100,8 +100,6 @@ Additional, uncommonly configured CSI driver parameters:
 | `storagenode.maxSnapshots`                       | Sets the default maximum number of snapshot per storage node.                               | `10`                                | 
 | `storagenode.maxSize`                            | Sets the max provisioning size of all storage nodes.                                        | `150g`                              | 
 | `storagenode.numPartitions`                      | Sets the number of partitions to create per device.                                         | `1`                                 | 
-| `storagenode.numDevices`                         | Sets the number of devices per storage node.                                                | `1`                                 | 
-| `storagenode.numDistribs`                        | Sets the number of distribs per storage node.                                               | `2`                                 | 
 | `storagenode.isolateCores`                       | Enables automatic core isolation.                                                           | `false`                             | 
 | `storagenode.dataNics`                           | Sets the data interface names.                                                              | `<empty>`                           | 
 | `storagenode.pciAllowed`                         | Sets the list of allowed NVMe PCIe addresses.                                               | `<empty>`                           | 
@@ -138,7 +136,7 @@ The following parameters should only be used after an explicit request from simp
 | Parameter                              | Description                                               | Default                                                                 |
 |----------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------------------|
 | `image.csi.repository`                 | Simplyblock CSI driver image.                             | `simplyblock/spdkcsi`                                                   |
-| `image.csi.tag`                        | Simplyblock CSI driver image tag.                         | `v0.1.0`                                                                |
+| `image.csi.tag`                        | Simplyblock CSI driver image tag.                         | `v0.2.4`                                                                |
 | `image.csi.pullPolicy`                 | Simplyblock CSI driver image pull policy.                 | `Always`                                                                |
 | `image.csiProvisioner.repository`      | CSI provisioner image.                                    | `registry.k8s.io/sig-storage/csi-provisioner`                           |
 | `image.csiProvisioner.tag`             | CSI provisioner image tag.                                | `v4.0.1`                                                                |
@@ -150,7 +148,7 @@ The following parameters should only be used after an explicit request from simp
 | `image.nodeDriverRegistrar.tag`        | CSI node driver registrar image tag.                      | `v2.10.1`                                                               |
 | `image.nodeDriverRegistrar.pullPolicy` | CSI node driver registrar image pull policy.              | `Always`                                                                |
 | `image.csiSnapshotter.repository`      | CSI snapshotter image.                                    | `registry.k8s.io/sig-storage/csi-snapshotter`                           |
-| `image.csiSnapshotter.tag`             | CSI snapshotter image tag.                                | `v7.0.2`                                                                |
+| `image.csiSnapshotter.tag`             | CSI snapshotter image tag.                                | `v8.2.0`                                                                |
 | `image.csiSnapshotter.pullPolicy`      | CSI snapshotter image pull policy.                        | `Always`                                                                |
 | `image.csiResizer.repository`          | CSI resizer image.                                        | `gcr.io/k8s-staging-sig-storage/csi-resizer`                            |
 | `image.csiResizer.tag`                 | CSI resizer image tag.                                    | `v1.10.1`                                                               |
@@ -158,8 +156,8 @@ The following parameters should only be used after an explicit request from simp
 | `image.csiHealthMonitor.repository`    | CSI external health-monitor controller image.             | `gcr.io/k8s-staging-sig-storage/csi-external-health-monitor-controller` |
 | `image.csiHealthMonitor.tag`           | CSI external health-monitor controller image tag.         | `v0.11.0`                                                               |
 | `image.csiHealthMonitor.pullPolicy`    | CSI external health-monitor controller image pull policy. | `Always`                                                                |
-| `image.simplyblock.repository`         | Simplyblock management image.                             | `simplyblock/simplyblock`                                               |
-| `image.simplyblock.tag`                | Simplyblock management image tag.                         | `R25.5-Hotfix`                                                          |
+| `image.simplyblock.repository`         | Simplyblock management image.                             | `public.ecr.aws/simply-block/simplyblock`                               |
+| `image.simplyblock.tag`                | Simplyblock management image tag.                         | `26.1.2`                                                                |
 | `image.simplyblock.pullPolicy`         | Simplyblock management image pull policy.                 | `Always`                                                                |
 | `image.storageNode.repository`         | Simplyblock storage-node controller image.                | `simplyblock/simplyblock`                                               |
 | `image.storageNode.tag`                | Simplyblock storage-node controller image tag.            | `v0.1.0`                                                                |

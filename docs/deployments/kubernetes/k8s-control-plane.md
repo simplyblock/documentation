@@ -40,10 +40,11 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  mgmtIfc: eth0
+  mgmtIfname: eth0
   haType: ha
-  stripeWdata: 2
-  stripeWparity: 1
+  stripe:
+    dataChunks: 2
+    parityChunks: 1
   fabric: tcp
 ```
 

@@ -36,37 +36,40 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  mgmtIfc: eth0
+  mgmtIfname: eth0
   haType: ha
-  stripeWdata: 2
-  stripeWparity: 1
+  stripe:
+    dataChunks: 2
+    parityChunks: 1
   fabric: tcp
-  capWarn: 89
-  capCrit: 99
-  provCapWarn: 250
-  provCapCrit: 500
+  warningThreshold:
+    capacity: 89
+    provisionedCapacity: 250
+  criticalThreshold:
+    capacity: 99
+    provisionedCapacity: 500
 ```
 
 ### Spec Fields
 
-| Field                    | Type    | Description                                                                  |
-|--------------------------|---------|------------------------------------------------------------------------------|
-| `clusterName`            | string  | Human-readable cluster name. **Required**.                                   |
-| `mgmtIfc`               | string  | Management network interface (e.g., `eth0`).                                 |
-| `haType`                 | string  | High availability type: `single` or `ha`.                                    |
-| `stripeWdata`            | int     | Erasure coding data chunks per stripe.                                       |
-| `stripeWparity`          | int     | Erasure coding parity chunks per stripe.                                     |
-| `fabric`                 | string  | NVMe-oF fabric type: `tcp`, `rdma`, or `tcp,rdma`.                          |
-| `enableNodeAffinity`     | bool    | Enable node affinity for data placement.                                     |
-| `strictNodeAntiAffinity` | bool    | Enforce strict node anti-affinity for chunks.                                |
-| `isSingleNode`           | bool    | Set to `true` for single-node clusters.                                      |
-| `qpairCount`             | int     | Queue pair count per volume.                                                 |
-| `clientQpairCount`       | int     | Client queue pair count per volume.                                          |
-| `capWarn`                | int     | Capacity warning threshold (percent).                                        |
-| `capCrit`                | int     | Capacity critical threshold (percent).                                       |
-| `provCapWarn`            | int     | Provisioning capacity warning threshold (percent).                           |
-| `provCapCrit`            | int     | Provisioning capacity critical threshold (percent).                          |
-| `action`                 | string  | Lifecycle action: `activate` or `expand`.                                    |
+| Field                                   | Type    | Description                                         |
+|-----------------------------------------|---------|-----------------------------------------------------|
+| `clusterName`                           | string  | Human-readable cluster name. **Required**.          |
+| `mgmtIfname`                            | string  | Management network interface (e.g., `eth0`).        |
+| `haType`                                | string  | High availability type: `single` or `ha`.           |
+| `stripe.dataChunks`                     | int     | Erasure coding data chunks per stripe.              |
+| `stripe.parityChunks`                   | int     | Erasure coding parity chunks per stripe.            |
+| `fabric`                                | string  | NVMe-oF fabric type: `tcp`, `rdma`, or `tcp,rdma`.  |
+| `enableNodeAffinity`                    | bool    | Enable node affinity for data placement.            |
+| `strictNodeAntiAffinity`                | bool    | Enforce strict node anti-affinity for chunks.       |
+| `isSingleNode`                          | bool    | Set to `true` for single-node clusters.             |
+| `qpairCount`                            | int     | Queue pair count per volume.                        |
+| `clientQpairCount`                      | int     | Client queue pair count per volume.                 |
+| `warningThreshold.capacity`             | int     | Capacity warning threshold (percent).               |
+| `criticalThreshold.capacity`            | int     | Capacity critical threshold (percent).              |
+| `warningThreshold.provisionedCapacity`  | int     | Provisioning capacity warning threshold (percent).  |
+| `criticalThreshold.provisionedCapacity` | int     | Provisioning capacity critical threshold (percent). |
+| `action`                                | string  | Lifecycle action: `activate` or `expand`.           |
 
 ### Status Fields
 
@@ -91,7 +94,11 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  maxLVol: 100
+  clusterImage: "public.ecr.aws/simply-block/simplyblock:26.1.2"
+  maxLogicalVolumeCount: 100
+  workerNodes:
+    - worker-1
+    - worker-2
   maxSize: "500G"
   partitions: 1
   coreIsolation: true
@@ -99,23 +106,24 @@ spec:
 
 ### Spec Fields
 
-| Field                     | Type     | Description                                                      |
-|---------------------------|----------|------------------------------------------------------------------|
-| `clusterName`             | string   | Name of the cluster this node belongs to. **Required**.          |
-| `maxLVol`                 | int      | Maximum number of logical volumes on this node.                  |
-| `maxSize`                 | string   | Maximum provisioning size for the node.                          |
-| `partitions`              | int      | Number of partitions per device.                                 |
-| `coreIsolation`           | bool     | Enable CPU core isolation.                                       |
-| `corePercentage`          | int      | Percentage of cores to allocate.                                 |
-| `coreMask`                | string   | Explicit CPU core mask.                                          |
-| `pcieAllowList`           | []string | List of allowed NVMe PCIe addresses.                             |
-| `pcieDenyList`            | []string | List of blocked NVMe PCIe addresses.                             |
-| `dataNIC`                 | []string | Data network interface names.                                    |
-| `socketsToUse`            | int      | Number of NUMA sockets to use.                                   |
-| `nodesPerSocket`          | int      | Number of storage nodes per NUMA socket.                         |
-| `workerNodes`             | []string | List of Kubernetes worker node names to deploy on.               |
-| `action`                  | string   | Node action: `shutdown`, `restart`, `suspend`, `resume`, `remove`.|
-| `nodeUUID`                | string   | Node UUID (required when action is specified).                   |
+| Field                   | Type     | Description                                                                                                           |
+|-------------------------|----------|-----------------------------------------------------------------------------------------------------------------------|
+| `clusterName`           | string   | Name of the cluster this node belongs to. **Required**.                                                               |
+| `clusterImage`          | string   | Storage-node image. **Required when `action` is not specified**.                                                      |
+| `maxLogicalVolumeCount` | int      | Maximum number of logical volumes on this node. **Required when `action` is not specified**.                          |
+| `maxSize`               | string   | Maximum provisioning size for the node.                                                                               |
+| `partitions`            | int      | Number of partitions per device.                                                                                      |
+| `coreIsolation`         | bool     | Enable CPU core isolation.                                                                                            |
+| `corePercentage`        | int      | Percentage of cores to allocate.                                                                                      |
+| `coreMask`              | string   | Explicit CPU core mask.                                                                                               |
+| `pcieAllowList`         | []string | List of allowed NVMe PCIe addresses.                                                                                  |
+| `pcieDenyList`          | []string | List of blocked NVMe PCIe addresses.                                                                                  |
+| `dataIfname`            | []string | Data network interface names.                                                                                         |
+| `socketsToUse`          | int      | Number of NUMA sockets to use.                                                                                        |
+| `nodesPerSocket`        | int      | Number of storage nodes per NUMA socket.                                                                              |
+| `workerNodes`           | []string | List of Kubernetes worker node names to deploy on. **Required and must be non-empty when `action` is not specified**. |
+| `action`                | string   | Node action: `shutdown`, `restart`, `suspend`, `resume`, `remove`.                                                    |
+| `nodeUUID`              | string   | Node UUID (required when action is specified).                                                                        |
 
 ## Storage Pool
 
@@ -131,21 +139,26 @@ spec:
   name: production-pool
   clusterName: production
   capacityLimit: "10T"
-  qosIOPSLimit: 100000
+  qos:
+    iops: 100000
+    throughput:
+      readWrite: 2048
+      read: 1024
+      write: 1024
 ```
 
 ### Spec Fields
 
-| Field            | Type   | Description                                            |
-|------------------|--------|--------------------------------------------------------|
-| `name`           | string | Pool name. **Required**.                               |
-| `clusterName`    | string | Name of the cluster. **Required**.                     |
-| `capacityLimit`  | string | Maximum pool capacity (e.g., `10T`).                   |
-| `qosIOPSLimit`   | int    | Maximum IOPS for the pool.                             |
-| `rwLimit`        | int    | Maximum read/write throughput (MB/s).                  |
-| `rLimit`         | int    | Maximum read throughput (MB/s).                        |
-| `wLimit`         | int    | Maximum write throughput (MB/s).                       |
-| `action`         | string | Pool lifecycle action.                                 |
+| Field                      | Type   | Description                                    |
+|----------------------------|--------|------------------------------------------------|
+| `name`                     | string | Pool name. **Required**.                       |
+| `clusterName`              | string | Name of the cluster. **Required**.             |
+| `capacityLimit`            | string | Maximum pool capacity (e.g., `10T`).           |
+| `qos.iops`                 | int    | Maximum IOPS for the pool.                     |
+| `qos.throughput.readWrite` | int    | Maximum combined read/write throughput (MB/s). |
+| `qos.throughput.read`      | int    | Maximum read throughput (MB/s).                |
+| `qos.throughput.write`     | int    | Maximum write throughput (MB/s).               |
+| `action`                   | string | Pool lifecycle action.                         |
 
 ## Logical Volume
 
