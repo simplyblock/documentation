@@ -23,7 +23,7 @@ spec:
   resources:
     requests:
       storage: 256Mi
-  storageClassName: simplyblock-storage-class     
+  storageClassName: simplyblock-csi-sc     
 ```
 
 Afterward, the PVC can be used as a normal PVC and added to a pod.

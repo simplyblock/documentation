@@ -26,7 +26,7 @@ Add the remaining node(s) required for the expansion (storage nodes must be adde
 Once all newly added nodes are healthy/ready, finalize the expansion:
 
 ```bash title="Finalize cluster expansion"
-{{ cliname }} complete-expand <CLUSTER_ID>
+{{ cliname }} cluster complete-expand <CLUSTER_ID>
 ```
 
 After the expansion is complete, the cluster returns to **ACTIVE** and resumes normal operation mode.

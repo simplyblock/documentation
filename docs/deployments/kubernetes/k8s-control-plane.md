@@ -19,7 +19,7 @@ Resources and manages the full lifecycle of clusters, storage nodes, pools, and 
 helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 
-helm install simplyblock -n simplyblock --create-namespace simplyblock/spdk-csi
+helm install simplyblock -n simplyblock --create-namespace simplyblock/operator
 ```
 
 After installation, verify the operator is running:

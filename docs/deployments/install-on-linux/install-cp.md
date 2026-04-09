@@ -198,14 +198,14 @@ pip install {{ cliname }} --upgrade
 Finally, we deploy the management node software and join the control plane cluster.
 
 ```bash title="Secondary management node deployment"
-{{ cliname }} mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET> <IF_NAME>
+{{ cliname }} mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET>
 ```
 
 Running against the primary management node in the control plane should create an output similar to the following
 example:
 
 ```plain title="Example output joining a control plane cluster"
-[demo@demo ~]# {{ cliname }} mgmt add 192.168.10.1 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0 eth0
+[demo@demo ~]# {{ cliname }} mgmt add 192.168.10.1 7bef076c-82b7-46a5-9f30-8c938b30e655 e8SQ1ElMm8Y9XIwyn8O0
 2025-02-26 12:40:17,815: INFO: Cluster found, NQN:nqn.2023-02.io.simplyblock:7bef076c-82b7-46a5-9f30-8c938b30e655
 2025-02-26 12:40:17,816: INFO: Installing dependencies...
 2025-02-26 12:40:25,606: INFO: Installing dependencies > Done

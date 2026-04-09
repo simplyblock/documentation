@@ -126,7 +126,7 @@ When all storage nodes are prepared, they can be added to the storage cluster.
 
 ```bash title="Attaching a storage node to the storage plane"
 sudo {{ cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
-  --partitions <NUM_OF_PARTITIONS> \
+  --journal-partition <NUM_OF_PARTITIONS> \
   --data-nics <DATA_IF>
 ```
 
@@ -136,15 +136,15 @@ NICs will utilize the management interface for all traffic.
 
 !!! Info
     The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
-    separate journaling device (e.g., a SLC NVMe device), the value should be zero (_0_) to prevent the storage
+    separate journaling device (e.g., an SLC NVMe device), the value should be zero (_0_) to prevent the storage
     devices from being partitioned. This improves the performance and prevents device sharing between the journal and
     the actual data storage location. However, in most cases, a separate journaling device is not available or required
-    and the value of `--partitions` has to be 1.
+    and the value of `--journal-partition` has to be 1 (default if nothing is specified).
 
 The output will look something like the following example:
 
 ```plain title="Example output of adding a storage node to the storage plane"
-[demo@demo ~]# sudo {{ cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --number-of-devices 3 --data-nics eth1
+[demo@demo ~]# sudo {{ cliname }} storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --data-nics eth1
 2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
 2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
 2025-02-26 14:55:17,341: INFO: Instance cloud: None

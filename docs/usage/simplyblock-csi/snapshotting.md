@@ -26,7 +26,7 @@ kind: VolumeSnapshot
 metadata:
   name: my-volume-snapshot
 spec:
-  volumeSnapshotClassName: csi-spdk-snapclass
+  volumeSnapshotClassName: simplyblock-csi-snapshotclass
   source:
     persistentVolumeClaimName: my-persistent-volume-claim # <- refers to the PVC to snapshot
 ```
@@ -42,7 +42,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: my-restored-snapshot-volume
 spec:
-  storageClassName: simplyblock-storage-class
+  storageClassName: simplyblock-csi-sc
   dataSource:
     name: my-volume-snapshot
     kind: VolumeSnapshot

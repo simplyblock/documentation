@@ -10,7 +10,7 @@ weight: 30200
 storage nodes show `n/0` disks available in the disks column (`{{ cliname }} storage-node list`).
 
 1. Shutdown all storage nodes: `{{ cliname }} storage-node shutdown --force`
-2. Force remove all storage nodes: `{{ cliname }} storage-node remove --force`
+2. Force remove all storage nodes: `{{ cliname }} storage-node remove --force-remove`
 3. Delete all storage nodes: `{{ cliname }} storage-node delete`
 4. Re-add all storage nodes. The disks should become active.
 5. Try to activate the cluster.
