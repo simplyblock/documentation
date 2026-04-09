@@ -130,8 +130,8 @@ Additional, uncommonly configured CSI driver parameters:
 ## Image Overrides
 
 !!! danger
-Overriding pinned image tags can result in an unusable state.
-The following parameters should only be used after an explicit request from simplyblock.
+    Overriding pinned image tags can result in an unusable state.
+    The following parameters should only be used after an explicit request from simplyblock.
 
 | Parameter                              | Description                                               | Default                                                                 |
 |----------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------------------|

@@ -164,7 +164,7 @@ On the target cluster, import the metadata:
 {{ cliname }} backup import <METADATA_FILE> [--cluster-id <CLUSTER_ID>]
 ```
 
-!!! Warning
+!!! warning
     Do not forget to switch back the source to the internal cluster to resume normal backup operations.
 
 ## Kubernetes CRD Operations

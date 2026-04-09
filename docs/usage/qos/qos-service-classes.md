@@ -24,7 +24,7 @@ cluster is 100,000 IOPS (at 64K), the default class and class 1 will receive 25,
 will receive 50,000 IOPS. If the total IOPS output of the cluster drops by 25%, so does the absolute amount
 in each class, but the relative amount stays the same. 
 
-!!! Info
+!!! info
     If service classes do not use their quotas, they are not "wasted" but can be consumed by other
     service classes.
 

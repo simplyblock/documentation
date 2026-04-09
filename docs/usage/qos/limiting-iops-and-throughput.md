@@ -22,7 +22,7 @@ Therefore, in Kubernetes, if the [Storage Class](../../usage/simplyblock-csi/sto
 which has Qos limits attached, it is not allowed to add them to the storage class as well. 
 The same applies to [OpenStack](../../deployments/openstack/index.md) QoS Settings on the Volume Type.
 
-!!! Warning  
+!!! warning  
     Volumes for which pool-level QoS is active must be located on the same storage node 
     in the cluster. Currently, it is not possible to spread them across storage nodes.
 
