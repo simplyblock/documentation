@@ -55,7 +55,7 @@ The full list of parameters for either command can be found in the
 ### Restart Old Storage Node
 
 !!! warning
-    Before migrating the storage node on a storage host, the ols storage node must be put in offline state.
+    Before migrating the storage node on a storage host, the old storage node must be put in offline state.
     
     If the storage node is not yet offline, it can be forced into offline state using the following command.
     

@@ -55,7 +55,7 @@ sudo {{ cliname }} storage-node suspend <NODE_ID>
 sudo {{ cliname }} storage-node shutdown <NODE_ID> 
 ```
 
-If the shutdown doesn't work by itself, you may savely force a shutdown using the `--force` parameter.
+If the shutdown doesn't work by itself, you may safely force a shutdown using the `--force` parameter.
 
 ```bash
 sudo {{ cliname }} storage-node shutdown <NODE_ID> --force 
@@ -67,7 +67,7 @@ Ensure the node has become offline before continuing.
 sudo {{ cliname }} storage-node list 
 ```
 
-Next up, on the storage node itself, a redployment must be executed. To achieve that, ssh into the storage node and run the following command.
+Next up, on the storage node itself, a redeployment must be executed. To achieve that, ssh into the storage node and run the following command.
 
 ```bash
 sudo {{ cliname }} storage-node deploy
@@ -83,7 +83,7 @@ sudo {{ cliname }} --dev storage-node restart <NODE-ID> --spdk-image <UPGRADE SP
     One can find the upgrade spdk image from env_var file on storage node, location: /usr/local/lib/python3.9/site-packages/simplyblock_core/env_var
 
 Once the node is restarted, wait until the cluster is stabilized. Depending on the capacity of a storage node, this can take a few minutes.
-The status of the cluster can be checked via the cluster listing or listing the tasks and checkking their progress.
+The status of the cluster can be checked via the cluster listing or listing the tasks and checking their progress.
 
 ```bash
 sudo {{ cliname }} cluster list

@@ -41,7 +41,7 @@ parameters:
   csi.storage.k8s.io/fstype: ext4
   ... other parameters
 reclaimPolicy: Delete
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
@@ -52,7 +52,7 @@ Each cluster has a default schema, but each volume can optionally use an alterna
 
 See the [Erasure Coding Configuration](../../deployments/deployment-preparation/erasure-coding-scheme.md) for more details.
 
-See here how to configure [Service Classes] and [Qos Limits](../../usage/qos/limiting-iops-and-throughput.md). 
+See here how to configure [Service Classes](../../usage/qos/qos-service-classes.md) and [Qos Limits](../../usage/qos/limiting-iops-and-throughput.md). 
 
 ##Namespace Volumes
 
@@ -70,10 +70,10 @@ If `namespace-volumes` is set to `yes`, you also need to define the number of na
 | fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                       | true     | tcp      |
 | csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                 | true     |          |
 | pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                   | false    | testing1 |
-| qos_rw_iops               | int        | Defines the minimum IOPS reserved for a logical volume of this storage class. A zero (0) means no minimum.                          | true     | 0        |
-| qos_rw_mbytes             | int        | Defines the minimum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no minimum. | true     | 0        |
-| qos_r_mbytes              | int        | Defines the minimum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no minimum.  | true     | 0        |
-| qos_w_mbytes              | int        | Defines the minimum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no minimum. | true     | 0        |
+| qos_rw_iops               | int        | Defines the maximum IOPS reserved for a logical volume of this storage class. A zero (0) means no maximum.                          | true     | 0        |
+| qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum. | true     | 0        |
+| qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.  | true     | 0        |
+| qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum. | true     | 0        |
 | compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                               | true     | false    |
 | encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                       | true     | false    |
 | distr_ndcs                | int        | Defines the number of data chunks for the erasure coding scheme.                                                                    | true     | 1        |

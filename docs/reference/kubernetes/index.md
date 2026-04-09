@@ -76,9 +76,9 @@ Additional, uncommonly configured CSI driver parameters:
 
 | Parameter                                        | Description                                                                                 | Default                             |
 |--------------------------------------------------|---------------------------------------------------------------------------------------------|-------------------------------------|
-| `storagenode.daemonsets[0].name`                 | Sets the name of the storage node DaemonSet.                                                | `storage-node-ds`                   | 
+| `storagenode.daemonsets[0].name`                 | Sets the name of the storage node DaemonSet.                                                | `simplyblock-storage-node-ds`       | 
 | `storagenode.daemonsets[0].appLabel`             | Sets the label applied to the storage node DaemonSet for identification.                    | `storage-node`                      | 
-| `storagenode.daemonsets[0].nodeSelector.key`     | Sets the key used in the nodeSelector to constrain which nodes the DaemonSet should run on. | `type`                              | 
+| `storagenode.daemonsets[0].nodeSelector.key`     | Sets the key used in the nodeSelector to constrain which nodes the DaemonSet should run on. | `io.simplyblock.node-type`          | 
 | `storagenode.daemonsets[0].nodeSelector.value`   | Sets the value for the nodeSelector key to match against specific nodes.                    | `simplyblock-storage-plane`         | 
 | `storagenode.daemonsets[0].tolerations.create`   | Specifies whether to create tolerations for the storage node.                               | `false`                             | 
 | `storagenode.daemonsets[0].tolerations.effect`   | Sets the effect of tolerations on the storage node.                                         | `<empty>`                           | 
@@ -87,7 +87,7 @@ Additional, uncommonly configured CSI driver parameters:
 | `storagenode.daemonsets[0].tolerations.value`    | Sets the value of tolerations for the storage node.                                         | `<empty>`                           | 
 | `storagenode.daemonsets[1].name`                 | Sets the name of the restart storage node DaemonSet.                                        | `storage-node-ds-restart`           | 
 | `storagenode.daemonsets[1].appLabel`             | Sets the label applied to the restart storage node DaemonSet for identification.            | `storage-node-restart`              | 
-| `storagenode.daemonsets[1].nodeSelector.key`     | Sets the key used in the nodeSelector to constrain which nodes the DaemonSet should run on. | `type`                              | 
+| `storagenode.daemonsets[1].nodeSelector.key`     | Sets the key used in the nodeSelector to constrain which nodes the DaemonSet should run on. | `io.simplyblock.node-type`          | 
 | `storagenode.daemonsets[1].nodeSelector.value`   | Sets the value for the nodeSelector key to match against specific nodes.                    | `simplyblock-storage-plane-restart` | 
 | `storagenode.daemonsets[1].tolerations.create`   | Specifies whether to create tolerations for the restart storage node.                       | `false`                             | 
 | `storagenode.daemonsets[1].tolerations.effect`   | Sets the effect of tolerations on the restart storage node.                                 | `<empty>`                           | 
