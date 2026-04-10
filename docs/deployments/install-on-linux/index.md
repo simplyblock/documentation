@@ -1,7 +1,7 @@
 ---
 title: "Install Simplyblock on Linux"
 description: "Install Simplyblock on Linux: Installing simplyblock for production on plain linux (Docker) requires a few components to be installed."
-weight: 20050
+weight: 20100
 ---
 
 Installing simplyblock for production on plain linux (Docker) requires a few components to be installed. Furthermore,

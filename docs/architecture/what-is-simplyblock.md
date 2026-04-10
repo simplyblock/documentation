@@ -41,7 +41,7 @@ Storage Interface (CSI) and ProxMox drivers.
   containers, compatible with x86 and ARM architectures.
 
 - **Deployment Flexibility:** Simplyblock offers the greatest deployment flexibility in the industry. It can be deployed
-  hyper-converged, disaggregated, and in a hybrid fashion, combining the best of both worlds.
+  **hyper-converged**, **disaggregated**, and in a **hybrid fashion**, combining the best of both worlds.
 
 ## Customer Benefits Across Industries
 

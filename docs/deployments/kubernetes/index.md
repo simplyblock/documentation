@@ -1,14 +1,18 @@
 ---
 title: "Install Simplyblock on Kubernetes"
 description: "Install Simplyblock on Kubernetes using the simplyblock operator, which manages the full lifecycle of clusters, storage nodes, pools, and the CSI driver via CRDs."
-weight: 20100
+weight: 20050
 ---
 
 Simplyblock provides a Kubernetes operator that manages the full lifecycle of simplyblock storage infrastructure. The
 operator is installed via a single Helm chart and uses Custom Resource Definitions (CRDs) to declaratively manage
 clusters, storage nodes, storage pools, and the CSI driver.
 
-## Deployment Overview
+For Kubernetes environments, a **hyper-converged setup is a first-class simplyblock deployment model** and the
+recommended approach. In this model, simplyblock storage services run on selected Kubernetes worker nodes, sharing
+resources with other workloads in the same Kubernetes cluster.
+
+## Hyper-Converged Deployment Overview (Recommended)
 
 A typical Kubernetes deployment follows these steps:
 

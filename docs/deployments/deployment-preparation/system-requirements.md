@@ -9,16 +9,22 @@ weight: 29999
     there are no restrictions on instance types as long as these system requirements are met. However, it is highly
     recommended to stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
 
-    For [hyper-converged](../../architecture/concepts/hyper-
-    converged.md) deployments, it is important that node sizing applies to the dedicated 
-    resources consumed by simplyblock. Hyper-converged instances must provide enough of resources 
-    to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the 
+    For [hyper-converged](../../architecture/concepts/hyper-converged.md) deployments, it is important that node sizing
+    applies to the dedicated resources consumed by simplyblock. Hyper-converged instances must provide enough of
+    resources to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the 
     operating system.
 
 ## Hardware Architecture Support
 
-- For the control plane, simplyblock **requires** x86-64 compatible CPUs.
-- For the storage plane, simplyblock **supports** x86-64 or ARM64 (AArch64) compatible CPUs.
+Simplyblock supports the most common system architectures, as well as plain Linux and Kubernetes-based (hyper-converged
+and disaggregated) installation. The following table describes the valid combinations.
+
+The supported architectures depend on the deployment model of the simplyblock components.
+
+For the control plane, simplyblock always supports **x86-64 (Intel / AMD)** compatible CPUs. If the control plane is deployed
+on a Kubernetes cluster, it also supports **ARM64 (AArch64)** compatible CPUs.
+
+For the storage plane, simplyblock always supports **x86-64 (Intel / AMD)** and **ARM64 (AArch64)** compatible CPUs.
 
 ## Virtualization Support
 
@@ -32,14 +38,15 @@ dedicated cores must be assigned exclusively to the virtual machines running sto
 
 Two deployment options are supported:
 
-- **Plain Linux**: In this mode, which also called Docker mode, all nodes are deployed to separate hosts. Storage nodes
-  are usually bare-metal and control plane nodes are usually VMs.
+- **Plain Linux**: In this mode, which is also called Docker mode, all nodes are deployed to separate hosts. Storage
+  nodes are usually bare-metal and control plane nodes are usually VMs.
 
   Basic Docker knowledge is helpful, but all management can be performed within the system via its CLI or API. 
 
-- **Kubernetes**: In Kubernetes, both disaggregated deployments with dedicated workers or clusters for storage nodes,
-  or hyper-converged deployments (co-located with compute workloads) are supported. A wide range of Kubernetes distros
-  and operating systems are supported.
+- **Kubernetes**: In Kubernetes, both **disaggregated** deployments with dedicated workers or clusters for storage
+  nodes, or **hyper-converged deployments** (co-located with compute workloads) are supported. A wide range of
+  Kubernetes distros and operating systems are supported. For OpenShift clusters, the hyper-converged deployment model
+  is recommended.
 
   Kubernetes Knowledge is required.
 

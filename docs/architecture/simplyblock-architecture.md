@@ -7,8 +7,13 @@ weight: 20100
 Simplyblock is a cloud-native, distributed block storage platform designed to deliver scalable, high-performance, and
 resilient storage through a software-defined architecture. Centered around NVMe-over-Fabrics (NVMe-oF), simplyblock
 separates compute and storage to enable scale-out elasticity, high availability, and low-latency operations in modern,
-containerized environments. The architecture is purpose-built to support Kubernetes-native deployments with seamless
-integration but supports virtual and even physical machines as clients as well.
+containerized environments.
+
+The architecture is purpose-built to support Kubernetes-native and OpenShift-based deployments with seamless
+integration.
+
+Furthermore, simplyblock support virtual and physical machines (bare metal) for storage-side and client-side
+deployments. 
 
 ## Control Plane
 
@@ -45,7 +50,7 @@ are free to define their own custom alerts.
 
 For log management, simplyblock uses Graylog. For a comprehensive insight, Graylog is configured to collect container
 logs from the control plane and storage plane services, the RPC communication between the control plane and storage
-cluster and the data services logs ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"} or Storage Performance
+cluster, and the data services logs ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"} or Storage Performance
 Development Kit).
 
 ### Control Plane State Storage

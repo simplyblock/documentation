@@ -37,9 +37,9 @@ the efficiency and reliability of your simplyblock deployment.
 
     ---
 
-    Deploy simplyblock on Kubernetes, bare metal, or virtualized
-    Linux machines. Choose between hyper-converged, disaggregated,
-    or hybrid deployment models.
+    Deploy simplyblock on Kubernetes as a hyper-converged storage platform,
+    or choose disaggregated and plain Linux models when stricter separation
+    is required.
 
     [:octicons-arrow-right-24: Simplyblock Deployment](deployments/index.md)
 
