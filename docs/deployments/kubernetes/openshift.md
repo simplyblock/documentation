@@ -25,3 +25,9 @@ oc adm policy add-scc-to-group privileged system:serviceaccounts
 
 This step is mandatory to allow SPDK and storage-related containers to run with the privileges required for NVMe device
 access.
+
+## Installation of Simplyblock
+
+To install the simplyblock components on OpenShift, follow the instructions to
+[install the Simplyblock Operator](k8s-control-plane.md) and follow the instructions to [deploy the storage nodes and
+CSI driver](k8s-storage-plane.md)

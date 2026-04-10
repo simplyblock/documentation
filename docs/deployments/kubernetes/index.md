@@ -12,6 +12,8 @@ For Kubernetes environments, a **hyper-converged setup is a first-class simplybl
 recommended approach. In this model, simplyblock storage services run on selected Kubernetes worker nodes, sharing
 resources with other workloads in the same Kubernetes cluster.
 
+For OpenShift environments, *hyper-converged* deployments are the recommended approach.
+
 ## Hyper-Converged Deployment Overview (Recommended)
 
 A typical Kubernetes deployment follows these steps:
@@ -37,7 +39,7 @@ The operator manages the following resources:
 | `SimplyBlockDevice`           | Manages NVMe devices on storage nodes              |
 | `SimplyBlockTask`             | Monitors cluster tasks                             |
 
-For detailed CRD documentation, see [Simplyblock Operator](operator.md).
+For detailed CRD documentation, see [Simplyblock Operator](../../reference/operator.md).
 
 ## Platform-Specific Notes
 

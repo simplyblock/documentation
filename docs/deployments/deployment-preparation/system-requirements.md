@@ -236,14 +236,14 @@ For further information on the requirements of the initiator-side (client-only),
 
 For Kubernetes-based deployments, the following Kubernetes environments and distributions are supported:
 
-| Distribution         | Versions        |
-|----------------------|-----------------|
-| Amazon EKS           | 1.28 and higher |
-| Google GKE           | 1.28 and higher |
-| K3s                  | 1.29 and higher |
-| Kubernetes (vanilla) | 1.28 and higher |
-| Talos                | 1.6.7 and higher|
-| Openshift            | 4.15 and higher |
+| Distribution         | Versions         |
+|----------------------|------------------|
+| Amazon EKS           | 1.28 and higher  |
+| Google GKE           | 1.28 and higher  |
+| K3s                  | 1.29 and higher  |
+| Kubernetes (vanilla) | 1.28 and higher  |
+| Talos                | 1.6.7 and higher |
+| OpenShift            | 4.19 and higher  |
 
 # Proxmox Requirements
 

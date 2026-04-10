@@ -1,5 +1,5 @@
 ---
-title: "Kubernetes Helm Chart Parameters"
+title: "Simplyblock Helm Chart Reference"
 description: "Kubernetes Helm Chart Parameters: Simplyblock provides a Helm chart to install one or more components into Kubernetes."
 weight: 20100
 ---

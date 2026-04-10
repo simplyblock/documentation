@@ -16,6 +16,11 @@ to deploy storage nodes, create a storage pool, and enable volume provisioning v
     it is important to remember to taint the Kubernetes worker accordingly to prevent other services from being
     scheduled on this worker.
 
+## OpenShift Prerequisites
+
+If you are deploying onto an OpenShift cluster, ensure that the environment-specific instructions provided in the
+[OpenShift Installation](openshift.md) guide are followed.
+
 ## Labeling Nodes
 
 Before deploying storage nodes, label all Kubernetes worker nodes designated as storage nodes:
@@ -79,7 +84,7 @@ kubectl apply -f storage-nodes.yaml
 | `nodesPerSocket`        | Number of storage nodes per NUMA socket.                               |         |
 | `workerNodes`           | Worker node names for deployment. **Required and must be non-empty when `action` is not specified**. |         |
 
-For a complete list of fields, see [Simplyblock Operator](operator.md).
+For a complete list of fields, see [Simplyblock Operator](../../reference/operator.md).
 
 ## Creating a Storage Pool
 

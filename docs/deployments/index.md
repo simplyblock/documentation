@@ -46,6 +46,11 @@ For details on how to install the storage cluster into Kubernetes, see here: [In
 
 For details on how to install the storage cluster into Plain Linux, see [Install Simplyblock Storage Nodes on Linux](install-on-linux/install-sp.md).
 
+## OpenShift Installation
+
+OpenShift requires an additional step before successfully installing simplyblock. For details on how to install
+simplyblock into an OpenShift cluster, see [Install Simplyblock on OpenShift](kubernetes/openshift.md).
+
 ## Installation of Drivers
 
 Simplyblock logical volumes are NVMe over TCP or RDMA (ROCEv2) volumes. 

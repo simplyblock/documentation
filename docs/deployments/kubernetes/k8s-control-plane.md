@@ -13,6 +13,11 @@ Resources and manages the full lifecycle of clusters, storage nodes, pools, and 
 - Helm 3 installed
 - `kubectl` configured with cluster access
 
+## OpenShift Prerequisites
+
+If you are deploying onto an OpenShift cluster, ensure that the environment-specific instructions provided in the
+[OpenShift Installation](openshift.md) guide are followed.
+
 ## Installing the Operator
 
 ```bash title="Install the simplyblock operator"
@@ -68,4 +73,4 @@ For NVMe-oF transport security, backup configuration, and other cluster options,
 Once the cluster is created, proceed to [Deploy Storage Nodes and CSI](k8s-storage-plane.md) to add storage
 capacity and enable volume provisioning.
 
-For a complete reference of all CRD fields, see [Simplyblock Operator](operator.md).
+For a complete reference of all CRD fields, see [Simplyblock Operator](../../reference/operator.md).

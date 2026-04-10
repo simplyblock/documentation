@@ -8,7 +8,7 @@ Proper deployment planning is essential for ensuring the performance, scalabilit
 storage cluster.
 
 !!! tip
-    For Kubernetes (especially OpenShift) environments, simplyblock’s **recommended** deployment model is
+    For OpenShift environments, simplyblock’s **recommended** deployment model is
     **hyper-converged**.
 
 Before installation, key factors such as node sizing, storage capacity, and fault tolerance mechanisms should be

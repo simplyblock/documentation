@@ -1,26 +1,26 @@
 ---
-title: "Simplyblock Operator"
+title: "Simplyblock Operator Reference"
 description: "The simplyblock Kubernetes operator manages simplyblock storage clusters, storage nodes, pools, logical volumes, and devices using Custom Resource Definitions (CRDs)."
-weight: 30050
+weight: 20090
 ---
 
 The simplyblock Kubernetes operator provides a declarative, Kubernetes-native interface for managing simplyblock storage
 infrastructure. Instead of using the CLI, administrators can define storage clusters, storage nodes, pools, and logical
-volumes as Kubernetes Custom Resources (CRs). The operator continuously reconciles the desired state with the actual
-state of the simplyblock cluster.
+volumes as Kubernetes Custom Resource Definitions (CRDs). The operator continuously reconciles the desired state with
+the actual state of the simplyblock cluster.
 
 ## Overview
 
 The operator manages the following Custom Resource Definitions (CRDs):
 
-| CRD                         | Short Name | Description                                      |
-|-----------------------------|------------|--------------------------------------------------|
+| CRD                         | Short Name | Description                                       |
+|-----------------------------|------------|---------------------------------------------------|
 | `SimplyBlockStorageCluster` | -          | Creates and manages a simplyblock storage cluster |
 | `SimplyBlockStorageNode`    | -          | Manages storage nodes within a cluster            |
 | `SimplyBlockPool`           | -          | Creates and manages storage pools                 |
 | `SimplyBlockLvol`           | -          | Manages logical volumes                           |
 | `SimplyBlockDevice`         | -          | Manages NVMe devices on storage nodes             |
-| `SimplyBlockTask`           | -          | Monitors cluster tasks and their status            |
+| `SimplyBlockTask`           | -          | Monitors cluster tasks and their status           |
 
 All CRDs use the API group `simplyblock.simplyblock.io/v1alpha1`.
 

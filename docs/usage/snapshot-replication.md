@@ -19,7 +19,7 @@ For the architectural overview, see [Replication Concepts](../architecture/conce
 ## Kubernetes Setup
 
 On Kubernetes, snapshot replication is managed through the `SimplyBlockSnapshotReplication` CRD provided by the
-[simplyblock operator](../deployments/kubernetes/operator.md).
+[Simplyblock Operator](../reference/operator.md).
 
 ### Configuring Replication
 
@@ -108,4 +108,4 @@ To include a volume in replication, enable snapshot capability when creating the
 {{ cliname }} volume add --snapshot <VOLUME_NAME> <SIZE> <POOL_NAME>
 ```
 
-Volumes without snapshot capability cannot participate in replication.
+Volumes without a snapshot capability cannot participate in replication.
