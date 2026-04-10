@@ -184,6 +184,38 @@ The `status.nodes` list reflects the observed state of each managed storage node
 | `actionStatus.message`  | string | Human-readable result or error message.          |
 | `actionStatus.updatedAt`| string | Timestamp of the last status transition.         |
 
+### Node Operations
+
+The `StorageNode` CR operates in two distinct modes depending on whether `spec.action` is set.
+
+#### Triggering an Action
+
+Set `spec.action` and `spec.nodeUUID` together. Both fields are required — the CRD validation will reject a CR that has `action` without `nodeUUID`.
+
+```yaml title="Example: Suspend a storage node"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNode
+metadata:
+  name: storage-nodes
+  namespace: simplyblock
+spec:
+  clusterName: production
+  action: suspend
+  nodeUUID: "d4e5f6a7-..."
+```
+
+To clear the action after it completes, remove `spec.action` and `spec.nodeUUID` from the CR. The operator does not clear these fields automatically.
+
+#### Action Lifecycle
+
+When an action is triggered, the operator transitions `status.actionStatus.state` through the following states:
+
+```
+(spec.action set) → running → success
+                            ↘ failed  (retried after 10 s)
+```
+
+
 ## Storage Pool
 
 The `Pool` resource creates and manages storage pools.
