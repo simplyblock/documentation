@@ -26,7 +26,7 @@ To access cluster-wide statistics, use the following command:
 ```
 
 More information about the command is available in the
-[CLI reference section](../../reference/cli/index.md).
+[CLI reference section](../../reference/cli/cluster.md).
 
 ## Accessing Storage Node Statistics
 
@@ -37,7 +37,7 @@ To access the I/O statistics of a storage node (which includes all physical NVMe
 ```
 
 More information about the command is available in the
-[CLI reference section](../../reference/cli/index.md).
+[CLI reference section](../../reference/cli/storage-node.md).
 
 To access the I/O statistics of a specific device in a storage node, use the following command:
 
@@ -46,7 +46,7 @@ To access the I/O statistics of a specific device in a storage node, use the fol
 ```
 
 More information about the command is available in the
-[CLI reference section](../../reference/cli/index.md).
+[CLI reference section](../../reference/cli/storage-node.md).
 
 ## Accessing Storage Pool Statistics
 
@@ -57,7 +57,7 @@ To access logical volume-specific statistics, use the following command:
 ```
 
 More information about the command is available in the
-[CLI reference section](../../reference/cli/index.md).
+[CLI reference section](../../reference/cli/storage-pool.md).
 
 ## Accessing Logical Volume Statistics
 
@@ -68,4 +68,4 @@ To access logical volume-specific statistics, use the following command:
 ```
 
 More information about the command is available in the
-[CLI reference section](../../reference/cli/index.md).
+[CLI reference section](../../reference/cli/volume.md).

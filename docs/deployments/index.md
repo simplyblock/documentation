@@ -42,7 +42,7 @@ For details, see the [Install Control Plane on Kubernetes](kubernetes/k8s-contro
 
 ## Storage Node Installation
 
-For details on how to install the storage cluster into Kubernetes, see here: [Install Storage Nodes on Kubernetes](kubernetes/k8s-control-plane.md)
+For details on how to install the storage cluster into Kubernetes, see here: [Install Storage Nodes on Kubernetes](kubernetes/k8s-storage-plane.md)
 
 For details on how to install the storage cluster into Plain Linux, see [Install Simplyblock Storage Nodes on Linux](install-on-linux/install-sp.md).
 

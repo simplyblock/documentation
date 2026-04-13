@@ -67,13 +67,13 @@ pvesm add simplyblock <NAME> \
     --shared=1
 ```
 
-| Parameter                   | Description                                                                                                                                                                    |
-|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| NAME                        | The name of the storage pool in Proxmox.                                                                                                                                       |
-| CONTROL_PLANE_API_ENDPOINT  | The API endpoint URL of the simplyblock control plane (e.g., `http://1.2.3.4/api/v1` or `https://controlplane.example.com/api/v1`).                                            |
-| CLUSTER_ID                  | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster list`](../../reference/cli/index.md).                   |
-| CLUSTER_SECRET              | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ cliname }} cluster get-secret`](../../reference/cli/index.md). |
-| STORAGE_POOL_NAME           | The simplyblock storage pool name to attach.                                                                                                                                   |
+| Parameter                  | Description                                                                                                                                             |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| NAME                       | The name of the storage pool in Proxmox.                                                                                                                |
+| CONTROL_PLANE_API_ENDPOINT | The API endpoint URL of the simplyblock control plane (e.g., `http://1.2.3.4/api/v1` or `https://controlplane.example.com/api/v1`).                     |
+| CLUSTER_ID                 | The simplyblock storage cluster id. The cluster id can be found using [`{{ cliname }} cluster list`](../../reference/cli/cluster.md).                   |
+| CLUSTER_SECRET             | The simplyblock storage cluster secret. The cluster secret can be retrieved using [`{{ cliname }} cluster get-secret`](../../reference/cli/cluster.md). |
+| STORAGE_POOL_NAME          | The simplyblock storage pool name to attach.                                                                                                            |
 
 ## After Installation
 
