@@ -80,6 +80,9 @@ For Kubernetes-based deployments, the following Kubernetes environments and dist
 | Talos                | 1.6.7 and higher |
 | OpenShift            | 4.19 and higher  |
 
+!!! important
+    Simplyblock requires a Kubernetes cluster running on Linux host machines. Windows host machines are not supported.
+
 # Proxmox Requirements
 
 The Proxmox integration supports any Proxmox installation of version 8.0 and higher.
