@@ -14,7 +14,7 @@ the efficiency and reliability of your simplyblock deployment.
 ## Getting Started
 
 <div class="grid cards" markdown>
--   :material-book-open-page-variant:{ .lg .middle } __Learn the basics__
+-   :material-book-open-page-variant:{ .lg .middle } **Learn the basics**
 
     ---
 
@@ -23,7 +23,7 @@ the efficiency and reliability of your simplyblock deployment.
 
     [:octicons-arrow-right-24: Important Notes](important-notes/index.md)
 
-- :material-floor-plan:{ .lg .middle } __Plan the deployment__
+- :material-floor-plan:{ .lg .middle } **Plan the deployment**
 
     ---
 
@@ -33,7 +33,7 @@ the efficiency and reliability of your simplyblock deployment.
 
     [:octicons-arrow-right-24: Deployment Planning](deployments/deployment-preparation/index.md)
 
-- :material-database-arrow-up:{ .lg .middle } __Deploy Simplyblock__
+- :material-database-arrow-up:{ .lg .middle } **Deploy Simplyblock**
 
     ---
 
@@ -43,7 +43,7 @@ the efficiency and reliability of your simplyblock deployment.
 
     [:octicons-arrow-right-24: Simplyblock Deployment](deployments/index.md)
 
-- :material-cog-refresh:{ .lg .middle } __Operate Simplyblock__
+- :material-cog-refresh:{ .lg .middle } **Operate Simplyblock**
 
     ---
 

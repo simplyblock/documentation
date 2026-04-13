@@ -11,6 +11,21 @@ storage cluster.
     For OpenShift environments, simplyblock’s **recommended** deployment model is
     **hyper-converged**.
 
+## Deployment Models
+
+Two deployment options are supported:
+
+- **Plain Linux**: In this mode, which is also called Docker mode, all nodes are deployed to separate hosts. Storage
+  nodes are usually bare-metal, and control plane nodes are usually VMs.Basic Docker knowledge is helpful, but all
+  management can be performed within the system via its CLI or API. 
+
+- **Kubernetes**: In Kubernetes, both **disaggregated** deployments with dedicated workers or clusters for storage
+  nodes, or **hyper-converged deployments** (co-located with compute workloads) are supported. A wide range of
+  Kubernetes distros and operating systems are supported. For OpenShift clusters, the hyper-converged deployment model
+  is recommended. Kubernetes Knowledge is required.
+
+## General Information on Requirements
+
 Before installation, key factors such as node sizing, storage capacity, and fault tolerance mechanisms should be
 carefully evaluated to match workload requirements. This section provides guidance on sizing management nodes and
 storage nodes, helping administrators allocate adequate CPU, memory, and disk resources for optimal cluster performance.

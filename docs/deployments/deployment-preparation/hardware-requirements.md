@@ -178,7 +178,7 @@ deploying simplyblock.
 
 ### Storage Traffic Network Requirements
 
-In production, simplyblock requires a __redundant network__ for storage traffic (e.g., via LACP, Stacked Switches, MLAG,
+In production, simplyblock requires a **redundant network** for storage traffic (e.g., via LACP, Stacked Switches, MLAG,
 active/active or active/passive NICs, STP, or MSTP).
 
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux

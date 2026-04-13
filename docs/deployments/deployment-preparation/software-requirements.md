@@ -14,27 +14,9 @@ weight: 29999
     resources to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the 
     operating system.
 
-## Deployment Models
-
-Two deployment options are supported:
-
-- **Plain Linux**: In this mode, which is also called Docker mode, all nodes are deployed to separate hosts. Storage
-  nodes are usually bare-metal and control plane nodes are usually VMs.
-
-  Basic Docker knowledge is helpful, but all management can be performed within the system via its CLI or API. 
-
-- **Kubernetes**: In Kubernetes, both **disaggregated** deployments with dedicated workers or clusters for storage
-  nodes, or **hyper-converged deployments** (co-located with compute workloads) are supported. A wide range of
-  Kubernetes distros and operating systems are supported. For OpenShift clusters, the hyper-converged deployment model
-  is recommended.
-
-  Kubernetes Knowledge is required.
-
-The minimum system requirements below concern simplyblock only and must be dedicated to simplyblock.
-
 ## Operating System Requirements (Control Plane, Storage Plane)
 
-__Control plane nodes__, as well as storage nodes in a __plain linux__ deployment, require one of the following
+**Control plane nodes**, as well as storage nodes in a **plain linux** deployment, require one of the following
 operating systems:
 
 | Operating System               | Versions |
