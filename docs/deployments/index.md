@@ -56,7 +56,7 @@ simplyblock into an OpenShift cluster, see [Install Simplyblock on OpenShift](ku
 Simplyblock logical volumes are NVMe over TCP or RDMA (ROCEv2) volumes. 
 They are attached to the Linux kernel via the provided `nvme-tcp` or `nvme-rdma`
 modules and managed via the `nvme-cli` tool. For more information, see
-  [Linux NVMe-oF Attach](baremetal/index.md).
+  [Linux NVMe-oF Attach](linux-initiators/index.md).
 On top of the NVMe-oF devices, which show up as linux block devices such as `/dev/nvme1n1`,  
 life cycle automation is performed by the orchestrator-specific simplyblock drivers: 
 
@@ -72,7 +72,8 @@ Generally, before creating volumes it is important to understand the difference 
 Simplyblock is designed for high-performance storage operations. Therefore, it has specific system requirements that
 must be met. The following sections describe the system and node sizing requirements. 
 
-- [System Requirements](deployment-preparation/system-requirements.md)
+- [Hardware Requirements](deployment-preparation/hardware-requirements.md)
+- [Software Requirements](deployment-preparation/software-requirements.md)
 - [Erasure Coding Configuration](deployment-preparation/erasure-coding-scheme.md)
 - [Air Gapped Installation](air-gap/index.md)
 

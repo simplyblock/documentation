@@ -7,7 +7,8 @@ weight: 32000
 ### Prerequisites
 
 Before starting the deployment, make sure that the following prerequisites as described in the
-[Prerequisites](../deployment-preparation/system-requirements.md) section are met.
+[hardware prerequisites](../deployment-preparation/hardware-requirements.md) and
+[software prerequisites](../deployment-preparation/software-requirements.md) section are met.
 
 ## Control Plane Installation
 

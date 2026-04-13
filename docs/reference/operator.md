@@ -282,32 +282,32 @@ spec:
 
 Each volume in the `status.lvols` list includes:
 
-| Field                      | Type     | Description                                                                     |
-|----------------------------|----------|---------------------------------------------------------------------------------|
-| `uuid`                     | string   | Volume UUID.                                                                    |
-| `lvolName`                 | string   | Volume name.                                                                    |
-| `status`                   | string   | Backend lifecycle status.                                                       |
-| `size`                     | string   | Volume size.                                                                    |
-| `ha`                       | bool     | High availability enabled.                                                      |
-| `health`                   | bool     | Whether health checks are passing.                                              |
-| `encrypted`                | bool     | Whether the volume is encrypted. See [Volume Encryption](volume-encryption.md). |
-| `erasureCodingScheme`      | string   | Active erasure coding layout for this volume (e.g., `2x1`).                     |
-| `nqn`                      | string   | NVMe Qualified Name for the volume.                                             |
-| `subsysPort`               | int      | NVMe subsystem listener port.                                                   |
-| `namespaceID`              | int      | NVMe namespace identifier.                                                      |
-| `poolName`                 | string   | Storage pool name.                                                              |
-| `poolUUID`                 | string   | Storage pool UUID.                                                              |
-| `nodeUUID`                 | []string | Node UUIDs associated with this volume.                                         |
-| `hostname`                 | string   | Node hostname associated with the volume.                                       |
-| `pvcName`                  | string   | Bound Kubernetes PVC name, if applicable.                                       |
-| `fabricType`               | string   | Storage fabric/protocol in use (`tcp` or `rdma`).                               |
-| `clonedFromSnapshot`       | string   | Source snapshot ID if this volume was cloned from a snapshot.                   |
-| `sourceSnapshotName`       | string   | Source snapshot name if this volume was cloned from a snapshot.                 |
-| `qos.class`                | int      | Assigned QoS class identifier.                                                  |
-| `qos.iops`                 | int      | IOPS limit for this volume.                                                     |
-| `qos.throughput.read`      | int      | Read throughput limit (MiB/s).                                                  |
-| `qos.throughput.write`     | int      | Write throughput limit (MiB/s).                                                 |
-| `qos.throughput.readWrite` | int      | Combined read/write throughput limit (MiB/s).                                   |
+| Field                      | Type     | Description                                                                                               |
+|----------------------------|----------|-----------------------------------------------------------------------------------------------------------|
+| `uuid`                     | string   | Volume UUID.                                                                                              |
+| `lvolName`                 | string   | Volume name.                                                                                              |
+| `status`                   | string   | Backend lifecycle status.                                                                                 |
+| `size`                     | string   | Volume size.                                                                                              |
+| `ha`                       | bool     | High availability enabled.                                                                                |
+| `health`                   | bool     | Whether health checks are passing.                                                                        |
+| `encrypted`                | bool     | Whether the volume is encrypted. See [Volume Encryption](../deployments/kubernetes/volume-encryption.md). |
+| `erasureCodingScheme`      | string   | Active erasure coding layout for this volume (e.g., `2x1`).                                               |
+| `nqn`                      | string   | NVMe Qualified Name for the volume.                                                                       |
+| `subsysPort`               | int      | NVMe subsystem listener port.                                                                             |
+| `namespaceID`              | int      | NVMe namespace identifier.                                                                                |
+| `poolName`                 | string   | Storage pool name.                                                                                        |
+| `poolUUID`                 | string   | Storage pool UUID.                                                                                        |
+| `nodeUUID`                 | []string | Node UUIDs associated with this volume.                                                                   |
+| `hostname`                 | string   | Node hostname associated with the volume.                                                                 |
+| `pvcName`                  | string   | Bound Kubernetes PVC name, if applicable.                                                                 |
+| `fabricType`               | string   | Storage fabric/protocol in use (`tcp` or `rdma`).                                                         |
+| `clonedFromSnapshot`       | string   | Source snapshot ID if this volume was cloned from a snapshot.                                             |
+| `sourceSnapshotName`       | string   | Source snapshot name if this volume was cloned from a snapshot.                                           |
+| `qos.class`                | int      | Assigned QoS class identifier.                                                                            |
+| `qos.iops`                 | int      | IOPS limit for this volume.                                                                               |
+| `qos.throughput.read`      | int      | Read throughput limit (MiB/s).                                                                            |
+| `qos.throughput.write`     | int      | Write throughput limit (MiB/s).                                                                           |
+| `qos.throughput.readWrite` | int      | Combined read/write throughput limit (MiB/s).                                                             |
 
 ### Snapshot Cloning
 

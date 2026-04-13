@@ -148,7 +148,7 @@ spec:
 
 !!! warning
     The resources consumed by simplyblock are exclusively used and have to be aligned with resources required by other
-    workloads. For further information, see [Minimum System Requirements](../deployment-preparation/system-requirements.md#minimum-system-requirements).
+    workloads. For further information, see [minimum hardware requirements](../deployment-preparation/hardware-requirements.md#minimum-system-requirements).
 
 !!! info
     The RAM requirement is split between huge page memory and system memory. Simplyblock manages huge page

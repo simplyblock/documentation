@@ -44,7 +44,7 @@ More information on the control plane, storage plane, and the different node typ
 ## Network Preparation
 
 For network requirements,
-see [System Requirements](../deployment-preparation/system-requirements.md#network-requirements).
+see [System Requirements](../deployment-preparation/hardware-requirements.md#network-requirements).
 
 On storage nodes, simplyblock can use either one network interface for both storage and management 
 or separate interfaces (VLANs or subnets).
