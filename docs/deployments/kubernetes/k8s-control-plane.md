@@ -35,11 +35,11 @@ kubectl get pods -n simplyblock
 
 ## Creating a Storage Cluster
 
-Once the operator is running, create a storage cluster by applying a `SimplyBlockStorageCluster` CRD:
+Once the operator is running, create a storage cluster by applying a `StorageCluster` CRD:
 
 ```yaml title="Example: storage-cluster.yaml"
 apiVersion: simplyblock.simplyblock.io/v1alpha1
-kind: SimplyBlockStorageCluster
+kind: StorageCluster
 metadata:
   name: my-cluster
   namespace: simplyblock

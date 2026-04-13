@@ -18,16 +18,16 @@ For the architectural overview, see [Replication Concepts](../architecture/conce
 
 ## Kubernetes Setup
 
-On Kubernetes, snapshot replication is managed through the `SimplyBlockSnapshotReplication` CRD provided by the
+On Kubernetes, snapshot replication is managed through the `SnapshotReplication` CRD provided by the
 [Simplyblock Operator](../reference/operator.md).
 
 ### Configuring Replication
 
-Create a `SimplyBlockSnapshotReplication` resource on the cluster running the operator:
+Create a `SnapshotReplication` resource on the cluster running the operator:
 
 ```yaml title="Example: Snapshot replication"
 apiVersion: simplyblock.simplyblock.io/v1alpha1
-kind: SimplyBlockSnapshotReplication
+kind: SnapshotReplication
 metadata:
   name: dr-replication
   namespace: simplyblock

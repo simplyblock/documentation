@@ -39,8 +39,8 @@ clusters.
 
 The replication system involves three components:
 
-1. **Simplyblock Operator** ([simplyblock-manager](https://github.com/simplyblock/simplyblock-manager){:target="_blank" rel="noopener"}): A Kubernetes
-   operator that watches the `SimplyBlockSnapshotReplication` CRD and orchestrates replication cycles. It detects
+1. **Simplyblock Operator** ([Simplyblock Manager](https://github.com/simplyblock/simplyblock-manager){:target="_blank" rel="noopener"}): A Kubernetes
+   operator that watches the `SnapshotReplication` CRD and orchestrates replication cycles. It detects
    failover conditions and manages the failback process.
 
 2. **Control Plane** (sbcli): The simplyblock management API handles the actual snapshot creation, data transfer via
@@ -77,7 +77,7 @@ as a new replication.
 Failback refers to the option to replicate the delta accumulated in the target cluster back to the source in case the
 source cluster can be recovered at origin (e.g. after temporary outage or maintainance action). 
 
-Failback is triggered **manually** by setting `action: failback` on the `SimplyBlockSnapshotReplication` CRD after the
+Failback is triggered **manually** by setting `action: failback` on the `SnapshotReplication` CRD after the
 source cluster has been restored.
 
 The failback process for each volume:
@@ -100,6 +100,6 @@ The failback process supports filtering volumes using `includeVolumeIDs` and `ex
 
 ## Kubernetes Integration
 
-In Kubernetes environments, replication is managed through the `SimplyBlockSnapshotReplication` CRD. For Kubernetes
+In Kubernetes environments, replication is managed through the `SnapshotReplication` CRD. For Kubernetes
 deployment and configuration details, see
 [Kubernetes Helm Chart Parameters](../../reference/kubernetes/index.md).
