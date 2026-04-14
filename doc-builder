@@ -85,6 +85,9 @@ function gen_sbcli_ref() {
 
   echo "Generating sbcli reference pages..."
   ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/cli-reference-gen.py /docs
+
+  echo "Generating openapi.json specification..."
+  ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/openapi-json-gen.py
 }
 
 function build_css() {

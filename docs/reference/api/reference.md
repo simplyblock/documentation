@@ -4,4 +4,4 @@ description: "Interactive Simplyblock API reference generated from OpenAPI, with
 weight: 20200
 ---
 
-!!swagger ../../../scripts/sbcli-repo/simplyblock_web/static/openapi.json!!
+!!swagger openapi.json!!
