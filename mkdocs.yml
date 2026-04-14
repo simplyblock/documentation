@@ -2,7 +2,7 @@ site_name: Simplyblock Documentation
 site_url: https://docs.simplyblock.io/
 repo_url: https://github.com/simplyblock/documentation
 edit_uri: edit/main/docs/
-copyright: "&copy; 2024-2025 Simplyblock GmbH"
+copyright: "&copy; 2024-2026 Simplyblock GmbH"
 extra:
   homepage: https://www.simplyblock.io
   homepage_name: Simplyblock
