@@ -23,6 +23,9 @@ A typical Kubernetes deployment follows these steps:
 2. **[Deploy Storage Nodes and CSI](k8s-storage-plane.md)**: Apply CRDs to create the storage cluster, add storage
    nodes, create storage pools, and deploy the CSI driver.
 
+For a detailed breakdown of every pod and service created by the Helm chart, see
+[Management Cluster Architecture](management-cluster-architecture.md).
+
 For connecting to an **external** simplyblock cluster (e.g., a disaggregated Linux-based cluster), the CSI driver
 can be installed separately: [Install Simplyblock CSI](install-csi.md).
 
