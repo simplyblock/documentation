@@ -34,7 +34,7 @@ kubectl get pv
 Now the PV can be deleted:
 
 ```bash title="Delete a PersistentVolume"
-kubectl get pv <pv-name>
+kubectl delete pv <pv-name>
 ```
 
 !!! warning

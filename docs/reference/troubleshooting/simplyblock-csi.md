@@ -1,6 +1,6 @@
 ---
 title: Kubernetes CSI
-description: "Kubernetes CSI: Controller Plugin: Runs as a Deployment and manages volume provisioning and deletion Node Plugin: Runs as a DaemonSet and handles volume."
+description: "Kubernetes CSI: Controller Plugin runs as a StatefulSet and manages volume provisioning and deletion. Node Plugin runs as a DaemonSet and handles volume attachment and mounts."
 weight: 30300
 ---
 
@@ -15,7 +15,7 @@ Most CSI issues appear in one of three layers:
 
 ## High-Level CSI Driver Architecture
 
-- **Controller Plugin:** Runs as a Deployment and manages volume provisioning and deletion.
+- **Controller Plugin:** Runs as a StatefulSet and manages volume provisioning and deletion.
 - **Node Plugin:** Runs as a DaemonSet and handles volume attachment, mounting, and unmounting.
 - **Sidecars:** Handle external provisioning (`csi-provisioner`), attaching (`csi-attacher`), and driver registration
   (`csi-node-driver-registrar`).

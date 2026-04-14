@@ -120,55 +120,6 @@ persistentvolume/pv-static created
     `persistentVolumeReclaimPolicy` in persistent volume specification must be set to `Retain` to avoid persistent
     volume delete attempt in csi-provisioner.
 
-
-### iSCSI Target
-
-To create the static persistent volume, the following values need to be known:
-
-- `lvol`
-- `targetAddr`
-- `targetPort`
-- Name of the logical volume
-
-```yaml title="Staticly provisioned persistent volume: pv-static.yaml"
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  annotations:
-    pv.kubernetes.io/provisioned-by: csi.simplyblock.io
-  name: pv-static
-spec:
-  accessModes:
-  - ReadWriteOnce
-  capacity:
-    storage: 256Mi
-  csi:
-    driver: csi.simplyblock.io
-    fsType: ext4
-    volumeAttributes:
-      # number Initiator group tag, the default value is `iqn.2016-06.io.spdk:`+ `volumeHandle`
-      iqn: iqn.2016-06.io.spdk:c0cd9559-cd6e-43b6-98af-45196e41655f
-      # iSCSI transport address, set by the `iscsi_create_portal_group` method
-      targetAddr: 127.0.0.1
-      targetPort: "3260"
-      targetType: iscsi
-    # volumeHandle should be same as lvol store name(uuid)
-    volumeHandle: c0cd9559-cd6e-43b6-98af-45196e41655f
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: spdkcsi-sc
-  volumeMode: Filesystem
-```
-
-```plain title="Example output of applying the statically persistent volume"
-[demo@demo ~]# kubectl create -f pv-static.yaml
-persistentvolume/pv-static created
-```
-
-!!! warning
-    Simplyblock's CSI driver does not support logical volume deletion for static persistent volumes. Hence,
-    `persistentVolumeReclaimPolicy` in persistent volume specification must be set to `Retain` to avoid persistent
-    volume delete attempt in csi-provisioner.
-
 ### Create static Persistent Volume Claim
 
 ```yaml title="Staticly provisioned persistent volume claim: pvc-static.yaml"

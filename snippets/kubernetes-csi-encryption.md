@@ -82,6 +82,7 @@ kind: PersistentVolumeClaim
 metadata:
   annotations:
     simplybk/secret-name: my-encryption-keys # Encryption keys
+    simplybk/secret-namespace: default       # Namespace of the secret
   name: my-encrypted-volume-claim
 spec:
   storageClassName: my-encrypted-volumes # StorageClass

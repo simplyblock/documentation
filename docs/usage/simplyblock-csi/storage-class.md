@@ -66,7 +66,9 @@ If `namespace-volumes` is set to `yes`, you also need to define the number of na
 
 | Parameter Name            | Value Type | Description                                                                                                                         | Optional | Default  |
 |---------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------|----------|----------|
-| cluster_id                | string     | Defines the backing cluster id the storage class.                                                                                   | true     |          |
+| cluster_id                | string     | Defines the backing cluster id for the storage class. Required unless `zone_cluster_map` or `region_cluster_map` is used.         | true     |          |
+| zone_cluster_map          | string     | JSON map of Kubernetes zone to simplyblock cluster id (for topology-aware multi-cluster provisioning).                             | true     |          |
+| region_cluster_map        | string     | JSON map of Kubernetes region to simplyblock cluster id (for topology-aware multi-cluster provisioning).                           | true     |          |
 | fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                       | true     | tcp      |
 | csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                 | true     |          |
 | pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                   | false    | testing1 |

@@ -149,7 +149,7 @@ Update Complete. ⎈Happy Helming!⎈
   --set csiConfig.simplybk.ip=${CNTR_ADDR} \
   --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
   --set logicalVolume.pool_name=${POOL_NAME}
-NAME: simplyblock-csi
+NAME: simplyblock
 LAST DEPLOYED: Wed Mar  5 15:06:02 2025
 NAMESPACE: simplyblock
 STATUS: deployed
@@ -172,7 +172,7 @@ real-world CSI driver deployments and should only be used on request of simplybl
 
 The full list of parameters is available here: [Kubernetes Helm Chart Parameters](../../reference/kubernetes/index.md).
 
-Please note that the `storagenode.create? parameter must be set to `false` (the default) to deploy only the CSI driver.
+Please note that the `storagenode.create` parameter must be set to `false` (the default) to deploy only the CSI driver.
 
 ## Multi Cluster Support
 
@@ -236,7 +236,7 @@ and uploaded to the Kubernetes cluster.
 # Save cluster secret to a file
 kubectl get secret simplyblock-csi-secret-v2 \
     -o jsonpath='{.data.secret\.json}' |\
-    base64 --decode > secret.yaml
+    base64 --decode > secret.json
 
 # Edit the clusters and add the new cluster's cluster_id,
 # cluster_endpoint, cluster_secret vi secret.json 
