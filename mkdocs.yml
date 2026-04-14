@@ -71,8 +71,20 @@ theme:
   icon:
     annotation: material/information-slab-circle
   palette:
-    scheme: slate
-    primary: custom
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
   font:
     text: Inter
     code: Roboto Mono
@@ -94,6 +106,7 @@ theme:
     - content.action.edit
 extra_css:
   - assets/stylesheets/extra.css
+  - assets/stylesheets/swagger-theme.css
 extra_javascript:
   - assets/javascripts/cpumask-calculator.js
 validation:

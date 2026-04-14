@@ -99,12 +99,13 @@
   {% set direction = config.theme.direction or lang.t("direction") %}
   {% if config.theme.palette %}
     {% set palette = config.theme.palette %}
-    {% if not palette is mapping %}
-      {% set palette = palette | first %}
+    {% set current_palette = palette %}
+    {% if not current_palette is mapping %}
+      {% set current_palette = current_palette | first %}
     {% endif %}
-    {% set scheme  = palette.scheme  | d("default", true) %}
-    {% set primary = palette.primary | d("indigo", true) %}
-    {% set accent  = palette.accent  | d("indigo", true) %}
+    {% set scheme  = current_palette.scheme  | d("default", true) %}
+    {% set primary = current_palette.primary | d("indigo", true) %}
+    {% set accent  = current_palette.accent  | d("indigo", true) %}
     <body dir="{{ direction }}" data-md-color-scheme="{{ scheme | replace(' ', '-') }}" data-md-color-primary="{{ primary | replace(' ', '-') }}" data-md-color-accent="{{ accent | replace(' ', '-') }}">
   {% else %}
     <body dir="{{ direction }}">

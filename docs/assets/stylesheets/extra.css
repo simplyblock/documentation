@@ -41,12 +41,20 @@
   font-weight: 600;
 }
 
-thead > tr > th {
-  background-color: rgba(255,255,255,0.1);
+[data-md-color-scheme="slate"] thead > tr > th {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
-tbody > tr:nth-child(even) {
-  background-color: rgba(255,255,255,0.02);
+[data-md-color-scheme="slate"] tbody > tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-md-color-scheme="default"] thead > tr > th {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-md-color-scheme="default"] tbody > tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .video-wrapper {
@@ -127,6 +135,10 @@ input[type=checkbox][disabled] {
     filter: hue-rotate(18deg) brightness(0.5);
 }
 
-.hbspot-custom .hs-input {
+[data-md-color-scheme="slate"] .hbspot-custom .hs-input {
     color: #FAFAFA !important;
+}
+
+[data-md-color-scheme="default"] .hbspot-custom .hs-input {
+    color: #111111 !important;
 }
