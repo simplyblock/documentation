@@ -61,12 +61,42 @@ Sign up for our newsletter and keep updated on what's happening at simplyblock.
 
 <script charset="utf-8" type="text/javascript" src="//js-eu1.hsforms.net/forms/embed/v2.js"></script>
 <script>
+  let applyFormTheme = () => {};
+
   hbspt.forms.create({
     portalId: "145570463",
     formId: "cbb58efc-4668-483b-a195-1d0ceab4bfb7",
     region: "eu1",
     onFormReady: function(form) {
-      form[0].style.color = "#e2e4e9";
+      applyFormTheme = () => {
+        const scheme = document.body?.dataset?.mdColorScheme || "default";
+        form.querySelectorAll("label, .hs-richtext").forEach(label => {
+          label.style.color = scheme === "slate" ? "#e2e8f0" : "rgba(0, 0, 0, 0.87)";
+        });
+      };
+      applyFormTheme();
     }
   });
+
+  function observeThemeToggle() {
+    const obs = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === "attributes" && m.attributeName === "data-md-color-scheme") {
+          applyFormTheme();
+          break;
+        }
+      }
+    });
+
+    obs.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-md-color-scheme"]
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", observeThemeToggle);
+  } else {
+    observeThemeToggle();
+  }
 </script>
