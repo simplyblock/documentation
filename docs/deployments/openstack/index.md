@@ -113,7 +113,7 @@ simplyblock_pool_name = <simplyblock_pool_name>
 ## Deploy and Reload Cinder
 
 ```bash title="Rerun Kolla-Ansible Deploy Command for Cinder"
-kolla-ansible deploy -i <inventory_file> --tags cinder
+kolla-ansible deploy -i <INVENTORY_FILE> --tags cinder
 ```
 
 ## Validation

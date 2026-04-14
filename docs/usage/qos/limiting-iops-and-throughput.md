@@ -29,13 +29,21 @@ The same applies to [OpenStack](../../deployments/openstack/index.md) QoS Settin
 To set QoS limits when adding or changing a volume:
 
 ```bash title="Setting and updating QoS on volumes"
-{{ cliname }} volume add lvol01 100G pool01 --max-rw-iops 5000 --max-rw-mbytes 50 --max-r-mbytes 35 --max-w-mbytes 15
-{{ cliname }} volume qos-set <VOLUME_ID> --max-rw-iops 10000 --max-rw-mbytes 100 --max-r-mbytes 70 --max-w-mbytes 30
+{{ cliname }} volume add lvol01 100G pool01 \
+  --max-rw-iops 5000 --max-rw-mbytes 50 \
+  --max-r-mbytes 35 --max-w-mbytes 15
+{{ cliname }} volume qos-set <VOLUME_ID> \
+  --max-rw-iops 10000 --max-rw-mbytes 100 \
+  --max-r-mbytes 70 --max-w-mbytes 30
 ```
 
 And the same on pools:
 
 ```bash title="Setting and updating QoS on pools"
-{{ cliname }} pool add pool01 <CLUSTER-UUID> --max-rw-iops 5000 --max-rw-mbytes 50 --max-r-mbytes 35 --max-w-mbytes 15
-{{ cliname }} pool set <POOL-UUID> --max-rw-iops 5000 --max-rw-mbytes 50 --max-r-mbytes 35 --max-w-mbytes 15
+{{ cliname }} pool add pool01 <CLUSTER-UUID> \
+  --max-rw-iops 5000 --max-rw-mbytes 50 \
+  --max-r-mbytes 35 --max-w-mbytes 15
+{{ cliname }} pool set <POOL-UUID> \
+  --max-rw-iops 5000 --max-rw-mbytes 50 \
+  --max-r-mbytes 35 --max-w-mbytes 15
 ```

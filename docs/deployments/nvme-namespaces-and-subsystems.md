@@ -59,5 +59,5 @@ This adds a new subsystem with a namespace and allows up to 9 more namespaces on
 To add new namespaces to the same subsystem, use:
 
 ```bash title="Add Volume to Existing Namespace"
-{{ cliname }} volume add lvol02 100G pool01 --namespace <uuid>
+{{ cliname }} volume add lvol02 100G pool01 --namespace <UUID>
 ```

@@ -46,7 +46,8 @@ The following flags also affect the huge page calculation:
 - `--cores-percentage (default: 0 / unset)`
 
 ```plain title="Example output of huge pages calculator"
-[demo@demo ~]# {{ cliname }} storage-node configure --calculate-hp-only --max-lvol 10 --number-of-devices 4
+[demo@demo ~]# {{ cliname }} storage-node configure \
+  --calculate-hp-only --max-lvol 10 --number-of-devices 4
 2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
 True
 ```
@@ -63,9 +64,9 @@ machine:
 To activate the huge pages, the `talosctl` command should be used.
 
 ```bash title="Enable Huge Pages in Talos"
-[demo@demo ~]# talosctl patch mc --nodes <worker_node_ip> \
+[demo@demo ~]# talosctl patch mc --nodes <WORKER_NODE_IP> \
     --path @huge-pages-config.yaml
-[demo@demo ~]# talosctl reboot --nodes <worker_node_ip>
+[demo@demo ~]# talosctl reboot --nodes <WORKER_NODE_IP>
 ```
 
 ## Required Talos Permissions

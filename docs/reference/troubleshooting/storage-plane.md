@@ -9,9 +9,9 @@ weight: 30200
 **Symptom:** After a fresh deployment, the cluster cannot be activated. The activation process hangs or fails, and the
 storage nodes show `n/0` disks available in the disks column (`{{ cliname }} storage-node list`).
 
-1. Shutdown all storage nodes: `{{ cliname }} storage-node shutdown <node_id> --force`
-2. Force remove all storage nodes: `{{ cliname }} storage-node remove <node_id> --force-remove`
-3. Delete all storage nodes: `{{ cliname }} storage-node delete <node_id>`
+1. Shutdown all storage nodes: `{{ cliname }} storage-node shutdown <NODE_ID> --force`
+2. Force remove all storage nodes: `{{ cliname }} storage-node remove <NODE_ID> --force-remove`
+3. Delete all storage nodes: `{{ cliname }} storage-node delete <NODE_ID>`
 4. Re-add all storage nodes. The disks should become active.
 5. Try to activate the cluster.
 
@@ -19,7 +19,7 @@ storage nodes show `n/0` disks available in the disks column (`{{ cliname }} sto
 
 **Symptom:** The storage node health check returns _health=false_ (`{{ cliname }} storage-node list`).
 
-1. First run `{{ cliname }} storage-node check <node_id>`.
+1. First run `{{ cliname }} storage-node check <NODE_ID>`.
 2. If the command keeps showing an unhealthy storage node, _suspend_, _shutdown_, and restart the storage node.
 
 !!! danger

@@ -33,7 +33,8 @@ If a manual registration is preferred, the repository public key must be downloa
 is used for signature verification.
 
 ```bash title="Install the Simplyblock Public Key"
-curl -o /etc/apt/keyrings/simplyblock.gpg https://install.simplyblock.io/simplyblock.key
+curl -o /etc/apt/keyrings/simplyblock.gpg \
+  https://install.simplyblock.io/simplyblock.key
 ```
 
 Afterward, the repository needs to be registered for apt itself. The following line registers the apt repository.

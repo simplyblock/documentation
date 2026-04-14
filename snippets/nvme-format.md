@@ -70,7 +70,7 @@ recommended to always format the device before use.
 To format the drive, the `nvme` cli is used again.
 
 ```bash title="Formatting the NVMe device"
-sudo nvme format --lbaf=<lbaf> --ses=0 /dev/nvmeXnY
+sudo nvme format --lbaf=<LBAF> --ses=0 /dev/nvmeXnY
 ```
 
 The output of the command should give a successful response when executed similarly to the example below.
