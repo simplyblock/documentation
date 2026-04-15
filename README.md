@@ -38,6 +38,8 @@ This repository contains the [simplyblock documentation](https://docs.simpylbloc
                 * [Infos](#infos)
                 * [Warnings](#warnings)
                 * [Dangers](#dangers)
+                * [Admonitions with Titles](#admonitions-with-titles)
+                * [Collapsible Admonitions](#collapsible-admonitions)
             - [Code Blocks](#code-blocks)
             - [Content Tabs](#content-tabs)
             - [Tables](#tables)
@@ -274,6 +276,34 @@ Dangers contain crucial information that can lead to harmful consequences, such 
 !!! danger
     The text goes here
 ```
+
+##### Admonitions with Titles
+
+Any admonition can be given a title by adding a title attribute to the opening tag.
+
+```markdown
+!!! note "This is a custom title"
+    The text goes here
+```
+
+##### Collapsible Admonitions
+
+Any admonition can be collapsible and closed or opened by default.
+
+The following snippet renders the admonition collapsed by default:
+
+```markdown
+??? note
+    The text goes here
+```
+
+The following snippet renders the admonition expanded by default:
+
+```markdown
+???+ note
+     The text goes here
+```
+
 
 #### Code Blocks
 

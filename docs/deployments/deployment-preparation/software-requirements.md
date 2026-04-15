@@ -4,16 +4,6 @@ description: "Software Requirements: Comprehensive Simplyblock Deployment Model 
 weight: 29999
 ---
 
-!!! info
-    In cloud environments including GCP and AWS, instance types are pre-configured. In general,  
-    there are no restrictions on instance types as long as these system requirements are met. However, it is highly
-    recommended to stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
-
-    For [hyper-converged](../../architecture/concepts/hyper-converged.md) deployments, it is important that node sizing
-    applies to the dedicated resources consumed by simplyblock. Hyper-converged instances must provide enough of
-    resources to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the 
-    operating system.
-
 ## Operating System Requirements (Control Plane, Storage Plane)
 
 **Control plane nodes**, as well as storage nodes in a **plain linux** deployment, require one of the following

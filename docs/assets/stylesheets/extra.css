@@ -13,6 +13,7 @@
 .md-typeset__table > table {
   display: revert !important;
   width: 100%;
+  font-size: .55rem !important;
 }
 
 .md-typeset .admonition.recommendation,

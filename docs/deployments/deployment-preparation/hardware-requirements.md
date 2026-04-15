@@ -12,12 +12,27 @@ network bandwidth, and free space on the boot disk.
 
 ### Overview
 
-| Node Type                 | vCPU(s) | RAM (GB)  | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes | 
-|---------------------------|---------|-----------|--------------------------|---------------------|----------------|-----------------|
-| Control Plane<sup>*</sup> | 4       | 16 DDR4+* | -                        | 1 GBit/s            | 35 GB          | 3 for HA        | 
-| Storage Node              | 8+      | 6+ DDR4+  | 1x dedicated NVMe        | 10 GBit/s           | 10 GB          | 3 for HA        | 
+| Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  | 
+|---------------|---------|------------------------|--------------------------|---------------------|----------------|------------------|
+| Control Plane | 4       | 16 DDR4                | -                        | 1 GBit/s            | 35 GB          | 3                | 
+| Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 1x dedicated NVMe        | 10 GBit/s           | 10 GB          | 3 <sup>(2)</sup> | 
 
-<sup>*</sup> Simplyblock highly recommends DDR5 memory on storage nodes for optimal performance.
+<span style="font-size: 0.8em;">
+<sup>1</sup> Simplyblock highly recommends DDR5 memory on storage nodes for optimal performance.<br>
+<sup>2</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
+</span>
+
+---
+
+!!! info
+    In cloud environments including GCP and AWS, instance types are pre-configured. In general,  
+    there are no restrictions on instance types as long as these system requirements are met. However, it is highly
+    recommended to stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
+
+    For [hyper-converged](../../architecture/concepts/hyper-converged.md) deployments, it is important that node sizing
+    applies to the dedicated resources consumed by simplyblock. Hyper-converged instances must provide enough of
+    resources to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the 
+    operating system.
 
 ## Sizing Basics
 
