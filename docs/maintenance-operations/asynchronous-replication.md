@@ -60,17 +60,17 @@ spec:
 
 ### SnapshotReplication Spec Fields
 
-| Field              | Type       | Description                                                                               |
-|--------------------|------------|-------------------------------------------------------------------------------------------|
-| `sourceCluster`    | string     | Source simplyblock cluster name. Required.                                                |
-| `targetCluster`    | string     | Target simplyblock cluster name. Required.                                                |
-| `targetPool`       | string     | Target storage pool for replicated volumes. Required.                                     |
-| `interval`         | int/string | Interval for creating new replication snapshots. Required.                                |
-| `timeout`          | int/string | Per-task replication timeout. Optional. Defaults to `60` seconds (control plane default). |
-| `action`           | string     | Lifecycle action. Use `failback` to trigger failback after source recovery.               |
-| `sourcePool`       | string     | Source storage pool, required for failback workflows.                                     |
-| `includeVolumeIDs` | []string   | Optional list of volumes to include in replication/failback.                              |
-| `excludeVolumeIDs` | []string   | Optional list of volumes to exclude from replication/failback.                            |
+| Field              | Type     | Description                                                                               |
+|--------------------|----------|-------------------------------------------------------------------------------------------|
+| `sourceCluster`    | string   | Source simplyblock cluster name. Required.                                                |
+| `targetCluster`    | string   | Target simplyblock cluster name. Required.                                                |
+| `targetPool`       | string   | Target storage pool for replicated volumes. Required.                                     |
+| `interval`         | int      | Interval for creating new replication snapshots. Required.                                |
+| `timeout`          | int      | Per-task replication timeout. Optional. Defaults to `60` seconds (control plane default). |
+| `action`           | string   | Lifecycle action. Use `failback` to trigger failback after source recovery.               |
+| `sourcePool`       | string   | Source storage pool, required for failback workflows.                                     |
+| `includeVolumeIDs` | []string | Optional list of volumes to include in replication/failback.                              |
+| `excludeVolumeIDs` | []string | Optional list of volumes to exclude from replication/failback.                            |
 
 ## Replication Cycle and Queue Behavior
 
