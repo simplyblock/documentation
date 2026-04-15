@@ -14,7 +14,7 @@ resilience.
 
 Simplyblock’s architecture provides robust fault tolerance and high availability by combining distributed erasure
 coding, multipath access with failover, and redundant management and storage planes. These capabilities ensure that
-Simplyblock storage clusters deliver the reliability and resiliency required for critical, high-demand workloads in
+simplyblock storage clusters deliver the reliability and resiliency required for critical, high-demand workloads in
 modern distributed environments.
 
 ### 1. Distributed Erasure Coding
@@ -33,11 +33,19 @@ storage nodes along with parity fragments. This provides:
 Simplyblock supports NVMe-over-Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
 storage:
 
-- **Primary and Secondary Paths**: Each Logical Volume (LV) is accessible through both a primary node and one or
+- **Primary and Secondary Paths**: Each logical volume (LV) is accessible through both a primary node and one or
   more secondary nodes.
 - **Automatic Failover**: If the primary node becomes unavailable, traffic is automatically redirected to a secondary
   node with minimal disruption.
 - **Load Balancing**: Multipathing also distributes I/O across available paths to optimize performance and reliability.
+
+The number of secondary node paths is automatically configured based on the selected erasure coding scheme.
+
+Any erasure coding scheme with a parity level of _1_ (`1+1`, `2+1`, `4+1`) has a single secondary path, while schemes
+with a parity level of _2_ (`1+2`, `2+2`, `4+2`) have two secondary paths.
+
+The number of secondary paths defines how many storage nodes can be lost at the same time without impacting the
+availability of the logical volume.
 
 ### 3. Redundant Control Plane and Storage Plane
 
