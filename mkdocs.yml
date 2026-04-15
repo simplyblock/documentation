@@ -22,6 +22,7 @@ extra:
     - icon: fontawesome/brands/mastodon
       link: https://mastodon.social/deck/@simplyblock
   cliname: sbctl
+  experimental: "**Experimental**{.chip-experimental}"
 plugins:
   - search
   - mike

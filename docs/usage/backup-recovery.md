@@ -169,8 +169,13 @@ On the target cluster, import the metadata:
 
 ## Kubernetes CRD Operations
 
+{{experimental}}
+
 In Kubernetes environments, backups can also be managed declaratively using Custom Resource Definitions. This is
 especially useful for automated backup workflows integrated with Kubernetes-native tooling.
+
+!!! attention
+    In simplyblock 26.2-PRE, this feature is not yet available.
 
 ### Backup CRD
 

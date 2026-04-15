@@ -135,3 +135,12 @@
 input[type=checkbox][disabled] {
     filter: hue-rotate(18deg) brightness(0.5);
 }
+
+.chip-experimental {
+  display: inline-block;
+  background: blue;
+  color: white;
+  padding: 0 16px;
+  border-radius: 20px;
+  font-weight: normal;
+}

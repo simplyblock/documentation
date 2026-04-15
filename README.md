@@ -217,6 +217,19 @@ following up the relative link the hash sign (#) and the heading id.
 The required heading ids are automatically generated as a full lowercase version of the heading with whitespaces and
 special characters transformed into dashes (-).
 
+#### Experimental Chip
+
+Experimental features are to be marked with the experimental chip, right after the title of sub heading where the
+feature is introduced.
+
+```markdown
+## Experimental Feature Title
+
+{{experimental}}
+
+Text goes here.
+```
+
 #### Admonitions
 
 Admonitions have specific meanings and should be used to emphasize certain parts of the documentation, warn users about
