@@ -82,7 +82,7 @@ If you need more information on erasure coding, see the dedicated concept page f
 - **Best Use Cases:**
     - Deployments where **high redundancy and storage efficiency is important** without compromising redundancy.
     - Applications that can tolerate slightly **higher recovery times** compared to **1+2**.
-    - Requires 5 or more nodes for full redundancy.
+    - Requires 6 or more nodes for full redundancy.
  
 ### Scheme: 4+2
 
@@ -94,7 +94,7 @@ If you need more information on erasure coding, see the dedicated concept page f
 - **Performance Considerations:** Similar to **4+1**, but with higher write latencies and lower effective write IOPS due to higher write amplification.
 - **Best Use Cases:**
     - Deployments where **high redundancy and storage efficiency is a priority**.
-    - Requires 7 or more nodes in a cluster.
+    - Requires 8 or more nodes in a cluster.
 
 ## Choosing the Scheme
 
