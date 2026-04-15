@@ -18,7 +18,7 @@ Storage Interface (CSI) and ProxMox drivers.
   entirely based on NVMe and NVMe over Fabric (TCP, RDMA). This includes local back-storage on storage nodes,
   host-to-cluster, and node-to-node traffic. Together with the user-space data plane, distributed data placement, and
   advanced quality of service (QoS) and other characteristics, this makes simplyblock the storage platform with the most
-  advanced performance guarantees in hyperconverged solutions available today.
+  advanced performance guarantees in hyper-converged solutions available today.
 
 - **User-Space Data Plane:** Simplyblock data plane is built entirely in user-space with an interrupt-free, lockless,
   zero-copy architecture with thread-to-core pinning. The hot data path entirely avoids Linux kernel involvement, data
