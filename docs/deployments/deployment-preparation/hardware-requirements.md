@@ -14,7 +14,6 @@ network bandwidth, and free space on the boot disk.
 
 | Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  | 
 |---------------|---------|------------------------|--------------------------|---------------------|----------------|------------------|
-| Control Plane | 4       | 16 DDR4                | -                        | 1 GBit/s            | 35 GB          | 3                | 
 | Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 1x dedicated NVMe        | 10 GBit/s           | 10 GB          | 3 <sup>(2)</sup> | 
 
 <span style="font-size: 0.8em;">
@@ -94,34 +93,97 @@ For storage nodes, simplyblock highly recommends DDR5 memory for optimal perform
 
 ## Control Plane Requirements
 
-### Control Plane Baseline (Linux)
+The simplyblock control plane has different hardware requirements depending on the deployment model.
 
-General control plane requirements provided above apply to the plain linux deployment. A control plane cluster of this
-size can manage up to 5 nodes, 1,000 logical volumes, and 2,500 snapshots. For larger deployments, increase the
-resources of the management nodes accordingly. 
+=== "Kubernetes"
 
-### Control Plane Baseline (Kubernetes)
+    For a Kubernetes-based control plane, the minimum requirements per replica are:
+    
+    | Service                      | Instances | vCPU(s) | RAM (GB) | Disk (GB) |
+    |------------------------------|-----------|---------|----------|-----------|
+    | Simplyblock Operator         | 1         | 1       | 0.5      | 0.5       |
+    | Control Plane API            | 3         | 1       | 1        | 0.5       |
+    | Meta-Database (FoundationDB) | 3         | 1       | 1        | 5         |
+    | Task Runners                 | 11        | 0.25    | 0.1      | 0.5       |
+    | CSI Driver Services          | 1         | 0.5     | 0.2      | 0.5       |
+    | Admin Pods                   | 1         | 0.5     | 0.25     | 0.5       |
+    | Prometheus                   | 3         | 0.5     | 0.5      | 10        |
+    | **Total per node**           | **3**     | **4.5** | **3.4**  | **18**    |
 
-For a Kubernetes-based control plane, the minimum requirements per replica are:
+    !!! info
+        3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
+        The Observability Stack can optionally be replicated and the sb-services run without replication.
 
-| Service                    | vCPU(s) | RAM (GB) | Disk (GB) |
-|----------------------------|---------|----------|-----------|
-| Simplyblock Meta-Database  | 1       | 4        | 5         |
-| Observability Stack        | 4       | 8        | 25        |
-| Simplyblock Web-API        | 1       | 2        | 0.5       |
-| Other Simplyblock Services | 1       | 2        | 0.5       |
+    Additionally, a non-production observability stack can be deployed:
+
+    | Service    | Instances | vCPU(s) | RAM (GB) | Disk (GB) |
+    |------------|-----------|---------|----------|-----------|
+    | Grafana    | 1         | 4       | 8        | 25        |
+    | Graylog    | 1         | 4       | 8        | 25        |
+    | OpenSearch | 1         | 4       | 8        | 25        |
+    | MongoDB    | 1         | 4       | 8        | 25        |
+    | Thanos     | 3         | 4       | 8        | 25        |
+
+=== "Plain Linux"
+
+    A control plane cluster of this size can manage up to 5 nodes, 1,000 logical volumes, and 2,500 snapshots. For
+    larger deployments, increase the resources of the management nodes accordingly.
+
+    | Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  | 
+    |---------------|---------|------------------------|--------------------------|---------------------|----------------|------------------|
+    | Control Plane | 4       | 16 DDR4                | -                        | 1 GBit/s            | 35 GB          | 3                | 
+
 
 ### Control Plane Scaling Triggers
 
-If more than 2,500 volumes or more than 5 storage nodes are attached to the control plane, additional RAM and vCPU
-are advised. Also, the required observability disk space must be increased, if retention of logs and statistics for
-more than 7 days is required.
+The general system requirements represent a minimal system setup with support for a limited amount of storage nodes,
+logical volumes, and log retention.
 
-### Control Plane Replication Notes
+=== "Kubernetes"
 
-!!! info
-    3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
-    The Observability Stack can optionally be replicated and the sb-services run without replication.
+    The control plane sizing is based on the minimal setup of the Simplyblock Operator. It is designed to support a
+    service size of 200 logical volumes and 3 storage nodes. Furthermore, the assumed log storage retention is 3 days.
+
+    For larger deployments, use the following tables to adjust the system requirements. The first table shows additional
+    resources per 1,000 logical volumes.
+
+    The second table shows additional required resources per 10 storage nodes.
+
+    <figure markdown><figcaption>Additional Resources per 1,000 Logical Volumes</figcaption>
+
+    | Service                      | add. vCPU | add. GB (RAM) | add. GB (Disk) |
+    |------------------------------|-----------|---------------|----------------|
+    | Simplyblock Operator         | 0.25      | 0.5           | -              |
+    | Control Plane API            | 0.25      | 0.5           | -              |
+    | Meta-Database (FoundationDB) | 0.5       | 0.25          | 2              |
+    | Task Runners                 | 0.25      | 0.25          | -              |
+    | CSI Driver Services          | 0.5       | 0.2           | -              |
+    | Admin Pods                   | 0.2       | 0.1           | -              |
+    | Prometheus                   | 0.5       | 0.25          | 10             |
+    | **Total per node**           | **2.5**   | **2.5**       | **12**         |
+
+    </figure>
+
+    <figure markdown><figcaption>Additional Resources per 10 Storage Nodes</figcaption>
+
+    | Service                      | add. vCPU | add. GB (RAM) | add. GB (Disk) |
+    |------------------------------|-----------|---------------|----------------|
+    | Simplyblock Operator         | 0.5       | 0.5           | -              |
+    | Control Plane API            | 0.1       | -             | -              |
+    | Meta-Database (FoundationDB) | 0.5       | 0.25          | 2              |
+    | Task Runners                 | 0.25      | 0.25          | -              |
+    | CSI Driver Services          | -         | -             | -              |
+    | Admin Pods                   | 0.1       | 0.1           | -              |
+    | Prometheus                   | 0.25      | 0.25          | 10             |
+    | **Total per node**           | **2.35**  | **1.35**      | **12**         |
+
+    </figure>
+
+=== "Plain Linux"
+
+    If more than 2,500 volumes or more than 5 storage nodes are attached to the control plane, additional RAM and vCPU
+    are advised. Also, the required observability disk space must be increased, if retention of logs and statistics for
+    more than 7 days is required.
 
 ## CPU & Platform Compatibility
 

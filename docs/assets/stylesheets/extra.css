@@ -6,6 +6,10 @@
   --md-typeset-a-color: #27AE60;
 }
 
+figure {
+  width: 100% !important;
+}
+
 .md-typeset__table {
   width: 100%;
 }
