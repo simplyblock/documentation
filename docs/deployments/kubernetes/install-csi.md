@@ -195,7 +195,7 @@ When the Simplyblock CSI driver is initially installed, only a single cluster ca
 helm install simplyblock-csi ./ \
     --set csiConfig.simplybk.uuid=${CLUSTER_ID} \
     --set csiConfig.simplybk.ip=${CLUSTER_IP} \
-    --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
+    --set csiSecret.simplybk.secret=${CLUSTER_SECRET}
 ```
 
 The `CLUSTER_ID` (UUID), gateway endpoint (`CLUSTER_IP`), and secret (`CLUSTER_SECRET`) of the initial cluster must be
