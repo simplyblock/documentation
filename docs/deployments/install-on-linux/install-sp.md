@@ -34,7 +34,7 @@ Python 3 and Pip (the Python package manager) are installed on the machine. This
 
 
 ```bash title="Install Python and Pip"
-sudo yum -y install python3-pip
+sudo yum -y install python3-pip pciutils nvme-cli
 ```
 
 Afterward, the `{{ cliname }}` command line interface can be installed. Upgrading the CLI later on uses the
