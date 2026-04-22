@@ -1,11 +1,11 @@
 ---
-title: "Deploy Storage Nodes and CSI"
+title: "Deploy Storage Nodes"
 description: "Deploy simplyblock storage nodes, storage pools, and the CSI driver on Kubernetes using the simplyblock operator CRDs."
 weight: 30100
 ---
 
-After [installing the simplyblock operator](k8s-control-plane.md) and creating a storage cluster, the next step is
-to deploy storage nodes, create a storage pool, and enable volume provisioning via the CSI driver.
+After [installing the simplyblock operator](k8s-control-plane.md), the next step is to create a storage cluster,
+deploy storage nodes, create a storage pool, and enable volume provisioning via the CSI driver.
 
 !!! info
     In a Kubernetes deployment, not all Kubernetes workers have to become part of the storage cluster.
@@ -21,14 +21,6 @@ to deploy storage nodes, create a storage pool, and enable volume provisioning v
 If you are deploying onto an OpenShift cluster, ensure that the environment-specific instructions provided in the
 [OpenShift Installation](openshift.md) guide are followed.
 
-## Labeling Nodes
-
-Before deploying storage nodes, label all Kubernetes worker nodes designated as storage nodes:
-
-```bash title="Label the Kubernetes worker node"
-kubectl label nodes <NODE_NAME> io.simplyblock.node-type=simplyblock-storage-plane
-```
-
 ## Networking Configuration
 
 Multiple ports are required to be opened on storage node hosts.
@@ -39,6 +31,41 @@ Opening ports may be required between the control plane and storage networks as 
 VLANs.
 
 {% include 'storage-plane-network-port-table-k8s.md' %}
+
+## Creating a Storage Cluster
+
+Once the operator is running, create a storage cluster by applying a `StorageCluster` CRD:
+
+```yaml title="Example: storage-cluster.yaml"
+apiVersion: simplyblock.simplyblock.io/v1alpha1
+kind: StorageCluster
+metadata:
+  name: my-cluster
+  namespace: simplyblock
+spec:
+  clusterName: production
+  mgmtIfname: eth0
+  haType: ha
+  stripe:
+    dataChunks: 2
+    parityChunks: 1
+  fabric: tcp
+```
+
+```bash title="Apply the cluster resource"
+kubectl apply -f storage-cluster.yaml
+```
+
+Check the cluster status:
+
+```bash title="Check cluster status"
+kubectl get simplyblockstoragecluster -n simplyblock
+```
+
+### Cluster Options
+
+For NVMe-oF transport security, backup configuration, and other cluster options, see
+[Cluster Deployment Options](../cluster-deployment-options.md).
 
 ## Deploying Storage Nodes
 

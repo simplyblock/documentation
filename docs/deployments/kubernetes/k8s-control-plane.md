@@ -33,44 +33,9 @@ After installation, verify the operator is running:
 kubectl get pods -n simplyblock
 ```
 
-## Creating a Storage Cluster
-
-Once the operator is running, create a storage cluster by applying a `StorageCluster` CRD:
-
-```yaml title="Example: storage-cluster.yaml"
-apiVersion: simplyblock.simplyblock.io/v1alpha1
-kind: StorageCluster
-metadata:
-  name: my-cluster
-  namespace: simplyblock
-spec:
-  clusterName: production
-  mgmtIfname: eth0
-  haType: ha
-  stripe:
-    dataChunks: 2
-    parityChunks: 1
-  fabric: tcp
-```
-
-```bash title="Apply the cluster resource"
-kubectl apply -f storage-cluster.yaml
-```
-
-Check the cluster status:
-
-```bash title="Check cluster status"
-kubectl get simplyblockstoragecluster -n simplyblock
-```
-
-### Cluster Options
-
-For NVMe-oF transport security, backup configuration, and other cluster options, see
-[Cluster Deployment Options](../cluster-deployment-options.md).
-
 ## Next Steps
 
-Once the cluster is created, proceed to [Deploy Storage Nodes and CSI](k8s-storage-plane.md) to add storage
+Once the cluster is created, proceed to [Deploy Storage Nodes](k8s-storage-plane.md) to add storage
 capacity and enable volume provisioning.
 
 For a complete reference of all CRD fields, see [Simplyblock Operator](../../reference/operator.md).

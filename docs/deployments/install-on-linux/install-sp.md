@@ -34,7 +34,7 @@ Python 3 and Pip (the Python package manager) are installed on the machine. This
 
 
 ```bash title="Install Python and Pip"
-sudo yum -y install python3-pip
+sudo yum -y install python3-pip pciutils nvme-cli
 ```
 
 Afterward, the `{{ cliname }}` command line interface can be installed. Upgrading the CLI later on uses the
@@ -76,12 +76,11 @@ will configure one storage node per NUMA node.
 
 ```bash title="Configure the storage node"
 sudo {{ cliname }} storage-node configure \
-  --max-lvol <MAX_LOGICAL_VOLUMES> \
-  --max-size <MAX_PROVISIONING_CAPACITY>
+  --max-lvol <MAX_LOGICAL_VOLUMES>
 ```
 
 ```plain title="Example output of storage node configure"
-[demo@demo-3 ~]# sudo {{ cliname }} storage-node configure --nodes-per-socket=2 --max-lvol=50 --max-size=1T
+[demo@demo-3 ~]# sudo {{ cliname }} storage-node configure --nodes-per-socket=2 --max-lvol=50
 2025-05-14 10:40:17,460: INFO: 0000:00:04.0 is already bound to nvme.
 0000:00:1e.0
 0000:00:1e.0
