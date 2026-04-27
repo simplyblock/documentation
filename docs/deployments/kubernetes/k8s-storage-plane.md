@@ -4,43 +4,56 @@ description: "Deploy simplyblock storage nodes, storage pools, and the CSI drive
 weight: 30100
 ---
 
-After [installing the simplyblock operator](k8s-control-plane.md), the next step is to create a storage cluster,
-deploy storage nodes, create a storage pool, and enable volume provisioning via the CSI driver.
+With the [simplyblock operator installed](k8s-control-plane.md), you are ready to bring up a storage cluster.
+This guide walks through the full journey: creating the cluster, adding storage nodes, creating a pool, and
+provisioning your first volume — with exactly what to expect at each step along the way.
+
+Here is the overall picture of what you will build:
+
+```
+StorageCluster  ──► unready
+                       │
+                       ▼  (add ≥ 3 storage nodes)
+StorageNode(s)  ──► active
+                       │
+                       ▼  (create a pool)
+Pool            ──► StorageClass created automatically
+                       │
+                       ▼  (create a PVC)
+PVC             ──► Bound  ✓
+```
 
 !!! info
-    In a Kubernetes deployment, not all Kubernetes workers have to become part of the storage cluster.
-    Simplyblock uses node labels to identify Kubernetes workers that are deemed as storage hosting instances.
+    Not all Kubernetes workers need to join the storage cluster. Simplyblock uses node labels to identify which
+    workers host storage. It is common to dedicate a separate node pool for storage — if you do, remember to taint
+    those nodes so other workloads are not scheduled on them.
 
-    It is common to add dedicated Kubernetes worker nodes for storage to the same
-    Kubernetes cluster. They can be separated into a different node pool, and using a different type of host. In this case,
-    it is important to remember to taint the Kubernetes worker accordingly to prevent other services from being
-    scheduled on this worker.
+## Prerequisites
 
-## OpenShift Prerequisites
+### OpenShift
 
-If you are deploying onto an OpenShift cluster, ensure that the environment-specific instructions provided in the
-[OpenShift Installation](openshift.md) guide are followed.
+If you are deploying onto OpenShift, follow the environment-specific steps in the
+[OpenShift Installation](openshift.md) guide before continuing here.
 
-## Networking Configuration
+### Networking
 
-Multiple ports are required to be opened on storage node hosts.
-
-Ports using the same source and target networks (VLANs) will not require any additional firewall settings.
-
-Opening ports may be required between the control plane and storage networks as those typically reside on different
-VLANs.
+Multiple ports must be open on storage node hosts. Ports within the same VLAN do not require extra firewall
+rules, but ports between the control plane and storage networks typically do.
 
 {% include 'storage-plane-network-port-table-k8s.md' %}
 
-## Creating a Storage Cluster
+---
 
-Once the operator is running, create a storage cluster by applying a `StorageCluster` CRD:
+## Step 1 — Create the Storage Cluster
 
-```yaml title="Example: storage-cluster.yaml"
-apiVersion: simplyblock.simplyblock.io/v1alpha1
+Start by creating a `StorageCluster` resource. This registers the cluster with the operator and prepares the
+control plane — it does not yet require any storage capacity.
+
+```yaml title="storage-cluster.yaml"
+apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageCluster
 metadata:
-  name: my-cluster
+  name: simplyblock-cluster
   namespace: simplyblock
 spec:
   clusterName: production
@@ -52,27 +65,39 @@ spec:
   fabric: tcp
 ```
 
-```bash title="Apply the cluster resource"
+```bash
 kubectl apply -f storage-cluster.yaml
 ```
 
-Check the cluster status:
+Check the status right after applying:
 
-```bash title="Check cluster status"
-kubectl get simplyblockstoragecluster -n simplyblock
+```bash
+kubectl get storagecluster -n simplyblock
 ```
 
-### Cluster Options
+You will see something like this:
 
-For NVMe-oF transport security, backup configuration, and other cluster options, see
-[Cluster Deployment Options](../cluster-deployment-options.md).
+```
+NAME                   STATUS    UUID                                   CONFIGURED   AGE
+simplyblock-cluster    unready   81932010-8c06-4acd-b14a-51f5c3fca425   true         1m
+```
 
-## Deploying Storage Nodes
+**`unready` is expected** at this point — the cluster has been registered, but it has no storage nodes yet.
+Move on to the next step.
 
-Apply a `StorageNode` CRD to deploy storage nodes:
+!!! tip
+    For additional cluster options — NVMe-oF transport security, backup configuration, capacity thresholds, and
+    more — see [Cluster Deployment Options](../cluster-deployment-options.md).
 
-```yaml title="Example: storage-nodes.yaml"
-apiVersion: simplyblock.simplyblock.io/v1alpha1
+---
+
+## Step 2 — Add Storage Nodes
+
+Now point storage nodes at the cluster. Create a `StorageNode` resource that lists the Kubernetes worker nodes
+you want to dedicate to storage:
+
+```yaml title="storage-nodes.yaml"
+apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNode
 metadata:
   name: storage-nodes
@@ -84,41 +109,60 @@ spec:
   workerNodes:
     - worker-1
     - worker-2
+    - worker-3
   maxSize: "500G"
   partitions: 1
   coreIsolation: true
 ```
 
-```bash title="Apply the storage node resource"
+```bash
 kubectl apply -f storage-nodes.yaml
 ```
 
-### Storage Node Parameters
+The operator bootstraps each listed worker, installing the SPDK service and registering it with the cluster.
+You can watch the spdk pods being created:
 
-| Parameter               | Description                                                                                          | Default |
-|-------------------------|------------------------------------------------------------------------------------------------------|---------|
-| `clusterName`           | Name of the cluster this node belongs to. **Required**.                                              |         |
-| `clusterImage`          | Storage-node image. **Required when `action` is not specified**.                                     |         |
-| `maxLogicalVolumeCount` | Maximum number of logical volumes on this node. **Required when `action` is not specified**.         | 10      |
-| `maxSize`               | Maximum utilized storage capacity (e.g., `500G`). Impacts RAM demand.                                | 150g    |
-| `partitions`            | Number of partitions per device.                                                                     | 1       |
-| `coreIsolation`         | Enable CPU core isolation. Requires a node restart after deployment.                                 | false   |
-| `corePercentage`        | Percentage of total cores allocated to simplyblock.                                                  |         |
-| `pcieAllowList`         | List of allowed NVMe PCIe addresses.                                                                 |         |
-| `pcieDenyList`          | List of blocked NVMe PCIe addresses.                                                                 |         |
-| `dataIfname`            | Data network interface names for storage traffic.                                                    |         |
-| `socketsToUse`          | Number of NUMA sockets to use.                                                                       |         |
-| `nodesPerSocket`        | Number of storage nodes per NUMA socket.                                                             |         |
-| `workerNodes`           | Worker node names for deployment. **Required and must be non-empty when `action` is not specified**. |         |
+```bash
+kubectl get pods -n simplyblock
+```
 
-For a complete list of fields, see [Simplyblock Operator](../../reference/operator.md).
+### When does the cluster become active?
 
-## Creating a Storage Pool
+Once at least three storage nodes have joined successfully, the operator automatically activates the cluster.
+Check the cluster status again:
 
-Apply a `Pool` CRD to create a storage pool:
+```bash
+kubectl get storagecluster -n simplyblock
+```
 
-```yaml title="Example: storage-pool.yaml"
-apiVersion: simplyblock.simplyblock.io/v1alpha1
+```
+NAME                   STATUS   UUID                                   CONFIGURED   AGE
+simplyblock-cluster    active   bfa260ce-06a7-4bcb-a843-813d0be633af   true         10m
+```
+
+When the status flips to `active`, the operator also creates the `simplyblock-csi-secret-v2` Secret in the
+`simplyblock` namespace, containing the cluster credentials the CSI driver needs. You do not need to manage
+this Secret manually — the operator keeps it up to date and removes the cluster entry when the cluster is
+deleted.
+
+For all available fields, see [Simplyblock Operator — Storage Node](../../reference/operator.md#storage-node).
+
+!!! warning
+    Simplyblock exclusively owns the resources it is allocated. Make sure they are sized correctly alongside
+    other workloads. See [minimum hardware requirements](../deployment-preparation/hardware-requirements.md#minimum-system-requirements).
+
+!!! info
+    Simplyblock manages huge page allocation automatically. Total RAM required depends on vCPU count, the number
+    of active logical volumes, and utilized virtual storage per node.
+
+---
+
+## Step 3 — Create a Storage Pool
+
+A storage pool is a logical grouping of capacity within the cluster. Create one with a `Pool` resource:
+
+```yaml title="storage-pool.yaml"
+apiVersion: storage.simplyblock.io/v1alpha1
 kind: Pool
 metadata:
   name: my-pool
@@ -129,28 +173,121 @@ spec:
   capacityLimit: "10T"
 ```
 
-```bash title="Apply the storage pool resource"
+```bash
 kubectl apply -f storage-pool.yaml
 ```
 
-## Verification
+Check that the pool is active:
 
-Check the status of all simplyblock resources:
-
-```bash title="Verify deployment status"
-kubectl get simplyblockstoragecluster -n simplyblock
-kubectl get simplyblockstoragenode -n simplyblock
+```bash
 kubectl get simplyblockpool -n simplyblock
-kubectl get pods -n simplyblock
 ```
+
+Once the pool is active, the operator automatically creates a `StorageClass` named
+`simplyblock-<clusterName>-<poolName>` — in this example, `simplyblock-production-production-pool`. It is
+deleted when the pool is deleted. For full details and customization options, see
+[Simplyblock Operator — Storage Pool](../../reference/operator.md#storage-pool).
+
+```bash
+kubectl get storageclass simplyblock-production-production-pool
+```
+
+---
+
+## Step 4 — Provision Your First Volume
+
+Everything is in place. Let's create a PersistentVolumeClaim and verify the full stack end-to-end.
+
+### Create the PVC
+
+```yaml title="test-pvc.yaml"
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simplyblock-test-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: simplyblock-production-production-pool
+```
+
+```bash
+kubectl apply -f test-pvc.yaml
+kubectl get pvc simplyblock-test-pvc
+```
+
+```
+NAME                    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
+simplyblock-test-pvc    Pending                                       simplyblock-production-production-pool   5s
+```
+
+**`Pending` is expected** — the StorageClass uses `WaitForFirstConsumer`, which means the volume is not
+provisioned until a pod actually needs it. This is by design: the scheduler picks the right node first, then
+the volume is created close to where it will be used.
+
+### Mount it with a test pod
+
+```yaml title="test-pod.yaml"
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simplyblock-test-pod
+spec:
+  containers:
+    - name: test
+      image: busybox
+      command: ["/bin/sh", "-c", "echo 'volume provisioned successfully' > /data/test.txt && sleep 3600"]
+      volumeMounts:
+        - mountPath: /data
+          name: storage
+  volumes:
+    - name: storage
+      persistentVolumeClaim:
+        claimName: simplyblock-test-pvc
+```
+
+```bash
+kubectl apply -f test-pod.yaml
+```
+
+Wait for the pod to reach `Running`, then check that the PVC is bound and the write succeeded:
+
+```bash
+kubectl get pvc simplyblock-test-pvc
+```
+
+```
+NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
+simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-production-production-pool   30s
+```
+
+```bash
+kubectl exec simplyblock-test-pod -- cat /data/test.txt
+```
+
+```
+volume provisioned successfully
+```
+
+Your cluster is fully operational. Clean up the test resources when you are done:
+
+```bash
+kubectl delete pod simplyblock-test-pod
+kubectl delete pvc simplyblock-test-pvc
+```
+
+---
 
 ## Multi-Cluster Storage Node Support
 
-A single Kubernetes cluster can host storage nodes connected to multiple simplyblock clusters. To configure this,
-specify the `workerNodes` field in the `StorageNode` CRD:
+A single Kubernetes cluster can host storage nodes connected to multiple simplyblock clusters. Create a
+separate `StorageNode` resource for each simplyblock cluster, pointing different worker nodes at each:
 
 ```yaml title="Multi-cluster storage nodes"
-apiVersion: simplyblock.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNode
 metadata:
   name: cluster-a-nodes
@@ -161,7 +298,7 @@ spec:
     - worker-a-1
     - worker-a-2
 ---
-apiVersion: simplyblock.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNode
 metadata:
   name: cluster-b-nodes
@@ -172,14 +309,3 @@ spec:
     - worker-b-1
     - worker-b-2
 ```
-
-!!! warning
-    The resources consumed by simplyblock are exclusively used and have to be aligned with resources required by other
-    workloads. For further information, see [minimum hardware requirements](../deployment-preparation/hardware-requirements.md#minimum-system-requirements).
-
-!!! info
-    The RAM requirement is split between huge page memory and system memory. Simplyblock manages huge page
-    allocation automatically.
-
-    The total amount of RAM required depends on the number of vCPUs used, the number of active logical volumes
-    (Persistent Volume Claims or PVCs) and the utilized virtual storage on this node.

@@ -83,6 +83,13 @@ spec:
 | `eventLogEntries`                       | int      | Number of event log entries to retain.                                             |
 | `action`                                | string   | Lifecycle action: `activate` or `expand`.                                          |
 
+### Auto-Managed CSI Credentials
+
+When a `StorageCluster` is created or becomes active, the operator automatically creates or updates the
+`simplyblock-csi-secret-v2` Secret in the operator's namespace with the cluster's credentials. This Secret is
+consumed by the CSI driver and requires no manual management. When the cluster is deleted, the operator removes
+the cluster's entry from the Secret automatically.
+
 ### Status Fields
 
 | Field                 | Type   | Description                                                          |
@@ -218,7 +225,9 @@ When an action is triggered, the operator transitions `status.actionStatus.state
 
 ## Storage Pool
 
-The `Pool` resource creates and manages storage pools.
+The `Pool` resource creates and manages storage pools. When a pool becomes active, the operator automatically
+creates a Kubernetes `StorageClass` named `simplyblock-<clusterName>-<poolName>`. The StorageClass is deleted
+when the pool is deleted.
 
 ```yaml title="Example: Create a storage pool"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -250,6 +259,23 @@ spec:
 | `qos.throughput.read`      | int    | Maximum read throughput (MiB/s).                |
 | `qos.throughput.write`     | int    | Maximum write throughput (MiB/s).               |
 | `action`                   | string | Pool lifecycle action.                          |
+| `storageClassParameters`   | object | Default volume parameters baked into the auto-created StorageClass. See [Quality of Service](../usage/simplyblock-csi/quality-of-service.md) for available fields. |
+
+### Auto-Created StorageClass
+
+When the pool reaches an active state, the operator creates a `StorageClass` with:
+
+- **Name**: `simplyblock-<clusterName>-<poolName>`
+- **Provisioner**: `csi.simplyblock.io`
+- **VolumeBindingMode**: `WaitForFirstConsumer`
+- **ReclaimPolicy**: `Delete`
+- **AllowVolumeExpansion**: `true`
+
+The `cluster_id` and `pool_name` parameters are set automatically. Any fields specified in
+`spec.storageClassParameters` are merged in as additional CSI driver parameters.
+
+Because Kubernetes StorageClass parameters are immutable after creation, the StorageClass is created once and
+left unchanged if it already exists. To change parameters, delete the pool and recreate it with updated values.
 
 ### Status Fields
 
