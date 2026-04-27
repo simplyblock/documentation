@@ -148,3 +148,7 @@ input[type=checkbox][disabled] {
   border-radius: 20px;
   font-weight: normal;
 }
+
+a img {
+  border-radius: 10px;
+}
