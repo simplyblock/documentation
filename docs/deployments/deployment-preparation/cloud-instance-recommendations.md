@@ -42,15 +42,20 @@ of queue pairs (logical connections between the virtual machine and physical NVM
 disk. Hence, separately attached NVMe devices are highly recommended to achieve the required number of queue pairs of
 simplyblock.
 
-!!! critical
-    If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of
-    type _spread_!
+!!! important
+    While simplyblock works on GCP, the lack of dedicated network bandwidth, the limited number of queue pairs per
+    NVMe device, and the general network performance (even on Tier1 networks) make it not recommended for
+    high-performance clusters. Hence, simplyblock does not recommend the use of GCP for production clusters.
 
 Generally, with GCP, there are three considerations when selecting virtual machine types:
 
 - Minimum requirements of vCPU and RAM
 - The size of the locally attached NVMe devices (SSD Storage)
 - Network performance
+
+!!! critical
+    If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of
+    type _spread_!
 
 Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes:
 
