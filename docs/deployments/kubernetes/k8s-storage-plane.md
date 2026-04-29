@@ -1,5 +1,5 @@
 ---
-title: "Create a Storage Nodes"
+title: "Create a Storage Cluster"
 description: "Deploy simplyblock storage nodes, storage pools, and the CSI driver on Kubernetes using the simplyblock operator CRDs."
 weight: 30100
 ---
