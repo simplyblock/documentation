@@ -4,11 +4,16 @@ description: "Defining Quality of Service: Simplyblock's Kubernetes CSI driver s
 weight: 40600
 ---
 
-Simplyblock's CSI driver supports QoS limits on logical volumes. There are two ways to set them.
+Simplyblock's CSI driver supports QoS (Quality of Service) limits on logical volumes.
+
+To configure the QoS limits, simplyblock offers the following two options.
 
 ## Option 1: StorageClass
 
-QoS applies to all volumes using the StorageClass. Values are fixed at creation time.
+Using StorageClass instances, you can define QoS limits for all volumes sharing the same StorageClass. This enables
+the definition of paid performance classes for the user.
+
+With applying a StorageClass, the QoS limits are locked in at volume creation time.
 
 ```yaml title="StorageClass with QoS"
 apiVersion: storage.k8s.io/v1
@@ -27,7 +32,13 @@ volumeBindingMode: Immediate
 
 ## Option 2: PVC Annotations
 
-Use this for per-volume QoS without creating a dedicated StorageClass. Set annotations on the PVC before it is provisioned — values are locked in at volume creation time.
+If more control is required, simplyblock supports defining QoS limits on a per-PVC basis using Kubernetes PVC
+annotations.
+
+When using PVC annotations, no definition inside a StorageClass is required. If both are defined, PVC annotations take
+precedence.
+
+Like with StorageClass definitions, the QoS limits are locked in at volume creation time.
 
 ```yaml title="PVC with QoS annotations"
 kind: PersistentVolumeClaim
@@ -52,12 +63,13 @@ spec:
 
 All parameters are optional. Default is `0` (no limit).
 
-| Parameter / Annotation          | Description                          |
-|---------------------------------|--------------------------------------|
-| `qos_rw_iops` / `simplybk/qos-rw-iops`       | Max read+write IOPS      |
-| `qos_rw_mbytes` / `simplybk/qos-rw-mbytes`   | Max read+write throughput (MB/s) |
-| `qos_r_mbytes` / `simplybk/qos-r-mbytes`     | Max read throughput (MB/s)  |
-| `qos_w_mbytes` / `simplybk/qos-w-mbytes`     | Max write throughput (MB/s) |
+| StorageClass Parameter | Annotation               | Description                      |
+|------------------------|--------------------------|----------------------------------|
+| `qos_rw_iops`          | `simplybk/qos-rw-iops`   | Max read+write IOPS              |
+| `qos_rw_mbytes`        | `simplybk/qos-rw-mbytes` | Max read+write throughput (MB/s) |
+| `qos_r_mbytes`         | `simplybk/qos-r-mbytes`  | Max read throughput (MB/s)       |
+| `qos_w_mbytes`         | `simplybk/qos-w-mbytes`  | Max write throughput (MB/s)      |
 
 !!! note
-    Annotation values override StorageClass values per parameter. You can annotate only the ones you want to override.
+    Annotation values override StorageClass values per parameter. You must only use annotations for values you want to
+    override.
