@@ -27,6 +27,19 @@ helm repo update
 helm install simplyblock -n simplyblock --create-namespace simplyblock/operator
 ```
 
+!!! important "TLS Encryption"
+    {{experimental}}
+
+    Simplyblock has just added support for TLS encryption for all internal communication. At the moment, it's an
+    experimental feature only available when installed into OpenShift clusters.
+
+    It generally is a good idea to install the operator with TLS support enabled on OpenShift to ensure that all
+    internal communication is encrypted and secure.
+
+    To enable TLS, add the `--set tls.enabled=true` flag to the `helm install` command.
+
+    In the future, the support will be extended to further Kubernetes distributions by enabling Cert-Manager support.
+
 After installation, verify the operator is running:
 
 ```bash title="Verify the operator"
