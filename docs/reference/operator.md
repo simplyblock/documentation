@@ -41,7 +41,7 @@ spec:
   stripe:
     dataChunks: 2
     parityChunks: 1
-  fabric: tcp
+  fabricType: tcp
   warningThreshold:
     capacity: 89
     provisionedCapacity: 250
@@ -67,21 +67,23 @@ spec:
 | `blockSize`                             | int      | Logical block size in bytes (`512` or `4096`).                                     |
 | `pageSizeInBlocks`                      | int      | Page size expressed in blocks.                                                     |
 | `qpairCount`                            | int      | NVMe queue pair count per volume.                                                  |
-| `clientQpairCount`                      | int      | Client-side queue pair count per volume.                                           |
 | `maxQueueSize`                          | int      | Maximum backend queue size.                                                        |
 | `inflightIOThreshold`                   | int      | Inflight I/O threshold before back-pressure is applied.                            |
 | `maxFaultTolerance`                     | int      | Maximum number of concurrent node faults tolerated.                                |
 | `nvmfBasePort`                          | int      | Base port for NVMe-oF services. Subsequent nodes increment from this value.        |
 | `rpcBasePort`                           | int      | Base port for RPC services.                                                        |
 | `snodeApiPort`                          | int      | Storage node API port.                                                             |
-| `qosClasses`                            | string   | Backend QoS class configuration string.                                            |
 | `warningThreshold.capacity`             | int      | Capacity warning threshold (percent).                                              |
 | `criticalThreshold.capacity`            | int      | Capacity critical threshold (percent).                                             |
 | `warningThreshold.provisionedCapacity`  | int      | Provisioned capacity warning threshold (percent).                                  |
 | `criticalThreshold.provisionedCapacity` | int      | Provisioned capacity critical threshold (percent).                                 |
-| `includeEventLog`                       | bool     | Include event log entries in cluster status responses.                             |
-| `eventLogEntries`                       | int      | Number of event log entries to retain.                                             |
 | `action`                                | string   | Lifecycle action: `activate` or `expand`.                                          |
+| `backup.credentialsSecretRef.name`      | string   | Name of the Secret (in the same namespace) holding `access_key_id` and `secret_access_key`. **Required when `backup` is set**. |
+| `backup.localEndpoint`                  | string   | S3-compatible endpoint URL for backup storage.                                     |
+| `backup.snapshotBackups`                | bool     | Enable snapshot-based backups.                                                     |
+| `backup.withCompression`                | bool     | Enable compression for backup data.                                                |
+| `backup.secondaryTarget`                | int      | Secondary backup target identifier.                                                |
+| `backup.localTesting`                   | bool     | Enable local testing mode for backup.                                              |
 
 ### Status Fields
 
@@ -89,15 +91,18 @@ spec:
 |-----------------------|--------|----------------------------------------------------------------------|
 | `uuid`                | string | Cluster UUID assigned after creation.                                |
 | `clusterName`         | string | Cluster name.                                                        |
-| `mgmtNodes`           | int    | Number of management nodes.                                          |
-| `storageNodes`        | int    | Number of storage nodes.                                             |
 | `nqn`                 | string | Cluster NVMe Qualified Name.                                         |
 | `status`              | string | Current cluster lifecycle status.                                    |
 | `rebalancing`         | bool   | Whether cluster rebalancing is currently active.                     |
 | `erasureCodingScheme` | string | Active erasure coding layout, for example `2x1`.                     |
 | `secretName`          | string | Name of the Kubernetes Secret holding cluster credentials.           |
-| `configured`          | bool   | Whether initial cluster setup has completed.                         |
-| `actionStatus`        | object | Most recent action state: `action`, `state`, `message`, `updatedAt`. |
+| `configured`                    | bool   | Whether initial cluster setup has completed.                         |
+| `actionStatus.action`           | string | Most recently requested action name.                                 |
+| `actionStatus.state`            | string | Action execution state.                                              |
+| `actionStatus.message`          | string | Human-readable result or error message.                              |
+| `actionStatus.updatedAt`        | string | Timestamp of the last status transition.                             |
+| `actionStatus.triggered`        | bool   | Whether the underlying backend action has been fired.                |
+| `actionStatus.observedGeneration` | int  | Resource generation observed when this status was recorded.          |
 
 ## Storage Node
 
@@ -128,6 +133,7 @@ spec:
 | `clusterName`                             | string       | Name of the cluster this node belongs to. **Required**.                                                               |
 | `clusterImage`                            | string       | Storage-node container image. **Required when `action` is not specified**.                                            |
 | `spdkImage`                               | string       | SPDK service container image override.                                                                                |
+| `spdkProxyImage`                          | string       | SPDK proxy service container image override.                                                                          |
 | `maxLogicalVolumeCount`                   | int          | Maximum number of logical volumes per node. **Required when `action` is not specified**.                              |
 | `maxSize`                                 | string       | Maximum allocatable storage size for the node (e.g., `500G`).                                                         |
 | `partitions`                              | int          | Number of partitions per backend storage device.                                                                      |
@@ -136,13 +142,11 @@ spec:
 | `coreIsolation`                           | bool         | Enable CPU core isolation mode.                                                                                       |
 | `corePercentage`                          | int          | Percentage of CPU cores to allocate to SPDK (0–99).                                                                   |
 | `reservedSystemCPU`                       | string       | CPUs reserved for system workloads (e.g., `0,1` or `0-1`).                                                            |
-| `coreMask`                                | string       | Explicit CPU core mask for SPDK.                                                                                      |
 | `enableCpuTopology`                       | bool         | Enable topology-aware CPU scheduling.                                                                                 |
 | `socketsToUse`                            | []string     | NUMA sockets to deploy storage on (e.g., `["0","1"]`).                                                                |
 | `nodesPerSocket`                          | int          | Number of storage nodes to create per NUMA socket.                                                                    |
 | `journalManager.count`                    | int          | Number of journal managers to configure.                                                                              |
 | `journalManager.percentPerDevice`         | int          | Journal manager capacity as a percentage of each device.                                                              |
-| `journalManager.useSeparateJournalDevice` | bool         | Use dedicated devices for journals instead of sharing with data.                                                      |
 | `pcieAllowList`                           | []string     | PCIe addresses of NVMe devices to include.                                                                            |
 | `pcieDenyList`                            | []string     | PCIe addresses of NVMe devices to exclude.                                                                            |
 | `pcieModel`                               | string       | Filter devices by PCI device model string.                                                                            |
@@ -156,8 +160,6 @@ spec:
 | `workerNodes`                             | []string     | Kubernetes worker node names to deploy storage on. **Required and must be non-empty when `action` is not specified**. |
 | `action`                                  | string       | Node lifecycle action: `shutdown`, `restart`, `suspend`, `resume`, `remove`.                                          |
 | `nodeUUID`                                | string       | UUID of the target node. **Required when `action` is specified**.                                                     |
-| `addPcieToAllowList`                      | []string     | Additional PCIe addresses appended to the allow-list during `restart` actions.                                        |
-| `force`                                   | bool         | Force action execution where supported.                                                                               |
 
 ### Status Fields
 
@@ -178,11 +180,18 @@ The `status.nodes` list reflects the observed state of each managed storage node
 | `nodes[].lvolPort`       | int    | Logical volume subsystem port.                                        |
 | `nodes[].nvmfPort`       | int    | NVMe-oF service port.                                                 |
 | `nodes[].uptime`         | string | Reported node uptime.                                                 |
-| `actionStatus.action`    | string | Most recently requested action name.                                  |
-| `actionStatus.nodeUUID`  | string | Target node UUID for the action.                                      |
-| `actionStatus.state`     | string | Action execution state: `pending`, `running`, `success`, or `failed`. |
-| `actionStatus.message`   | string | Human-readable result or error message.                               |
-| `actionStatus.updatedAt` | string | Timestamp of the last status transition.                              |
+| `actionStatus.action`             | string | Most recently requested action name.                                  |
+| `actionStatus.nodeUUID`           | string | Target node UUID for the action.                                      |
+| `actionStatus.state`              | string | Action execution state: `pending`, `running`, `success`, or `failed`. |
+| `actionStatus.message`            | string | Human-readable result or error message.                               |
+| `actionStatus.updatedAt`          | string | Timestamp of the last status transition.                              |
+| `actionStatus.triggered`          | bool   | Whether the underlying backend action has been fired.                 |
+| `actionStatus.observedGeneration` | int    | Resource generation observed when this status was recorded.           |
+| `drainCoordination[].hostname`    | string | Kubernetes node name being drained.                                   |
+| `drainCoordination[].activeNodeUUID` | string | Backend UUID of the storage node being shut down or restarted.     |
+| `drainCoordination[].phase`       | string | Drain phase: `detected`, `shutdown_called`, `draining`, `restart_called`, `complete`, or `failed`. |
+| `drainCoordination[].message`     | string | Additional status detail or error information.                        |
+| `drainCoordination[].startedAt`   | string | Timestamp when drain coordination began for this node.                |
 
 ### Node Operations
 
@@ -250,6 +259,24 @@ spec:
 | `qos.throughput.read`      | int    | Maximum read throughput (MiB/s).                |
 | `qos.throughput.write`     | int    | Maximum write throughput (MiB/s).               |
 | `action`                   | string | Pool lifecycle action.                          |
+| `storageClassParameters`   | object | Default volume parameters baked into the auto-created StorageClass. See [Quality of Service](../usage/simplyblock-csi/quality-of-service.md) for available fields. |
+
+### Auto-Created StorageClass
+
+When the pool reaches an active state, the operator creates a `StorageClass` with:
+
+- **Name**: `simplyblock-<clusterName>-<poolName>`
+- **Provisioner**: `csi.simplyblock.io`
+- **VolumeBindingMode**: `WaitForFirstConsumer`
+- **ReclaimPolicy**: `Delete`
+- **AllowVolumeExpansion**: `true`
+
+The `cluster_id` and `pool_name` parameters are set automatically. Any fields specified in
+`spec.storageClassParameters` are merged in as additional CSI driver parameters.
+
+Because Kubernetes StorageClass parameters are immutable after creation, the StorageClass is created once and
+left unchanged if it already exists. To change parameters, delete the pool and recreate it with updated values.
+The StorageClass is deleted when the pool is deleted.
 
 ### Status Fields
 
@@ -282,9 +309,9 @@ spec:
 
 Each volume in the `status.lvols` list includes:
 
-| Field                      | Type     | Description                                                                                               |
-|----------------------------|----------|-----------------------------------------------------------------------------------------------------------|
-| `uuid`                     | string   | Volume UUID.                                                                                              |
+| Field                        | Type     | Description                                                                                               |
+|------------------------------|----------|-----------------------------------------------------------------------------------------------------------|
+| `uuid`                       | string   | Volume UUID.                                                                                              |
 | `lvolName`                 | string   | Volume name.                                                                                              |
 | `status`                   | string   | Backend lifecycle status.                                                                                 |
 | `size`                     | string   | Volume size.                                                                                              |
@@ -307,7 +334,9 @@ Each volume in the `status.lvols` list includes:
 | `qos.iops`                 | int      | IOPS limit for this volume.                                                                               |
 | `qos.throughput.read`      | int      | Read throughput limit (MiB/s).                                                                            |
 | `qos.throughput.write`     | int      | Write throughput limit (MiB/s).                                                                           |
-| `qos.throughput.readWrite` | int      | Combined read/write throughput limit (MiB/s).                                                             |
+| `qos.throughput.readWrite`   | int      | Combined read/write throughput limit (MiB/s).                                                             |
+| `blobID`                     | int      | Backend blob identifier.                                                                                  |
+| `maxNamespacesPerSubsystem`  | int      | Maximum number of NVMe namespaces per subsystem.                                                          |
 
 ### Snapshot Cloning
 
@@ -342,6 +371,24 @@ To perform actions on a specific device, set the `action`, `nodeUUID`, and `devi
 | `remove`  | Remove a device from a node  |
 | `restart` | Restart a device on a node   |
 
+### Status Fields
+
+| Field                                      | Type   | Description                                                          |
+|--------------------------------------------|--------|----------------------------------------------------------------------|
+| `nodes[].nodeUUID`                         | string | Backend UUID of the storage node.                                    |
+| `nodes[].devices[].uuid`                   | string | Backend device UUID.                                                 |
+| `nodes[].devices[].status`                 | string | Backend lifecycle status of the device.                              |
+| `nodes[].devices[].health`                 | string | Backend health indicator for the device.                             |
+| `nodes[].devices[].model`                  | string | Reported device model.                                               |
+| `nodes[].devices[].size`                   | string | Formatted device capacity.                                           |
+| `actionStatus.action`                      | string | Most recently requested action name.                                 |
+| `actionStatus.nodeUUID`                    | string | Target node UUID for the action.                                     |
+| `actionStatus.state`                       | string | Action execution state.                                              |
+| `actionStatus.message`                     | string | Human-readable result or error message.                              |
+| `actionStatus.updatedAt`                   | string | Timestamp of the last status transition.                             |
+| `actionStatus.triggered`                   | bool   | Whether the underlying backend action has been fired.                |
+| `actionStatus.observedGeneration`          | int    | Resource generation observed when this status was recorded.          |
+
 ## Task
 
 The `Task` resource provides visibility into cluster tasks (migrations, rebalancing, etc.).
@@ -354,7 +401,23 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  subtasks: true
+  taskID: "abc123"   # optional: filter to a specific task
 ```
 
-The `status.tasks` list shows each task's UUID, type, status, result, and timing information.
+### Spec Fields
+
+| Field         | Type   | Description                                                          |
+|---------------|--------|----------------------------------------------------------------------|
+| `clusterName` | string | Target storage cluster name. **Required**.                           |
+| `taskID`      | string | Filter results to a specific backend task UUID.                      |
+
+### Status Fields
+
+| Field                  | Type   | Description                                          |
+|------------------------|--------|------------------------------------------------------|
+| `tasks[].uuid`         | string | Backend task UUID.                                   |
+| `tasks[].taskType`     | string | Backend task function or type name.                  |
+| `tasks[].taskStatus`   | string | Backend lifecycle status for the task.               |
+| `tasks[].taskResult`   | string | Backend result payload or message.                   |
+| `tasks[].retried`      | int    | Number of retry attempts made for the task.          |
+| `tasks[].canceled`     | bool   | Whether the task was canceled.                       |
