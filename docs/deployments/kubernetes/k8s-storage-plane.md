@@ -1,53 +1,63 @@
 ---
-title: "Deploy Storage Nodes"
+title: "Create a Storage Nodes"
 description: "Deploy simplyblock storage nodes, storage pools, and the CSI driver on Kubernetes using the simplyblock operator CRDs."
 weight: 30100
 ---
 
-With the [simplyblock operator installed](k8s-control-plane.md), you are ready to bring up a storage cluster.
-This guide walks through the full journey: creating the cluster, adding storage nodes, creating a pool, and
-provisioning your first volume — with exactly what to expect at each step along the way.
+With the [Simplyblock Operator](k8s-control-plane.md) being installed, it's time to bring up a storage cluster.
 
-Here is the overall picture of what you will build:
+This includes creating the cluster resource, adding storage nodes, creating a storage pool, and provisioning the first
+simplyblock logical volume.
 
-```
-StorageCluster  ──► unready
+Before going on, here is a high-level overview of the following deployment process:
+
+```plain title="Storage Cluster Lifecycle"
+StorageCluster   ──► unready
                        │
                        ▼  (add ≥ 3 storage nodes)
-StorageNode(s)  ──► active
+StorageNode(s)   ──► active
                        │
                        ▼  (create a pool)
-Pool            ──► StorageClass created automatically
+Pool             ──► StorageClass created automatically
                        │
                        ▼  (create a PVC)
-PVC             ──► Bound  ✓
+PersitentVolume  ──► Bound
 ```
 
 !!! info
-    Not all Kubernetes workers need to join the storage cluster. Simplyblock uses node labels to identify which
-    workers host storage. It is common to dedicate a separate node pool for storage — if you do, remember to taint
-    those nodes so other workloads are not scheduled on them.
+    Not all Kubernetes workers have to become part of the simplyblock storage cluster. It is possible and common to
+    only use a subset of all Kubernetes worker nodes for storage.
+    
+    It is also possible to use a separate Kubernetes worker node pool dedicated to storage. In this case, it is
+    important to remember to taint the nodes accordingly to prevent other workloads from being scheduled on them.
 
 ## Prerequisites
 
 ### OpenShift
 
-If you are deploying onto OpenShift, follow the environment-specific steps in the
+If deploying onto an OpenShift cluster, there are additional environment-specific steps in the
 [OpenShift Installation](openshift.md) guide before continuing here.
+
+### Talos
+
+If deploying onto a Talos cluster, there are additional environment-specific steps in the
+[Talos Installation](talos.md) guide before continuing here.
 
 ### Networking
 
-Multiple ports must be open on storage node hosts. Ports within the same VLAN do not require extra firewall
-rules, but ports between the control plane and storage networks typically do.
+Multiple ports must be open on storage node hosts.
+
+It is required to use one or more separate VLANs for simplyblock. Ports within the same VLAN do not require extra
+firewall rules, but ports between the control plane and storage networks typically do.
 
 {% include 'storage-plane-network-port-table-k8s.md' %}
 
 ---
 
-## Step 1 — Create the Storage Cluster
+## Create the Storage Cluster
 
-Start by creating a `StorageCluster` resource. This registers the cluster with the operator and prepares the
-control plane — it does not yet require any storage capacity.
+The first step is to create a `StorageCluster` resource. This registers the cluster with the operator and prepares the
+control plane. This step does not yet acquire storage devices.
 
 ```yaml title="storage-cluster.yaml"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -65,36 +75,36 @@ spec:
   fabric: tcp
 ```
 
-```bash
+```bash title="Create the cluster"
 kubectl apply -f storage-cluster.yaml
 ```
 
-Check the status right after applying:
+Next, the cluster status can be checked:
 
-```bash
+```bash title="Check the cluster status"
 kubectl get storagecluster -n simplyblock
 ```
 
-You will see something like this:
+The output should look similar to this:
 
-```
+```plain title="Example output of cluster status"
 NAME                   STATUS    UUID                                   CONFIGURED   AGE
 simplyblock-cluster    unready   81932010-8c06-4acd-b14a-51f5c3fca425   true         1m
 ```
 
-**`unready` is expected** at this point — the cluster has been registered, but it has no storage nodes yet.
-Move on to the next step.
+The cluster is set up, but not yet ready to use. Hence, **`unready` is expected** at this point. While the cluster has
+been registered, it has no storage nodes yet. Those are added in the next step.
 
-!!! tip
-    For additional cluster options — NVMe-oF transport security, backup configuration, capacity thresholds, and
-    more — see [Cluster Deployment Options](../cluster-deployment-options.md).
+!!! note
+    There are additional configuration properties when creating a storage cluster. The documentation, such
+    as NVMe-oF transport security, backup configuration, capacity thresholds, and more, are available at
+    [Cluster Deployment Options](../cluster-deployment-options.md).
 
----
+## Add Storage Nodes
 
-## Step 2 — Add Storage Nodes
-
-Now point storage nodes at the cluster. Create a `StorageNode` resource that lists the Kubernetes worker nodes
-you want to dedicate to storage:
+Now, Kubernetes worker nodes will be transformed into simplyblock storage nodes. To initiate the process, a
+`StorageNode` resource must be created. The resource lists all Kubernetes worker nodes that are supposed to become
+part of the storage cluster.
 
 ```yaml title="storage-nodes.yaml"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -115,51 +125,60 @@ spec:
   coreIsolation: true
 ```
 
-```bash
+```bash title="Add storage nodes"
 kubectl apply -f storage-nodes.yaml
 ```
 
-The operator bootstraps each listed worker, installing the SPDK service and registering it with the cluster.
-You can watch the spdk pods being created:
+As part of the provisioning process, the operator bootstraps each listed worker, installs the SPDK service, and
+registers it with the previously created storage cluster.
 
-```bash
-kubectl get pods -n simplyblock
+The process takes a little while the spdk pods are being created. It can be checked with:
+
+```bash title="Check the bring up process"
+kubectl get pods -n simplyblock -w
 ```
 
-### When does the cluster become active?
+### When does the Cluster become Active?
 
-Once at least three storage nodes have joined successfully, the operator automatically activates the cluster.
-Check the cluster status again:
+By default, simplyblock clusters use the [Erasure Coding](../deployment-preparation/erasure-coding-scheme.md) schema
+of `1+1` which requires at least three storage nodes to join the cluster.
 
-```bash
+That means the operator will automatically activate the cluster when at least three storage nodes have joined. For
+other erasure coding schemes, the number of required storage nodes will be different. See the erasure coding scheme
+documentation for more details.
+
+The cluster status can be checked with:
+
+```bash title="Check the cluster status"
 kubectl get storagecluster -n simplyblock
 ```
 
-```
+```plain title="Example output of cluster status"
 NAME                   STATUS   UUID                                   CONFIGURED   AGE
 simplyblock-cluster    active   bfa260ce-06a7-4bcb-a843-813d0be633af   true         10m
 ```
 
-When the status flips to `active`, the operator also creates the `simplyblock-csi-secret-v2` Secret in the
-`simplyblock` namespace, containing the cluster credentials the CSI driver needs. You do not need to manage
-this Secret manually — the operator keeps it up to date and removes the cluster entry when the cluster is
-deleted.
+When the status becomes `active`, the operator automatically creates a `simplyblock-csi-secret-v2` secret in the
+`simplyblock` namespace, containing the cluster credentials for the CSI driver.
 
-For all available fields, see [Simplyblock Operator — Storage Node](../../reference/operator.md#storage-node).
+There is no necessity to manage this secret manually. The operator keeps it up to date and removes the cluster entry
+when the cluster is deleted.
+
+There are additional configuration properties. A full list is available at [Simplyblock Operator: Storage Node](../../reference/operator.md#storage-node).
 
 !!! warning
-    Simplyblock exclusively owns the resources it is allocated. Make sure they are sized correctly alongside
-    other workloads. See [minimum hardware requirements](../deployment-preparation/hardware-requirements.md#minimum-system-requirements).
+    Simplyblock exclusively owns the resources it has been allocated. It must be ensured they are sized correctly
+    alongside other workloads.
 
-!!! info
-    Simplyblock manages huge page allocation automatically. Total RAM required depends on vCPU count, the number
-    of active logical volumes, and utilized virtual storage per node.
+    Additionally, simplyblock manages huge page allocation automatically. Total RAM required depends on vCPU count, the
+    number of active logical volumes, and utilized virtual storage per node.
 
----
+    More information can be found in [Minimum Hardware Requirements](../deployment-preparation/hardware-requirements.md#minimum-system-requirements).
 
-## Step 3 — Create a Storage Pool
+## Create a Storage Pool
 
-A storage pool is a logical grouping of capacity within the cluster. Create one with a `Pool` resource:
+A storage pool is a grouping of logical volumes and capacity limits within the cluster. An initial `Pool` resource must
+be created to define a storage pool before being able to provision volumes. 
 
 ```yaml title="storage-pool.yaml"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -173,30 +192,32 @@ spec:
   capacityLimit: "10T"
 ```
 
-```bash
+```bash title="Create the pool"
 kubectl apply -f storage-pool.yaml
 ```
 
-Check that the pool is active:
+The status of the storage pool can be checked with:
 
-```bash
+```bash title="Check the pool status"
 kubectl get simplyblockpool -n simplyblock
 ```
 
-Once the pool is active, the operator automatically creates a `StorageClass` named
-`simplyblock-<clusterName>-<poolName>` — in this example, `simplyblock-production-production-pool`. It is
-deleted when the pool is deleted. For full details and customization options, see
-[Simplyblock Operator — Storage Pool](../../reference/operator.md#storage-pool).
+Once the pool is active, the operator automatically creates a StorageClass named
+`simplyblock-<clusterName>-<poolName>`. In this example, the StorageClass is called
+`simplyblock-production-production-pool`.
 
-```bash
+The StorageClass is automatically removed when the storage pool is deleted. For full details and customization options
+are available at [Simplyblock Operator: Storage Pool](../../reference/operator.md#storage-pool).
+
+```bash title="Check the StorageClass"
 kubectl get storageclass simplyblock-production-production-pool
 ```
 
----
+## Provision Your First Volume
 
-## Step 4 — Provision Your First Volume
-
-Everything is in place. Let's create a PersistentVolumeClaim and verify the full stack end-to-end.
+Now, everything is in place to create the first volume. The operator has automatically deployed the Simplyblock CSI
+Driver into the Kubernetes cluster. Hence, creating a volume is as simple as creating PersistentVolumeClaim with the
+correct StorageClass set.
 
 ### Create the PVC
 
@@ -214,21 +235,24 @@ spec:
   storageClassName: simplyblock-production-production-pool
 ```
 
-```bash
+```bash title="Create the PVC"
 kubectl apply -f test-pvc.yaml
 kubectl get pvc simplyblock-test-pvc
 ```
 
-```
+```plain title="Example output of PVC status"
 NAME                    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
 simplyblock-test-pvc    Pending                                       simplyblock-production-production-pool   5s
 ```
 
-**`Pending` is expected** — the StorageClass uses `WaitForFirstConsumer`, which means the volume is not
-provisioned until a pod actually needs it. This is by design: the scheduler picks the right node first, then
-the volume is created close to where it will be used.
+Since provisioning is asynchronous, the PVC status will initially be `Pending`. The StorageClass uses
+`WaitForFirstConsumer` by default, which means the volume is not provisioned until a pod actually needs it. The
+scheduler picks the right node first, then the volume is created close to where it will be used.
 
-### Mount it with a test pod
+### Mount the Volume into a Test Pod
+
+To mount the volume, it can be used like any other Kubernetes persistent volume claim by referencing it in the pod's
+volumes specification.
 
 ```yaml title="test-pod.yaml"
 apiVersion: v1
@@ -249,42 +273,46 @@ spec:
         claimName: simplyblock-test-pvc
 ```
 
-```bash
+```bash title="Create the pod"
 kubectl apply -f test-pod.yaml
 ```
 
-Wait for the pod to reach `Running`, then check that the PVC is bound and the write succeeded:
+When the pod reaches `Running` status, the PVC changes to bound.
 
-```bash
+```bash title="Check the PVC status"
 kubectl get pvc simplyblock-test-pvc
 ```
 
-```
+```plain title="Example output of PVC status"
 NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
 simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-production-production-pool   30s
 ```
 
-```bash
+It is now possible to access the data written to the volume when the pod started up.
+
+```bash title="Check the volume contents"
 kubectl exec simplyblock-test-pod -- cat /data/test.txt
 ```
 
-```
+```plain title="Example output of volume contents"
 volume provisioned successfully
 ```
 
-Your cluster is fully operational. Clean up the test resources when you are done:
+The cluster is now fully operational and the test resources should be cleaned up with:
 
-```bash
+```bash title="Cleanup the test resources"
 kubectl delete pod simplyblock-test-pod
 kubectl delete pvc simplyblock-test-pvc
 ```
 
----
-
 ## Multi-Cluster Storage Node Support
 
-A single Kubernetes cluster can host storage nodes connected to multiple simplyblock clusters. Create a
-separate `StorageNode` resource for each simplyblock cluster, pointing different worker nodes at each:
+A single Kubernetes cluster can host storage nodes connected to multiple simplyblock clusters.
+
+To create an additional storage cluster, a separate `StorageNode` resource must be created for each simplyblock cluster.
+
+Multiple storage clusters can share Kubernetes worker nodes, but it is recommended to point each storage cluster to a
+different set of worker nodes.
 
 ```yaml title="Multi-cluster storage nodes"
 apiVersion: storage.simplyblock.io/v1alpha1
