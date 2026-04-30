@@ -40,10 +40,10 @@ To set QoS limits when adding or changing a volume:
 And the same on pools:
 
 ```bash title="Setting and updating QoS on pools"
-{{ cliname }} pool add pool01 <CLUSTER-UUID> \
+{{ cliname }} storage-pool add pool01 <CLUSTER-UUID> \
   --max-rw-iops 5000 --max-rw-mbytes 50 \
   --max-r-mbytes 35 --max-w-mbytes 15
-{{ cliname }} pool set <POOL-UUID> \
+{{ cliname }} storage-pool set <POOL-UUID> \
   --max-rw-iops 5000 --max-rw-mbytes 50 \
   --max-r-mbytes 35 --max-w-mbytes 15
 ```

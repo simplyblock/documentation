@@ -52,49 +52,32 @@ NVMe-oF security is configured at two levels:
 
 ### Cluster Level
 
-At cluster creation, DH-HMAC-CHAP parameters (digest algorithms and DH groups) are configured using a JSON
-configuration file via the `--host-sec` flag. This defines the authentication behavior for all NVMe-oF connections
-within the cluster.
-
-```json title="Example: host-security-config.json"
-{
-  "params": {
-    "dhchap_digests": ["sha256", "sha384"],
-    "dhchap_dhgroups": ["ffdhe4096", "ffdhe2048"]
-  }
-}
-```
+At cluster creation time, DH-HMAC-CHAP parameters (digest algorithms and DH groups) are automatically provisioned. No
+specific configuration is required.
 
 ### Pool Level
 
-At pool creation, security options define which key types are generated for volumes in the pool. This is configured
-using a JSON file via the `--sec-options` flag. Keys are automatically generated for each host added to a volume.
+At pool creation time, host authentication and encryption can be enabled using a single parameter `--dhchap`.
 
-```json title="Example: sec-options.json"
-{
-  "dhchap_key": true,
-  "dhchap_ctrlr_key": true,
-  "psk": true
-}
+By default, all security options are disabled. If the parameter is present at pool creation, the following security
+options are enabled:
+
+- DH-HMAC-CHAP Authentication
+- TLS Pre-Shared Key (PSK) Encryption
+
+```bash title="Create Pool with DH-HMAC-CHAP Authentication and Transport Encryption"
+{{ cliname }} storage-pool add <POOL_NAME> --dhchap
 ```
-
-The available security option keys are:
-
-| Key               | Description                                                              |
-|-------------------|--------------------------------------------------------------------------|
-| `dhchap_key`      | Generate a DH-HMAC-CHAP key for host authentication.                    |
-| `dhchap_ctrlr_key`| Generate a DH-HMAC-CHAP controller key for mutual authentication. Requires `dhchap_key`. |
-| `psk`             | Generate a TLS Pre-Shared Key for encrypted transport.                   |
 
 ## Host Management
 
-Once a pool with security options is in place, hosts can be managed per volume:
+Once a pool with security options is in place, hosts can be managed per storage pool:
 
-- **Add a host**: `{{ cliname }} volume add-host <VOLUME_ID> <HOST_NQN>` — keys are auto-generated based on the pool's
+- **Add a host**: `{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>` — keys are auto-generated based on the pool's
   security options.
-- **Remove a host**: `{{ cliname }} volume remove-host <VOLUME_ID> <HOST_NQN>`
-- **Get credentials**: `{{ cliname }} volume get-secret <VOLUME_ID> <HOST_NQN>` — retrieves the generated keys for a
-  specific host.
+- **Remove a host**: `{{ cliname }} storage-pool remove-host <POOL_ID> <HOST_NQN>`
+
+## Connecting a Volume
 
 When connecting a volume with host access control, the `--host-nqn` flag must be provided:
 
