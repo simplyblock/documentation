@@ -4,8 +4,13 @@ description: "Install the simplyblock Kubernetes operator via Helm. The operator
 weight: 30000
 ---
 
+{{ experimental }}
+
 The simplyblock operator is deployed via a single Helm chart. Once installed, it watches for simplyblock Custom
 Resources and manages the full lifecycle of clusters, storage nodes, pools, and the CSI driver.
+
+At the moment, the operator is still marked as experimental. However, it is fully functional and can be used in
+production environments.
 
 ## Prerequisites
 
@@ -24,7 +29,10 @@ If you are deploying onto an OpenShift cluster, ensure that the environment-spec
 helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 
-helm install simplyblock -n simplyblock --create-namespace simplyblock/operator
+helm upgrade --install simplyblock -n simplyblock spdk-csi \
+  --create-namespace \
+  --set operator.enabled=true \
+  --set controlplane.enabled=true
 ```
 
 !!! important "TLS Encryption"
