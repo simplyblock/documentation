@@ -114,7 +114,7 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  clusterImage: "public.ecr.aws/simply-block/simplyblock:26.4.0"
+  clusterImage: "quay.io/simplyblock-io/simplyblock:26.2.1-PRE"
   maxLogicalVolumeCount: 100
   workerNodes:
     - worker-1
