@@ -68,11 +68,11 @@ metadata:
 spec:
   clusterName: production
   mgmtIfname: eth0
+  fabricType: tcp
   haType: ha
   stripe:
     dataChunks: 2
     parityChunks: 1
-  fabric: tcp
 ```
 
 ```bash title="Create the cluster"
