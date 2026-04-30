@@ -116,13 +116,13 @@ spec:
   clusterName: production
   clusterImage: "quay.io/simplyblock-io/simplyblock:26.2.1-PRE"
   maxLogicalVolumeCount: 100
+  partitions: 1
+  coreIsolation: false
+  enableCpuTopology: true
   workerNodes:
     - worker-1
     - worker-2
     - worker-3
-  maxSize: "500G"
-  partitions: 1
-  coreIsolation: true
 ```
 
 ```bash title="Add storage nodes"
