@@ -64,7 +64,7 @@ metadata:
 spec:
   clusterName: simplyblock-cluster
   mgmtIfname: eth0
-  fabric: tcp
+  fabricType: tcp
   isSingleNode: false
   enableNodeAffinity: false
   strictNodeAntiAffinity: false
