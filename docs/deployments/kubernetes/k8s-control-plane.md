@@ -28,8 +28,7 @@ helm repo update
 
 helm upgrade --install simplyblock -n simplyblock spdk-csi \
     --create-namespace \
-    --set operator.enabled=true \
-    --set controlplane.enabled=true
+    --set operator.enabled=true
 ```
 
 !!! important "TLS Encryption"
