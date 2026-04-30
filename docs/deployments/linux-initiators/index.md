@@ -45,7 +45,7 @@ Before logical volumes can be created and connected, a storage pool is required.
 reused. Otherwise, creating a storage pool can be created on any control plane node as follows:
 
 ```bash title="Create a Storage Pool"
-{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID>
+{{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_UUID>
 ```
 
 To enable NVMe-oF security for all volumes in the pool, provide a JSON configuration file with the `--sec-options` flag.
@@ -53,7 +53,7 @@ This configures which security keys (DH-HMAC-CHAP, TLS/PSK) are auto-generated f
 must have been created with `--host-sec` for authentication to work.
 
 ```bash title="Create a Storage Pool with NVMe-oF Security"
-{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID> --sec-options=sec-options.json
+{{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_UUID> --sec-options=sec-options.json
 ```
 
 ```json title="Example: sec-options.json"
@@ -69,7 +69,7 @@ For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-se
 The last line of a successful storage pool creation returns the new pool id.
 
 ```plain title="Example output of creating a storage pool"
-[demo@demo ~]# {{ cliname }} pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+[demo@demo ~]# {{ cliname }} storage-pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
 2025-03-05 06:36:06,093: INFO: Adding pool
 2025-03-05 06:36:06,098: INFO: {"cluster_id": "4502977c-ae2d-4046-a8c5-ccc7fa78eb9a", "event": "OBJ_CREATED", "object_name": "Pool", "message": "Pool created test", "caused_by": "cli"}
 2025-03-05 06:36:06,100: INFO: Done

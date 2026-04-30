@@ -30,9 +30,9 @@ helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 
 helm upgrade --install simplyblock -n simplyblock spdk-csi \
-  --create-namespace \
-  --set operator.enabled=true \
-  --set controlplane.enabled=true
+    --create-namespace \
+    --set operator.enabled=true \
+    --set controlplane.enabled=true
 ```
 
 !!! important "TLS Encryption"

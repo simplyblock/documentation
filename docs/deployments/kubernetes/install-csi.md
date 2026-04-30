@@ -79,7 +79,7 @@ Additionally, a storage pool is required. If a pool already exists, it can be re
 pool can be created as follows:
 
 ```bash title="Create a Storage Pool"
-{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID>
+{{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_UUID>
 ```
 
 To enable NVMe-oF security for all volumes in the pool, provide a JSON configuration file with the `--sec-options` flag.
@@ -87,7 +87,7 @@ This configures which security keys (DH-HMAC-CHAP, TLS/PSK) are auto-generated f
 must have been created with `--host-sec` for authentication to work.
 
 ```bash title="Create a Storage Pool with NVMe-oF Security"
-{{ cliname }} pool add <POOL_NAME> <CLUSTER_UUID> --sec-options=sec-options.json
+{{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_UUID> --sec-options=sec-options.json
 ```
 
 ```json title="Example: sec-options.json"
@@ -103,7 +103,7 @@ For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-se
 The last line of a successful storage pool creation returns the new pool id.
 
 ```plain title="Example output of creating a storage pool"
-[demo@demo ~]# {{ cliname }} pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
+[demo@demo ~]# {{ cliname }} storage-pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
 2025-03-05 06:36:06,093: INFO: Adding pool
 2025-03-05 06:36:06,098: INFO: {"cluster_id": "4502977c-ae2d-4046-a8c5-ccc7fa78eb9a", "event": "OBJ_CREATED", "object_name": "Pool", "message": "Pool created test", "caused_by": "cli"}
 2025-03-05 06:36:06,100: INFO: Done
@@ -126,7 +126,8 @@ CNTR_ADDR="<CONTROL-PLANE-ADDR>"
 POOL_NAME="<POOL-NAME>"
 helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
-helm install -n simplyblock --create-namespace simplyblock simplyblock/spdk-csi \
+helm upgrade --install -n simplyblock \
+    --create-namespace simplyblock simplyblock/spdk-csi \
     --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
     --set csiConfig.simplybk.ip=${CNTR_ADDR} \
     --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
