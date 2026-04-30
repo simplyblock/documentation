@@ -114,15 +114,15 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  clusterImage: "public.ecr.aws/simply-block/simplyblock:26.1.2"
+  clusterImage: "quay.io/simplyblock-io/simplyblock:26.2.1-PRE"
   maxLogicalVolumeCount: 100
+  partitions: 1
+  coreIsolation: false
+  enableCpuTopology: true
   workerNodes:
     - worker-1
     - worker-2
     - worker-3
-  maxSize: "500G"
-  partitions: 1
-  coreIsolation: true
 ```
 
 ```bash title="Add storage nodes"
