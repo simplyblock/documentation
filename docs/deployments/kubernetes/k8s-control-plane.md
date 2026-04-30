@@ -26,7 +26,7 @@ If you are deploying onto an OpenShift cluster, ensure that the environment-spec
 helm repo add simplyblock https://install.simplyblock.io/helm/csi
 helm repo update
 
-helm upgrade --install simplyblock -n simplyblock spdk-csi \
+helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
     --create-namespace \
     --set operator.enabled=true
 ```
