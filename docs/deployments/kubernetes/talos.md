@@ -69,6 +69,29 @@ To activate the huge pages, the `talosctl` command should be used.
 [demo@demo ~]# talosctl reboot --nodes <WORKER_NODE_IP>
 ```
 
+## Configuring CPU Topology
+
+To ensure highest performance, simplyblock requires the Kubernetes kubelet on Talos to be configured to use a static
+CPU manager and to use a single NUMA node topology manager.
+
+```yaml title="Content of enable-cpu-topology.yaml"
+machine:
+  kubelet:
+    extraArgs:
+      cpu-manager-policy: static
+      cpu-manager-reconcile-period: "5s"
+      topology-manager-policy: "single-numa-node"
+      topology-manager-scope: "pod"
+```
+
+To activate the huge pages, the `talosctl` command should be used.
+
+```bash title="Enable CPU Topology Manager"
+[demo@demo ~]# talosctl patch mc --nodes <WORKER_NODE_IP> \
+    --path @enable-cpu-topology.yaml
+[demo@demo ~]# talosctl reboot --nodes <WORKER_NODE_IP>
+```
+
 ## Required Talos Permissions
 
 Simyplyblock's CSI driver requires connecting NVMe over Fabrics devices, as well as mounting and formatting them.
