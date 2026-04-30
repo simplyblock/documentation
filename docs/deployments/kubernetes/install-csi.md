@@ -124,7 +124,7 @@ CLUSTER_UUID="<UUID>"
 CLUSTER_SECRET="<SECRET>"
 CNTR_ADDR="<CONTROL-PLANE-ADDR>"
 POOL_NAME="<POOL-NAME>"
-helm repo add simplyblock https://install.simplyblock.io/helm
+helm repo add simplyblock https://install.simplyblock.io/helm/csi
 helm repo update
 helm upgrade --install -n simplyblock \
     --create-namespace simplyblock simplyblock/spdk-csi \
