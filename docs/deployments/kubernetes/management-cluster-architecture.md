@@ -11,12 +11,14 @@ checks, collects metrics, and executes administrative tasks. But performs no NVM
 A storage class must exist in the cluster before installation. FoundationDB provisions a 10 Gi `ReadWriteOnce`
 persistent volume for each of its log and storage processes. This is where all cluster state (topology, volume
 metadata, task queues) is durably stored and must survive pod restarts. Prometheus similarly requires a 5 Gi
-volume for its time-series data. Pass the storage class name at install time:
+volume for its time-series data.
 
 ```bash title="Install the control plane cluster"
-helm upgrade --install sbcli --namespace simplyblock --create-namespace ./ \
-  --set observability.enabled=false \
-  --set storageclass.name='local-path'
+helm repo add simplyblock https://install.simplyblock.io/helm
+helm repo update
+helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
+    --create-namespace \
+    --set operator.enabled=true
 ```
 
 ## Architecture Diagram
