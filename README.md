@@ -462,3 +462,13 @@ website and updates the latest symlink, creates the necessary tag for history re
 documentation back into the `main` branch (folder `deployment`) using an auto-generated and auto-merged pull request. 
 
 No further action is required.
+
+### Updating an Existing Release
+
+The process is similar to the creation of a new release, but the branch name MUST be named `update/{version-number}`
+instead of `release/{version-number}`.
+
+The existing release and the `sbcli` tag MUST be updated to the new version number.
+
+After pushing the new update-release branch, the GitHub action builder kicks in, builds the version, and deploys it
+automatically. As part of the build process, the existing tag is removed and replaced with the new tag.

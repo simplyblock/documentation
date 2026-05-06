@@ -1,0 +1,85 @@
+name: Update Release Builder
+on:
+  push:
+    branches:
+      - 'update/**'
+
+permissions:
+  actions: write
+  contents: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: "documentation"
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          token: '${{ github.token }}'
+      - name: "Adjust Release Name: ${{ github.ref_name }}"
+        env:
+          name: "${{ github.ref_name }}"
+        run: |
+          echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
+      - name: "Ensure Existing Release"
+        run: |
+          [ ! -d ./deployment/${RELEASE_NAME} ] && echo "Release ${RELEASE_NAME} does not exist" && exit 1
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      - name: "Lock sbcli/sbcli version"
+        run: |
+          [ -f ./scripts/sbcli.lock ] || echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
+      - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
+        run: |
+          ./doc-builder update-repositories
+          ./doc-builder deploy ${{ env.RELEASE_NAME }} --force
+      - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
+        run: |
+          git config --global --add safe.directory $PWD
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git push --delete origin ${RELEASE_NAME}
+          git tag -d ${RELEASE_NAME}
+          git add deployment
+          git add scripts/sbcli.lock
+          git commit -m "Auto-Build: Rebuild ${RELEASE_NAME}"
+          git tag ${RELEASE_NAME}
+          git rm scripts/sbcli.lock
+          git commit -m "Auto-Build: Post Rebuild ${RELEASE_NAME}"
+          git push --all
+          git push --tags
+          rm ./deployment/versions.json
+          rm ./deployment/latest
+      - name: "Upload Documentation"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_username }}
+          password: ${{ secrets.ftp_password }}
+          protocol: ftps
+          server-dir: /
+          local-dir: ./deployment/
+      - name: "Create Pull Request for ${{ github.event.repository.default_branch }}"
+        id: open-pr
+        run: |
+          gh pr create --title "[Automated] Merge Rebuild of ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}" --body "Merge ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}" --assignee ${{ github.actor }} --reviewer ${{ github.actor }} --base ${{ github.event.repository.default_branch }}
+          echo "pr_number=$(gh pr list --state open --json number --limit 1 | jq -r '.[0].number')" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: "Enable Auto-Merge PR to ${{ github.event.repository.default_branch }}"
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: "${{ github.token }}"
+          pull-request-number: ${{ steps.open-pr.outputs.pr_number }}
+          merge-method: merge
