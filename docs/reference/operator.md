@@ -21,6 +21,9 @@ The operator manages the following Custom Resource Definitions (CRDs):
 | `Lvol`           | -          | Manages logical volumes                           |
 | `Device`         | -          | Manages NVMe devices on storage nodes             |
 | `Task`           | -          | Monitors cluster tasks and their status           |
+| `StorageBackup`  | -          | Creates a one-time backup of a PVC to S3          |
+| `BackupRestore`  | -          | Restores a backup into a new PVC                  |
+| `BackupPolicy`   | -          | Defines an automated backup schedule for PVCs     |
 
 All CRDs use the API group `storage.simplyblock.io/v1alpha1`.
 
@@ -431,3 +434,123 @@ spec:
 | `tasks[].taskResult`   | string | Backend result payload or message.                   |
 | `tasks[].retried`      | int    | Number of retry attempts made for the task.          |
 | `tasks[].canceled`     | bool   | Whether the task was canceled.                       |
+
+## StorageBackup
+
+The `StorageBackup` resource creates a one-time backup of a PVC to the S3-compatible storage endpoint configured
+in the `StorageCluster`. For backup configuration prerequisites, see
+[Backup and Recovery](../../usage/backup-recovery.md#kubernetes-crd-operations).
+
+```yaml title="Example: Create a PVC backup"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageBackup
+metadata:
+  name: my-backup
+  namespace: simplyblock
+spec:
+  clusterName: production
+  pvcRef:
+    name: my-pvc
+```
+
+### Spec Fields
+
+| Field         | Type   | Description                                          |
+|---------------|--------|------------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**.     |
+| `pvcRef.name` | string | Name of the PVC to back up. **Required**.            |
+
+### Status Fields
+
+| Field      | Type   | Description                                                 |
+|------------|--------|-------------------------------------------------------------|
+| `phase`    | string | Current phase: `InProgress` or `Done`.                      |
+| `pvc`      | string | Name of the source PVC.                                     |
+| `backupID` | string | Backend backup identifier assigned after the backup starts. |
+| `snapshot` | string | Name of the snapshot used for the backup.                   |
+
+## BackupRestore
+
+The `BackupRestore` resource restores a `StorageBackup` into a new PVC. The backup may be directed to a
+different pool or storage node, but must be restored within the same namespace as the `BackupRestore` object.
+
+```yaml title="Example: Restore a backup to a new PVC"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupRestore
+metadata:
+  name: my-restore
+  namespace: simplyblock
+spec:
+  clusterName: production
+  backupRef:
+    name: my-backup
+  pvcTemplate:
+    metadata:
+      name: restored-pvc
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+```
+
+### Spec Fields
+
+| Field                       | Type   | Description                                                                    |
+|-----------------------------|--------|--------------------------------------------------------------------------------|
+| `clusterName`               | string | Name of the target StorageCluster. **Required**.                               |
+| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                     |
+| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                |
+| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup.|
+| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                   |
+| `pvcTemplate.spec`          | object | PVC spec including `accessModes` and `resources`.                              |
+
+### Status Fields
+
+| Field    | Type   | Description                                              |
+|----------|--------|----------------------------------------------------------|
+| `phase`  | string | Current phase: `InProgress`, `PVCBinding`, or `Done`.   |
+| `backup` | string | Name of the source `StorageBackup`.                      |
+| `pvc`    | string | Name of the newly created PVC.                           |
+
+!!! warning
+    `BackupRestore` can only restore a PVC to the same namespace as the restore object.
+
+## BackupPolicy
+
+The `BackupPolicy` resource defines an automated backup schedule with retention settings. Policies are attached
+to PVCs using the `simplybk/backup-policy` Kubernetes annotation, which causes `StorageBackup` objects to be
+created automatically on schedule. Removing the annotation detaches the policy; updating it switches the PVC to
+the new policy.
+
+```yaml title="Example: Create a backup policy"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupPolicy
+metadata:
+  name: my-policy
+  namespace: simplyblock
+spec:
+  clusterName: production
+  maxVersions: 10
+  maxAge: "7d"
+  schedule: "15m,4 60m,11 24h,7"
+```
+
+Attach the policy to a PVC:
+
+```bash title="Attach a backup policy to a PVC"
+kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy=my-policy
+```
+
+### Spec Fields
+
+| Field         | Type   | Description                                                                       |
+|---------------|--------|-----------------------------------------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**.                                  |
+| `maxVersions` | int    | Maximum number of backup versions to retain.                                      |
+| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).                           |
+| `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs.                 |
+
+The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
+take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).
