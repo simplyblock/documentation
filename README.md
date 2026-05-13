@@ -71,6 +71,21 @@ repositories to the latest commit.
 
 The command can be run at any time to update the external repositories to the latest commit.
 
+### Generating the Operator API Reference
+
+The operator API reference is generated from the Simplyblock operator Go API types. By default, the generator expects
+the operator repository at `../simplyblock-manager` relative to this documentation repository:
+
+```bash
+./scripts/operator-reference-gen.sh
+```
+
+To use a different checkout, set `OPERATOR_ROOT`:
+
+```bash
+OPERATOR_ROOT=/path/to/simplyblock-manager ./scripts/operator-reference-gen.sh
+```
+
 ### Serving Content Locally
 
 When building or updating the documentation, it is useful to have a local builder with live updating. Mkdocs supports
