@@ -46,10 +46,10 @@ apiVersion: v1
 metadata:
   name: my-pvc
   annotations:
-    simplybk/qos-rw-iops: "1000"
-    simplybk/qos-rw-mbytes: "125"
-    simplybk/qos-r-mbytes: "125"
-    simplybk/qos-w-mbytes: "125"
+    simplyblock.io/qos-rw-iops: "1000"
+    simplyblock.io/qos-rw-mbps: "125"
+    simplyblock.io/qos-r-mbps: "125"
+    simplyblock.io/qos-w-mbps: "125"
 spec:
   accessModes:
   - ReadWriteOnce
@@ -63,13 +63,17 @@ spec:
 
 All parameters are optional. Default is `0` (no limit).
 
-| StorageClass Parameter | Annotation               | Description                      |
-|------------------------|--------------------------|----------------------------------|
-| `qos_rw_iops`          | `simplybk/qos-rw-iops`   | Max read+write IOPS              |
-| `qos_rw_mbytes`        | `simplybk/qos-rw-mbytes` | Max read+write throughput (MB/s) |
-| `qos_r_mbytes`         | `simplybk/qos-r-mbytes`  | Max read throughput (MB/s)       |
-| `qos_w_mbytes`         | `simplybk/qos-w-mbytes`  | Max write throughput (MB/s)      |
+| StorageClass Parameter | Annotation                      | Description                      |
+|------------------------|---------------------------------|----------------------------------|
+| `qos_rw_iops`          | `simplyblock.io/qos-rw-iops`    | Max read+write IOPS              |
+| `qos_rw_mbytes`        | `simplyblock.io/qos-rw-mbps`    | Max read+write throughput (MB/s) |
+| `qos_r_mbytes`         | `simplyblock.io/qos-r-mbps`     | Max read throughput (MB/s)       |
+| `qos_w_mbytes`         | `simplyblock.io/qos-w-mbps`     | Max write throughput (MB/s)      |
 
 !!! note
     Annotation values override StorageClass values per parameter. You must only use annotations for values you want to
     override.
+
+!!! warning "Deprecated annotation prefix"
+    The `simplybk/` annotation prefix (e.g. `simplybk/qos-rw-iops`) is deprecated. Existing PVCs using the old prefix
+    continue to work for backward compatibility, but new deployments should use the `simplyblock.io/` prefix.
