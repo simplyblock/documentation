@@ -32,10 +32,9 @@ The `StorageCluster` resource creates and manages a simplyblock storage cluster.
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageCluster
 metadata:
-  name: my-cluster
+  name: production
   namespace: simplyblock
 spec:
-  clusterName: production
   mgmtIfname: eth0
   haType: ha
   stripe:
@@ -54,7 +53,6 @@ spec:
 
 | Field                                   | Type     | Description                                                                        |
 |-----------------------------------------|----------|------------------------------------------------------------------------------------|
-| `clusterName`                           | string   | Human-readable cluster name. **Required**.                                         |
 | `mgmtIfname`                            | string   | Management network interface (e.g., `eth0`).                                       |
 | `haType`                                | string   | High availability type: `single` or `ha`.                                          |
 | `stripe.dataChunks`                     | int      | Erasure coding data chunks per stripe.                                             |
@@ -87,6 +85,9 @@ spec:
 
 ### Auto-Managed CSI Credentials
 
+The cluster identifier is the `StorageCluster` resource name (`metadata.name`). The operator uses that name when
+creating the backend cluster and the cluster credential Secret.
+
 When a `StorageCluster` is created or becomes active, the operator automatically creates or updates the
 `simplyblock-csi-secret-v2` Secret in the operator's namespace with the cluster's credentials. This Secret is
 consumed by the CSI driver and requires no manual management. When the cluster is deleted, the operator removes
@@ -97,7 +98,7 @@ the cluster's entry from the Secret automatically.
 | Field                 | Type   | Description                                                          |
 |-----------------------|--------|----------------------------------------------------------------------|
 | `uuid`                | string | Cluster UUID assigned after creation.                                |
-| `clusterName`         | string | Cluster name.                                                        |
+| `clusterName`         | string | Cluster name, derived from `metadata.name`.                          |
 | `nqn`                 | string | Cluster NVMe Qualified Name.                                         |
 | `status`              | string | Current cluster lifecycle status.                                    |
 | `rebalancing`         | bool   | Whether cluster rebalancing is currently active.                     |
@@ -123,7 +124,6 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  clusterImage: "public.ecr.aws/simply-block/simplyblock:26.1.2"
   maxLogicalVolumeCount: 100
   workerNodes:
     - worker-1
@@ -138,7 +138,7 @@ spec:
 | Field                                     | Type         | Description                                                                                                           |
 |-------------------------------------------|--------------|-----------------------------------------------------------------------------------------------------------------------|
 | `clusterName`                             | string       | Name of the cluster this node belongs to. **Required**.                                                               |
-| `clusterImage`                            | string       | Storage-node container image. **Required when `action` is not specified**.                                            |
+| `clusterImage`                            | string       | Storage-node container image override. If omitted, the operator inherits the image from the ControlPlane CRD.          |
 | `spdkImage`                               | string       | SPDK service container image override.                                                                                |
 | `spdkProxyImage`                          | string       | SPDK proxy service container image override.                                                                          |
 | `maxLogicalVolumeCount`                   | int          | Maximum number of logical volumes per node. **Required when `action` is not specified**.                              |
@@ -242,10 +242,9 @@ when the pool is deleted.
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: Pool
 metadata:
-  name: my-pool
+  name: production-pool
   namespace: simplyblock
 spec:
-  name: production-pool
   clusterName: production
   capacityLimit: "10T"
   qos:
@@ -260,7 +259,6 @@ spec:
 
 | Field                      | Type   | Description                                     |
 |----------------------------|--------|-------------------------------------------------|
-| `name`                     | string | Pool name. **Required**.                        |
 | `clusterName`              | string | Name of the cluster. **Required**.              |
 | `capacityLimit`            | string | Maximum pool capacity (e.g., `10T`).            |
 | `qos.iops`                 | int    | Maximum IOPS for the pool.                      |
@@ -271,6 +269,9 @@ spec:
 | `storageClassParameters`   | object | Default volume parameters baked into the auto-created StorageClass. See [Quality of Service](../usage/simplyblock-csi/quality-of-service.md) for available fields. |
 
 ### Auto-Created StorageClass
+
+The pool identifier is the `Pool` resource name (`metadata.name`). The operator uses that name as the backend pool
+name and as the `pool_name` CSI StorageClass parameter.
 
 When the pool reaches an active state, the operator creates a `StorageClass` with:
 

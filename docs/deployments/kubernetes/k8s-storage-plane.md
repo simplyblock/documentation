@@ -66,7 +66,6 @@ metadata:
   name: simplyblock-cluster
   namespace: simplyblock
 spec:
-  clusterName: production
   mgmtIfname: eth0
   fabricType: tcp
   haType: ha
@@ -114,7 +113,6 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  clusterImage: "quay.io/simplyblock-io/simplyblock:26.2.1-PRE"
   maxLogicalVolumeCount: 100
   partitions: 1
   coreIsolation: false
@@ -184,10 +182,9 @@ be created to define a storage pool before being able to provision volumes.
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: Pool
 metadata:
-  name: my-pool
+  name: production-pool
   namespace: simplyblock
 spec:
-  name: production-pool
   clusterName: production
   capacityLimit: "10T"
 ```
@@ -204,7 +201,7 @@ kubectl get simplyblockpool -n simplyblock
 
 Once the pool is active, the operator automatically creates a StorageClass named
 `simplyblock-<clusterName>-<poolName>`. In this example, the StorageClass is called
-`simplyblock-production-production-pool`.
+`simplyblock-simplyblock-cluster-production-pool`.
 
 The StorageClass is automatically removed when the storage pool is deleted. For full details and customization options
 are available at [Simplyblock Operator: Storage Pool](../../reference/operator.md#storage-pool).
