@@ -235,7 +235,7 @@ When an action is triggered, the operator transitions `status.actionStatus.state
 ## Storage Pool
 
 The `Pool` resource creates and manages storage pools. When a pool becomes active, the operator automatically
-creates a Kubernetes `StorageClass` named `simplyblock-<clusterName>-<poolName>`. The StorageClass is deleted
+creates a Kubernetes `StorageClass` named `simplyblock-<namespace>-<clusterName>-<poolName>`. The StorageClass is deleted
 when the pool is deleted.
 
 ```yaml title="Example: Create a storage pool"
@@ -274,7 +274,7 @@ spec:
 
 When the pool reaches an active state, the operator creates a `StorageClass` with:
 
-- **Name**: `simplyblock-<clusterName>-<poolName>`
+- **Name**: `simplyblock-<namespace>-<clusterName>-<poolName>`
 - **Provisioner**: `csi.simplyblock.io`
 - **VolumeBindingMode**: `WaitForFirstConsumer`
 - **ReclaimPolicy**: `Delete`
