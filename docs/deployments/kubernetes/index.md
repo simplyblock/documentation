@@ -36,7 +36,7 @@ The operator manages the following resources:
 | CRD              | Description                                       |
 |------------------|---------------------------------------------------|
 | `StorageCluster` | Creates and manages a simplyblock storage cluster |
-| `StorageNode`    | Deploys and manages storage nodes                 |
+| `StorageNode`    | Defines a cluster’s storage nodes                  |
 | `Pool`           | Creates and manages storage pools                 |
 | `Lvol`           | Views logical volume status                       |
 | `Device`         | Manages NVMe devices on storage nodes             |

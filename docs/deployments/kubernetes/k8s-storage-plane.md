@@ -15,7 +15,7 @@ Before going on, here is a high-level overview of the following deployment proce
 StorageCluster   ──► unready
                        │
                        ▼  (add ≥ 3 storage nodes)
-StorageNode(s)   ──► active
+StorageNode      ──► active
                        │
                        ▼  (create a pool)
 Pool             ──► StorageClass created automatically
@@ -102,9 +102,16 @@ been registered, it has no storage nodes yet. Those are added in the next step.
 
 ## Add Storage Nodes
 
-Now, Kubernetes worker nodes will be transformed into simplyblock storage nodes. To initiate the process, a
-`StorageNode` resource must be created. The resource lists all Kubernetes worker nodes that are supposed to become
-part of the storage cluster.
+Now, Kubernetes worker nodes will be transformed into simplyblock storage nodes. To initiate the process, create one
+`StorageNode` resource for the storage cluster. The resource defines the cluster's storage nodes and accepts multiple
+Kubernetes worker nodes through `spec.workerNodes`. To add more storage capacity later, add more worker nodes to the same
+`StorageNode` resource.
+
+!!! note
+    One simplyblock cluster should use one `StorageNode` resource, normally within a single availability zone. If storage
+    nodes are required in another availability zone, create a separate storage cluster for those nodes instead of adding
+    another storage-node collection to the same cluster. This follows the recommended topology for performance and
+    failure-domain isolation.
 
 ```yaml title="storage-nodes.yaml"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -309,10 +316,13 @@ kubectl delete pvc simplyblock-test-pvc
 
 A single Kubernetes cluster can host storage nodes connected to multiple simplyblock clusters.
 
-To create an additional storage cluster, a separate `StorageNode` resource must be created for each simplyblock cluster.
+Create one `StorageNode` resource for each simplyblock cluster. Each resource defines that cluster's storage nodes and
+can contain multiple worker nodes in `spec.workerNodes`; it is not an additional storage-node group inside an existing
+cluster.
 
 Multiple storage clusters can share Kubernetes worker nodes, but it is recommended to point each storage cluster to a
-different set of worker nodes.
+different set of worker nodes. If separate availability zones are involved, use separate simplyblock clusters for those
+storage nodes.
 
 ```yaml title="Multi-cluster storage nodes"
 apiVersion: storage.simplyblock.io/v1alpha1

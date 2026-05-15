@@ -16,7 +16,7 @@ The operator manages the following Custom Resource Definitions (CRDs):
 | CRD              | Short Name | Description                                       |
 |------------------|------------|---------------------------------------------------|
 | `StorageCluster` | -          | Creates and manages a simplyblock storage cluster |
-| `StorageNode`    | -          | Manages storage nodes within a cluster            |
+| `StorageNode`    | -          | Defines a cluster’s storage nodes                  |
 | `Pool`           | -          | Creates and manages storage pools                 |
 | `Lvol`           | -          | Manages logical volumes                           |
 | `Device`         | -          | Manages NVMe devices on storage nodes             |
@@ -113,7 +113,16 @@ the cluster's entry from the Secret automatically.
 
 ## Storage Node
 
-The `StorageNode` resource manages storage nodes within a cluster.
+The `StorageNode` resource defines a cluster's storage nodes. One simplyblock cluster uses one `StorageNode` resource,
+and that resource accepts multiple Kubernetes worker nodes through `spec.workerNodes`. To add storage capacity to the
+cluster, add more worker nodes to the same `StorageNode` resource. The resource can also run explicit actions on
+individual backend storage nodes.
+
+!!! note
+    A simplyblock cluster is expected to use one `StorageNode` resource, typically within a single availability zone.
+    If storage nodes are needed in another availability zone, create a separate storage cluster for those nodes rather than
+    adding another storage-node collection to the same cluster. This keeps the storage topology aligned with the recommended
+    failure domain and performance model.
 
 ```yaml title="Example: Deploy storage nodes"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -137,7 +146,7 @@ spec:
 
 | Field                                     | Type         | Description                                                                                                           |
 |-------------------------------------------|--------------|-----------------------------------------------------------------------------------------------------------------------|
-| `clusterName`                             | string       | Name of the cluster this node belongs to. **Required**.                                                               |
+| `clusterName`                             | string       | Name of the cluster whose storage nodes this resource defines. **Required**.                                        |
 | `clusterImage`                            | string       | Storage-node container image. **Required when `action` is not specified**.                                            |
 | `spdkImage`                               | string       | SPDK service container image override.                                                                                |
 | `spdkProxyImage`                          | string       | SPDK proxy service container image override.                                                                          |
