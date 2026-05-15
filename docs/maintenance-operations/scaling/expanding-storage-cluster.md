@@ -31,6 +31,36 @@ Once all newly added nodes are healthy/ready, finalize the expansion:
 
 After the expansion is complete, the cluster returns to **ACTIVE** and resumes normal operation mode.
 
+## Adding Worker Nodes with the Kubernetes Operator
+
+When running Simplyblock on Kubernetes, add new worker nodes to the storage fabric by appending them to
+`StorageNode.spec.workerNodes`:
+
+```bash title="Add worker nodes via the operator"
+kubectl patch storagenode simplyblock-node -n simplyblock \
+  --type=json -p '[
+    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-4"},
+    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-5"}
+  ]'
+```
+
+The operator deploys the storage-node DaemonSet to the new workers, registers them with the Simplyblock backend,
+and waits for each node to come online. The backend transitions to **IN_EXPANSION** during this process.
+
+Once the nodes are online, finalize the expansion using the `StorageCluster` action:
+
+```bash title="Finalize expansion via the operator"
+kubectl patch storagecluster simplyblock-cluster -n simplyblock \
+  --type=merge -p '{"spec": {"action": "expand"}}'
+```
+
+Monitor progress:
+
+```bash title="Watch expansion status"
+kubectl get storagecluster simplyblock-cluster -n simplyblock \
+  -o jsonpath='{.status.status}{"\n"}' -w
+```
+
 ```plain title="Example output for finalizing cluster expansion"
 [demo@demo ~]# {{ cliname }} cluster complete-expand e2cda3fe-e9f2-42ce-bb2d-eecd10f58ccf
 2026-02-19 11:28:49,995: 139892426475328: INFO: Connecting to remote_jm_af8d10c1-6613-47a9-8ed0-ebdf1f873738
