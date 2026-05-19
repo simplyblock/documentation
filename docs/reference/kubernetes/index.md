@@ -73,6 +73,18 @@ Additional, uncommonly configured CSI driver parameters:
 | `benchmarks`                             | Enables benchmark resources when set to non-zero.                                                               | `0`                    |
 | `autoClusterActivate`                    | Enables automatic cluster activation when sufficient nodes are up.                                              | `false`                |
 
+## Operator & Control Plane Parameters
+
+| Parameter                       | Description                                                                                                  | Default     |
+|---------------------------------|--------------------------------------------------------------------------------------------------------------|-------------|
+| `operator.enabled`              | Enables the simplyblock operator that manages StorageCluster, StorageNode, Pool, and Lvol CRDs.              | `false`     |
+| `tls.enabled`                   | Enables TLS encryption for all control-plane internal communication.                                         | `false`     |
+| `tls.mutual_enabled`            | Enables mutual TLS (mTLS) authentication between control-plane components. Requires `tls.enabled=true` and `tls.provider=cert-manager`. | `false`     |
+| `tls.provider`                  | TLS certificate provider. `cert-manager` for generic Kubernetes, `openshift` for OpenShift-managed certs.    | `openshift` |
+| `tls.cert-manager.issuer`       | Name of the cert-manager `ClusterIssuer` to use. **Required when `tls.provider=cert-manager`**.              | `<empty>`   |
+
+For details, see [Securing the Control Plane](../../deployments/kubernetes/security.md).
+
 ## Storage Node Parameters
 
 | Parameter                                        | Description                                                                                 | Default                               |
