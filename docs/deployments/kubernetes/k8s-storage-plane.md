@@ -103,7 +103,7 @@ been registered, it has no storage nodes yet. Those are added in the next step.
 !!! tip "External KMS"
     If volumes in this cluster should offload their encryption keys to an external KMS, set
     `spec.hashicorpVaultSettings.base_url` on the `StorageCluster` now. The setting can also be added later, but
-    configuring it up front means encrypted volumes use the external KMS from day one. See
+    configuring it upfront means encrypted volumes use the external KMS from day one. See
     [Securing the Control Plane: External KMS](security.md#external-key-management-kms).
 
 ## Add Storage Nodes
