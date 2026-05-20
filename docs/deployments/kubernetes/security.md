@@ -92,7 +92,7 @@ either of them.
 
 ### Prerequisites
 
-- [mTLS configured](#transport-layer-security-mtls) is required, because the vault is authenticated to the cluster via
+- [mTLS configured](#transport-layer-security-mutual-tls-mtls) is required, because the vault is authenticated to the cluster via
   a certificate issued by the operator's `simplyblock-certificate-authority-issuer`.
 - A Vault or OpenBao instance reachable from the simplyblock namespace. The instance must be initialized and unsealed
   before configuring authentication.

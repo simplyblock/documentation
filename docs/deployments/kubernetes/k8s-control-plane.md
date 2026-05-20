@@ -39,7 +39,7 @@ helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
     client certificates, is only works with Cert-Manager. That means that on OpenShift, the Cert-Manager must be
     installed to enable mTLS.
 
-    See [Securing the Control Plane](security.md#transport-layer-security-mtls) for configuration.
+    See [Securing the Control Plane](security.md#transport-layer-security-mutual-tls-mtls) for configuration.
 
 After installation, verify the operator is running:
 
