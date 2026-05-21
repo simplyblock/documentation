@@ -101,7 +101,8 @@ To enable NVMe-oF transport security (DH-HMAC-CHAP authentication and TLS/PSK), 
 with the `--host-sec` flag:
 
 ```bash title="Deploy with NVMe-oF security"
-{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --host-sec=host-security-config.json
+{{ cliname }} cluster create --ifname=<IF_NAME> \
+  --ha-type=ha --host-sec=host-security-config.json
 ```
 
 ```json title="Example: host-security-config.json"
@@ -119,7 +120,8 @@ authentication. For more information, see [NVMe-oF Security](../../architecture/
 To enable S3 backup and recovery, provide a JSON configuration file with the `--use-backup` flag:
 
 ```bash title="Deploy with Backup"
-{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --use-backup=backup-config.json
+{{ cliname }} cluster create --ifname=<IF_NAME> \
+  --ha-type=ha --use-backup=backup-config.json
 ```
 
 ```json title="Example: backup-config.json"
