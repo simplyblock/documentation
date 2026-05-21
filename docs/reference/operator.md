@@ -131,7 +131,6 @@ spec:
   workerNodes:
     - worker-1
     - worker-2
-  maxSize: "500G"
   partitions: 1
   coreIsolation: true
 ```
@@ -145,7 +144,7 @@ spec:
 | `spdkImage`                               | string       | SPDK service container image override.                                                                                |
 | `spdkProxyImage`                          | string       | SPDK proxy service container image override.                                                                          |
 | `maxLogicalVolumeCount`                   | int          | Maximum number of logical volumes per node. **Required when `action` is not specified**.                              |
-| `maxSize`                                 | string       | Maximum allocatable storage size for the node (e.g., `500G`).                                                         |
+| `maxSize`                                 | string       | Maximum allocatable huge pages memry (e.g., `16G`).                                                                   |
 | `partitions`                              | int          | Number of partitions per backend storage device.                                                                      |
 | `mgmtIfname`                              | string       | Management network interface name used by storage nodes.                                                              |
 | `dataIfname`                              | []string     | Data-plane network interface names.                                                                                   |

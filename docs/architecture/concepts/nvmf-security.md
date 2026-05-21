@@ -1,5 +1,5 @@
 ---
-title: "NVMe-oF Security"
+title: "NVMe over Fabrics Security"
 description: "NVMe-oF security in simplyblock provides host access control, DH-HMAC-CHAP authentication, and TLS/PSK encryption for NVMe-oF connections."
 weight: 30200
 ---

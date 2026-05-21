@@ -81,8 +81,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   annotations:
-    simplybk/secret-name: my-encryption-keys # Encryption keys
-    simplybk/secret-namespace: default       # Namespace of the secret
+    simplyblock.io/secret-name: my-encryption-keys # Encryption keys
+    simplyblock.io/secret-namespace: default       # Namespace of the secret
   name: my-encrypted-volume-claim
 spec:
   storageClassName: my-encrypted-volumes # StorageClass
@@ -92,3 +92,7 @@ spec:
     requests:
       storage: 200Gi
 ```
+
+!!! warning "Deprecated annotation prefix"
+    The `simplybk/` annotation prefix (e.g. `simplybk/secret-name`) is deprecated. Existing PVCs using the old prefix
+    continue to work for backward compatibility, but new deployments should use the `simplyblock.io/` prefix.
