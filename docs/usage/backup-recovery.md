@@ -169,155 +169,224 @@ On the target cluster, import the metadata:
 
 ## Kubernetes CRD Operations
 
-{{experimental}}
+In Kubernetes environments, backups can be managed declaratively using Custom Resource Definitions (CRDs). This
+is especially useful for automated backup workflows integrated with Kubernetes-native tooling.
 
-In Kubernetes environments, backups can also be managed declaratively using Custom Resource Definitions. This is
-especially useful for automated backup workflows integrated with Kubernetes-native tooling.
+### Prerequisites
 
-!!! attention
-    In simplyblock 26.2-PRE, this feature is not yet available.
+#### S3-Compatible Object Storage
 
-### Backup CRD
+Backups require an S3-compatible object storage endpoint. For local testing, you can deploy a Minio instance:
 
-The `Backup` CRD (`backups.simplyblock.com`, short name: `bkp`) creates a one-time backup of all PVCs in a pool or a
-single PVC.
+```sh title="Deploy a local Minio instance for testing"
+kubectl create ns minio
 
-```yaml title="Back up all PVCs in a pool to S3"
-apiVersion: simplyblock.com/v25.10.5
-kind: Backup
-metadata:
-  name: daily-backup
-  namespace: simplyblock
-spec:
-  clusterUUID: "<CLUSTER_UUID>"
-  pool: "production"
-  s3:
-    bucket: "simplyblock-backups"
-    region: "eu-central-1"
-    accessKeySecret: "backup-s3-credentials"
-    secretKeySecret: "backup-s3-credentials"
-  retention: 7
+kubectl -n minio create deployment minio \
+  --image=minio/minio \
+  -- /bin/sh -c "minio server /data --console-address :9001"
+
+kubectl -n minio expose deploy/minio --port 9000
+
+kubectl -n minio set env deploy/minio \
+  MINIO_ROOT_USER=minioadmin \
+  MINIO_ROOT_PASSWORD=minioadmin123
 ```
 
-```yaml title="Back up a single PVC"
-apiVersion: simplyblock.com/v25.10.5
-kind: Backup
+#### Backup Credentials Secret
+
+Store your S3 credentials in a Kubernetes Secret in the same namespace as your `StorageCluster`:
+
+```yaml title="Create backup credentials secret"
+kubectl apply -f - <<'EOF'
+apiVersion: v1
+kind: Secret
 metadata:
-  name: db-backup
+  name: backup-credentials
+  namespace: simplyblock
+type: Opaque
+stringData:
+  access_key_id: <YOUR_ACCESS_KEY>
+  secret_access_key: <YOUR_SECRET_KEY>
+EOF
+```
+
+#### StorageCluster Backup Configuration
+
+Include a `backup` section in your `StorageCluster` spec referencing the credentials secret:
+
+```yaml title="StorageCluster backup configuration"
+spec:
+  # ... other fields ...
+  backup:
+    credentialsSecretRef:
+      name: backup-credentials
+    localEndpoint: http://minio.minio.svc.cluster.local:9000
+    snapshotBackups: true
+    withCompression: false
+```
+
+See the [Operator Reference](../reference/operator.md#storage-cluster) for all available `backup` spec fields.
+
+### StorageBackup CRD
+
+The `StorageBackup` resource creates a one-time backup of a PVC to the configured S3-compatible storage endpoint.
+
+```yaml title="Create a backup for a PVC"
+kubectl apply -f - <<'EOF'
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageBackup
+metadata:
+  name: my-pvc-backup
   namespace: simplyblock
 spec:
-  clusterUUID: "<CLUSTER_UUID>"
-  pvc: "postgres-data"
-  s3:
-    bucket: "simplyblock-backups"
-    region: "eu-central-1"
-    accessKeySecret: "backup-s3-credentials"
-    secretKeySecret: "backup-s3-credentials"
+  clusterName: simplyblock-cluster
+  pvcRef:
+    name: my-pvc
+EOF
+```
+
+Monitor the backup status:
+
+```bash title="List backups"
+kubectl -n simplyblock get storagebackup
+```
+
+```plain
+NAME            PHASE   PVC      BACKUPID                               SNAPSHOT              AGE
+my-pvc-backup   Done    my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   backup-my-pvc-backup  3m
+```
+
+!!! note
+    The first backup may take longer to complete as there is no prior incremental state.
+
+#### Spec Fields
+
+| Field         | Type   | Description                                          |
+|---------------|--------|------------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**.     |
+| `pvcRef.name` | string | Name of the PVC to back up. **Required**.            |
+
+#### Status Fields
+
+| Column     | Description                                      |
+|------------|--------------------------------------------------|
+| `PHASE`    | Current phase: `InProgress` or `Done`.           |
+| `PVC`      | Name of the source PVC.                          |
+| `BACKUPID` | Backend backup identifier.                       |
+| `SNAPSHOT` | Name of the snapshot used for the backup.        |
+
+### BackupRestore CRD
+
+The `BackupRestore` resource restores a `StorageBackup` into a new PVC. The restored PVC is created in the
+same namespace as the `BackupRestore` object.
+
+```yaml title="Restore a backup to a new PVC"
+kubectl apply -f - <<'EOF'
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupRestore
+metadata:
+  name: my-restore
+  namespace: simplyblock
+spec:
+  clusterName: simplyblock-cluster
+  backupRef:
+    name: my-pvc-backup
+  pvcTemplate:
+    metadata:
+      name: restored-pvc
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+EOF
+```
+
+Monitor the restore status:
+
+```bash title="List restores"
+kubectl -n simplyblock get backuprestore
+```
+
+```plain
+NAME         PHASE   BACKUP          PVC            AGE
+my-restore   Done    my-pvc-backup   restored-pvc   79s
+```
+
+The phase transitions from `InProgress` → `PVCBinding` → `Done`. Once `Done`, the new PVC is ready to attach
+to a pod.
+
+#### Spec Fields
+
+| Field                       | Type   | Description                                                                    |
+|-----------------------------|--------|--------------------------------------------------------------------------------|
+| `clusterName`               | string | Name of the target StorageCluster. **Required**.                               |
+| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                     |
+| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                |
+| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup.|
+| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                   |
+| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                       |
+
+!!! warning
+    A backup can only be restored to the same namespace as the `BackupRestore` object.
+
+### BackupPolicy CRD
+
+A `BackupPolicy` defines an automated backup schedule with retention settings. Attach it to a PVC using the
+`simplybk/backup-policy` annotation to automatically create `StorageBackup` objects on schedule.
+
+```yaml title="Create a backup policy"
+kubectl apply -f - <<'EOF'
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupPolicy
+metadata:
+  name: my-policy
+  namespace: simplyblock
+spec:
+  clusterName: simplyblock-cluster
+  maxVersions: 10
+  maxAge: "7d"
+  schedule: "15m,4 60m,11 24h,7"
+EOF
 ```
 
 #### Spec Fields
 
-| Field                    | Type    | Description                                                     |
-|--------------------------|---------|-----------------------------------------------------------------|
-| `clusterUUID`           | string  | UUID of the cluster                                              |
-| `pool`                  | string  | Pool to snapshot and back up (all PVCs)                          |
-| `pvc`                   | string  | Individual PVC to back up (alternative to pool)                  |
-| `s3.bucket`             | string  | S3 bucket name                                                   |
-| `s3.region`             | string  | AWS region                                                       |
-| `s3.accessKeySecret`    | string  | Kubernetes Secret for S3 access key                              |
-| `s3.secretKeySecret`    | string  | Kubernetes Secret for S3 secret key                              |
-| `filesystem.mountPoint` | string  | Filesystem mount point (alternative to S3)                       |
-| `retention`             | integer | Number of backups to retain                                      |
-| `keepOnlineBackup`      | boolean | Keep the online snapshot after backup completes                  |
-| `backupRestoreList`     | string  | JSON file with backup metadata for cross-cluster restore         |
-| `replacePVConRestore`   | boolean | Replace existing bound PVCs during restore (instead of creating new ones) |
+| Field         | Type   | Description                                                                       |
+|---------------|--------|-----------------------------------------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**.                                  |
+| `maxVersions` | int    | Maximum number of backup versions to retain.                                      |
+| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).                           |
+| `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs.                 |
 
-#### Monitoring Backup Status
+The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
+take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).
 
-```bash title="List backups"
-kubectl get bkp -n simplyblock
+#### Attaching a Policy to a PVC
+
+Apply the `simplybk/backup-policy` annotation to start automatic backups for a PVC:
+
+```bash title="Attach a backup policy"
+kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy=my-policy
 ```
 
-```plain
-NAME           CLUSTER      POOL         PVC   TARGET                RETENTION   STATE
-daily-backup   abc123...    production         simplyblock-backups   7           Completed
+The policy will begin creating `StorageBackup` objects automatically. View them with:
+
+```bash title="List auto-created backups"
+kubectl get storagebackup -n simplyblock
 ```
 
-The status field shows: `Pending`, `Running`, `Completed`, or `Failed`.
+#### Updating and Detaching Policies
 
-For detailed status including per-PVC backup details:
+To switch a PVC to a different policy (detaches from the old policy and attaches to the new one):
 
-```bash title="Get detailed backup status"
-kubectl get bkp daily-backup -n simplyblock -o yaml
+```bash title="Switch to a different policy"
+kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy=new-policy --overwrite
 ```
 
-The status includes a `PVCs` array with per-PVC information: PVC name, pool UUID, and the list of backup IDs with
-their corresponding snapshot UUIDs.
+To detach a policy from a PVC (existing backups are not deleted):
 
-#### Restoring from a Backup CRD
-
-To restore, update the Backup CRD with the `restore` action:
-
-```yaml title="Restore from backup"
-apiVersion: simplyblock.com/v25.10.5
-kind: Backup
-metadata:
-  name: daily-backup
-  namespace: simplyblock
-spec:
-  clusterUUID: "<CLUSTER_UUID>"
-  pool: "production"
-  action: "restore"
-  s3:
-    bucket: "simplyblock-backups"
-    region: "eu-central-1"
-    accessKeySecret: "backup-s3-credentials"
-    secretKeySecret: "backup-s3-credentials"
+```bash title="Detach a backup policy"
+kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy-
 ```
-
-To restore from a cross-cluster backup, provide the backup metadata JSON file:
-
-```yaml title="Cross-cluster restore"
-spec:
-  action: "restore"
-  backupRestoreList: "/path/to/backup-metadata.json"
-  replacePVConRestore: false
-```
-
-Setting `replacePVConRestore: true` will replace existing bound PVCs with the restored data instead of creating new
-PVCs.
-
-### BackupSchedule CRD
-
-The `BackupSchedule` CRD (`backupscheduless.simplyblock.com`, short name: `bks`) defines recurring backup schedules.
-
-```yaml title="Scheduled backup for a pool"
-apiVersion: simplyblock.com/v25.10.5
-kind: BackupSchedule
-metadata:
-  name: hourly-backup
-  namespace: simplyblock
-spec:
-  clusterUUID: "<CLUSTER_UUID>"
-  pool: "production"
-  s3:
-    bucket: "simplyblock-backups"
-    region: "eu-central-1"
-    accessKeySecret: "backup-s3-credentials"
-    secretKeySecret: "backup-s3-credentials"
-```
-
-#### Actions
-
-| Action               | Description                                      |
-|----------------------|--------------------------------------------------|
-| `restore`           | Restores volumes from backups in this schedule    |
-| `delete-all-backups`| Deletes all backups created by this schedule      |
-
-#### Monitoring Schedule Status
-
-```bash title="List backup schedules"
-kubectl get bks -n simplyblock
-```
-
-The status tracks the list of backup IDs created by the schedule, along with per-PVC backup details.

@@ -21,6 +21,9 @@ The operator manages the following Custom Resource Definitions (CRDs):
 | `Lvol`           | -          | Manages logical volumes                           |
 | `Device`         | -          | Manages NVMe devices on storage nodes             |
 | `Task`           | -          | Monitors cluster tasks and their status           |
+| `StorageBackup`  | -          | Creates a one-time backup of a PVC to S3          |
+| `BackupRestore`  | -          | Restores a backup into a new PVC                  |
+| `BackupPolicy`   | -          | Defines an automated backup schedule for PVCs     |
 
 All CRDs use the API group `storage.simplyblock.io/v1alpha1`.
 
@@ -34,10 +37,9 @@ The `StorageCluster` resource creates and manages a simplyblock storage cluster.
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageCluster
 metadata:
-  name: my-cluster
+  name: production
   namespace: simplyblock
 spec:
-  clusterName: production
   mgmtIfname: eth0
   haType: ha
   stripe:
@@ -54,40 +56,42 @@ spec:
 
 ### Spec Fields
 
-| Field                                   | Type     | Description                                                                        |
-|-----------------------------------------|----------|------------------------------------------------------------------------------------|
-| `clusterName`                           | string   | Human-readable cluster name. **Required**.                                         |
-| `mgmtIfname`                            | string   | Management network interface (e.g., `eth0`).                                       |
-| `haType`                                | string   | High availability type: `single` or `ha`.                                          |
-| `stripe.dataChunks`                     | int      | Erasure coding data chunks per stripe.                                             |
-| `stripe.parityChunks`                   | int      | Erasure coding parity chunks per stripe.                                           |
-| `fabricType`                            | string   | NVMe-oF fabric type: `tcp`, `rdma`, or `tcp,rdma`.                                 |
-| `clientDataIfname`                      | string   | Client-side data network interface name.                                           |
-| `enableNodeAffinity`                    | bool     | Enable node affinity for data placement.                                           |
-| `strictNodeAntiAffinity`                | bool     | Enforce strict node anti-affinity for chunks.                                      |
-| `isSingleNode`                          | bool     | Set to `true` for single-node clusters.                                            |
-| `blockSize`                             | int      | Logical block size in bytes (`512` or `4096`).                                     |
-| `pageSizeInBlocks`                      | int      | Page size expressed in blocks.                                                     |
-| `qpairCount`                            | int      | NVMe queue pair count per volume.                                                  |
-| `maxQueueSize`                          | int      | Maximum backend queue size.                                                        |
-| `inflightIOThreshold`                   | int      | Inflight I/O threshold before back-pressure is applied.                            |
-| `maxFaultTolerance`                     | int      | Maximum number of concurrent node faults tolerated.                                |
-| `nvmfBasePort`                          | int      | Base port for NVMe-oF services. Subsequent nodes increment from this value.        |
-| `rpcBasePort`                           | int      | Base port for RPC services.                                                        |
-| `snodeApiPort`                          | int      | Storage node API port.                                                             |
-| `warningThreshold.capacity`             | int      | Capacity warning threshold (percent).                                              |
-| `criticalThreshold.capacity`            | int      | Capacity critical threshold (percent).                                             |
-| `warningThreshold.provisionedCapacity`  | int      | Provisioned capacity warning threshold (percent).                                  |
-| `criticalThreshold.provisionedCapacity` | int      | Provisioned capacity critical threshold (percent).                                 |
-| `action`                                | string   | Lifecycle action: `activate` or `expand`.                                          |
-| `backup.credentialsSecretRef.name`      | string   | Name of the Secret (in the same namespace) holding `access_key_id` and `secret_access_key`. **Required when `backup` is set**. |
-| `backup.localEndpoint`                  | string   | S3-compatible endpoint URL for backup storage.                                     |
-| `backup.snapshotBackups`                | bool     | Enable snapshot-based backups.                                                     |
-| `backup.withCompression`                | bool     | Enable compression for backup data.                                                |
-| `backup.secondaryTarget`                | int      | Secondary backup target identifier.                                                |
-| `backup.localTesting`                   | bool     | Enable local testing mode for backup.                                              |
+| Field                                   | Type   | Description                                                                                                                    |
+|-----------------------------------------|--------|--------------------------------------------------------------------------------------------------------------------------------|
+| `mgmtIfname`                            | string | Management network interface (e.g., `eth0`).                                                                                   |
+| `haType`                                | string | High availability type: `single` or `ha`.                                                                                      |
+| `stripe.dataChunks`                     | int    | Erasure coding data chunks per stripe.                                                                                         |
+| `stripe.parityChunks`                   | int    | Erasure coding parity chunks per stripe.                                                                                       |
+| `fabricType`                            | string | NVMe-oF fabric type: `tcp`, `rdma`, or `tcp,rdma`.                                                                             |
+| `clientDataIfname`                      | string | Client-side data network interface name.                                                                                       |
+| `enableNodeAffinity`                    | bool   | Enable node affinity for data placement.                                                                                       |
+| `strictNodeAntiAffinity`                | bool   | Enforce strict node anti-affinity for chunks.                                                                                  |
+| `isSingleNode`                          | bool   | Set to `true` for single-node clusters.                                                                                        |
+| `blockSize`                             | int    | Logical block size in bytes (`512` or `4096`).                                                                                 |
+| `pageSizeInBlocks`                      | int    | Page size expressed in blocks.                                                                                                 |
+| `qpairCount`                            | int    | NVMe queue pair count per volume.                                                                                              |
+| `maxQueueSize`                          | int    | Maximum backend queue size.                                                                                                    |
+| `inflightIOThreshold`                   | int    | Inflight I/O threshold before back-pressure is applied.                                                                        |
+| `maxFaultTolerance`                     | int    | Maximum number of concurrent node faults tolerated.                                                                            |
+| `nvmfBasePort`                          | int    | Base port for NVMe-oF services. Subsequent nodes increment from this value.                                                    |
+| `rpcBasePort`                           | int    | Base port for RPC services.                                                                                                    |
+| `snodeApiPort`                          | int    | Storage node API port.                                                                                                         |
+| `warningThreshold.capacity`             | int    | Capacity warning threshold (percent).                                                                                          |
+| `criticalThreshold.capacity`            | int    | Capacity critical threshold (percent).                                                                                         |
+| `warningThreshold.provisionedCapacity`  | int    | Provisioned capacity warning threshold (percent).                                                                              |
+| `criticalThreshold.provisionedCapacity` | int    | Provisioned capacity critical threshold (percent).                                                                             |
+| `action`                                | string | Lifecycle action: `activate` or `expand`.                                                                                      |
+| `backup.credentialsSecretRef.name`      | string | Name of the Secret (in the same namespace) holding `access_key_id` and `secret_access_key`. **Required when `backup` is set**. |
+| `backup.localEndpoint`                  | string | S3-compatible endpoint URL for backup storage.                                                                                 |
+| `backup.snapshotBackups`                | bool   | Enable snapshot-based backups.                                                                                                 |
+| `backup.withCompression`                | bool   | Enable compression for backup data.                                                                                            |
+| `backup.secondaryTarget`                | int    | Secondary backup target identifier.                                                                                            |
+| `backup.localTesting`                   | bool   | Enable local testing mode for backup.                                                                                          |
 
 ### Auto-Managed CSI Credentials
+
+The cluster identifier is the `StorageCluster` resource name (`metadata.name`). The operator uses that name when
+creating the backend cluster and the cluster credential Secret.
 
 When a `StorageCluster` is created or becomes active, the operator automatically creates or updates the
 `simplyblock-csi-secret-v2` Secret in the operator's namespace with the cluster's credentials. This Secret is
@@ -96,22 +100,22 @@ the cluster's entry from the Secret automatically.
 
 ### Status Fields
 
-| Field                 | Type   | Description                                                          |
-|-----------------------|--------|----------------------------------------------------------------------|
-| `uuid`                | string | Cluster UUID assigned after creation.                                |
-| `clusterName`         | string | Cluster name.                                                        |
-| `nqn`                 | string | Cluster NVMe Qualified Name.                                         |
-| `status`              | string | Current cluster lifecycle status.                                    |
-| `rebalancing`         | bool   | Whether cluster rebalancing is currently active.                     |
-| `erasureCodingScheme` | string | Active erasure coding layout, for example `2x1`.                     |
-| `secretName`          | string | Name of the Kubernetes Secret holding cluster credentials.           |
-| `configured`                    | bool   | Whether initial cluster setup has completed.                         |
-| `actionStatus.action`           | string | Most recently requested action name.                                 |
-| `actionStatus.state`            | string | Action execution state.                                              |
-| `actionStatus.message`          | string | Human-readable result or error message.                              |
-| `actionStatus.updatedAt`        | string | Timestamp of the last status transition.                             |
-| `actionStatus.triggered`        | bool   | Whether the underlying backend action has been fired.                |
-| `actionStatus.observedGeneration` | int  | Resource generation observed when this status was recorded.          |
+| Field                             | Type   | Description                                                 |
+|-----------------------------------|--------|-------------------------------------------------------------|
+| `uuid`                            | string | Cluster UUID assigned after creation.                       |
+| `clusterName`                     | string | Cluster name, derived from `metadata.name`.                 |
+| `nqn`                             | string | Cluster NVMe Qualified Name.                                |
+| `status`                          | string | Current cluster lifecycle status.                           |
+| `rebalancing`                     | bool   | Whether cluster rebalancing is currently active.            |
+| `erasureCodingScheme`             | string | Active erasure coding layout, for example `2x1`.            |
+| `secretName`                      | string | Name of the Kubernetes Secret holding cluster credentials.  |
+| `configured`                      | bool   | Whether initial cluster setup has completed.                |
+| `actionStatus.action`             | string | Most recently requested action name.                        |
+| `actionStatus.state`              | string | Action execution state.                                     |
+| `actionStatus.message`            | string | Human-readable result or error message.                     |
+| `actionStatus.updatedAt`          | string | Timestamp of the last status transition.                    |
+| `actionStatus.triggered`          | bool   | Whether the underlying backend action has been fired.       |
+| `actionStatus.observedGeneration` | int    | Resource generation observed when this status was recorded. |
 
 ## Storage Node
 
@@ -125,7 +129,6 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  clusterImage: "public.ecr.aws/simply-block/simplyblock:26.1.2"
   maxLogicalVolumeCount: 100
   workerNodes:
     - worker-1
@@ -139,7 +142,7 @@ spec:
 | Field                                     | Type         | Description                                                                                                           |
 |-------------------------------------------|--------------|-----------------------------------------------------------------------------------------------------------------------|
 | `clusterName`                             | string       | Name of the cluster this node belongs to. **Required**.                                                               |
-| `clusterImage`                            | string       | Storage-node container image. **Required when `action` is not specified**.                                            |
+| `clusterImage`                            | string       | Storage-node container image override. If omitted, the operator inherits the image from the ControlPlane CRD.          |
 | `spdkImage`                               | string       | SPDK service container image override.                                                                                |
 | `spdkProxyImage`                          | string       | SPDK proxy service container image override.                                                                          |
 | `maxLogicalVolumeCount`                   | int          | Maximum number of logical volumes per node. **Required when `action` is not specified**.                              |
@@ -173,33 +176,33 @@ spec:
 
 The `status.nodes` list reflects the observed state of each managed storage node.
 
-| Field                    | Type   | Description                                                           |
-|--------------------------|--------|-----------------------------------------------------------------------|
-| `nodes[].uuid`           | string | Backend node UUID.                                                    |
-| `nodes[].hostname`       | string | Kubernetes node hostname.                                             |
-| `nodes[].status`         | string | Backend lifecycle state.                                              |
-| `nodes[].health`         | bool   | Whether health checks are currently passing.                          |
-| `nodes[].cpu`            | int    | Reported CPU core count.                                              |
-| `nodes[].memory`         | string | Reported memory value.                                                |
-| `nodes[].volumes`        | int    | Current logical volume count.                                         |
-| `nodes[].devices`        | string | Backend device summary for this node.                                 |
-| `nodes[].mgmtIp`         | string | Management IP address.                                                |
-| `nodes[].rpcPort`        | int    | Node RPC service port.                                                |
-| `nodes[].lvolPort`       | int    | Logical volume subsystem port.                                        |
-| `nodes[].nvmfPort`       | int    | NVMe-oF service port.                                                 |
-| `nodes[].uptime`         | string | Reported node uptime.                                                 |
-| `actionStatus.action`             | string | Most recently requested action name.                                  |
-| `actionStatus.nodeUUID`           | string | Target node UUID for the action.                                      |
-| `actionStatus.state`              | string | Action execution state: `pending`, `running`, `success`, or `failed`. |
-| `actionStatus.message`            | string | Human-readable result or error message.                               |
-| `actionStatus.updatedAt`          | string | Timestamp of the last status transition.                              |
-| `actionStatus.triggered`          | bool   | Whether the underlying backend action has been fired.                 |
-| `actionStatus.observedGeneration` | int    | Resource generation observed when this status was recorded.           |
-| `drainCoordination[].hostname`    | string | Kubernetes node name being drained.                                   |
-| `drainCoordination[].activeNodeUUID` | string | Backend UUID of the storage node being shut down or restarted.     |
-| `drainCoordination[].phase`       | string | Drain phase: `detected`, `shutdown_called`, `draining`, `restart_called`, `complete`, or `failed`. |
-| `drainCoordination[].message`     | string | Additional status detail or error information.                        |
-| `drainCoordination[].startedAt`   | string | Timestamp when drain coordination began for this node.                |
+| Field                                | Type   | Description                                                                                        |
+|--------------------------------------|--------|----------------------------------------------------------------------------------------------------|
+| `nodes[].uuid`                       | string | Backend node UUID.                                                                                 |
+| `nodes[].hostname`                   | string | Kubernetes node hostname.                                                                          |
+| `nodes[].status`                     | string | Backend lifecycle state.                                                                           |
+| `nodes[].health`                     | bool   | Whether health checks are currently passing.                                                       |
+| `nodes[].cpu`                        | int    | Reported CPU core count.                                                                           |
+| `nodes[].memory`                     | string | Reported memory value.                                                                             |
+| `nodes[].volumes`                    | int    | Current logical volume count.                                                                      |
+| `nodes[].devices`                    | string | Backend device summary for this node.                                                              |
+| `nodes[].mgmtIp`                     | string | Management IP address.                                                                             |
+| `nodes[].rpcPort`                    | int    | Node RPC service port.                                                                             |
+| `nodes[].lvolPort`                   | int    | Logical volume subsystem port.                                                                     |
+| `nodes[].nvmfPort`                   | int    | NVMe-oF service port.                                                                              |
+| `nodes[].uptime`                     | string | Reported node uptime.                                                                              |
+| `actionStatus.action`                | string | Most recently requested action name.                                                               |
+| `actionStatus.nodeUUID`              | string | Target node UUID for the action.                                                                   |
+| `actionStatus.state`                 | string | Action execution state: `pending`, `running`, `success`, or `failed`.                              |
+| `actionStatus.message`               | string | Human-readable result or error message.                                                            |
+| `actionStatus.updatedAt`             | string | Timestamp of the last status transition.                                                           |
+| `actionStatus.triggered`             | bool   | Whether the underlying backend action has been fired.                                              |
+| `actionStatus.observedGeneration`    | int    | Resource generation observed when this status was recorded.                                        |
+| `drainCoordination[].hostname`       | string | Kubernetes node name being drained.                                                                |
+| `drainCoordination[].activeNodeUUID` | string | Backend UUID of the storage node being shut down or restarted.                                     |
+| `drainCoordination[].phase`          | string | Drain phase: `detected`, `shutdown_called`, `draining`, `restart_called`, `complete`, or `failed`. |
+| `drainCoordination[].message`        | string | Additional status detail or error information.                                                     |
+| `drainCoordination[].startedAt`      | string | Timestamp when drain coordination began for this node.                                             |
 
 ### Node Operations
 
@@ -236,17 +239,16 @@ When an action is triggered, the operator transitions `status.actionStatus.state
 ## Storage Pool
 
 The `Pool` resource creates and manages storage pools. When a pool becomes active, the operator automatically
-creates a Kubernetes `StorageClass` named `simplyblock-<clusterName>-<poolName>`. The StorageClass is deleted
+creates a Kubernetes `StorageClass` named `simplyblock-<namespace>-<clusterName>-<poolName>`. The StorageClass is deleted
 when the pool is deleted.
 
 ```yaml title="Example: Create a storage pool"
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: Pool
 metadata:
-  name: my-pool
+  name: production-pool
   namespace: simplyblock
 spec:
-  name: production-pool
   clusterName: production
   capacityLimit: "10T"
   qos:
@@ -259,23 +261,25 @@ spec:
 
 ### Spec Fields
 
-| Field                      | Type   | Description                                     |
-|----------------------------|--------|-------------------------------------------------|
-| `name`                     | string | Pool name. **Required**.                        |
-| `clusterName`              | string | Name of the cluster. **Required**.              |
-| `capacityLimit`            | string | Maximum pool capacity (e.g., `10T`).            |
-| `qos.iops`                 | int    | Maximum IOPS for the pool.                      |
-| `qos.throughput.readWrite` | int    | Maximum combined read/write throughput (MiB/s). |
-| `qos.throughput.read`      | int    | Maximum read throughput (MiB/s).                |
-| `qos.throughput.write`     | int    | Maximum write throughput (MiB/s).               |
-| `action`                   | string | Pool lifecycle action.                          |
+| Field                      | Type   | Description                                                                                                                                                        |
+|----------------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `clusterName`              | string | Name of the cluster. **Required**.                                                                                                                                 |
+| `capacityLimit`            | string | Maximum pool capacity (e.g., `10T`).                                                                                                                               |
+| `qos.iops`                 | int    | Maximum IOPS for the pool.                                                                                                                                         |
+| `qos.throughput.readWrite` | int    | Maximum combined read/write throughput (MiB/s).                                                                                                                    |
+| `qos.throughput.read`      | int    | Maximum read throughput (MiB/s).                                                                                                                                   |
+| `qos.throughput.write`     | int    | Maximum write throughput (MiB/s).                                                                                                                                  |
+| `action`                   | string | Pool lifecycle action.                                                                                                                                             |
 | `storageClassParameters`   | object | Default volume parameters baked into the auto-created StorageClass. See [Quality of Service](../usage/simplyblock-csi/quality-of-service.md) for available fields. |
 
 ### Auto-Created StorageClass
 
+The pool identifier is the `Pool` resource name (`metadata.name`). The operator uses that name as the backend pool
+name and as the `pool_name` CSI StorageClass parameter.
+
 When the pool reaches an active state, the operator creates a `StorageClass` with:
 
-- **Name**: `simplyblock-<clusterName>-<poolName>`
+- **Name**: `simplyblock-<namespace>-<clusterName>-<poolName>`
 - **Provisioner**: `csi.simplyblock.io`
 - **VolumeBindingMode**: `WaitForFirstConsumer`
 - **ReclaimPolicy**: `Delete`
@@ -320,34 +324,34 @@ spec:
 
 Each volume in the `status.lvols` list includes:
 
-| Field                        | Type     | Description                                                                                               |
-|------------------------------|----------|-----------------------------------------------------------------------------------------------------------|
-| `uuid`                       | string   | Volume UUID.                                                                                              |
-| `lvolName`                 | string   | Volume name.                                                                                              |
-| `status`                   | string   | Backend lifecycle status.                                                                                 |
-| `size`                     | string   | Volume size.                                                                                              |
-| `ha`                       | bool     | High availability enabled.                                                                                |
-| `health`                   | bool     | Whether health checks are passing.                                                                        |
-| `encrypted`                | bool     | Whether the volume is encrypted. See [Volume Encryption](../deployments/kubernetes/volume-encryption.md). |
-| `erasureCodingScheme`      | string   | Active erasure coding layout for this volume (e.g., `2x1`).                                               |
-| `nqn`                      | string   | NVMe Qualified Name for the volume.                                                                       |
-| `subsysPort`               | int      | NVMe subsystem listener port.                                                                             |
-| `namespaceID`              | int      | NVMe namespace identifier.                                                                                |
-| `poolName`                 | string   | Storage pool name.                                                                                        |
-| `poolUUID`                 | string   | Storage pool UUID.                                                                                        |
-| `nodeUUID`                 | []string | Node UUIDs associated with this volume.                                                                   |
-| `hostname`                 | string   | Node hostname associated with the volume.                                                                 |
-| `pvcName`                  | string   | Bound Kubernetes PVC name, if applicable.                                                                 |
-| `fabricType`               | string   | Storage fabric/protocol in use (`tcp` or `rdma`).                                                         |
-| `clonedFromSnapshot`       | string   | Source snapshot ID if this volume was cloned from a snapshot.                                             |
-| `sourceSnapshotName`       | string   | Source snapshot name if this volume was cloned from a snapshot.                                           |
-| `qos.class`                | int      | Assigned QoS class identifier.                                                                            |
-| `qos.iops`                 | int      | IOPS limit for this volume.                                                                               |
-| `qos.throughput.read`      | int      | Read throughput limit (MiB/s).                                                                            |
-| `qos.throughput.write`     | int      | Write throughput limit (MiB/s).                                                                           |
-| `qos.throughput.readWrite`   | int      | Combined read/write throughput limit (MiB/s).                                                             |
-| `blobID`                     | int      | Backend blob identifier.                                                                                  |
-| `maxNamespacesPerSubsystem`  | int      | Maximum number of NVMe namespaces per subsystem.                                                          |
+| Field                       | Type     | Description                                                                                               |
+|-----------------------------|----------|-----------------------------------------------------------------------------------------------------------|
+| `uuid`                      | string   | Volume UUID.                                                                                              |
+| `lvolName`                  | string   | Volume name.                                                                                              |
+| `status`                    | string   | Backend lifecycle status.                                                                                 |
+| `size`                      | string   | Volume size.                                                                                              |
+| `ha`                        | bool     | High availability enabled.                                                                                |
+| `health`                    | bool     | Whether health checks are passing.                                                                        |
+| `encrypted`                 | bool     | Whether the volume is encrypted. See [Volume Encryption](../deployments/kubernetes/volume-encryption.md). |
+| `erasureCodingScheme`       | string   | Active erasure coding layout for this volume (e.g., `2x1`).                                               |
+| `nqn`                       | string   | NVMe Qualified Name for the volume.                                                                       |
+| `subsysPort`                | int      | NVMe subsystem listener port.                                                                             |
+| `namespaceID`               | int      | NVMe namespace identifier.                                                                                |
+| `poolName`                  | string   | Storage pool name.                                                                                        |
+| `poolUUID`                  | string   | Storage pool UUID.                                                                                        |
+| `nodeUUID`                  | []string | Node UUIDs associated with this volume.                                                                   |
+| `hostname`                  | string   | Node hostname associated with the volume.                                                                 |
+| `pvcName`                   | string   | Bound Kubernetes PVC name, if applicable.                                                                 |
+| `fabricType`                | string   | Storage fabric/protocol in use (`tcp` or `rdma`).                                                         |
+| `clonedFromSnapshot`        | string   | Source snapshot ID if this volume was cloned from a snapshot.                                             |
+| `sourceSnapshotName`        | string   | Source snapshot name if this volume was cloned from a snapshot.                                           |
+| `qos.class`                 | int      | Assigned QoS class identifier.                                                                            |
+| `qos.iops`                  | int      | IOPS limit for this volume.                                                                               |
+| `qos.throughput.read`       | int      | Read throughput limit (MiB/s).                                                                            |
+| `qos.throughput.write`      | int      | Write throughput limit (MiB/s).                                                                           |
+| `qos.throughput.readWrite`  | int      | Combined read/write throughput limit (MiB/s).                                                             |
+| `blobID`                    | int      | Backend blob identifier.                                                                                  |
+| `maxNamespacesPerSubsystem` | int      | Maximum number of NVMe namespaces per subsystem.                                                          |
 
 ### Snapshot Cloning
 
@@ -432,3 +436,123 @@ spec:
 | `tasks[].taskResult`   | string | Backend result payload or message.                   |
 | `tasks[].retried`      | int    | Number of retry attempts made for the task.          |
 | `tasks[].canceled`     | bool   | Whether the task was canceled.                       |
+
+## StorageBackup
+
+The `StorageBackup` resource creates a one-time backup of a PVC to the S3-compatible storage endpoint configured
+in the `StorageCluster`. For backup configuration prerequisites, see
+[Backup and Recovery](../usage/backup-recovery.md#kubernetes-crd-operations).
+
+```yaml title="Example: Create a PVC backup"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageBackup
+metadata:
+  name: my-backup
+  namespace: simplyblock
+spec:
+  clusterName: production
+  pvcRef:
+    name: my-pvc
+```
+
+### Spec Fields
+
+| Field         | Type   | Description                                          |
+|---------------|--------|------------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**.     |
+| `pvcRef.name` | string | Name of the PVC to back up. **Required**.            |
+
+### Status Fields
+
+| Field      | Type   | Description                                                 |
+|------------|--------|-------------------------------------------------------------|
+| `phase`    | string | Current phase: `InProgress` or `Done`.                      |
+| `pvc`      | string | Name of the source PVC.                                     |
+| `backupID` | string | Backend backup identifier assigned after the backup starts. |
+| `snapshot` | string | Name of the snapshot used for the backup.                   |
+
+## BackupRestore
+
+The `BackupRestore` resource restores a `StorageBackup` into a new PVC. The backup may be directed to a
+different pool or storage node, but must be restored within the same namespace as the `BackupRestore` object.
+
+```yaml title="Example: Restore a backup to a new PVC"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupRestore
+metadata:
+  name: my-restore
+  namespace: simplyblock
+spec:
+  clusterName: production
+  backupRef:
+    name: my-backup
+  pvcTemplate:
+    metadata:
+      name: restored-pvc
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+```
+
+### Spec Fields
+
+| Field                       | Type   | Description                                                                     |
+|-----------------------------|--------|---------------------------------------------------------------------------------|
+| `clusterName`               | string | Name of the target StorageCluster. **Required**.                                |
+| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                      |
+| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                 |
+| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup. |
+| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                    |
+| `pvcTemplate.spec`          | object | PVC spec including `accessModes` and `resources`.                               |
+
+### Status Fields
+
+| Field    | Type   | Description                                           |
+|----------|--------|-------------------------------------------------------|
+| `phase`  | string | Current phase: `InProgress`, `PVCBinding`, or `Done`. |
+| `backup` | string | Name of the source `StorageBackup`.                   |
+| `pvc`    | string | Name of the newly created PVC.                        |
+
+!!! warning
+    `BackupRestore` can only restore a PVC to the same namespace as the restore object.
+
+## BackupPolicy
+
+The `BackupPolicy` resource defines an automated backup schedule with retention settings. Policies are attached
+to PVCs using the `simplybk/backup-policy` Kubernetes annotation, which causes `StorageBackup` objects to be
+created automatically on schedule. Removing the annotation detaches the policy; updating it switches the PVC to
+the new policy.
+
+```yaml title="Example: Create a backup policy"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupPolicy
+metadata:
+  name: my-policy
+  namespace: simplyblock
+spec:
+  clusterName: production
+  maxVersions: 10
+  maxAge: "7d"
+  schedule: "15m,4 60m,11 24h,7"
+```
+
+Attach the policy to a PVC:
+
+```bash title="Attach a backup policy to a PVC"
+kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy=my-policy
+```
+
+### Spec Fields
+
+| Field         | Type   | Description                                                       |
+|---------------|--------|-------------------------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**.                  |
+| `maxVersions` | int    | Maximum number of backup versions to retain.                      |
+| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).            |
+| `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs. |
+
+The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
+take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).

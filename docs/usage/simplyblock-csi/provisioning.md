@@ -68,6 +68,7 @@ To create a new persistent volume claim from an existing and live volume, see th
 ### NVMe over Fabrics Target
 
 To create the static persistent volume, the following values need to be known:
+
 - `model`
 - `nqn`
 - `lvol`
