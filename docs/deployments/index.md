@@ -65,7 +65,7 @@ life cycle automation is performed by the orchestrator-specific simplyblock driv
 - On OpenStack: [Cinder Driver](openstack/index.md)
 
 Generally, before creating volumes it is important to understand the difference btw. an
-[NVMe-oF Subsystem and a Namespace](nvme-namespaces-and-subsystems.md). 
+[NVMe-oF Subsystem and a Namespace](../architecture/concepts/nvme-namespaces-and-subsystems.md). 
 
 ## System Requirements and Sizing
 
