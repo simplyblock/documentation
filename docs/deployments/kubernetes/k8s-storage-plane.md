@@ -203,14 +203,14 @@ kubectl get simplyblockpool -n simplyblock
 ```
 
 Once the pool is active, the operator automatically creates a StorageClass named
-`simplyblock-<clusterName>-<poolName>`. In this example, the StorageClass is called
-`simplyblock-production-production-pool`.
+`simplyblock-<namespace>-<clusterName>-<poolName>`. In this example, the StorageClass is called
+`simplyblock-simplyblock-production-my-pool`.
 
 The StorageClass is automatically removed when the storage pool is deleted. For full details and customization options
 are available at [Simplyblock Operator: Storage Pool](../../reference/operator.md#storage-pool).
 
 ```bash title="Check the StorageClass"
-kubectl get storageclass simplyblock-production-production-pool
+kubectl get storageclass simplyblock-simplyblock-production-my-pool
 ```
 
 ## Provision Your First Volume
@@ -232,7 +232,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: simplyblock-production-production-pool
+  storageClassName: simplyblock-simplyblock-production-my-pool
 ```
 
 ```bash title="Create the PVC"
@@ -242,7 +242,7 @@ kubectl get pvc simplyblock-test-pvc
 
 ```plain title="Example output of PVC status"
 NAME                    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
-simplyblock-test-pvc    Pending                                       simplyblock-production-production-pool   5s
+simplyblock-test-pvc    Pending                                       simplyblock-simplyblock-production-my-pool   5s
 ```
 
 Since provisioning is asynchronous, the PVC status will initially be `Pending`. The StorageClass uses
@@ -285,7 +285,7 @@ kubectl get pvc simplyblock-test-pvc
 
 ```plain title="Example output of PVC status"
 NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
-simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-production-production-pool   30s
+simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-simplyblock-production-my-pool   30s
 ```
 
 It is now possible to access the data written to the volume when the pod started up.
