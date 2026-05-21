@@ -176,6 +176,11 @@ nodes need to be added.
 On the secondary nodes, the network requires the same configuration as on the primary. Executing the commands under
 [Firewall Configuration (CP)](#firewall-configuration-cp) will get the node prepared.
 
+!!! important "Highly Available Control Plane"
+    When simplyblock is deployed with an HA control plane, an external load balancer is required to distribute
+    requests of the storage plane to active control plane nodes. This is required to ensure that the control plane
+    is not a single point of failure when one or more management nodes are down.
+
 Afterward, Python, Pip, and `{{ cliname }}` need to be installed.
 
 ```bash title="Deployment preparation"
