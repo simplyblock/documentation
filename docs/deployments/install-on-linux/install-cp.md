@@ -1,6 +1,6 @@
 ---
 title: "Install Control Plane"
-description: "Install Control Plane: The first step when installing simplyblock on plain linux (Docker), is to install the control plane."
+description: "Install Control Plane: The first step when installing simplyblock on plain Linux (Docker), is to install the control plane."
 weight: 32000
 ---
 
@@ -12,7 +12,7 @@ Before starting the deployment, make sure that the following prerequisites as de
 
 ## Control Plane Installation
 
-The first step when installing simplyblock on plain linux (Docker), is to install the control plane. The control
+The first step when installing simplyblock on plain Linux (Docker) is to install the control plane. The control
 plane manages one or more storage clusters. If an existing control plane is available and the new cluster should be
 added to it, this section can be skipped. 
 
