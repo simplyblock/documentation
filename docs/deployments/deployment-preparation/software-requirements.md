@@ -6,7 +6,7 @@ weight: 29999
 
 ## Operating System Requirements (Control Plane, Storage Plane)
 
-**Control plane nodes**, as well as storage nodes in a **plain linux** deployment, require a Red Hat Linux-based
+**Control plane nodes**, as well as storage nodes in a **plain Linux** deployment, require a Red Hat Linux-based
 distribution with minimum version 9.
 
 In a hyper-converged deployment a broad range of operating systems are supported. The availability depends on the
