@@ -2,7 +2,7 @@
 |---------------------------------|-------------------|-------------------------|----------------------------------------------------------|-------------|
 | ICMP                            | ingress           | control                 | -                                                        | ICMP        |
 | spdk-http-proxy                 | egress            | storage, control        | 5000                                                     | TCP         |
-| spdk-firewall-proxy<sup>1<sup>  | egress            | storage, control        | 50001-50065                                              | TCP         |
+| spdk-firewall-proxy<sup>1</sup> | egress            | storage, control        | 50001-50065                                              | TCP         |
 | nvmf (internal, client-target)  | ingress, egress   | storage                 | 4420-4499                                                | TCP         |
 | FoundationDB                    | egress            | storage                 | 4500                                                     | TCP         |
 | Control plane API               | egress            | control                 | 80                                                       | TCP         |
