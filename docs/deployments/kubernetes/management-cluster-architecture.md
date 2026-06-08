@@ -64,7 +64,6 @@ metadata:
   name: simplyblock-cluster
   namespace: default
 spec:
-  clusterName: simplyblock-cluster
   mgmtIfname: eth0
   fabricType: tcp
   isSingleNode: false

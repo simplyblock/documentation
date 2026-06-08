@@ -1,6 +1,6 @@
 ---
 title: "Install Control Plane"
-description: "Install Control Plane: The first step when installing simplyblock on plain linux (Docker), is to install the control plane."
+description: "Install Control Plane: The first step when installing simplyblock on plain Linux (Docker), is to install the control plane."
 weight: 32000
 ---
 
@@ -12,7 +12,7 @@ Before starting the deployment, make sure that the following prerequisites as de
 
 ## Control Plane Installation
 
-The first step when installing simplyblock on plain linux (Docker), is to install the control plane. The control
+The first step when installing simplyblock on plain Linux (Docker) is to install the control plane. The control
 plane manages one or more storage clusters. If an existing control plane is available and the new cluster should be
 added to it, this section can be skipped. 
 
@@ -26,7 +26,7 @@ to be disabled on management nodes.
 The following is a list of all ports (TCP and UDP) required to operate as a management node. Attention is required, as
 this list is for management nodes only. Storage nodes have a different port configuration.
 
-{% include 'control-plane-network-port-table.md' %}
+{% include 'network-port-table.md' %}
 
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 
@@ -97,29 +97,11 @@ If the check succeeds, it's time to set up the primary management node:
 {{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha
 ```
 
-To enable NVMe-oF transport security (DH-HMAC-CHAP authentication and TLS/PSK), provide a JSON configuration file
-with the `--host-sec` flag:
-
-```bash title="Deploy with NVMe-oF security"
-{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --host-sec=host-security-config.json
-```
-
-```json title="Example: host-security-config.json"
-{
-  "params": {
-    "dhchap_digests": ["sha256", "sha384"],
-    "dhchap_dhgroups": ["ffdhe4096", "ffdhe2048"]
-  }
-}
-```
-
-This configures the cluster-wide DH-HMAC-CHAP digest algorithms and Diffie-Hellman groups used for NVMe-oF
-authentication. For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-security.md).
-
 To enable S3 backup and recovery, provide a JSON configuration file with the `--use-backup` flag:
 
 ```bash title="Deploy with Backup"
-{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha --use-backup=backup-config.json
+{{ cliname }} cluster create --ifname=<IF_NAME> \
+  --ha-type=ha --use-backup=backup-config.json
 ```
 
 ```json title="Example: backup-config.json"
@@ -193,6 +175,11 @@ nodes need to be added.
 
 On the secondary nodes, the network requires the same configuration as on the primary. Executing the commands under
 [Firewall Configuration (CP)](#firewall-configuration-cp) will get the node prepared.
+
+!!! important "Highly Available Control Plane"
+    When simplyblock is deployed with an HA control plane, an external load balancer is required to distribute
+    requests of the storage plane to active control plane nodes. This is required to ensure that the control plane
+    is not a single point of failure when one or more management nodes are down.
 
 Afterward, Python, Pip, and `{{ cliname }}` need to be installed.
 
