@@ -20,7 +20,15 @@ Ensure your OpenShift cluster is operational and that you have administrator pri
 Before deploying simplyblock components, grant the required SCC permissions:
 
 ```bash title="Grant SCC permissions"
-oc adm policy add-scc-to-group privileged system:serviceaccounts
+oc create namespace simplyblock
+
+oc adm policy add-scc-to-group privileged system:serviceaccounts:simplyblock
+oc adm policy add-scc-to-group anyuid system:serviceaccounts:simplyblock
+
+oc label namespace simplyblock \
+  pod-security.kubernetes.io/enforce=privileged \
+  pod-security.kubernetes.io/audit=privileged \
+  pod-security.kubernetes.io/warn=privileged
 ```
 
 This step is mandatory to allow SPDK and storage-related containers to run with the privileges required for NVMe device
