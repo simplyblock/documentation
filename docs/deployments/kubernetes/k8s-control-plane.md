@@ -32,17 +32,14 @@ helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
 ```
 
 !!! important "TLS Encryption"
-    {{experimental}}
+    {{ experimental }}
 
-    Simplyblock has just added support for TLS encryption for all internal communication. At the moment, it's an
-    experimental feature only available when installed into OpenShift clusters.
+    All internal control plane traffic can be encrypted with TLS. On OpenShift, the cluster's built-in certificate
+    manager is used out of the box. Mutual TLS (mTLS), where components additionally authenticate each other with
+    client certificates, is only works with Cert-Manager. That means that on OpenShift, the Cert-Manager must be
+    installed to enable mTLS.
 
-    It generally is a good idea to install the operator with TLS support enabled on OpenShift to ensure that all
-    internal communication is encrypted and secure.
-
-    To enable TLS, add the `--set tls.enabled=true` flag to the `helm install` command.
-
-    In the future, the support will be extended to further Kubernetes distributions by enabling Cert-Manager support.
+    See [Securing the Control Plane](security.md#transport-layer-security-mutual-tls-mtls) for configuration.
 
 After installation, verify the operator is running:
 

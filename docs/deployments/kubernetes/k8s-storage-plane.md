@@ -99,6 +99,12 @@ been registered, it has no storage nodes yet. Those are added in the next step.
     as NVMe-oF transport security, backup configuration, capacity thresholds, and more, are available at
     [Cluster Deployment Options](../cluster-deployment-options.md).
 
+!!! tip "External KMS"
+    If volumes in this cluster should offload their encryption keys to an external KMS, set
+    `spec.hashicorpVaultSettings.base_url` on the `StorageCluster` now. The setting can also be added later, but
+    configuring it upfront means encrypted volumes use the external KMS from day one. See
+    [Securing the Control Plane: External KMS](security.md#external-key-management-kms).
+
 ## Add Storage Nodes
 
 Now, Kubernetes worker nodes will be transformed into simplyblock storage nodes. To initiate the process, a

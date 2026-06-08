@@ -1,6 +1,6 @@
 ---
 title: "Encrypting with Kubernetes Secrets"
-description: "Encrypting with Kubernetes Secrets: {% include 'kubernetes-csi-encryption.md' %}."
+description: "Encrypting with Kubernetes Secrets in simplyblock"
 weight: 30200
 ---
 

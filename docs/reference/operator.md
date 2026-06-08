@@ -79,6 +79,7 @@ spec:
 | `warningThreshold.provisionedCapacity`  | int    | Provisioned capacity warning threshold (percent).                                                                              |
 | `criticalThreshold.provisionedCapacity` | int    | Provisioned capacity critical threshold (percent).                                                                             |
 | `action`                                | string | Lifecycle action: `activate` or `expand`.                                                                                      |
+| `hashicorpVaultSettings.base_url`       | string | Base URL of an external Hashicorp Vault or Openbao instance used to manage volume encryption keys (e.g., `https://vault.vault:8200/`). See [Securing the Control Plane: External KMS](../deployments/kubernetes/security.md#external-key-management-kms). |
 | `backup.credentialsSecretRef.name`      | string | Name of the Secret (in the same namespace) holding `access_key_id` and `secret_access_key`. **Required when `backup` is set**. |
 | `backup.localEndpoint`                  | string | S3-compatible endpoint URL for backup storage.                                                                                 |
 | `backup.snapshotBackups`                | bool   | Enable snapshot-based backups.                                                                                                 |
