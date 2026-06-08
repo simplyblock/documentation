@@ -50,7 +50,7 @@ Multiple ports must be open on storage node hosts.
 It is required to use one or more separate VLANs for simplyblock. Ports within the same VLAN do not require extra
 firewall rules, but ports between the control plane and storage networks typically do.
 
-{% include 'storage-plane-network-port-table-k8s.md' %}
+{% include 'network-port-table.md' %}
 
 ---
 
