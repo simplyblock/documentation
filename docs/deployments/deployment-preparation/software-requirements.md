@@ -6,40 +6,31 @@ weight: 29999
 
 ## Operating System Requirements (Control Plane, Storage Plane)
 
-**Control plane nodes**, as well as storage nodes in a **plain linux** deployment, require one of the following
-operating systems:
+**Control plane nodes**, as well as storage nodes in a **plain Linux** deployment, require a Red Hat Linux-based
+distribution with minimum version 9.
 
-| Operating System               | Versions |
-|--------------------------------|----------|
-| Alma Linux                     | 9        |
-| Rocky Linux                    | 9        |
-| Redhat Enterprise Linux (RHEL) | 9        |
-
-In a hyper-converged deployment a broad range of operating systems are supported. The availability also depends on the
-utilized Kubernetes distribution.
-
-| Operating System               | Versions     |
-|--------------------------------|--------------|
-| Alma Linux                     | 9, 10        |
-| Rocky Linux                    | 9, 10        |
-| Redhat Enterprise Linux (RHEL) | 9, 10        |
-| Ubuntu                         | 22.04, 24.04 |   
-| Debian                         | 12, 13       |
-| Talos                          | from 1.6.7   |
+In a hyper-converged deployment a broad range of operating systems are supported. The availability depends on the
+used Kubernetes distribution.
 
 The operating system must be on the latest patch-level.
 
+A full overview of the supported operating systems can be found at the
+[Supported Linux Distributions](../../reference/supported-linux-distributions.md) reference.
 
 # Operating System Requirements (Initiator)
 
-An initiator is the operating system to which simplyblock logical volumes are attached over the network (NVMe/TCP).
+An initiator (NVMe client) is the operating system to which simplyblock logical volumes are attached over the network
+(NVMe/TCP or NVMe/RDMA).
 
-For further information on the requirements of the initiator-side (client-only), see:
+A full overview of the supported operating systems for initiators can be found at:
 
-- [Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
+- [Linux Distributions and Versions](../../reference/supported-linux-distributions.md#hosts-initiators-accessing-storage-cluster-over-nvmf)
 - [Linux Kernel Versions](../../reference/supported-linux-kernels.md)
 
 # Kubernetes Requirements
+
+!!! important
+    Simplyblock requires a Kubernetes cluster running on Linux host machines. Windows host machines are not supported.
 
 For Kubernetes-based deployments, the following Kubernetes environments and distributions are supported:
 
@@ -52,8 +43,9 @@ For Kubernetes-based deployments, the following Kubernetes environments and dist
 | Talos                | 1.6.7 and higher |
 | OpenShift            | 4.19 and higher  |
 
-!!! important
-    Simplyblock requires a Kubernetes cluster running on Linux host machines. Windows host machines are not supported.
+Additionally, there are verified and supported operating systems for the Kubernetes worker nodes. A full reference is
+available at the [Supported Linux Distributions](../../reference/supported-linux-distributions.md#kubernetes-hyper-converged-control-plane-and-storage-plane)
+reference.
 
 # Proxmox Requirements
 

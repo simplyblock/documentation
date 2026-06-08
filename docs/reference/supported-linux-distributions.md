@@ -33,7 +33,8 @@ The following Linux distributions are considered tested and supported to run a d
 
 ## Kubernetes Hyper-Converged: Control Plane and Storage Plane
 
-The following Linux distributions are considered tested and supported to run a hyper-converged storage plane:
+The following Linux distributions are considered tested and supported to run a hyper-converged control and storage
+plane:
 
 | Distribution             | Version         | Architecture            | Support Level   |
 |--------------------------|-----------------|-------------------------|-----------------|

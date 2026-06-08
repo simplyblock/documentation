@@ -275,6 +275,14 @@ interconnect.
 It is recommended to use a separate physical NIC with two ports (bonded) and a highly available network for
 management traffic. For management traffic, a 1 GBit/s network is sufficient and a Linux Bridge may be used.
 
+!!! important "Highly Available Control Plane"
+    When simplyblock is deployed with an HA control plane, an external load balancer is required to distribute
+    requests of the storage plane to active control plane nodes. This is required to ensure that the control plane
+    is not a single point of failure when one or more management nodes are down.
+
+    For Simplyblock Operator-based deployments, the load balancer is not required, as it is already implemented as
+    a Kubernetes Service.
+
 ### Layer 2 Constraints and Prohibited Topologies
 
 !!! warning
