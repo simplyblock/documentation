@@ -7,4 +7,4 @@
 | spdk-http-proxy                | egress    | storage, control        | 5000, 5001    | TCP         |
 | spdk-firewall-proxy<sup>1<sup> | egress    | storage, control        | 50001,50002   | TCP         |
 
-<sup>1</sup> deprecated in 26.2.3
+<span><sup>1</sup> deprecated in 26.2.3</span>
