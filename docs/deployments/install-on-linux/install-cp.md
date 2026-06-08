@@ -26,7 +26,7 @@ to be disabled on management nodes.
 The following is a list of all ports (TCP and UDP) required to operate as a management node. Attention is required, as
 this list is for management nodes only. Storage nodes have a different port configuration.
 
-{% include 'control-plane-network-port-table.md' %}
+{% include 'network-port-table.md' %}
 
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 

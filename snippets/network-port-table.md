@@ -13,4 +13,4 @@
 | Control plane RPC               | ingress           | storage | Control | 8080-9044                        | TCP         |
 | Monitoring Stack                | ingress, egress   | control | Control | 12202, 13301, 13302, 9200, 9090  | TCP         |
 
-<p style="font-size: 12px; position: relative; top: -20px;"><sup>1</sup>will depricate with 26.2.3</p>
+<p style="font-size: 12px; position: relative; top: -20px;"><sup>1</sup>Deprecated since 26.2.3</p>
