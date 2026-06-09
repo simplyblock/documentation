@@ -8,13 +8,12 @@ Simplyblock provides a Kubernetes operator that manages the full lifecycle of si
 operator is installed via a single Helm chart and uses Custom Resource Definitions (CRDs) to declaratively manage
 clusters, storage nodes, storage pools, and the CSI driver.
 
-For Kubernetes environments, a **hyper-converged setup is a first-class simplyblock deployment model** and the
-recommended approach. In this model, simplyblock storage services run on selected Kubernetes worker nodes, sharing
-resources with other workloads in the same Kubernetes cluster.
+For Kubernetes environments, a **simplyblock deployment** can be either hyper-converged or disaggregated. 
+In the hyper-converged model, simplyblock storage services run on selected Kubernetes worker nodes, sharing
+resources with other workloads in the same Kubernetes cluster. In a disaggregated deployment, storage services run on
+dedicated worker nodes either within the same or a different cluster.
 
-For OpenShift environments, *hyper-converged* deployments are the recommended approach.
-
-## Hyper-Converged Deployment Overview (Recommended)
+## Deployment Overview (Recommended)
 
 A typical Kubernetes deployment follows these steps:
 
