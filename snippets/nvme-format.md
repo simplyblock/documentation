@@ -1,14 +1,21 @@
-Once the check is complete, the NVMe devices in each storage node can be prepared. To prevent data loss in case of a
-sudden power outage, NVMe devices need to be formatted for a specific LBA format.
+Simplyblock generally requires NVMe devices with support for 4K block size. This is the case for almost all Enterprise-grade NVMe devices, 
+nevertheless it is recommended to ensure support before deployment. 
+
+Alternatively, 512 bytes block only supporting devices can be used. However, they must provide 4K write atomiticy or 4K torn write protection. 
 
 !!! warning
-    Failing to format NVMe devices with the correct LBA format can lead to data loss or data corruption in the case
-    of a sudden power outage or other loss of power. If you can't find the necessary LBA format, it is best to ask
-    your simplyblock contact for further instructions.
-    
-    On AWS, the necessary LBA format is not available. Simplyblock is, however, fully tested and supported with AWS.
+    The only devices with 512 bytes block size, that are also known to support 4K torn write protection, are the NVMe devices provided by AWS.
 
-The `lsblk` is the best way to find all NVMe devices attached to a system.
+Devices must not contain active mount points under Linux. Simplyblock fails to claim devices that are moounted or otherwise marked as busy. 
+
+Additionally, partitions must be removed from devices. Simplyblock can only claim unpartitioned devices. Alternatively, simplyblock can remove
+partitions during the optional formatting process as part of the deployment. However, partitioned devices will never be automatically selected.
+
+!!! danger
+    Simplyblock optionally performs a low-level format of selected devices during the deployment process. 
+    This erases all data on the devices without recovery option!
+    
+Use `lsblk` to identify available NVMe devices without active mount points.
 
 ```plain title="Example output of lsblk"
 [demo@demo-3 ~]# sudo lsblk
@@ -24,7 +31,8 @@ nvme1n1     259:2    0   70G  0 disk
 nvme0n1     259:3    0   70G  0 disk
 ```
 
-In the example, we see four NVMe devices. Three devices of 70GiB and one device with 6.5GiB storage capacity.
+The example shows four NVMe devices. Three devices of 70 GiB each and one device with 6.5 GiB storage capacity.
+None of those devices have any active mount points and partitions.
 
 To find the correct LBA format (_lbaf_) for each of the devices, the `nvme` CLI can be used.
 
@@ -48,43 +56,10 @@ lbaf  6 : ms:16  lbads:12 rp:0
 lbaf  7 : ms:64  lbads:12 rp:0
 ```
 
-From this output, the required _lbaf_ configuration can be found. The necessary configuration has to have the following
-values:
+From this output, the required _lbaf_ configuration can be found. `lbads` must be 12. Simplyblock will automatically choose `lbads: 12` with any `ms > 0` if available, as 
+this significantly improves performance if DIF (data integrity checking) is used.
 
-| Property | Value |
-|----------|-------|
-| ms       | 0     |
-| lbads    | 12    |
-| rp       | 0     |
-
-In the example, the required LBA format is 4. If an NVMe device doesn't have that combination, any other _lbads=12_
-combination will work. However, simplyblock recommends asking for the best available combination.
-
-!!! info
-    In some rare cases, no lbads=12 combination will be available. In this case, it is ok to leave the current
-    setup. This is specifically true for certain cloud providers such as AWS. 
-
-In our example, the device is already formatted with the correct _lbaf_ (see the "in use"). It is, however,
-recommended to always format the device before use.
-
-To format the drive, the `nvme` cli is used again.
-
-```bash title="Formatting the NVMe device"
-sudo nvme format --lbaf=<LBAF> --ses=0 /dev/nvmeXnY
-```
-
-The output of the command should give a successful response when executed similarly to the example below.
-
-```plain title="Example output of NVMe device formatting"
-[demo@demo-3 ~]# sudo nvme format --lbaf=4 --ses=0 /dev/nvme0n1
-You are about to format nvme0n1, namespace 0x1.
-WARNING: Format may irrevocably delete this device's data.
-You have 10 seconds to press Ctrl-C to cancel this operation.
-
-Use the force [--force] option to suppress this warning.
-Sending format operation ...
-Success formatting namespace:1
-```
+If only `ms: 0` is available, simplyblock will use this as a fallback option.
 
 !!! warning
     This operation needs to be repeated for each NVMe device that will be handled by simplyblock.
