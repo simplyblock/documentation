@@ -25,19 +25,26 @@ When an external KMS is configured, simplyblock applies a two-layer key model:
   Typically, a certain number of all the unseal keys are required to unseal the KMS (e.g., 3 of 5 keys). These keys
   should be stored in separate secure locations.
 - **Data Encryption Keys (DEKs)** are generated per volume and used to encrypt the at-rest data blocks of that volume.
-  These keys are short-lived in cluster memory and never stored in plaintext at rest. The wrapped DEKs are stored inside
-  the external KMS.
-- **Key Encryption Keys (KEKs)** live inside the KMS. The cluster asks the KMS to wrap each DEK on creation and to
-  unwrap it when the volume is brought online. The KEKs never leave the KMS.
+  The control plane stores only the wrapped (encrypted) form of each DEK and never decrypts it. Plaintext DEKs exist
+  only transiently in memory on the storage node where the volume is being mounted, handled exclusively by the SPDK
+  proxy.
+- **Key Encryption Keys (KEKs)** live inside the KMS. The cluster asks the KMS to wrap each DEK on creation. When a
+  volume is brought online, the wrapped DEK is passed to the SPDK proxy on the target storage node, which asks the KMS
+  to unwrap it directly. The KEKs never leave the KMS.
 
 ## Authentication and Trust
 
-The KMS authenticates simplyblock components using a client certificate issued by the
+Two distinct simplyblock components authenticate to the KMS using client certificates issued by the
 `simplyblock-certificate-authority-issuer` ClusterIssuer, which the operator creates as part of its mTLS setup.
 Because the KMS depends on this CA, [mTLS](../../deployments/kubernetes/security.md#transport-layer-security-mutual-tls-mtls)
 must be configured on the control plane before an external KMS can be wired up.
 
-Operationally, this means the KMS team and the storage team share only the CA bundle and an agreed-upon DNS-name for
-the simplyblock client. No static passwords or long-lived tokens must be exchanged.
+- The **web API** authenticates as `simplyblock-webappapi` and holds a policy limited to key management, envelope
+  encryption, and KV reads/writes. It can never decrypt.
+- The **SPDK proxy** (running on each storage node) authenticates as `simplyblock-storagenode` and holds a policy
+  limited to Transit decryption. It can access no other KMS state.
+
+Operationally, this means the KMS team and the storage team share only the CA bundle and agreed-upon DNS names for
+the two simplyblock roles. No static passwords or long-lived tokens must be exchanged.
 
 For the setup steps, see [Securing the Control Plane: External KMS](../../deployments/kubernetes/security.md#external-key-management-kms).

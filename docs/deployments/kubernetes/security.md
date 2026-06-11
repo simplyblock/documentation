@@ -140,7 +140,8 @@ works for both Vault (`vault`) and OpenBao (`bao`). Assign the appropriate CLI t
 ```bash title="Configure the vault for simplyblock"
 CLI=vault   # or: CLI=bao
 
-# Policy granting access to the transit and kv backends
+# Policy for the web API: manages KEKs, generates and stores wrapped DEKs,
+# and reads them back out. Never performs decryption.
 $CLI policy write webappapi-policy - <<EOF
 path "transit/keys/*" {
   capabilities = ["create", "update", "read", "delete"]
@@ -154,12 +155,21 @@ path "transit/datakey/wrapped/*" {
   capabilities = ["create", "update"]
 }
 
-path "transit/decrypt/*" {
-  capabilities = ["create", "update"]
+path "transit/encrypt/*" {
+  capabilities = ["update"]
 }
 
 path "kv/*" {
   capabilities = ["create", "read", "update", "delete"]
+}
+EOF
+
+# Policy for the SPDK proxy: receives wrapped DEKs from the control plane
+# and decrypts them locally on the storage node. No KV or key management
+# access is needed.
+$CLI policy write spdk-proxy-policy - <<EOF
+path "transit/decrypt/*" {
+  capabilities = ["update"]
 }
 EOF
 
@@ -172,17 +182,29 @@ $CLI write auth/cert/certs/webappapi \
     token_ttl=10m \
     token_max_ttl=30m
 
+# Adjust allowed_dns_sans to match the DNS SAN on the storage node certificates.
+$CLI write auth/cert/certs/spdk-proxy \
+    certificate=@/${CLI}/tls/ca.crt \
+    allowed_dns_sans="simplyblock-storagenode" \
+    token_policies=spdk-proxy-policy \
+    token_ttl=10m \
+    token_max_ttl=30m
+
 # Secret engines used by simplyblock
 $CLI secrets enable transit
 $CLI secrets enable -version=1 kv
 ```
 
-- The **policy** grants simplyblock the minimum capabilities it needs: managing keys, performing envelope
-  encryption on the `transit` backend, and storing per-volume key material on the `kv` backend.
-- The **cert auth** role only accepts clients that present a certificate chaining to the simplyblock CA *and* whose
-  DNS SAN is `simplyblock-webappapi`. Tokens are short-lived (10 min, 30 min maximum), so a compromised token expires
-  quickly.
-- **Transit** is used for wrapping data-encryption keys. The **kv** version 1 is used as the per-volume metadata store.
+- The **webappapi policy** grants the control plane the minimum capabilities it needs: managing KEKs,
+  performing envelope encryption on the `transit` backend, and storing per-volume wrapped key material on the
+  `kv` backend. Decryption is explicitly excluded — the control plane never holds plaintext DEKs.
+- The **spdk-proxy policy** grants storage nodes the single capability they need: calling `transit/decrypt` to
+  recover plaintext keys locally, so they never leave the node.
+- The **cert auth** roles only accept clients that present a certificate chaining to the simplyblock CA *and*
+  whose DNS SAN matches the respective role. Tokens are short-lived (10 min, 30 min maximum), so a compromised
+  token expires quickly.
+- **Transit** is used for wrapping and unwrapping data-encryption keys. The **kv** version 1 is used as the
+  per-volume metadata store.
 
 ### Point the StorageCluster to Vault
 
