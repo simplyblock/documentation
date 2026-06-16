@@ -33,4 +33,6 @@ Key characteristics and benefits of hyper-converged storage include:
   requirements from small edge clusters to large data center clusters.  
 -  **De-coupling from Hardware Lifecycle** Individual hardware components or units can be replaced choosing from different vendors 
 without service interruption or degradation. Gradual replacement of hardware is supported.
+-  **Data Locality**: Best-effort data locality can significantly reduce the burden on the shared network and improve the latency of and 
+  throughput of IO. 
 
