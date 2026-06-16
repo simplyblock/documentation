@@ -16,9 +16,12 @@ The core principle of erasure coding involves breaking data into **k** data frag
 fragments. These **k+m** fragments are distributed across multiple storage nodes. The system can recover lost data using
 any **k** available fragments, even if up to **m** fragments are missing or corrupted.
 
+In Simplyblock, we support n=1, 2 and 4 and k=0, 1 and 2. It is important to note that we use Distributed Erasure Coding in which every chunk of a stripe 
+is stored on a different node. This way we do not only protect the data from loss of drives, but also ensure data availability in case one or two nodes
+are not operational.
+
 Erasure coding has a number of key characteristics:
 
 - **High Fault Tolerance:** Erasure coding can tolerate multiple node failures while allowing full data recovery.
 - **Storage Efficiency:** Compared to replication, erasure coding requires less additional storage to achieve similar levels of redundancy.
-- **Computational Overhead:** Encoding and decoding operations involve computational complexity, which may impact performance in latency-sensitive applications.
 - **Flexibility:** The parameters **k** and **m** can be adjusted to balance redundancy, performance, and storage overhead.
