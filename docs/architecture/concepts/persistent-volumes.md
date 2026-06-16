@@ -5,7 +5,7 @@ weight: 30200
 ---
 
 Persistent Volumes (PVs) in Kubernetes provide a mechanism for managing storage resources independently of individual
-Pods. Unlike ephemeral storage, which is tied to the lifecycle of a Pod, PVs ensure data persistence across Pod restarts
+Pods. Unlike ephemeral storage, which is tied to the lifecycle of a Pod, PVs ensure data persists across Pod restarts
 and rescheduling, enabling stateful applications to function reliably in a Kubernetes cluster.
 
 In Kubernetes, storage resources are abstracted through the Persistent Volume framework, which decouples storage
@@ -19,3 +19,7 @@ Key characteristics of Persistent Volumes include:
 - **Access Modes:** PVs support multiple access modes, such as ReadWriteOnce (RWO), ReadOnlyMany (ROX), and ReadWriteMany (RWX), defining how storage can be accessed by Pods.
 - **Reclaim Policies:** When a PV is no longer needed, it can be retained, recycled, or deleted based on its configured reclaim policy.
 - **Storage Classes:** Kubernetes allows administrators to define different types of storage using StorageClasses, enabling automated provisioning of PVs based on workload requirements.
+
+In simplyblock, each PV is connected to the storage cluster with NVMe-oF (TCP, RoCEv2) through multiple paths to
+multiple storage nodes, with the primary path being a local loopback when possible. Each PV is implemented as a
+namespace in an NVMe-oF subsystem on the storage nodes.
