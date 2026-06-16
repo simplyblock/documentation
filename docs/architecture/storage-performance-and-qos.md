@@ -39,6 +39,32 @@ workloads.
 Simplyblock exhibits a range of architectural characteristics and features to guarantee consistently low latency and
 IOPS in both disaggregated and hyper-converged environments.
 
+### Data Locality
+
+Simplyblock uses nvmf-tcp or nvmf-rocev2 to connect clients (storage consumers) to the storage cluster. While those protocols 
+are networked and allow any type of distributed topology between clients and cluster nodes, Simplyblock can ensure a 
+maximum of data locality to minimize impacts of network latency and bandwidth utilization. In Simplyblock, front storage
+(the remote "docking points" of the clients into the cluster) and back storage (the actual NVMe storage layer) are distributed.
+All cluster back storage devices can be accessed from any front storage entry point using cluster internal NVMe-oF.
+However, to achieve a maximum of data locality without compromising the advantages of a fully distributed system, such as scalability, 
+several advanced mechanisms can be used within Simplyblock:
+1. In a hyper-converged deployment, Simplyblock tries to co-locate front storage volume entry points with the actual workload. In
+Kubernetes, it attempts to create the volume itself on the same node as the workload initially.
+2. Simplyblock has an instant volume migration feature. This allows to re-locate the front storage volume instantly in case the workload
+is migrated to re-align them. In this step, no data is moved yet.
+3. Simplyblock also has a back storage node affinity feature; while the back storage is distributed by its nature, the affinity
+is a best-effort to also co-locate back storage on the same node as front storage.
+4. With node affinity enabled, if the front storage is moved, the back storage will not move instantly. However, once the cluster
+is rebalanced in the background, the data is moved to satisfy node affinity. This movement in rebalancing has important features:
+First, it tries to maximize transfer size, in fact turning smaller random writes into large sequential writes, which are much more efficient.
+Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS); therefore its impact on 
+IO performance is quite limited. This means that volumes ultimately converge towards full data locality whenever possible.
+At the same time, this does not result in any hard limits: For example, in a cluster with 2 PB of storage, it is still possible to 
+create a single volume consuming all of these 2 PB! Also, it can be balanced against scalability and consistency: if io-intensive
+workloads are not well-balanced across worker nodes, data locality could lead to actually worse performance. Therefore, data locality
+is not an absolute requirement, but remains a best effort, and by the operatior is automatically balanced against an optimal 
+IO-performance balance across nodes.
+
 ### Pseudo-Randomized, Distributed Data Placement With Fast Re-Balancing
 
 Simplyblock is a fully distributed solution. Back-storage is balanced across all nodes in the cluster on a very granular
