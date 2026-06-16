@@ -23,3 +23,11 @@ Key characteristics of storage pooling include:
 - **Security Options:** Storage pools can define NVMe-oF security settings (DH-HMAC-CHAP authentication and TLS/PSK
   encryption) that are automatically applied to all volumes created within the pool. See
   [NVMe-oF Security](nvmf-security.md) for details.
+
+!!! important
+    Due to dual layer virtualization (front storage is virtualized separately from back storage), we are are able to achieve true consolidation of entire cluster resources 
+    into a single pool. This means that there is no limit on how to carve logical volumes from that pool (for example, if your total pool is 2 PB in size, you can carve one
+    single volume sized 2 PB or 10.000 small volumes). Also it means that not only the capacity, but the total performance of a pool scales linearly when expanding the pool.
+    As this characteristic is conflicting with the benefits of data locality, we still apply principles of data locality, but in a best-effort manner and without damaging 
+    performance of parts of volumes through localized bottlenecks. 
+
