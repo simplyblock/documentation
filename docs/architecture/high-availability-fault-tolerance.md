@@ -28,6 +28,13 @@ storage nodes along with parity fragments. This provides:
 - **Automatic Rebuilds**: In the event of node or disk failures, missing data is rebuilt automatically using parity
   information stored across the cluster.
 
+> [!IMPORTANT]
+> Simplyblock now also provides support for so-called stretch clusters. This deployment topology adds 
+> disaster recovery across failure domains - racks, cabinets or sites - to protection from failed drives and single-site
+> high-availability. And all of this at a minimum protection overhead. For example, if a cluster is span across 6 racks,
+> it is possible to protect from a single entire rack outage AND a concurrent node outage on another rack or drive failures
+> on any other node with just and overhead of 50%!
+
 ### 2. Multipathing with Primary and Secondary Nodes
 
 Simplyblock supports NVMe-over-Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
@@ -68,3 +75,45 @@ storage plane:
 - Seamless failover and recovery from node, network, or disk failures.
 - Efficient use of storage capacity while ensuring redundancy through erasure coding.
 - Continuous operation during maintenance and upgrade procedures.
+
+### 4. Asynchronous Replication (new)
+
+This new feature allows to protect data stored in a cluster from a site disaster with only 60 seconds of RPO, if 
+bandwidth and/or latency between sites do not allow for stretch clusters. 
+
+The feature can be enabled selectively on a per-volume level at volume create time or later on; it requires the
+control plane to be distributed across two sites, serving one single-site storage cluster on each site.
+
+On disaster fail-over, workloads have to be restarted to reconnect after as short loss of IO  to the now 
+automatically redirected paths; Fail-back considers two scenarios:
+- old site cannot be recovered, a fresh storage cluster is redeployed. All data will be replicated back to the
+original site into the fresh cluster and ultimately fail-back is possible without io interrupt by rolling over the
+NVMe-oF connections.
+- old site can be recovered; in this scenario, only the delta between old and new sites will be replicated back
+and again, ultimately fail-back is possible without io interrupt by rolling over the
+NVMe-oF connections.
+
+The feature also allows monitoring of active and completed replications and generally to control the backlog.
+
+### 5. Backup/Restore (new)
+
+This new feature requires an S3-compatible backup store such as minio or aws S3. It comes with backup policy (retention)
+management and auto-backup. It is very storage and time-efficient as delta-snapshots are used to recurringly store only
+changed data of volumes. The number and timing of individual generations of the backup can be controlled. 
+Older versions can be auto-merged into full backups. Backups can be restored:
+- using the latest or older generations of data
+- into the same storage cluster or a different storage cluster
+- managing encyrpted data via self-contained, encyrpted keys and an external KMS
+
+### 6. Synchronous Replication (outlook)
+
+This planned feature will enable two-site synchronous replication with strong consistency within a single cluster
+without using the stretch feature. It comes at a higher data protection overhead, but in return treats two parts of
+the cluster (one on each site) with independent erasure coding, increasing the overall degree of data protection.
+
+
+
+
+
+
+
