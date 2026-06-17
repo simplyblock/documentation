@@ -13,7 +13,7 @@ scalability, and optimizes resource utilization in distributed data storage envi
 
 Simplyblock values data-locality in hyper-converged deployments and even implements dynamic data locality "following"
 the workloads. 
-However, data locality in Simplyblock is always best-effort, never limiting the scalability of individual volumes or 
+However, data locality in simplyblock is always best-effort, never limiting the scalability of individual volumes or 
 entire storage pools and clusters as well as a balanced resource utilization. 
 
 Traditional storage architectures often separate compute and storage into distinct hardware layers, requiring complex
