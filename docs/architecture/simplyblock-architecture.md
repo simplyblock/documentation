@@ -25,33 +25,34 @@ quorum-based model ensures no single point of failure.
 
 ### Control Plane Responsibilities
 
-The control plane provides the following functionality:
+The control plane provides the following functionality in two groups of distributed services:
 
-- Lifecycle management of clusters:
-    - Deploy storage clusters
-    - Manages nodes and devices
-    - Resize and reconfigure clusters
-- Lifecycle management of logical volumes and pools
-    - For Kubernetes, the Simplyblock CSI driver integrates with the persistent volume lifecycle management
-- Cluster operations
-    - I/O Statistics
-    - Capacity Statistics
-    - Alerts
-    - Logging
-    - others
+- Operations Management and Automation
+    - Lifecycle management of clusters
+        - Deploy storage clusters
+        - Manages nodes and devices
+        - Resize and reconfigure clusters
+    - Lifecycle management of logical volumes and pools
+    - Raw IO Statistics, Capacity, Alerting and Log Feeds
+- Observability Stack (optional)
+    - Log Management (graylog, opensearch, mongoDB, thanos)
+    - Performance Monitoring and Dashboarding (grafana, prometheus) with configurable alerting to email and slack
 
-The control plane also provides real-time collection and aggregation of I/O stats (performance, capacity,
-utilization), proactive cluster monitoring and health checks, monitoring dashboards, alerting, a log file repository
-with a management interface, data migration, and automated node and device restart services.
+The observability stack is optional. It is typically used in PoC (proof of concept) or testing environments and for
+customers, who need to get started quickly. For large scale, multi-cluster deployments it is 
+rather recommended to integrate with pre-existing or targeted observability stacks.
+      
+The control plane is layered and its distributed control plane services run on both kubernetes and native Docker.
+The latter can be used for non-Kubernetes (Proxmox, OpenStack) or disaggregated deployments.
+All services are accessible via the Simplyblock CLI and Control Plane API.
 
-For monitoring dashboards and alerting, the simplyblock control plane provides Grafana and Prometheus. Both systems are
-configured to provide a set of standard alerts that can be delivered via Slack or email. Additionally, customers
-are free to define their own custom alerts.
+On top of those services sits a CSI driver and a Kubernetes operator within the Kubernetes-native operations model. 
+It is entirely managed by Custom Resource Definitions (CRDs), however, internally uses the same Control Plane APIs.
 
-For log management, simplyblock uses Graylog. For a comprehensive insight, Graylog is configured to collect container
-logs from the control plane and storage plane services, the RPC communication between the control plane and storage
-cluster, and the data services logs ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"} or Storage Performance
-Development Kit).
+Communication between the Control Plane and the Storage Plane is performed via two separate access paths:
+
+- A secure HTTPS RPC mechanism with JSON payloads.
+- A secure HTTPS service endpoint for basic control, such as storage node availability monitoring, restart and shutdown.
 
 ### Control Plane State Storage
 
@@ -69,8 +70,8 @@ workers. It will, however, run in separate pods.
 ## Storage Plane
 
 The storage plane consists of distributed storage nodes that run on Linux-based systems and provide logical volumes (
-LVs) as virtual NVMe devices. Using SPDK and DPDK (Data Plane Development Kit), simplyblock achieves high-speed,
-user-space storage operations with minimal latency.
+LVs) as virtual NVMe devices. Using a fork of SPDK (Storage Performance Development Kit) and DPDK (Data Plane Development
+Kit), simplyblock achieves high-speed, user-space storage operations with minimal latency.
 
 To achieve that, simplyblock detaches NVMe devices from the Linux kernel, bypassing the typical kernel-based handling.
 It then takes full control of the device directly, handling all communication with the hardware in user-space. That
@@ -87,7 +88,7 @@ nodes. This improves throughput by parallelizing the access to data through mult
 
 ### Data Protection & Fault Tolerance
 
-Simplyblock's storage engine implements erasure coding, a RAID-like system, which uses parity information to protect
+Simplyblock's storage engine implements distributed erasure coding, a RAID-like system, which uses parity information to protect
 data and restore it in case of a failure. Due to the fully distributed nature of simplyblock's erasure coding
 implementation, parity information is not only stored on disks other than the original data chunk, but also on other
 nodes. This improves data protection and enables higher fault tolerance than typical implementations. While most
