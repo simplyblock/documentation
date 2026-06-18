@@ -3,21 +3,21 @@ title: "Volume Migration"
 weight: 30700
 ---
 
-Simplyblock distributes storage across two layers: the front storage, which acts as "docking point" for clients connecting 
-to volumes remotely via NVMe-oF (tcp, rocev2), and the back storage, which serves the actual cluster storage capacity. 
-Front storage accesses back storage both locally and remotely, by itself using NVMe-oF.
+Simplyblock distributes storage across two layers. The front storage, which acts as "docking point" for clients connecting 
+to volumes remotely via NVMe-oF (TCP, RoCEv2), and the back storage, which serves the actual cluster storage capacity. 
+The front storage accesses back storage both locally and remotely. Remote access itself uses NVMe-oF.
 
 Volume migration in simplyblock enables the online relocation of logical volumes (front storage or "docking points") 
 between storage nodes without service interruption and almost instantly. This is possible, because front storage has
 remote access to all devices in the cluster and thus exists essentially "in memory" only. 
 
-Volume migration is performed automatically based on operator decisions to either pre-serve data locality of workloads or 
-to to balance IO performance across cluster nodes (as the front storage does the "heavy-lifting" in IO processing and runs all
-the data services). It is also used to drain nodes in case they need to be removed from the cluster (hardware replacement, infrastructure
-modernization).
+Volume migrations are performed automatically based on operator decisions to either pre-serve data locality of workloads or 
+to to balance I/O performance across cluster nodes. This is required since the front storage does the "heavy-lifting" in I/O processing
+and runs all the data services. Additionally, volume migration is is used to drain nodes in case they need to be removed from the cluster
+(hardware replacement, infrastructure modernization).
 
-While most of the volume migrations happen "under the hood", users can also explicitely initiate migrations, e.g. to 
-move particular, IO-heavy volumes to particular nodes.
+While most of the volume migrations happen "under the hood", users can also explicitely initiate migrations (e.g., to 
+move particular, I/O-heavy volumes to particular nodes).
 
 ## How Volume Migration Works
 
