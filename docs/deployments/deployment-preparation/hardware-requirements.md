@@ -12,13 +12,14 @@ network bandwidth, and free space on the boot disk.
 
 ### Overview
 
-| Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  | 
-|---------------|---------|------------------------|--------------------------|---------------------|----------------|------------------|
-| Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 1x dedicated NVMe        | 10 GBit/s           | 10 GB          | 3 <sup>(2)</sup> | 
+| Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage          | Network Performance | Free Boot Disk | Number of Nodes  | 
+|---------------|---------|------------------------|-----------------------------------|---------------------|----------------|------------------|
+| Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> | 
 
 <span style="font-size: 0.8em;">
 <sup>1</sup> Simplyblock highly recommends DDR5 memory on storage nodes for optimal performance.<br>
-<sup>2</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
+<sup>2</sup> It is possible to test with only one dedicated NVMe, but this is not approved for production <br>    
+<sup>3</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
 </span>
 
 ---
@@ -42,7 +43,7 @@ The supported architectures and sizing behavior depend on the deployment model o
 ### Storage Node CPU Sizing
 
 IOPS performance depends on Storage Node vCPU. The maximum performance will be reached with
-32 physical cores per socket. In such a scenario, the deployment will dedicate (isolate) 24 cores to
+48 physical cores per socket. In such a scenario, the deployment will dedicate (isolate) 40 cores to
 simplyblock data plane (spdk_80xx containers) and the rest will remain under control of Linux.
 
 ### Storage Node NUMA Placement
@@ -62,29 +63,30 @@ Manual changes to the configuration are possible if the proposed configuration i
 
 ### Hyper-Converged Sizing Guidance
 
-As hyper-converged deployments have to share vCPUs, it is recommended to dedicate 8 vCPU per socket
-to simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to
+As hyper-converged deployments have to share vCPUs, it is recommended to dedicate 15%-20%, but not less than 
+8 vCPU per socket to simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to
 12.5% of vCPU capacity per host. For very IO-intensive applications, this amount should be increased.
 
 ### Storage Node Isolation Behavior
 
 !!! warning
     On storage nodes, required vCPUs will be automatically isolated from the operating system. No
-    kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs.
+    kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs. In 
+    Kubernetes, CPU Topology Manager is used for this purpose. 
 
 ### Storage Node Memory Sizing Formula
 
-For RAM, it is required to estimate the expected average number of logical volumes per node, as well as the
-average raw storage capacity, which can be utilized per node. For example, if each node in
-a cluster has 100 TiB of raw capacity, this would be the average too. In a 5-node cluster,
-with a maximum of 2,500 logical volumes, the average per node would be 500.
+For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on 
+the assigned vcpu and networking performance of the node. For each 10 gb/s of dedicated network bandwidth
+we recommend to use at least 3 subsystems. For each vcpu exceeding 8, it is recommended to use one additional
+subsystem. Use the lower of both values (dedicated network bandwidth, vcpu).
 
 For storage nodes, simplyblock highly recommends DDR5 memory for optimal performance.
 
 | Unit                                                     | Memory Requirement |
 |----------------------------------------------------------|--------------------|
 | Fixed amount                                             | 3 GiB              |
-| Per logical volume (cluster average per node)            | 25 MiB             |
+| Per subsystem      (cluster average per node)            | 25 MiB             |
 | % of maximum storage capacity (cluster average per node) | 1.5 GiB / TiB      |
 
 !!! info
@@ -99,16 +101,17 @@ The simplyblock control plane has different hardware requirements depending on t
 
     For a Kubernetes-based control plane, the minimum requirements per replica are:
     
-    | Service                      | Instances | vCPU(s) | RAM (GB) | Disk (GB) |
-    |------------------------------|-----------|---------|----------|-----------|
-    | Simplyblock Operator         | 1         | 1       | 0.5      | 0.5       |
-    | Control Plane API            | 3         | 1       | 1        | 0.5       |
-    | Meta-Database (FoundationDB) | 3         | 1       | 1        | 5         |
-    | Task Runners                 | 11        | 0.25    | 0.1      | 0.5       |
-    | CSI Driver Services          | 1         | 0.5     | 0.2      | 0.5       |
-    | Admin Pods                   | 1         | 0.5     | 0.25     | 0.5       |
-    | Prometheus                   | 3         | 0.5     | 0.5      | 10        |
-    | **Total per node**           | **3**     | **4.5** | **3.4**  | **18**    |
+    | Service                      | Instances | vCPU(s)  | RAM (GB)  | Disk (GB) |
+    |------------------------------|-----------|----------|-----------|-----------|
+    | Simplyblock Operator         | 1         | 1        | 0.5       | 0.5       |
+    | Control Plane API            | 3         | 0.5      | 1         | 0.5       |
+    | Meta-Database (FoundationDB) | 3         | 1        | 1         | 5         |
+    | Task Runners                 | 11        | 0.25     | 0.1       | 0.5       |
+    | CSI Driver Services          | 1         | 0.5      | 0.2       | 0.5       |
+    | Admin Pods                   | 1         | 0.25     | 0.25      | 0.5       |
+    | Prometheus                   | 1         | 1        | 3         | 10        |
+    | **Total accross 3 nodes**    | **3**     | **10**   | **10.55** | **33.5**  |
+
 
     !!! info
         3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
@@ -118,11 +121,11 @@ The simplyblock control plane has different hardware requirements depending on t
 
     | Service    | Instances | vCPU(s) | RAM (GB) | Disk (GB) |
     |------------|-----------|---------|----------|-----------|
-    | Grafana    | 1         | 4       | 8        | 25        |
-    | Graylog    | 1         | 4       | 8        | 25        |
-    | OpenSearch | 1         | 4       | 8        | 25        |
-    | MongoDB    | 1         | 4       | 8        | 25        |
-    | Thanos     | 3         | 4       | 8        | 25        |
+    | Grafana    | 1         | 1       | 1        | 25        |
+    | Graylog    | 1         | 2       | 3        | 25        |
+    | OpenSearch | 1         | 3       | 12       | 25        |
+    | MongoDB    | 1         | 1       | 1        | 25        |
+    | Thanos     | 3         | 0.25    | 2        | 25        |
 
 === "Plain Linux"
 
@@ -142,10 +145,10 @@ logical volumes, and log retention.
 === "Kubernetes"
 
     The control plane sizing is based on the minimal setup of the Simplyblock Operator. It is designed to support a
-    service size of 200 logical volumes and 3 storage nodes. Furthermore, the assumed log storage retention is 3 days.
+    service size of 2.000 logical volumes and 3 storage nodes. Furthermore, the assumed log storage retention is 3 days.
 
     For larger deployments, use the following tables to adjust the system requirements. The first table shows additional
-    resources per 1,000 logical volumes.
+    resources per 2.500 logical volumes.
 
     The second table shows additional required resources per 10 storage nodes.
 
@@ -255,8 +258,10 @@ deploying simplyblock.
 
 ### Storage Traffic Network Requirements
 
-In production, simplyblock requires a **redundant network** for storage traffic (e.g., via LACP, Stacked Switches, MLAG,
-active/active or active/passive NICs, STP, or MSTP).
+In production, simplyblock works with one of two options:
+- a **redundant network** for storage traffic (e.g., via LACP, Stacked Switches, MLAG, active/active or active/passive NICs, STP, or MSTP).
+- two separate VLANs per node for storage traffic, connected via two separate NIC ports and switch paths, and configured as ***NVMe Multipathing***
+  in such a setup we still recommend to provide a **redundant network for management traffic**, but it is not obligatory.
 
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux
 bond over two ports of the NIC(s) or using SRV-IO must be created.
@@ -287,8 +292,8 @@ management traffic. For management traffic, a 1 GBit/s network is sufficient and
 
 !!! warning
     All storage nodes within a cluster and all hosts accessing storage shall reside within the same hardware VLAN.
-
-    Avoid any gateways, firewalls, or proxies higher than L2 on the network path.
+    Avoid any gateways, firewalls, or proxies higher than L2 on the network path. This is for performance and latency 
+    reasons.
 
 ## Additional Hardware Guidance
 
