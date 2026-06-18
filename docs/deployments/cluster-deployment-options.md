@@ -13,7 +13,7 @@ of data is always stored on the local node (the node to which the volume is atta
 This reduces network traffic and latency - accelerating particularly the read - but may lead to an
 inequal distribution of capacity within the cluster. Generally, using node affinity accelerates
 reads, but leads to higher variability in performance across nodes in the cluster.
-It is recommended on shared networks and networks below 100gb/s. 
+It is recommended particularly for 1+1 EC schemas.
 
 ### ```--data-chunks-per-stripe, --parity-chunks-per-stripe```
 
@@ -36,6 +36,7 @@ new volumes cannot be provisioned and volumes cannot be enlarged. A limit of 500
 ### ```--log-del-interval```
 
 Number of days by which logs are retained. Log storage can grow significantly and it is recommended to keep logs for not longer than one week.
+This is only relevant, if the observability stack is deployed.
 
 ### ```--metrics-retention-period```
 
@@ -43,7 +44,8 @@ Number of days by which the io statistics and other metrics are retained. The am
 
 ### ```--contact-point```
 
-This is a webhook endpoint for alerting (critical events such as storage nodes becoming unreachable)
+This is a webhook endpoint for alerting (critical events such as storage nodes becoming unreachable).
+This is only relevant, if the observability stack is deployed.
 
 ### ```--fabric```
 
@@ -58,26 +60,6 @@ server resources (ram, cpu) and thus limit the total amount of volumes per stora
 If you need few, very performant volumes, increase the amount, if you need a large amount of less performant 
 volumes decrease it. More than 12 parallel connections have limited impact on overall performance. Also, the 
 host requires at least one core per queue pair.
-
-### ```--host-sec```
-
-Path to a JSON file with NVMe-oF host security configuration. This enables DH-HMAC-CHAP authentication for NVMe-oF
-connections cluster-wide. The JSON file specifies the allowed digest algorithms and Diffie-Hellman groups.
-
-```json title="Example: host-security-config.json"
-{
-  "params": {
-    "dhchap_digests": ["sha256", "sha384"],
-    "dhchap_dhgroups": ["ffdhe4096", "ffdhe2048"]
-  }
-}
-```
-
-Supported digests: `sha256`, `sha384`, `sha512`
-
-Supported DH groups: `null`, `ffdhe2048`, `ffdhe3072`, `ffdhe4096`, `ffdhe6144`, `ffdhe8192`
-
-For more information, see [NVMe-oF Security](../architecture/concepts/nvmf-security.md).
 
 ### ```--use-backup```
 
