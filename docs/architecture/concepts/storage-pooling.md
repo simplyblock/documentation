@@ -25,9 +25,14 @@ Key characteristics of storage pooling include:
   [NVMe-oF Security](nvmf-security.md) for details.
 
 !!! important
-    Due to dual layer virtualization (front storage is virtualized separately from back storage), we are are able to achieve true consolidation of entire cluster resources 
-    into a single pool. This means that there is no limit on how to carve logical volumes from that pool (for example, if your total pool is 2 PB in size, you can carve one
-    single volume sized 2 PB or 10.000 small volumes). Also it means that not only the capacity, but the total performance of a pool scales linearly when expanding the pool.
-    As this characteristic is conflicting with the benefits of data locality, we still apply principles of data locality, but in a best-effort manner and without damaging 
-    performance of parts of volumes through localized bottlenecks. 
+    Due to dual-layer virtualization (front storage is virtualized separately from back storage), simplyblock is able
+    to achieve true consolidation of entire cluster resources into a single storage pool.
+
+    This means that there is no physical limit on how to carve logical volumes from that pool. For example, if a total
+    pool is 2 PB in size, a single volume can be sized 2 PB or 10,000 small volumes can be created. Also it means that
+    capacity and total performance of a pool scales linearly when the pool is expanded.
+
+    As this characteristic is conflicting with the benefits of data locality, simplyblock still applies the principles
+    of data locality. This is implemented as a best-effort manner and without damaging performance of parts of volumes
+    through localized bottlenecks. 
 
