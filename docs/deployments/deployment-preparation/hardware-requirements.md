@@ -12,13 +12,14 @@ network bandwidth, and free space on the boot disk.
 
 ### Overview
 
-| Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  | 
-|---------------|---------|------------------------|--------------------------|---------------------|----------------|------------------|
-| Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 1x dedicated NVMe        | 10 GBit/s           | 10 GB          | 3 <sup>(2)</sup> | 
+| Node Type     | vCPU(s) | RAM (GB)                | Locally Attached Storage                 | Network Performance | Free Boot Disk | Number of Nodes  | 
+|---------------|---------|-------------------------|------------------------------------------|---------------------|----------------|------------------|
+| Storage Node  | 8+      | 12+ DDR4 <sup>(1)</sup> | 1x dedicated NVMe <sup>(2)</sup>         | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> | 
 
 <span style="font-size: 0.8em;">
 <sup>1</sup> Simplyblock highly recommends DDR5 memory on storage nodes for optimal performance.<br>
-<sup>2</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
+<sup>2</sup> For production setup, this number is two. 
+<sup>3</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
 </span>
 
 ---
