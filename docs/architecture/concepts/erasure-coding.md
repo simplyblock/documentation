@@ -10,15 +10,16 @@ additional parity fragments, enabling data recovery in the event of node failure
 
 Traditional data redundancy methods, such as replication, require multiple full copies of data, leading to significant
 storage overhead. Erasure coding improves upon this by using mathematical algorithms to generate parity fragments,
-allowing data reconstruction with fewer overheads.
+allowing data reconstruction with lower overhead.
 
 The core principle of erasure coding involves breaking data into **k** data fragments and computing **m** parity
 fragments. These **k+m** fragments are distributed across multiple storage nodes. The system can recover lost data using
 any **k** available fragments, even if up to **m** fragments are missing or corrupted.
 
-In Simplyblock, we support n=1, 2 and 4 and k=0, 1 and 2. It is important to note that we use Distributed Erasure Coding in which every chunk of a stripe 
-is stored on a different node. This way we do not only protect the data from loss of drives, but also ensure data availability in case one or two nodes
-are not operational.
+In simplyblock, we support **k** values of 1, 2, and 4, as well as **m** values of 0, 1, and 2. It is important to
+note that we use distributed erasure coding, in which every chunk of a stripe is stored on a different node. This
+way, we not only protect data from drive loss but also ensure data availability in case one or two nodes are not
+operational.
 
 Erasure coding has a number of key characteristics:
 
