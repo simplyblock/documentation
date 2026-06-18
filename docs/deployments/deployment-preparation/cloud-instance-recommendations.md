@@ -4,7 +4,8 @@ description: "Cloud Instance Recommendations: Simplyblock has been tested on and
 weight: 30000
 ---
 
-Simplyblock has been tested on and recommends the following instance types. There is generally no restriction on other instance types as long as they fulfill the system requirements. 
+Simplyblock has been tested on and recommends the following instance types. In general, there is no restriction on
+other instance types as long as they fulfill the system requirements.
 
 ## AWS Amazon EC2 Recommendations
 
@@ -36,17 +37,17 @@ Based on those criteria, simplyblock commonly recommends the following virtual m
 
 ## Google Compute Engine Recommendations
 
-In GCP, physical hosts are highly-shared and sliced into virtual machines. This isn't only true for network CPU, RAM,
-and network bandwidth, but also virtualized NVMe devices. Google Compute Engine NVMe devices provide a specific number
+In GCP, physical hosts are highly shared and sliced into virtual machines. This is true not only for CPU, RAM, and
+network bandwidth, but also for virtualized NVMe devices. Google Compute Engine NVMe devices provide a specific number
 of queue pairs (logical connections between the virtual machine and physical NVMe device) depending on the size of the
 disk. Hence, separately attached NVMe devices are highly recommended to achieve the required number of queue pairs of
 simplyblock.
 
-!!! important
-    While simplyblock works on GCP, the lack of dedicated network bandwidth, the limited number of queue pairs per
-    NVMe device, and the general network performance (even on Tier1 networks) make it not recommended for
-    high-performance clusters. Hence, simplyblock does not recommend the use of GCP for production clusters.
-
+!!! critical
+    GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
+    
+    Therefore, a "sudden power off" is not safe, data corruption may occur!
+    
 Generally, with GCP, there are three considerations when selecting virtual machine types:
 
 - Minimum requirements of vCPU and RAM
@@ -71,11 +72,11 @@ Based on those criteria, simplyblock commonly recommends the following virtual m
 
 ### Attaching an additional Local SSD on Google Compute Engine
 
-The above recommended instance types do not provide NVMe storage by default. It has to specifically be added to the
+The recommended instance types above do not provide NVMe storage by default. It has to be added explicitly to the
 virtual machine at creation time. It cannot be changed after the virtual machine is created.
 
-To add additional Local SSD Storage to a virtual machine, the operating system section must be selected in the wizard,
-then "Add local SSD" must be clicked. Now an additional disk can be added.
+To add additional Local SSD Storage to a virtual machine, select the operating system section in the wizard, then
+click "Add local SSD." An additional disk can then be added.
 
 !!! warning
     It is important that NVMe is selected as the interface type. SCSI will not work!
