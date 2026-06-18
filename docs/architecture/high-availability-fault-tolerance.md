@@ -28,12 +28,14 @@ storage nodes along with parity fragments. This provides:
 - **Automatic Rebuilds**: In the event of node or disk failures, missing data is rebuilt automatically using parity
   information stored across the cluster.
 
-> [!IMPORTANT]
-> Simplyblock now also provides support for so-called stretch clusters. This deployment topology adds 
-> disaster recovery across failure domains - racks, cabinets or sites - to protection from failed drives and single-site
-> high-availability. And all of this at a minimum protection overhead. For example, if a cluster is span across 6 racks,
-> it is possible to protect from a single entire rack outage AND a concurrent node outage on another rack or drive failures
-> on any other node with just and overhead of 50%!
+!!! important
+    Simplyblock provides support for so-called stretch clusters. This deployment topology adds disaster recovery
+    across failure domains (such as racks, cabinets, or sites) to improve protection from failed drives and
+    single-site high availability. This is achieved with minimum protection overhead.
+
+    For example, if a cluster is span across 6 racks, it is possible to protect from a single entire rack
+    outage and a concurrent node outage on another rack or drive failures on any other node with an storage
+    overhead of just 50%.
 
 ### 2. Multipathing with Primary and Secondary Nodes
 
