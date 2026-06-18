@@ -43,9 +43,10 @@ IOPS in both disaggregated and hyper-converged environments.
 
 Simplyblock uses NVMe/TCP or NVMe/RDMA (RoCEv2) to connect initiators (storage consumers) to the storage cluster. While those protocols 
 are networked and allow any type of distributed topology between clients and cluster nodes, simplyblock can ensure a 
-maximum of data locality to minimize impacts of network latency and bandwidth utilization. In simplyblock, front storage
-(the remote "docking points" of the clients into the cluster) and back storage (the actual NVMe storage layer) are distributed.
-All cluster back storage devices can be accessed from any front storage entry point using cluster internal NVMe-oF.
+maximum of data locality to minimize impacts of network latency and bandwidth utilization.
+
+In simplyblock, front storage (the remote "docking points" of the clients into the cluster) and back storage (the actual NVMe storage layer)
+are distributed. All cluster back storage devices can be accessed from any front storage entry point using cluster internal NVMe-oF.
 
 However, to achieve a maximum of data locality without compromising the advantages of a fully distributed system, such as scalability, 
 several advanced mechanisms can be used within Simplyblock:
@@ -65,10 +66,10 @@ The relabalcing algorithm which moves data around is optimized for minimal overh
 - Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS). Therefore, its impact on 
   I/O performance is quite limited. This means that volumes ultimately converge towards full data locality whenever possible.
 - At the same time, this does not result in any hard limits.
-  - For example, in a cluster with 2 PB of storage, it is still possible to create a single volume consuming all of these 2 PB.
-  - Also, it can be balanced against scalability and consistency. Meaning, if I/O-intensive workloads are not well-balanced across worker nodes,
-    data locality could lead to actually worse performance. Therefore, data locality is not an absolute requirement, but remains a best effort,
-    and by the operatior is automatically balanced against an optimal I/O-performance balance across nodes.
+   - For example, in a cluster with 2 PB of storage, it is still possible to create a single volume consuming all of these 2 PB.
+   - Also, it can be balanced against scalability and consistency. Meaning, if I/O-intensive workloads are not well-balanced across worker nodes,
+     data locality could lead to actually worse performance. Therefore, data locality is not an absolute requirement, but remains a best effort,
+     and by the operatior is automatically balanced against an optimal I/O-performance balance across nodes.
 
 ### Pseudo-Randomized, Distributed Data Placement With Fast Re-Balancing
 
