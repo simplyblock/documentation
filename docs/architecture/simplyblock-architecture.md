@@ -38,20 +38,21 @@ The control plane provides the following functionality in two groups of distribu
     - Log Management (graylog, opensearch, mongoDB, thanos)
     - Performance Monitoring and Dashboarding (grafana, prometheus) with configurable alerting to email and slack
 
-The observability stack is optional; it is typically used in PoC and Testing environments and for
+The observability stack is optional. It is typically used in PoC (proof of concept) or testing environments and for
 customers, who need to get started quickly. For large scale, multi-cluster deployments it is 
 rather recommended to integrate with pre-existing or targeted observability stacks.
       
-The control plane is layered: distributed control plane services run on both kubernetes and native docker.
-The latter can be used for non-kubernetes (ProxMox, OpenStack) or disaggregated deployments.
-All services are accessible via both CLI and API.
+The control plane is layered and its distributed control plane services run on both kubernetes and native Docker.
+The latter can be used for non-Kubernetes (Proxmox, OpenStack) or disaggregated deployments.
+All services are accessible via the Simplyblock CLI and Control Plane API.
 
-On top of those services sits a CSI driver and a Kubernetes operator within the kubernetes-native operations model. 
-It is entirely managed by CRDs, internally using the services APIs.
+On top of those services sits a CSI driver and a Kubernetes operator within the Kubernetes-native operations model. 
+It is entirely managed by Custom Resource Definitions (CRDs), however, internally uses the same Control Plane APIs.
 
-Communication between the control plane and the storage plan is performed via two means:
-- a secure http/s RPC mechanism with json payloads
-- a secure http/s service endpoint to control basic functions such as storage node availability monitoring, restart and shutdown
+Communication between the Control Plane and the Storage Plane is performed via two separate access paths:
+
+- A secure HTTPS RPC mechanism with JSON payloads.
+- A secure HTTPS service endpoint for basic control, such as storage node availability monitoring, restart and shutdown.
 
 ### Control Plane State Storage
 
@@ -69,8 +70,8 @@ workers. It will, however, run in separate pods.
 ## Storage Plane
 
 The storage plane consists of distributed storage nodes that run on Linux-based systems and provide logical volumes (
-LVs) as virtual NVMe devices. Using a fork of SPDK and DPDK (Data Plane Development Kit), simplyblock achieves high-speed,
-user-space storage operations with minimal latency.
+LVs) as virtual NVMe devices. Using a fork of SPDK (Storage Performance Development Kit) and DPDK (Data Plane Development
+Kit), simplyblock achieves high-speed, user-space storage operations with minimal latency.
 
 To achieve that, simplyblock detaches NVMe devices from the Linux kernel, bypassing the typical kernel-based handling.
 It then takes full control of the device directly, handling all communication with the hardware in user-space. That
