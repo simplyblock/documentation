@@ -17,8 +17,8 @@ It is recommended on shared networks and networks below 100gb/s.
 
 ### ```--data-chunks-per-stripe, --parity-chunks-per-stripe```
 
-Those two parameters together make up the default erasure coding schema of the node (e.g. 1+1, 2+2, 4+2). Starting from R25.10, it is also
-possible to set individual schemas per volume, but this feature is still in alpha-stage.
+Those two parameters together make up the erasure coding schema of the cluster (e.g. 1+1, 2+2, 4+2). The schema is set
+once at cluster creation and applies to all volumes in the cluster. It cannot be configured per volume.
 
 ### ```--cap-warn, --cap-crit```
 

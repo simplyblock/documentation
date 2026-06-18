@@ -75,21 +75,20 @@ To create a new logical volume, the following command can be run on any control 
   --max-rw-iops <IOPS> \
   --max-r-mbytes <THROUGHPUT> \
   --max-w-mbytes <THROUGHPUT> \
-  --data-chunks-per-stripe <DATA CHUNKS IN STRIPE> \
-  --parity-chunks-per-stripe <PARITY CHUNKS IN STRIPE>
-  --fabric {tcp, rdma}
-  --lvol-priority-class <1-6>
+  --fabric {tcp, rdma} \
+  --lvol-priority-class <1-6> \
   <VOLUME_NAME> \
   <VOLUME_SIZE> \
   <POOL_NAME>
 ```
 
 !!! info
-    The parameters `data-chunks-per-stripe` and `parity-chunks-per-stripe` define the erasure-coding schema
-    (e.g., `--data-chunks-per-stripe=4 --parity-chunks-per-stripe=2`). The settings are optional. If not specified,
-    the cluster default is chosen. Valid for `data-chunks-per-stripe` are 1, 2, and 4, and for `parity-chunks-per-stripe`
-    0,1, and 2. However, it must be considered that the number of cluster nodes must be equal to or larger than
-    (`data-chunks-per-stripe` + `parity-chunks-per-stripe`).
+    The erasure-coding schema (the number of data and parity chunks per stripe) is not configured per volume. It is a
+    cluster-level setting that is defined once when the cluster is created, via the `--data-chunks-per-stripe` and
+    `--parity-chunks-per-stripe` options of the cluster deployment. All volumes inherit the cluster's erasure-coding
+    schema. For details on the available schemas and how to choose one, see
+    [Erasure Coding Scheme](../deployment-preparation/erasure-coding-scheme.md) and
+    [Cluster Deployment Options](../cluster-deployment-options.md).
 
     The parameter `--fabric` defines the fabric by which the volume is connected to the cluster. It is optional and the
     default is `tcp`. The fabric type `rdma` can only be chosen for hosts with an RDMA-capable NIC and for clusters that
@@ -98,8 +97,6 @@ To create a new logical volume, the following command can be run on any control 
 
 ```plain title="Example of creating a logical volume"
 {{ cliname }} volume add \
-  --data-chunks-per-stripe 2 \
-  --parity-chunks-per-stripe 1 \
   --fabric tcp lvol01 1000G test  
 ```
 
