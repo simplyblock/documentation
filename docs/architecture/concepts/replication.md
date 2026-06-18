@@ -3,7 +3,7 @@ title: "Replication"
 weight: 30800
 ---
 
-Simplyblock supports snapshot-based replication between clusters for multi-site disaster recovery and data
+Simplyblock supports asynchronous replication between clusters for multi-site disaster recovery and data
 availability. Replication ensures that snapshots of volumes on a source cluster are continuously transferred to a
 remote target cluster, enabling recovery from site-level failures with automatic failover detection and controlled
 failback.
