@@ -42,11 +42,10 @@ of queue pairs (logical connections between the virtual machine and physical NVM
 disk. Hence, separately attached NVMe devices are highly recommended to achieve the required number of queue pairs of
 simplyblock.
 
-!!! important
-    While simplyblock works on GCP, the lack of dedicated network bandwidth, the limited number of queue pairs per
-    NVMe device, and the general network performance (even on Tier1 networks) make it not recommended for
-    high-performance clusters. Hence, simplyblock does not recommend the use of GCP for production clusters.
-
+!!! critical
+    GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
+    Therefore, "sudden power off" is not safe, data corruption may occur!
+    
 Generally, with GCP, there are three considerations when selecting virtual machine types:
 
 - Minimum requirements of vCPU and RAM
