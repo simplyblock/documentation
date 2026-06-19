@@ -36,10 +36,10 @@ For Kubernetes-based deployments, the following Kubernetes environments and dist
 
 | Distribution         | Versions                                |
 |----------------------|-----------------------------------------|
-| Amazon EKS           | 1.28 and higher                         |
-| Google GKE           | 1.28 and higher - non production only!  |
-| K3s                  | 1.29 and higher                         |
-| Kubernetes (vanilla) | 1.28 and higher                         |
+| Amazon EKS           | 1.30 and higher                         |
+| Google GKE           | 1.30 and higher - non production only!  |
+| K3s                  | 1.33 and higher                         |
+| Kubernetes (vanilla) | 1.33 and higher                         |
 | Talos                | 1.6.7 and higher                        |
 | OpenShift            | 4.19 and higher                         |
 
