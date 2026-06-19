@@ -219,7 +219,8 @@ A full list of the supported architectures can be found in the
 
 ### NVMe Capacity and Performance Guidance
 
-NVMe devices must support 4KB native block size and are recommended to be sized between 1.9 TiB and 7.68 TiB.
+NVMe devices must support 4KB native block size or devices with 512b native block size, which must support 
+4KB write atomicity, and are recommended to be sized between 1.9 TiB and 7.68 TiB.
 Large NVMe devices are supported, but performance per TiB is lower and rebalancing can take longer.
 
 Clusters are lightweight, and it is recommended to use different clusters for different types of
@@ -247,8 +248,7 @@ once simplyblock's storage nodes are running.
 
 ### NVMe Formatting Prerequisites
 
-It is required to [Low-Level Format Devices](../../reference/nvme-low-level-format.md) with 4KB block size before
-deploying simplyblock.
+Simplyblock does optionally low-level format NVMe devices with 4KB block size before deploying simplyblock. 
 
 !!! warning
     Low-level formatting destroys all data on the device. Ensure to back up any important data before formatting, if
@@ -269,8 +269,8 @@ bond over two ports of the NIC(s) or using SRV-IO must be created.
 
 ### Fabric and Protocol Notes
 
-Simplyblock implements NVMe over Fabrics (NVMe-oF), specifically NVMe over TCP, and works over any Ethernet
-interconnect.
+Simplyblock implements NVMe over Fabrics (NVMe-oF), either NVMe over TCP or NVMe over ROcEv2, and works over any Ethernet
+interconnect. Fabric transport layers can be mixed (e.g. cluster internal-traffic on NVMe over ROcEv2 and client to cluster over TCP).
 
 !!! recommendation
     Simplyblock highly recommends NICs with RDMA/ROCEv2 support such as NVIDIA Mellanox network adapters (ConnectX-6 or higher).
@@ -305,5 +305,5 @@ The minimum required PCIe standard for NVMe devices is PCIe 3.0. However, PCIe 4
 
 ### Hyperthreading
 
-If 32 or more physical cores are available per storage node, it is highly recommended to turn off hyperthreading in the
+If 32 or more physical cores are available per storage node, it is recommended to turn off hyperthreading in the
 BIOS or UEFI setup services.
