@@ -45,7 +45,6 @@ simplyblock.
 
 !!! critical
     GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
-    
     Therefore, a "sudden power off" is not safe, data corruption may occur!
     
 Generally, with GCP, there are three considerations when selecting virtual machine types:
