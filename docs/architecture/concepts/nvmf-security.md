@@ -5,9 +5,9 @@ weight: 30200
 ---
 
 Simplyblock supports NVMe-oF transport security to protect data in transit and restrict access to storage subsystems.
-Security is enabled at the pool level: turning it on for a pool applies it to every volume created in that pool. Host
-access control and the per-host security keys are then managed per volume. There is no cluster-level security
-configuration — the DH-HMAC-CHAP parameters are fixed and need not (and cannot) be set when creating a cluster.
+Security is enabled at a storage pool level. Turning it on for a storage pool applies to all volume created in that
+specific storage pool. Host access control and the per-host security keys are then managed per volume. There is no
+cluster-level security configuration. The DH-HMAC-CHAP parameters are fixed and cannot be set when creating a cluster.
 
 ## Host Access Control
 
@@ -32,9 +32,9 @@ Simplyblock supports:
 - **Bidirectional (mutual) authentication**: Both host and target verify each other using a `dhchap_key` (host-to-target)
   and a `dhchap_ctrlr_key` (target-to-host).
 
-Simplyblock uses a fixed DH-HMAC-CHAP configuration; these parameters are not configurable:
+Simplyblock uses a fixed DH-HMAC-CHAP configuration. The following settings are used:
 
-- Hash algorithms (digests) offered to the host: `sha256`, `sha384`, `sha512` (the host negotiates one).
+- Hash algorithms (digests) offered to and negotiated by the host: `sha256`, `sha384`, `sha512`.
 - Diffie-Hellman group: `ffdhe2048`.
 
 DH-HMAC-CHAP keys are automatically generated in the NVMe TP8018 format (`DHHC-1:<hash_id>:<base64(key)>:`) when
@@ -50,8 +50,8 @@ PSK keys are automatically generated (256-bit random hex tokens) when a host is 
 
 ## Configuration Levels
 
-NVMe-oF security is configured at the pool level and managed per volume/host. It is **not** configured at the cluster
-level — a cluster carries no security settings, and there is no `--host-sec` (or equivalent) option on `cluster create`.
+NVMe-oF security is configured at the storage pool level and managed per volume/host. It is **not** configured at the cluster
+level. In simplyblock, a storage cluster itself carries no security settings.
 
 ### Pool Level
 
