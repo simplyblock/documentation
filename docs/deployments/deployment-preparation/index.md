@@ -7,10 +7,6 @@ weight: 20000
 Proper deployment planning is essential for ensuring the performance, scalability, and resilience of a simplyblock
 storage cluster.
 
-!!! tip
-    For OpenShift environments, simplyblock’s **recommended** deployment model is
-    **hyper-converged**.
-
 ## Deployment Models
 
 Two deployment options are supported:
@@ -21,8 +17,9 @@ Two deployment options are supported:
 
 - **Kubernetes**: In Kubernetes, both **disaggregated** deployments with dedicated workers or clusters for storage
   nodes, or **hyper-converged deployments** (co-located with compute workloads) are supported. A wide range of
-  Kubernetes distros and operating systems are supported. For OpenShift clusters, the hyper-converged deployment model
-  is recommended. Kubernetes Knowledge is required.
+  Kubernetes distros and operating systems are supported. There is no essential difference between the two models from a
+  deployment perspective, if the same cluster is used to serve and consume the storage: it becomes a question of
+  node tagging only.
 
 ## General Information on Requirements
 

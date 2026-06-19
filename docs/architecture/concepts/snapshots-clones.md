@@ -10,10 +10,15 @@ point in time, they serve distinct purposes and operate using different mechanis
 
 ## Volume Snapshots
 
-A volume snapshot is a read-only, point-in-time copy of a storage volume. It preserves the state of the volume at the
-moment the snapshot is taken, allowing users to restore data or create new volumes based on the captured state.
-Snapshots are typically implemented using copy-on-write (COW) or redirect-on-write (ROW) techniques, minimizing storage
-overhead and improving efficiency.
+In simplyblock, a volume snapshot can be taken instantly. It contains the read-only (frozen) state of the volume at the
+time it was taken, while the source volume then operates with Copy-on-Write (CoW) semantics.
+
+Multiple snapshots can coexist for a particular volume, representing different frozen generations or versions of that
+volume, and they are ordered in time (a snapshot references the changed data delta between its predecessor and its
+successor).
+
+Volume snapshots can be independently deleted, backed up to S3, and replicated into other clusters. New volumes can be
+created from any Snapshot (copy-on-write cloning).
 
 Key characteristics of volume snapshots include:
 
@@ -27,7 +32,7 @@ Key characteristics of volume snapshots include:
 
 ## Volume Clones
 
-A volume clone is a writable, independent copy of a storage volume, created from either an existing volume or a
+A volume clone is a writable, independent copy of a storage volume created from either an existing volume or a
 snapshot. Unlike snapshots, clones are fully functional duplicates that can operate as separate storage entities.
 
 Key characteristics of volume clones include:
