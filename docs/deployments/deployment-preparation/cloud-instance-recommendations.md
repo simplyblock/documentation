@@ -37,26 +37,21 @@ Based on those criteria, simplyblock commonly recommends the following virtual m
 
 ## Google Compute Engine Recommendations
 
+!!! critical
+    GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
+    Therefore, a "sudden power off" is not safe, data corruption may occur!
+
 In GCP, physical hosts are highly shared and sliced into virtual machines. This is true not only for CPU, RAM, and
 network bandwidth, but also for virtualized NVMe devices. Google Compute Engine NVMe devices provide a specific number
 of queue pairs (logical connections between the virtual machine and physical NVMe device) depending on the size of the
 disk. Hence, separately attached NVMe devices are highly recommended to achieve the required number of queue pairs of
 simplyblock.
-
-!!! critical
-    GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
-    
-    Therefore, a "sudden power off" is not safe, data corruption may occur!
     
 Generally, with GCP, there are three considerations when selecting virtual machine types:
 
 - Minimum requirements of vCPU and RAM
 - The size of the locally attached NVMe devices (SSD Storage)
 - Network performance
-
-!!! critical
-    If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of
-    type _spread_!
 
 Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes:
 
