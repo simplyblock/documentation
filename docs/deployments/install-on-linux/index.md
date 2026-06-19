@@ -52,7 +52,7 @@ or separate interfaces (VLANs or subnets).
 !!! Important
     It is possible to configure a storage cluster with NVMe-of Multipathing. This requires two storage
     VLANs per host, routed via separate NIC ports and switches for fault tolerance. This configuration can
-    replace a HA networking (LACP, MLAG, ...) behind a bond.
+    be used as an alternative to a HA networking setup with link aggregation (such as LACP, MLAG, and similar).
     
 To install simplyblock in your environment, you may have to adopt these commands to match your configuration.
 
