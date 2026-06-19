@@ -12,9 +12,9 @@ other instance types as long as they fulfill the system requirements.
 Simplyblock can work with local instance storage (local NVMe devices) and Amazon EBS volumes. For performance reasons,
 Amazon EBS is not recommended for high-performance clusters.
 
-!!! critical
+!!! important
     If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of type
-    _Spread_!
+    _Spread_! Otherwise you have no guarantee that multiple nodes are not located in the same failure domain. 
 
 Generally, with AWS, there are three considerations when selecting virtual machine types:
 
@@ -22,7 +22,8 @@ Generally, with AWS, there are three considerations when selecting virtual machi
 - Locally attached NVMe devices
 - Network performance (dedicated and "up to")
 
-Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes:
+Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes
+***in disaggregated clusters***:
 
 | VM Type         | vCPU(s) | RAM    | Locally Attached Storage | Network Performance |
 |-----------------|---------|--------|--------------------------|---------------------|
@@ -35,6 +36,10 @@ Based on those criteria, simplyblock commonly recommends the following virtual m
 | _i4i.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.75 GBit/s        |
 | _i4i.12xlarge_  | 48      | 384 GB | 3x 3750 GB               | 28.12 GBit/s        |
 
+For hyper-converged EC2 kubernetes worker nodes (EKS, k3s or other), any instance with a local SSD can be chosen.
+Keep the [minimum system requirements](./hardware-requirements.md)in mind. At least 8 vcpu are required for Simplyblock. 
+
+
 ## Google Compute Engine Recommendations
 
 In GCP, physical hosts are highly shared and sliced into virtual machines. This is true not only for CPU, RAM, and
@@ -45,7 +50,6 @@ simplyblock.
 
 !!! critical
     GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
-    
     Therefore, a "sudden power off" is not safe, data corruption may occur!
     
 Generally, with GCP, there are three considerations when selecting virtual machine types:
@@ -53,10 +57,6 @@ Generally, with GCP, there are three considerations when selecting virtual machi
 - Minimum requirements of vCPU and RAM
 - The size of the locally attached NVMe devices (SSD Storage)
 - Network performance
-
-!!! critical
-    If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of
-    type _spread_!
 
 Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes:
 
