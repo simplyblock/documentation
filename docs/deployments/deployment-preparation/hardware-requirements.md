@@ -72,14 +72,14 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 !!! warning
     On storage nodes, required vCPUs will be automatically isolated from the operating system. No
     kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs. In 
-    Kubernetes, CPU Topology Manager is used for this purpose. 
+    Kubernetes, the CPU Manager and Topology Manager are used for this purpose. 
 
 ### Storage Node Memory Sizing Formula
 
 For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on 
-the assigned vcpu and networking performance of the node. For each 10 gb/s of dedicated network bandwidth
-we recommend to use at least 3 subsystems. For each vcpu exceeding 8, it is recommended to use one additional
-subsystem. Use the lower of both values (dedicated network bandwidth, vcpu).
+the assigned vCPUs and networking performance of the node. For each 10 GBit/s of dedicated network bandwidth
+we recommend to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
+subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs).
 
 For storage nodes, simplyblock highly recommends DDR5 memory for optimal performance.
 
@@ -145,10 +145,10 @@ logical volumes, and log retention.
 === "Kubernetes"
 
     The control plane sizing is based on the minimal setup of the Simplyblock Operator. It is designed to support a
-    service size of 2.000 logical volumes and 3 storage nodes. Furthermore, the assumed log storage retention is 3 days.
+    service size of 2,000 logical volumes and 3 storage nodes. Furthermore, the assumed log storage retention is 3 days.
 
     For larger deployments, use the following tables to adjust the system requirements. The first table shows additional
-    resources per 2.500 logical volumes.
+    resources per 2,500 logical volumes.
 
     The second table shows additional required resources per 10 storage nodes.
 
@@ -259,9 +259,10 @@ deploying simplyblock.
 ### Storage Traffic Network Requirements
 
 In production, simplyblock works with one of two options:
-- a **redundant network** for storage traffic (e.g., via LACP, Stacked Switches, MLAG, active/active or active/passive NICs, STP, or MSTP).
-- two separate VLANs per node for storage traffic, connected via two separate NIC ports and switch paths, and configured as ***NVMe Multipathing***
-  in such a setup we still recommend to provide a **redundant network for management traffic**, but it is not obligatory.
+
+- A **redundant network** for storage traffic (e.g., via LACP, Stacked Switches, MLAG, active/active or active/passive NICs, STP, or MSTP).
+- Two separate VLANs per node for storage traffic, connected via two separate NIC ports and switch paths, as well as configured as ***NVMe Multipathing***.
+  In such a setup simplyblock still recommend to provide a **redundant network for management traffic**, but it is not obligatory.
 
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux
 bond over two ports of the NIC(s) or using SRV-IO must be created.
@@ -292,8 +293,9 @@ management traffic. For management traffic, a 1 GBit/s network is sufficient and
 
 !!! warning
     All storage nodes within a cluster and all hosts accessing storage shall reside within the same hardware VLAN.
-    Avoid any gateways, firewalls, or proxies higher than L2 on the network path. This is for performance and latency 
-    reasons.
+
+    Any gateways, firewalls, or proxies higher than L2 on the network path must be avoided. Any of those solutions
+    will heavily (and unpredictably) impact performance and latency.
 
 ## Additional Hardware Guidance
 
