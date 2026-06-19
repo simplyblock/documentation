@@ -36,31 +36,31 @@ With the previously defined subnets, the following snippet configures the iptabl
 ```plain title="Network Configuration"
 #!/usr/bin/env bash
 
-  # Clean up
-  sudo iptables -F SIMPLYBLOCK
-  sudo iptables -D DOCKER-FORWARD -j SIMPLYBLOCK
-  sudo iptables -X SIMPLYBLOCK
+# Clean up
+sudo iptables -F SIMPLYBLOCK
+sudo iptables -D DOCKER-FORWARD -j SIMPLYBLOCK
+sudo iptables -X SIMPLYBLOCK
 
-  # Setup
-  sudo iptables -N SIMPLYBLOCK
-  sudo iptables -I DOCKER-FORWARD 1 -j SIMPLYBLOCK
-  sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-  sudo iptables -A SIMPLYBLOCK -m state --state ESTABLISHED,RELATED -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 80 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 2375 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 2377 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 4500 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p udp --dport 4789 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p udp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 9090 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 9200 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p udp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 12202 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 13301 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -p tcp --dport 13302 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-  sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
+# Setup
+sudo iptables -N SIMPLYBLOCK
+sudo iptables -I DOCKER-FORWARD 1 -j SIMPLYBLOCK
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A SIMPLYBLOCK -m state --state ESTABLISHED,RELATED -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 80 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 2375 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 2377 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 4500 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p udp --dport 4789 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p udp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 9090 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 9200 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p udp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 12202 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 13301 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -p tcp --dport 13302 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 ```
 
 ### Management Node Installation
