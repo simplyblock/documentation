@@ -20,47 +20,47 @@ In this case, the following section can be skipped to [Storage Plane Installatio
 
 ### Firewall Configuration (CP)
 
-Simplyblock requires a number of TCP and UDP ports to be opened from certain networks. Additionally, it requires IPv6
-to be disabled on management nodes.
+Simplyblock requires a number of TCP and UDP ports to be opened from certain networks. 
 
 The following is a list of all ports (TCP and UDP) required to operate as a management node. Attention is required, as
 this list is for management nodes only. Storage nodes have a different port configuration.
 
 {% include 'network-port-table.md' %}
 
-With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
+With the previously defined subnets, the following snippet configures the iptables automatically.
 
 !!! danger
     The example assumes that you have an external firewall between the _admin_ network and the public internet!<br/>
     If this is not the case, ensure the correct source access for ports _22_ and _80_.
 
 ```plain title="Network Configuration"
-sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+#!/usr/bin/env bash
 
-# Clean up
-sudo iptables -F SIMPLYBLOCK
-sudo iptables -D DOCKER-FORWARD -j SIMPLYBLOCK
-sudo iptables -X SIMPLYBLOCK
-# Setup
-sudo iptables -N SIMPLYBLOCK
-sudo iptables -I DOCKER-FORWARD 1 -j SIMPLYBLOCK
-sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-sudo iptables -A SIMPLYBLOCK -m state --state ESTABLISHED,RELATED -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 80 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 2375 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 2377 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 4500 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p udp --dport 4789 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p udp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 9100 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p udp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 12202 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 13201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 13202 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
+  # Clean up
+  sudo iptables -F SIMPLYBLOCK
+  sudo iptables -D DOCKER-FORWARD -j SIMPLYBLOCK
+  sudo iptables -X SIMPLYBLOCK
+
+  # Setup
+  sudo iptables -N SIMPLYBLOCK
+  sudo iptables -I DOCKER-FORWARD 1 -j SIMPLYBLOCK
+  sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+  sudo iptables -A SIMPLYBLOCK -m state --state ESTABLISHED,RELATED -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 80 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 2375 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 2377 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 4500 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p udp --dport 4789 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p udp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 9090 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 9200 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p udp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 12202 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 13301 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -p tcp --dport 13302 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
+  sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 ```
 
 ### Management Node Installation
@@ -94,38 +94,10 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 If the check succeeds, it's time to set up the primary management node:
 
 ```bash title="Deploy the primary management node"
-{{ cliname }} cluster create --ifname=<IF_NAME> --ha-type=ha
+{{ cliname }} cluster create --ifname=<IF_NAME> 
 ```
 
-To enable S3 backup and recovery, provide a JSON configuration file with the `--use-backup` flag:
-
-```bash title="Deploy with Backup"
-{{ cliname }} cluster create --ifname=<IF_NAME> \
-  --ha-type=ha --use-backup=backup-config.json
-```
-
-```json title="Example: backup-config.json"
-{
-  "access_key_id": "<AWS_ACCESS_KEY>",
-  "secret_access_key": "<AWS_SECRET_KEY>",
-  "bucket_name": "simplyblock-backups"
-}
-```
-
-For MinIO or S3-compatible storage, add the `local_endpoint` field:
-
-```json title="Example: MinIO backup config"
-{
-  "access_key_id": "<MINIO_ACCESS_KEY>",
-  "secret_access_key": "<MINIO_SECRET_KEY>",
-  "bucket_name": "simplyblock-backups",
-  "local_endpoint": "http://minio.example.com:9000"
-}
-```
-
-For more information on backup operations, see [Backup and Recovery](../../usage/backup-recovery.md).
-
-Additional cluster deployment options can be found in the [Cluster Deployment Options](../cluster-deployment-options.md).
+Important cluster deployment options can be found in the [Cluster Deployment Options](../cluster-deployment-options.md).
 
 The output should look something like this:
 
