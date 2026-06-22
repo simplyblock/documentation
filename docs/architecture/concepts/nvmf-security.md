@@ -105,7 +105,8 @@ the connect command returns a plain connection string without authentication par
 
 ## Clone Security Behavior
 
-Clones created from snapshots of DHCHAP-protected volumes receive independent security settings. A clone is a
-new volume and inherits the pool's `allowed_hosts` list at creation time, but its host access control is
-managed independently from the parent volume. Adding or removing hosts on the parent does not affect existing
-clones, and vice versa.
+When a clone is created from a DHCHAP-protected volume, it receives independent security settings. 
+A clone is treated as a new volume and inherits the pool’s `allowed_hosts` list at the time of creation. 
+However, its host access control is managed independently from the parent volume. Adding or removing hosts 
+on the parent volume does not affect existing clones, and adding or removing hosts on a clone does not 
+affect the parent volume.
