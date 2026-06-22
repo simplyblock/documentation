@@ -219,8 +219,11 @@ A full list of the supported architectures can be found in the
 
 ### NVMe Capacity and Performance Guidance
 
-NVMe devices must support 4KB native block size and are recommended to be sized between 1.9 TiB and 7.68 TiB.
-Large NVMe devices are supported, but performance per TiB is lower and rebalancing can take longer.
+NVMe devices must support 4KB native block size or devices that support 512b native block size with 
+4KB write atomicity.
+
+The NVMe devices are recommended to be sized between 1.9 TiB and 7.68 TiB. Large NVMe devices are supported,
+but performance per TiB is lower and rebalancing can take longer.
 
 Clusters are lightweight, and it is recommended to use different clusters for different types of
 hardware (NVMe, networking, compute) or with a different performance profile per TiB of raw storage.
@@ -247,8 +250,8 @@ once simplyblock's storage nodes are running.
 
 ### NVMe Formatting Prerequisites
 
-It is required to [Low-Level Format Devices](../../reference/nvme-low-level-format.md) with 4KB block size before
-deploying simplyblock.
+Simplyblock can low-level format NVMe devices with 4KB block size before deploying simplyblock. This is an optional
+step. Low-level formating can also be executed manually.
 
 !!! warning
     Low-level formatting destroys all data on the device. Ensure to back up any important data before formatting, if
@@ -269,8 +272,8 @@ bond over two ports of the NIC(s) or using SRV-IO must be created.
 
 ### Fabric and Protocol Notes
 
-Simplyblock implements NVMe over Fabrics (NVMe-oF), specifically NVMe over TCP, and works over any Ethernet
-interconnect.
+Simplyblock implements NVMe over Fabrics (NVMe-oF), either NVMe over TCP or NVMe over RoCEv2, and works over any Ethernet
+interconnect. The fabric transport layers can be mixed, like cluster internal-traffic on NVMe over RoCEv2 and client to cluster over NVMe over TCP.
 
 !!! recommendation
     Simplyblock highly recommends NICs with RDMA/ROCEv2 support such as NVIDIA Mellanox network adapters (ConnectX-6 or higher).
@@ -305,5 +308,5 @@ The minimum required PCIe standard for NVMe devices is PCIe 3.0. However, PCIe 4
 
 ### Hyperthreading
 
-If 32 or more physical cores are available per storage node, it is highly recommended to turn off hyperthreading in the
-BIOS or UEFI setup services.
+If 32 or more physical cores are available per storage node, it is recommended to turn off hyperthreading in the
+BIOS setup or UEFI services.
