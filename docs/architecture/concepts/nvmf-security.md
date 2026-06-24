@@ -32,6 +32,10 @@ Simplyblock supports:
 - **Bidirectional (mutual) authentication**: Both host and target verify each other using a `dhchap_key` (host-to-target)
   and a `dhchap_ctrlr_key` (target-to-host).
 
+When using pool-level DHCHAP (`--dhchap` flag), both keys are always auto-generated, meaning bidirectional
+(mutual) authentication is enabled by default. There is no option to enable unidirectional authentication at
+the pool level.
+
 Simplyblock uses a fixed DH-HMAC-CHAP configuration. The following settings are used:
 
 - Hash algorithms (digests) offered to and negotiated by the host: `sha256`, `sha384`, `sha512`.
@@ -57,13 +61,13 @@ level. In simplyblock, a storage cluster itself carries no security settings.
 
 At pool creation time, host authentication and encryption can be enabled using a single parameter `--dhchap`.
 
-By default, all security options are disabled. If the parameter is present at pool creation, the following security
-options are enabled:
+By default, all security options are disabled. If the parameter is present at pool creation, the following is
+enabled:
 
-- DH-HMAC-CHAP Authentication
-- TLS Pre-Shared Key (PSK) Encryption
+- Bidirectional DH-HMAC-CHAP Authentication (both `dhchap_key` and `dhchap_ctrlr_key` are auto-generated)
+- Host access control (`allow_any_host` is set to `false` for all volumes in the pool)
 
-```bash title="Create Pool with DH-HMAC-CHAP Authentication and Transport Encryption"
+```bash title="Create Pool with DH-HMAC-CHAP Authentication"
 {{ cliname }} storage-pool add <POOL_NAME> --dhchap
 ```
 
@@ -84,4 +88,25 @@ When connecting a volume with host access control, the `--host-nqn` flag must be
 ```
 
 The connect command outputs the appropriate `nvme connect` command with the required authentication flags
-(`--hostnqn`, `--dhchap-secret`, `--dhchap-ctrl-secret`, `--tls`) based on the host's configured keys.
+based on the host's configured keys:
+
+```bash title="Example Output"
+nvme connect -t tcp -a 192.168.1.100 -s 4420 \
+  -n nqn.2023-02.io.simplyblock:lvol:abc123 \
+  --hostnqn=nqn.2023-02.io.example:host-1 \
+  --dhchap-secret=DHHC-1:01:<base64-key>: \
+  --dhchap-ctrl-secret=DHHC-1:01:<base64-key>: \
+  --ctrl-loss-tmo=-1
+```
+
+The `--dhchap-secret` and `--dhchap-ctrl-secret` flags are included only when the volume belongs to a
+DHCHAP-enabled pool and the specified host NQN is in the pool's allowed hosts list. Without `--host-nqn`,
+the connect command returns a plain connection string without authentication parameters.
+
+## Clone Security Behavior
+
+When a clone is created from a DHCHAP-protected volume, it receives independent security settings. 
+A clone is treated as a new volume and inherits the pool’s `allowed_hosts` list at the time of creation. 
+However, its host access control is managed independently from the parent volume. Adding or removing hosts 
+on the parent volume does not affect existing clones, and adding or removing hosts on a clone does not 
+affect the parent volume.
