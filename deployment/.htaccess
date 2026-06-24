@@ -1,6 +1,15 @@
 Options +FollowSymlinks
 RewriteEngine On
 
+# Keep only /latest indexable. Numbered version dirs (25.x, 26.x, ...) and the
+# /dev development build are crawlable but noindex; they canonicalize to /latest.
+# Do NOT also Disallow these in robots.txt, or Google can't crawl to see noindex.
+<IfModule mod_headers.c>
+  SetEnvIf Request_URI "^/[0-9]"    NOINDEX
+  SetEnvIf Request_URI "^/dev(/|$)" NOINDEX
+  Header set X-Robots-Tag "noindex" env=NOINDEX
+</IfModule>
+
 # Old documentation redirects
 RewriteRule ^deployment/deployment /latest/deployments/ [L,R=301]
 RewriteRule ^deployment/requirements /latest/deployments/deployment-preparation/ [L,R=301]
@@ -30,4 +39,5 @@ Header set Pragma "no-cache"
 Header set Expires 0
 RewriteCond %{REQUEST_URI} !^/latest/
 RewriteRule (.+) /latest/$1 [L,R=301]
+RewriteCond %{REQUEST_URI} !^/latest/
 RewriteRule ^$ /latest/ [L,R=301]

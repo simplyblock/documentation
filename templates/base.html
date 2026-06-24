@@ -33,7 +33,10 @@
         <meta name="author" content="{{ config.site_author }}">
       {% endif %}
       {% if page.canonical_url %}
-        <link rel="canonical" href="{{ page.canonical_url }}">
+        {#- Consolidate every version onto the /latest alias as the sole canonical.
+            mike sets config.site_url to the versioned base (e.g. .../26.2-PRE/);
+            strip that prefix and re-root the page path onto canonical_base. -#}
+        <link rel="canonical" href="{{ config.extra.canonical_base }}{{ page.canonical_url | replace(config.site_url, '') }}">
       {% endif %}
       {% if page.previous_page %}
         <link rel="prev" href="{{ page.previous_page.url | url }}">
