@@ -40,6 +40,17 @@ figure {
   transform: revert !important;
   pointer-events: revert !important;
   transition: revert !important;
+  /* When scrolled, Material adds .md-header__title--active which forces the
+     topic (host of the mike version selector) to z-index:-1, trapping it
+     behind sibling header content and making the dropdown unclickable. */
+  z-index: revert !important;
+}
+
+/* The version dropdown list defaults to z-index:3, tying with the sticky tabs
+   bar (.md-tabs, z-index:3) which wins on DOM order and covers the open list.
+   Lift it above the tabs so the items stay clickable when scrolled. */
+.md-version__list {
+  z-index: 5;
 }
 
 .md-tabs__link {
