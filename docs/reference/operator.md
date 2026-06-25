@@ -27,6 +27,8 @@ The operator manages the following Custom Resource Definitions (CRDs):
 
 All CRDs use the API group `storage.simplyblock.io/v1alpha1`.
 
+For the complete generated field reference, see [Simplyblock Operator API Reference](operator-api.md).
+
 ## Storage Cluster
 
 The `StorageCluster` resource creates and manages a simplyblock storage cluster.
