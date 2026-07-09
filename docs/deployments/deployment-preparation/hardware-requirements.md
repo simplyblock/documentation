@@ -113,9 +113,10 @@ The simplyblock control plane has different hardware requirements depending on t
     | **Total accross 3 nodes**    | **3**     | **10**   | **10.55** | **33.5**  |
 
 
-    !!! info
-        3 replicas are mandatory for the Key-Value-Store. The WebAPI runs as a Daemonset on all Workers, if no taint is applied.
-        The Observability Stack can optionally be replicated and the sb-services run without replication.
+    !!! important
+        3 replicas across 3 Kubernetes workers are mandatory for the Key-Value-Store. The WebAPI runs as
+        a Daemonset on all Workers, if no taint is applied. The Observability Stack can optionally be
+        replicated and the sb-services run without replication.
 
     Additionally, a non-production observability stack can be deployed:
 
