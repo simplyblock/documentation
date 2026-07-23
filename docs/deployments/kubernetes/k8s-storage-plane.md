@@ -167,7 +167,7 @@ When the status becomes `active`, the operator automatically creates a `simplybl
 There is no necessity to manage this secret manually. The operator keeps it up to date and removes the cluster entry
 when the cluster is deleted.
 
-For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator.md#storagenodesset).
+For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator.md#storagenodeset).
 
 !!! warning
     Simplyblock exclusively owns the resources it has been allocated. It must be ensured they are sized correctly
