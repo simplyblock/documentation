@@ -250,7 +250,117 @@ simplyblock-node-worker-3.example.com-s0-n0            worker-3.example.com     
 | `socketID`          | string | NUMA socket identifier from `socketsToUse`. **Immutable**.                            |
 | `nodeIndex`         | int    | Per-socket node index (0…nodesPerSocket-1). **Immutable**.                            |
 | `socketIndex`       | int    | Global ordinal across all sockets on this worker. **Immutable**.                      |
-| `overrides`         | object | Per-node configuration overrides (propagated from `StorageNodeSet.spec.nodeConfigs`). |
+| `overrides`         | object | Per-node configuration overrides. See [StorageNode Overrides](#storagenode-overrides). |
+
+### StorageNode Overrides
+
+`spec.overrides` allows any field from the parent `StorageNodeSet` to be tuned on a per-node basis. Overrides win
+over fleet defaults. They can be set in two ways:
+
+1. **Via `StorageNodeSet.spec.nodeConfigs`** — the operator propagates the matching entry to the `StorageNode` CR
+   automatically.
+2. **Directly on a manually-created `StorageNode` CR** — useful when you need fine-grained control over a single
+   node, for example during expansion.
+
+#### Overrides Reference
+
+| Field                  | Type     | Description                                                                                  |
+|------------------------|----------|----------------------------------------------------------------------------------------------|
+| `maxLogicalVolumeCount`| int      | Maximum logical volumes for this node.                                                       |
+| `maxSize`              | string   | Maximum allocatable huge pages memory (e.g., `16G`).                                         |
+| `spdkImage`            | string   | SPDK image override (e.g., for phased rollouts of a new image version).                      |
+| `spdkProxyImage`       | string   | SPDK proxy image override.                                                                   |
+| `spdkSystemMemory`     | string   | SPDK huge-page memory allocation (e.g., `4G`, `512M`). Useful for nodes with less RAM.      |
+| `corePercentage`       | int      | Percentage of CPU cores allocated to SPDK (0–99).                                            |
+| `journalManager`       | object   | Journal manager tuning (`count`, `percentPerDevice`).                                        |
+| `pcieAllowList`        | []string | PCIe addresses allowed for this node.                                                        |
+| `pcieDenyList`         | []string | PCIe addresses excluded on this node.                                                        |
+| `pcieModel`            | string   | PCI model string filter for this node.                                                       |
+| `driveSizeRange`       | string   | Drive size range filter (e.g., `100G-2T`).                                                   |
+| `deviceNames`          | []string | Explicit NVMe namespace names (e.g., `["nvme0n1","nvme1n1"]`).                               |
+| `enableCpuTopology`    | bool     | Topology-aware CPU scheduling override.                                                      |
+| `reservedSystemCPU`    | string   | CPUs reserved for system workloads (e.g., `0,1`).                                            |
+| `failureDomain`        | int      | Failure-domain group index (≥ 1). Required when the cluster has `enableFailureDomains=true`. |
+| `expand`               | bool     | Mark this node as a cluster-expansion add (triggers rebalancing on the backend).             |
+
+#### Use Cases
+
+**Different memory allocation per node**
+
+Some nodes may have less RAM. Override `spdkSystemMemory` to cap huge-page allocation:
+
+```yaml
+# StorageNodeSet.spec.nodeConfigs
+nodeConfigs:
+  low-ram-worker.example.com:
+    spdkSystemMemory: "2G"
+```
+
+**Failure domain assignment**
+
+Required when the `StorageCluster` has `enableFailureDomains: true`. Assign each worker to a domain so the
+cluster can maintain fault tolerance across racks or availability zones:
+
+```yaml
+nodeConfigs:
+  worker-rack-a-1.example.com:
+    failureDomain: 1
+  worker-rack-a-2.example.com:
+    failureDomain: 1
+  worker-rack-b-1.example.com:
+    failureDomain: 2
+  worker-rack-b-2.example.com:
+    failureDomain: 2
+```
+
+**Node-level volume limit**
+
+Limit the number of volumes on a specific node that has fewer or smaller devices:
+
+```yaml
+nodeConfigs:
+  small-worker.example.com:
+    maxLogicalVolumeCount: 5
+```
+
+**Expansion add (manual StorageNode CR)**
+
+When creating a `StorageNode` CR manually for cluster expansion, set `expand: true` so the backend applies
+rebalancing rather than treating it as a fresh node. Combine with any other node-specific tuning:
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNode
+metadata:
+  name: simplyblock-node-vm15-expansion
+  namespace: simplyblock
+spec:
+  storageNodeSetRef: simplyblock-node
+  workerNode: vm15.simplyblock3.localdomain
+  socketIndex: 0
+  overrides:
+    expand: true
+    maxLogicalVolumeCount: 20
+    spdkSystemMemory: "4G"
+    failureDomain: 2
+```
+
+**Device filtering per node**
+
+Use different device selection strategies per node when hardware is mixed across workers:
+
+```yaml
+nodeConfigs:
+  nvme-only-worker.example.com:
+    deviceNames:
+      - nvme0n1
+      - nvme1n1
+  pcie-filter-worker.example.com:
+    pcieAllowList:
+      - "0000:01:00.0"
+      - "0000:02:00.0"
+    driveSizeRange: "1.7T-2T"
+```
 
 ### Status Fields
 
