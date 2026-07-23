@@ -322,13 +322,67 @@ spec:
 
 ### Supported Actions
 
-| Action     | Expected outcome after success                                  |
-|------------|-----------------------------------------------------------------|
-| `shutdown` | Node transitions to `offline`.                                  |
-| `restart`  | Node transitions back to `online`.                              |
-| `suspend`  | Node transitions to `suspended`.                                |
-| `resume`   | Node transitions back to `online`.                              |
+| Action     | Expected outcome after success                                    |
+|------------|-------------------------------------------------------------------|
+| `shutdown` | Node transitions to `offline`.                                    |
+| `restart`  | Node transitions back to `online`.                                |
+| `suspend`  | Node transitions to `suspended`.                                  |
+| `resume`   | Node transitions back to `online`.                                |
 | `remove`   | Node is drained, all volumes migrated, node deleted from backend. |
+| `migrate`  | Node is relocated to a different Kubernetes worker, promoted.     |
+
+### Migrating a Storage Node to a Different Worker (`migrate`)
+
+The `migrate` action **relocates** a storage node to a different Kubernetes worker without removing it from the
+cluster. Unlike `remove`, the node retains its backend UUID, its data partitions, and its logical-volume
+assignments — no `VolumeMigration` CRs are created and no volumes are moved between nodes. The backend rebalance
+triggered by the final promote redistributes load automatically.
+
+```yaml title="Example: Relocate a storage node to a different worker"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeOps
+metadata:
+  name: migrate-worker-1
+  namespace: simplyblock
+spec:
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: migrate
+  targetWorkerNode: worker-5.example.com
+```
+
+**`migrate`-specific spec fields:**
+
+| Field              | Type     | Description                                                                                            |
+|--------------------|----------|--------------------------------------------------------------------------------------------------------|
+| `targetWorkerNode` | string   | Kubernetes worker hostname to relocate the node to. **Required for `migrate`**, immutable.             |
+| `reattachVolume`   | bool     | Reattach volumes during the restart phase.                                                             |
+| `newSsdPcie`       | []string | Additional NVMe PCIe addresses to bind on the target host (passed as `new_ssd_pcie` to the backend).  |
+
+**Sub-phases for `migrate`:**
+
+| SubPhase      | Description                                                                                                   |
+|---------------|---------------------------------------------------------------------------------------------------------------|
+| `Preparing`   | Operator clones per-node config to the target worker, labels it into the storage plane, and waits until the storage-node-api pod is Ready and reachable. |
+| `Restarting`  | Operator issues a control-plane restart pointing at the target host. Waits for the node to leave `online` (restart started) and return to `online` (restart finished). |
+| `Promoting`   | Operator issues `/promote` on the relocated node, triggering a cluster rebalance. StorageNodeSet.workerNodes is updated to replace the source worker with the target. |
+
+### Pinned Volume Behaviour During `remove`
+
+PVCs annotated with `simplyblock.io/pinned-volume` affect the `remove` drain flow:
+
+- If the annotation value is a **valid storage node UUID** (different from the node being drained), the volume is
+  migrated to that specific node — drain proceeds normally.
+- If the annotation value is **empty, not a UUID, or self-referencing** (pointing to the node being drained),
+  drain is blocked and a `PinnedVolumeBlocking` event is emitted naming the affected PVC.
+
+To migrate a pinned volume to a specific node, set the annotation to the target node UUID before draining:
+
+```bash title="Set migration target for a pinned volume"
+kubectl annotate pvc <pvc-name> -n <namespace> \
+  simplyblock.io/pinned-volume=<target-storage-node-uuid> --overwrite
+```
+
+See [Pinned Volume Migration During Node Removal](../maintenance-operations/node-drain-coordination.md#pinned-volume-migration-during-node-removal) for full details.
 
 
 ## Storage Pool

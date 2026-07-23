@@ -154,6 +154,34 @@ kubectl delete storagenodeops restart-worker-1 -n simplyblock
 | `resume`   | Node transitions back to `online`.                                           |
 | `remove`   | Node is drained, all volumes migrated, node deleted from backend.            |
 
+### Migrating a Node to a Different Worker
+
+The `migrate` action relocates a storage node to a different Kubernetes worker **without removing it** from the
+cluster. The node keeps its backend UUID and data — no volumes are moved between nodes. After the migration the
+backend triggers a rebalance automatically.
+
+```bash title="Migrate a storage node to a different worker"
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeOps
+metadata:
+  name: migrate-worker-1
+  namespace: simplyblock
+spec:
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: migrate
+  targetWorkerNode: worker-5.example.com
+EOF
+```
+
+```bash title="Watch migration progress"
+kubectl get storagenodeops migrate-worker-1 -n simplyblock -w
+```
+
+The operation progresses through sub-phases: `Preparing → Restarting → Promoting`. See
+[StorageNodeOps: migrate](../reference/operator.md#migrating-a-storage-node-to-a-different-worker-migrate)
+for full details including `newSsdPcie` and `reattachVolume` options.
+
 ### Draining and Removing a Node
 
 The `remove` action runs a multi-step drain workflow. Progress is tracked in `status.subPhase`:
