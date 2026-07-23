@@ -12,16 +12,17 @@ simplyblock logical volume.
 Before going on, here is a high-level overview of the following deployment process:
 
 ```plain title="Storage Cluster Lifecycle"
-StorageCluster   ──► unready
-                       │
-                       ▼  (add ≥ 3 storage nodes)
-StorageNode(s)   ──► active
-                       │
-                       ▼  (create a pool)
-Pool             ──► StorageClass created automatically
-                       │
-                       ▼  (create a PVC)
-PersitentVolume  ──► Bound
+StorageCluster    ──► unready
+                        │
+                        ▼  (enrol ≥ 3 workers in a StorageNodeSet)
+StorageNodeSet    ──► operator creates StorageNode CRs and provisions each worker
+StorageNode(s)    ──► active (once ≥ 3 nodes are online)
+                        │
+                        ▼  (create a pool)
+Pool              ──► StorageClass created automatically
+                        │
+                        ▼  (create a PVC)
+PersistentVolume  ──► Bound
 ```
 
 !!! info
@@ -107,39 +108,40 @@ been registered, it has no storage nodes yet. Those are added in the next step.
 
 ## Add Storage Nodes
 
-Now, Kubernetes worker nodes will be transformed into simplyblock storage nodes. To initiate the process, a
-`StorageNode` resource must be created. The resource lists all Kubernetes worker nodes that are supposed to become
-part of the storage cluster.
+To enrol Kubernetes workers as simplyblock storage nodes, create a `StorageNodeSet` resource. It declares which
+workers to use and how to configure them. The operator creates one `StorageNode` CR per worker (and per NUMA socket
+if multiple sockets are configured), then provisions each one sequentially.
 
-```yaml title="storage-nodes.yaml"
+```yaml title="storage-nodeset.yaml"
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNode
+kind: StorageNodeSet
 metadata:
-  name: storage-nodes
+  name: simplyblock-node
   namespace: simplyblock
 spec:
-  clusterName: production
-  maxLogicalVolumeCount: 100
-  partitions: 1
-  coreIsolation: false
-  enableCpuTopology: true
+  clusterName: simplyblock-cluster
+  maxLogicalVolumeCount: 20
+  partitions: 0
+  corePercentage: 50
   workerNodes:
-    - worker-1
-    - worker-2
-    - worker-3
+    - worker-1.example.com
+    - worker-2.example.com
+    - worker-3.example.com
 ```
 
-```bash title="Add storage nodes"
-kubectl apply -f storage-nodes.yaml
+```bash title="Enrol storage nodes"
+kubectl apply -f storage-nodeset.yaml
 ```
 
 As part of the provisioning process, the operator bootstraps each listed worker, installs the SPDK service, and
-registers it with the previously created storage cluster.
+registers it with the previously created storage cluster. Workers are added one at a time by default
+(`maxParallelNodeAdds: 1`) to protect FoundationDB from simultaneous reboots.
 
-The process takes a little while the spdk pods are being created. It can be checked with:
+The process takes a little while as SPDK pods are created. Track progress with:
 
-```bash title="Check the bring up process"
-kubectl get pods -n simplyblock -w
+```bash title="Check the bring-up process"
+kubectl get storagenodeset simplyblock-node -n simplyblock
+kubectl get storagenodes -n simplyblock
 ```
 
 ### When does the Cluster become Active?
@@ -147,11 +149,8 @@ kubectl get pods -n simplyblock -w
 By default, simplyblock clusters use the [Erasure Coding](../deployment-preparation/erasure-coding-scheme.md) schema
 of `1+1` which requires at least three storage nodes to join the cluster.
 
-That means the operator will automatically activate the cluster when at least three storage nodes have joined. For
-other erasure coding schemes, the number of required storage nodes will be different. See the erasure coding scheme
-documentation for more details.
-
-The cluster status can be checked with:
+The operator automatically activates the cluster when at least three storage nodes are online. For other erasure
+coding schemes, the required number differs — see the erasure coding documentation for details.
 
 ```bash title="Check the cluster status"
 kubectl get storagecluster -n simplyblock
@@ -168,7 +167,7 @@ When the status becomes `active`, the operator automatically creates a `simplybl
 There is no necessity to manage this secret manually. The operator keeps it up to date and removes the cluster entry
 when the cluster is deleted.
 
-There are additional configuration properties. A full list is available at [Simplyblock Operator: Storage Node](../../reference/operator.md#storage-node).
+For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator.md#storagenodesset).
 
 !!! warning
     Simplyblock exclusively owns the resources it has been allocated. It must be ensured they are sized correctly
@@ -312,31 +311,29 @@ kubectl delete pvc simplyblock-test-pvc
 
 A single Kubernetes cluster can host storage nodes connected to multiple simplyblock clusters.
 
-To create an additional storage cluster, a separate `StorageNode` resource must be created for each simplyblock cluster.
-
-Multiple storage clusters can share Kubernetes worker nodes, but it is recommended to point each storage cluster to a
-different set of worker nodes.
+Create a separate `StorageNodeSet` for each simplyblock cluster. Multiple storage clusters can share Kubernetes
+worker nodes, but it is recommended to point each storage cluster to a different set of workers.
 
 ```yaml title="Multi-cluster storage nodes"
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNode
+kind: StorageNodeSet
 metadata:
   name: cluster-a-nodes
   namespace: simplyblock
 spec:
   clusterName: cluster-a
   workerNodes:
-    - worker-a-1
-    - worker-a-2
+    - worker-a-1.example.com
+    - worker-a-2.example.com
 ---
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNode
+kind: StorageNodeSet
 metadata:
   name: cluster-b-nodes
   namespace: simplyblock
 spec:
   clusterName: cluster-b
   workerNodes:
-    - worker-b-1
-    - worker-b-2
+    - worker-b-1.example.com
+    - worker-b-2.example.com
 ```

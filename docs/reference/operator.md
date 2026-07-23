@@ -13,17 +13,19 @@ the actual state of the simplyblock cluster.
 
 The operator manages the following Custom Resource Definitions (CRDs):
 
-| CRD              | Short Name | Description                                       |
-|------------------|------------|---------------------------------------------------|
-| `StorageCluster` | -          | Creates and manages a simplyblock storage cluster |
-| `StorageNode`    | -          | Manages storage nodes within a cluster            |
-| `Pool`           | -          | Creates and manages storage pools                 |
-| `Lvol`           | -          | Manages logical volumes                           |
-| `Device`         | -          | Manages NVMe devices on storage nodes             |
-| `Task`           | -          | Monitors cluster tasks and their status           |
-| `StorageBackup`  | -          | Creates a one-time backup of a PVC to S3          |
-| `BackupRestore`  | -          | Restores a backup into a new PVC                  |
-| `BackupPolicy`   | -          | Defines an automated backup schedule for PVCs     |
+| CRD                | Short Name | Description                                                           |
+|--------------------|------------|-----------------------------------------------------------------------|
+| `StorageCluster`   | -          | Creates and manages a simplyblock storage cluster                     |
+| `StorageNodeSet`   | -          | Fleet-level declarative management of storage nodes across workers    |
+| `StorageNode`      | -          | Represents a single backend storage node instance (auto-created)      |
+| `StorageNodeOps`   | -          | One-shot operational action targeting a single storage node           |
+| `Pool`             | -          | Creates and manages storage pools                                     |
+| `Lvol`             | -          | Manages logical volumes                                               |
+| `Device`           | -          | Manages NVMe devices on storage nodes                                 |
+| `Task`             | -          | Monitors cluster tasks and their status                               |
+| `StorageBackup`    | -          | Creates a one-time backup of a PVC to S3                              |
+| `BackupRestore`    | -          | Restores a backup into a new PVC                                      |
+| `BackupPolicy`     | -          | Defines an automated backup schedule for PVCs                         |
 
 All CRDs use the API group `storage.simplyblock.io/v1alpha1`.
 
@@ -116,123 +118,217 @@ the cluster's entry from the Secret automatically.
 | `actionStatus.triggered`          | bool   | Whether the underlying backend action has been fired.       |
 | `actionStatus.observedGeneration` | int    | Resource generation observed when this status was recorded. |
 
-## Storage Node
+## Storage Nodes
 
-The `StorageNode` resource manages storage nodes within a cluster.
+Storage node management uses three separate CRDs with distinct responsibilities. Together they form a three-tier model:
 
-```yaml title="Example: Deploy storage nodes"
+```
+StorageNodeSet   ──► declares which workers to use and how to configure them
+      │                (fleet-level, declarative)
+      ▼ creates
+StorageNode      ──► represents one backend storage node instance
+      │                (per-worker, read-mostly, auto-created by the operator)
+      ▲ targeted by
+StorageNodeOps   ──► drives a single one-shot operation to completion
+                       (shutdown / restart / suspend / resume / remove)
+```
+
+## StorageNodeSet
+
+The `StorageNodeSet` resource is the single point of configuration for a fleet of storage nodes. It declares which
+Kubernetes workers to enrol, how to configure them (image versions, NUMA topology, device filtering, per-node
+overrides), and how many nodes to add in parallel.
+
+The operator creates one `StorageNode` CR per enrolled worker (and per configured NUMA socket when
+`socketsToUse` has more than one entry). Those child CRs are managed automatically and must not be created or
+deleted manually.
+
+```yaml title="Example: Enrol three workers into a storage cluster"
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNode
+kind: StorageNodeSet
 metadata:
-  name: storage-nodes
+  name: simplyblock-node
   namespace: simplyblock
 spec:
-  clusterName: production
-  maxLogicalVolumeCount: 100
+  clusterName: simplyblock-cluster
+  maxLogicalVolumeCount: 20
+  partitions: 0
+  corePercentage: 50
   workerNodes:
-    - worker-1
-    - worker-2
-  partitions: 1
-  coreIsolation: true
+    - worker-1.example.com
+    - worker-2.example.com
+    - worker-3.example.com
 ```
 
 ### Spec Fields
 
-| Field                                     | Type         | Description                                                                                                           |
-|-------------------------------------------|--------------|-----------------------------------------------------------------------------------------------------------------------|
-| `clusterName`                             | string       | Name of the cluster this node belongs to. **Required**.                                                               |
-| `clusterImage`                            | string       | Storage-node container image override. If omitted, the operator inherits the image from the ControlPlane CRD.          |
-| `spdkImage`                               | string       | SPDK service container image override.                                                                                |
-| `spdkProxyImage`                          | string       | SPDK proxy service container image override.                                                                          |
-| `maxLogicalVolumeCount`                   | int          | Maximum number of logical volumes per node. **Required when `action` is not specified**.                              |
-| `maxSize`                                 | string       | Maximum allocatable huge pages memry (e.g., `16G`).                                                                   |
-| `partitions`                              | int          | Number of partitions per backend storage device.                                                                      |
-| `mgmtIfname`                              | string       | Management network interface name used by storage nodes.                                                              |
-| `dataIfname`                              | []string     | Data-plane network interface names.                                                                                   |
-| `coreIsolation`                           | bool         | Enable CPU core isolation mode.                                                                                       |
-| `corePercentage`                          | int          | Percentage of CPU cores to allocate to SPDK (0–99).                                                                   |
-| `reservedSystemCPU`                       | string       | CPUs reserved for system workloads (e.g., `0,1` or `0-1`).                                                            |
-| `enableCpuTopology`                       | bool         | Enable topology-aware CPU scheduling.                                                                                 |
-| `socketsToUse`                            | []string     | NUMA sockets to deploy storage on (e.g., `["0","1"]`).                                                                |
-| `nodesPerSocket`                          | int          | Number of storage nodes to create per NUMA socket.                                                                    |
-| `journalManager.count`                    | int          | Number of journal managers to configure.                                                                              |
-| `journalManager.percentPerDevice`         | int          | Journal manager capacity as a percentage of each device.                                                              |
-| `pcieAllowList`                           | []string     | PCIe addresses of NVMe devices to include.                                                                            |
-| `pcieDenyList`                            | []string     | PCIe addresses of NVMe devices to exclude.                                                                            |
-| `pcieModel`                               | string       | Filter devices by PCI device model string.                                                                            |
-| `deviceNames`                             | []string     | Explicit NVMe namespace names to use (e.g., `["nvme0n1","nvme1n1"]`). Alternative to PCIe-based filtering.            |
-| `driveSizeRange`                          | string       | Filter devices by capacity range (e.g., `100G-2T`).                                                                   |
-| `forceFormat4K`                           | bool         | Force 4K block-size formatting on NVMe devices that support it.                                                       |
-| `skipKubeletConfiguration`                | bool         | Skip kubelet configuration changes during node setup.                                                                 |
-| `openShiftCluster`                        | bool         | Enable OpenShift-specific behavior (required on OpenShift). See [OpenShift](../deployments/kubernetes/openshift.md).  |
-| `ubuntuHost`                              | bool         | Indicate the host OS is Ubuntu for OS-specific initialization.                                                        |
-| `tolerations`                             | []Toleration | Kubernetes pod tolerations applied to storage-node pods.                                                              |
-| `workerNodes`                             | []string     | Kubernetes worker node names to deploy storage on. **Required and must be non-empty when `action` is not specified**. |
-| `action`                                  | string       | Node lifecycle action: `shutdown`, `restart`, `suspend`, `resume`, `remove`.                                          |
-| `nodeUUID`                                | string       | UUID of the target node. **Required when `action` is specified**.                                                     |
+| Field                             | Type                  | Description                                                                                                          |
+|-----------------------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------|
+| `clusterName`                     | string                | Name of the target `StorageCluster`. **Required, immutable**.                                                        |
+| `clusterImage`                    | string                | Storage-node container image override.                                                                               |
+| `spdkImage`                       | string                | SPDK service container image override.                                                                               |
+| `spdkProxyImage`                  | string                | SPDK proxy container image override.                                                                                 |
+| `maxLogicalVolumeCount`           | int                   | Maximum logical volumes per node.                                                                                    |
+| `maxSize`                         | string                | Maximum allocatable huge pages memory (e.g., `16G`).                                                                |
+| `partitions`                      | int                   | Partitions per backend storage device. **Immutable**.                                                                |
+| `mgmtIfname`                      | string                | Management network interface. **Immutable**.                                                                         |
+| `dataIfname`                      | []string              | Data-plane network interface names.                                                                                  |
+| `corePercentage`                  | int                   | Percentage of CPU cores allocated to SPDK (0–99).                                                                    |
+| `reservedSystemCPU`               | string                | CPUs reserved for system workloads (e.g., `0,1`).                                                                    |
+| `enableCpuTopology`               | bool                  | Enable topology-aware CPU scheduling.                                                                                |
+| `socketsToUse`                    | []string              | NUMA sockets to deploy storage on (e.g., `["0","1"]`).                                                               |
+| `nodesPerSocket`                  | int                   | Storage nodes per NUMA socket. **Immutable**.                                                                        |
+| `journalManager.count`            | int                   | Journal manager count.                                                                                               |
+| `journalManager.percentPerDevice` | int                   | Journal manager capacity as a percentage of each device.                                                             |
+| `pcieAllowList`                   | []string              | PCIe addresses of NVMe devices to include.                                                                           |
+| `pcieDenyList`                    | []string              | PCIe addresses of NVMe devices to exclude.                                                                           |
+| `pcieModel`                       | string                | Filter devices by PCI model string.                                                                                  |
+| `deviceNames`                     | []string              | Explicit NVMe namespace names (alternative to PCIe filtering).                                                       |
+| `driveSizeRange`                  | string                | Filter devices by capacity range (e.g., `100G-2T`).                                                                  |
+| `forceFormat4K`                   | bool                  | Force 4K block-size formatting. **Immutable**.                                                                       |
+| `skipKubeletConfiguration`        | bool                  | Skip kubelet configuration changes during node setup.                                                                |
+| `openShiftCluster`                | bool                  | Enable OpenShift-specific behaviour.                                                                                 |
+| `ubuntuHost`                      | bool                  | Indicate the host OS is Ubuntu.                                                                                      |
+| `tolerations`                     | []Toleration          | Pod tolerations applied to storage-node DaemonSet pods.                                                              |
+| `workerNodes`                     | []string              | Kubernetes worker node names to enrol. **Required, max 200**.                                                        |
+| `maxParallelNodeAdds`             | int                   | Maximum number of nodes added concurrently (default: `1`).                                                           |
+| `spdkSystemMemory`                | string                | Memory reserved for the SPDK system allocator (e.g., `4G`).                                                          |
+| `expand`                          | bool                  | Mark this set as a cluster-expansion add.                                                                            |
+| `nodeConfigs`                     | map[string]Overrides  | Per-worker configuration overrides keyed by worker hostname.                                                         |
+| `nodeFailureDomains`              | map[string]int        | Failure-domain assignment per worker (integer ≥ 1).                                                                  |
+| `imagePullPolicy`                 | string                | Image pull policy: `Always`, `Never`, or `IfNotPresent`.                                                             |
+| `containerResources`              | ResourceRequirements  | CPU/memory requests and limits for the main storage-node container.                                                  |
+| `initContainerResources`          | ResourceRequirements  | CPU/memory requests and limits for init containers.                                                                  |
 
 ### Status Fields
 
-The `status.nodes` list reflects the observed state of each managed storage node.
-
 | Field                                | Type   | Description                                                                                        |
 |--------------------------------------|--------|----------------------------------------------------------------------------------------------------|
+| `totalNodes`                         | int    | Total number of owned `StorageNode` CRs.                                                           |
+| `onlineNodes`                        | int    | Count of nodes currently in `online` state.                                                        |
+| `offlineNodes`                       | int    | Count of nodes in `offline` state.                                                                 |
+| `suspendedNodes`                     | int    | Count of nodes in `suspended` state.                                                               |
+| `creatingNodes`                      | int    | Count of nodes in `in_creation` state.                                                             |
+| `removedNodes`                       | int    | Count of nodes in `removed` state.                                                                 |
 | `nodes[].uuid`                       | string | Backend node UUID.                                                                                 |
 | `nodes[].hostname`                   | string | Kubernetes node hostname.                                                                          |
 | `nodes[].status`                     | string | Backend lifecycle state.                                                                           |
 | `nodes[].health`                     | bool   | Whether health checks are currently passing.                                                       |
-| `nodes[].cpu`                        | int    | Reported CPU core count.                                                                           |
-| `nodes[].memory`                     | string | Reported memory value.                                                                             |
-| `nodes[].volumes`                    | int    | Current logical volume count.                                                                      |
-| `nodes[].devices`                    | string | Backend device summary for this node.                                                              |
 | `nodes[].mgmtIp`                     | string | Management IP address.                                                                             |
 | `nodes[].rpcPort`                    | int    | Node RPC service port.                                                                             |
 | `nodes[].lvolPort`                   | int    | Logical volume subsystem port.                                                                     |
 | `nodes[].nvmfPort`                   | int    | NVMe-oF service port.                                                                              |
-| `nodes[].uptime`                     | string | Reported node uptime.                                                                              |
-| `actionStatus.action`                | string | Most recently requested action name.                                                               |
-| `actionStatus.nodeUUID`              | string | Target node UUID for the action.                                                                   |
-| `actionStatus.state`                 | string | Action execution state: `pending`, `running`, `success`, or `failed`.                              |
-| `actionStatus.message`               | string | Human-readable result or error message.                                                            |
-| `actionStatus.updatedAt`             | string | Timestamp of the last status transition.                                                           |
-| `actionStatus.triggered`             | bool   | Whether the underlying backend action has been fired.                                              |
-| `actionStatus.observedGeneration`    | int    | Resource generation observed when this status was recorded.                                        |
 | `drainCoordination[].hostname`       | string | Kubernetes node name being drained.                                                                |
 | `drainCoordination[].activeNodeUUID` | string | Backend UUID of the storage node being shut down or restarted.                                     |
 | `drainCoordination[].phase`          | string | Drain phase: `detected`, `shutdown_called`, `draining`, `restart_called`, `complete`, or `failed`. |
 | `drainCoordination[].message`        | string | Additional status detail or error information.                                                     |
 | `drainCoordination[].startedAt`      | string | Timestamp when drain coordination began for this node.                                             |
 
-### Node Operations
+## StorageNode
 
-The `StorageNode` CR operates in two distinct modes depending on whether `spec.action` is set.
+The `StorageNode` resource represents a single backend storage node instance. One `StorageNode` CR is created
+automatically by the operator for each (worker, NUMA socket) combination declared in a `StorageNodeSet`. These
+CRs are read-mostly — their spec is set at creation and is effectively immutable.
 
-#### Triggering an Action
+```bash title="List all StorageNode instances"
+kubectl get storagenodes -n simplyblock
+```
 
-Set `spec.action` and `spec.nodeUUID` together. Both fields are required — the CRD validation will reject a CR that has `action` without `nodeUUID`.
+```plain title="Example output"
+NAME                                                   WORKER                      SOCKET  NODEIDX  UUID                                   STATUS   HEALTH  AGE
+simplyblock-node-worker-1.example.com-s0-n0            worker-1.example.com        0       0        a1b2c3d4-...                           online   true    10m
+simplyblock-node-worker-2.example.com-s0-n0            worker-2.example.com        0       0        b2c3d4e5-...                           online   true    8m
+simplyblock-node-worker-3.example.com-s0-n0            worker-3.example.com        0       0        c3d4e5f6-...                           online   true    6m
+```
 
-```yaml title="Example: Suspend a storage node"
+### Spec Fields
+
+| Field               | Type   | Description                                                                           |
+|---------------------|--------|---------------------------------------------------------------------------------------|
+| `storageNodeSetRef` | string | Name of the owning `StorageNodeSet`. **Required, immutable**.                         |
+| `workerNode`        | string | Kubernetes node hostname. **Required, immutable**.                                    |
+| `socketID`          | string | NUMA socket identifier from `socketsToUse`. **Immutable**.                            |
+| `nodeIndex`         | int    | Per-socket node index (0…nodesPerSocket-1). **Immutable**.                            |
+| `socketIndex`       | int    | Global ordinal across all sockets on this worker. **Immutable**.                      |
+| `overrides`         | object | Per-node configuration overrides (propagated from `StorageNodeSet.spec.nodeConfigs`). |
+
+### Status Fields
+
+| Field               | Type   | Description                                                 |
+|---------------------|--------|-------------------------------------------------------------|
+| `uuid`              | string | Backend storage node UUID (set after provisioning).         |
+| `status`            | string | Backend lifecycle status (`online`, `offline`, `suspended`, `in_creation`, etc.). |
+| `health`            | bool   | Backend health flag.                                        |
+| `hostname`          | string | Node hostname as reported by the backend.                   |
+| `resources.cpu`     | int    | SPDK CPU cores allocated.                                   |
+| `resources.memory`  | string | SPDK memory allocation.                                     |
+| `resources.volumes` | int    | Current logical volume count.                               |
+| `resources.devices` | string | Device summary (online/total).                              |
+| `ports.management`  | string | Management IP address.                                      |
+| `ports.nvmeof`      | int    | NVMe-oF fabric port.                                        |
+| `ports.lvol`        | int    | Logical volume subsystem port.                              |
+| `ports.rpc`         | int    | RPC/management API port.                                    |
+| `postedAt`          | string | Timestamp of the node-add POST (provisioning guard).        |
+
+## StorageNodeOps
+
+The `StorageNodeOps` resource drives a single one-shot operation against one `StorageNode`. It is analogous to a
+Kubernetes `Job` — the operator executes the requested action, records the outcome, and the CR is left in a
+terminal state. Only one `StorageNodeOps` may be active for a given `StorageNode` at a time.
+
+```yaml title="Example: Restart a specific storage node"
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNode
+kind: StorageNodeOps
 metadata:
-  name: storage-nodes
+  name: restart-worker-1
   namespace: simplyblock
 spec:
-  clusterName: production
-  action: suspend
-  nodeUUID: "d4e5f6a7-..."
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: restart
 ```
 
-To clear the action after it completes, remove `spec.action` and `spec.nodeUUID` from the CR. The operator does not clear these fields automatically.
-
-#### Action Lifecycle
-
-When an action is triggered, the operator transitions `status.actionStatus.state` through the following states:
-
+```yaml title="Example: Remove (drain) a storage node"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeOps
+metadata:
+  name: drain-worker-1
+  namespace: simplyblock
+spec:
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: remove
 ```
-(spec.action set) → running → success
-                            ↘ failed  (retried after 10 s)
-```
+
+### Spec Fields
+
+| Field              | Type   | Description                                                                                              |
+|--------------------|--------|----------------------------------------------------------------------------------------------------------|
+| `storageNodeRef`   | string | Name of the target `StorageNode` CR. **Required, immutable**.                                            |
+| `action`           | string | Operation: `shutdown`, `restart`, `suspend`, `resume`, `remove`. **Required, immutable**.                |
+| `force`            | bool   | Force execution where the backend supports it.                                                           |
+| `reattachVolume`   | bool   | Reattach volumes during restart (`restart` only).                                                        |
+| `drain.systemVolumeFilterRegex` | string | Go regex matching system volumes to exclude from migration and delete in the Verifying phase. Defaults to `^sb-fio-baseline-.*`. |
+
+### Status Fields
+
+| Field             | Type   | Description                                                                                           |
+|-------------------|--------|-------------------------------------------------------------------------------------------------------|
+| `phase`           | string | High-level lifecycle: `Pending`, `Running`, `Succeeded`, or `Failed`.                                 |
+| `subPhase`        | string | Active drain step (`remove` only): `Validating`, `Suspending`, `Migrating`, `Verifying`, `Removing`.  |
+| `message`         | string | Human-readable state description or failure reason.                                                   |
+| `volumesMigrated` | int    | Number of volumes successfully migrated (`remove` only).                                              |
+| `volumesPending`  | int    | Number of volumes still awaiting migration (`remove` only).                                           |
+| `startedAt`       | string | Operation start timestamp.                                                                            |
+| `completedAt`     | string | Operation completion timestamp.                                                                       |
+
+### Supported Actions
+
+| Action     | Expected outcome after success                                  |
+|------------|-----------------------------------------------------------------|
+| `shutdown` | Node transitions to `offline`.                                  |
+| `restart`  | Node transitions back to `online`.                              |
+| `suspend`  | Node transitions to `suspended`.                                |
+| `resume`   | Node transitions back to `online`.                              |
+| `remove`   | Node is drained, all volumes migrated, node deleted from backend. |
 
 
 ## Storage Pool

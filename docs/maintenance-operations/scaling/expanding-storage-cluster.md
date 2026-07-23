@@ -34,18 +34,18 @@ After the expansion is complete, the cluster returns to **ACTIVE** and resumes n
 ## Adding Worker Nodes with the Kubernetes Operator
 
 When running simplyblock on Kubernetes, adding new worker nodes to the storage fabric is achieved by appending them to
-the current `StorageNode.spec.workerNodes` configuration:
+the `StorageNodeSet.spec.workerNodes` list:
 
 ```bash title="Add worker nodes via the operator"
-kubectl patch storagenode simplyblock-node -n simplyblock \
+kubectl patch storagenodeset simplyblock-node -n simplyblock \
   --type=json -p '[
-    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-4"},
-    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-5"}
+    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-4.example.com"},
+    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-5.example.com"}
   ]'
 ```
 
-The Simplyblock Operator automatically picks up on the change and will deploy the storage-node DaemonSet to the newly
-added workers, register them with the simplyblock backend, and wait for each node to come online.
+The Simplyblock Operator automatically picks up on the change, creates the corresponding `StorageNode` CRs, deploys
+the storage-node DaemonSet to the newly added workers, and registers them with the simplyblock backend one at a time.
 
 The backend transitions to **IN_EXPANSION** during this process.
 
