@@ -49,6 +49,11 @@ see [System Requirements](../deployment-preparation/hardware-requirements.md#net
 On storage nodes, simplyblock can use either one network interface for both storage and management 
 or separate interfaces (VLANs or subnets).
 
+!!! Important
+    It is possible to configure a storage cluster with NVMe-of Multipathing. This requires two storage
+    VLANs per host, routed via separate NIC ports and switches for fault tolerance. This configuration can
+    be used as an alternative to a HA networking setup with link aggregation (such as LACP, MLAG, and similar).
+    
 To install simplyblock in your environment, you may have to adopt these commands to match your configuration.
 
 | Network interface | Network definition | Abbreviation | Subnet          |

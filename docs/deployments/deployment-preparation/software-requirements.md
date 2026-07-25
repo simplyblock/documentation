@@ -7,7 +7,7 @@ weight: 29999
 ## Operating System Requirements (Control Plane, Storage Plane)
 
 **Control plane nodes**, as well as storage nodes in a **plain Linux** deployment, require a Red Hat Linux-based
-distribution with minimum version 9.
+distribution in version 9.
 
 In a hyper-converged deployment a broad range of operating systems are supported. The availability depends on the
 used Kubernetes distribution.
@@ -34,14 +34,14 @@ A full overview of the supported operating systems for initiators can be found a
 
 For Kubernetes-based deployments, the following Kubernetes environments and distributions are supported:
 
-| Distribution         | Versions         |
-|----------------------|------------------|
-| Amazon EKS           | 1.28 and higher  |
-| Google GKE           | 1.28 and higher  |
-| K3s                  | 1.29 and higher  |
-| Kubernetes (vanilla) | 1.28 and higher  |
-| Talos                | 1.6.7 and higher |
-| OpenShift            | 4.19 and higher  |
+| Distribution         | Versions                                |
+|----------------------|-----------------------------------------|
+| Amazon EKS           | 1.30 and higher                         |
+| Google GKE           | 1.30 and higher - non production only!  |
+| K3s                  | 1.33 and higher                         |
+| Kubernetes (vanilla) | 1.33 and higher                         |
+| Talos                | 1.6.7 and higher                        |
+| OpenShift            | 4.19 and higher                         |
 
 Additionally, there are verified and supported operating systems for the Kubernetes worker nodes. A full reference is
 available at the [Supported Linux Distributions](../../reference/supported-linux-distributions.md#kubernetes-hyper-converged-control-plane-and-storage-plane)

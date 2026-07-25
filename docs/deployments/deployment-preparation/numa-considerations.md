@@ -9,12 +9,12 @@ Modern multi-socket servers use a memory architecture called
 In a NUMA system, each CPU socket has its own local memory and I/O paths. Accessing local resources is faster than
 reaching across sockets to remote memory or devices. Simplyblock is fully NUMA-aware.
 
-On a host with more than one socket, by default one or two storage nodes are deployed per socket.
+On a host with more than one socket, by default one storage node is deployed per NUMA node.
 
-Two storage nodes per socket are deployed if:
+In rare cases, it can make sense to deploy more than one storage node per NUMA node (disaggregated deployment only):
 
-- more than 32 vCPUs (cores) per NUMA socket are dedicated to simplyblock per socket
-- more than 10 NVMe devices are connected to the NUMA socket   
+- A single socket has attached more than 10 NVMe.
+- A single socket provides more than 48 cores (96 vCPUs).
 
 Users can change this behavior. Either by setting the appropriate Helm Chart parameters (in case of Kubernetes-based
 storage node deployment) or by manually modifying the initially created configuration file on the storage node
@@ -27,6 +27,10 @@ If a socket has no NVMe devices connected, it will not qualify to run a simplybl
 
 It is also important that the NIC(s) used by simplyblock for storage traffic are connected to the same NUMA socket.
 However, simplyblock does not auto-assign a NIC and users have manually to take care of that.
+
+!!! Important
+    In a hyper-converged deployment, it can be preferable to attach all NVMe devices to one socket and only deploy a
+    node on this socket. This saves overall CPU and RAM required for Simplyblock.
 
 ## Checking NUMA Configuration
 

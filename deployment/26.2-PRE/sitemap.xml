@@ -1,547 +1,547 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/</loc>
+         <loc>https://docs.simplyblock.io/latest/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/high-availability-fault-tolerance/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/high-availability-fault-tolerance/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/simplyblock-architecture/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/simplyblock-architecture/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/storage-performance-and-qos/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/storage-performance-and-qos/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/what-is-simplyblock/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/what-is-simplyblock/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/automatic-rebalancing/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/automatic-rebalancing/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/disaggregated/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/disaggregated/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/erasure-coding/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/erasure-coding/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/hyper-converged/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/hyper-converged/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/logical-volumes/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/logical-volumes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/nvmf-security/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/nvmf-security/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/persistent-volumes/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/persistent-volumes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/replication/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/replication/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/simplyblock-cluster/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/simplyblock-cluster/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/snapshots-clones/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/snapshots-clones/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/storage-pooling/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/storage-pooling/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/architecture/concepts/volume-migration/</loc>
+         <loc>https://docs.simplyblock.io/latest/architecture/concepts/volume-migration/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/cluster-deployment-options/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/cluster-deployment-options/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/nvme-namespaces-and-subsystems/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/nvme-namespaces-and-subsystems/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/air-gap/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/air-gap/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/data-migration/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/data-migration/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/deployment-preparation/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/deployment-preparation/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/deployment-preparation/cloud-instance-recommendations/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/deployment-preparation/cloud-instance-recommendations/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/deployment-preparation/erasure-coding-scheme/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/deployment-preparation/erasure-coding-scheme/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/deployment-preparation/hardware-requirements/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/deployment-preparation/hardware-requirements/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/deployment-preparation/numa-considerations/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/deployment-preparation/numa-considerations/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/deployment-preparation/software-requirements/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/deployment-preparation/software-requirements/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/install-on-linux/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/install-on-linux/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/install-on-linux/install-cp/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/install-on-linux/install-cp/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/install-on-linux/install-sp/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/install-on-linux/install-sp/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/install-csi/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/install-csi/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/k8s-control-plane/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/k8s-control-plane/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/k8s-storage-plane/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/k8s-storage-plane/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/management-cluster-architecture/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/management-cluster-architecture/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/openshift/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/openshift/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/talos/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/talos/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/kubernetes/volume-encryption/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/kubernetes/volume-encryption/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/linux-initiators/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/linux-initiators/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/openstack/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/openstack/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/deployments/proxmox/</loc>
+         <loc>https://docs.simplyblock.io/latest/deployments/proxmox/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/important-notes/</loc>
+         <loc>https://docs.simplyblock.io/latest/important-notes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/important-notes/acronyms/</loc>
+         <loc>https://docs.simplyblock.io/latest/important-notes/acronyms/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/important-notes/contributing/</loc>
+         <loc>https://docs.simplyblock.io/latest/important-notes/contributing/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/important-notes/documentation-conventions/</loc>
+         <loc>https://docs.simplyblock.io/latest/important-notes/documentation-conventions/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/important-notes/known-issues/</loc>
+         <loc>https://docs.simplyblock.io/latest/important-notes/known-issues/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/important-notes/terminology/</loc>
+         <loc>https://docs.simplyblock.io/latest/important-notes/terminology/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/asynchronous-replication/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/asynchronous-replication/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/cluster-upgrade/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/cluster-upgrade/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/find-secondary-node/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/find-secondary-node/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/manual-restarting-nodes/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/manual-restarting-nodes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/migrating-storage-node/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/migrating-storage-node/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/node-affinity/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/node-affinity/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/reconnect-nvme-device/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/reconnect-nvme-device/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/replacing-storage-node/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/replacing-storage-node/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/trimming/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/trimming/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/monitoring/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/monitoring/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/monitoring/accessing-grafana/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/monitoring/accessing-grafana/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/monitoring/accessing-graylog/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/monitoring/accessing-graylog/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/monitoring/alerts/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/monitoring/alerts/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/monitoring/cluster-health/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/monitoring/cluster-health/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/monitoring/io-stats/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/monitoring/io-stats/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/monitoring/lvol-conditions/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/monitoring/lvol-conditions/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/scaling/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/scaling/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/scaling/expanding-storage-cluster/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/scaling/expanding-storage-cluster/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/scaling/expanding-storage-pool/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/scaling/expanding-storage-pool/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/security/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/security/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/security/authentication-encryption/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/security/authentication-encryption/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/security/encryption-kubernetes-secrets/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/security/encryption-kubernetes-secrets/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/maintenance-operations/security/multi-tenancy/</loc>
+         <loc>https://docs.simplyblock.io/latest/maintenance-operations/security/multi-tenancy/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/nvme-low-level-format/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/nvme-low-level-format/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/operator/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/operator/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/supported-linux-distributions/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/supported-linux-distributions/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/supported-linux-kernels/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/supported-linux-kernels/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/upgrade-matrix/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/upgrade-matrix/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/api/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/api/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/api/reference/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/api/reference/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/backup/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/backup/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/cluster/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/cluster/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/control-plane/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/control-plane/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/qos/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/qos/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/snapshot/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/snapshot/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/storage-node/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/storage-node/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/storage-pool/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/storage-pool/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/cli/volume/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/cli/volume/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/kubernetes/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/kubernetes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/troubleshooting/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/troubleshooting/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/troubleshooting/control-plane/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/troubleshooting/control-plane/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/troubleshooting/simplyblock-csi/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/troubleshooting/simplyblock-csi/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/reference/troubleshooting/storage-plane/</loc>
+         <loc>https://docs.simplyblock.io/latest/reference/troubleshooting/storage-plane/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-10-2/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-10-2/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-10-3/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-10-3/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-10-4/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-10-4/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-10-5/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-10-5/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-3-pre/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-3-pre/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-6-ga/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-6-ga/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-7-1/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-7-1/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-7-2/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-7-2/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-7-3/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-7-3/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-7-4/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-7-4/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-7-5/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-7-5/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/25-7-6/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/25-7-6/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/release-notes/26-2-pre/</loc>
+         <loc>https://docs.simplyblock.io/latest/release-notes/26-2-pre/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/tutorials/</loc>
+         <loc>https://docs.simplyblock.io/latest/tutorials/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/tutorials/kubernetes-deployment/</loc>
+         <loc>https://docs.simplyblock.io/latest/tutorials/kubernetes-deployment/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/tutorials/simplyblock-intro/</loc>
+         <loc>https://docs.simplyblock.io/latest/tutorials/simplyblock-intro/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/tutorials/sla-intro/</loc>
+         <loc>https://docs.simplyblock.io/latest/tutorials/sla-intro/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/backup-recovery/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/backup-recovery/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/cloning/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/cloning/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/encrypting/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/encrypting/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/expanding/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/expanding/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/provisioning/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/provisioning/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/quality-of-service/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/quality-of-service/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/removing/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/removing/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/baremetal/snapshotting/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/baremetal/snapshotting/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/qos/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/qos/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/qos/limiting-iops-and-throughput/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/qos/limiting-iops-and-throughput/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/qos/qos-service-classes/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/qos/qos-service-classes/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/cloning/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/cloning/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/encrypting/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/encrypting/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/expanding/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/expanding/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/provisioning/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/provisioning/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/quality-of-service/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/quality-of-service/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/removing/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/removing/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/snapshotting/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/snapshotting/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
     <url>
-         <loc>https://docs.simplyblock.io/26.2-PRE/usage/simplyblock-csi/storage-class/</loc>
+         <loc>https://docs.simplyblock.io/latest/usage/simplyblock-csi/storage-class/</loc>
          <lastmod>2026-05-06</lastmod>
     </url>
 </urlset>
