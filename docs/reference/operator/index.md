@@ -1,5 +1,5 @@
 ---
-title: "Simplyblock Operator Reference"
+title: "Simplyblock Operator"
 description: "The simplyblock Kubernetes operator manages simplyblock storage clusters, storage nodes, pools, logical volumes, and devices using Custom Resource Definitions (CRDs)."
 weight: 20090
 ---

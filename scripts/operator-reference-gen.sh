@@ -15,7 +15,7 @@ if [ -z "${OPERATOR_ROOT:-}" ]; then
     OPERATOR_ROOT="$(cd "${DOCS_ROOT}/../simplyblock-manager" && pwd)"
   fi
 fi
-OUTPUT_FILE="${OUTPUT_FILE:-${DOCS_ROOT}/docs/reference/operator-api.md}"
+OUTPUT_FILE="${OUTPUT_FILE:-${DOCS_ROOT}/docs/reference/operator/reference.md}"
 CONFIG_FILE="${CONFIG_FILE:-${SCRIPT_DIR}/operator-crd-ref-docs.yaml}"
 
 # The operator Go API types live under the operator/ subdirectory in recent
@@ -54,8 +54,8 @@ go build -C "${CRD_REF_DOCS_DIR}" -o "${CRD_REF_DOCS_BIN}" .
 {
   cat <<'FRONTMATTER'
 ---
-title: "Simplyblock Operator API Reference"
-description: "Generated API reference for Simplyblock operator Custom Resource Definitions (CRDs)."
+title: "Simplyblock Operator Reference"
+description: "Reference for Simplyblock operator Custom Resource Definitions (CRDs)."
 weight: 20091
 ---
 

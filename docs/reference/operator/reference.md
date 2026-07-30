@@ -1,6 +1,6 @@
 ---
-title: "Simplyblock Operator API Reference"
-description: "Generated API reference for Simplyblock operator Custom Resource Definitions (CRDs)."
+title: "Simplyblock Operator Reference"
+description: "Reference for Simplyblock operator Custom Resource Definitions (CRDs)."
 weight: 20091
 ---
 
@@ -514,7 +514,7 @@ _Appears in:_
 _Example:_
 
 ```yaml
-localEndpoint: '^https://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+localEndpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
 snapshotBackups: boolean
 withCompression: boolean
 secondaryTarget: integer
@@ -525,51 +525,12 @@ credentialsSecretRef:
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `localEndpoint` _string_ |  |  | Pattern: `^https://[a-zA-Z0-9.-]+(:[0-9]\{1,5\})?(/.*)?$` <br /> |
+| `localEndpoint` _string_ |  |  | Pattern: `^https?://[a-zA-Z0-9.-]+(:[0-9]\{1,5\})?(/.*)?$` <br /> |
 | `snapshotBackups` _boolean_ |  |  | Optional: \{\} <br /> |
 | `withCompression` _boolean_ |  |  | Optional: \{\} <br /> |
 | `secondaryTarget` _integer_ |  |  | Optional: \{\} <br /> |
 | `localTesting` _boolean_ |  |  | Optional: \{\} <br /> |
 | `credentialsSecretRef` _[BackupCredentialsSecretRef](#backupcredentialssecretref)_ | CredentialsSecretRef points to the Secret holding access_key_id and secret_access_key. |  |  |
-
-
-#### BaselineColdStartPolicy
-
-_Underlying type:_ _string_
-
-BaselineColdStartPolicy selects what happens for a node that has fewer than
-BaselineMinSamples samples in the rolling window (e.g. a freshly onboarded node, or
-shortly after the probe sidecar starts).
-
-_Validation:_
-- Enum: [defer partialWindow]
-
-_Appears in:_
-- [VolumeAutoPlacementSettings](#volumeautoplacementsettings)
-
-| Field | Description |
-| --- | --- |
-| `defer` | BaselineColdStartDefer omits an under-sampled node from the evaluation cycle: it is<br />neither a migration source nor a target until it has accumulated BaselineMinSamples<br />samples. Avoids acting on a noisy baseline.<br /> |
-| `partialWindow` | BaselineColdStartPartialWindow computes the baseline from whatever samples exist,<br />accepting a noisier baseline early on so rebalancing engages sooner. This is the default.<br /> |
-
-
-#### BaselineStrategy
-
-_Underlying type:_ _string_
-
-BaselineStrategy selects how the per-node latency baseline (the denominator of the
-rebalancing deviation signal) is derived.
-
-_Validation:_
-- Enum: [benchmark rollingWindow]
-
-_Appears in:_
-- [VolumeAutoPlacementSettings](#volumeautoplacementsettings)
-
-| Field | Description |
-| --- | --- |
-| `benchmark` | BaselineStrategyBenchmark uses the one-shot fio measurement taken by the baseline<br />Job on a fresh cluster and frozen on the StorageNode CR status. Simple but tends to<br />read too low, because an idle cluster is far faster than a loaded one — every loaded<br />node then shows a large deviation.<br /> |
-| `rollingWindow` | BaselineStrategyRollingWindow derives the baseline from a rolling window of the<br />probe-sidecar latency series in Prometheus, using a robust outlier-rejecting<br />estimator. Reflects each node's actual recent operating latency rather than an idle<br />measurement. This is the default.<br /> |
 
 
 #### CapacityThresholdSpec
@@ -745,12 +706,12 @@ _Appears in:_
 _Example:_
 
 ```yaml
-baseURL: '^https://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+baseURL: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
 ```
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `baseURL` _string_ | BaseURL is the HashiCorp Vault endpoint (e.g. https://vault.example.com:8200). |  | Pattern: `^https://[a-zA-Z0-9.-]+(:[0-9]\{1,5\})?(/.*)?$` <br /> |
+| `baseURL` _string_ | BaseURL is the HashiCorp Vault endpoint (e.g. https://vault.example.com:8200). |  | Pattern: `^https?://[a-zA-Z0-9.-]+(:[0-9]\{1,5\})?(/.*)?$` <br /> |
 
 
 #### JournalManagerSpec
@@ -1822,7 +1783,7 @@ spec:
     provisionedCapacity: integer
   clientQpairCount: integer
   backup:
-    localEndpoint: '^https://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+    localEndpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
     snapshotBackups: boolean
     withCompression: boolean
     secondaryTarget: integer
@@ -1830,7 +1791,7 @@ spec:
     credentialsSecretRef:
       name: string
   hashicorpVaultSettings:
-    baseURL: '^https://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+    baseURL: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   volumeMigrationSettings:
     enabled: boolean
     rebalancerImage: string
@@ -1850,17 +1811,13 @@ spec:
     prometheusURL: string
     latencyBenchmarkEnabled: boolean
     latencyBenchmarkInterval: Duration
-    baselineStrategy: BaselineStrategy
-    baselineWindow: Duration
-    baselineColdStart: BaselineColdStartPolicy
-    baselineMinSamples: integer
-    baselineOutlierK: float
     iopsWeight: float
     throughputWeight: float
   enableFailureDomains: boolean
 status:
-  uuid:
-    UUID: UUID
+  uuid: string
+  phase: string
+  subPhase: string
   clusterName: string
   mgmtNodes: integer
   storageNodes: integer
@@ -1959,7 +1916,7 @@ criticalThreshold:
   provisionedCapacity: integer
 clientQpairCount: integer
 backup:
-  localEndpoint: '^https://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+  localEndpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   snapshotBackups: boolean
   withCompression: boolean
   secondaryTarget: integer
@@ -1967,7 +1924,7 @@ backup:
   credentialsSecretRef:
     name: string
 hashicorpVaultSettings:
-  baseURL: '^https://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+  baseURL: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
 volumeMigrationSettings:
   enabled: boolean
   rebalancerImage: string
@@ -1987,11 +1944,6 @@ volumeAutoPlacement:
   prometheusURL: string
   latencyBenchmarkEnabled: boolean
   latencyBenchmarkInterval: Duration
-  baselineStrategy: BaselineStrategy
-  baselineWindow: Duration
-  baselineColdStart: BaselineColdStartPolicy
-  baselineMinSamples: integer
-  baselineOutlierK: float
   iopsWeight: float
   throughputWeight: float
 enableFailureDomains: boolean
@@ -2041,8 +1993,9 @@ _Appears in:_
 _Example:_
 
 ```yaml
-uuid:
-  UUID: UUID
+uuid: string
+phase: string
+subPhase: string
 clusterName: string
 mgmtNodes: integer
 storageNodes: integer
@@ -2091,7 +2044,9 @@ rebalancingMetrics:
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `uuid` _[UUID](#uuid)_ | UUID is the backend cluster UUID. |  |  |
+| `uuid` _string_ | UUID is the backend cluster UUID. |  |  |
+| `phase` _string_ | Phase tracks the cluster creation lifecycle to prevent concurrent reconcilers<br />from creating duplicate clusters. Set to "creation" while a creation is in<br />progress and cleared once the cluster UUID is persisted. |  |  |
+| `subPhase` _string_ | SubPhase tracks the step within the current Phase. Reserved for future<br />sub-state machine expansion; currently only "creating" is used. |  |  |
 | `clusterName` _string_ | ClusterName is the resolved backend cluster name. |  |  |
 | `mgmtNodes` _integer_ | MgmtNodes is the number of management nodes.<br />FIXME: Unused for now (API update required?) |  |  |
 | `storageNodes` _integer_ | StorageNodes is the number of storage nodes.<br />FIXME: Unused for now (API update required?) |  |  |
@@ -3105,11 +3060,6 @@ metricsBackend: MetricsBackend
 prometheusURL: string
 latencyBenchmarkEnabled: boolean
 latencyBenchmarkInterval: Duration
-baselineStrategy: BaselineStrategy
-baselineWindow: Duration
-baselineColdStart: BaselineColdStartPolicy
-baselineMinSamples: integer
-baselineOutlierK: float
 iopsWeight: float
 throughputWeight: float
 ```
@@ -3127,12 +3077,7 @@ throughputWeight: float
 | `metricsBackend` _[MetricsBackend](#metricsbackend)_ | MetricsBackend selects the data source for I/O metrics. Defaults to "prometheus". |  | Enum: [controlplane prometheus uniform] <br />Optional: \{\} <br /> |
 | `prometheusURL` _string_ | PrometheusURL is required when MetricsBackend is "prometheus". |  | Optional: \{\} <br /> |
 | `latencyBenchmarkEnabled` _boolean_ | LatencyBenchmarkEnabled enables fio-based NVMe-oF latency measurement via Kubernetes Jobs.<br />Defaults to false; set to true once a RebalancerImage is configured. |  | Optional: \{\} <br /> |
-| `latencyBenchmarkInterval` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#duration-v1-meta)_ | LatencyBenchmarkInterval is how often fio benchmark Jobs run against each storage node.<br />It also sets the step of the rolling-window baseline query (the cadence at which the<br />probe sidecar publishes latency samples). Defaults to 5m. |  | Optional: \{\} <br /> |
-| `baselineStrategy` _[BaselineStrategy](#baselinestrategy)_ | BaselineStrategy selects how the per-node latency baseline is derived. Defaults to<br />"rollingWindow" (robust estimate over BaselineWindow of the Prometheus latency series);<br />"benchmark" uses the frozen one-shot fio measurement instead. |  | Enum: [benchmark rollingWindow] <br />Optional: \{\} <br /> |
-| `baselineWindow` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#duration-v1-meta)_ | BaselineWindow is the look-back window used by the "rollingWindow" strategy. Defaults to 6h. |  | Optional: \{\} <br /> |
-| `baselineColdStart` _[BaselineColdStartPolicy](#baselinecoldstartpolicy)_ | BaselineColdStart selects what happens for a node with fewer than BaselineMinSamples<br />samples in the window. Defaults to "partialWindow" (compute from available samples);<br />"defer" skips the node until enough samples exist. |  | Enum: [defer partialWindow] <br />Optional: \{\} <br /> |
-| `baselineMinSamples` _integer_ | BaselineMinSamples is the number of samples below which a node is considered<br />under-sampled (see BaselineColdStart). Defaults to 6. |  | Optional: \{\} <br /> |
-| `baselineOutlierK` _float_ | BaselineOutlierK is the Hampel-identifier threshold: a sample is rejected as an outlier<br />when it lies more than k·1.4826·MAD from the window median. Lower is more aggressive.<br />Defaults to 3.0. |  | Optional: \{\} <br /> |
+| `latencyBenchmarkInterval` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#duration-v1-meta)_ | LatencyBenchmarkInterval is how often fio benchmark Jobs run against each storage node.<br />Defaults to 5m. |  | Optional: \{\} <br /> |
 | `iopsWeight` _float_ | IOPSWeight is the weight applied to per-volume IOPS in the volume IO score. Defaults to 1.0. |  | Optional: \{\} <br /> |
 | `throughputWeight` _float_ | ThroughputWeight is the weight applied to per-volume throughput (MB/s) in the volume<br />IO score. Defaults to 0.1. |  | Optional: \{\} <br /> |
 
