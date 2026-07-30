@@ -37,6 +37,9 @@ jobs:
       - name: "Lock sbcli/sbcli version"
         run: |
           [ -f ./scripts/sbcli.lock ] || echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
+      - name: "Lock simplyblock-operator version"
+        run: |
+          ./scripts/operator-lock.sh "${{ env.RELEASE_NAME }}"
       - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
         run: |
           ./doc-builder update-repositories
@@ -48,9 +51,11 @@ jobs:
           git config user.email github-actions@github.com
           git add deployment
           git add scripts/sbcli.lock
+          if [ -f scripts/operator.lock ]; then git add scripts/operator.lock; fi
           git commit -m "Auto-Build: ${RELEASE_NAME}"
           git tag ${RELEASE_NAME}
           git rm scripts/sbcli.lock
+          if [ -f scripts/operator.lock ]; then git rm scripts/operator.lock; fi
           git commit -m "Auto-Build: Post ${RELEASE_NAME}"
           git push --all
           git push --tags

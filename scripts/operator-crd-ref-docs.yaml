@@ -6,4 +6,5 @@ processor:
     - "ObjectMeta$"
 
 render:
+  showExampleYAML: true
   kubernetesVersion: 1.36

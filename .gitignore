@@ -5,4 +5,5 @@ venv
 .idea
 docs/reference/cli
 scripts/sbcli-repo
+scripts/operator-repo
 docs/reference/api/openapi.json

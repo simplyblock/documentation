@@ -73,8 +73,10 @@ The command can be run at any time to update the external repositories to the la
 
 ### Generating the Operator API Reference
 
-The operator API reference is generated from the Simplyblock operator Go API types. By default, the generator expects
-the operator repository at `../simplyblock-manager` relative to this documentation repository:
+The operator API reference is generated from the Simplyblock operator Go API types. By default, the generator uses the
+`simplyblock-operator` checkout created by `./doc-builder update-repositories` at `./scripts/operator-repo`. If that
+checkout is not present, it falls back to a sibling checkout at `../simplyblock-manager` relative to this documentation
+repository:
 
 ```bash
 ./scripts/operator-reference-gen.sh
@@ -83,8 +85,12 @@ the operator repository at `../simplyblock-manager` relative to this documentati
 To use a different checkout, set `OPERATOR_ROOT`:
 
 ```bash
-OPERATOR_ROOT=/path/to/simplyblock-manager ./scripts/operator-reference-gen.sh
+OPERATOR_ROOT=/path/to/simplyblock-operator ./scripts/operator-reference-gen.sh
 ```
+
+The `simplyblock-operator` checkout is pinned the same way the `sbcli` repository is (see the release process below). A
+`scripts/operator.lock` file, if present, pins the operator repository to a specific tag; otherwise the latest `HEAD` is
+used.
 
 ### Serving Content Locally
 
@@ -475,6 +481,13 @@ In the branch, the following changes have to be performed:
 After pushing the new release branch, the GitHub action builder kicks in, builds the version, deploys it to the live
 website and updates the latest symlink, creates the necessary tag for history reasons, and merges the built
 documentation back into the `main` branch (folder `deployment`) using an auto-generated and auto-merged pull request. 
+
+As part of the build, the `sbcli` repository is pinned to the release version via `scripts/sbcli.lock`, and the
+`simplyblock-operator` repository is pinned via `scripts/operator.lock`. The operator lock is resolved automatically to
+the latest operator tag whose `MAJOR.MINOR` matches the release version — for example, release `26.2.4` resolves to the
+newest `v26.2.y` operator tag (the patch level may differ). If no matching operator tag exists (for example for older
+releases that predate the operator), the operator lock is skipped. Both lock files are committed on the version tag and
+removed again afterwards, so `main` never carries a pin.
 
 No further action is required.
 

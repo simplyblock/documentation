@@ -1,17 +1,36 @@
+
 #!/usr/bin/env bash
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCS_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-OPERATOR_ROOT="${OPERATOR_ROOT:-$(cd "${DOCS_ROOT}/../simplyblock-manager" && pwd)}"
+
+# Prefer the operator checkout managed by `./doc-builder update-repositories`
+# (pinned via scripts/operator.lock). Fall back to a sibling checkout for local
+# development. Override explicitly by setting OPERATOR_ROOT.
+if [ -z "${OPERATOR_ROOT:-}" ]; then
+  if [ -d "${DOCS_ROOT}/scripts/operator-repo" ]; then
+    OPERATOR_ROOT="${DOCS_ROOT}/scripts/operator-repo"
+  else
+    OPERATOR_ROOT="$(cd "${DOCS_ROOT}/../simplyblock-manager" && pwd)"
+  fi
+fi
 OUTPUT_FILE="${OUTPUT_FILE:-${DOCS_ROOT}/docs/reference/operator-api.md}"
 CONFIG_FILE="${CONFIG_FILE:-${SCRIPT_DIR}/operator-crd-ref-docs.yaml}"
-CRD_REF_DOCS_VERSION="${CRD_REF_DOCS_VERSION:-v0.3.0}"
+CRD_REF_DOCS_REPO="${CRD_REF_DOCS_REPO:-git@github.com:simplyblock/crd-ref-docs.git}"
+CRD_REF_DOCS_REF="${CRD_REF_DOCS_REF:-master}"
 
 TMP_FILE="$(mktemp)"
-trap 'rm -f "${TMP_FILE}"' EXIT
+CRD_REF_DOCS_DIR="$(mktemp -d)"
+CRD_REF_DOCS_BIN="$(mktemp -u)"
+trap 'rm -f "${TMP_FILE}" "${CRD_REF_DOCS_BIN}"; rm -rf "${CRD_REF_DOCS_DIR}"' EXIT
 
-go run "github.com/elastic/crd-ref-docs@${CRD_REF_DOCS_VERSION}" \
+git clone --quiet --depth 1 --branch "${CRD_REF_DOCS_REF}" \
+  "${CRD_REF_DOCS_REPO}" "${CRD_REF_DOCS_DIR}"
+
+go build -C "${CRD_REF_DOCS_DIR}" -o "${CRD_REF_DOCS_BIN}" .
+
+"${CRD_REF_DOCS_BIN}" \
   --source-path "${OPERATOR_ROOT}/api" \
   --config "${CONFIG_FILE}" \
   --renderer markdown \
