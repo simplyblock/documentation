@@ -167,7 +167,7 @@ When the status becomes `active`, the operator automatically creates a `simplybl
 There is no necessity to manage this secret manually. The operator keeps it up to date and removes the cluster entry
 when the cluster is deleted.
 
-For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator.md#storagenodeset).
+For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator/reference.md#storagenodeset).
 
 !!! warning
     Simplyblock exclusively owns the resources it has been allocated. It must be ensured they are sized correctly
@@ -209,7 +209,7 @@ Once the pool is active, the operator automatically creates a StorageClass named
 `simplyblock-simplyblock-cluster-production-pool`.
 
 The StorageClass is automatically removed when the storage pool is deleted. For full details and customization options
-are available at [Simplyblock Operator: Storage Pool](../../reference/operator.md#storage-pool).
+are available at [Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#pool).
 
 ```bash title="Check the StorageClass"
 kubectl get storageclass simplyblock-simplyblock-production-my-pool

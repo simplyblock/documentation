@@ -52,4 +52,4 @@ kubectl get pods -n simplyblock
 Once the cluster is created, proceed to [Deploy Storage Nodes](k8s-storage-plane.md) to add storage
 capacity and enable volume provisioning.
 
-For a complete reference of all CRD fields, see [Simplyblock Operator](../../reference/operator.md).
+For a complete reference of all CRD fields, see [Simplyblock Operator](../../reference/operator/index.md).

@@ -1,0 +1,10 @@
+processor:
+  ignoreTypes:
+    - ".*List$"
+  ignoreFields:
+    - "TypeMeta$"
+    - "ObjectMeta$"
+
+render:
+  showExampleYAML: true
+  kubernetesVersion: 1.36
