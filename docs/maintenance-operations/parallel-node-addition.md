@@ -4,12 +4,16 @@ description: "How the Simplyblock operator adds storage nodes in parallel while 
 weight: 10760
 ---
 
-When a `StorageNode` resource is created with multiple worker nodes, the operator can add non-FDB workers
+When a `StorageNodeSet` resource is created with multiple worker nodes, the operator can add storage nodes on workers
 concurrently rather than sequentially. This significantly reduces cluster provisioning time for large deployments.
+
+This concurrency, however, is only available to non-FoundationDB workers. FDB workers are always added one at a time.
+This requires that, in case of a worker node restart, the FoundationDB cluster has enough coordinators to remain
+available.
 
 ## How It Works
 
-The operator classifies each worker node into one of two groups before starting the add process:
+The operator classifies each worker node into one of two groups before starting the added process:
 
 - **Non-FDB workers** — workers that do not host any FoundationDB process pods. These are added in parallel up
   to the configured `maxParallelNodeAdds` limit.
@@ -24,14 +28,14 @@ threshold, which would cause cluster unavailability.
 
 Parallelism for non-FDB workers is controlled by `StorageNode.spec.maxParallelNodeAdds`.
 
-| Value | Behaviour |
-|-------|-----------|
-| `1` (default) | All workers added one at a time — safe for all topologies |
-| `> 1` | Up to N non-FDB workers added concurrently per reconcile pass |
+| Value         | Behaviour                                                        |
+|---------------|------------------------------------------------------------------|
+| `1` (default) | All workers added one at a time which is safe for all topologies |
+| `> 1`         | Up to `n` non-FDB workers added concurrently per reconcile pass  |
 
 ```yaml title="Enable parallel node addition"
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNode
+kind: StorageNodeSet
 metadata:
   name: simplyblock-node
   namespace: simplyblock
@@ -74,12 +78,12 @@ spec:
             simplyblock.io/fdb-node: "true"
 ```
 
-With this setup, only the three labelled nodes are treated as FDB workers. All remaining workers are added
+With this setup, only the three labeled nodes are treated as FDB workers. All remaining workers are added
 in parallel.
 
 ## Validation
 
-The following example shows a cluster with 8 storage workers where 6 non-FDB workers started in parallel.
+The following example shows a cluster with eight storage workers where six non-FDB workers started in parallel.
 All SPDK pods entered `ContainerCreating` within the same reconcile pass:
 
 ```
@@ -92,5 +96,5 @@ snode-spdk-pod-4424-cb5317  worker-1   ContainerCreating
 snode-spdk-pod-4425-cb5317  worker-8   ContainerCreating
 ```
 
-The two FDB workers (nodes 2 and 4) were then added sequentially. All 8 nodes came online and the cluster
+The two FDB workers (nodes 2 and 4) were then added sequentially. All eight nodes came online and the cluster
 reached `ACTIVE` status.
