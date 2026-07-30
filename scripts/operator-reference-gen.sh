@@ -17,7 +17,7 @@ if [ -z "${OPERATOR_ROOT:-}" ]; then
 fi
 OUTPUT_FILE="${OUTPUT_FILE:-${DOCS_ROOT}/docs/reference/operator-api.md}"
 CONFIG_FILE="${CONFIG_FILE:-${SCRIPT_DIR}/operator-crd-ref-docs.yaml}"
-CRD_REF_DOCS_REPO="${CRD_REF_DOCS_REPO:-git@github.com:simplyblock/crd-ref-docs.git}"
+CRD_REF_DOCS_REPO="${CRD_REF_DOCS_REPO:-https://github.com/simplyblock/crd-ref-docs.git}"
 CRD_REF_DOCS_REF="${CRD_REF_DOCS_REF:-master}"
 
 TMP_FILE="$(mktemp)"

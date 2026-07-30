@@ -110,6 +110,16 @@ function gen_sbcli_ref() {
   ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/openapi-json-gen.py
 }
 
+function gen_operator_ref() {
+  if [ ! -d ./scripts/operator-repo ]; then
+    echo "The simplyblock-operator repository is not yet available. Please run ./doc-builder update-repositories and try again."
+    exit 1
+  fi
+
+  echo "Generating operator API reference..."
+  ./scripts/operator-reference-gen.sh
+}
+
 function build_css() {
   ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/docs/scripts/build-css.sh" ${IMAGE_NAME}
 }
@@ -256,6 +266,16 @@ function run_help() {
       echo "Generates the sbcli / sbctl reference documentation"
       echo "./doc-builder gen-sbcli-ref"
     ;;
+    "gen-operator-ref")
+      echo "Generates the simplyblock-operator API reference documentation"
+      echo "./doc-builder gen-operator-ref"
+      echo
+      echo "Regenerates docs/reference/operator-api.md from the operator repository"
+      echo "checked out at ./scripts/operator-repo (see ./doc-builder update-repositories)."
+      echo "Requires Go to be installed. When a scripts/operator.lock file exists, the"
+      echo "operator repository is pinned to that reference; otherwise the latest HEAD is"
+      echo "used."
+    ;;
     *)
       echo "Unknown command. No help available."
     ;;
@@ -314,12 +334,20 @@ case "$1" in
     gen_sbcli_ref
   ;;
 
+  "gen-operator-ref")
+    # Test for help requested
+    run_help "$1" "$2"
+
+    gen_operator_ref
+  ;;
+
   *)
     echo "Simplyblock Documentation Builder"
     echo "Available commands:"
     echo "  ./doc-builder build-image              Building required docker image"
     echo "  ./doc-builder update-repositories      Initialized or updated external repository"
     echo "  ./doc-builder gen-sbcli-ref            Generates the sbcli reference pages"
+    echo "  ./doc-builder gen-operator-ref         Generates the operator API reference page"
     echo "  ./doc-builder serve                    Live serving content changes"
     echo "  ./doc-builder build                    Building static documentation"
     echo "  ./doc-builder build-css                Building static CSS"

@@ -39,6 +39,7 @@ jobs:
       - name: "Build Documentation Test"
         run: |
           ./doc-builder update-repositories
+          ./doc-builder gen-operator-ref
           ./doc-builder build
   build-deploy-pr:
     if: github.event.action != 'closed'
@@ -53,6 +54,7 @@ jobs:
       - name: "Build Documentation"
         run: |
           ./doc-builder update-repositories
+          ./doc-builder gen-operator-ref
           ./doc-builder build
       - name: "Creating Deployment Artifact"
         run: |

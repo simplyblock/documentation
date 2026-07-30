@@ -82,6 +82,13 @@ repository:
 ./scripts/operator-reference-gen.sh
 ```
 
+Alternatively, use the `doc-builder` wrapper, which uses the managed checkout and prints a helpful error if it is
+missing:
+
+```bash
+./doc-builder gen-operator-ref
+```
+
 To use a different checkout, set `OPERATOR_ROOT`:
 
 ```bash
@@ -91,6 +98,10 @@ OPERATOR_ROOT=/path/to/simplyblock-operator ./scripts/operator-reference-gen.sh
 The `simplyblock-operator` checkout is pinned the same way the `sbcli` repository is (see the release process below). A
 `scripts/operator.lock` file, if present, pins the operator repository to a specific tag; otherwise the latest `HEAD` is
 used.
+
+The CI builders regenerate the operator API reference automatically after `./doc-builder update-repositories`, so
+pull request and development builds reflect the operator's latest `main`, while release builds reflect the pinned
+`operator.lock` tag. The generation requires Go, which is preinstalled on the GitHub runners.
 
 ### Serving Content Locally
 

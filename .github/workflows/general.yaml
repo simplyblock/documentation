@@ -29,6 +29,7 @@ jobs:
       - name: "Build Documentation Test"
         run: |
           ./doc-builder update-repositories
+          ./doc-builder gen-operator-ref
           ./doc-builder build
   dev-deployment:
     runs-on: ubuntu-latest
@@ -46,6 +47,7 @@ jobs:
           sed -i -r "s|(site_url: .*)|\1dev/|g" ./mkdocs.yml
           cat ./mkdocs.yml
           ./doc-builder update-repositories
+          ./doc-builder gen-operator-ref
           ./doc-builder build
       - name: "Creating Deployment Artifact"
         run: |
