@@ -31,7 +31,7 @@ When the operator detects that a worker node has become cordoned, it executes th
 ## Drain Phases
 
 Each worker being drained progresses through the following phases, tracked in
-`StorageNode.status.drainCoordination`:
+`StorageNodeSet.status.drainCoordination`:
 
 | Phase             | Description                                                                   |
 |-------------------|-------------------------------------------------------------------------------|
@@ -44,15 +44,15 @@ Each worker being drained progresses through the following phases, tracked in
 
 ## Monitoring Drain State
 
-The progress of the drain coordination can be monitored using the `StorageNode` custom resource.
+The progress of the drain coordination can be monitored using the `StorageNodeSet` custom resource.
 
 ```bash title="Inspecting drain coordination status"
-kubectl get storagenode simplyblock-node -n simplyblock \
+kubectl get storagenodeset simplyblock-node -n simplyblock \
   -o jsonpath='{.status.drainCoordination}' | jq .
 ```
 
 ```bash title="Streaming live changes"
-kubectl get storagenode simplyblock-node -n simplyblock -w
+kubectl get storagenodeset simplyblock-node -n simplyblock -w
 ```
 
 ## Configuring Fault Tolerance
@@ -68,3 +68,61 @@ spec:
 A value of `1` is the safest default. The safe-maximum of this value depends on the selected erasure coding scheme and
 replication factor. It reflects the maximum number of toleratable simultaneous node outages without connection loss and
 traffic interruption.
+
+## Pinned Volume Migration During Node Removal
+
+By default, a PVC annotated with `simplyblock.io/pinned-volume` blocks node drain. When draining a node (via a
+`StorageNodeOps` with `action: remove`), the operator will not migrate a pinned volume and will instead emit a
+`PinnedVolumeBlocking` event until the annotation is removed.
+
+**User-directed placement** allows you to specify exactly which node the volume should migrate _to_ during drain
+by setting the annotation value to the target storage node UUID. The operator then migrates the volume to that
+specific node instead of blocking.
+
+### Specifying a Migration Target
+
+Set the annotation value to the target `StorageNode` UUID before triggering drain:
+
+```bash title="Pin a PVC to a specific target node for migration"
+kubectl annotate pvc <pvc-name> -n <namespace> \
+  simplyblock.io/pinned-volume=<target-storage-node-uuid> --overwrite
+```
+
+Find the available storage node UUIDs with:
+
+```bash title="List storage node UUIDs"
+kubectl get storagenodeset simplyblock-node -n simplyblock \
+  -o jsonpath='{.status.nodes[*].uuid}' | tr ' ' '\n'
+```
+
+Once annotated, trigger the drain as usual:
+
+```bash title="Remove the node"
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeOps
+metadata:
+  name: drain-worker-1
+  namespace: simplyblock
+spec:
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: remove
+EOF
+```
+
+The operator will migrate the volume to the specified target instead of blocking.
+
+### Annotation Rules
+
+| Annotation value | Drain behaviour |
+|---|---|
+| A valid storage node UUID (different from the node being drained) | Volume is migrated to that node; drain proceeds |
+| Empty string | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
+| A non-UUID value | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
+| The UUID of the node being drained | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
+
+A `PinnedVolumeBlocking` event names the affected PVC and tells you exactly what to fix:
+
+```bash title="Check for pinned volume blocking events"
+kubectl get events -n simplyblock --field-selector reason=PinnedVolumeBlocking
+```
