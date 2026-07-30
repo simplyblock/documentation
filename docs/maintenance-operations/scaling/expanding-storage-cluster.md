@@ -33,30 +33,131 @@ After the expansion is complete, the cluster returns to **ACTIVE** and resumes n
 
 ## Adding Worker Nodes with the Kubernetes Operator
 
-When running simplyblock on Kubernetes, adding new worker nodes to the storage fabric is achieved by appending them to
-the current `StorageNode.spec.workerNodes` configuration:
+There are two ways to add nodes when using the Kubernetes operator: via the `StorageNodeSet` (recommended for
+adding multiple nodes) or by creating individual `StorageNode` CRs manually (useful when you need per-node
+overrides or want fine-grained control).
 
-```bash title="Add worker nodes via the operator"
-kubectl patch storagenode simplyblock-node -n simplyblock \
-  --type=json -p '[
-    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-4"},
-    {"op":"add","path":"/spec/workerNodes/-","value":"new-node-5"}
-  ]'
+---
+
+### Option A: Add Nodes via a New StorageNodeSet (recommended)
+
+Create a separate `StorageNodeSet` for the expansion workers. Setting `spec.expand: true` tells the operator to
+register each node as an expansion add rather than a fresh cluster node. This keeps the expansion cleanly
+separated from the original set and avoids mutating an existing resource.
+
+**Adding two new nodes:**
+
+```yaml title="expansion-nodeset.yaml — add 2 nodes"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeSet
+metadata:
+  name: simplyblock-node-expansion
+  namespace: simplyblock
+spec:
+  clusterName: simplyblock-cluster
+  expand: true
+  maxLogicalVolumeCount: 20
+  partitions: 0
+  corePercentage: 50
+  workerNodes:
+    - new-node-4.example.com
+    - new-node-5.example.com
 ```
 
-The Simplyblock Operator automatically picks up on the change and will deploy the storage-node DaemonSet to the newly
-added workers, register them with the simplyblock backend, and wait for each node to come online.
+**Adding four new nodes:**
 
-The backend transitions to **IN_EXPANSION** during this process.
+```yaml title="expansion-nodeset.yaml — add 4 nodes"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeSet
+metadata:
+  name: simplyblock-node-expansion
+  namespace: simplyblock
+spec:
+  clusterName: simplyblock-cluster
+  expand: true
+  maxLogicalVolumeCount: 20
+  partitions: 0
+  corePercentage: 50
+  workerNodes:
+    - new-node-4.example.com
+    - new-node-5.example.com
+    - new-node-6.example.com
+    - new-node-7.example.com
+```
 
-Once the nodes are online, finalize the expansion using the `StorageCluster` action:
+```bash title="Apply the expansion StorageNodeSet"
+kubectl apply -f expansion-nodeset.yaml
+```
+
+The operator creates `StorageNode` CRs for each new worker, deploys the storage-node DaemonSet, and registers
+them with the backend one at a time.
+
+Monitor until all new nodes are online:
+
+```bash title="Watch the expansion StorageNodeSet"
+kubectl get storagenodeset simplyblock-node-expansion -n simplyblock -w
+```
+
+```bash title="Check individual StorageNode status"
+kubectl get storagenodes -n simplyblock
+```
+
+---
+
+### Option B: Add a Single Node via StorageNode CR
+
+For cases where you need per-node overrides (custom `maxLogicalVolumeCount`, `spdkSystemMemory`, etc.) or want
+to add a single node manually, create a `StorageNode` CR directly. Set `overrides.expand: true` so the backend
+treats it as an expansion add rather than a fresh cluster node.
+
+`spec.storageNodeSetRef` must point to the existing `StorageNodeSet` and `spec.workerNode` must match the
+Kubernetes node hostname. The CR name is arbitrary.
+
+```yaml title="Add a single expansion node manually"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNode
+metadata:
+  name: simplyblock-new-node-4-expansion
+  namespace: simplyblock
+spec:
+  storageNodeSetRef: simplyblock-node
+  workerNode: new-node-4.example.com
+  socketIndex: 0
+  overrides:
+    expand: true
+    maxLogicalVolumeCount: 20
+```
+
+```bash title="Apply the StorageNode CR"
+kubectl apply -f expansion-node.yaml
+```
+
+The operator picks up the new CR and provisions the node. Watch the status:
+
+```bash title="Watch the new node's provisioning status"
+kubectl get storagenode simplyblock-new-node-4-expansion \
+  -n simplyblock -w
+```
+
+!!! note
+    The `StorageNode` CR is normally auto-created by the operator when you add a worker to the `StorageNodeSet`.
+    Create it manually only when you need per-node overrides that are not covered by `StorageNodeSet.spec.nodeConfigs`.
+
+---
+
+### Finalizing the Expansion
+
+Once all newly added nodes are online (regardless of which method was used), finalize the expansion:
+
+The backend transitions to **IN_EXPANSION** once the first new node is registered. All new nodes must be online
+before finalizing.
 
 ```bash title="Finalize expansion via the operator"
 kubectl patch storagecluster simplyblock-cluster -n simplyblock \
   --type=merge -p '{"spec": {"action": "expand"}}'
 ```
 
-Progress can be monitored using the `StorageCluster` status:
+Monitor until the cluster returns to `active`:
 
 ```bash title="Watch expansion status"
 kubectl get storagecluster simplyblock-cluster -n simplyblock \

@@ -6,6 +6,8 @@ copyright: "&copy; 2024-2026 Simplyblock GmbH"
 extra:
   homepage: https://www.simplyblock.io
   homepage_name: Simplyblock
+  # Sole canonical for all versions — every page canonicalizes to the /latest alias.
+  canonical_base: https://docs.simplyblock.io/latest/
   version:
     provider: mike
   social:

@@ -4,9 +4,9 @@ description: "How to perform lifecycle operations on a Simplyblock storage clust
 weight: 10750
 ---
 
-When simplyblock is deployed on OpenShift or Kubernetes, cluster and node lifecycle operations are performed by patching
-the `StorageCluster` and `StorageNode` Custom Resources rather than using the CLI directly. The operator picks up the
-changes, calls the backend API, polls for the expected terminal state, and records the result in `.status.actionStatus`.
+When simplyblock is deployed on OpenShift or Kubernetes, cluster and node lifecycle operations are performed through
+Custom Resources rather than using the CLI directly. The operator picks up changes, calls the backend API, polls for
+the expected terminal state, and records the result in `.status`.
 
 !!! info
     For CLI-based node operations on non-Kubernetes deployments, see
@@ -103,55 +103,121 @@ kubectl get storagecluster simplyblock-cluster -n simplyblock \
   -o jsonpath='{.status.nodeRecycleStatus}' | jq .
 ```
 
-## StorageNode Actions
+## StorageNodeOps Actions
 
-Direct operations on individual backend storage nodes are triggered by patching `spec.action` and `spec.nodeUUID`
-on the `StorageNode` resource. Both fields are required together. The CRD validation rejects an `action` without a
-`nodeUUID`.
+Direct operations on individual backend storage nodes are performed by creating a `StorageNodeOps` resource. It
+targets a single `StorageNode` by name, runs the requested action to completion, and records the outcome. Only one
+`StorageNodeOps` may be active for a given `StorageNode` at a time.
 
-```bash title="Restarting a specific storage node"
-kubectl patch storagenode simplyblock-node -n simplyblock \
-  --type=merge -p '{
-    "spec": {
-      "action": "restart",
-      "nodeUUID": "<node-uuid>"
-    }
-  }'
+```bash title="Find the StorageNode name to target"
+kubectl get storagenodes -n simplyblock
 ```
 
-After the action completes, `spec.action` and `spec.nodeUUID` must be cleared from the custom resource. The operator
-does not automatically clear them.
+```bash title="Restart a specific storage node"
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeOps
+metadata:
+  name: restart-worker-1
+  namespace: simplyblock
+spec:
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: restart
+EOF
+```
+
+Track progress by watching the `StorageNodeOps` status:
+
+```bash title="Watch the operation status"
+kubectl get storagenodeops restart-worker-1 -n simplyblock -w
+```
+
+```bash title="Get detailed status"
+kubectl get storagenodeops restart-worker-1 -n simplyblock \
+  -o jsonpath='{.status}' | jq .
+```
+
+Once the operation is complete (`phase: Succeeded` or `phase: Failed`), the `StorageNodeOps` CR can be deleted.
+The operator does not delete it automatically.
+
+```bash title="Clean up after completion"
+kubectl delete storagenodeops restart-worker-1 -n simplyblock
+```
 
 ### Supported Actions and Terminal States
 
-| Action     | Expected backend state after success                            |
-|------------|-----------------------------------------------------------------|
-| `shutdown` | `offline`                                                       |
-| `restart`  | `online`                                                        |
-| `suspend`  | `suspended`                                                     |
-| `resume`   | `online`                                                        |
-| `remove`   | Node no longer present. A `404` response is treated as success. |
+| Action     | Expected outcome after success                                               |
+|------------|------------------------------------------------------------------------------|
+| `shutdown` | Node transitions to `offline`.                                               |
+| `restart`  | Node transitions back to `online`.                                           |
+| `suspend`  | Node transitions to `suspended`.                                             |
+| `resume`   | Node transitions back to `online`.                                           |
+| `remove`   | Node is drained, all volumes migrated, node deleted from backend.            |
 
-### Moving a Storage Node to a Different Worker Node (Storage Node Relocation)
+### Migrating a Node to a Different Worker
 
-For a `restart` action, two additional fields are available:
+The `migrate` action relocates a storage node to a different Kubernetes worker **without removing it** from the
+cluster. The node keeps its backend UUID and data — no volumes are moved between nodes. After the migration the
+backend triggers a rebalance automatically.
 
-| Field            | Type   | Description                                                                                                                                                                   |
-|------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `workerNode`     | string | Kubernetes worker to restart the storage node on. The operator labels the worker and waits for the storage node API to become reachable before triggering the move operation. |
-| `reattachVolume` | bool   | Reattach volumes during restart where the backend supports it.                                                                                                                |
-| `force`          | bool   | Force the action where supported by the backend.                                                                                                                              |
+```bash title="Migrate a storage node to a different worker"
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeOps
+metadata:
+  name: migrate-worker-1
+  namespace: simplyblock
+spec:
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: migrate
+  targetWorkerNode: worker-5.example.com
+EOF
+```
+
+```bash title="Watch migration progress"
+kubectl get storagenodeops migrate-worker-1 -n simplyblock -w
+```
+
+The operation progresses through sub-phases: `Preparing → Restarting → Promoting`. See
+[StorageNodeOps: migrate](../reference/operator.md#migrating-a-storage-node-to-a-different-worker-migrate)
+for full details including `newSsdPcie` and `reattachVolume` options.
+
+### Draining and Removing a Node
+
+The `remove` action runs a multi-step drain workflow. Progress is tracked in `status.subPhase`:
+
+```
+Validating → Suspending → Migrating → Verifying → Removing
+```
+
+```bash title="Remove (drain) a storage node"
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageNodeOps
+metadata:
+  name: drain-worker-1
+  namespace: simplyblock
+spec:
+  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  action: remove
+EOF
+```
+
+```bash title="Watch drain progress"
+kubectl get storagenodeops drain-worker-1 -n simplyblock \
+  -o jsonpath='{.status.subPhase}{"\n"}' -w
+```
 
 ## Monitoring Action Progress
 
 ### Watch Cluster Action State
 
-```bash title="Getting current action status"
+```bash title="Getting current cluster action status"
 kubectl get storagecluster simplyblock-cluster -n simplyblock \
   -o jsonpath='{.status.actionStatus}' | jq .
 ```
 
-```bash title="Streaming live status changes"
+```bash title="Streaming live cluster status changes"
 kubectl get storagecluster simplyblock-cluster -n simplyblock -w
 ```
 
@@ -164,7 +230,11 @@ kubectl get storagecluster simplyblock-cluster -n simplyblock \
 
 ### Inspecting individual node states
 
-```bash title="Getting all storage node states"
-kubectl get storagenode simplyblock-node -n simplyblock \
+```bash title="Getting all storage node states from the StorageNodeSet"
+kubectl get storagenodeset simplyblock-node -n simplyblock \
   -o jsonpath='{.status.nodes}' | jq .
+```
+
+```bash title="Getting individual StorageNode status"
+kubectl get storagenodes -n simplyblock
 ```
