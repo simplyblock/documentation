@@ -43,7 +43,7 @@ The operator manages the following resources:
 | `Device`         | Manages NVMe devices on storage nodes                               |
 | `Task`           | Monitors cluster tasks                                              |
 
-For detailed CRD documentation, see [Simplyblock Operator](../../reference/operator.md).
+For detailed CRD documentation, see [Simplyblock Operator](../../reference/operator/index.md).
 
 ## Platform-Specific Notes
 

@@ -225,7 +225,7 @@ spec:
     withCompression: false
 ```
 
-See the [Operator Reference](../reference/operator.md#storage-cluster) for all available `backup` spec fields.
+See the [Operator Reference](../reference/operator/reference.md#storagecluster) for all available `backup` spec fields.
 
 ### StorageBackup CRD
 

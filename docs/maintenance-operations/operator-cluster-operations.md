@@ -179,7 +179,7 @@ kubectl get storagenodeops migrate-worker-1 -n simplyblock -w
 ```
 
 The operation progresses through sub-phases: `Preparing → Restarting → Promoting`. See
-[StorageNodeOps: migrate](../reference/operator.md#migrating-a-storage-node-to-a-different-worker-migrate)
+[StorageNodeOps: migrate](../reference/operator/index.md#migrating-a-storage-node-to-a-different-worker-migrate)
 for full details including `newSsdPcie` and `reattachVolume` options.
 
 ### Draining and Removing a Node
