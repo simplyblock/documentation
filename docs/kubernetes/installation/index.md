@@ -47,5 +47,6 @@ For detailed CRD documentation, see [Simplyblock Operator](../../reference/opera
 ## Platform-Specific Notes
 
 - [OpenShift](openshift.md): Additional configuration for OpenShift clusters.
+- [SUSE Rancher and RKE2](rancher.md): Permissions and kubelet configuration for RKE2 and K3s clusters.
 - [Talos](talos.md): Specifics for Talos-based OS images.
 - [Volume Encryption](../usage/volume-encryption.md): End-to-end encryption with customer-managed keys.
