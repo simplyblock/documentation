@@ -28,6 +28,17 @@ jobs:
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      # The sbcli reference is not committed and the operator reference follows
+      # the operator repository, so both are generated before the checks run.
+      # Without them the links into the reference pages cannot be resolved.
+      - name: "Generate References"
+        run: |
+          ./doc-builder update-repositories
+          ./doc-builder gen-sbcli-ref
+          ./doc-builder gen-operator-ref
       - name: "Setup Python"
         uses: actions/setup-python@v5
         with:
