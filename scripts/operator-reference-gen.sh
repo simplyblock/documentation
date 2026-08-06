@@ -55,7 +55,7 @@ go build -C "${CRD_REF_DOCS_DIR}" -o "${CRD_REF_DOCS_BIN}" .
   cat <<'FRONTMATTER'
 ---
 title: "Simplyblock Operator Reference"
-description: "Reference for Simplyblock operator Custom Resource Definitions (CRDs)."
+description: "Reference for Simplyblock Operator Custom Resource Definitions (CRDs)."
 weight: 20091
 ---
 

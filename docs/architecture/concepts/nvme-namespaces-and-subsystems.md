@@ -11,7 +11,7 @@ A subsystem is identified by its unique worldwide name (NQN) and can be roughly 
 controller, which exposes and connects one or multiple namespaces (actual volumes) to hosts. 
 
 The NQN of a subsystem can contain the namespace uuid and is worldwide unique. 
-In Simplyblock it looks as follows (the last part behind `:lvol:<uuid>` indicates the namespace representing the volume):
+In simplyblock, it looks as follows (the last part behind `:lvol:<uuid>` indicates the namespace representing the volume):
 
 ```plain title="Example NQN"
 qn.2023-02.io.simplyblock:136012a7-f386-4091-ae0f-4e763059e9c8:lvol:6809b758-1c73-451f-810c-210c18d6aa14

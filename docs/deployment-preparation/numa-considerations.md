@@ -30,7 +30,7 @@ However, simplyblock does not auto-assign a NIC and users have manually to take 
 
 !!! Important
     In a hyper-converged deployment, it can be preferable to attach all NVMe devices to one socket and only deploy a
-    node on this socket. This saves overall CPU and RAM required for Simplyblock.
+    node on this socket. This saves overall CPU and RAM required for simplyblock.
 
 ## Checking NUMA Configuration
 

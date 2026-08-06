@@ -13,7 +13,7 @@ For the architecture background, see [Replication Concepts](../../architecture/c
 ## Scope and Prerequisites
 
 - Asynchronous replication with automatic failover and controlled failback is a Kubernetes-only feature.
-- It is managed by the Simplyblock Manager (Kubernetes operator) using the `SnapshotReplication` CRD.
+- It is managed by the Simplyblock Operator using the `SnapshotReplication` CRD.
 - Source and target storage clusters must be attached to the same simplyblock control plane.
 - The two simplyblock clusters (source and target) must have network interconnectivity.
 - Both clusters must be activated and have storage nodes online.

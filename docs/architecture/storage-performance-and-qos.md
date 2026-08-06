@@ -49,7 +49,7 @@ In simplyblock, front storage (the remote "docking points" of the clients into t
 are distributed. All cluster back storage devices can be accessed from any front storage entry point using cluster internal NVMe-oF.
 
 However, to achieve a maximum of data locality without compromising the advantages of a fully distributed system, such as scalability, 
-several advanced mechanisms can be used within Simplyblock:
+several advanced mechanisms can be used within simplyblock:
 
 1. In a hyper-converged deployment, simplyblock tries to co-locate front storage volume entry points with the actual workload. In
    Kubernetes, it attempts to create the volume itself on the same node as the workload initially.
