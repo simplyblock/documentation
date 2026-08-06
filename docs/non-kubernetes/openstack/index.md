@@ -79,9 +79,9 @@ In case you need the RoCE/RDMA fabric or both fabrics, (also) run:
     ```
 
 === "Debian / Ubuntu"
-```bash title="Load NVMe/RoCE on Ubuntu  or Debian"
-sudo apt-get install -y linux-modules-extra-$(uname -r)
-sudo modprobe nvme_rdma
+    ```bash title="Load NVMe/RoCE on Ubuntu  or Debian"
+    sudo apt-get install -y linux-modules-extra-$(uname -r)
+    sudo modprobe nvme_rdma
     ```
 
 ## Configure OpenStack (Kolla-Ansible)

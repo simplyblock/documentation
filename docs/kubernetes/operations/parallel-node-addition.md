@@ -86,7 +86,7 @@ in parallel.
 The following example shows a cluster with eight storage workers where six non-FDB workers started in parallel.
 All SPDK pods entered `ContainerCreating` within the same reconcile pass:
 
-```
+```plain
 NAME                        NODE                    STATUS
 snode-spdk-pod-4420-cb5317  worker-7   ContainerCreating
 snode-spdk-pod-4421-cb5317  worker-6   ContainerCreating

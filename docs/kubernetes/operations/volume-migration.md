@@ -1,6 +1,6 @@
 ---
 title: "Volume Migration"
-description: "How the Simplyblock operator migrates a volume's backing logical volume between storage nodes — manually, through experimental auto-rebalancing, and automatically during node draining or removal."
+description: "How the Simplyblock Operator migrates the backing logical volume of a volume between storage nodes, manually or automatically when a node is drained."
 weight: 10770
 ---
 

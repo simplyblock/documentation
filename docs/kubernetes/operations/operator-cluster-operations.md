@@ -186,7 +186,7 @@ for full details including `newSsdPcie` and `reattachVolume` options.
 
 The `remove` action runs a multi-step drain workflow. Progress is tracked in `status.subPhase`:
 
-```
+```plain
 Validating → Suspending → Migrating → Verifying → Removing
 ```
 

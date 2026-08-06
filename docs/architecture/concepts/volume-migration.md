@@ -1,5 +1,6 @@
 ---
 title: "Volume Migration"
+description: "How simplyblock separates front and back storage, and how the backing logical volume of a volume moves between storage nodes during a migration."
 weight: 30700
 ---
 

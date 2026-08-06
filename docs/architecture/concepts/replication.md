@@ -1,5 +1,6 @@
 ---
 title: "Replication"
+description: "Asynchronous replication between simplyblock clusters for multi-site disaster recovery, continuously transferring volume snapshots to a target cluster."
 weight: 30800
 ---
 

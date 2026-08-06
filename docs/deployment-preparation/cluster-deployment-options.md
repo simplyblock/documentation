@@ -1,6 +1,7 @@
 ---
 title: Cluster Deployment Options
 description: "Cluster Deployment Options: The following options can be set when creating a cluster. This applies to both plain linux and kubernetes deployments."
+weight: 30200
 ---
 
 The following options can be set when creating a cluster. This applies to both plain Linux and Kubernetes deployments.

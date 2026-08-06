@@ -1,5 +1,6 @@
 ---
 title: "Backup and Recovery"
+description: "Snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage, managed through Kubernetes CRDs or the Simplyblock CLI."
 weight: 20100
 ---
 

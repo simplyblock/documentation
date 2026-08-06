@@ -1,5 +1,6 @@
 ---
 title: "Backup and Recovery"
+description: "Snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage on plain Linux, managed through the Simplyblock CLI."
 weight: 20100
 ---
 
