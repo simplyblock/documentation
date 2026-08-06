@@ -31,7 +31,7 @@ the efficiency and reliability of your simplyblock deployment.
     familiar with the required node sizing and other considerations for
     a performant and stable cluster operation.
 
-    [:octicons-arrow-right-24: Deployment Planning](deployments/deployment-preparation/index.md)
+    [:octicons-arrow-right-24: Deployment Planning](deployment-preparation/index.md)
 
 - :material-database-arrow-up:{ .lg .middle } **Deploy Simplyblock**
 
@@ -41,7 +41,8 @@ the efficiency and reliability of your simplyblock deployment.
     or choose disaggregated and plain Linux models when stricter separation
     is required.
 
-    [:octicons-arrow-right-24: Simplyblock Deployment](deployments/index.md)
+    [:octicons-arrow-right-24: Kubernetes Installation](kubernetes/installation/index.md)<br/>
+    [:octicons-arrow-right-24: Non-Kubernetes Installation](non-kubernetes/installation/index.md)
 
 - :material-cog-refresh:{ .lg .middle } **Operate Simplyblock**
 
@@ -50,8 +51,8 @@ the efficiency and reliability of your simplyblock deployment.
     After the installation of a simplyblock cluster, learn how to
     operate and maintain it.
 
-    [:octicons-arrow-right-24: Simplyblock Usage](usage/index.md)<br/>
-    [:octicons-arrow-right-24: Simplyblock Operations](maintenance-operations/index.md)
+    [:octicons-arrow-right-24: Kubernetes Operations](kubernetes/operations/index.md)<br/>
+    [:octicons-arrow-right-24: Non-Kubernetes Operations](non-kubernetes/operations/index.md)
 
 </div>
 

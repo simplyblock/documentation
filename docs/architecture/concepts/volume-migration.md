@@ -1,5 +1,6 @@
 ---
 title: "Volume Migration"
+description: "How simplyblock separates front and back storage, and how the backing logical volume of a volume moves between storage nodes during a migration."
 weight: 30700
 ---
 
@@ -75,4 +76,4 @@ If migration fails at any point, the target-side artifacts are cleaned up and th
 - **Infrastructure Upgrades:** Move volumes to newer, higher-performance hardware without downtime.
 
 For the operational procedure to migrate volumes, see
-[Migrating a Storage Node](../../maintenance-operations/migrating-storage-node.md).
+[Migrating a Storage Node](../../non-kubernetes/operations/migrating-storage-node.md).

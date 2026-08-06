@@ -43,7 +43,7 @@ the cluster's entry from the Secret automatically.
 
 Storage node management uses three separate CRDs with distinct responsibilities. Together they form a three-tier model:
 
-```
+```plain
 StorageNodeSet   ──► declares which workers to use and how to configure them
       │                (fleet-level, declarative)
       ▼ creates
@@ -304,7 +304,7 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
   simplyblock.io/pinned-volume=<target-storage-node-uuid> --overwrite
 ```
 
-See [Pinned Volume Migration During Node Removal](../../maintenance-operations/node-drain-coordination.md#pinned-volume-migration-during-node-removal) for full details.
+See [Pinned Volume Migration During Node Removal](../../kubernetes/operations/node-drain-coordination.md#pinned-volume-migration-during-node-removal) for full details.
 
 
 ## Storage Pool
@@ -384,7 +384,7 @@ The complete set of `Task` fields is available in [Task reference](reference.md#
 
 The `StorageBackup` resource creates a one-time backup of a PVC to the S3-compatible storage endpoint configured
 in the `StorageCluster`. For backup configuration prerequisites, see
-[Backup and Recovery](../../usage/backup-recovery.md#kubernetes-crd-operations).
+[Backup and Recovery](../../kubernetes/operations/backup-recovery.md).
 
 ```yaml title="Example: Create a PVC backup"
 apiVersion: storage.simplyblock.io/v1alpha1

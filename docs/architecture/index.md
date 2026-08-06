@@ -1,7 +1,7 @@
 ---
 title: Architecture
 description: "Architecture: Simplyblock is a cloud-native, software-defined storage platform designed for high performance, scalability, and resilience."
-weight: 10100
+weight: 10080
 ---
 
 Simplyblock is a cloud-native, software-defined storage platform designed for high performance, scalability, and

@@ -34,10 +34,10 @@ When an external KMS is configured, simplyblock applies a two-layer key model:
 
 The KMS authenticates simplyblock components using a client certificate issued by the
 `simplyblock-certificate-authority-issuer` ClusterIssuer, which the operator creates as part of its mTLS setup.
-Because the KMS depends on this CA, [mTLS](../../deployments/kubernetes/security.md#transport-layer-security-mutual-tls-mtls)
+Because the KMS depends on this CA, [mTLS](../../kubernetes/installation/security.md#transport-layer-security-mutual-tls-mtls)
 must be configured on the control plane before an external KMS can be wired up.
 
 Operationally, this means the KMS team and the storage team share only the CA bundle and an agreed-upon DNS-name for
 the simplyblock client. No static passwords or long-lived tokens must be exchanged.
 
-For the setup steps, see [Securing the Control Plane: External KMS](../../deployments/kubernetes/security.md#external-key-management-kms).
+For the setup steps, see [Securing the Control Plane: External KMS](../../kubernetes/installation/security.md#external-key-management-kms).

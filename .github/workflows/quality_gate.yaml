@@ -1,0 +1,48 @@
+name: Quality Gate
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - 'main'
+  push:
+    branches:
+      - 'main'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "quality-gate-${{ github.ref }}"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+      - name: "Prepare Documentation Builder"
+        run: |
+          ./doc-builder build-image
+      # The sbcli reference is not committed and the operator reference follows
+      # the operator repository, so both are generated before the checks run.
+      # Without them the links into the reference pages cannot be resolved.
+      - name: "Generate References"
+        run: |
+          ./doc-builder update-repositories
+          ./doc-builder gen-sbcli-ref
+          ./doc-builder gen-operator-ref
+      - name: "Setup Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: "Run Quality Gates"
+        run: |
+          ./scripts/quality-gate.sh

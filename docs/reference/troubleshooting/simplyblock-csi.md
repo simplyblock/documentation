@@ -175,7 +175,7 @@ When escalating to support, collect:
 
 ## Related References
 
-- [Install CSI Driver](../../deployments/kubernetes/install-csi.md)
-- [Provisioning](../../usage/simplyblock-csi/provisioning.md)
+- [Install CSI Driver](../../kubernetes/installation/install-csi.md)
+- [Provisioning](../../kubernetes/usage/provisioning.md)
 - [Storage Plane Troubleshooting](storage-plane.md)
-- [Cluster Health Monitoring](../../maintenance-operations/monitoring/cluster-health.md)
+- [Cluster Health Monitoring](../../kubernetes/operations/monitoring/cluster-health.md)

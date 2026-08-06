@@ -1,5 +1,6 @@
 ---
 title: "Replication"
+description: "Asynchronous replication between simplyblock clusters for multi-site disaster recovery, continuously transferring volume snapshots to a target cluster."
 weight: 30800
 ---
 
@@ -39,7 +40,7 @@ clusters.
 
 The replication system involves three components:
 
-1. **Simplyblock Operator** ([Simplyblock Manager](https://github.com/simplyblock/simplyblock-manager){:target="_blank" rel="noopener"}): A Kubernetes
+1. **Simplyblock Operator** ([Simplyblock Operator](https://github.com/simplyblock/simplyblock-manager){:target="_blank" rel="noopener"}): A Kubernetes
    operator that watches the `SnapshotReplication` CRD and orchestrates replication cycles. It detects
    failover conditions and manages the failback process.
 

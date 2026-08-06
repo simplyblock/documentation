@@ -83,7 +83,7 @@ Additional, uncommonly configured CSI driver parameters:
 | `tls.provider`                  | TLS certificate provider. `cert-manager` for generic Kubernetes, `openshift` for OpenShift-managed certs.    | `openshift` |
 | `tls.cert-manager.issuer`       | Name of the cert-manager `ClusterIssuer` to use. **Required when `tls.provider=cert-manager`**.              | `<empty>`   |
 
-For details, see [Securing the Control Plane](../../deployments/kubernetes/security.md).
+For details, see [Securing the Control Plane](../../kubernetes/installation/security.md).
 
 ## Storage Node Parameters
 
@@ -134,7 +134,7 @@ For details, see [Securing the Control Plane](../../deployments/kubernetes/secur
 | `storagenode.openShiftCluster`                   | Set to true if it an OpenShift Cluster and needs core isolation.                            | `false`                               |
 | `storagenode.reservedSystemCpu`                  | Sets CPU cores reserved for host/system and excluded from SPDK usage.                       | `<empty>`                             |
 | `storagenode.multiCluster.enable`                | Enables multi-cluster storage-node support.                                                 | `false`                               |
-| `storagenode.multiCluster.clusters[].cluster_id` | Sets the Simplyblock cluster UUID in multi-cluster mode.                                    | `<empty>`                             |
+| `storagenode.multiCluster.clusters[].cluster_id` | Sets the simplyblock cluster UUID in multi-cluster mode.                                    | `<empty>`                             |
 | `storagenode.multiCluster.clusters[].secret`     | Sets the cluster secret for multi-cluster mode.                                             | `<empty>`                             |
 | `storagenode.multiCluster.clusters[].workers`    | Sets worker node names assigned to the cluster in multi-cluster mode.                       | `<empty>`                             |
 
