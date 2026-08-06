@@ -1,10 +1,10 @@
 ---
 title: "Quality of Service Limits"
-description: "Quality of Service Limits: Quality of Service (QoS) limits (IOPS, Read, Write and ReadWrite limits) can be chosen on both volume and pool level."
+description: "Quality of Service Limits: Quality of Service (QoS) limits (IOPS, Read, Write, and ReadWrite limits) can be chosen on both volume and pool level."
 weight: 10300
 ---
 
-Quality of Service (QoS) limits (IOPS, Read, Write and ReadWrite limits) can be chosen on both volume and pool level.
+Quality of Service (QoS) limits (IOPS, Read, Write, and ReadWrite limits) can be chosen on both volume and pool level.
 
 It is not allowed to set them on both. A volume assigned to a pool with an active QoS setting  
 cannot contain its own QoS settings or vice versa. It is possible to combine both approaches in

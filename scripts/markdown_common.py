@@ -414,8 +414,14 @@ def apply_fixes_to_file(file_path, fixes):
     return applied
 
 
-def report_violations(violations, check_name, files, success_message):
-    """Print the report of a gate and return its exit code."""
+def report_violations(violations, check_name, files, success_message, group_warnings=True):
+    """Print the report of a gate and return its exit code.
+
+    Warnings are grouped per file by default: they are numerous and only their
+    line numbers are needed to find them. A gate whose warnings are candidates to
+    read rather than places to visit passes group_warnings=False, so that every
+    one is printed with its reason and its excerpt.
+    """
     errors = [v for v in violations if v.severity == SEVERITY_ERROR]
     warnings = [v for v in violations if v.severity == SEVERITY_WARNING]
 
@@ -429,12 +435,16 @@ def report_violations(violations, check_name, files, success_message):
         sys.stderr.flush()
 
     if warnings:
-        grouped = {}
-        for v in warnings:
-            grouped.setdefault((v.file, v.check), []).append(v.line)
         print(f"\nWarnings ({len(warnings)}), these do not fail the check yet:")
-        for (file, check), numbers in grouped.items():
-            print(f"  • {file} | {check} | line(s) {', '.join(str(n) for n in numbers)}")
+        if group_warnings:
+            grouped = {}
+            for v in warnings:
+                grouped.setdefault((v.file, v.check), []).append(v.line)
+            for (file, check), numbers in grouped.items():
+                print(f"  • {file} | {check} | line(s) {', '.join(str(n) for n in numbers)}")
+        else:
+            for v in warnings:
+                print(f"  • {v.file}:{v.line}:{v.column} | {v.reason}\n    {v.excerpt}")
         sys.stdout.flush()
 
     if errors:

@@ -36,7 +36,7 @@ Based on those criteria, simplyblock commonly recommends the following virtual m
 | _i4i.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.75 GBit/s        |
 | _i4i.12xlarge_  | 48      | 384 GB | 3x 3750 GB               | 28.12 GBit/s        |
 
-For hyper-converged AWS EC2-based Kubernetes workers (EKS, K3s or other), any instance with a local SSD can be chosen.
+For hyper-converged AWS EC2-based Kubernetes workers (EKS, K3s, or other), any instance with a local SSD can be chosen.
 
 Keep the [minimum system requirements](./hardware-requirements.md)in mind. At least 8 vCPUs are required for simplyblock. 
 

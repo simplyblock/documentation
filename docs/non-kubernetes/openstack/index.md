@@ -61,7 +61,7 @@ Before deployment:
 Depending on the fabric, it is necessary to load the Linux kernel modules on compute nodes and controller:
 
 === "Red Hat / Alma / Rocky"
-    ```bash title="Load NVMe/TCP on RHEL, Rocky or Alma"
+    ```bash title="Load NVMe/TCP on RHEL, Rocky, or Alma"
     sudo modprobe nvme_tcp
     ```
 
@@ -74,7 +74,7 @@ Depending on the fabric, it is necessary to load the Linux kernel modules on com
 For the RoCE/RDMA fabric or both fabrics, (also) run:
 
 === "Red Hat / Alma / Rocky"
-    ```bash title="Load NVMe/RoCE on RHEL, Rocky or Alma"
+    ```bash title="Load NVMe/RoCE on RHEL, Rocky, or Alma"
     sudo modprobe nvme_rdma
     ```
 

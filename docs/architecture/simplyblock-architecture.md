@@ -33,7 +33,7 @@ The control plane provides the following functionality in two groups of distribu
         - Manages nodes and devices
         - Resize and reconfigure clusters
     - Lifecycle management of logical volumes and pools
-    - Raw IO Statistics, Capacity, Alerting and Log Feeds
+    - Raw IO Statistics, Capacity, Alerting, and Log Feeds
 - Observability Stack (optional)
     - Log Management (Graylog, OpenSearch, MongoDB, Thanos)
     - Performance Monitoring and Dashboarding (Grafana, Prometheus) with configurable alerting to email and Slack
@@ -52,7 +52,7 @@ It is entirely managed by Custom Resource Definitions (CRDs), however, internall
 Communication between the Control Plane and the Storage Plane is performed via two separate access paths:
 
 - A secure HTTPS RPC mechanism with JSON payloads.
-- A secure HTTPS service endpoint for basic control, such as storage node availability monitoring, restart and shutdown.
+- A secure HTTPS service endpoint for basic control, such as storage node availability monitoring, restart, and shutdown.
 
 ### Control Plane State Storage
 
