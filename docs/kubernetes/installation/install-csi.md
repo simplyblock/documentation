@@ -111,7 +111,7 @@ ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
 ```
 
 The last item necessary before deploying the CSI driver is the control plane address. It is recommended to front the
-simplyblock API with an AWS load balancer, HAproxy, or similar service. Hence, your control plane address is the
+simplyblock API with an AWS load balancer, HAproxy, or similar service. Hence, the control plane address is the
 "public" endpoint of this load balancer.
 
 ## Deploying the Helm Chart
@@ -173,7 +173,7 @@ real-world CSI driver deployments and should only be used on request of simplybl
 
 The full list of parameters is available here: [Kubernetes Helm Chart Parameters](../../reference/kubernetes/index.md).
 
-Please note that the `storagenode.create` parameter must be set to `false` (the default) to deploy only the CSI driver.
+Note that the `storagenode.create` parameter must be set to `false` (the default) to deploy only the CSI driver.
 
 ## Multi Cluster Support
 
@@ -269,7 +269,7 @@ volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
-You can define another StorageClass for a different cluster:
+Another StorageClass can be defined for a different cluster:
 
 ```yaml title="Example of selecting another cluster"
 apiVersion: storage.k8s.io/v1
@@ -331,11 +331,11 @@ This method allows Kubernetes to automatically pick the right cluster based on t
 This approach allows a single StorageClass to automatically select the appropriate simplyblock cluster based on the Kubernetes region where the workload runs.
 It’s recommended when:
 
-- your cluster spans multiple regions, and
+- the cluster spans multiple regions, and
 
 - each region maps to a different simplyblock backend, or
 
-- you want region-scoped placement rather than zone-scoped placement
+- region-scoped placement is wanted rather than zone-scoped placement
 
 `storageclass.regionClusterMap`
 
@@ -371,6 +371,6 @@ allowedTopologies:
 This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling region.
 
 !!! tip
-    The keys inside `region_cluster_map` must match the region labels present on your Kubernetes nodes
-    (typically `topology.kubernetes.io/region`). You can include as many regions as needed, each pointing to
+    The keys inside `region_cluster_map` must match the region labels present on the Kubernetes nodes
+    (typically `topology.kubernetes.io/region`). As many regions as needed can be included, each pointing to
     the cluster ID defined in `simplyblock-csi-secret-v2`.

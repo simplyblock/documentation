@@ -30,7 +30,7 @@ this list is for management nodes only. Storage nodes have a different port conf
 With the previously defined subnets, the following snippet configures the iptables automatically.
 
 !!! danger
-    The example assumes that you have an external firewall between the _admin_ network and the public internet!<br/>
+    The example assumes an external firewall between the _admin_ network and the public internet!<br/>
     If this is not the case, ensure the correct source access for ports _22_ and _80_.
 
 ```plain title="Network Configuration"
@@ -87,7 +87,7 @@ sudo pip install {{ cliname }} --upgrade
 
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 
-```bash title="Automatically check your configuration"
+```bash title="Automatically check the configuration"
 curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 ```
 
@@ -160,7 +160,7 @@ sudo yum -y install python3-pip
 pip install {{ cliname }} --upgrade
 ```
 
-Finally, we deploy the management node software and join the control plane cluster.
+Finally, the management node software is deployed and joins the control plane cluster.
 
 ```bash title="Secondary management node deployment"
 {{ cliname }} mgmt add <CP_PRIMARY_IP> <CLUSTER_ID> <CLUSTER_SECRET>

@@ -23,7 +23,7 @@ the cluster to ensure equal usage distribution.
 
 If a storage node failed and cannot be recovered, adding a new storage node is perfectly fine, though.
 
-To start a new storage node, follow the storage node installation according to your chosen setup:
+To start a new storage node, follow the storage node installation according to the chosen setup:
 
 - [Storage nodes in Kubernetes](../../kubernetes/installation/index.md)
 - [Storage nodes on Linux](../installation/install-sp.md)

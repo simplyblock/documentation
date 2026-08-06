@@ -16,7 +16,7 @@ full utilization.
     Add storage nodes in **pairs** (i.e., 2, 4, 6, … nodes at a time).  
     Expansions with an odd number of nodes are **not supported**.
 
-To add a new storage node, follow the installation steps for your chosen deployment method up to the point where nodes are added to the cluster, then continue here:
+To add a new storage node, follow the installation steps for the chosen deployment method up to the point where nodes are added to the cluster, then continue here:
 
 - [Storage nodes in Kubernetes](../../installation/index.md)
 - [Storage nodes on Linux](../../../non-kubernetes/installation/install-sp.md)
@@ -34,7 +34,7 @@ After the expansion is complete, the cluster returns to **ACTIVE** and resumes n
 ## Adding Worker Nodes with the Kubernetes Operator
 
 There are two ways to add nodes when using the Kubernetes operator: via the `StorageNodeSet` (recommended for
-adding multiple nodes) or by creating individual `StorageNode` CRs manually (useful when you need per-node
+adding multiple nodes) or by creating individual `StorageNode` CRs manually (useful for per-node
 overrides or want fine-grained control).
 
 ---
@@ -106,8 +106,8 @@ kubectl get storagenodes -n simplyblock
 
 ### Option B: Add a Single Node via StorageNode CR
 
-For cases where you need per-node overrides (custom `maxLogicalVolumeCount`, `spdkSystemMemory`, etc.) or want
-to add a single node manually, create a `StorageNode` CR directly. Set `overrides.expand: true` so the backend
+For cases that need per-node overrides (custom `maxLogicalVolumeCount`, `spdkSystemMemory`, etc.) or a
+single node added manually, create a `StorageNode` CR directly. Set `overrides.expand: true` so the backend
 treats it as an expansion add rather than a fresh cluster node.
 
 `spec.storageNodeSetRef` must point to the existing `StorageNodeSet` and `spec.workerNode` must match the
@@ -140,8 +140,8 @@ kubectl get storagenode simplyblock-new-node-4-expansion \
 ```
 
 !!! note
-    The `StorageNode` CR is normally auto-created by the operator when you add a worker to the `StorageNodeSet`.
-    Create it manually only when you need per-node overrides that are not covered by `StorageNodeSet.spec.nodeConfigs`.
+    The `StorageNode` CR is normally auto-created by the operator when a worker is added to the `StorageNodeSet`.
+    Create it manually only for per-node overrides that are not covered by `StorageNodeSet.spec.nodeConfigs`.
 
 ---
 

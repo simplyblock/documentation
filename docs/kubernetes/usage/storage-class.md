@@ -59,7 +59,7 @@ See here how to configure [Service Classes](../../non-kubernetes/operations/qos-
 For a definition of namespace volumes, as well as the advantages and disadvantages of NVMe namespaces versus NVMe
 subsystems, see [Logical Volumes](../../architecture/concepts/logical-volumes.md).
 
-If `namespace-volumes` is set to `yes`, you also need to define the number of namespaces per subsystem (e.g.,
+If `namespace-volumes` is set to `yes`, the number of namespaces per subsystem has to be defined as well (e.g.,
 `max_namespace_per_subsys: <n>`). This means that for every new subsystem <n> namespaces will be created. 
 
 ## Available Parameters

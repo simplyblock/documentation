@@ -10,7 +10,7 @@ list is for storage nodes only. Management nodes have a different port configura
 With the previously defined subnets, the following snippet disables IPv6 and configures the iptables automatically.
 
 !!! danger
-    The example assumes that you have an external firewall between the _admin_ network and the public internet!<br/>
+    The example assumes an external firewall between the _admin_ network and the public internet!<br/>
     If this is not the case, ensure the correct source access for port _22_.
 
 ```plain title="Disable IPv6"

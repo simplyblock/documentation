@@ -29,7 +29,7 @@ machine:
 Simplyblock requires huge pages memory to operate. The storage engine expects to find huge pages of 2 MiB page size. The
 required amount of huge pages depends on a number of factors.
 
-After installing the Kubernetes control plane, you can calculate the required huge pages from the admin control pod (see the [Kubernetes Control Plane installation guide](./k8s-control-plane.md) for how to find and exec into the pod).
+After installing the Kubernetes control plane, the required huge pages can be calculated from the admin control pod (see the [Kubernetes Control Plane installation guide](./k8s-control-plane.md) for how to find and exec into the pod).
 
 Run the following command on the admin control pod to calculate the huge pages required on the host:
 

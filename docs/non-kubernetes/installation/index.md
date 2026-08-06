@@ -8,11 +8,11 @@ Installing simplyblock for production on plain Linux (Docker) requires a few com
 there are a couple of configuration steps to secure the network, ensure the performance, and data protection in the case
 of hardware or software failures.
 
-Simplyblock provides two test scripts to automatically check your system's configuration. While those may not catch all
+Simplyblock provides two test scripts to automatically check the system's configuration. While those may not catch all
 edge cases, they can help to streamline the configuration check. This script can be run multiple times during the
 preparation phase to find missing configurations during the process.
 
-```bash title="Automatically check your configurations"
+```bash title="Automatically check the configurations"
 # Configuration check for the control plane (management nodes)
 curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 
@@ -20,7 +20,7 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 ```
 
-## Before We Start
+## Before Starting
 
 A simplyblock production cluster consists of three different types of nodes in the plain Linux (Docker) variant
 of the deployment:
@@ -54,7 +54,7 @@ or separate interfaces (VLANs or subnets).
     VLANs per host, routed via separate NIC ports and switches for fault tolerance. This configuration can
     be used as an alternative to a HA networking setup with link aggregation (such as LACP, MLAG, and similar).
     
-To install simplyblock in your environment, you may have to adopt these commands to match your configuration.
+To install simplyblock in a specific environment, these commands may have to be adopted to match its configuration.
 
 | Network interface | Network definition | Abbreviation | Subnet          |
 |-------------------|--------------------|--------------|-----------------|

@@ -20,7 +20,7 @@ The effectiveness of reclaim depends on the filesystem, kernel support, and moun
 
 Before trimming:
 
-- Ensure the volume is mounted and you know the correct mountpoint.
+- Ensure the volume is mounted and the correct mountpoint is known.
 - Ensure required filesystem tools are available on the node.
 - Run trim operations with sufficient privileges.
 - Prefer running large trim jobs during low I/O periods in production environments.
@@ -56,7 +56,7 @@ filesystem type. Below are common examples:
 After trimming:
 
 - Confirm the command output reports completed trim activity for the expected mountpoint.
-- Verify reclaimed capacity through your monitoring workflow (CLI metrics and dashboards).
+- Verify reclaimed capacity through the monitoring workflow (CLI metrics and dashboards).
 - If reclaim appears lower than expected, re-check mountpoint, filesystem type, and timing of backend metric updates.
 
 ## Common Pitfalls

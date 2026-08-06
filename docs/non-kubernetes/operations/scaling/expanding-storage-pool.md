@@ -22,7 +22,7 @@ nodes or devices) are separate scaling operations.
 Before expanding a pool:
 
 - Ensure the target cluster is healthy and reachable.
-- Ensure you have operator permissions to modify pool settings.
+- Ensure operator permissions to modify pool settings are available.
 - Identify the correct storage pool ID.
 - Confirm the target size aligns with cluster capacity and policy.
 
@@ -80,7 +80,7 @@ If expansion does not behave as expected:
 ## Operational Best Practices
 
 - Keep alert thresholds aligned with updated capacity policy.
-- Record pool capacity changes in your operational change history.
+- Record pool capacity changes in the operational change history.
 
 ## Related References
 

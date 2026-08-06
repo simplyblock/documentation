@@ -69,7 +69,7 @@ in the background.  This solution requires two minimal downtimes to create and r
     parameters. It should only be used by advanced users that understand the danger of the commands below.<br/><br/>
     Furthermore, this migration method **MUST NOT** be used for boot devices!
 
-In this walkthrough, we assume the new simplyblock logical volume is already connected to the system.
+This walkthrough assumes the new simplyblock logical volume is already connected to the system.
 
 ### Preparation
 
@@ -204,7 +204,7 @@ This is again done using `mdadm` tool.
 mdadm <RAID_DEVICE_MAPPER_FILE> --add <NEW_DEVICE_FILE>
 ```
 
-In the example, we add _/dev/nvme0n1_ (the simplyblock logical volume) to the RAID named "migration."
+In the example, _/dev/nvme0n1_ (the simplyblock logical volume) is added to the RAID named "migration."
 
 ```plain title="Example output of mdadm --add"
 [root@demo ~]# mdadm /dev/md/migration --add /dev/nvme0n1

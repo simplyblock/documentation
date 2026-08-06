@@ -16,7 +16,7 @@ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 2. Ensure sufficient disk space on the root partition on all control plane nodes. Free disk space can be checked with `df -h`.
    1. If not enough free disk space is available, start by checking the Graylog, MongoDB, and Elasticsearch containers. If those consume most of the disk space, old indices (2-3) can be deleted.
    2. Increase the root partition size.
-   3. If you cannot increase the root partition size, remove any data or service not relevant to the simplyblock control plane and run a `docker system prune`.
+   3. If the root partition size cannot be increased, remove any data or service not relevant to the simplyblock control plane and run a `docker system prune`.
 3. Restart the Docker daemon: `systemctl restart docker`
 4. Reboot the node
 
@@ -40,7 +40,7 @@ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
    ```
 2. Delete the old Graylog indices via the Graylog UI.
        * Go to _System_ -> _Indices_
-       * Select your index set
+       * Select the index set
        * Adjust the _Max Number of Indices_ to a lower number
 3. Reduce Docker disk usage by removing unused Docker volumes and images, as well as old containers.
    ```bash title="Remove old Docker entities"

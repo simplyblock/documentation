@@ -30,7 +30,7 @@ To retrieve the endpoint address from the cluster itself, use the following comm
 
 The Grafana installation uses the cluster secret as its password for the user _admin_.
 
-In Kubernetes deployments, either we can log in with (CLUSTER_ID/CLUSTER_SECRET) as an unprivileged user or the Grafana password can be retrieved using `kubectl` as follows for the admin user:
+In Kubernetes deployments, logging in with (CLUSTER_ID/CLUSTER_SECRET) is possible as an unprivileged user, or the Grafana password can be retrieved using `kubectl` as follows for the admin user:
 
 ```bash title="Retrieve the Grafana password"
 kubectl get secret -n simplyblock simplyblock-grafana-secrets \

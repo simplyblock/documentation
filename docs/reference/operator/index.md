@@ -107,7 +107,7 @@ over fleet defaults. They can be set in two ways:
 
 1. **Via `StorageNodeSet.spec.nodeConfigs`** — the operator propagates the matching entry to the `StorageNode` CR
    automatically.
-2. **Directly on a manually-created `StorageNode` CR** — useful when you need fine-grained control over a single
+2. **Directly on a manually-created `StorageNode` CR** — useful for fine-grained control over a single
    node, for example during expansion.
 
 #### Overrides Reference

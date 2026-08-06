@@ -215,7 +215,7 @@ are available at [Simplyblock Operator: Storage Pool](../../reference/operator/r
 kubectl get storageclass simplyblock-simplyblock-production-my-pool
 ```
 
-## Provision Your First Volume
+## Provision the First Volume
 
 Now, everything is in place to create the first volume. The operator has automatically deployed the Simplyblock CSI
 Driver into the Kubernetes cluster. Hence, creating a volume is as simple as creating PersistentVolumeClaim with the

@@ -13,11 +13,10 @@ understand how its storage components function and interact within a distributed
 
 The concepts covered in this section include Logical Volumes (LVs), Snapshots, Clones, Hyper-Convergence,
 Disaggregation, and more. Each concept plays is crucial in optimizing storage performance, ensuring data durability,
-and enabling efficient resource allocation. Whether you are deploying simplyblock in a Kubernetes environment, a
-virtualized infrastructure, or a bare-metal setup, understanding these core principles will help you design, configure,
-and manage your storage clusters effectively.
+and enabling efficient resource allocation. Whether simplyblock is deployed in a Kubernetes environment, a
+virtualized infrastructure, or a bare-metal setup, these core principles are the basis for designing, configuring,
+and managing a storage cluster effectively.
 
-By familiarizing yourself with these concepts, you will gain insight into how simplyblock abstracts storage resources,
-provides scalable and resilient data services, and integrates with modern cloud-native environments. This knowledge is
-essential for leveraging simplyblock to meet your organization's storage performance, reliability, and scalability
-requirements.
+These concepts explain how simplyblock abstracts storage resources, provides scalable and resilient data services,
+and integrates with modern cloud-native environments. This knowledge is essential for leveraging simplyblock to meet
+an organization's storage performance, reliability, and scalability requirements.

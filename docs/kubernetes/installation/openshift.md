@@ -11,11 +11,11 @@ storage and SPDK operations.
 !!! info
     In OpenShift deployments, not all worker nodes must host storage components.
     Simplyblock uses node labels to identify nodes that participate in the storage cluster.
-    You can isolate storage workloads on dedicated worker nodes or node pools.
+    Storage workloads can be isolated on dedicated worker nodes or node pools.
 
 ## Prerequisites
 
-Ensure your OpenShift cluster is operational and that you have administrator privileges.
+Ensure the OpenShift cluster is operational and that administrator privileges are available.
 
 Before deploying simplyblock components, grant the required SCC permissions:
 

@@ -1,15 +1,15 @@
 ---
 title: Home
-description: "Home: Welcome to the Simplyblock Documentation, your comprehensive resource for understanding, deploying, and managing simplyblock's cloud-native."
+description: "Home: Welcome to the Simplyblock Documentation, the comprehensive resource for understanding, deploying, and managing simplyblock's cloud-native platform."
 weight: 10000
 ---
 
 # Welcome to the Simplyblock Documentation
 
-Welcome to the **Simplyblock Documentation**, your comprehensive resource for understanding, deploying, and managing
+Welcome to the **Simplyblock Documentation**, the comprehensive resource for understanding, deploying, and managing
 simplyblock's cloud-native, high-performance storage platform. This documentation provides detailed information on
-architecture, installation, configuration, and best practices, ensuring you have the necessary guidance to maximize
-the efficiency and reliability of your simplyblock deployment.
+architecture, installation, configuration, and best practices, with all the guidance necessary to maximize
+the efficiency and reliability of a simplyblock deployment.
 
 ## Getting Started
 
@@ -27,7 +27,7 @@ the efficiency and reliability of your simplyblock deployment.
 
     ---
 
-    Before starting to deploy simplyblock, take a moment to make yourself
+    Before starting to deploy simplyblock, take a moment to get
     familiar with the required node sizing and other considerations for
     a performant and stable cluster operation.
 
@@ -58,7 +58,7 @@ the efficiency and reliability of your simplyblock deployment.
 
 ## Keep Updated
 
-Sign up for our newsletter and keep updated on what's happening at simplyblock.
+Sign up for the simplyblock newsletter and keep updated on what's happening.
 
 <script charset="utf-8" type="text/javascript" src="//js-eu1.hsforms.net/forms/embed/v2.js"></script>
 <script>

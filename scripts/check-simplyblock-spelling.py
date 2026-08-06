@@ -15,25 +15,32 @@ Usage:
 """
 
 import argparse
-import os
 import re
 import sys
 from dataclasses import dataclass
 
-DEFAULT_TARGET_DIRS = ["docs", "snippets"]
-
-SCANNED_EXTENSIONS = {".md"}
+from markdown_common import (
+    CODE_FENCE_PATTERN,
+    DEFAULT_TARGET_DIRS,
+    FileFix,
+    HTML_BLOCK_OPEN_PATTERN,
+    MD_IN_HTML_ATTR_PATTERN,
+    VOID_HTML_TAGS,
+    apply_fixes_to_file,
+    collect_files,
+    drop_generated,
+    get_line_excerpt,
+    indentation_of,
+    is_inside_range,
+    mask_ranges,
+    non_prose_ranges,
+    read_lines,
+    relative_path,
+)
 
 BRAND_PATTERN = re.compile(r"\bsimplyblock\b", re.IGNORECASE)
 
 HEADING_PATTERN = re.compile(r"^\s*#{1,6}\s+")
-CODE_FENCE_PATTERN = re.compile(r"^\s*```")
-# Regions that are not prose: inline code spans (a run of backticks closed by a
-# run of the same length) and mkdocs-macros template expressions. The latter cover
-# both placeholders declared under "extra" in mkdocs.yml ({{ cliname }}) and
-# statements such as snippet includes ({% include 'file.md' %}).
-CODE_SPAN_PATTERN = re.compile(r"(`+)(?:.+?)\1")
-TEMPLATE_PATTERN = re.compile(r"\{\{.*?\}\}|\{%.*?%\}")
 
 # `[^\w\s]|_` is the Python equivalent of `[^\p{L}\p{N}\s]`, since `\w` also covers
 # the underscore, which is neither a letter nor a number.
@@ -56,17 +63,6 @@ CARD_DIVIDER = "---"
 # Admonition ("!!! note \"Title\"") and content tab ("=== \"Title\"") titles.
 ADMONITION_TITLE_PATTERN = re.compile(r"^\s*(?:!!!|\?\?\?\+?)(?:\s|$)")
 TAB_TITLE_PATTERN = re.compile(r"^\s*===\+?\s")
-
-# Raw HTML blocks start with a tag on their own line. Their content is only
-# Markdown if the block carries the md_in_html "markdown" attribute.
-HTML_BLOCK_OPEN_PATTERN = re.compile(r"^\s*<([a-zA-Z][\w:-]*)((?:\"[^\"]*\"|'[^']*'|[^>\"'])*)>")
-MD_IN_HTML_ATTR_PATTERN = re.compile(
-    r"(?:^|\s)markdown(?:\s*=\s*(?:\"[^\"]*\"|'[^']*'|\S+))?(?=\s|/|$)"
-)
-VOID_HTML_TAGS = {
-    "area", "base", "br", "col", "embed", "hr", "img", "input",
-    "link", "meta", "param", "source", "track", "wbr",
-}
 
 # Block-level markers keep their paragraph-start exemption even on a card body
 # continuation line, because they open a new block instead of wrapping a sentence.
@@ -91,13 +87,6 @@ CASE_MATCHED_TERMS = {"documentation"}
 DEPRECATED_TERMS = {"manager": ("Simplyblock Manager", "Simplyblock Operator")}
 
 FOLLOWING_WORD_PATTERN = re.compile(r"\s+([A-Za-z][\w-]*)")
-
-# Generated files are corrected at their source, so they are not checked here.
-GENERATED_MARKER_PATTERN = re.compile(
-    r"this file is generated|do not edit (?:it )?by hand|code generated .*do not edit",
-    re.IGNORECASE,
-)
-GENERATED_MARKER_LINES = 15
 
 # Characters after which a new text block begins. Besides sentence punctuation
 # this covers the pipe, which starts a new cell in a markdown table.
@@ -134,58 +123,14 @@ class CandidatePattern:
 
 
 @dataclass
-class FileFix:
-    line: int
-    column: int
-    length: int
-    replacement: str
-
-
-@dataclass
 class ScanResult:
     violations: list
     candidates: list
     fixes: list
 
 
-def walk(directory):
-    files = []
-    for root, dirnames, filenames in os.walk(directory):
-        dirnames.sort()
-        for name in sorted(filenames):
-            if os.path.splitext(name)[1].lower() in SCANNED_EXTENSIONS:
-                files.append(os.path.join(root, name))
-    return files
-
-
 def is_heading_line(line):
     return bool(HEADING_PATTERN.match(line))
-
-
-def indentation_of(line):
-    return len(line) - len(line.lstrip())
-
-
-def non_prose_ranges(line):
-    """Return the (start, end) ranges of all non-prose regions in a line."""
-    ranges = [match.span() for match in CODE_SPAN_PATTERN.finditer(line)]
-    ranges.extend(match.span() for match in TEMPLATE_PATTERN.finditer(line))
-    return ranges
-
-
-def is_inside_range(ranges, index):
-    return any(start <= index < end for start, end in ranges)
-
-
-def mask_ranges(line, ranges):
-    """Blank out non-prose regions so they do not affect the prefix analysis."""
-    if not ranges:
-        return line
-    chars = list(line)
-    for start, end in ranges:
-        for index in range(start, min(end, len(chars))):
-            chars[index] = " "
-    return "".join(chars)
 
 
 def is_likely_paragraph_start(prefix):
@@ -197,12 +142,6 @@ def previous_non_whitespace_char(prefix):
         if not ch.isspace() and ch not in IGNORABLE_FORMATTING_CHARS:
             return ch
     return None
-
-
-def get_line_excerpt(line, col):
-    start = max(0, col - 30)
-    end = min(len(line), col + 45)
-    return line[start:end].strip()
 
 
 def is_inside_markdown_link_text(line, index):
@@ -218,25 +157,9 @@ def is_inside_markdown_link_text(line, index):
     return line[right + 1:].lstrip().startswith("(")
 
 
-def read_lines(file_path):
-    with open(file_path, "r", encoding="utf-8") as handle:
-        content = handle.read()
-    if content.startswith("﻿"):
-        content = content[1:]
-    return re.split(r"\r?\n", content)
-
-
-def is_generated(file_path):
-    """Detect the "do not edit by hand" marker that generators write out."""
-    head = read_lines(file_path)[:GENERATED_MARKER_LINES]
-    return any(GENERATED_MARKER_PATTERN.search(line) for line in head)
-
-
 def scan_file(file_path):
     lines = read_lines(file_path)
-    rel = os.path.relpath(file_path, os.getcwd())
-    if rel.startswith(".."):
-        rel = file_path
+    rel = relative_path(file_path)
 
     violations = []
     candidates = []
@@ -520,34 +443,10 @@ def scan_file(file_path):
     return ScanResult(violations=violations, candidates=candidates, fixes=fixes)
 
 
-def apply_fixes_to_file(file_path, fixes):
-    if not fixes:
-        return 0
-
-    lines = read_lines(file_path)
-
-    grouped = {}
-    for fix in fixes:
-        grouped.setdefault(fix.line, []).append(fix)
-
-    applied = 0
-    for line_number, line_fixes in grouped.items():
-        line_index = line_number - 1
-        if line_index >= len(lines):
-            continue
-        updated = lines[line_index]
-        for fix in sorted(line_fixes, key=lambda f: f.column, reverse=True):
-            start = fix.column - 1
-            end = start + fix.length
-            updated = f"{updated[:start]}{fix.replacement}{updated[end:]}"
-            applied += 1
-        lines[line_index] = updated
-
-    # read_lines() keeps a trailing empty element for a final newline, so joining
-    # restores the file exactly as it was, including whether it ended with one.
-    with open(file_path, "w", encoding="utf-8") as handle:
-        handle.write("\n".join(lines))
-    return applied
+def report_generated(generated):
+    print(f"Skipped {len(generated)} generated file(s), fix those at their source:")
+    for file in generated:
+        print(f"  • {relative_path(file)}")
 
 
 def main():
@@ -570,31 +469,11 @@ def main():
     )
     args = parser.parse_args()
 
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-    # The defaults are anchored to the repository root, so the check can be run
-    # from anywhere; explicitly passed paths stay relative to the current directory.
-    if args.paths:
-        targets = [os.path.abspath(path) for path in args.paths]
-    else:
-        targets = [os.path.join(repo_root, name) for name in DEFAULT_TARGET_DIRS]
-
-
-    files = []
-    for target in targets:
-        if os.path.isdir(target):
-            files.extend(walk(target))
-        elif os.path.isfile(target):
-            files.append(target)
-        else:
-            print(f"Skipping missing path: {target}", file=sys.stderr)
-
-    generated = [file for file in files if is_generated(file)]
-    if generated:
-        files = [file for file in files if file not in set(generated)]
-        print(f"Skipped {len(generated)} generated file(s), fix those at their source:")
-        for file in generated:
-            print(f"  • {os.path.relpath(file, os.getcwd())}")
+    files = collect_files(
+        args.paths,
+        on_missing=lambda target: print(f"Skipping missing path: {target}", file=sys.stderr),
+    )
+    files = drop_generated(files, report=report_generated)
 
     scans = [scan_file(file) for file in files]
     violations = [v for scan in scans for v in scan.violations]
