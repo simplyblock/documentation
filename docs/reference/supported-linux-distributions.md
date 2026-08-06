@@ -27,9 +27,9 @@ The following Linux distributions are considered tested and supported to run a d
 
 | Distribution             | Version     | Architecture            | Support Level   |
 |--------------------------|-------------|-------------------------|-----------------|
-| Red Hat Enterprise Linux | 9 and later | x86-64, ARM64 (Aarch64) | Fully supported |
-| Rocky Linux              | 9 and later | x86-64, ARM64 (Aarch64) | Fully supported |
-| AlmaLinux                | 9 and later | x86-64, ARM64 (Aarch64) | Fully supported |
+| Red Hat Enterprise Linux | 9 and later | x86-64, ARM64 (AArch64) | Fully supported |
+| Rocky Linux              | 9 and later | x86-64, ARM64 (AArch64) | Fully supported |
+| AlmaLinux                | 9 and later | x86-64, ARM64 (AArch64) | Fully supported |
 
 ## Kubernetes Hyper-Converged: Control Plane and Storage Plane
 
@@ -38,14 +38,14 @@ plane:
 
 | Distribution             | Version         | Architecture            | Support Level   |
 |--------------------------|-----------------|-------------------------|-----------------|
-| Red Hat Enterprise Linux | 9 and later     | x86-64, ARM64 (Aarch64) | Fully supported |
-| Rocky Linux              | 9 and later     | x86-64, ARM64 (Aarch64) | Fully supported |
-| Alma Linux               | 9 and later     | x86-64, ARM64 (Aarch64) | Fully supported |
-| Ubuntu                   | 22.04 and later | x86-64, ARM64 (Aarch64) | Fully supported |
-| Debian                   | 12 or later     | x86-64, ARM64 (Aarch64) | Fully supported |
-| Amazon Linux 2 (AL2)     | -               | x86-64, ARM64 (Aarch64) | Fully supported |
-| Amazon Linux 2023        | -               | x86-64, ARM64 (Aarch64) | Fully supported |
-| Talos                    | 1.6.7 or later  | x86-64, ARM64 (Aarch64) | Fully supported |
+| Red Hat Enterprise Linux | 9 and later     | x86-64, ARM64 (AArch64) | Fully supported |
+| Rocky Linux              | 9 and later     | x86-64, ARM64 (AArch64) | Fully supported |
+| Alma Linux               | 9 and later     | x86-64, ARM64 (AArch64) | Fully supported |
+| Ubuntu                   | 22.04 and later | x86-64, ARM64 (AArch64) | Fully supported |
+| Debian                   | 12 or later     | x86-64, ARM64 (AArch64) | Fully supported |
+| Amazon Linux 2 (AL2)     | -               | x86-64, ARM64 (AArch64) | Fully supported |
+| Amazon Linux 2023        | -               | x86-64, ARM64 (AArch64) | Fully supported |
+| Talos                    | 1.6.7 or later  | x86-64, ARM64 (AArch64) | Fully supported |
 
 ## Hosts (Initiators accessing Storage Cluster over NVMf)
 
@@ -53,16 +53,16 @@ The following Linux distributions are considered tested and supported as NVMe-oF
 
 | Distribution             | Version       | Architecture            | Support Level                   |
 |--------------------------|---------------|-------------------------|---------------------------------|
-| Red Hat Enterprise Linux | 8.1 and later | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| CentOS                   | 8 and later   | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| Rocky Linux              | 9 and later   | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| AlmaLinux                | 9 and later   | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| Ubuntu                   | 18.04         | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| Ubuntu                   | 20.04         | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| Ubuntu                   | 22.04         | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| Debian                   | 12 or later   | x86-64, ARM64 (Aarch64) | Fully supported                 |
-| Amazon Linux 2 (AL2)     | -             | x86-64, ARM64 (Aarch64) | Partially supported<sup>1</sup> |
-| Amazon Linux 2023        | -             | x86-64, ARM64 (Aarch64) | Partially supported<sup>1</sup> |
+| Red Hat Enterprise Linux | 8.1 and later | x86-64, ARM64 (AArch64) | Fully supported                 |
+| CentOS                   | 8 and later   | x86-64, ARM64 (AArch64) | Fully supported                 |
+| Rocky Linux              | 9 and later   | x86-64, ARM64 (AArch64) | Fully supported                 |
+| AlmaLinux                | 9 and later   | x86-64, ARM64 (AArch64) | Fully supported                 |
+| Ubuntu                   | 18.04         | x86-64, ARM64 (AArch64) | Fully supported                 |
+| Ubuntu                   | 20.04         | x86-64, ARM64 (AArch64) | Fully supported                 |
+| Ubuntu                   | 22.04         | x86-64, ARM64 (AArch64) | Fully supported                 |
+| Debian                   | 12 or later   | x86-64, ARM64 (AArch64) | Fully supported                 |
+| Amazon Linux 2 (AL2)     | -             | x86-64, ARM64 (AArch64) | Partially supported<sup>1</sup> |
+| Amazon Linux 2023        | -             | x86-64, ARM64 (AArch64) | Partially supported<sup>1</sup> |
 
 <span markdown style="font-size: small;"><sup>1</sup> Amazon Linux 2 and Amazon Linux 2023 have a bug with
 [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics

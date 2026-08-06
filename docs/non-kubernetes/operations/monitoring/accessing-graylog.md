@@ -26,7 +26,7 @@ The Graylog installation uses the cluster secret as its password for the user _a
 If the simplyblock control plane is installed outside Kubernetes, to retrieve the cluster secret, the following
 commands should be used:
 
-```bash title="Get the cluster uuid"
+```bash title="Get the cluster UUID"
 {{ cliname }} cluster list
 ```
 

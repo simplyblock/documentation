@@ -24,7 +24,7 @@ iptables configuration needs to be restricted.
 The following script will create additional iptables rules prepended to Docker's forwarding rules and only enabling
 access from internal networks. This script should be stored in _/usr/local/sbin/simplyblock-iptables.sh_.
 
-```bash title="Configuration script for Iptables"
+```bash title="Configuration script for iptables"
 #!/usr/bin/env bash
 
 # Clean up
@@ -48,10 +48,10 @@ sudo iptables -A SIMPLYBLOCK -p tcp --dport 9090-9900 -s 192.168.10.0/24,10.10.1
 sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
 ```
 
-To automatically run this script whenever Docker is started or restarted, it must be attached to a Systemd service,
+To automatically run this script whenever Docker is started or restarted, it must be attached to a systemd service,
 stored as _/etc/systemd/system/simplyblock-iptables.service_.
 
-```plain title="Systemd script to set up Iptables"
+```plain title="systemd script to set up iptables"
 [Unit]
 Description=Simplyblock Iptables Restrictions for Docker 
 After=docker.service
@@ -68,7 +68,7 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 ```
 
-After both files are stored in their respective locations, the bash script needs to be made executable, and the Systemd
+After both files are stored in their respective locations, the bash script needs to be made executable, and the systemd
 service needs to be enabled to start automatically.
 
 ```bash title="Enabling service file"

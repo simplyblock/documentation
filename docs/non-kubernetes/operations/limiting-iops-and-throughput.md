@@ -19,7 +19,7 @@ In Kubernetes, storage class-level QoS Settings are not allowed if the storage c
 to a pool with QoS settings.
 
 Therefore, in Kubernetes, if the [Storage Class](../../kubernetes/usage/storage-class.md) references any pool, 
-which has Qos limits attached, it is not allowed to add them to the storage class as well. 
+which has QoS limits attached, it is not allowed to add them to the storage class as well. 
 The same applies to [OpenStack](../openstack/index.md) QoS Settings on the Volume Type.
 
 !!! warning  

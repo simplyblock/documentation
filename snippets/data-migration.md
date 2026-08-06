@@ -4,7 +4,7 @@ level, depending on the source system and migration requirements. Because simply
 as virtual block devices, data can be migrated using standard block device cloning tools such as `dd`, as well
 as file-based tools like `rsync` after the block device has been formatted.
 
-Therefore, sata migration to simplyblock is a straightforward process using common block-level and file-level tools.
+Therefore, SATA migration to simplyblock is a straightforward process using common block-level and file-level tools.
 For full disk cloning, `dd` and similar utilities are effective. For selective file migrations, `rsync` provides
 flexibility and reliability. Proper planning and validation of available storage capacity are essential to ensure
 successful and complete data transfers.

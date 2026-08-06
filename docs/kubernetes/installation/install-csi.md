@@ -117,7 +117,7 @@ simplyblock API with an AWS load balancer, HAproxy, or similar service. Hence, y
 ## Deploying the Helm Chart
 
 Anyhow, deploying the Simplyblock CSI Driver using the provided Helm Chart comes down to providing the four necessary
-values, adding the helm chart repository, and installing the driver.
+values, adding the Helm chart repository, and installing the driver.
 
 ```bash title="Install Simplyblock's CSI Driver"
 CLUSTER_UUID="<UUID>"

@@ -27,8 +27,8 @@ Commonly configured CSI driver parameters:
 | `logicalVolume.qos_rw_mbytes`            | Sets the maximum read-write Mbps. Zero means unlimited.                                      | `0`                                                         | 
 | `logicalVolume.qos_r_mbytes`             | Sets the maximum read Mbps. Zero means unlimited.                                            | `0`                                                         | 
 | `logicalVolume.qos_w_mbytes`             | Sets the maximum write Mbps. Zero means unlimited.                                           | `0`                                                         | 
-| `logicalVolume.numDataChunks`            | Sets the number of Erasure coding schema parameter k (distributed raid).                     | `1`                                                         | 
-| `logicalVolume.numParityChunks`          | Sets the number of Erasure coding schema parameter n (distributed raid).                     | `1`                                                         | 
+| `logicalVolume.numDataChunks`            | Sets the number of Erasure coding schema parameter k (distributed RAID).                     | `1`                                                         | 
+| `logicalVolume.numParityChunks`          | Sets the number of Erasure coding schema parameter n (distributed RAID).                     | `1`                                                         | 
 | `logicalVolume.lvol_priority_class`      | Sets the logical volume priority class.                                                      | `0`                                                         | 
 | `logicalVolume.fabric`                   | Sets the NVMe-oF transport type.                                                             | `tcp`                                                       |
 | `logicalVolume.tune2fs_reserved_blocks`  | Sets the percentage of disk blocks reserved for system.                                      | `0`                                                         | 
@@ -46,14 +46,14 @@ Additional, uncommonly configured CSI driver parameters:
 | `serviceAccount.create`                  | Specifies whether to create service account for the CSI controller.                                             | `true`                 |
 | `rbac.create`                            | Specifies whether to create RBAC permissions for the CSI controller.                                            | `true`                 |
 | `controller.replicas`                    | Sets the replica number of the CSI controller StatefulSet.                                                      | `1`                    |
-| `controller.tolerations.create`          | Specifies whether to create tolerations for the csi controller.                                                 | `false`                | 
-| `controller.tolerations.list[].effect`   | Sets the effect of tolerations on the csi controller.                                                           | `<empty>`              | 
-| `controller.tolerations.list[].key`      | Sets the key of tolerations for the csi controller.                                                             | `<empty>`              | 
-| `controller.tolerations.list[].operator` | Sets the operator for the csi controller tolerations.                                                           | `Exists`               | 
-| `controller.tolerations.list[].value`    | Sets the value of tolerations for the csi controller.                                                           | `<empty>`              | 
-| `controller.nodeSelector.create`         | Specifies whether to create nodeSelector for the csi controller.                                                | `false`                | 
-| `controller.nodeSelector.key`            | Sets the key of nodeSelector for the csi controller.                                                            | `<empty>`              | 
-| `controller.nodeSelector.value`          | Sets the value of nodeSelector for the csi controller.                                                          | `<empty>`              | 
+| `controller.tolerations.create`          | Specifies whether to create tolerations for the CSI controller.                                                 | `false`                | 
+| `controller.tolerations.list[].effect`   | Sets the effect of tolerations on the CSI controller.                                                           | `<empty>`              | 
+| `controller.tolerations.list[].key`      | Sets the key of tolerations for the CSI controller.                                                             | `<empty>`              | 
+| `controller.tolerations.list[].operator` | Sets the operator for the CSI controller tolerations.                                                           | `Exists`               | 
+| `controller.tolerations.list[].value`    | Sets the value of tolerations for the CSI controller.                                                           | `<empty>`              | 
+| `controller.nodeSelector.create`         | Specifies whether to create nodeSelector for the CSI controller.                                                | `false`                | 
+| `controller.nodeSelector.key`            | Sets the key of nodeSelector for the CSI controller.                                                            | `<empty>`              | 
+| `controller.nodeSelector.value`          | Sets the value of nodeSelector for the CSI controller.                                                          | `<empty>`              | 
 | `externallyManagedConfigmap.create`      | Specifies whether a externallyManagedConfigmap should be created.                                               | `true`                 | 
 | `externallyManagedSecret.create`         | Specifies whether a externallyManagedSecret should be created.                                                  | `true`                 | 
 | `podAnnotations`                         | Annotations to apply to all pods in the chart.                                                                  | `{}`                   | 
@@ -61,7 +61,7 @@ Additional, uncommonly configured CSI driver parameters:
 | `node.tolerations.create`                | Specifies whether to create tolerations for the CSI driver node.                                                | `false`                |  
 | `node.tolerations.list[].effect`         | Sets the effect of tolerations on the CSI driver node.                                                          | `<empty>`              | 
 | `node.tolerations.list[].key`            | Sets the key of tolerations for the CSI driver node.                                                            | `<empty>`              | 
-| `node.tolerations.list[].operator`       | Sets the operator for the csi node tolerations.                                                                 | `Exists`               | 
+| `node.tolerations.list[].operator`       | Sets the operator for the CSI node tolerations.                                                                 | `Exists`               | 
 | `node.tolerations.list[].value`          | Sets the value of tolerations for the CSI driver node.                                                          | `<empty>`              | 
 | `node.nodeSelector.create`               | Specifies whether to create nodeSelector for the CSI driver node.                                               | `false`                | 
 | `node.nodeSelector.key`                  | Sets the key of nodeSelector for the CSI driver node.                                                           | `<empty>`              | 
@@ -107,7 +107,7 @@ For details, see [Securing the Control Plane](../../kubernetes/installation/secu
 | `storagenode.daemonsets[1].tolerations.key`      | Sets the key of tolerations for the restart storage node.                                   | `<empty>`                             | 
 | `storagenode.daemonsets[1].tolerations.operator` | Sets the operator for the restart storage node tolerations.                                 | `Exists`                              | 
 | `storagenode.daemonsets[1].tolerations.value`    | Sets the value of tolerations for the restart storage node.                                 | `<empty>`                             | 
-| `storagenode.create`                             | Specifies whether to create storage node on kubernetes worker node.                         | `false`                               | 
+| `storagenode.create`                             | Specifies whether to create storage node on Kubernetes worker node.                         | `false`                               | 
 | `storagenode.ifname`                             | Sets the default interface to be used for binding the storage node to host interface.       | `eth0`                                | 
 | `storagenode.maxLogicalVolumes`                  | Sets the default maximum number of logical volumes per storage node.                        | `10`                                  | 
 | `storagenode.maxSnapshots`                       | Sets the default maximum number of snapshot per storage node.                               | `10`                                  | 
@@ -179,6 +179,6 @@ For details, see [Securing the Control Plane](../../kubernetes/installation/secu
 | `image.numaResource.repository`             | Simplyblock NUMA resource plugin image repository.        | `simplyblock/numa-resource-plugin`                                      |
 | `image.numaResource.tag`                    | Simplyblock NUMA resource plugin image tag.               | `latest`                                                                |
 | `image.numaResource.pullPolicy`             | Simplyblock NUMA resource plugin image pull policy.       | `Always`                                                                |
-| `image.mgmtAPI.repository`                  | Simplyblock management api image.                         | `python`                                                                |
-| `image.mgmtAPI.tag`                         | Simplyblock management api image tag.                     | `3.10`                                                                  |
-| `image.mgmtAPI.pullPolicy`                  | Simplyblock management api image pull policy.             | `Always`                                                                |
+| `image.mgmtAPI.repository`                  | Simplyblock management API image.                         | `python`                                                                |
+| `image.mgmtAPI.tag`                         | Simplyblock management API image tag.                     | `3.10`                                                                  |
+| `image.mgmtAPI.pullPolicy`                  | Simplyblock management API image pull policy.             | `Always`                                                                |

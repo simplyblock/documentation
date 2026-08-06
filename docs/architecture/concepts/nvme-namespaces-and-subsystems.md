@@ -10,7 +10,7 @@ An NVMe-oF subsystem is the exported entity that the host connects to over the f
 A subsystem is identified by its unique worldwide name (NQN) and can be roughly seen as a 
 controller, which exposes and connects one or multiple namespaces (actual volumes) to hosts. 
 
-The NQN of a subsystem can contain the namespace uuid and is worldwide unique. 
+The NQN of a subsystem can contain the namespace UUID and is worldwide unique. 
 In simplyblock, it looks as follows (the last part behind `:lvol:<uuid>` indicates the namespace representing the volume):
 
 ```plain title="Example NQN"

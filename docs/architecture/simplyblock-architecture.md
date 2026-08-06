@@ -5,7 +5,7 @@ weight: 20100
 ---
 
 Simplyblock is a cloud-native, distributed block storage platform designed to deliver scalable, high-performance, and
-resilient storage through a software-defined architecture. Centered around NVMe-over-Fabrics (NVMe-oF), simplyblock
+resilient storage through a software-defined architecture. Centered around NVMe over Fabrics (NVMe-oF), simplyblock
 separates compute and storage to enable scale-out elasticity, high availability, and low-latency operations in modern,
 containerized environments.
 
@@ -35,14 +35,14 @@ The control plane provides the following functionality in two groups of distribu
     - Lifecycle management of logical volumes and pools
     - Raw IO Statistics, Capacity, Alerting and Log Feeds
 - Observability Stack (optional)
-    - Log Management (graylog, opensearch, mongoDB, thanos)
-    - Performance Monitoring and Dashboarding (grafana, prometheus) with configurable alerting to email and slack
+    - Log Management (Graylog, OpenSearch, MongoDB, Thanos)
+    - Performance Monitoring and Dashboarding (Grafana, Prometheus) with configurable alerting to email and Slack
 
 The observability stack is optional. It is typically used in PoC (proof of concept) or testing environments and for
 customers, who need to get started quickly. For large scale, multi-cluster deployments it is 
 rather recommended to integrate with pre-existing or targeted observability stacks.
       
-The control plane is layered and its distributed control plane services run on both kubernetes and native Docker.
+The control plane is layered and its distributed control plane services run on both Kubernetes and native Docker.
 The latter can be used for non-Kubernetes (Proxmox, OpenStack) or disaggregated deployments.
 All services are accessible via the Simplyblock CLI and Control Plane API.
 
@@ -64,7 +64,7 @@ For internal state storage, the control plane uses ([FoundationDB](https://www.f
 its key-value store. FoundationDB, by itself, operates in a replicated highly-available cluster across all management
 nodes.
 
-Within Kubernetes deployments, the control plane can now also be deployed alongside the storage nodes on the same k8s
+Within Kubernetes deployments, the control plane can now also be deployed alongside the storage nodes on the same K8s
 workers. It will, however, run in separate pods.
 
 ## Storage Plane

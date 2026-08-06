@@ -52,7 +52,7 @@ Each cluster has a default schema, but each volume can optionally use an alterna
 
 See the [Erasure Coding Configuration](../../deployment-preparation/erasure-coding-scheme.md) for more details.
 
-See here how to configure [Service Classes](../../non-kubernetes/operations/qos-service-classes.md) and [Qos Limits](../../non-kubernetes/operations/limiting-iops-and-throughput.md). 
+See here how to configure [Service Classes](../../non-kubernetes/operations/qos-service-classes.md) and [QoS Limits](../../non-kubernetes/operations/limiting-iops-and-throughput.md). 
 
 ##Namespace Volumes
 
@@ -69,7 +69,7 @@ If `namespace-volumes` is set to `yes`, you also need to define the number of na
 | cluster_id                | string     | Defines the backing cluster id for the storage class. Required unless `zone_cluster_map` or `region_cluster_map` is used.         | true     |          |
 | zone_cluster_map          | string     | JSON map of Kubernetes zone to simplyblock cluster id (for topology-aware multi-cluster provisioning).                             | true     |          |
 | region_cluster_map        | string     | JSON map of Kubernetes region to simplyblock cluster id (for topology-aware multi-cluster provisioning).                           | true     |          |
-| fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                       | true     | tcp      |
+| fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                       | true     | `tcp`    |
 | csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                 | true     |          |
 | pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                   | false    | testing1 |
 | qos_rw_iops               | int        | Defines the maximum IOPS reserved for a logical volume of this storage class. A zero (0) means no maximum.                          | true     | 0        |

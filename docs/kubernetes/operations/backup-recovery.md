@@ -14,9 +14,9 @@ is especially useful for automated backup workflows integrated with Kubernetes-n
 
 #### S3-Compatible Object Storage
 
-Backups require an S3-compatible object storage endpoint. For local testing, you can deploy a Minio instance:
+Backups require an S3-compatible object storage endpoint. For local testing, you can deploy a MinIO instance:
 
-```sh title="Deploy a local Minio instance for testing"
+```sh title="Deploy a local MinIO instance for testing"
 kubectl create ns minio
 
 kubectl -n minio create deployment minio \

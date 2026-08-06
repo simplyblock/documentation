@@ -35,7 +35,7 @@ weight: 20450
 | PSK                     | Pre-Shared Key                       |
 | PV                      | Persistent Volume                    |
 | PVC                     | Persistent Volume Claim              |
-| QOS                     | Quality of Service                   |
+| QoS                     | Quality of Service                   |
 | RAID                    | Redundant Array of Independent Disks |
 | RDMA                    | Remote Direct Memory Access          |
 | ROW                     | Redirect On Write                    |

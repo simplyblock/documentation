@@ -1,6 +1,6 @@
 ---
 title: "Install Simplyblock"
-description: "Install Simplyblock on Linux: Installing simplyblock for production on plain linux (Docker) requires a few components to be installed."
+description: "Install Simplyblock on Linux: Installing simplyblock for production on plain Linux (Docker) requires a few components to be installed."
 weight: 20000
 ---
 
@@ -22,7 +22,7 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 
 ## Before We Start
 
-A simplyblock production cluster consists of three different types of nodes in the plain linux (Docker) variant
+A simplyblock production cluster consists of three different types of nodes in the plain Linux (Docker) variant
 of the deployment:
 
 1. _Management nodes_ are part of the control plane which managed the cluster(s). 
@@ -50,7 +50,7 @@ On storage nodes, simplyblock can use either one network interface for both stor
 or separate interfaces (VLANs or subnets).
 
 !!! Important
-    It is possible to configure a storage cluster with NVMe-of Multipathing. This requires two storage
+    It is possible to configure a storage cluster with NVMe-oF Multipathing. This requires two storage
     VLANs per host, routed via separate NIC ports and switches for fault tolerance. This configuration can
     be used as an alternative to a HA networking setup with link aggregation (such as LACP, MLAG, and similar).
     

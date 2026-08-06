@@ -15,7 +15,7 @@ users to provide feedback, report typos, suggest improvements, and submit fixes 
 
 ## How to Contribute
 
-The simplyblock documentation is built using [mkdocs](https://www.mkdocs.org/){:target="_blank" rel="noopener"}, specifically using the
+The simplyblock documentation is built using [MkDocs](https://www.mkdocs.org/){:target="_blank" rel="noopener"}, specifically using the
 [mkdocs-material](https://squidfunk.github.io/mkdocs-material/){:target="_blank" rel="noopener"} variant.
 
 Changes to the documentation can be made by changing or adding the necessary Markdown files.

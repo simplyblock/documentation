@@ -206,7 +206,7 @@ Simplyblock supports the most common system architectures, as well as plain Linu
 Both simplyblock storage nodes and control plane nodes can run fully virtualized. It has been tested on plain KVM,
 Proxmox, Nitro (AWS EC2) and GCP.
 
-For storage node production deployments, _SR-IOV_ is required for NVMEs and network interfaces (NICs). Furthermore,
+For storage node production deployments, _SR-IOV_ is required for NVMe devices and network interfaces (NICs). Furthermore,
 dedicated cores must be assigned exclusively to the virtual machines running storage node (no over-provisioning).
 
 For deployments on Cloud-based platforms, see [cloud-instance recommendations](cloud-instance-recommendations.md).
