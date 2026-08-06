@@ -1,0 +1,84 @@
+---
+title: "Cloud Instance Recommendations"
+description: "Cloud Instance Recommendations: Simplyblock has been tested on and recommends the following instance types."
+weight: 30000
+---
+
+Simplyblock has been tested on and recommends the following instance types. In general, there is no restriction on
+other instance types as long as they fulfill the system requirements.
+
+## AWS Amazon EC2 Recommendations
+
+Simplyblock can work with local instance storage (local NVMe devices) and Amazon EBS volumes. For performance reasons,
+Amazon EBS is not recommended for high-performance clusters.
+
+!!! important
+    If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of type
+    _Spread_! Otherwise there is no guarantee that multiple storage nodes won't be located in the same failure domain. 
+
+Generally, with AWS, there are three considerations when selecting virtual machine types:
+
+- Minimum requirements of vCPU and RAM
+- Locally attached NVMe devices
+- Network performance (dedicated and "up to")
+
+Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes
+***in disaggregated clusters***:
+
+| VM Type         | vCPU(s) | RAM    | Locally Attached Storage | Network Performance |
+|-----------------|---------|--------|--------------------------|---------------------|
+| _i4g.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.5 GBit/s         |
+| _i4g.16xlarge_  | 64      | 512 GB | 4x 3750 GB               | 37.5 GBit/s         |
+| _i3en.6xlarge_  | 24      | 192 GB | 2x 7500 GB               | 25 GBit/s           |
+| _i3en.12xlarge_ | 48      | 384 GB | 4x 7500 GB               | 50 GBit/s           |
+| _i3en.24xlarge_ | 96      | 768 GB | 8x 7500 GB               | 100 GBit/s          |
+| _m5d.4xlarge_   | 16      | 64 GB  | 2x 300 GB                | 10 GBit/s           |
+| _i4i.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.75 GBit/s        |
+| _i4i.12xlarge_  | 48      | 384 GB | 3x 3750 GB               | 28.12 GBit/s        |
+
+For hyper-converged AWS EC2-based Kubernetes workers (EKS, k3s or other), any instance with a local SSD can be chosen.
+
+Keep the [minimum system requirements](./hardware-requirements.md)in mind. At least 8 vCPUs are required for simplyblock. 
+
+## Google Compute Engine Recommendations
+
+!!! critical
+    GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
+    Therefore, a "sudden power off" is not safe, data corruption may occur!
+
+In GCP, physical hosts are highly shared and sliced into virtual machines. This is true not only for CPU, RAM, and
+network bandwidth, but also for virtualized NVMe devices. Google Compute Engine NVMe devices provide a specific number
+of queue pairs (logical connections between the virtual machine and physical NVMe device) depending on the size of the
+disk. Hence, separately attached NVMe devices are highly recommended to achieve the required number of queue pairs of
+simplyblock.
+    
+Generally, with GCP, there are three considerations when selecting virtual machine types:
+
+- Minimum requirements of vCPU and RAM
+- The size of the locally attached NVMe devices (SSD Storage)
+- Network performance
+
+Based on those criteria, simplyblock commonly recommends the following virtual machine types for storage nodes:
+
+| VM Type          | vCPU(s) | RAM    | Additional Local SSD Storage | Network Performance |
+|------------------|---------|--------|------------------------------|---------------------|
+| _n2-standard-8_  | 8       | 32 GB  | 2x 2500 GB                   | 16 GBit/s           |
+| _n2-standard-16_ | 16      | 64 GB  | 2x 2500 GB                   | 32 GBit/s           |
+| _n2-standard-32_ | 32      | 128 GB | 4x 2500 GB                   | 32 GBit/s           |
+| _n2-standard-48_ | 48      | 192 GB | 4x 2500 GB                   | 50 GBit/s           |
+| _n2-standard-48_ | 48      | 192 GB | 4x 2500 GB                   | 50 GBit/s           |
+| _n2-standard-64_ | 64      | 256 GB | 6x 2500 GB                   | 75 GBit/s           |
+| _n2-standard-80_ | 64      | 320 GB | 8x 2500 GB                   | 100 GBit/s          |
+
+### Attaching an additional Local SSD on Google Compute Engine
+
+The recommended instance types above do not provide NVMe storage by default. It has to be added explicitly to the
+virtual machine at creation time. It cannot be changed after the virtual machine is created.
+
+To add additional Local SSD Storage to a virtual machine, select the operating system section in the wizard, then
+click "Add local SSD." An additional disk can then be added.
+
+!!! warning
+    It is important that NVMe is selected as the interface type. SCSI will not work!
+
+![Google Compute Engine wizard screenshot for adding additional local SSDs to a virtual machine](../assets/images/gcp-wizard-local-ssd.png)

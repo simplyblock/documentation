@@ -83,7 +83,7 @@ Additional, uncommonly configured CSI driver parameters:
 | `tls.provider`                  | TLS certificate provider. `cert-manager` for generic Kubernetes, `openshift` for OpenShift-managed certs.    | `openshift` |
 | `tls.cert-manager.issuer`       | Name of the cert-manager `ClusterIssuer` to use. **Required when `tls.provider=cert-manager`**.              | `<empty>`   |
 
-For details, see [Securing the Control Plane](../../deployments/kubernetes/security.md).
+For details, see [Securing the Control Plane](../../kubernetes/installation/security.md).
 
 ## Storage Node Parameters
 
