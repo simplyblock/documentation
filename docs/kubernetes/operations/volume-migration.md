@@ -100,7 +100,7 @@ Each migration progresses through the following phases, tracked in `VolumeMigrat
 | `Running`    | The backend is copying data and snapshots. `status.snapsMigrated` / `status.snapsTotal` track progress. |
 | `Completed`  | The volume now resides on the target node.                                                              |
 | `Failed`     | The migration could not complete. `status.errorMessage` holds the reason.                               |
-| `Aborted`    | The migration was cancelled via `spec.abort`.                                                           |
+| `Aborted`    | The migration was canceled via `spec.abort`.                                                           |
 
 The status also records the resolved `sourceNodeUUID`, `volumeUUID`, `poolUUID`, `clusterUUID`, the backend
 `migrationUUID`, and `startedAt` / `completedAt` timestamps.
@@ -243,7 +243,7 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
   simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
-| Annotation value                                                  | Removal behaviour                                                |
+| Annotation value                                                  | Removal behavior                                                |
 |-------------------------------------------------------------------|------------------------------------------------------------------|
 | A valid storage node UUID (different from the node being removed) | Volume is migrated to that node; removal proceeds.               |
 | Empty / absent                                                    | Volume is not pinned; the operator picks a target automatically. |
@@ -287,7 +287,7 @@ filter on:
 | `MigrationStarted`          | The backend migration is running.                                      |
 | `MigrationCompleted`        | The volume finished migrating to the target node.                      |
 | `MigrationFailed`           | The migration failed; see the event message and `status.errorMessage`. |
-| `MigrationAborted`          | The migration was cancelled via `spec.abort`.                          |
+| `MigrationAborted`          | The migration was canceled via `spec.abort`.                          |
 | `MigrationStuck`            | A migration has not progressed within the expected time.               |
 | `VolumeRebalancingStarted`  | Auto-rebalancing began moving a volume.                                |
 | `VolumeRebalancingComplete` | An auto-rebalancing migration finished.                                |

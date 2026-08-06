@@ -17,7 +17,7 @@ The operator classifies each worker node into one of two groups before starting 
 
 - **Non-FDB workers:** workers that do not host any FoundationDB process pods. These are added in parallel up
   to the configured `maxParallelNodeAdds` limit.
-- **FDB workers:** workers running pods labelled `foundationdb.org/fdb-cluster-name`. These are always added
+- **FDB workers:** workers running pods labeled `foundationdb.org/fdb-cluster-name`. These are always added
   one at a time, in sequence.
 
 The sequential constraint for FDB workers exists because the storage node add process triggers a worker reboot.
@@ -28,7 +28,7 @@ threshold, which would cause cluster unavailability.
 
 Parallelism for non-FDB workers is controlled by `StorageNode.spec.maxParallelNodeAdds`.
 
-| Value         | Behaviour                                                        |
+| Value         | Behavior                                                        |
 |---------------|------------------------------------------------------------------|
 | `1` (default) | All workers added one at a time which is safe for all topologies |
 | `> 1`         | Up to `n` non-FDB workers added concurrently per reconcile pass  |

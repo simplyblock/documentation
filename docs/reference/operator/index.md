@@ -57,14 +57,14 @@ StorageNodeOps   ──► drives a single one-shot operation to completion
 ## StorageNodeSet
 
 The `StorageNodeSet` resource is the single point of configuration for a fleet of storage nodes. It declares which
-Kubernetes workers to enrol, how to configure them (image versions, NUMA topology, device filtering, per-node
+Kubernetes workers to enroll, how to configure them (image versions, NUMA topology, device filtering, per-node
 overrides), and how many nodes to add in parallel.
 
 The operator creates one `StorageNode` CR per enrolled worker (and per configured NUMA socket when
 `socketsToUse` has more than one entry). Those child CRs are managed automatically and must not be created or
 deleted manually.
 
-```yaml title="Example: Enrol three workers into a storage cluster"
+```yaml title="Example: Enroll three workers into a storage cluster"
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNodeSet
 metadata:

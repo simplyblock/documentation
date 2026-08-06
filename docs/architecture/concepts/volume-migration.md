@@ -64,7 +64,7 @@ If migration fails at any point, the target-side artifacts are cleaned up and th
 - **One migration per source node:** Only one volume migration can run on a given source node at a time. This is
   required to maintain snapshot consistency during the transfer.
 - **Protection guards:** Volumes undergoing migration are protected from deletion, resizing, and snapshot deletion
-  until the migration completes or is cancelled.
+  until the migration completes or is canceled.
 - **Automatic retry:** Transient failures during migration (such as temporary network issues) are automatically retried.
   The migration resumes from the last successful checkpoint.
 

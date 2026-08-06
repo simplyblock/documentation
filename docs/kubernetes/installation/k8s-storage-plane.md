@@ -14,7 +14,7 @@ Before going on, here is a high-level overview of the following deployment proce
 ```plain title="Storage Cluster Lifecycle"
 StorageCluster    ──► unready
                         │
-                        ▼  (enrol ≥ 3 workers in a StorageNodeSet)
+                        ▼  (enroll ≥ 3 workers in a StorageNodeSet)
 StorageNodeSet    ──► operator creates StorageNode CRs and provisions each worker
 StorageNode(s)    ──► active (once ≥ 3 nodes are online)
                         │
@@ -108,7 +108,7 @@ been registered, it has no storage nodes yet. Those are added in the next step.
 
 ## Add Storage Nodes
 
-To enrol Kubernetes workers as simplyblock storage nodes, create a `StorageNodeSet` resource. It declares which
+To enroll Kubernetes workers as simplyblock storage nodes, create a `StorageNodeSet` resource. It declares which
 workers to use and how to configure them. The operator creates one `StorageNode` CR per worker (and per NUMA socket
 if multiple sockets are configured), then provisions each one sequentially.
 
@@ -129,7 +129,7 @@ spec:
     - worker-3.example.com
 ```
 
-```bash title="Enrol storage nodes"
+```bash title="Enroll storage nodes"
 kubectl apply -f storage-nodeset.yaml
 ```
 

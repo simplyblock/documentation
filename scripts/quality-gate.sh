@@ -32,7 +32,7 @@ else
 fi
 
 # The available gates, in execution order.
-ALL_GATES=(spelling terminology voice syntax)
+ALL_GATES=(spelling terminology american voice syntax)
 
 gate_spelling_description="Brand name spelling and casing"
 gate_spelling() {
@@ -42,6 +42,11 @@ gate_spelling() {
 gate_terminology_description="Spelling of product names, projects and acronyms"
 gate_terminology() {
   "${PYTHON}" "${SCRIPT_DIR}/check-terminology.py"
+}
+
+gate_american_description="American English spelling"
+gate_american() {
+  "${PYTHON}" "${SCRIPT_DIR}/check-american-english.py"
 }
 
 gate_voice_description="Impersonal voice, without addressing the reader or the author"

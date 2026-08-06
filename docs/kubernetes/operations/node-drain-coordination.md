@@ -114,7 +114,7 @@ The operator will migrate the volume to the specified target instead of blocking
 
 ### Annotation Rules
 
-| Annotation value | Drain behaviour |
+| Annotation value | Drain behavior |
 |---|---|
 | A valid storage node UUID (different from the node being drained) | Volume is migrated to that node; drain proceeds |
 | Empty string | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
