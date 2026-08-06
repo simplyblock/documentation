@@ -10,6 +10,10 @@ does not move the storage node itself. This is different from
 [Migrating a Storage Node](../../non-kubernetes/operations/migrating-storage-node.md), which relocates an entire storage node identity to a
 new host.
 
+Because we move only the logical volume itself, not the actual data, which remains distributed in the back storage,
+volume migrations are not only online, but nearly instant. If node affinity is turned on for a cluster, back storage data
+migration happens, but only via rebalancing, which is asynchronous and happens after the volume migration. 
+
 Volume migration is used in three ways:
 
 - **Manual migration:** requests a specific volume to move to a specific target node.
