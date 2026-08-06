@@ -76,11 +76,15 @@ will configure one storage node per NUMA node.
 
 ```bash title="Configure the storage node"
 sudo {{ cliname }} storage-node configure \
-  --max-lvol <MAX_LOGICAL_VOLUMES>
+  --max-subsys <MAX_SUBSYSTEMS>
 ```
 
+The `--max-subsys` parameter defines the maximum number of NVMe-oF subsystems (and hence, in the default
+one-volume-per-subsystem layout, logical volumes) this node will serve. It drives the node's memory reservation
+and is capped by a hard limit of 75 subsystems per node (see [Limits](../../reference/limits.md)).
+
 ```plain title="Example output of storage node configure"
-[demo@demo-3 ~]# sudo {{ cliname }} storage-node configure --nodes-per-socket=2 --max-lvol=50
+[demo@demo-3 ~]# sudo {{ cliname }} storage-node configure --nodes-per-socket=2 --max-subsys=50
 2025-05-14 10:40:17,460: INFO: 0000:00:04.0 is already bound to nvme.
 0000:00:1e.0
 0000:00:1e.0
@@ -131,20 +135,26 @@ When all storage nodes are prepared, they can be added to the storage cluster.
 
 ```bash title="Attaching a storage node to the storage plane"
 sudo {{ cliname }} storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
-  --journal-partition <NUM_OF_PARTITIONS> \
-  --data-nics <DATA_IF>
+  --data-nics <DATA_IF>[,<DATA_IF2>]
 ```
 
-If a separate NIC (e.g., BOND device) is used for storage traffic (no matter if in the cluster and between hosts and
-cluster nodes), the `--data-nics` parameter must be specified. In R25.10, zero or one data NICs are supported. Zero data
-NICs will utilize the management interface for all traffic.
+If separate NICs (e.g., a BOND device, or dedicated interfaces per storage VLAN) are used for storage traffic
+(no matter if in the cluster or between hosts and cluster nodes), the `--data-nics` parameter must be specified.
+Without it, the management interface carries all traffic. Multiple interfaces are given as a comma-separated
+list (e.g., `--data-nics eth1,eth2`), in which case all NVMe-oF subsystems listen on every data interface and
+connections are established once per interface — see
+[Storage Network Multipathing](storage-network-multipathing.md).
 
 !!! info
-    The number of partitions (_NUM_OF_PARTITIONS_) depends on the storage node setup. If a storage node has a
-    separate journaling device (e.g., an SLC NVMe device), the value should be zero (_0_) to prevent the storage
-    devices from being partitioned. This improves the performance and prevents device sharing between the journal and
-    the actual data storage location. However, in most cases, a separate journaling device is not available or required
-    and the value of `--journal-partition` has to be 1 (default if nothing is specified).
+    By default, simplyblock auto-creates small journal partitions on the NVMe data devices (a maximum of 3% of
+    the total available raw disk space). If a storage node has a separate journaling device (e.g., an SLC NVMe
+    device), pass `--enable-journal-device` to use the smallest NVMe device of the node exclusively for the
+    journal. This improves performance and prevents device sharing between the journal and the actual data
+    storage location.
+
+If the cluster was created with failure-domain support, every node must additionally be tagged with its
+failure-domain id via `--failure-domain <ID>`; see
+[Managing Failure Domains](../operations/failure-domains.md).
 
 The output will look something like the following example:
 

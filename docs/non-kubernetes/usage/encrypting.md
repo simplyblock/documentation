@@ -26,31 +26,24 @@ Simplyblock supports the encryption of logical volumes. Internally, simplyblock 
 [crypto bdev](https://spdk.io/doc/bdev.html){:target="_blank" rel="noopener"} provided by SPDK to implement its encryption
 functionality.
 
-The encryption uses an AES_XTS variable-length block cipher. This cipher requires two keys of 16 to 32 bytes each. The
-keys need to have the same length, meaning that if one key is 32 bytes long, the other one has to be 32 bytes, too.
+The encryption uses an AES_XTS variable-length block cipher.
 
-!!! recommendation
-    Simplyblock strongly recommends two keys of 32 bytes.
+The encryption keys are created and stored by the cluster's key management system (KMS) when the volume is
+created. By default, simplyblock manages the keys internally; alternatively, an external KMS (HashiCorp Vault or
+OpenBao) can be configured at cluster creation time via `--hashicorp-vault-url`. See
+[External Key Management](../../architecture/concepts/external-key-management.md) for the architecture.
 
-## Generate Random Keys
-
-Simplyblock does not provide an integrated way to generate encryption keys, but recommends using the OpenSSL tool chain.
-
-To generate the two keys, the following command is run twice. The result must be stored for later.
-
-```bash title="Create an Encryption Key"
-openssl rand -hex 32
-```
+!!! note
+    Earlier releases required manually generated keys passed via `--crypto-key1` and `--crypto-key2`. These
+    parameters are deprecated since 26.2 and cannot be used anymore; key handling is fully KMS-based.
 
 ## Creating an Encrypted Logical Volume
 
 To provision a new Logical Volume with encryption enabled:
 
-```bash
+```bash title="Create an encrypted logical volume"
 {{ cliname }} volume add \
   --encrypt \
-  --crypto-key1 <HEX_KEY_1> \
-  --crypto-key2 <HEX_KEY_2> \
   <VOLUME_NAME> \
   <VOLUME_SIZE> \
   <POOL_NAME>
@@ -60,11 +53,9 @@ To see all available parameters when creating a logical volume, see [Provisionin
 
 ### Parameters
 
-| Parameter                 | Description                                      | Default |
-|---------------------------|--------------------------------------------------|---------|
-| --encrypt                 | Enables inline encryption on the logical volume. | false   |
-| --crypto-key1 CRYPTO_KEY1 | The hex value of the first encryption key.       |         |
-| --crypto-key2 CRYPTO_KEY2 | The hex value of the second encryption key.      |         |
+| Parameter   | Description                                      | Default |
+|-------------|--------------------------------------------------|---------|
+| `--encrypt` | Enables inline encryption on the logical volume. | false   |
 
 ## Verification
 

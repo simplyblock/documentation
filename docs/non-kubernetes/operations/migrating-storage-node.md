@@ -40,7 +40,7 @@ To prepare the new storage host, the following commands must be executed.
 
 ```bash title="Preparing the configuration"
 {{ cliname }} storage-node configure \
-    --max-lvol=<MAX_LVOL> \
+    --max-subsys=<MAX_SUBSYSTEMS> \
     --max-size=<MAX_SIZE> \
     [--nodes-per-socket=<NUM_OF_NODES>]
 ```

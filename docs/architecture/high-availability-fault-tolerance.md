@@ -37,6 +37,11 @@ storage nodes along with parity fragments. This provides:
     outage and a concurrent node outage on another rack or drive failures on any other node with an storage
     overhead of just 50%.
 
+Clusters can be deployed with [failure domains](concepts/failure-domains.md): storage nodes are tagged with the
+rack, cabinet, or availability zone they belong to, and simplyblock spreads data chunks, journal copies, and
+failover paths across the domains. A failure-domain cluster keeps serving I/O through the outage of one entire
+domain (and, with two parity chunks, one additional node or drive failure in another domain).
+
 ### 2. Multipathing with Primary and Secondary Nodes
 
 Simplyblock supports NVMe over Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
@@ -55,6 +60,12 @@ with a parity level of _2_ (`1+2`, `2+2`, `4+2`) have two secondary paths.
 
 The number of secondary paths defines how many storage nodes can be lost at the same time without impacting the
 availability of the logical volume.
+
+In addition to the node-level path redundancy, simplyblock supports multipathing across independent **storage
+networks**: storage nodes attached with multiple data interfaces in separate VLANs expose every path on every
+network, multiplying the number of client connections (for example, four connections with one failover path and
+two networks, or six with two failover paths). This provides an alternative to link aggregation (LACP, MLAG) —
+see [Storage Network Multipathing](../non-kubernetes/installation/storage-network-multipathing.md).
 
 ### 3. Redundant Control Plane and Storage Plane
 

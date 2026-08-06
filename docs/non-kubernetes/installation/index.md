@@ -50,9 +50,10 @@ On storage nodes, simplyblock can use either one network interface for both stor
 or separate interfaces (VLANs or subnets).
 
 !!! Important
-    It is possible to configure a storage cluster with NVMe-oF Multipathing. This requires two storage
+    It is possible to configure a storage cluster with NVMe-oF multipathing. This requires two storage
     VLANs per host, routed via separate NIC ports and switches for fault tolerance. This configuration can
     be used as an alternative to a HA networking setup with link aggregation (such as LACP, MLAG, and similar).
+    See [Storage Network Multipathing](storage-network-multipathing.md) for the setup instructions.
 
 To install simplyblock in a specific environment, these commands may have to be adopted to match its configuration.
 

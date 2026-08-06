@@ -48,15 +48,22 @@ Restoring a backup creates a new logical volume with the data reconstructed from
 
 ```bash title="Restore a backup"
 {{ cliname }} backup restore <BACKUP_ID> \
-  --lvol <NEW_VOLUME_NAME> --pool <POOL_ID> \
-  [--node <TARGET_NODE_ID>] [--cluster-id <CLUSTER_ID>]
+  --lvol <NEW_VOLUME_NAME> --pool <POOL_ID> --cluster-id <CLUSTER_ID> \
+  [--node <TARGET_NODE_ID>]
 ```
+
+The `--lvol`, `--pool`, and `--cluster-id` parameters are required. Any node of the cluster can restore any
+backup; without `--node`, the node that took the backup is used.
 
 The restore process downloads and applies each backup in the chain. The new volume is set to a restoring state during
 the transfer and transitions to online once complete.
 
 !!! warning
     The restore operation creates a new volume. It does not overwrite or modify any existing volume.
+
+!!! note
+    The restored volume is created with the default high-availability type and NVMe/TCP, regardless of the
+    settings of the original volume. Deleting the original snapshot or volume does not affect its backups.
 
 ### Deleting Backups
 
@@ -139,15 +146,23 @@ This produces a JSON file containing backup metadata (not the actual data, which
 
 #### Importing Backup Metadata
 
-##### Switching Backup Source
+On the target cluster, import the metadata:
 
-Before restoring imported backups, switch the cluster's S3 source to read from the original cluster's bucket:
-
-```bash title="Switch backup source"
-{{ cliname }} backup source-switch <SOURCE_CLUSTER_ID> [--cluster-id <CLUSTER_ID>]
+```bash title="Import backup metadata"
+{{ cliname }} backup import <METADATA_FILE> --cluster-id <TARGET_CLUSTER_ID>
 ```
 
-To list available backup sources:
+#### Switching the Backup Source
+
+Before restoring imported backups, switch the target cluster's S3 source to read from the original cluster's
+bucket:
+
+```bash title="Switch backup source"
+{{ cliname }} backup source-switch <SOURCE_CLUSTER_ID> [--cluster-id <TARGET_CLUSTER_ID>]
+```
+
+The switch changes only the bucket that is read; the target cluster's own S3 credentials and endpoint are reused,
+so they must have access to the source cluster's bucket. To list available backup sources:
 
 ```bash title="List backup sources"
 {{ cliname }} backup source-list [--cluster-id <CLUSTER_ID>]
@@ -157,16 +172,15 @@ To list available backup sources:
     While the backup source is switched to an external cluster, new backups cannot be created on the local cluster.
     Switch back to the local source after completing restore operations.
 
-After switching the source, use the standard `backup restore` command to restore from the imported backups.
+After switching the source, use the standard `backup restore` command to restore from the imported backups. For a
+cross-cluster restore, pass `--node <TARGET_NODE_ID>` explicitly, since the node recorded in the backup belongs to
+the source cluster.
 
-On the target cluster, import the metadata:
+Once the restores are complete, switch the source back:
 
-```bash title="Import backup metadata"
-{{ cliname }} backup import <METADATA_FILE> [--cluster-id <CLUSTER_ID>]
+```bash title="Switch back to the local backup source"
+{{ cliname }} backup source-switch local [--cluster-id <TARGET_CLUSTER_ID>]
 ```
-
-!!! warning
-    Do not forget to switch back the source to the internal cluster to resume normal backup operations.
 
 ## Kubernetes CRD Operations
 

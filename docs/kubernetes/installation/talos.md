@@ -36,7 +36,7 @@ Run the following command on the admin control pod to calculate the huge pages r
 ```bash title="Run the huge memory calculator"
 {{ cliname }} storage-node configure \
   --calculate-hp-only \
-  --max-lvol <MAX_LVOL> \
+  --max-subsys <MAX_SUBSYSTEMS> \
   --number-of-devices <NUMBER_OF_DEVICES>
 ```
 The following flags also affect the huge page calculation:
@@ -47,7 +47,7 @@ The following flags also affect the huge page calculation:
 
 ```plain title="Example output of huge pages calculator"
 [demo@demo ~]# {{ cliname }} storage-node configure \
-  --calculate-hp-only --max-lvol 10 --number-of-devices 4
+  --calculate-hp-only --max-subsys 10 --number-of-devices 4
 2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
 True
 ```

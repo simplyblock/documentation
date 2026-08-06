@@ -29,19 +29,23 @@ To create a new logical volume:
 
 ### Available Parameters
 
-| Parameter                     | Description                                                                 | Default |
-|-------------------------------|-----------------------------------------------------------------------------|---------|
-| --snapshot, -s                | Enables snapshot capability on the logical volume.                          | false   |
-| --max-size                    | Maximum size of the logical volume.                                         | 0       |
-| --ha-type {single,ha,default} | High-availability mode of the logical volume.                               | ha      |
-| --encrypt                     | Enables inline encryption on the logical volume.                            | false   |
-| --crypto-key1 CRYPTO_KEY1     | The hex value of the first encryption key.                                  |         |
-| --crypto-key2 CRYPTO_KEY2     | The hex value of the second encryption key.                                 |         |
-| --max-rw-iops MAX_RW_IOPS     | Maximum I/O operations per second.                                          | 0       |
-| --max-rw-mbytes MAX_RW_MBYTES | Maximum read/write throughput.                                              | 0       |
-| --max-r-mbytes MAX_R_MBYTES   | Maximum read throughout.                                                    | 0       |
-| --max-w-mbytes MAX_W_MBYTES   | Maximum write throughput.                                                   | 0       |
-| --allowed-hosts               | Path to JSON file with host NQNs allowed to access this volume's subsystem. |         |
+| Parameter                       | Description                                                     | Default |
+|---------------------------------|-----------------------------------------------------------------|---------|
+| `--snapshot`, `-s`              | Enables snapshot capability on the logical volume.              | false   |
+| `--max-size`                    | Maximum size of the logical volume.                             | 1000T   |
+| `--ha-type {single,ha,default}` | High-availability mode of the logical volume.                   | default |
+| `--encrypt`                     | Enables inline encryption on the logical volume.                | false   |
+| `--max-rw-iops <IOPS>`          | Maximum I/O operations per second.                              | 0       |
+| `--max-rw-mbytes <MBYTES>`      | Maximum read/write throughput.                                  | 0       |
+| `--max-r-mbytes <MBYTES>`       | Maximum read throughput.                                        | 0       |
+| `--max-w-mbytes <MBYTES>`       | Maximum write throughput.                                       | 0       |
+| `--replicate`                   | Enables snapshot-based asynchronous replication for the volume. | false   |
+
+The encryption keys of a volume created with `--encrypt` are managed by the cluster's key management system. See
+[Encrypting a Logical Volume](encrypting.md).
+
+Host access restrictions (allowed host NQNs) are configured on the storage pool with
+`{{ cliname }} storage-pool add-host` and `{{ cliname }} storage-pool remove-host`, not per volume.
 
 ## Verification
 
