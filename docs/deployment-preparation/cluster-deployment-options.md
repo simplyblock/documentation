@@ -1,6 +1,6 @@
 ---
 title: Cluster Deployment Options
-description: "Cluster Deployment Options: The following options can be set when creating a cluster. This applies to both plain linux and kubernetes deployments."
+description: "Cluster Deployment Options: The following options can be set when creating a cluster. This applies to both plain Linux and Kubernetes deployments."
 weight: 30200
 ---
 
@@ -59,7 +59,7 @@ using either option (defined per volume or storage class), but the cluster inter
 The default number of queue pairs (sockets) per volume for an initiator (host) to connect to the
 target (server). More queue pairs per volume increase concurrency and volume performance, but require more
 server resources (RAM, CPU) and thus limit the total number of volumes per storage node. The default is 3.
-If you need a few very performant volumes, increase the amount. If you need a large number of less performant
+For a few very performant volumes, increase the amount. For a large number of less performant
 volumes, decrease it. More than 12 parallel connections have limited impact on overall performance. Also, the
 host requires at least one core per queue pair.
 

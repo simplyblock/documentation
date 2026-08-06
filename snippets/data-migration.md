@@ -4,7 +4,7 @@ level, depending on the source system and migration requirements. Because simply
 as virtual block devices, data can be migrated using standard block device cloning tools such as `dd`, as well
 as file-based tools like `rsync` after the block device has been formatted.
 
-Therefore, sata migration to simplyblock is a straightforward process using common block-level and file-level tools.
+Therefore, SATA migration to simplyblock is a straightforward process using common block-level and file-level tools.
 For full disk cloning, `dd` and similar utilities are effective. For selective file migrations, `rsync` provides
 flexibility and reliability. Proper planning and validation of available storage capacity are essential to ensure
 successful and complete data transfers.
@@ -69,7 +69,7 @@ in the background.  This solution requires two minimal downtimes to create and r
     parameters. It should only be used by advanced users that understand the danger of the commands below.<br/><br/>
     Furthermore, this migration method **MUST NOT** be used for boot devices!
 
-In this walkthrough, we assume the new simplyblock logical volume is already connected to the system.
+This walkthrough assumes the new simplyblock logical volume is already connected to the system.
 
 ### Preparation
 
@@ -204,7 +204,7 @@ This is again done using `mdadm` tool.
 mdadm <RAID_DEVICE_MAPPER_FILE> --add <NEW_DEVICE_FILE>
 ```
 
-In the example, we add _/dev/nvme0n1_ (the simplyblock logical volume) to the RAID named "migration."
+In the example, _/dev/nvme0n1_ (the simplyblock logical volume) is added to the RAID named "migration."
 
 ```plain title="Example output of mdadm --add"
 [root@demo ~]# mdadm /dev/md/migration --add /dev/nvme0n1

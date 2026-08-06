@@ -39,7 +39,7 @@ storage nodes along with parity fragments. This provides:
 
 ### 2. Multipathing with Primary and Secondary Nodes
 
-Simplyblock supports NVMe-over-Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
+Simplyblock supports NVMe over Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
 storage:
 
 - **Primary and Secondary Paths**: Each logical volume (LV) is accessible through both a primary node and one or
@@ -99,7 +99,7 @@ The feature also allows monitoring of active and completed replications and gene
 
 ### 5. Backup/Restore (new)
 
-This new feature requires an S3-compatible backup store such as minio or aws S3. It comes with backup policy (retention)
+This new feature requires an S3-compatible backup store such as MinIO or AWS S3. It comes with backup policy (retention)
 management and auto-backup. It is very storage and time-efficient as delta-snapshots are used to recurringly store only
 changed data of volumes. The number and timing of individual generations of the backup can be controlled. 
 Older versions can be auto-merged into full backups. Backups can be restored:

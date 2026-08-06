@@ -10,7 +10,7 @@ To configure the QoS limits, simplyblock offers the following two options.
 
 ## Option 1: StorageClass
 
-Using StorageClass instances, you can define QoS limits for all volumes sharing the same StorageClass. This enables
+Using StorageClass instances, QoS limits can be defined for all volumes sharing the same StorageClass. This enables
 the definition of paid performance classes for the user.
 
 With applying a StorageClass, the QoS limits are locked in at volume creation time.
@@ -71,8 +71,8 @@ All parameters are optional. Default is `0` (no limit).
 | `qos_w_mbytes`         | `simplyblock.io/qos-w-mbps`     | Max write throughput (MB/s)      |
 
 !!! note
-    Annotation values override StorageClass values per parameter. You must only use annotations for values you want to
-    override.
+    Annotation values override StorageClass values per parameter. Use annotations only for the values to be
+    overridden.
 
 !!! warning "Deprecated annotation prefix"
     The `simplybk/` annotation prefix (e.g. `simplybk/qos-rw-iops`) is deprecated. Existing PVCs using the old prefix

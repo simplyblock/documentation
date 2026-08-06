@@ -50,7 +50,7 @@ sudo pip install {{ cliname }} --upgrade
 
 At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
 
-```bash title="Automatically check your configuration"
+```bash title="Automatically check the configuration"
 curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 ```
 

@@ -32,11 +32,21 @@ else
 fi
 
 # The available gates, in execution order.
-ALL_GATES=(spelling syntax)
+ALL_GATES=(spelling terminology voice syntax)
 
 gate_spelling_description="Brand name spelling and casing"
 gate_spelling() {
   "${PYTHON}" "${SCRIPT_DIR}/check-simplyblock-spelling.py"
+}
+
+gate_terminology_description="Spelling of product names, projects and acronyms"
+gate_terminology() {
+  "${PYTHON}" "${SCRIPT_DIR}/check-terminology.py"
+}
+
+gate_voice_description="Impersonal voice, without addressing the reader or the author"
+gate_voice() {
+  "${PYTHON}" "${SCRIPT_DIR}/check-voice.py"
 }
 
 gate_syntax_description="Markdown structure, links, frontmatter and placeholders"

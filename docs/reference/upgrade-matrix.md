@@ -11,11 +11,11 @@ the latest versions. Hence, some upgrades may include multiple steps.
 
 Use the matrix as follows:
 
-- **Requested Version** is the target version you want to run.
+- **Requested Version** is the target version to run.
 - **Installed Version** lists versions that can directly upgrade to the requested version.
 
-If your currently installed version is not listed in the row for your target version, you must first upgrade to a
-listed intermediate version.
+If the currently installed version is not listed in the row for the target version, an upgrade to a listed
+intermediate version has to come first.
 
 ## Upgrade Rules
 
@@ -28,7 +28,7 @@ listed intermediate version.
 Before starting an upgrade:
 
 1. Confirm cluster health is stable (no critical alerts or degraded nodes).
-2. Take and validate backups or snapshots according to your recovery policy.
+2. Take and validate backups or snapshots according to the recovery policy.
 3. Ensure enough capacity and maintenance window for the full upgrade path.
 4. Review release notes and known issues for both source and target versions.
 
@@ -55,7 +55,7 @@ If an upgrade step fails:
 
 1. Stop and do not continue to the next version step.
 2. Investigate the failure and restore service health first.
-3. Use your validated backup/snapshot rollback procedure if required.
+3. Use the validated backup/snapshot rollback procedure if required.
 4. Retry only after confirming the failed step prerequisites are met.
 
 ## Related References

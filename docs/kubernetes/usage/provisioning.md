@@ -62,8 +62,8 @@ To create a new persistent volume claim from an existing and live volume, see th
 ## Static Provisioning
 
 !!! warning
-    Simplyblock discourages the static provisioning of Kubernetes Persistent Volumes. Only do it if you know what you
-    are doing. We highly recommend using the dynamic provisioning through the Simplyblock CSI driver.
+    Simplyblock discourages the static provisioning of Kubernetes Persistent Volumes. Use it only with a clear
+    understanding of the consequences. Dynamic provisioning through the Simplyblock CSI driver is highly recommended.
 
 ### NVMe over Fabrics Target
 

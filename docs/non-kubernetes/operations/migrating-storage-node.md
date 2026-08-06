@@ -10,7 +10,7 @@ that doesn't require explicit maintenance windows or storage downtime.
 ## Storage Node Migration
 
 Migrating a storage node is a three-step process. First, the new storage node will be pre-deployed, after that the old
-storage node must be shutdown properly. It will be restarted (migrated) with the new storage node's storage node api address,
+storage node must be shutdown properly. It will be restarted (migrated) with the new storage node's storage node API address,
 and finally, the new storage node will become the primary storage node.
 
 !!! warning

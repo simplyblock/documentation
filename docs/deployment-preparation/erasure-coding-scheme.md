@@ -7,7 +7,7 @@ weight: 30100
 Choosing the appropriate **erasure coding scheme** is crucial when deploying a simplyblock storage cluster, as it
 directly impacts **data redundancy, storage efficiency, and overall system performance**. Simplyblock currently supports
 the following erasure coding schemes: `1+0`, `1+1`, `2+1`, `4+1`, `1+2`, `2+2`, and `4+2`. Understanding the
-trade-offs between redundancy and storage utilization will help determine the best option for your workload. All schemas
+trade-offs between redundancy and storage utilization helps to determine the best option for a given workload. All schemas
 have been performance-optimized by specialized algorithms. There is, however, a remaining capacity-to-performance
 trade-off.
 
@@ -19,7 +19,7 @@ allowing data recovery in case of hardware failures. The notation **k+m** repres
 - **k**: The number of data fragments.
 - **m**: The number of parity/coding fragments.
 
-If you need more information on erasure coding, see the dedicated concept page for
+For more information on erasure coding, see the dedicated concept page for
 [erasure coding](../architecture/concepts/erasure-coding.md).
 
 The table below gives an overview of the supported schemes:

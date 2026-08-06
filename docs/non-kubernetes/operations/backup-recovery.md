@@ -177,9 +177,9 @@ is especially useful for automated backup workflows integrated with Kubernetes-n
 
 #### S3-Compatible Object Storage
 
-Backups require an S3-compatible object storage endpoint. For local testing, you can deploy a Minio instance:
+Backups require an S3-compatible object storage endpoint. For local testing, a MinIO instance can be deployed:
 
-```sh title="Deploy a local Minio instance for testing"
+```sh title="Deploy a local MinIO instance for testing"
 kubectl create ns minio
 
 kubectl -n minio create deployment minio \
@@ -195,7 +195,7 @@ kubectl -n minio set env deploy/minio \
 
 #### Backup Credentials Secret
 
-Store your S3 credentials in a Kubernetes Secret in the same namespace as your `StorageCluster`:
+Store the S3 credentials in a Kubernetes Secret in the same namespace as the `StorageCluster`:
 
 ```yaml title="Create backup credentials secret"
 kubectl apply -f - <<'EOF'
@@ -213,7 +213,7 @@ EOF
 
 #### StorageCluster Backup Configuration
 
-Include a `backup` section in your `StorageCluster` spec referencing the credentials secret:
+Include a `backup` section in the `StorageCluster` spec referencing the credentials secret:
 
 ```yaml title="StorageCluster backup configuration"
 spec:

@@ -7,7 +7,7 @@ weight: 30000
 !!! info
     This driver is still not part of the official OpenStack support matrix. 
 
-    We are working on getting it there.
+    Work to get it there is ongoing.
 
 ## Scope and Support Status
 
@@ -71,7 +71,7 @@ Depending on the fabric, it is necessary to load the Linux kernel modules on com
     sudo modprobe nvme_tcp
     ```
 
-In case you need the RoCE/RDMA fabric or both fabrics, (also) run:
+For the RoCE/RDMA fabric or both fabrics, (also) run:
 
 === "Red Hat / Alma / Rocky"
     ```bash title="Load NVMe/RoCE on RHEL, Rocky or Alma"

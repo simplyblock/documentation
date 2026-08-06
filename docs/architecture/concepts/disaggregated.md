@@ -7,7 +7,7 @@ weight: 30400
 Simplyblock supports disaggregated storage deployments, in which dedicated storage nodes operate separately from compute, in addition to
 hyper-converged and hybrid deployment topologies.
 
-It is important to note that, while we support plain Linux (Docker-based) disaggregated deployments, they can also run fully in the
+It is important to note that, while plain Linux (Docker-based) disaggregated deployments are supported, they can also run fully in the
 Kubernetes-native operations model, either within the same cluster as the compute workloads or in separate clusters.
 
 The main difference from the hyper-converged model is the separation of storage and compute resources.
@@ -19,7 +19,7 @@ For example, a small compute cluster with I/O-intensive workloads may still requ
 The biggest disadvantages are the loss of data locality and possible misalignments in scaling (required minimum scale of the
 storage cluster and scaling of the storage cluster with compute).
 
-Key characteristics of our disaggregated storage solutions include:
+Key characteristics of the disaggregated storage solutions include:
 
 - **Independent Scalability:** Compute and storage can be scaled separately, optimizing resource utilization and
   reducing unnecessary hardware expansion. IO demand and compute sizing are treated independently.

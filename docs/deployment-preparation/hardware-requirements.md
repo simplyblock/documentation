@@ -78,7 +78,7 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 
 For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on 
 the assigned vCPUs and networking performance of the node. For each 10 GBit/s of dedicated network bandwidth
-we recommend to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
+it is recommended to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
 subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs).
 
 For storage nodes, simplyblock highly recommends DDR5 memory for optimal performance.
@@ -206,7 +206,7 @@ Simplyblock supports the most common system architectures, as well as plain Linu
 Both simplyblock storage nodes and control plane nodes can run fully virtualized. It has been tested on plain KVM,
 Proxmox, Nitro (AWS EC2) and GCP.
 
-For storage node production deployments, _SR-IOV_ is required for NVMEs and network interfaces (NICs). Furthermore,
+For storage node production deployments, _SR-IOV_ is required for NVMe devices and network interfaces (NICs). Furthermore,
 dedicated cores must be assigned exclusively to the virtual machines running storage node (no over-provisioning).
 
 For deployments on Cloud-based platforms, see [cloud-instance recommendations](cloud-instance-recommendations.md).

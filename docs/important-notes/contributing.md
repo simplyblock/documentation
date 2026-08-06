@@ -1,6 +1,6 @@
 ---
 title: "Contributing"
-description: "Contributing: Simplyblock's documentation is publicly available, and we welcome contributions from the community to improve clarity, fix errors, and enhance the."
+description: "Contributing: Simplyblock's documentation is publicly available, and contributions from the community to improve clarity, fix errors, and enhance it are welcome."
 weight: 20600
 ---
 
@@ -8,40 +8,40 @@ weight: 20600
 
 ## Overview
 
-Simplyblock's documentation is publicly available, and we welcome contributions from the community to improve clarity,
-fix errors, and enhance the overall quality of our documentation. While simplyblock itself is not open source, our
-documentation is publicly hosted  [GitHub](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"}. We encourage
-users to provide feedback, report typos, suggest improvements, and submit fixes for documentation inconsistencies.
+Simplyblock's documentation is publicly available, and contributions from the community to improve clarity,
+fix errors, and enhance its overall quality are welcome. While simplyblock itself is not open source, the
+documentation is publicly hosted  [GitHub](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"}. Feedback,
+reported typos, suggested improvements, and fixes for documentation inconsistencies are all appreciated.
 
 ## How to Contribute
 
-The simplyblock documentation is built using [mkdocs](https://www.mkdocs.org/){:target="_blank" rel="noopener"}, specifically using the
+The simplyblock documentation is built using [MkDocs](https://www.mkdocs.org/){:target="_blank" rel="noopener"}, specifically using the
 [mkdocs-material](https://squidfunk.github.io/mkdocs-material/){:target="_blank" rel="noopener"} variant.
 
 Changes to the documentation can be made by changing or adding the necessary Markdown files.
 
 ### 1. Provide Feedback or Report Issues
 
-If you notice any inaccuracies, typos, missing information, or outdated content, you can submit an issue on our GitHub
+Inaccuracies, typos, missing information, and outdated content can be reported as an issue on the GitHub
 repository:
 
 1. Navigate to the [Simplyblock Documentation GitHub Repository](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"}.
 2. Click on the **Issues** tab.
 3. Click **New Issue** and provide a clear description of the problem or suggestion.
-4. Submit the issue, and our team will review it.
+4. Submit the issue. The simplyblock team reviews it.
 
 ### 2. Make Edits and Submit a Pull Request (PR)
 
-If you'd like to make direct changes to the documentation, follow these steps:
+Direct changes to the documentation follow these steps:
 
 1. **Fork the Repository**
 
 - Visit [Simplyblock Documentation GitHub](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"} and click **Fork** to create
-  your own copy of the repository.
+  a personal copy of the repository.
 
 2. **Clone the Repository**
 
-- Clone your fork to your local machine:
+- Clone the fork to a local machine:
   ```sh
   git clone https://github.com/YOUR_USERNAME/documentation.git
   cd documentation
@@ -49,7 +49,7 @@ If you'd like to make direct changes to the documentation, follow these steps:
 
 3. **Create a New Branch**
 
-- Always create a new branch for your changes:
+- Always create a new branch for the changes:
   ```sh
   git checkout -b update-docs
   ```
@@ -60,13 +60,13 @@ If you'd like to make direct changes to the documentation, follow these steps:
   `/docs` directory.
 - Ensure that formatting follows existing conventions.
 
-5. **Commit and Push Your Changes**
+5. **Commit and Push the Changes**
 
-- Commit your changes with a clear message:
+- Commit the changes with a clear message:
   ```sh
   git commit -m "Fix typo in installation guide"
   ```
-- Push the changes to your fork:
+- Push the changes to the fork:
   ```sh
   git push origin update-docs
   ```
@@ -74,9 +74,9 @@ If you'd like to make direct changes to the documentation, follow these steps:
 6. **Create a Pull Request (PR)**
 
 - Navigate to the original simplyblock documentation repository.
-- Click **New Pull Request** and select your branch.
+- Click **New Pull Request** and select the branch.
 - Provide a concise description of the changes and submit the PR.
-- Our team will review and merge accepted contributions.
+- The simplyblock team reviews and merges accepted contributions.
 
 ## Contribution Guidelines
 
@@ -87,5 +87,5 @@ If you'd like to make direct changes to the documentation, follow these steps:
 
 ## Getting in Touch
 
-If you have questions about contributing, feel free to open an issue or contact us via the simplyblock support channels.
+Questions about contributing can be raised as an issue or through the simplyblock support channels.
 

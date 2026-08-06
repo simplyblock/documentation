@@ -75,7 +75,7 @@ By default, a PVC annotated with `simplyblock.io/pinned-volume` blocks node drai
 `StorageNodeOps` with `action: remove`), the operator will not migrate a pinned volume and will instead emit a
 `PinnedVolumeBlocking` event until the annotation is removed.
 
-**User-directed placement** allows you to specify exactly which node the volume should migrate _to_ during drain
+**User-directed placement** specifies exactly which node the volume should migrate _to_ during drain
 by setting the annotation value to the target storage node UUID. The operator then migrates the volume to that
 specific node instead of blocking.
 
@@ -121,7 +121,7 @@ The operator will migrate the volume to the specified target instead of blocking
 | A non-UUID value | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
 | The UUID of the node being drained | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
 
-A `PinnedVolumeBlocking` event names the affected PVC and tells you exactly what to fix:
+A `PinnedVolumeBlocking` event names the affected PVC and states exactly what to fix:
 
 ```bash title="Check for pinned volume blocking events"
 kubectl get events -n simplyblock --field-selector reason=PinnedVolumeBlocking

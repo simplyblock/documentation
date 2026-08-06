@@ -1,16 +1,16 @@
 ---
 title: NVMe Namespaces And Subsystems
-description: "NVMe Namespaces And Subsystems: To connect to a storage volume, both locally and via NVMe-oF, you need a subsystem and a namespace."
+description: "NVMe Namespaces And Subsystems: Connecting to a storage volume, both locally and via NVMe-oF, requires a subsystem and a namespace."
 weight: 30190
 ---
 
-To connect to a storage volume, both locally and via NVMe over Fabrics (NVMe-oF), you need a subsystem and a namespace.
+Connecting to a storage volume, both locally and via NVMe over Fabrics (NVMe-oF), requires a subsystem and a namespace.
 
 An NVMe-oF subsystem is the exported entity that the host connects to over the fabric (RDMA, TCP).
 A subsystem is identified by its unique worldwide name (NQN) and can be roughly seen as a 
 controller, which exposes and connects one or multiple namespaces (actual volumes) to hosts. 
 
-The NQN of a subsystem can contain the namespace uuid and is worldwide unique. 
+The NQN of a subsystem can contain the namespace UUID and is worldwide unique. 
 In simplyblock, it looks as follows (the last part behind `:lvol:<uuid>` indicates the namespace representing the volume):
 
 ```plain title="Example NQN"
@@ -39,14 +39,14 @@ When a host connects to the subsystem, each namespace appears as a separate bloc
 
 All namespaces on the same subsystem use the same network connections to transfer IO.
 
-It’s what you would use for:
+It’s what is used for:
 
 Creating a filesystem (e.g., mkfs.ext4 /dev/nvme0n1)
 Raw block I/O (e.g., via fio, dd, or SPDK bdevs)
-So the namespace is the thing you actually read and write data to.
+So the namespace is the thing data is actually read from and written to.
 
 !!! info
-    In simplyblock, you can define how many namespace volumes are to be created for a particular
+    In simplyblock, the number of namespace volumes to be created can be defined for a particular
     subsystem. This allows sharing of subsystems by Linux block devices (e.g., nvme0nX), where each of them
     is less performance-critical. In Kubernetes, to use different relationships (e.g., 1:10) between subsystem 
     and namespace, different storage classes are required.

@@ -56,7 +56,7 @@ sudo {{ cliname }} storage-node suspend <NODE_ID>
 sudo {{ cliname }} storage-node shutdown <NODE_ID> 
 ```
 
-If the shutdown does not complete by itself, you may safely force a shutdown using the `--force` parameter.
+If the shutdown does not complete by itself, it can safely be forced using the `--force` parameter.
 
 ```bash title="Force Shut Down Storage Node"
 sudo {{ cliname }} storage-node shutdown <NODE_ID> --force 
@@ -83,7 +83,7 @@ sudo {{ cliname }} --dev storage-node restart <NODE-ID> \
 ```
 
 !!! note
-    You can find the upgrade SPDK image in the `env_var` file on the storage node at:
+    The upgrade SPDK image is found in the `env_var` file on the storage node at:
     
     ```plain
     /usr/local/lib/python3.9/site-packages/simplyblock_core/env_var

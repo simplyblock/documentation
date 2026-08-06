@@ -17,7 +17,7 @@ Resources and manages the full lifecycle of clusters, storage nodes, pools, and 
 
 ## OpenShift Prerequisites
 
-If you are deploying onto an OpenShift cluster, ensure that the environment-specific instructions provided in the
+When deploying onto an OpenShift cluster, ensure that the environment-specific instructions provided in the
 [OpenShift Installation](openshift.md) guide are followed.
 
 ## Installing the Operator

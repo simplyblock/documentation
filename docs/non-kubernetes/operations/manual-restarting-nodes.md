@@ -19,7 +19,7 @@ There are a few reasons to manually restart a storage node:
     
     - The cluster is suspended (e.g. two or more storage nodes are offline)
     - The RPC interface is responsive and the container is up, but the storage node has another health issue
-    - The host or docker service are not available or hanging (e.g. network issue) 
+    - The host or Docker service are not available or hanging (e.g. network issue) 
     - Too many retries (e.g. because there is a problem with the lvolstore recovering for some of the logical volimes)
     
     In these cases, a manual restart is required.
@@ -78,7 +78,7 @@ If there is a problem with the entire Docker service on a host, the Docker servi
 In such a case, auto-restart will not be able to automatically self-heal the storage node. This happens because the
 container responsible for self-healing and auto-restarting (SNodeAPI) itself does not respond anymore.
 
-```bash title="Restarting docker service"
+```bash title="Restarting Docker service"
 sudo systemctl restart docker --force
 ```  
 

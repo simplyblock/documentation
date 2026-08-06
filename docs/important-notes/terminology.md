@@ -49,7 +49,7 @@ devices like SSDs, leveraging the PCIe (Peripheral Component Interconnect Expres
 high throughput. Unlike traditional protocols such as SATA or SAS, NVMe takes advantage of parallelism and multiple
 queues, significantly improving data transfer speeds and reducing CPU overhead. It is widely used in enterprise storage,
 cloud computing, and high-performance computing (HPC) environments, where speed and efficiency are critical. NVMe is
-also the foundation for NVMe-over-Fabrics (NVMe-oF), which extends its benefits across networked storage systems,
+also the foundation for NVMe over Fabrics (NVMe-oF), which extends its benefits across networked storage systems,
 enhancing scalability and flexibility in distributed environments.
 
 ### NVMe-oF (NVMe over Fabrics)
@@ -64,7 +64,7 @@ infrastructures, providing fast and efficient remote storage access.
 
 ### NVMe/TCP (NVMe over TCP)
 
-NVMe/TCP (NVMe over TCP) is a transport protocol that extends NVMe-over-Fabrics (NVMe-oF) using standard TCP/IP networks
+NVMe/TCP (NVMe over TCP) is a transport protocol that extends NVMe over Fabrics (NVMe-oF) using standard TCP/IP networks
 to enable high-performance, low-latency access to remote NVMe storage. By leveraging existing Ethernet infrastructure,
 NVMe/TCP eliminates the need for specialized networking hardware such as RDMA (RoCE or iWARP) or Fibre Channel (FC),
 making it a cost-effective and easily deployable solution for cloud, enterprise, and data center storage environments.
@@ -73,7 +73,7 @@ ensuring broad compatibility with modern network architectures.
 
 ### NVMe/RoCE (NVMe over RDMA over Converged Ethernet)
 
-NVMe/RoCE (NVMe over RoCE) is a high-performance storage transport protocol that extends NVMe-over-Fabrics (NVMe-oF)
+NVMe/RoCE (NVMe over RoCE) is a high-performance storage transport protocol that extends NVMe over Fabrics (NVMe-oF)
 using RDMA over Converged Ethernet (RoCE) to enable ultra-low-latency and high-throughput access to remote NVMe storage
 devices. By leveraging Remote Direct Memory Access (RDMA), NVMe/RoCE bypasses the CPU for data transfers, reducing
 latency and improving efficiency compared to traditional TCP-based storage protocols. This makes it ideal for
@@ -148,7 +148,7 @@ relative resource allocation (IOPS and/or throughput) to each class. Logical vol
 Storage Performance Development Kit (SPDK) is an open-source set of libraries and tools designed to optimize
 high-performance, low-latency storage applications by bypassing traditional kernel-based I/O processing. SPDK leverages
 user-space and polled-mode drivers to eliminate context switching and interrupts, significantly reducing CPU overhead
-and improving throughput. It is particularly suited for NVMe storage, NVMe-over-Fabrics (NVMe-oF), and iSCSI target
+and improving throughput. It is particularly suited for NVMe storage, NVMe over Fabrics (NVMe-oF), and iSCSI target
 acceleration, making it a key technology in software-defined storage solutions. By providing a highly efficient
 framework for storage processing, SPDK enables modern storage architectures to achieve high IOPS, reduced latency, and
 better resource utilization in cloud and enterprise environments.

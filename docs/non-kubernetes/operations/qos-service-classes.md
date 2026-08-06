@@ -14,10 +14,10 @@ Classes are defined when creating a cluster, not all classes must be defined. It
 perfectly fine to use just one extra class.
 
 Classes receive weights. The absolute number of the weight is irrelevant. It only matters how they are set
-proportionally. For example, if you create one extra class and assign a weight of 100 to the default
+proportionally. For example, with one extra class and a weight of 100 assigned to the default
 class and a weight of 100 to the extra class, both classes will receive exactly identical QUOTAS.
 
-If you, however, add two extra classes and add one with weight 100 and the second one with weight 200,
+With two extra classes, however, one with weight 100 and the second one with weight 200,
 the second class will receive double the quota of class 1. For example, if all three classes receive IO of 
 the same IOPS pattern (e.g., all predominantly receive 64K IO sizes), and the total output of the
 cluster is 100,000 IOPS (at 64K), the default class and class 1 will receive 25,000 IOPS and class 2 

@@ -34,7 +34,7 @@ Mixed IO patterns increase these challenges from different workloads.
 This can cause substantial variability in latency, IOPS throughput, and high-tail latency, with a negative impact on
 workloads.
 
-## Simplyblock: How We Ensure Ultra-Low Latency In The 99th Percentile
+## Simplyblock: How Ultra-Low Latency In The 99th Percentile Is Ensured
 
 Simplyblock exhibits a range of architectural characteristics and features to guarantee consistently low latency and
 IOPS in both disaggregated and hyper-converged environments.
@@ -138,7 +138,7 @@ workloads.
 Therefore, using absolute limits on one pool of volumes is effective for protecting others from spillover effects and
 undesired behavior. Still, it does not guarantee performance for a particular class of volumes.
 
-Service classes provide a much better degree of isolation under the consideration of dynamic workloads. As long as you
-do not overload a particular service class, the general IO pressure on the cluster will not matter for the performance
+Service classes provide a much better degree of isolation under the consideration of dynamic workloads. As long as a
+particular service class is not overloaded, the general IO pressure on the cluster will not matter for the performance
 of volumes in that class.
 

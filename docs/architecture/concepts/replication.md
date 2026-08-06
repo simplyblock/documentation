@@ -58,7 +58,7 @@ Failover is triggered **automatically** when the operator detects that the sourc
 - All storage nodes in the source cluster are `unreachable`.
 
 When both conditions are met, the operator initiates a one-time volume switch (`replicate_lvol`) for each
-replicated volume, effectively providing access to the full volume on the target cluster via new nvme-OF paths. 
+replicated volume, effectively providing access to the full volume on the target cluster via new NVMe-oF paths. 
 The RPO is based on the latest completed snapshot replication.
 The target volumes become primary and begin serving I/O.
 
