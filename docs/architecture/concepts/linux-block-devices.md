@@ -1,16 +1,17 @@
 ---
 title: "Linux Block Devices (lblk)"
-description: "How simplyblock clusters use arbitrary Linux block devices, such as SAS or SATA SSDs and cloud volumes, through SPDK AIO bdevs instead of NVMe."
+description: "How simplyblock clusters use arbitrary Linux block devices, such as SAS or SATA SSDs and cloud volumes, instead of NVMe PCIe devices."
 weight: 30650
 ---
 
 {{ experimental }}
 
 A simplyblock storage cluster normally onboards storage as NVMe PCIe devices: at deployment, NVMe
-controllers are detected on the PCI bus, unbound from the kernel driver, and attached natively by
-SPDK. The Linux block device mode (`lblk`) is an alternative, cluster-global device mode that accepts
-any Linux block device — SAS or SATA SSDs behind an HBA, virtualized disks (virtio, Xen), or cloud
-volumes such as Amazon EBS — without requiring NVMe hardware at all.
+controllers are detected on the PCI bus, unbound from the kernel driver, and attached natively to the
+Simplyblock Storage Plane Container. The Linux block device mode (`lblk`) is an alternative,
+cluster-global device mode that accepts any Linux block device — SAS or SATA SSDs behind an HBA,
+virtualized disks (virtio, Xen), or cloud volumes such as Amazon EBS — without requiring NVMe
+hardware at all.
 
 !!! warning
     Linux block device support is experimental. It is intended for evaluation, for test environments,
@@ -27,14 +28,12 @@ cluster:
 | `nvme` (default) | NVMe PCIe SSDs | SPDK native NVMe driver (kernel driver unbind) |
 | `lblk` | Any Linux disk-type block device | SPDK AIO bdev on top of the kernel block layer |
 
-In `lblk` mode, each selected device is wrapped in one SPDK AIO bdev. Everything above the base
-device — journaling, [erasure coding](erasure-coding.md), logical volume stores, and NVMe-oF export —
-is identical in both modes, because the storage stack is device-agnostic from the device abstraction
-layer upward. The inter-node fabric is unaffected: nodes still interconnect via NVMe/TCP or RDMA, and
-clients still connect via NVMe-oF, regardless of the device mode.
+In `lblk` mode, Linux block devices can be selected by their block device name (either allow or deny
+lists) or by their serial number at deploy time. The deployment process and cluster operations are
+otherwise identical.
 
 Because the devices remain owned by the Linux kernel in `lblk` mode, no kernel driver unbinding takes
-place, and no device is ever claimed by SPDK's PCI layer.
+place, and no device is ever claimed by the Simplyblock Storage Plane PCI layer.
 
 ## Device Eligibility
 
