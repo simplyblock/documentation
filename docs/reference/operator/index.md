@@ -454,7 +454,7 @@ spec:
 Attach the policy to a PVC:
 
 ```bash title="Attach a backup policy to a PVC"
-kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy=my-policy
+kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=my-policy
 ```
 
 The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:

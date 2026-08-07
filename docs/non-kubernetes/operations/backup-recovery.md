@@ -335,7 +335,7 @@ to a pod.
 ### BackupPolicy CRD
 
 A `BackupPolicy` defines an automated backup schedule with retention settings. Attach it to a PVC using the
-`simplybk/backup-policy` annotation to automatically create `StorageBackup` objects on schedule.
+`simplyblock.io/backup-policy` annotation to automatically create `StorageBackup` objects on schedule.
 
 ```yaml title="Create a backup policy"
 kubectl apply -f - <<'EOF'
@@ -366,10 +366,10 @@ take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 
 
 #### Attaching a Policy to a PVC
 
-Apply the `simplybk/backup-policy` annotation to start automatic backups for a PVC:
+Apply the `simplyblock.io/backup-policy` annotation to start automatic backups for a PVC:
 
 ```bash title="Attach a backup policy"
-kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy=my-policy
+kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=my-policy
 ```
 
 The policy will begin creating `StorageBackup` objects automatically. View them with:
@@ -383,11 +383,11 @@ kubectl get storagebackup -n simplyblock
 To switch a PVC to a different policy (detaches from the old policy and attaches to the new one):
 
 ```bash title="Switch to a different policy"
-kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy=new-policy --overwrite
+kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=new-policy --overwrite
 ```
 
 To detach a policy from a PVC (existing backups are not deleted):
 
 ```bash title="Detach a backup policy"
-kubectl annotate pvc my-pvc -n simplyblock simplybk/backup-policy-
+kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy-
 ```
