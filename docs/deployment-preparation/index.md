@@ -11,11 +11,11 @@ storage cluster.
 
 Two deployment options are supported:
 
-- **Plain Linux**: In this mode, which is also called Docker mode, all nodes are deployed to separate hosts. Storage
+- **Plain Linux:** In this mode, which is also called Docker mode, all nodes are deployed to separate hosts. Storage
   nodes are usually bare-metal, and control plane nodes are usually VMs.Basic Docker knowledge is helpful, but all
   management can be performed within the system via its CLI or API. 
 
-- **Kubernetes**: In Kubernetes, both **disaggregated** deployments with dedicated workers or clusters for storage
+- **Kubernetes:** In Kubernetes, both **disaggregated** deployments with dedicated workers or clusters for storage
   nodes, or **hyper-converged deployments** (co-located with compute workloads) are supported. A wide range of
   Kubernetes distros and operating systems are supported. There is no essential difference between the two models from a
   deployment perspective, if the same cluster is used to serve and consume the storage: it becomes a question of

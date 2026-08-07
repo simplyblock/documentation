@@ -16,8 +16,8 @@ trade-off.
 Erasure coding (EC) is a **data protection mechanism** that distributes data and parity across multiple storage nodes,
 allowing data recovery in case of hardware failures. The notation **k+m** represents:
 
-- **k**: The number of data fragments.
-- **m**: The number of parity/coding fragments.
+- **k:** The number of data fragments.
+- **m:** The number of parity/coding fragments.
 
 For more information on erasure coding, see the dedicated concept page for
 [erasure coding](../architecture/concepts/erasure-coding.md).

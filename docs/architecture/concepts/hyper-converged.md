@@ -23,7 +23,7 @@ a software-defined storage (SDS) layer that dynamically distributes and manages 
 
 Key characteristics and benefits of hyper-converged storage include:
 
-- **Massive Simplification of Hardware Management and Operations**: A single type and configuration of a rack server and networking
+- **Massive Simplification of Hardware Management and Operations:** A single type and configuration of a rack server and networking
   setup can scale to hundreds, thousands or hundreds of thousands of units. There is no need for specialized storage hardware and fabric 
   to be fitted into the operations model. This model provides much better economies of scale from hardware procurement to infrastructure
   operations. 
@@ -34,6 +34,6 @@ Key characteristics and benefits of hyper-converged storage include:
   requirements from small edge clusters to large data center clusters.  
 -  **De-coupling from Hardware Lifecycle** Individual hardware components or units can be replaced choosing from different vendors 
 without service interruption or degradation. Gradual replacement of hardware is supported.
--  **Data Locality**: Best-effort data locality can significantly reduce the burden on the shared network and improve the latency of and 
+-  **Data Locality:** Best-effort data locality can significantly reduce the burden on the shared network and improve the latency of and 
   throughput of IO. 
 

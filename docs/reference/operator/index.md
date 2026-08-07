@@ -339,11 +339,11 @@ name and as the `pool_name` CSI StorageClass parameter.
 
 When the pool reaches an active state, the operator creates a `StorageClass` with:
 
-- **Name**: `simplyblock-<namespace>-<clusterName>-<poolName>`
-- **Provisioner**: `csi.simplyblock.io`
-- **VolumeBindingMode**: `WaitForFirstConsumer`
-- **ReclaimPolicy**: `Delete`
-- **AllowVolumeExpansion**: `true`
+- **Name:** `simplyblock-<namespace>-<clusterName>-<poolName>`
+- **Provisioner:** `csi.simplyblock.io`
+- **VolumeBindingMode:** `WaitForFirstConsumer`
+- **ReclaimPolicy:** `Delete`
+- **AllowVolumeExpansion:** `true`
 
 The `cluster_id` and `pool_name` parameters are set automatically. Any fields specified in
 `spec.storageClassParameters` are merged in as additional CSI driver parameters.

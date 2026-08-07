@@ -18,16 +18,16 @@ Before deploying, review the node sizing, network, and erasure coding guidance i
 
 ## What This Section Covers
 
-- **[Install Simplyblock](installation/index.md)**: Prepare the hosts and the network, then install the control plane
+- **[Install Simplyblock](installation/index.md):** Prepare the hosts and the network, then install the control plane
   (management nodes) and the storage plane (storage nodes) on plain Linux.
-- **[Plain Linux Initiators](linux-initiators/index.md)**: Perform the host-level configuration required to attach
+- **[Plain Linux Initiators](linux-initiators/index.md):** Perform the host-level configuration required to attach
   simplyblock volumes to Linux hosts that are not running Kubernetes, Proxmox, or OpenStack.
-- **[OpenStack Integration](openstack/index.md)**: Use simplyblock as a Cinder backend for OpenStack.
-- **[Proxmox Integration](proxmox/index.md)**: Provision volumes for KVM virtual machines and LXC containers through the
+- **[OpenStack Integration](openstack/index.md):** Use simplyblock as a Cinder backend for OpenStack.
+- **[Proxmox Integration](proxmox/index.md):** Provision volumes for KVM virtual machines and LXC containers through the
   simplyblock Proxmox storage plugin.
-- **[Usage](usage/index.md)**: Provision, expand, snapshot, clone, encrypt, and remove logical volumes with
+- **[Usage](usage/index.md):** Provision, expand, snapshot, clone, encrypt, and remove logical volumes with
   `{{ cliname }}`.
-- **[Operations](operations/index.md)**: Monitor cluster health, scale capacity, back up and restore volumes, upgrade
+- **[Operations](operations/index.md):** Monitor cluster health, scale capacity, back up and restore volumes, upgrade
   the cluster, apply quality of service, and replace or migrate storage nodes.
 
 ## Related References

@@ -28,8 +28,8 @@ cleartext.
 
 Simplyblock supports:
 
-- **Unidirectional authentication**: The target verifies the host identity using a shared `dhchap_key`.
-- **Bidirectional (mutual) authentication**: Both host and target verify each other using a `dhchap_key` (host-to-target)
+- **Unidirectional authentication:** The target verifies the host identity using a shared `dhchap_key`.
+- **Bidirectional (mutual) authentication:** Both host and target verify each other using a `dhchap_key` (host-to-target)
   and a `dhchap_ctrlr_key` (target-to-host).
 
 When using pool-level DHCHAP (`--dhchap` flag), both keys are always auto-generated, meaning bidirectional
@@ -75,9 +75,9 @@ enabled:
 
 Once a pool with security options is in place, hosts can be managed per storage pool:
 
-- **Add a host**: `{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>` — keys are auto-generated based on the pool's
+- **Add a host:** `{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>` — keys are auto-generated based on the pool's
   security options.
-- **Remove a host**: `{{ cliname }} storage-pool remove-host <POOL_ID> <HOST_NQN>`
+- **Remove a host:** `{{ cliname }} storage-pool remove-host <POOL_ID> <HOST_NQN>`
 
 ## Connecting a Volume
 

@@ -22,10 +22,10 @@ modern distributed environments.
 Simplyblock protects data using distributed erasure coding, which ensures that data is striped across multiple
 storage nodes along with parity fragments. This provides:
 
-- **Redundancy**: Data can be reconstructed even if one or more nodes fail, depending on the configured erasure coding
+- **Redundancy:** Data can be reconstructed even if one or more nodes fail, depending on the configured erasure coding
   scheme (such as _1+1_, _1+2_, _2+1_, or _2+2_).
-- **Efficiency**: Storage overhead is minimized compared to full replication while maintaining strong fault tolerance.
-- **Automatic Rebuilds**: In the event of node or disk failures, missing data is rebuilt automatically using parity
+- **Efficiency:** Storage overhead is minimized compared to full replication while maintaining strong fault tolerance.
+- **Automatic Rebuilds:** In the event of node or disk failures, missing data is rebuilt automatically using parity
   information stored across the cluster.
 
 !!! important
@@ -42,11 +42,11 @@ storage nodes along with parity fragments. This provides:
 Simplyblock supports NVMe over Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
 storage:
 
-- **Primary and Secondary Paths**: Each logical volume (LV) is accessible through both a primary node and one or
+- **Primary and Secondary Paths:** Each logical volume (LV) is accessible through both a primary node and one or
   more secondary nodes.
-- **Automatic Failover**: If the primary node becomes unavailable, traffic is automatically redirected to a secondary
+- **Automatic Failover:** If the primary node becomes unavailable, traffic is automatically redirected to a secondary
   node with minimal disruption.
-- **Load Balancing**: Multipathing also distributes I/O across available paths to optimize performance and reliability.
+- **Load Balancing:** Multipathing also distributes I/O across available paths to optimize performance and reliability.
 
 The number of secondary node paths is automatically configured based on the selected erasure coding scheme.
 
@@ -61,12 +61,12 @@ availability of the logical volume.
 To ensure cluster-wide availability, simplyblock operates with full redundancy in both its control plane and
 storage plane:
 
-- **Control Plane (Management Nodes)**:
+- **Control Plane (Management Nodes):**
     - Deployed as a highly available set of management nodes, typically in a quorum-based configuration.
     - Responsible for cluster health, topology management, and coordination.
     - Remains operational even if one or more management nodes fail.
 
-- **Storage Plane (Storage Nodes)**:
+- **Storage Plane (Storage Nodes):**
     - Storage services are distributed across multiple storage nodes.
     - Data and workloads are automatically rebalanced and protected in case of node or device failures.
     - Failures are handled transparently with automatic recovery processes.

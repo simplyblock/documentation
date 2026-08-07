@@ -20,11 +20,11 @@ additional sizing notes for hyper-converged clusters where compute and storage s
 
 ## What This Section Covers
 
-- **[Install Simplyblock](installation/index.md)**: Install the operator with its Helm chart, deploy the control plane
+- **[Install Simplyblock](installation/index.md):** Install the operator with its Helm chart, deploy the control plane
   and storage plane through CRDs, install the CSI driver, and apply distribution-specific configuration.
-- **[Usage](usage/index.md)**: Configure storage classes and quality of service, and provision, expand, snapshot, clone,
+- **[Usage](usage/index.md):** Configure storage classes and quality of service, and provision, expand, snapshot, clone,
   encrypt, and remove logical volumes using Kubernetes resources.
-- **[Operations](operations/index.md)**: Monitor cluster health, scale capacity, back up and restore volumes, replicate
+- **[Operations](operations/index.md):** Monitor cluster health, scale capacity, back up and restore volumes, replicate
   asynchronously, coordinate node drains, and run cluster operations through the operator.
 
 ## Related References

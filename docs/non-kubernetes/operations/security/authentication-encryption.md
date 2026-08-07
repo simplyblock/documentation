@@ -7,10 +7,10 @@ weight: 30110
 Simplyblock supports NVMe-oF transport security to protect data in transit and restrict host access to storage
 subsystems. This includes:
 
-- **Host access control** — restrict which hosts (by NQN) can connect to a volume's NVMe-oF subsystem.
-- **DH-HMAC-CHAP authentication** — mutual authentication between host and target using the NVMe standard
+- **Host access control:** restrict which hosts (by NQN) can connect to a volume's NVMe-oF subsystem.
+- **DH-HMAC-CHAP authentication:** mutual authentication between host and target using the NVMe standard
   authentication protocol (TP8018).
-- **TLS/PSK encryption** — encrypt data in transit using TLS 1.3 with Pre-Shared Keys.
+- **TLS/PSK encryption:** encrypt data in transit using TLS 1.3 with Pre-Shared Keys.
 
 ## Enable Host Authentication and Encryption
 
