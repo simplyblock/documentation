@@ -201,10 +201,18 @@ def check_semicolon(prose):
         yield Finding(column=index, check="semicolon", reason=SEMICOLON_REASON)
 
 
+# A table cell holding nothing but a dash is a value ("no default"), not an aside.
+EMPTY_CELL_PATTERN = re.compile(r"\|\s*[—–]\s*(?=\|)")
+
+
 def check_em_dash(prose):
+    cells = [match.span() for match in EMPTY_CELL_PATTERN.finditer(prose.masked)]
     for index, char in enumerate(prose.masked):
-        if char == "—":
-            yield Finding(column=index, check="em-dash", reason=EM_DASH_REASON)
+        if char != "—":
+            continue
+        if any(start <= index < end for start, end in cells):
+            continue
+        yield Finding(column=index, check="em-dash", reason=EM_DASH_REASON)
 
 
 # ---------------------------------------------------------------------------
@@ -218,15 +226,17 @@ def check_em_dash(prose):
 #
 # One pattern per emphasis marker, since the closing marker has to match the
 # opening one and the subject may contain the other marker. The separator is part
-# of the replaced span, so that the whole of it becomes the colon.
+# of the replaced span, so that the whole of it becomes the colon. A numbered item
+# carries a subject exactly like a bulleted one.
+MARKER = r"^\s*(?:[-*+]|\d+[.)])\s+"
 SEPARATOR = r"(?P<separator>\s*:|\s+[-–—](?=\s))?"
 SUBJECT_PATTERNS = (
     ("**", re.compile(
-        rf"^\s*[-*+]\s+(?P<replace>\*\*(?P<subject>[^*]+?)\*\*{SEPARATOR})")),
+        rf"{MARKER}(?P<replace>\*\*(?P<subject>[^*]+?)\*\*{SEPARATOR})")),
     ("*", re.compile(
-        rf"^\s*[-*+]\s+(?P<replace>(?<!\*)\*(?P<subject>[^*]+?)\*(?!\*){SEPARATOR})")),
+        rf"{MARKER}(?P<replace>(?<!\*)\*(?P<subject>[^*]+?)\*(?!\*){SEPARATOR})")),
     ("_", re.compile(
-        rf"^\s*[-*+]\s+(?P<replace>_(?P<subject>[^_]+?)_{SEPARATOR})")),
+        rf"{MARKER}(?P<replace>_(?P<subject>[^_]+?)_{SEPARATOR})")),
 )
 
 EMPHASIS_REASON = (
