@@ -32,9 +32,9 @@ Storage Interface (CSI) and Proxmox drivers.
   bottlenecks local to specific nodes. This provides almost linear performance scalability for the cluster.
 
 - **Containerized Architecture:** The solution comprises:
-    - *Storage Nodes:* Container stacks delivering distributed data services via NVMe over Fabrics (NVMe over TCP),
+    - **Storage Nodes:** Container stacks delivering distributed data services via NVMe over Fabrics (NVMe over TCP),
       forming storage clusters.
-    - *Management Nodes:* Container stacks offering control and management services, collectively known as the control
+    - **Management Nodes:** Container stacks offering control and management services, collectively known as the control
       plane.
 
 - **Platform Support:** Simplyblock supports deployment on virtual machines, bare-metal instances, and Kubernetes
