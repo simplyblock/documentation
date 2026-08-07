@@ -26,6 +26,7 @@ from markdown_common import (
     HTML_BLOCK_OPEN_PATTERN,
     MD_IN_HTML_ATTR_PATTERN,
     VOID_HTML_TAGS,
+    Violation,
     apply_fixes_to_file,
     collect_files,
     drop_generated,
@@ -36,6 +37,7 @@ from markdown_common import (
     non_prose_ranges,
     read_lines,
     relative_path,
+    report_violations,
 )
 
 BRAND_PATTERN = re.compile(r"\bsimplyblock\b", re.IGNORECASE)
@@ -102,16 +104,6 @@ CONTEXT_REASON = (
     "Expected lowercase 'simplyblock' here (exception rules: heading, card or admonition "
     "title, paragraph start, sentence start after '.', ':', '?', '!', or ';')"
 )
-
-
-@dataclass
-class Violation:
-    file: str
-    line: int
-    column: int
-    found: str
-    reason: str
-    excerpt: str
 
 
 @dataclass
@@ -195,7 +187,7 @@ def scan_file(file_path):
                             file=rel,
                             line=index + 1,
                             column=col + 1,
-                            found=f"{found} {next_word}",
+                            check=f"{found} {next_word}",
                             reason=f"Outdated term: '{old_term}' is now called '{new_term}'",
                             excerpt=get_line_excerpt(line, col),
                         )
@@ -210,7 +202,7 @@ def scan_file(file_path):
                         file=rel,
                         line=index + 1,
                         column=col + 1,
-                        found=f"{found} {next_word}",
+                        check=f"{found} {next_word}",
                         reason=MIXED_CASE_REASON,
                         excerpt=get_line_excerpt(line, col),
                     )
@@ -236,7 +228,7 @@ def scan_file(file_path):
                         file=rel,
                         line=index + 1,
                         column=col + 1,
-                        found=found,
+                        check=found,
                         reason=CASING_REASON,
                         excerpt=get_line_excerpt(line, col),
                     )
@@ -293,7 +285,7 @@ def scan_file(file_path):
                     file=rel,
                     line=index + 1,
                     column=col + 1,
-                    found=found,
+                    check=found,
                     reason=CONTEXT_REASON,
                     excerpt=get_line_excerpt(line, col),
                 )
@@ -498,18 +490,12 @@ def main():
         violations = [v for scan in scans for v in scan.violations]
         candidates = [c for scan in scans for c in scan.candidates]
 
-    if not violations:
-        print(f"No simplyblock spelling/casing violations found in {len(files)} file(s).")
-    else:
-        print(
-            "simplyblock spelling/casing check failed. Found non-compliant occurrences:",
-            file=sys.stderr,
-        )
-        for v in violations:
-            print(
-                f"- {v.file}:{v.line}:{v.column} | {v.found} | {v.reason}\n  {v.excerpt}",
-                file=sys.stderr,
-            )
+    exit_code = report_violations(
+        violations,
+        "simplyblock spelling/casing check",
+        files,
+        "No simplyblock spelling/casing violations found in {files} file(s).",
+    )
 
     if candidates:
         print("")
@@ -522,8 +508,7 @@ def main():
             for sample in group[:3]:
                 print(f"  • {sample.file}:{sample.line} -> {sample.excerpt}")
 
-    if violations:
-        sys.exit(1)
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

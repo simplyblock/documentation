@@ -9,6 +9,10 @@
 #   ./scripts/quality-gate.sh                  # run all gates
 #   ./scripts/quality-gate.sh spelling         # run the named gates only
 #
+# Every error of every gate is repeated at the end of a run, all of them, so that
+# the list to work through is in one place and no warning has to be read to find
+# it.
+#
 # To add a gate, append its name to ALL_GATES and implement the matching
 # gate_<name> function together with its gate_<name>_description.
 
@@ -139,12 +143,13 @@ for gate in "${failed_gates[@]}"; do
   echo ""
   echo -e "${BOLD}${gate}:${RESET}"
   if grep -q "^ERROR" "${LOG_DIR}/${gate}.log"; then
-    # Only the finding itself, its excerpt stays in the output of the gate above.
+    # Every error, never a warning: this list is the work to do. The excerpt of a
+    # finding stays in the output of the gate above.
     grep "^ERROR" "${LOG_DIR}/${gate}.log"
   else
     # A gate that fails without reporting a finding did not run to its end.
     echo "  The gate itself failed, it reported no finding. Its last output was:"
-    tail -n 5 "${LOG_DIR}/${gate}.log" | sed 's/^/  /'
+    tail -n 20 "${LOG_DIR}/${gate}.log" | sed 's/^/  /'
   fi
 done
 
