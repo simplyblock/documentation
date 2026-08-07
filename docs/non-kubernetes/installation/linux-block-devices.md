@@ -6,10 +6,10 @@ weight: 35000
 
 {{ experimental }}
 
-This page describes deploying a storage plane on Linux block devices instead of NVMe PCIe devices. It
-follows the standard [storage plane installation](install-sp.md) flow; only the differing steps are
-described here. Background on the device mode, the eligibility rules, and the device identity is
-found under [Linux Block Devices (lblk)](../../architecture/concepts/linux-block-devices.md).
+Deploying a storage plane on Linux block devices instead of NVMe PCIe devices follows the standard
+[storage plane installation](install-sp.md) flow; only the differing steps are described here.
+Background on the device mode, the eligibility rules, and the device identity is found under
+[Linux Block Devices (lblk)](../../architecture/concepts/linux-block-devices.md).
 
 !!! warning
     Linux block device support is experimental. It is intended for evaluation, for test environments,
@@ -25,8 +25,8 @@ control plane:
 sudo {{ cliname }} cluster create --device-mode lblk
 ```
 
-`--device-mode` accepts `nvme` (the default) and `lblk`. It cannot be changed after creation, and all
-storage nodes of the cluster follow it.
+`nvme` (the default) and `lblk` are accepted by `--device-mode`. The mode cannot be changed after
+creation, and it is followed by all storage nodes of the cluster.
 
 !!! important
     All control plane and storage node services must run a software version that supports the `lblk`
@@ -63,8 +63,9 @@ sudo {{ cliname }} storage-node configure --lblk --blk-serials S3EVNX0M602707,S3
 A requested device that is busy — mounted, held, or otherwise ineligible — is an error: the
 configuration fails rather than silently skipping the device.
 
-The resulting configuration file (`/etc/simplyblock/sn_config_file`) stores the selected devices with
-their name, serial, stable by-id path, size, and NUMA assignment. As in NVMe mode, the file can be
+The selected devices are stored in the resulting configuration file
+(`/etc/simplyblock/sn_config_file`) with their name, serial, stable by-id path, size, and NUMA
+assignment. As in NVMe mode, the file can be
 reviewed and manually edited before deployment, for example to remove a device from the selection.
 
 ### Partitioned Devices
@@ -88,8 +89,9 @@ sudo {{ cliname }} storage-node deploy --ifname eth0
 ```
 
 Adding the node to the cluster from a control plane node is unchanged as well, with one additional
-flag: if partitioned devices were force-included at configuration time, `--force-format` instructs
-the node addition to wipe partition tables and filesystem signatures (`wipefs`) from those devices:
+flag: if partitioned devices were force-included at configuration time, with `--force-format` the
+node addition is instructed to wipe partition tables and filesystem signatures (`wipefs`) from those
+devices:
 
 ```bash title="Adding the storage node while wiping partitioned devices"
 sudo {{ cliname }} storage-node add-node --force-format <CLUSTER_ID> <NODE_IP>:5000 eth0
@@ -101,7 +103,7 @@ sudo {{ cliname }} storage-node add-node --force-format <CLUSTER_ID> <NODE_IP>:5
 
 During node addition, each selected device is wrapped in an SPDK AIO bdev. No kernel driver unbinding
 takes place — the devices stay visible to the host OS but must not be used by anything else. The
-smallest device becomes the journal device, as in NVMe mode with journal-on-device deployments.
+smallest device is used as the journal device, as in NVMe mode with journal-on-device deployments.
 
 Everything after node addition — cluster activation, pool creation, volume provisioning, and client
 connection — is identical to an NVMe-mode cluster.
@@ -115,5 +117,5 @@ address:
 sudo {{ cliname }} storage-node list-devices <NODE_ID>
 ```
 
-On the host, `lsblk` continues to show the devices, since they remain kernel-owned, and the SPDK
-process exposes one `aio_<serial>` base bdev per device.
+On the host, the devices continue to be shown by `lsblk`, since they remain kernel-owned, and one
+`aio_<serial>` base bdev per device is exposed by the SPDK process.

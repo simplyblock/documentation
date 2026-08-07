@@ -6,25 +6,25 @@ weight: 20090
 
 {{ experimental }}
 
-This page covers day-2 operations specific to clusters in the Linux block device mode (`lblk`).
+Day-2 operations specific to clusters in the Linux block device mode (`lblk`) are described below.
 Concepts and deployment are described under
 [Linux Block Devices (lblk)](../../architecture/concepts/linux-block-devices.md) and
 [Deploy with Linux Block Devices](../installation/linux-block-devices.md).
 
 ## Node Restarts
 
-A node restart requires no lblk-specific handling. On restart, the node's configured devices are
+No `lblk`-specific handling is required for a node restart. On restart, the node's configured devices are
 re-resolved serial-first against the live host inventory: kernel device names may have changed across
 a reboot (for example, `/dev/sdb` and `/dev/sdc` swapping), and the devices are still matched
 correctly by their persisted serial numbers. The AIO bdevs and the storage stack above them are then
 rebuilt exactly as recorded in the cluster database.
 
 A configured device that is missing from the host at restart is marked removed — the same semantics
-as a missing NVMe controller — and triggers the standard failed-device data migration.
+as a missing NVMe controller — and the standard failed-device data migration is triggered.
 
 !!! info
-    The `--ssd-pcie` option of `storage-node restart`, which adds new devices during a restart, is
-    not supported on lblk-mode clusters and is rejected.
+    The `--ssd-pcie` option of `storage-node restart`, by which new devices are added during a
+    restart, is not supported on `lblk`-mode clusters and is rejected.
 
 ## Adding Devices to a Storage Node
 
@@ -40,8 +40,8 @@ time:
     sudo {{ cliname }} storage-node configure --lblk --blk-names sdb,sdc,sdd --max-lvol 50
     ```
 
-4. Re-add the node to the cluster. The node joins with the extended device set, and the automatic
-   rebalancing redistributes data onto it.
+4. Re-add the node to the cluster. The node joins with the extended device set, and data is
+   redistributed onto it by the automatic rebalancing.
 
 Cluster capacity can alternatively be extended by
 [adding a new storage node](scaling/index.md) with its own devices.
@@ -50,8 +50,8 @@ Cluster capacity can alternatively be extended by
 
 Device failures are handled by the same machinery as in NVMe mode. A device producing IO errors is
 marked unavailable and, after the retry budget is exhausted, marked failed; the cluster map is
-updated, and a data migration rebuilds the affected data from redundancy. A device whose IO hangs
-without erroring is caught by the lblk hung-IO watchdog — roughly 30 seconds of zero progress with
+updated, and the affected data is rebuilt from redundancy by a data migration. A device whose IO
+hangs without erroring is caught by the `lblk` hung-IO watchdog — roughly 30 seconds of zero progress with
 outstanding IO — and driven through the same unavailable, restart, and failed path. A device that
 disappears from the host, through hot removal or a cloud volume detach, is detected and treated like
 an NVMe hot-remove.
@@ -62,4 +62,4 @@ following [Replacing a Storage Node](replacing-storage-node.md).
 
 !!! info
     SMART health information is not available for AIO-backed devices; device health checks
-    (`storage-node check-device`) operate on liveness and IO statistics only.
+    (`storage-node check-device`) are limited to liveness and IO statistics.
