@@ -64,7 +64,7 @@ The relabalcing algorithm which moves data around is optimized for minimal overh
 
 * First, it tries to maximize transfer size, in fact turning smaller random writes into large sequential writes, which are much more efficient.
 * Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS). Therefore, its impact on 
-  I/O performance is quite limited. This means that volumes ultimately converge towards full data locality whenever possible.
+  I/O performance is quite limited. This means that volumes ultimately converge toward full data locality whenever possible.
 * At the same time, this does not result in any hard limits.
     * For example, in a cluster with 2 PB of storage, it is still possible to create a single volume consuming all of these 2 PB.
     * Also, it can be balanced against scalability and consistency. Meaning, if I/O-intensive workloads are not well-balanced across worker nodes,

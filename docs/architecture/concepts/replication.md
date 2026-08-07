@@ -72,7 +72,7 @@ No manual action is required to trigger failover -- the operator detects the con
 ## Failback
 
 In case the source cluster is entirely lost, it is possible to replicate all data back to a fresh cluster at the origin or
-any other site by setting up the replication path towards this new cluster. This is not a true "failback" but handled
+any other site by setting up the replication path toward this new cluster. This is not a true "failback" but handled
 as a new replication.
 
 Failback refers to the option to replicate the delta accumulated in the target cluster back to the source in case the

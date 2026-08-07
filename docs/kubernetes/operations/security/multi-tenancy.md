@@ -19,7 +19,7 @@ are defined.
 If tenants are expected to have multiple volumes, defining the overall available storage quota a tenant can access and
 assign to volumes might be required. Hence, simplyblock enables the creation of a storage pool with a maximum capacity
 per tenant. All volumes for this tenant should be created in their respective storage pool and automatically count
-towards the storage quota.
+toward the storage quota.
 
 ### Logical Volume Isolation
 
