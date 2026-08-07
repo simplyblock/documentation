@@ -5,14 +5,14 @@ weight: 20140
 ---
 
 Simplyblock enforces a set of limits per storage node and per cluster. Some are hard limits built into the
-control plane; others depend on the node's vCPU count and memory configuration.
+control plane. Others depend on the node's vCPU count and memory configuration.
 
 ## Hard Per-Node Object Limits
 
 | Limit                       | Value | What it counts                                                                                      |
 |-----------------------------|------:|-----------------------------------------------------------------------------------------------------|
 | Objects per node            | 6000  | Logical volumes, clones, and snapshots owned by the node (its logical volume store)                 |
-| NVMe-oF subsystems per node | 75    | Subsystems for which the node is the primary; namespaced volumes sharing one subsystem count as one |
+| NVMe-oF subsystems per node | 75    | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
 | Namespaces per subsystem    | 50    | Volumes (namespaces) sharing one NVMe-oF subsystem                                                  |
 
 These limits are enforced on every create path (volume create, snapshot create, clone). When a limit is reached,
@@ -27,8 +27,8 @@ max_namespace_per_subsys=64 exceeds the hard limit of 50 namespaces per subsyste
 Notes on what counts against the limits:
 
 - Only the **primary** node of a volume is charged. Failover copies on secondary and tertiary nodes do not count
-  against those nodes' limits — their resource reservation already provisions for them.
-- Deleted objects do not count; objects in creation or deletion still do.
+  against those nodes' limits, because their resource reservation already provisions for them.
+- Deleted objects do not count. Objects in creation or deletion still do.
 - When volume placement finds no node below its subsystem limit, volume creation fails with
   `No nodes found with enough resources to create the LVol`.
 
@@ -46,8 +46,8 @@ It can be changed later via `{{ cliname }} storage-node restart --max-subsys <N>
 
 ## Namespaces per Subsystem
 
-By default, simplyblock places each volume in its own NVMe-oF subsystem. Namespaced volumes share a subsystem;
-the default maximum is **32 namespaces per subsystem**, configurable per volume at creation time up to the hard
+By default, simplyblock places each volume in its own NVMe-oF subsystem. Namespaced volumes share a subsystem.
+The default maximum is **32 namespaces per subsystem**, configurable per volume at creation time up to the hard
 ceiling of 50:
 
 ```bash title="Create a namespaced volume with a custom namespace limit"
@@ -65,7 +65,7 @@ On top of the hard object limits, several resource limits scale with the vCPU co
 |--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | CPU cores per storage node     | At most 64 cores can be assigned to one storage node (SPDK instance).                                                                                       |
 | Distribution services per node | Scales with the assigned cores, capped at 12.                                                                                                               |
-| NVMe-oF buffer pools           | Scale with core count and `--max-subsys`; they determine part of the huge-page demand.                                                                      |
+| NVMe-oF buffer pools           | Scale with core count and `--max-subsys`. They determine part of the huge-page demand.                                                                      |
 | Huge-page memory               | The minimum huge-page memory grows with the core count and the configured maximum number of subsystems. Nodes refuse to start with insufficient huge pages. |
 | Storage nodes per host         | 1 or 2 (`--nodes-per-socket`), aligned to NUMA sockets.                                                                                                     |
 

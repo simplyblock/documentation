@@ -4,7 +4,7 @@ description: "How simplyblock failure domains group storage nodes by rack, cabin
 weight: 30750
 ---
 
-A failure domain groups storage nodes that share a common infrastructure dependency — a rack, a cabinet, a power
+A failure domain groups storage nodes that share a common infrastructure dependency: a rack, a cabinet, a power
 distribution unit, or an availability zone. When failure domains are enabled, simplyblock spreads data chunks,
 journal copies, and failover paths across the domains so that the loss of one entire domain does not interrupt
 the availability of the cluster.
@@ -44,8 +44,8 @@ For the failover paths, the guaranteed invariant is:
 
 With two failure domains and three paths (primary, secondary, tertiary), it is mathematically impossible to place
 all three paths in distinct domains. Simplyblock therefore guarantees at least one cross-domain failover path per
-volume store — enough to survive a full domain outage — and places the remaining paths cross-domain wherever the
-topology allows it.
+volume store, which is enough to survive a full domain outage. The remaining paths are placed cross-domain
+wherever the topology allows it.
 
 At cluster activation, simplyblock arranges the hosts in a round-robin order across the failure domains and derives
 all secondary and tertiary assignments from this interleaved rotation. On a cluster with equally sized domains, this
@@ -61,7 +61,7 @@ Failure-domain placement only works if the domains stay comparable in size. Simp
   removing a node is refused if it would unbalance the domains further.
 - Every domain must keep at least **two hosts** once the cluster holds data.
 
-A cluster with a one-host imbalance stays fully within the availability contract: exactly one volume store then has
+A cluster with a one-host imbalance stays fully within the availability contract. Exactly one volume store then has
 a same-domain secondary path, and its tertiary path is still guaranteed to be cross-domain.
 
 !!! note
@@ -92,14 +92,14 @@ prevents accidental topology changes that would silently invalidate the placemen
 
 Failure domains also change how the cluster recovers from large outages:
 
-- An outage confined to one domain — up to and including every node of the domain — keeps the cluster **degraded
+- An outage confined to one domain (up to and including every node of the domain) keeps the cluster **degraded
   but serving**. The cluster is not suspended.
 - With two parity chunks, the cluster additionally tolerates the loss of one entire domain **plus** one further
   node or device outage in exactly one other domain.
 - When a whole domain returns from an outage (for example, after a rack power loss), its nodes are restarted **in
   parallel** instead of strictly one-by-one, substantially shortening the recovery of large domains.
 
-For operating instructions — creating a failure-domain cluster, adding and removing nodes, and expansion rules —
-see [Managing Failure Domains](../../non-kubernetes/operations/failure-domains.md). For Kubernetes-based
-deployments, failure domains are assigned through the Simplyblock Operator; see the
+For operating instructions (cluster creation, node addition, node removal, and the expansion rules), see
+[Managing Failure Domains](../../non-kubernetes/operations/failure-domains.md). For Kubernetes-based
+deployments, failure domains are assigned through the Simplyblock Operator. See the
 [Operator Reference](../../reference/operator/index.md).

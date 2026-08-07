@@ -7,7 +7,7 @@ weight: 36000
 Simplyblock supports two ways to make the storage network redundant:
 
 - A **redundant network** below a single interface, built with link aggregation (LACP), stacked switches, MLAG, or
-  active/passive bonding. Simplyblock sees one data interface; the redundancy is handled entirely in the network
+  active/passive bonding. Simplyblock sees one data interface. The redundancy is handled entirely in the network
   layer.
 - **NVMe-oF multipathing** over two (or more) independent storage networks. Each storage node is attached with
   multiple data interfaces in separate VLANs or subnets, routed over separate NIC ports and switches. Simplyblock
@@ -53,9 +53,9 @@ The data interfaces of a storage node are declared when the node is attached to 
     The interface list is comma-separated without spaces (`eth1,eth2`). If `--data-nics` is omitted, the
     management interface carries the storage traffic and no multipathing is available.
 
-There is no separate switch to enable multipathing: as soon as a node has more than one usable data interface,
-all of its NVMe-oF subsystems — logical volumes as well as cluster-internal device and journal subsystems — listen
-on every data interface, and all connections to the node are established once per interface.
+There is no separate switch to enable multipathing. As soon as a node has more than one usable data interface, all
+of its NVMe-oF subsystems listen on every data interface, and all connections to the node are established once per
+interface. These subsystems include logical volumes as well as cluster-internal device and journal subsystems.
 
 Multipathing applies per node, but a consistent configuration across all nodes is strongly recommended: use the
 same number of data interfaces, in the same set of VLANs, on every storage node.
@@ -64,18 +64,18 @@ same number of data interfaces, in the same set of VLANs, on every storage node.
 
 With multipathing, `{{ cliname }} volume connect` returns one `nvme connect` command per combination of node and
 data interface. A volume with one failover path (erasure coding with one parity chunk) on nodes with two data
-interfaces yields **four** connection strings; with two failover paths (two parity chunks), **six**:
+interfaces yields **four** connection strings. With two failover paths (two parity chunks), it yields **six**:
 
 ```bash title="Retrieve all connection strings for a volume"
 {{ cliname }} volume connect <VOLUME_ID>
 ```
 
 Run **all** returned `nvme connect` commands on the host. The commands connect the same NVMe subsystem (the same
-NQN) over the different paths; the Linux kernel's native NVMe multipathing merges them into a single block device
+NQN) over the different paths. The Linux kernel's native NVMe multipathing merges them into a single block device
 and steers I/O based on the ANA (Asymmetric Namespace Access) state that simplyblock manages per path. No
 `dm-multipath` configuration is required or supported.
 
-If a path fails — a NIC, a switch, or an entire network — the kernel transparently continues on the remaining
+If a path fails (a NIC, a switch, or an entire network), the kernel transparently continues on the remaining
 paths. When a primary node fails over to a secondary node, simplyblock switches the ANA states, and the host
 follows without a reconnect.
 
@@ -83,11 +83,11 @@ follows without a reconnect.
 
 After attaching the nodes, verify that all paths exist:
 
-1. `{{ cliname }} storage-node list --json` — every node reports all of its data interfaces (`data_nics`).
-2. `{{ cliname }} storage-node port-list <NODE_ID>` — lists the data interfaces of a node.
-3. `{{ cliname }} volume connect <VOLUME_ID>` — returns one connection string per node and interface (for
+1. `{{ cliname }} storage-node list --json`: every node reports all of its data interfaces (`data_nics`).
+2. `{{ cliname }} storage-node port-list <NODE_ID>`: lists the data interfaces of a node.
+3. `{{ cliname }} volume connect <VOLUME_ID>`: returns one connection string per node and interface (for
    example, four entries for a volume with one failover path on dual-interface nodes).
-4. `{{ cliname }} storage-node check <NODE_ID>` — verifies all NVMe-oF connections to and from the node,
+4. `{{ cliname }} storage-node check <NODE_ID>`: verifies all NVMe-oF connections to and from the node,
    including all paths of the cluster-internal connections.
 
 Per-interface I/O statistics are available with `{{ cliname }} storage-node port-io-stats <PORT_ID>`.
@@ -96,7 +96,7 @@ Per-interface I/O statistics are available with `{{ cliname }} storage-node port
 
 In Kubernetes-based deployments, the data interfaces are declared in the `StorageNodeSet` resource: the
 `dataIfname` field takes a list of interface names, equivalent to `--data-nics`. Volume connections made by the
-CSI driver automatically use all paths; no storage-class parameter is required. See the
+CSI driver automatically use all paths. No storage-class parameter is required. See the
 [Operator Reference](../../reference/operator/index.md) for details.
 
 ## Interaction with Failure Domains and Migration
@@ -105,5 +105,5 @@ CSI driver automatically use all paths; no storage-class parameter is required. 
   that combine naturally: failure domains protect against the loss of a rack or site, multipathing against the
   loss of a network path.
 - During a [volume migration](../operations/volume-migration.md), the target subsystem is exposed on all data
-  interfaces of the target node. The client must connect all returned target paths before continuing the
-  migration, so that the cutover is seamless on every path.
+  interfaces of the target node. All returned target paths must be connected on the client before the migration
+  is continued, so that the cutover is seamless on every path.

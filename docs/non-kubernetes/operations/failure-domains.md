@@ -11,7 +11,7 @@ the placement guarantees are described in
 
 This page describes how to deploy and operate a failure-domain cluster with the CLI. In Kubernetes environments,
 failure domains are assigned declaratively through the Simplyblock Operator
-(`enableFailureDomains` on the `StorageCluster` and `failureDomain` per node); see the
+(`enableFailureDomains` on the `StorageCluster` and `failureDomain` per node). See the
 [Operator Reference](../../reference/operator/index.md).
 
 ## Enabling Failure Domains
@@ -31,8 +31,8 @@ plane.
 
 ## Tagging Storage Nodes
 
-On a failure-domain cluster, every storage node must be added with a failure-domain id — a non-negative integer
-identifying the rack, cabinet, or availability zone. All nodes in the same physical fault group share the same id.
+On a failure-domain cluster, every storage node must be added with a failure-domain id (a non-negative integer
+identifying the rack, cabinet, or availability zone). All nodes in the same physical fault group share the same id.
 
 ```bash title="Add storage nodes with failure-domain tags"
 # Rack A (domain 0)
@@ -58,13 +58,13 @@ The assigned domains are shown in the node list once at least one node carries a
 
 Activating a freshly assembled failure-domain cluster enforces the following rules:
 
-| Rule                                          | Enforcement                                                                          |
-|-----------------------------------------------|--------------------------------------------------------------------------------------|
-| Every node carries a failure-domain id        | Hard — activation fails                                                              |
-| A host does not span two domains              | Hard — activation fails                                                              |
-| At least two distinct domains exist           | Hard — activation fails                                                              |
-| All domains hold an equal number of hosts     | Hard — activation fails                                                              |
-| At least `parity chunks + 1` distinct domains | Recommendation — a warning is logged, activation proceeds with best-effort placement |
+| Rule                                          | Enforcement                                                                         |
+|-----------------------------------------------|-------------------------------------------------------------------------------------|
+| Every node carries a failure-domain id        | Hard: activation fails                                                              |
+| A host does not span two domains              | Hard: activation fails                                                              |
+| At least two distinct domains exist           | Hard: activation fails                                                              |
+| All domains hold an equal number of hosts     | Hard: activation fails                                                              |
+| At least `parity chunks + 1` distinct domains | Recommendation: a warning is logged, activation proceeds with best-effort placement |
 
 During activation, simplyblock computes the interleaved host rotation across the domains and assigns all secondary
 and tertiary failover paths from it. Re-activation of an existing cluster (for example, during disaster recovery)
@@ -88,7 +88,7 @@ journal quorum.
 Once the cluster holds data, topology changes are admitted only if the failure domains stay balanced:
 
 - The host count per domain may never diverge by more than one (±1 rule). On a balanced cluster, one host can be
-  added to any domain; the next host must then go to a different domain.
+  added to any domain. The next host must then go to a different domain.
 - No domain may drop below two hosts.
 - Adding another storage node slot on an already-member host (multi-socket systems) is balance-neutral and always
   admitted, as long as the host keeps its original domain id.
@@ -111,7 +111,7 @@ before any change is made.
 
 !!! important
     On clusters with a single parity chunk (FTT 1), an odd total host count cannot satisfy the cross-domain
-    invariant, because there is no tertiary path to fall back on. Grow such clusters in pairs — one host per
+    invariant, because there is no tertiary path to fall back on. Grow such clusters in pairs, one host per
     domain at a time.
 
 ## Removing a Storage Node
@@ -119,7 +119,7 @@ before any change is made.
 Node removal applies the same balance rules (±1, minimum two hosts per domain). In addition, the failover paths
 hosted by the node being removed are relocated to other nodes. If the path being relocated is the only
 cross-domain path of its volume store, the replacement node **must** be in a different failure domain than the
-primary; if no such node exists, the removal is refused.
+primary. If no such node exists, the removal is refused.
 
 ## Moving a Host Between Domains
 

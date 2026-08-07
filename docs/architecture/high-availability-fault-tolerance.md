@@ -64,8 +64,8 @@ availability of the logical volume.
 In addition to the node-level path redundancy, simplyblock supports multipathing across independent **storage
 networks**: storage nodes attached with multiple data interfaces in separate VLANs expose every path on every
 network, multiplying the number of client connections (for example, four connections with one failover path and
-two networks, or six with two failover paths). This provides an alternative to link aggregation (LACP, MLAG) —
-see [Storage Network Multipathing](../non-kubernetes/installation/storage-network-multipathing.md).
+two networks, or six with two failover paths). This provides an alternative to link aggregation (LACP, MLAG).
+See [Storage Network Multipathing](../non-kubernetes/installation/storage-network-multipathing.md).
 
 ### 3. Redundant Control Plane and Storage Plane
 

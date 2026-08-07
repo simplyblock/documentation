@@ -4,14 +4,14 @@ description: "Migrate a logical volume between storage nodes with the simplybloc
 weight: 20040
 ---
 
-Simplyblock can move a logical volume — including its snapshots — from one storage node to another while the
+Simplyblock can move a logical volume (including its snapshots) from one storage node to another while the
 volume stays online. I/O is only frozen for the brief moment needed to transfer the final delta at the end of the
 migration.
 
 This page describes the CLI-driven migration between nodes of the **same cluster**. For moving volumes between
 **clusters**, see [Asynchronous Replication](asynchronous-replication.md), which provides a
 replication-based cross-cluster migration. In Kubernetes environments, migrations are managed declaratively
-through the `VolumeMigration` resource; see
+through the `VolumeMigration` resource. See
 [Volume Migration on Kubernetes](../../kubernetes/operations/volume-migration.md).
 
 ## How a Migration Works
@@ -21,8 +21,8 @@ A migration is a two-step operation with a client action in between:
 1. `volume migrate` **pre-creates** the target: the NVMe-oF subsystem for the volume is created on the target
    node with the same NQN as on the source, with all listeners in the ANA state `inaccessible`. The command
    returns a migration ID and the NVMe connect strings for the new target paths.
-2. The operator runs the returned `nvme connect` commands **on the client**. The new paths join the client's
-   native NVMe multipath for the volume; because they are `inaccessible`, they carry no I/O yet.
+2. The returned `nvme connect` commands are run **on the client**. The new paths join the client's native NVMe
+   multipath for the volume. Because they are `inaccessible`, they carry no I/O yet.
 3. `volume migrate-continue` starts the data transfer. The snapshot chain is copied oldest-first, the live delta
    is progressively shrunk with intermediate snapshots, and the final delta is transferred under a short I/O
    freeze. At cutover, the ANA states flip: the target paths become active and the source paths become
@@ -54,8 +54,8 @@ sudo nvme connect --transport=tcp --traddr=<TARGET_IP> --trsvcid=<PORT> --nqn=<N
 {{ cliname }} volume migrate-continue <MIGRATION_ID>
 ```
 
-`migrate-continue` accepts `--max-retries <N>` (default 10) and `--deadline <SECONDS>` (default 14400; `0`
-disables the deadline).
+`migrate-continue` accepts `--max-retries <N>` (default 10) and `--deadline <SECONDS>` (default 14400). Setting
+the deadline to `0` disables it.
 
 If the volume has host authentication configured (DH-HMAC-CHAP), pass the client's host NQN to the pre-create
 step with `--host-nqn <NQN>`.
@@ -74,7 +74,7 @@ counter, and the last error, if any.
 | `pre_created`    | Target subsystem exists, waiting for `migrate-continue`.                                |
 | `snap_copy`      | The snapshot chain is being copied to the target.                                       |
 | `lvol_migrate`   | The final delta is being transferred. This is the only phase with a (short) I/O freeze. |
-| `cleanup_source` | Data has moved; source-side objects are being removed.                                  |
+| `cleanup_source` | Data has moved. Source-side objects are being removed.                                  |
 | `cleanup_target` | Rollback after a failure or cancellation: target-side objects are being removed.        |
 | `completed`      | The migration has finished.                                                             |
 
@@ -88,15 +88,15 @@ A volume that is part of an active migration shows the migration ID in the `migr
 ```
 
 A migration canceled in the `pre_created` phase is torn down immediately. In later phases, the cancellation is
-picked up asynchronously by the migration runner, which rolls the target back (`cleanup_target`); it may take a
+picked up asynchronously by the migration runner, which rolls the target back (`cleanup_target`). It may take a
 few seconds to reflect in `migrate-list`. Data on the source remains intact and authoritative until the final
 cutover, so a migration can be canceled at any phase before `cleanup_source`.
 
 ## Migrating Shared Subsystems (Batch Migration)
 
 Volumes that share one NVMe-oF subsystem (namespaced volumes) can only be migrated together. Pass `--batch` with
-any member volume; simplyblock migrates all volumes of the subsystem as one coordinated group and returns a
-migration group ID, which is then used with `--batch` on the other commands:
+any member volume. Simplyblock then migrates all volumes of the subsystem as one coordinated group and returns a
+migration group ID, which is used with `--batch` on the other commands:
 
 ```bash title="Migrate all volumes of a shared subsystem"
 {{ cliname }} volume migrate <ANY_MEMBER_VOLUME_ID> <TARGET_NODE_ID> --batch
@@ -113,16 +113,17 @@ A migration is admitted only if:
 
 - The cluster is active and not currently rebalancing (no device migration or post-restart rebalancing tasks are
   running).
-- The volume is online; the target node is online and different from the source node; the source node is online
-  or suspended.
+- The volume is online.
+- The target node is online and different from the source node.
+- The source node is online or suspended.
 - The volume has no other active migration. Re-running `volume migrate` with the same volume and target returns
-  the existing migration ID; a different target requires canceling the existing migration first.
+  the existing migration ID. A different target requires canceling the existing migration first.
 
 Additional operational constraints while a migration is active:
 
 - **Snapshots of volumes on the source node cannot be created** until the migration completes.
 - New volumes cannot be attached to a subsystem that has an active migration.
-- The erasure coding scheme of the volume is preserved; it is not re-negotiated on the target.
+- The erasure coding scheme of the volume is preserved. It is not re-negotiated on the target.
 - Simplyblock does not pre-check the free capacity of the target node. Ensure the target has enough capacity for
   the volume and its snapshots before starting the migration.
 

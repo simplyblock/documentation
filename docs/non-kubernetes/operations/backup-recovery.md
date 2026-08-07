@@ -53,7 +53,7 @@ Restoring a backup creates a new logical volume with the data reconstructed from
 ```
 
 The `--lvol`, `--pool`, and `--cluster-id` parameters are required. Any node of the cluster can restore any
-backup; without `--node`, the node that took the backup is used.
+backup. Without `--node`, the node that took the backup is used.
 
 The restore process downloads and applies each backup in the chain. The new volume is set to a restoring state during
 the transfer and transitions to online once complete.
@@ -161,7 +161,7 @@ bucket:
 {{ cliname }} backup source-switch <SOURCE_CLUSTER_ID> [--cluster-id <TARGET_CLUSTER_ID>]
 ```
 
-The switch changes only the bucket that is read; the target cluster's own S3 credentials and endpoint are reused,
+The switch changes only the bucket that is read. The target cluster's own S3 credentials and endpoint are reused,
 so they must have access to the source cluster's bucket. To list available backup sources:
 
 ```bash title="List backup sources"

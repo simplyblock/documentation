@@ -1,6 +1,6 @@
 ---
 title: "Asynchronous Replication"
-description: "Asynchronous replication between simplyblock clusters: disaster recovery, cross-cluster volume migration, failover and failback."
+description: "Asynchronous replication between simplyblock clusters: disaster recovery, cross-cluster volume migration, failover, and failback."
 weight: 20045
 ---
 
@@ -20,7 +20,7 @@ Kubernetes environments, where replication is managed through the `SnapshotRepli
 ## Prerequisites
 
 - **Both clusters are managed by the same control plane.** The first cluster is created with
-  `{{ cliname }} cluster create`; the second is attached to the same control plane with `{{ cliname }} cluster add`.
+  `{{ cliname }} cluster create`. The second is attached to the same control plane with `{{ cliname }} cluster add`.
 - The storage nodes of the source cluster can reach the storage nodes of the target cluster over the storage
   network: replication transfers data directly between the nodes over NVMe-oF.
 - Both clusters are activated, and both have an active storage pool.
@@ -55,9 +55,9 @@ run the command once in each direction.
 - `--mode migration`: planned cutover. The target subsystem is pre-created up front (inaccessible), and the
   volume is cut over on an explicit commit.
 - `--interval-min <N>`: take an internal replication snapshot every `N` minutes (the first one immediately).
-  `0` disables interval snapshots; then only user-created snapshots replicate.
+  `0` disables interval snapshots. Only user-created snapshots then replicate.
 
-Every snapshot of a replicated volume — interval-based or user-created — is queued for transfer to the target
+Every snapshot of a replicated volume (interval-based or user-created) is queued for transfer to the target
 cluster. Snapshots that were taken before replication was enabled are transferred as well. The achievable recovery
 point (RPO) is roughly the snapshot interval plus the transfer time.
 
@@ -78,9 +78,9 @@ To take an immediate replication snapshot outside the interval:
 ```
 
 The output shows the last snapshot, the last completed replication and its duration, the number of replicated
-snapshots, the **time lag** (the age of the newest point-in-time that exists on the target — the actual RPO), and
-the outstanding backlog (count and bytes of not-yet-replicated snapshots). A volume is caught up when the
-outstanding count is zero.
+snapshots, the **time lag**, and the outstanding backlog (count and bytes of not-yet-replicated snapshots). The
+time lag is the age of the newest point-in-time that exists on the target, which is the actual RPO. A volume is
+caught up when the outstanding count is zero.
 
 ```bash title="All replication tasks of a cluster"
 {{ cliname }} volume replication-status <CLUSTER_ID>
@@ -103,7 +103,7 @@ Wait until `{{ cliname }} volume replication-info <VOLUME_ID>` reports an outsta
 ```
 
 The commit takes a final snapshot to minimize the delta, builds the target volume on the last replicated
-snapshot — with the **same NQN and namespace ID** as the source — exposes it as inaccessible, and queues the final
+snapshot (with the **same NQN and namespace ID** as the source), exposes it as inaccessible, and queues the final
 cutover task. The cutover freezes source I/O, transfers the residual delta, and flips the ANA states so that the
 client fails over to the target paths without a disconnect.
 
@@ -113,7 +113,7 @@ client fails over to the target paths without a disconnect.
     `nvme connect` commands on the client before the cutover task completes. Because source and target expose the
     same NQN and namespace ID, the new paths join the existing multipath device.
 
-Since continuous replication keeps the backlog small, the final freeze only covers the residual delta — typically
+Since continuous replication keeps the backlog small, the final freeze only covers the residual delta, typically
 a fraction of a second to a few seconds.
 
 ## Failover (Disaster Recovery)
@@ -132,7 +132,7 @@ with the same device identity.
 
 !!! warning
     Data written on the source after the last successfully replicated snapshot is not available on the target.
-    The data gap is at most the replication interval plus the replication lag; check
+    The data gap is at most the replication interval plus the replication lag. Check
     `volume replication-info` to see the effective lag. Unlike the planned cutover, a failover interrupts I/O:
     workloads must reconnect (and typically restart) against the target paths.
 
@@ -159,7 +159,7 @@ interruption-free cutback.
 ```
 
 Stopping cancels the pending replication tasks of the volume and disables further snapshots from replicating. The
-already replicated snapshots on the target are kept; they can be removed individually without touching the source
+already replicated snapshots on the target are kept. They can be removed individually without touching the source
 snapshot:
 
 ```bash title="Delete only the replicated copy of a snapshot"

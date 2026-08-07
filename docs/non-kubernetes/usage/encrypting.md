@@ -29,13 +29,13 @@ functionality.
 The encryption uses an AES_XTS variable-length block cipher.
 
 The encryption keys are created and stored by the cluster's key management system (KMS) when the volume is
-created. By default, simplyblock manages the keys internally; alternatively, an external KMS (HashiCorp Vault or
+created. By default, simplyblock manages the keys internally. Alternatively, an external KMS (HashiCorp Vault or
 OpenBao) can be configured at cluster creation time via `--hashicorp-vault-url`. See
 [External Key Management](../../architecture/concepts/external-key-management.md) for the architecture.
 
 !!! note
     Earlier releases required manually generated keys passed via `--crypto-key1` and `--crypto-key2`. These
-    parameters are deprecated since 26.2 and cannot be used anymore; key handling is fully KMS-based.
+    parameters are deprecated since 26.2 and cannot be used anymore. Key handling is fully KMS-based.
 
 ## Creating an Encrypted Logical Volume
 

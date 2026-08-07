@@ -142,7 +142,7 @@ If separate NICs (e.g., a BOND device, or dedicated interfaces per storage VLAN)
 (no matter if in the cluster or between hosts and cluster nodes), the `--data-nics` parameter must be specified.
 Without it, the management interface carries all traffic. Multiple interfaces are given as a comma-separated
 list (e.g., `--data-nics eth1,eth2`), in which case all NVMe-oF subsystems listen on every data interface and
-connections are established once per interface — see
+connections are established once per interface. See
 [Storage Network Multipathing](storage-network-multipathing.md).
 
 !!! info
@@ -153,7 +153,7 @@ connections are established once per interface — see
     storage location.
 
 If the cluster was created with failure-domain support, every node must additionally be tagged with its
-failure-domain id via `--failure-domain <ID>`; see
+failure-domain id via `--failure-domain <ID>`. See
 [Managing Failure Domains](../operations/failure-domains.md).
 
 The output will look something like the following example:
