@@ -30,7 +30,7 @@ A migration is a two-step operation with a client action in between:
 
 !!! warning
     A pre-created migration must be continued within **five minutes**. If `migrate-continue` is not run in time,
-    the migration is automatically cancelled and the target resources are released.
+    the migration is automatically canceled and the target resources are released.
 
 ## Starting a Migration
 
@@ -69,28 +69,28 @@ step with `--host-nqn <NQN>`.
 The list shows source and target node, the current phase, status, snapshot progress (migrated/planned), the retry
 counter, and the last error, if any.
 
-| Phase | Meaning |
-|-------|---------|
-| `pre_created` | Target subsystem exists, waiting for `migrate-continue`. |
-| `snap_copy` | The snapshot chain is being copied to the target. |
-| `lvol_migrate` | The final delta is being transferred. This is the only phase with a (short) I/O freeze. |
-| `cleanup_source` | Data has moved; source-side objects are being removed. |
-| `cleanup_target` | Rollback after a failure or cancellation: target-side objects are being removed. |
-| `completed` | The migration has finished. |
+| Phase            | Meaning                                                                                 |
+|------------------|-----------------------------------------------------------------------------------------|
+| `pre_created`    | Target subsystem exists, waiting for `migrate-continue`.                                |
+| `snap_copy`      | The snapshot chain is being copied to the target.                                       |
+| `lvol_migrate`   | The final delta is being transferred. This is the only phase with a (short) I/O freeze. |
+| `cleanup_source` | Data has moved; source-side objects are being removed.                                  |
+| `cleanup_target` | Rollback after a failure or cancellation: target-side objects are being removed.        |
+| `completed`      | The migration has finished.                                                             |
 
 A volume that is part of an active migration shows the migration ID in the `migrating` field of
 `{{ cliname }} volume get <VOLUME_ID>`.
 
-## Cancelling a Migration
+## Canceling a Migration
 
 ```bash title="Cancel a migration"
 {{ cliname }} volume migrate-cancel <MIGRATION_ID>
 ```
 
-A migration cancelled in the `pre_created` phase is torn down immediately. In later phases, the cancellation is
+A migration canceled in the `pre_created` phase is torn down immediately. In later phases, the cancellation is
 picked up asynchronously by the migration runner, which rolls the target back (`cleanup_target`); it may take a
 few seconds to reflect in `migrate-list`. Data on the source remains intact and authoritative until the final
-cutover, so a migration can be cancelled at any phase before `cleanup_source`.
+cutover, so a migration can be canceled at any phase before `cleanup_source`.
 
 ## Migrating Shared Subsystems (Batch Migration)
 
@@ -116,7 +116,7 @@ A migration is admitted only if:
 - The volume is online; the target node is online and different from the source node; the source node is online
   or suspended.
 - The volume has no other active migration. Re-running `volume migrate` with the same volume and target returns
-  the existing migration ID; a different target requires cancelling the existing migration first.
+  the existing migration ID; a different target requires canceling the existing migration first.
 
 Additional operational constraints while a migration is active:
 

@@ -21,14 +21,14 @@ is added to the cluster.
 
 With failure domains enabled, placement decisions consider the domain tag in four independent dimensions:
 
-1. **Data and parity chunks**: The distributed erasure coding spreads the chunks of each stripe across distinct
+1. **Data and parity chunks:** The distributed erasure coding spreads the chunks of each stripe across distinct
    failure domains, so that a full domain outage leaves enough chunks to reconstruct all data within the configured
    erasure coding scheme.
-2. **Journal copies**: The copies of the high-availability write journal are balanced across domains with a
+2. **Journal copies:** The copies of the high-availability write journal are balanced across domains with a
    per-domain cap, so that losing a whole domain always leaves enough journal copies to maintain the journal quorum.
-3. **Failover paths**: The secondary (and, with two parity chunks, tertiary) failover nodes of each logical volume
+3. **Failover paths:** The secondary (and, with two parity chunks, tertiary) failover nodes of each logical volume
    are placed in different failure domains than the primary node wherever possible.
-4. **Cluster status**: The health assessment of the cluster understands domains. Any combination of node and
+4. **Cluster status:** The health assessment of the cluster understands domains. Any combination of node and
    device outages confined to a single failure domain keeps the cluster serving I/O in a degraded state instead
    of suspending it.
 
@@ -67,15 +67,15 @@ a same-domain secondary path, and its tertiary path is still guaranteed to be cr
 !!! note
     Balance is counted in physical hosts, not storage nodes. On multi-socket hosts running two storage nodes, both
     nodes count as one host and must carry the same failure-domain id. Dedicated secondary nodes are not counted
-    towards the balance.
+    toward the balance.
 
 ## Failure Domains and Erasure Coding Schemes
 
 The number of failure domains should match the data protection goal:
 
-| Goal | Recommendation |
-|------|----------------|
-| Survive one full domain outage | At least `parity chunks + 1` distinct failure domains |
+| Goal                                                                            | Recommendation                                                                                                |
+|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Survive one full domain outage                                                  | At least `parity chunks + 1` distinct failure domains                                                         |
 | Survive one full domain outage plus one further node or drive failure elsewhere | Erasure coding scheme with two parity chunks (e.g., `1+2`, `2+2`) and at least as many domains as data chunks |
 
 The high-availability journal requires at least **four** journal copies on failure-domain clusters (instead of

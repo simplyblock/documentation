@@ -30,11 +30,11 @@ switch paths.
 
 A typical layout separates management and storage traffic completely:
 
-| Network interface | Purpose | Subnet (example) |
-|-------------------|---------------------|------------------|
-| eth0 | Management / control plane | 192.168.10.0/24 |
-| eth1 | Storage path A | 10.10.10.0/24 |
-| eth2 | Storage path B | 10.10.20.0/24 |
+| Network interface | Purpose                    | Subnet (example) |
+|-------------------|----------------------------|------------------|
+| eth0              | Management / control plane | 192.168.10.0/24  |
+| eth1              | Storage path A             | 10.10.10.0/24    |
+| eth2              | Storage path B             | 10.10.20.0/24    |
 
 The management network should still be highly available (a simple bond is sufficient), but it does not carry
 storage traffic.

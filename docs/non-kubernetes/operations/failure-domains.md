@@ -16,7 +16,7 @@ failure domains are assigned declaratively through the Simplyblock Operator
 
 ## Enabling Failure Domains
 
-Failure-domain support is enabled when the storage cluster is created and is immutable afterwards:
+Failure-domain support is enabled when the storage cluster is created and is immutable afterward:
 
 ```bash title="Create a cluster with failure-domain support"
 {{ cliname }} cluster create --enable-failure-domain <FURTHER_OPTIONS>
@@ -58,12 +58,12 @@ The assigned domains are shown in the node list once at least one node carries a
 
 Activating a freshly assembled failure-domain cluster enforces the following rules:
 
-| Rule | Enforcement |
-|------|-------------|
-| Every node carries a failure-domain id | Hard — activation fails |
-| A host does not span two domains | Hard — activation fails |
-| At least two distinct domains exist | Hard — activation fails |
-| All domains hold an equal number of hosts | Hard — activation fails |
+| Rule                                          | Enforcement                                                                          |
+|-----------------------------------------------|--------------------------------------------------------------------------------------|
+| Every node carries a failure-domain id        | Hard — activation fails                                                              |
+| A host does not span two domains              | Hard — activation fails                                                              |
+| At least two distinct domains exist           | Hard — activation fails                                                              |
+| All domains hold an equal number of hosts     | Hard — activation fails                                                              |
 | At least `parity chunks + 1` distinct domains | Recommendation — a warning is logged, activation proceeds with best-effort placement |
 
 During activation, simplyblock computes the interleaved host rotation across the domains and assigns all secondary

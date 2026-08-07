@@ -9,11 +9,11 @@ control plane; others depend on the node's vCPU count and memory configuration.
 
 ## Hard Per-Node Object Limits
 
-| Limit | Value | What it counts |
-|-------|------:|----------------|
-| Objects per node | 6000 | Logical volumes, clones, and snapshots owned by the node (its logical volume store) |
-| NVMe-oF subsystems per node | 75 | Subsystems for which the node is the primary; namespaced volumes sharing one subsystem count as one |
-| Namespaces per subsystem | 50 | Volumes (namespaces) sharing one NVMe-oF subsystem |
+| Limit                       | Value | What it counts                                                                                      |
+|-----------------------------|------:|-----------------------------------------------------------------------------------------------------|
+| Objects per node            | 6000  | Logical volumes, clones, and snapshots owned by the node (its logical volume store)                 |
+| NVMe-oF subsystems per node | 75    | Subsystems for which the node is the primary; namespaced volumes sharing one subsystem count as one |
+| Namespaces per subsystem    | 50    | Volumes (namespaces) sharing one NVMe-oF subsystem                                                  |
 
 These limits are enforced on every create path (volume create, snapshot create, clone). When a limit is reached,
 the operation fails with an explanatory error, for example:
@@ -61,32 +61,32 @@ the node's subsystem limit).
 
 On top of the hard object limits, several resource limits scale with the vCPU count of the storage node:
 
-| Limit | Rule |
-|-------|------|
-| CPU cores per storage node | At most 64 cores can be assigned to one storage node (SPDK instance). |
-| Distribution services per node | Scales with the assigned cores, capped at 12. |
-| NVMe-oF buffer pools | Scale with core count and `--max-subsys`; they determine part of the huge-page demand. |
-| Huge-page memory | The minimum huge-page memory grows with the core count and the configured maximum number of subsystems. Nodes refuse to start with insufficient huge pages. |
-| Storage nodes per host | 1 or 2 (`--nodes-per-socket`), aligned to NUMA sockets. |
+| Limit                          | Rule                                                                                                                                                        |
+|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CPU cores per storage node     | At most 64 cores can be assigned to one storage node (SPDK instance).                                                                                       |
+| Distribution services per node | Scales with the assigned cores, capped at 12.                                                                                                               |
+| NVMe-oF buffer pools           | Scale with core count and `--max-subsys`; they determine part of the huge-page demand.                                                                      |
+| Huge-page memory               | The minimum huge-page memory grows with the core count and the configured maximum number of subsystems. Nodes refuse to start with insufficient huge pages. |
+| Storage nodes per host         | 1 or 2 (`--nodes-per-socket`), aligned to NUMA sockets.                                                                                                     |
 
 In practice, the **memory** derived from vCPU count and `--max-subsys` is the sizing driver: see
 [Hardware Requirements](../deployment-preparation/hardware-requirements.md) for the RAM formula per subsystem.
 
 ## Cluster-Level Limits and Gates
 
-| Limit | Default | Description |
-|-------|--------:|-------------|
-| Fault tolerance (FTT) | 1 | 1 or 2, derived from the parity chunks of the erasure coding scheme. |
-| Minimum online devices at activation | — | Data chunks + parity chunks + 1. |
-| Minimum online nodes for volume creation | — | At least data chunks + parity chunks online nodes. |
-| Journal copies (`--ha-jm-count`) | 3 (FTT 1) / 4 (FTT 2) | Failure-domain clusters require 4 even at FTT 1. |
-| Minimum volume size | 100 MiB | Smaller volumes are rejected. |
-| Provisioning warning (`--prov-cap-warn`) | 250 % | Warning when total provisioned capacity exceeds this ratio of the cluster capacity. |
-| Provisioning limit (`--prov-cap-crit`) | 500 % | Volume creation fails beyond this over-provisioning ratio. |
-| Utilization warning / critical (`--cap-warn` / `--cap-crit`) | 89 % / 99 % | Alerts on used physical capacity. |
-| Storage pool caps (`--pool-max`, `--lvol-max`) | unlimited | Optional per-pool caps for total provisioned size and per-volume size. |
-| NVMe/TCP qpairs per volume (`--qpair-count`) | 32 | Cluster-internal queue pair count per volume connection. |
-| Client qpairs (`--client-qpair-count`) | 3 | Queue pairs per client connection. |
+| Limit                                                        | Default               | Description                                                                         |
+|--------------------------------------------------------------|----------------------:|-------------------------------------------------------------------------------------|
+| Fault tolerance (FTT)                                        | 1                     | 1 or 2, derived from the parity chunks of the erasure coding scheme.                |
+| Minimum online devices at activation                         | —                     | Data chunks + parity chunks + 1.                                                    |
+| Minimum online nodes for volume creation                     | —                     | At least data chunks + parity chunks online nodes.                                  |
+| Journal copies (`--ha-jm-count`)                             | 3 (FTT 1) / 4 (FTT 2) | Failure-domain clusters require 4 even at FTT 1.                                    |
+| Minimum volume size                                          | 100 MiB               | Smaller volumes are rejected.                                                       |
+| Provisioning warning (`--prov-cap-warn`)                     | 250 %                 | Warning when total provisioned capacity exceeds this ratio of the cluster capacity. |
+| Provisioning limit (`--prov-cap-crit`)                       | 500 %                 | Volume creation fails beyond this over-provisioning ratio.                          |
+| Utilization warning / critical (`--cap-warn` / `--cap-crit`) | 89 % / 99 %           | Alerts on used physical capacity.                                                   |
+| Storage pool caps (`--pool-max`, `--lvol-max`)               | unlimited             | Optional per-pool caps for total provisioned size and per-volume size.              |
+| NVMe/TCP qpairs per volume (`--qpair-count`)                 | 32                    | Cluster-internal queue pair count per volume connection.                            |
+| Client qpairs (`--client-qpair-count`)                       | 3                     | Queue pairs per client connection.                                                  |
 
 There is no built-in limit on the number of storage nodes per cluster, clusters per control plane, or storage
 pools per cluster.
