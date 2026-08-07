@@ -37,7 +37,8 @@ time:
 3. Re-run the configuration with a selection that includes the new devices:
 
     ```bash title="Reconfiguring the node with an extended device selection"
-    sudo {{ cliname }} storage-node configure --lblk --blk-names sdb,sdc,sdd --max-lvol 50
+    sudo {{ cliname }} storage-node configure \
+       --lblk --blk-names sdb,sdc,sdd --max-lvol 50
     ```
 
 4. Re-add the node to the cluster. The node joins with the extended device set, and data is

@@ -49,15 +49,18 @@ Devices can also be selected explicitly, by name or by serial number. The three 
 mutually exclusive:
 
 ```bash title="Selecting block devices by name"
-sudo {{ cliname }} storage-node configure --lblk --blk-names sdb,sdc --max-lvol 50
+sudo {{ cliname }} storage-node configure \
+    --lblk --blk-names sdb,sdc --max-lvol 50
 ```
 
 ```bash title="Selecting all eligible block devices except some"
-sudo {{ cliname }} storage-node configure --lblk --blk-names-exclude sda --max-lvol 50
+sudo {{ cliname }} storage-node configure \
+    --lblk --blk-names-exclude sda --max-lvol 50
 ```
 
 ```bash title="Selecting block devices by serial number or WWN"
-sudo {{ cliname }} storage-node configure --lblk --blk-serials S3EVNX0M602707,S3EVNX0M602708 --max-lvol 50
+sudo {{ cliname }} storage-node configure \
+    --lblk --blk-serials S3EVNX0M602707,S3EVNX0M602708 --max-lvol 50
 ```
 
 A requested device that is busy (mounted, held, or otherwise ineligible) is an error. The
@@ -74,7 +77,8 @@ A device carrying a partition table is not eligible by default. To reuse such a 
 eligible with `--force` at configuration time:
 
 ```bash title="Including a partitioned block device in the selection"
-sudo {{ cliname }} storage-node configure --lblk --blk-names sdb --force --max-lvol 50
+sudo {{ cliname }} storage-node configure \
+    --lblk --blk-names sdb --force --max-lvol 50
 ```
 
 The wipe itself happens later, at node addition, where it has to be requested explicitly with
@@ -94,7 +98,8 @@ additional flag. If partitioned devices were force-included at configuration tim
 (`wipefs`) from those devices:
 
 ```bash title="Adding the storage node while wiping partitioned devices"
-sudo {{ cliname }} storage-node add-node --force-format <CLUSTER_ID> <NODE_IP>:5000 eth0
+sudo {{ cliname }} storage-node add-node \
+    --force-format <CLUSTER_ID> <NODE_IP>:5000 eth0
 ```
 
 !!! danger
