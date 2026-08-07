@@ -198,6 +198,15 @@ SPELLINGS.update(explicit(
 SPELLINGS.update(explicit(
     ("aeroplane", "airplane"), ("aeroplanes", "airplanes"),
     ("ageing", "aging"),
+    # American English drops the "s" of the directional adverbs. "sideways" is
+    # not one of them: it has no "sideway" form on either side.
+    ("afterwards", "afterward"), ("backwards", "backward"),
+    # A hyphenated compound would otherwise be read as an identifier and skipped.
+    ("backwards-compatible", "backward-compatible"),
+    ("downwards", "downward"), ("forwards", "forward"),
+    ("inwards", "inward"), ("onwards", "onward"),
+    ("outwards", "outward"), ("towards", "toward"),
+    ("upwards", "upward"),
     ("aluminium", "aluminum"),
     ("amidst", "amid"), ("amongst", "among"), ("whilst", "while"),
     ("analogue", "analog"), ("analogues", "analogs"),
