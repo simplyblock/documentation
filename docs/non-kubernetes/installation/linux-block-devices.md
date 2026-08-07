@@ -25,8 +25,8 @@ control plane:
 sudo {{ cliname }} cluster create --device-mode lblk
 ```
 
-`nvme` (the default) and `lblk` are accepted by `--device-mode`. The mode cannot be changed after
-creation, and it is followed by all storage nodes of the cluster.
+Two values are accepted by `--device-mode`: `nvme` (the default) and `lblk`. The mode is followed by
+all storage nodes of the cluster and cannot be changed after creation.
 
 !!! important
     All control plane and storage node services must run a software version that supports the `lblk`
@@ -41,12 +41,12 @@ and an optional device selector:
 sudo {{ cliname }} storage-node configure --lblk --max-lvol <MAX_LOGICAL_VOLUMES>
 ```
 
-Without a selector, every eligible disk on the host is used. Eligible means a whole, unmounted,
+Without a selector, every eligible disk on the host is used. An eligible disk is a whole, unmounted,
 unheld, and unpartitioned disk that is not the root disk (see the
 [eligibility rules](../../architecture/concepts/linux-block-devices.md#device-eligibility)).
 
-Devices can be selected explicitly by name or by serial number. The three selectors are mutually
-exclusive:
+Devices can also be selected explicitly, by name or by serial number. The three selectors are
+mutually exclusive:
 
 ```bash title="Selecting block devices by name"
 sudo {{ cliname }} storage-node configure --lblk --blk-names sdb,sdc --max-lvol 50
@@ -60,13 +60,13 @@ sudo {{ cliname }} storage-node configure --lblk --blk-names-exclude sda --max-l
 sudo {{ cliname }} storage-node configure --lblk --blk-serials S3EVNX0M602707,S3EVNX0M602708 --max-lvol 50
 ```
 
-A requested device that is busy (mounted, held, or otherwise ineligible) is an error: the
+A requested device that is busy (mounted, held, or otherwise ineligible) is an error. The
 configuration fails rather than silently skipping the device.
 
 The selected devices are stored in the resulting configuration file
 (`/etc/simplyblock/sn_config_file`) with their name, serial, stable by-id path, size, and NUMA
-assignment. As in NVMe mode, the file can be
-reviewed and manually edited before deployment, for example to remove a device from the selection.
+assignment. As in NVMe mode, the file can be reviewed and manually edited before deployment, for
+example to remove a device from the selection.
 
 ### Partitioned Devices
 
@@ -77,7 +77,7 @@ eligible with `--force` at configuration time:
 sudo {{ cliname }} storage-node configure --lblk --blk-names sdb --force --max-lvol 50
 ```
 
-The actual wipe happens later, at node addition, and must be requested there explicitly with
+The wipe itself happens later, at node addition, where it has to be requested explicitly with
 `--force-format`. Until then, no data is touched.
 
 ## Storage Node Deployment and Addition
@@ -88,10 +88,10 @@ Node deployment is unchanged:
 sudo {{ cliname }} storage-node deploy --ifname eth0
 ```
 
-Adding the node to the cluster from a control plane node is unchanged as well, with one additional
-flag: if partitioned devices were force-included at configuration time, with `--force-format` the
-node addition is instructed to wipe partition tables and filesystem signatures (`wipefs`) from those
-devices:
+Adding the node to the cluster from a control plane node is unchanged as well, apart from one
+additional flag. If partitioned devices were force-included at configuration time, with
+`--force-format` the node addition is instructed to wipe partition tables and filesystem signatures
+(`wipefs`) from those devices:
 
 ```bash title="Adding the storage node while wiping partitioned devices"
 sudo {{ cliname }} storage-node add-node --force-format <CLUSTER_ID> <NODE_IP>:5000 eth0
@@ -117,5 +117,5 @@ address:
 sudo {{ cliname }} storage-node list-devices <NODE_ID>
 ```
 
-On the host, the devices continue to be shown by `lsblk`, since they remain kernel-owned, and one
-`aio_<serial>` base bdev per device is exposed by the SPDK process.
+On the host, the devices remain kernel-owned and continue to be shown by `lsblk`. One `aio_<serial>`
+base bdev per device is exposed by the SPDK process.

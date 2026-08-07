@@ -13,10 +13,10 @@ Concepts and deployment are described under
 
 ## Node Restarts
 
-No `lblk`-specific handling is required for a node restart. On restart, the node's configured devices are
-re-resolved serial-first against the live host inventory: kernel device names may have changed across
-a reboot (for example, `/dev/sdb` and `/dev/sdc` swapping), and the devices are still matched
-correctly by their persisted serial numbers. The AIO bdevs and the storage stack above them are then
+No `lblk`-specific handling is required for a node restart. On restart, the node's configured devices
+are re-resolved serial-first against the live host inventory. Kernel device names may have changed
+across a reboot (for example, `/dev/sdb` and `/dev/sdc` swapping), but the devices are still matched
+correctly by their persisted serial numbers, and the AIO bdevs and the storage stack above them are
 rebuilt exactly as recorded in the cluster database.
 
 A configured device that is missing from the host at restart is marked removed (the same semantics
@@ -50,13 +50,14 @@ Cluster capacity can alternatively be extended by
 
 Device failures are handled by the same machinery as in NVMe mode. A device producing IO errors is
 marked unavailable and, after the retry budget is exhausted, marked failed. The cluster map is
-updated, and the affected data is rebuilt from redundancy by a data migration. A device whose IO
-hangs without erroring is caught by the `lblk` hung-IO watchdog (roughly 30 seconds of zero progress
-with outstanding IO) and driven through the same unavailable, restart, and failed path. A device that
-disappears from the host, through hot removal or a cloud volume detach, is detected and treated like
-an NVMe hot-remove.
+updated, and the affected data is rebuilt from redundancy by a data migration.
 
-To replace a failed device, a replacement device is attached to the host, followed by the
+A device whose IO hangs without erroring is caught by the `lblk` hung-IO watchdog (roughly 30 seconds
+of zero progress with outstanding IO) and driven through the same unavailable, restart, and failed
+path. A device that disappears from the host, through hot removal or a cloud volume detach, is
+detected and treated like an NVMe hot-remove.
+
+A failed device is replaced by attaching a replacement device to the host and then following the
 [Adding Devices](#adding-devices-to-a-storage-node) procedure. Alternatively, the whole node is
 replaced, following [Replacing a Storage Node](replacing-storage-node.md).
 
