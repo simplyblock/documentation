@@ -59,7 +59,10 @@ def ise_verbs(*bases):
     endings: "organis|e" and "organiz|e" both become "-es", "-ed", "-ing" and
     "-ation".
     """
-    suffixes = ("e", "es", "ed", "ing", "er", "ers", "ation", "ations", "able")
+    suffixes = (
+        "e", "es", "ed", "ing", "er", "ers",
+        "ation", "ations", "ational", "ationally", "able",
+    )
     pairs = {}
     for base in bases:
         british, american = base[:-1], base[:-2] + "z"
@@ -85,8 +88,8 @@ def yse_verbs(*bases):
 def our_nouns(*bases):
     """Map the "-our" words to "-or", together with the forms built on them."""
     suffixes = (
-        "", "s", "ed", "ing", "ful", "fully", "less", "able", "ably",
-        "al", "ally", "ite", "ites", "hood", "hoods",
+        "", "s", "ed", "ing", "er", "ers", "ful", "fully", "less",
+        "able", "ably", "al", "ally", "ite", "ites", "hood", "hoods",
     )
     pairs = {}
     for base in bases:
@@ -131,6 +134,9 @@ SPELLINGS.update(ise_verbs(
     "summarise", "symbolise", "sympathise", "synchronise", "synthesise",
     "systematise", "theorise", "tokenise", "unionise", "urbanise", "utilise",
     "vaporise", "verbalise", "virtualise", "visualise", "weaponise",
+    "amortise", "dramatise", "evangelise", "globalise", "hypothesise",
+    "immunise", "jeopardise", "mechanise", "patronise", "plagiarise",
+    "pulverise", "victimise",
 ))
 SPELLINGS.update(yse_verbs(
     "analyse", "catalyse", "dialyse", "electrolyse", "hydrolyse", "paralyse",
@@ -146,6 +152,8 @@ SPELLINGS.update(re_nouns(
     "calibre", "centimetre", "centre", "datacentre", "fibre", "goitre",
     "kilometre", "litre", "lustre", "meagre", "metre", "millimetre", "mitre",
     "sabre", "sceptre", "sombre", "spectre", "theatre", "titre",
+    "amphitheatre", "epicentre", "micrometre", "millilitre", "nanometre",
+    "reconnoitre",
 ))
 
 # The doubled "l": British doubles it before a suffix ("cancelled"), American
@@ -194,8 +202,36 @@ SPELLINGS.update(explicit(
     ("practised", "practiced"), ("practising", "practicing"),
 ))
 
+# British keeps the silent "e" before "-able" where American drops it. Only after
+# a hard consonant: "manageable" and "noticeable" keep it on both sides, because
+# the "e" is what keeps the "g" and the "c" soft.
+SPELLINGS.update(explicit(
+    ("blameable", "blamable"), ("likeable", "likable"), ("liveable", "livable"),
+    ("moveable", "movable"), ("rateable", "ratable"), ("saleable", "salable"),
+    ("shakeable", "shakable"), ("sizeable", "sizable"), ("useable", "usable"),
+))
+
 # Ligatures and everything that follows no rule at all.
 SPELLINGS.update(explicit(
+    ("anticlockwise", "counterclockwise"),
+    ("biassed", "biased"), ("biassing", "biasing"),
+    ("chequered", "checkered"),
+    ("connexion", "connection"), ("inflexion", "inflection"),
+    ("reflexion", "reflection"),
+    ("cosy", "cozy"),
+    ("focussed", "focused"), ("focussing", "focusing"),
+    ("furore", "furor"),
+    ("gaol", "jail"),
+    ("gramme", "gram"), ("grammes", "grams"),
+    ("kilogramme", "kilogram"), ("kilogrammes", "kilograms"),
+    ("instal", "install"), ("instals", "installs"),
+    ("jewellery", "jewelry"),
+    ("judgemental", "judgmental"),
+    ("marvellous", "marvelous"),
+    ("maths", "math"),
+    ("spilt", "spilled"), ("spoilt", "spoiled"),
+    ("unravelled", "unraveled"), ("unravelling", "unraveling"),
+    ("woollen", "woolen"),
     ("aeroplane", "airplane"), ("aeroplanes", "airplanes"),
     ("ageing", "aging"),
     # American English drops the "s" of the directional adverbs. "sideways" is
