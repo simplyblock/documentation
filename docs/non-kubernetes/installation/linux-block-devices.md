@@ -7,7 +7,7 @@ weight: 35000
 {{ experimental }}
 
 Deploying a storage plane on Linux block devices instead of NVMe PCIe devices follows the standard
-[storage plane installation](install-sp.md) flow; only the differing steps are described here.
+[storage plane installation](install-sp.md) flow. Only the differing steps are described here.
 Background on the device mode, the eligibility rules, and the device identity is found under
 [Linux Block Devices (lblk)](../../architecture/concepts/linux-block-devices.md).
 
@@ -60,7 +60,7 @@ sudo {{ cliname }} storage-node configure --lblk --blk-names-exclude sda --max-l
 sudo {{ cliname }} storage-node configure --lblk --blk-serials S3EVNX0M602707,S3EVNX0M602708 --max-lvol 50
 ```
 
-A requested device that is busy — mounted, held, or otherwise ineligible — is an error: the
+A requested device that is busy (mounted, held, or otherwise ineligible) is an error: the
 configuration fails rather than silently skipping the device.
 
 The selected devices are stored in the resulting configuration file
@@ -102,11 +102,11 @@ sudo {{ cliname }} storage-node add-node --force-format <CLUSTER_ID> <NODE_IP>:5
     the node configuration has to be verified before the node is added.
 
 During node addition, each selected device is wrapped in an SPDK AIO bdev. No kernel driver unbinding
-takes place — the devices stay visible to the host OS but must not be used by anything else. The
+takes place, so the devices stay visible to the host OS but must not be used by anything else. The
 smallest device is used as the journal device, as in NVMe mode with journal-on-device deployments.
 
-Everything after node addition — cluster activation, pool creation, volume provisioning, and client
-connection — is identical to an NVMe-mode cluster.
+Everything after node addition (cluster activation, pool creation, volume provisioning, and client
+connection) is identical to an NVMe-mode cluster.
 
 ## Verification
 

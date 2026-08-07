@@ -19,8 +19,8 @@ a reboot (for example, `/dev/sdb` and `/dev/sdc` swapping), and the devices are 
 correctly by their persisted serial numbers. The AIO bdevs and the storage stack above them are then
 rebuilt exactly as recorded in the cluster database.
 
-A configured device that is missing from the host at restart is marked removed — the same semantics
-as a missing NVMe controller — and the standard failed-device data migration is triggered.
+A configured device that is missing from the host at restart is marked removed (the same semantics
+as a missing NVMe controller), and the standard failed-device data migration is triggered.
 
 !!! info
     The `--ssd-pcie` option of `storage-node restart`, by which new devices are added during a
@@ -49,17 +49,17 @@ Cluster capacity can alternatively be extended by
 ## Failed Devices
 
 Device failures are handled by the same machinery as in NVMe mode. A device producing IO errors is
-marked unavailable and, after the retry budget is exhausted, marked failed; the cluster map is
+marked unavailable and, after the retry budget is exhausted, marked failed. The cluster map is
 updated, and the affected data is rebuilt from redundancy by a data migration. A device whose IO
-hangs without erroring is caught by the `lblk` hung-IO watchdog — roughly 30 seconds of zero progress with
-outstanding IO — and driven through the same unavailable, restart, and failed path. A device that
+hangs without erroring is caught by the `lblk` hung-IO watchdog (roughly 30 seconds of zero progress
+with outstanding IO) and driven through the same unavailable, restart, and failed path. A device that
 disappears from the host, through hot removal or a cloud volume detach, is detected and treated like
 an NVMe hot-remove.
 
 To replace a failed device, a replacement device is attached to the host, followed by the
-[Adding Devices](#adding-devices-to-a-storage-node) procedure — or the whole node is replaced,
-following [Replacing a Storage Node](replacing-storage-node.md).
+[Adding Devices](#adding-devices-to-a-storage-node) procedure. Alternatively, the whole node is
+replaced, following [Replacing a Storage Node](replacing-storage-node.md).
 
 !!! info
-    SMART health information is not available for AIO-backed devices; device health checks
+    SMART health information is not available for AIO-backed devices. Device health checks
     (`storage-node check-device`) are limited to liveness and IO statistics.

@@ -9,9 +9,9 @@ weight: 30650
 Storage is normally onboarded by a simplyblock storage cluster as NVMe PCIe devices: at deployment,
 NVMe controllers are detected on the PCI bus, unbound from the kernel driver, and attached natively to
 the simplyblock storage plane container. The Linux block device mode (`lblk`) is an alternative,
-cluster-global device mode, in which any Linux block device is accepted — SAS or SATA SSDs behind an
-HBA, virtualized disks (virtio, Xen), or cloud volumes such as Amazon EBS — without requiring NVMe
-hardware at all.
+cluster-global device mode, in which any Linux block device is accepted without requiring NVMe
+hardware at all: SAS or SATA SSDs behind an HBA, virtualized disks (virtio, Xen), or cloud volumes
+such as Amazon EBS.
 
 !!! warning
     Linux block device support is experimental. It is intended for evaluation, for test environments,
@@ -39,8 +39,8 @@ place, and no device is ever claimed by the simplyblock storage plane PCI layer.
 
 A block device is eligible for `lblk` onboarding if all of the following hold:
 
-- It is a whole disk — not a partition, and not a special device such as a loop, RAM, CD-ROM, or
-  device-mapper device.
+- It is a whole disk (not a partition, and not a special device such as a loop, RAM, CD-ROM, or
+  device-mapper device).
 - It is not mounted, and no partition of it is mounted.
 - It is not held by another subsystem (LVM, MD RAID, or device-mapper).
 - It is not the root disk.
@@ -54,11 +54,11 @@ NVMe devices are re-identified across reboots and restarts by their PCIe address
 Linux block device names (`/dev/sdb`, `/dev/xvdc`, ...) are not stable across reboots, so a
 serial-first identity is used in `lblk` mode: the device serial number (or WWN) is the primary
 identity, persisted in the cluster database at node addition. On every node restart, the stored serial
-is re-resolved against the live host inventory; the stored device name is only used as a fallback for devices that
-expose no serial. A device without any hardware serial is given a stable synthetic identifier at
+is re-resolved against the live host inventory. The stored device name is only used as a fallback for
+devices that expose no serial. A device without any hardware serial is given a stable synthetic identifier at
 configuration time.
 
-Renaming — for example, two disks swapping kernel names after a reboot — is therefore harmless: the
+Renaming (for example, two disks swapping kernel names after a reboot) is therefore harmless: the
 devices are matched by serial, and the storage stack is rebuilt on the correct disks.
 
 ## Failure Detection and Handling
@@ -67,24 +67,24 @@ Device failure handling in `lblk` mode is at parity with the NVMe path. IO error
 detected by the storage stack exactly as in NVMe mode and are fed into the same device state machine:
 a device is marked unavailable after repeated errors, and a device that keeps failing is removed from
 the cluster map, with its data rebuilt from redundancy onto the remaining devices by an automatic data
-migration. A device that disappears from the host — through hot removal or a cloud volume detach — is
+migration. A device that disappears from the host (through hot removal or a cloud volume detach) is
 detected by inventory sweeps and handled like an NVMe hot-remove event.
 
 Hung IO is covered separately. An IO timeout is enforced by the SPDK native NVMe driver, by which
-stuck IO is converted into failed IO; AIO bdevs have no such timeout, so a control-plane hung-IO
+stuck IO is converted into failed IO. AIO bdevs have no such timeout, so a control-plane hung-IO
 watchdog is added in `lblk` mode. A device whose IO has made no progress for a sustained window
 (30 seconds by default) is detected by queue-depth sampling and marked unavailable, entering the same
 recovery machinery. Device stalls are typically converted into IO errors by kernel-level SCSI and
-NVMe timeouts well before this watchdog fires; it exists as the safety net for devices that hang
+NVMe timeouts well before this watchdog fires. It exists as the safety net for devices that hang
 without erroring.
 
 ## Restrictions
 
 The device mode is cluster-global and deploy-time only: `nvme` and `lblk` devices cannot be mixed
 within one cluster, and the mode cannot be changed after cluster creation. In `lblk` mode,
-journal-on-device deployment (a dedicated device for the journal) is required; device partitioning is
-not supported. Growing a node's device set at restart time is not supported either — see
-[Linux Block Device Operations](../../non-kubernetes/operations/lblk-device-operations.md).
+journal-on-device deployment (a dedicated device for the journal) is required. Device partitioning is
+not supported, and growing a node's device set at restart time is not supported either (see
+[Linux Block Device Operations](../../non-kubernetes/operations/lblk-device-operations.md)).
 
 SMART health telemetry is not available for AIO-backed devices. Device-level performance depends on
 the underlying block device and the kernel block layer, so higher latency than with SPDK-native NVMe
