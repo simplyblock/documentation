@@ -4,7 +4,7 @@ description: "Hyper-converged storage is a key component of hyper-converged infr
 weight: 30300
 ---
 
-Simplyblock supports Hyper-converged, dissaggregated and hybrid deployment topologies. In Hyper-converged setups,
+Simplyblock supports Hyper-converged, disaggregated, and hybrid deployment topologies. In Hyper-converged setups,
 simplyblock values data locality
 
 Hyper-converged storage is a key component of hyper-converged infrastructure (HCI), where compute, storage, and
@@ -15,7 +15,7 @@ Simplyblock values data-locality in hyper-converged deployments and even impleme
 the workloads.
 
 However, data locality in simplyblock is always best-effort, never limiting the scalability of individual volumes or
-entire storage pools and clusters as well as a balanced resource utilization.
+entire storage pools and clusters as well as balanced resource utilization.
 
 Traditional storage architectures often separate compute and storage into distinct hardware layers, requiring complex
 management and specialized hardware. Hyper-converged storage consolidates these resources within the same nodes, forming
@@ -24,7 +24,7 @@ a software-defined storage (SDS) layer that dynamically distributes and manages 
 Key characteristics and benefits of hyper-converged storage include:
 
 - **Massive Simplification of Hardware Management and Operations:** A single type and configuration of a rack server and networking
-  setup can scale to hundreds, thousands or hundreds of thousands of units. There is no need for specialized storage hardware and fabric
+  setup can scale to hundreds, thousands, or hundreds of thousands of units. There is no need for specialized storage hardware and fabric
   to be fitted into the operations model. This model provides much better economies of scale from hardware procurement to infrastructure
   operations.
 - **Cluster Scalability:** Clusters can scale from very small to very large without having to adjust storage separately.
@@ -36,4 +36,4 @@ Key characteristics and benefits of hyper-converged storage include:
 without service interruption or degradation. Gradual replacement of hardware is supported.
 
 -  **Data Locality:** Best-effort data locality can significantly reduce the burden on the shared network and improve the latency of and
-  throughput of IO.
+  throughput of I/O.

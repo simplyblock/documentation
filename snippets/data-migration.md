@@ -62,7 +62,7 @@ An alternative, but more complex solution enables minimal downtime. This option 
 subsystem.
 
 Using the Device Mapper, the current and new block devices will be moved into a RAID-1 and synchronized (re-silvered)
-in the background.  This solution requires two minimal downtimes to create and remount the devices.
+in the background. This solution requires two minimal downtimes to create and remount the devices.
 
 !!! warning
     This method is quite involved, requires a lot of steps, and can lead to data loss in case of wrong commands or

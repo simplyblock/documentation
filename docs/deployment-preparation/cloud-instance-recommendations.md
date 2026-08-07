@@ -44,7 +44,7 @@ Keep the [minimum system requirements](./hardware-requirements.md)in mind. At le
 
 !!! critical
     GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs!
-    Therefore, a "sudden power off" is not safe, data corruption may occur!
+    Therefore, a "sudden power off" is not safe, and data corruption may occur!
 
 In GCP, physical hosts are highly shared and sliced into virtual machines. This is true not only for CPU, RAM, and
 network bandwidth, but also for virtualized NVMe devices. Google Compute Engine NVMe devices provide a specific number

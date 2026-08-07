@@ -66,7 +66,7 @@ Depending on the fabric, it is necessary to load the Linux kernel modules on com
     ```
 
 === "Debian / Ubuntu"
-    ```bash title="Load NVMe/TCP on Ubuntu  or Debian"
+    ```bash title="Load NVMe/TCP on Ubuntu or Debian"
     sudo apt-get install -y linux-modules-extra-$(uname -r)
     sudo modprobe nvme_tcp
     ```
@@ -79,7 +79,7 @@ For the RoCE/RDMA fabric or both fabrics, (also) run:
     ```
 
 === "Debian / Ubuntu"
-    ```bash title="Load NVMe/RoCE on Ubuntu  or Debian"
+    ```bash title="Load NVMe/RoCE on Ubuntu or Debian"
     sudo apt-get install -y linux-modules-extra-$(uname -r)
     sudo modprobe nvme_rdma
     ```

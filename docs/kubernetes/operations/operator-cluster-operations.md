@@ -146,13 +146,13 @@ kubectl delete storagenodeops restart-worker-1 -n simplyblock
 
 ### Supported Actions and Terminal States
 
-| Action     | Expected outcome after success                                               |
-|------------|------------------------------------------------------------------------------|
-| `shutdown` | Node transitions to `offline`.                                               |
-| `restart`  | Node transitions back to `online`.                                           |
-| `suspend`  | Node transitions to `suspended`.                                             |
-| `resume`   | Node transitions back to `online`.                                           |
-| `remove`   | Node is drained, all volumes migrated, node deleted from backend.            |
+| Action     | Expected outcome after success                                    |
+|------------|-------------------------------------------------------------------|
+| `shutdown` | Node transitions to `offline`.                                    |
+| `restart`  | Node transitions back to `online`.                                |
+| `suspend`  | Node transitions to `suspended`.                                  |
+| `resume`   | Node transitions back to `online`.                                |
+| `remove`   | Node is drained, all volumes migrated, node deleted from backend. |
 
 ### Migrating a Node to a Different Worker
 

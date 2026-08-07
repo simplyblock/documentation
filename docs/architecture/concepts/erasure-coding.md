@@ -18,7 +18,7 @@ any **k** available fragments, even if up to **m** fragments are missing or corr
 
 Simplyblock supports **k** values of 1, 2, and 4, as well as **m** values of 0, 1, and 2. It is important to
 note that the erasure coding is distributed, in which every chunk of a stripe is stored on a different node. This
-way, data is not only protected from drive loss, but also stays available in case one or two nodes are not
+way, data is not only protected from drive loss but also stays available in case one or two nodes are not
 operational.
 
 Erasure coding has a number of key characteristics:

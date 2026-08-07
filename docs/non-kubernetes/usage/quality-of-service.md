@@ -26,12 +26,12 @@ QoS can be applied when creating a new logical volume:
 
 ### Parameters
 
-| Parameter                     | Description                                         | Default |
-|-------------------------------|-----------------------------------------------------|---------|
-| --max-rw-iops MAX_RW_IOPS     | Maximum IO operations per second.                   | 0       |
-| --max-rw-mbytes MAX_RW_MBYTES | Maximum read/write throughput.                      | 0       |
-| --max-r-mbytes MAX_R_MBYTES   | Maximum read throughout.                            | 0       |
-| --max-w-mbytes MAX_W_MBYTES   | Maximum write throughput.                           | 0       |
+| Parameter                     | Description                        | Default |
+|-------------------------------|------------------------------------|---------|
+| --max-rw-iops MAX_RW_IOPS     | Maximum I/O operations per second. | 0       |
+| --max-rw-mbytes MAX_RW_MBYTES | Maximum read/write throughput.     | 0       |
+| --max-r-mbytes MAX_R_MBYTES   | Maximum read throughout.           | 0       |
+| --max-w-mbytes MAX_W_MBYTES   | Maximum write throughput.          | 0       |
 
 To see all available parameters when creating a logical volume, see [Provisioning](provisioning.md).
 

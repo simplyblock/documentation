@@ -25,7 +25,7 @@ Storage Interface (CSI) and Proxmox drivers.
   copies, dynamic thread scheduling, and inter-thread synchronization. Its deployment is fully numa-node-aware.
 
 - **Advanced QoS:** Simplyblock provides not only IOPS or throughput-based caps, but also true QoS service classes,
-  effectively isolating IO traffic.
+  effectively isolating I/O traffic.
 
 - **Distributed Data Placement:** Simplyblock's advanced data placement, which is based on small, fixed-size data
   chunks, ensures a perfectly balanced utilization of storage, compute, and network bandwidth, avoiding any performance

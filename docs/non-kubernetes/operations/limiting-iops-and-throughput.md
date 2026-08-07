@@ -12,7 +12,7 @@ one cluster, though.
 
 QoS settings on a pool limit the total consumption of all volumes in the pool, but they do not
 determine how resources are split within a pool. Some volumes require and receive more IOPS, while
-others require and receive less. If the aggregate IO demand is beyond the limits set for a pool,
+others require and receive less. If the aggregate I/O demand is beyond the limits set for a pool,
 all volumes will be relatively throttled.
 
 In Kubernetes, storage class-level QoS Settings are not allowed if the storage class is connected

@@ -73,7 +73,7 @@ Also verify that:
 If expansion does not behave as expected:
 
 - Verify `POOL_ID` points to the intended pool.
-- Verify `_NEW_SIZE_` format (for example `500G`, `2T`).
+- Verify `_NEW_SIZE_` format (for example, `500G`, `2T`).
 - Re-run `storage-pool get` to confirm whether the change was persisted.
 - If monitoring values lag, allow a short interval for metrics refresh and re-check.
 

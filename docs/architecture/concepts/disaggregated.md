@@ -16,13 +16,13 @@ The biggest benefit of the disaggregated model is the decoupling the lifecycle o
 compute lifecycle management (worker node upgrades, node maintenance, and node reboots), as well as independent scaling.
 For example, a small compute cluster with I/O-intensive workloads may still require a lot of storage capacity and IOPS.
 
-The biggest disadvantages are the loss of data locality and possible misalignments in scaling (required minimum scale of the
+The biggest disadvantages are the loss of data locality and possible misalignment in scaling (required minimum scale of the
 storage cluster and scaling of the storage cluster with compute).
 
 Key characteristics of the disaggregated storage solutions include:
 
 - **Independent Scalability:** Compute and storage can be scaled separately, optimizing resource utilization and
-  reducing unnecessary hardware expansion. IO demand and compute sizing are treated independently.
+  reducing unnecessary hardware expansion. I/O demand and compute sizing are treated independently.
 - **Independent Cluster Lifecycle:** Storage and compute can be maintained, upgraded, and replaced independently of each other.
 - **Controlled Storage Performance:** It is easier to control latency, throughput, and IOPS output in a disaggregated model.
 - **Hardware Independence:** This feature is shared with hyper-converged storage. Hardware component and node replacements

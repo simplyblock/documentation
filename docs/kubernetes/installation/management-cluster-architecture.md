@@ -9,7 +9,7 @@ Simplyblock uses a **two-tier model**: a single **control plane cluster** acts a
 checks, collects metrics, and executes administrative tasks. But performs no NVMe I/O itself.
 
 A storage class must exist in the cluster before installation. FoundationDB provisions a 10 Gi `ReadWriteOnce`
-persistent volume for each of its log and storage processes. This is where all cluster state (topology, volume
+persistent volume for each of its log and storage processes. This is where all cluster states (topology, volume
 metadata, task queues) is durably stored and must survive pod restarts. Prometheus similarly requires a 5 Gi
 volume for its time-series data.
 

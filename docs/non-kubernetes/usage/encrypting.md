@@ -60,11 +60,11 @@ To see all available parameters when creating a logical volume, see [Provisionin
 
 ### Parameters
 
-| Parameter                     | Description                                      | Default |
-|-------------------------------|--------------------------------------------------|---------|
-| --encrypt                     | Enables inline encryption on the logical volume. | false   |
-| --crypto-key1 CRYPTO_KEY1     | The hex value of the first encryption key.       |         |
-| --crypto-key2 CRYPTO_KEY2     | The hex value of the second encryption key.      |         |
+| Parameter                 | Description                                      | Default |
+|---------------------------|--------------------------------------------------|---------|
+| --encrypt                 | Enables inline encryption on the logical volume. | false   |
+| --crypto-key1 CRYPTO_KEY1 | The hex value of the first encryption key.       |         |
+| --crypto-key2 CRYPTO_KEY2 | The hex value of the second encryption key.      |         |
 
 ## Verification
 

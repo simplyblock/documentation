@@ -1,23 +1,23 @@
 ---
 title: "Performance and QoS"
-description: "Performance and QoS: Storage performance can be categorized by latency (the aggregate response time of an IO request from the host to the storage system) and."
+description: "Performance and QoS: Storage performance can be categorized by latency (the aggregate response time of an I/O request from the host to the storage system) and."
 weight: 20100
 ---
 
 ## Storage Performance Indicators
 
-Storage performance can be categorized by latency (the aggregate response time of an IO request from the host to the
+Storage performance can be categorized by latency (the aggregate response time of an I/O request from the host to the
 storage system) and throughput. Throughput can be broken down into random IOPS throughput and sequential throughput.
 
 IOPS and sequential throughput must be measured relative to capacity (i.e., IOPS per TB).
 
-Latency and IOPS throughput depend heavily on the IO operation (read, write, unmap) and the IO size (4K, 8K, 16K,
-32K, ...). For comparability, it is typically tested with a 4K IO size, but tests with 8K to 128K are standard too.
+Latency and IOPS throughput depend heavily on the I/O operation (read, write, unmap) and the I/O size (4K, 8K, 16K,
+32K, ...). For comparability, it is typically tested with a 4K I/O size, but tests with 8K to 128K are standard too.
 
-Latency is strongly influenced by the overall load on the overall storage system. If there is intense IO pressure,
+Latency is strongly influenced by the overall load on the overall storage system. If there is intense I/O pressure,
 queues build up and response times go up. This is no different from a traffic jam on the highway or a queue at the
 airline counter. Therefore, to compare latency results, it must be measured under a fixed system load (amount of
-parallel IO, its size, and IO type mix).
+parallel I/O, its size, and I/O type mix).
 
 !!! important
     For latency, consistency matters. High latency variability, especially in the tail, can severely impact workloads.
@@ -29,7 +29,7 @@ Unequal load distribution across cluster nodes, and the dynamics of specific nod
 multithreading, network bandwidth fluctuations, etc.), create significant challenges for consistent, high storage
 performance in such an environment.
 
-Mixed IO patterns increase these challenges from different workloads.
+Mixed I/O patterns increase these challenges from different workloads.
 
 This can cause substantial variability in latency, IOPS throughput, and high-tail latency, with a negative impact on
 workloads.
@@ -75,7 +75,7 @@ The relabalcing algorithm which moves data around is optimized for minimal overh
 
 Simplyblock is a fully distributed solution. Back-storage is balanced across all nodes in the cluster on a very granular
 level. Relative to their capacity and performance, each device and node in the cluster receives a similar amount and
-size of IO. This feature ensures an entirely equal distribution of load across the network, compute, and NVMe drives.
+size of I/O. This feature ensures an entirely equal distribution of load across the network, compute, and NVMe drives.
 
 In case of drive or node failures, distributed rebalancing occurs to reach the fully balanced state as quickly as
 possible. When adding drives and nodes, performance increases in a **linear manner**. This mechanism avoids local
@@ -85,7 +85,7 @@ overload and keeps latency and IOPS throughput consistent across the cluster, in
 
 Storage access is entirely based on NVMe (local back-storage) and NVMe over Fabric (hosts to storage nodes and storage
 nodes to storage nodes). This protocol is inherently asynchronous and supports highly parallel processing, eliminating
-bottlenecks specific to mixed IO patterns on other protocols (such as iSCSI) and ensuring consistently low latency.
+bottlenecks specific to mixed I/O patterns on other protocols (such as iSCSI) and ensuring consistently low latency.
 
 ### Support for ROCEv2
 
@@ -131,13 +131,13 @@ resources.
 #### Why QoS Service Classes are Critical
 
 Why is a limit not sufficient? Imagine a heavily mixed workload in the cluster. Some workloads are read-intensive, while
-others are write-intensive. Some workloads require a lot of small random IO, while others read and write large
-sequential IO. There is no absolute number of IOPS or throughput a cluster can provide, considering the dynamics of
+others are write-intensive. Some workloads require a lot of small random I/O, while others read and write large
+sequential I/O. There is no absolute number of IOPS or throughput a cluster can provide, considering the dynamics of
 workloads.
 
 Therefore, using absolute limits on one pool of volumes is effective for protecting others from spillover effects and
 undesired behavior. Still, it does not guarantee performance for a particular class of volumes.
 
 Service classes provide a much better degree of isolation under the consideration of dynamic workloads. As long as a
-particular service class is not overloaded, the general IO pressure on the cluster will not matter for the performance
+particular service class is not overloaded, the general I/O pressure on the cluster will not matter for the performance
 of volumes in that class.

@@ -25,20 +25,20 @@ For more information on erasure coding, see the dedicated concept page for
 The table below gives an overview of the supported schemes:
 
 - **FTT** (failures to tolerate) is the number of storage nodes that can fail with no data loss (`m`).
-- **Data protection overhead** is the additional raw capacity stored on top of the usable data (e.g. 100% means the
+- **Data protection overhead** is the additional raw capacity stored on top of the usable data (e.g., 100% means the
   cluster holds 2× the raw capacity for the usable amount, and 0% means no protection).
 - **IOPS r/w performance and latency** is a relative rating of read/write IOPS and latency.
 - **Minimum nodes** is the number of storage nodes required for full redundancy.
 
-| Schema   | FTT | Data Protection Overhead | IOPS R/W Performance and Latency | Minimum Nodes |
-|----------|-----|--------------------------|----------------------------------|---------------|
-| `1+0`    | 0   | 0%                       | Very good                        | 1             |
-| `1+1`    | 1   | 100%                     | Excellent                        | 3             |
-| `2+1`    | 1   | 50%                      | Very good                        | 4             |
-| `4+1`    | 1   | 25%                      | Very good                        | 6             |
-| `1+2`    | 2   | 200%                     | Very good                        | 5             |
-| `2+2`    | 2   | 100%                     | Very good                        | 6             |
-| `4+2`    | 2   | 50%                      | Very good                        | 8             |
+| Schema | FTT | Data Protection Overhead | IOPS R/W Performance and Latency | Minimum Nodes |
+|--------|-----|--------------------------|----------------------------------|---------------|
+| `1+0`  | 0   | 0%                       | Very good                        | 1             |
+| `1+1`  | 1   | 100%                     | Excellent                        | 3             |
+| `2+1`  | 1   | 50%                      | Very good                        | 4             |
+| `4+1`  | 1   | 25%                      | Very good                        | 6             |
+| `1+2`  | 2   | 200%                     | Very good                        | 5             |
+| `2+2`  | 2   | 100%                     | Very good                        | 6             |
+| `4+2`  | 2   | 50%                      | Very good                        | 8             |
 
 ## Choosing the Scheme
 

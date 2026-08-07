@@ -49,12 +49,12 @@ Cluster capacity can alternatively be extended by
 
 ## Failed Devices
 
-Device failures are handled by the same machinery as in NVMe mode. A device producing IO errors is
+Device failures are handled by the same machinery as in NVMe mode. A device producing I/O errors is
 marked unavailable and, after the retry budget is exhausted, marked failed. The cluster map is
 updated, and the affected data is rebuilt from redundancy by a data migration.
 
-A device whose IO hangs without erroring is caught by the `lblk` hung-IO watchdog (roughly 30 seconds
-of zero progress with outstanding IO) and driven through the same unavailable, restart, and failed
+A device whose I/O hangs without erroring is caught by the `lblk` hung-IO watchdog (roughly 30 seconds
+of zero progress with outstanding I/O) and driven through the same unavailable, restart, and failed
 path. A device that disappears from the host, through hot removal or a cloud volume detach, is
 detected and treated like an NVMe hot-remove.
 
@@ -64,4 +64,4 @@ replaced, following [Replacing a Storage Node](replacing-storage-node.md).
 
 !!! info
     SMART health information is not available for AIO-backed devices. Device health checks
-    (`storage-node check-device`) are limited to liveness and IO statistics.
+    (`storage-node check-device`) are limited to liveness and I/O statistics.

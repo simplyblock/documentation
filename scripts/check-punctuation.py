@@ -40,6 +40,7 @@ import sys
 from dataclasses import dataclass
 
 from markdown_common import (
+    CODE_FENCE_PATTERN,
     DEFAULT_TARGET_DIRS,
     SEVERITY_ERROR,
     SEVERITY_WARNING,
@@ -190,6 +191,25 @@ EM_DASH_REASON = (
     "Em dash setting off a clause, prefer parentheses or a comma"
 )
 
+# "--" between words is a typed em dash and reads the same way. A "--" that opens
+# a command line option is code, and the code spans are masked out already.
+DOUBLE_HYPHEN_PATTERN = re.compile(r"(?<=\s)--(?=\s)")
+DOUBLE_HYPHEN_REASON = (
+    "Double hyphen used as a dash, prefer parentheses, a comma, or two sentences"
+)
+
+# An item of a list starts as the sentence above it left off: upper case after a
+# full stop, a colon, or a heading, lower case when the sentence is still open.
+LIST_BODY_PATTERN = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+(?P<body>.*)$")
+LIST_LEAD_SKIP_PATTERN = re.compile(r"^\s*(?:\||>|!!!|\?\?\?|===|<)")
+LIST_BODY_PREFIX_PATTERN = re.compile(r"^(?:\*\*|_|\*|\[)+")
+CASE_UPPER_REASON = (
+    "List item starts lower case although the sentence above it is finished"
+)
+CASE_LOWER_REASON = (
+    "List item starts upper case although it continues the sentence above it"
+)
+
 
 def check_semicolon(prose):
     entities = [match.span() for match in ENTITY_PATTERN.finditer(prose.masked)]
@@ -203,6 +223,13 @@ def check_semicolon(prose):
 
 # A table cell holding nothing but a dash is a value ("no default"), not an aside.
 EMPTY_CELL_PATTERN = re.compile(r"\|\s*[—–]\s*(?=\|)")
+
+
+def check_double_hyphen(prose):
+    for match in DOUBLE_HYPHEN_PATTERN.finditer(prose.masked):
+        yield Finding(
+            column=match.start(), check="double-hyphen", reason=DOUBLE_HYPHEN_REASON
+        )
 
 
 def check_em_dash(prose):
@@ -291,7 +318,53 @@ def check_list_punctuation(prose):
         return
 
 
-RULES = (check_oxford_comma, check_semicolon, check_em_dash, check_list_punctuation)
+RULES = (
+    check_oxford_comma,
+    check_semicolon,
+    check_em_dash,
+    check_double_hyphen,
+    check_list_punctuation,
+)
+
+
+def check_list_item_case(lines):
+    """Yield (line number, check, reason) for a list item that starts wrong.
+
+    An item continues from whatever came above the list. After a heading, a full
+    stop, or a colon the sentence is finished and the item opens a new one in
+    upper case. After a line that just runs on, the item is the rest of that
+    sentence and stays lower case.
+    """
+    in_code_fence = False
+    lead = None
+
+    for index, line in enumerate(lines):
+        if CODE_FENCE_PATTERN.match(line):
+            in_code_fence = not in_code_fence
+            continue
+        if in_code_fence:
+            continue
+
+        match = LIST_BODY_PATTERN.match(line)
+        if not match:
+            stripped = line.strip()
+            if stripped and not LIST_LEAD_SKIP_PATTERN.match(stripped):
+                lead = stripped
+            continue
+
+        body = match.group("body").strip()
+        # A value or an identifier is written the way it is spelled.
+        if lead is None or not body or body.startswith("`"):
+            continue
+        first = LIST_BODY_PREFIX_PATTERN.sub("", body)
+        if not first or not first[0].isalpha():
+            continue
+
+        finished = lead.startswith("#") or lead.endswith((":", ".", "!", "?"))
+        if finished and first[0].islower():
+            yield index + 1, "list-item-case", CASE_UPPER_REASON
+        elif not finished and first[0].isupper():
+            yield index + 1, "list-item-case", CASE_LOWER_REASON
 
 
 def scan_file(file_path):
@@ -299,6 +372,19 @@ def scan_file(file_path):
     rel = relative_path(file_path)
     violations = []
     fixes = []
+
+    for number, check, reason in check_list_item_case(lines):
+        violations.append(
+            Violation(
+                file=rel,
+                line=number,
+                column=1,
+                check=check,
+                reason=reason,
+                excerpt=lines[number - 1].strip()[:90],
+                severity=SEVERITY_WARNING,
+            )
+        )
 
     for prose in iter_prose_lines(lines):
         findings = [finding for rule in RULES for finding in rule(prose)]

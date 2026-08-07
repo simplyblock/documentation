@@ -94,5 +94,5 @@ spec:
 ```
 
 !!! warning "Deprecated annotation prefix"
-    The `simplybk/` annotation prefix (e.g. `simplybk/secret-name`) is deprecated. Existing PVCs using the old prefix
+    The `simplybk/` annotation prefix (e.g., `simplybk/secret-name`) is deprecated. Existing PVCs using the old prefix
     continue to work for backward compatibility, but new deployments should use the `simplyblock.io/` prefix.

@@ -17,10 +17,10 @@ There are a few reasons to manually restart a storage node:
     unresponsive. The auto-restart functionality retries multiple times. It will **not** work in one of
     the following cases:
 
-    - The cluster is suspended (e.g. two or more storage nodes are offline)
+    - The cluster is suspended (e.g., two or more storage nodes are offline)
     - The RPC interface is responsive and the container is up, but the storage node has another health issue
-    - The host or Docker service are not available or hanging (e.g. network issue)
-    - Too many retries (e.g. because there is a problem with the lvolstore recovering for some of the logical volimes)
+    - The host or Docker service are not available or hanging (e.g., network issue)
+    - Too many retries (e.g., because there is a problem with the lvolstore recovering for some of the logical volimes)
 
     In these cases, a manual restart is required.
 
@@ -30,7 +30,7 @@ There are a few reasons to manually restart a storage node:
     Nodes can only be restarted from `offline` state!
 
     It is important to ensure that the cluster is not in `degraded` state and all other nodes are `online`
-    before shutting down a storage node for maintainance or upgrades! Otherwise loss of availability - io interrupt - may occur!
+    before shutting down a storage node for maintenance or upgrades! Otherwise loss of availability - I/O interrupt - may occur!
 
 Suspending a storage node and then shutting it down:
 

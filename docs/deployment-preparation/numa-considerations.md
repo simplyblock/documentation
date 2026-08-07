@@ -26,7 +26,7 @@ which the storage node is deployed.
 If a socket has no NVMe devices connected, it will not qualify to run a simplyblock storage node.
 
 It is also important that the NIC(s) used by simplyblock for storage traffic are connected to the same NUMA socket.
-However, simplyblock does not auto-assign a NIC and users have manually to take care of that.
+However, simplyblock does not auto-assign a NIC, and users have manually to take care of that.
 
 !!! Important
     In a hyper-converged deployment, it can be preferable to attach all NVMe devices to one socket and only deploy a

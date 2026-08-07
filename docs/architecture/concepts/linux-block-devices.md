@@ -24,10 +24,10 @@ virtualized disks (virtio, Xen), or cloud volumes such as Amazon EBS.
 The device mode is chosen once, at cluster creation, and applies to every storage node in the
 cluster:
 
-| Mode | Storage devices | Attachment |
-|------|-----------------|------------|
-| `nvme` (default) | NVMe PCIe SSDs | SPDK native NVMe driver (kernel driver unbind) |
-| `lblk` | Any Linux disk-type block device | SPDK AIO bdev on top of the kernel block layer |
+| Mode             | Storage devices                  | Attachment                                     |
+|------------------|----------------------------------|------------------------------------------------|
+| `nvme` (default) | NVMe PCIe SSDs                   | SPDK native NVMe driver (kernel driver unbind) |
+| `lblk`           | Any Linux disk-type block device | SPDK AIO bdev on top of the kernel block layer |
 
 In `lblk` mode, devices can be selected at deploy time by their block device name (through an allow
 list or a deny list) or by their serial number. The deployment process and cluster operations are
@@ -65,19 +65,19 @@ serial, and the storage stack is rebuilt on the correct disks.
 
 ## Failure Detection and Handling
 
-Device failure handling in `lblk` mode is at parity with the NVMe path. IO errors on a device are
+Device failure handling in `lblk` mode is at parity with the NVMe path. I/O errors on a device are
 detected by the storage stack exactly as in NVMe mode and are fed into the same device state machine:
 a device is marked unavailable after repeated errors, and a device that keeps failing is removed from
 the cluster map, with its data rebuilt from redundancy onto the remaining devices by an automatic data
 migration. A device that disappears from the host, through hot removal or a cloud volume detach, is
 detected by inventory sweeps and handled like an NVMe hot-remove event.
 
-Hung IO is handled separately. An IO timeout is enforced by the SPDK native NVMe driver, by which
-stuck IO is converted into failed IO, but AIO bdevs have no such timeout. A control-plane hung-IO
-watchdog is therefore added in `lblk` mode: a device whose IO has made no progress for a sustained
+Hung I/O is handled separately. An I/O timeout is enforced by the SPDK native NVMe driver, by which
+stuck I/O is converted into failed I/O, but AIO bdevs have no such timeout. A control-plane hung-IO
+watchdog is therefore added in `lblk` mode: a device whose I/O has made no progress for a sustained
 window (30 seconds by default) is detected by queue-depth sampling and marked unavailable, entering
 the same recovery machinery. The watchdog is the safety net for devices that hang without erroring,
-because device stalls are typically converted into IO errors by kernel-level SCSI and NVMe timeouts
+because device stalls are typically converted into I/O errors by kernel-level SCSI and NVMe timeouts
 well before it fires.
 
 ## Restrictions

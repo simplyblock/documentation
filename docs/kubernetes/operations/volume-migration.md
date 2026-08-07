@@ -13,7 +13,7 @@ new host.
 A volume migration moves only the logical volume itself, not the actual data. Since data remains distributed in the back
 storage, volume migrations is an online live migration and nearly instant. If node affinity is turned on for a cluster,
 back storage data realignment happens via rebalancing as an asynchronous task after one or more the volume migration(s)
-finished. 
+finished.
 
 Volume migration is used in three ways:
 
@@ -37,11 +37,11 @@ spec:
       interval: 10m                     # default: 10m
 ```
 
-| Field                      | Default | Description                                                                                                                      |
-|----------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------|
-| `enabled`                  | `true`  | When `false`, the operator does not act on `VolumeMigration` resources for this cluster.                                         |
-| `dataRealignment.enabled`  | `true`  | Enables automatic post-migration [data realignment](#data-realignment).                                                          |
-| `dataRealignment.interval` | `10m`   | How often the operator checks whether a realignment is pending.                                                                  |
+| Field                      | Default | Description                                                                              |
+|----------------------------|---------|------------------------------------------------------------------------------------------|
+| `enabled`                  | `true`  | When `false`, the operator does not act on `VolumeMigration` resources for this cluster. |
+| `dataRealignment.enabled`  | `true`  | Enables automatic post-migration [data realignment](#data-realignment).                  |
+| `dataRealignment.interval` | `10m`   | How often the operator checks whether a realignment is pending.                          |
 
 ## Manual Volume Migration
 
@@ -105,7 +105,7 @@ Each migration progresses through the following phases, tracked in `VolumeMigrat
 | `Running`    | The backend is copying data and snapshots. `status.snapsMigrated` / `status.snapsTotal` track progress. |
 | `Completed`  | The volume now resides on the target node.                                                              |
 | `Failed`     | The migration could not complete. `status.errorMessage` holds the reason.                               |
-| `Aborted`    | The migration was canceled via `spec.abort`.                                                           |
+| `Aborted`    | The migration was canceled via `spec.abort`.                                                            |
 
 The status also records the resolved `sourceNodeUUID`, `volumeUUID`, `poolUUID`, `clusterUUID`, the backend
 `migrationUUID`, and `startedAt` / `completedAt` timestamps.
@@ -248,12 +248,12 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
   simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
-| Annotation value                                                  | Removal behavior                                                |
-|-------------------------------------------------------------------|------------------------------------------------------------------|
-| A valid storage node UUID (different from the node being removed) | Volume is migrated to that node, removal proceeds.               |
-| Empty / absent                                                    | Volume is not pinned, a target is picked by the operator.        |
-| A non-UUID value                                                  | Removal is blocked. An `InvalidPinTarget` event is emitted.      |
-| The UUID of the node being removed                                | Removal is blocked. A `PinnedVolumeBlocking` event is emitted.   |
+| Annotation value                                                  | Removal behavior                                               |
+|-------------------------------------------------------------------|----------------------------------------------------------------|
+| A valid storage node UUID (different from the node being removed) | Volume is migrated to that node, removal proceeds.             |
+| Empty / absent                                                    | Volume is not pinned, a target is picked by the operator.      |
+| A non-UUID value                                                  | Removal is blocked. An `InvalidPinTarget` event is emitted.    |
+| The UUID of the node being removed                                | Removal is blocked. A `PinnedVolumeBlocking` event is emitted. |
 
 Volumes whose backing logical volume has no corresponding PV (for example, a volume created outside
 Kubernetes) also block removal, with an `UnmanagedVolumeBlocking` event, until they are resolved.
@@ -292,11 +292,11 @@ filter on:
 | `MigrationStarted`          | The backend migration is running.                                      |
 | `MigrationCompleted`        | The volume finished migrating to the target node.                      |
 | `MigrationFailed`           | The migration failed. See the event message and `status.errorMessage`. |
-| `MigrationAborted`          | The migration was canceled via `spec.abort`.                          |
+| `MigrationAborted`          | The migration was canceled via `spec.abort`.                           |
 | `MigrationStuck`            | A migration has not progressed within the expected time.               |
 | `VolumeRebalancingStarted`  | Auto-rebalancing began moving a volume.                                |
 | `VolumeRebalancingComplete` | An auto-rebalancing migration finished.                                |
-| `VolumeRebalancingDeferred` | A rebalancing move was skipped this cycle (e.g. cool-down).            |
+| `VolumeRebalancingDeferred` | A rebalancing move was skipped this cycle (e.g., cool-down).           |
 | `PinnedVolumeBlocking`      | A pinned volume is blocking a node removal.                            |
 | `UnmanagedVolumeBlocking`   | A volume without a PV is blocking a node removal.                      |
 | `InvalidPinTarget`          | A pin annotation value is not a known storage node UUID.               |

@@ -32,15 +32,15 @@ can be installed separately: [Install Simplyblock CSI](install-csi.md).
 
 The operator manages the following resources:
 
-| CRD              | Description                                                         |
-|------------------|---------------------------------------------------------------------|
-| `StorageCluster` | Creates and manages a simplyblock storage cluster                   |
-| `StorageNodeSet` | Fleet-level declarative configuration for a set of storage nodes    |
-| `StorageNode`    | Represents a single backend storage node instance (auto-created)    |
-| `StorageNodeOps` | One-shot operational action targeting a single storage node         |
-| `Pool`           | Creates and manages storage pools                                   |
-| `Device`         | Manages NVMe devices on storage nodes                               |
-| `Task`           | Monitors cluster tasks                                              |
+| CRD              | Description                                                      |
+|------------------|------------------------------------------------------------------|
+| `StorageCluster` | Creates and manages a simplyblock storage cluster                |
+| `StorageNodeSet` | Fleet-level declarative configuration for a set of storage nodes |
+| `StorageNode`    | Represents a single backend storage node instance (auto-created) |
+| `StorageNodeOps` | One-shot operational action targeting a single storage node      |
+| `Pool`           | Creates and manages storage pools                                |
+| `Device`         | Manages NVMe devices on storage nodes                            |
+| `Task`           | Monitors cluster tasks                                           |
 
 For detailed CRD documentation, see [Simplyblock Operator](../../reference/operator/index.md).
 

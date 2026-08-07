@@ -34,6 +34,8 @@ python3 scripts/check-simplyblock-spelling.py --fix
 python3 scripts/check-terminology.py --fix
 python3 scripts/check-american-english.py --fix
 python3 scripts/check-punctuation.py --fix
+python3 scripts/check-prose.py --fix
+python3 scripts/check-mkdocs-syntax.py --fix    # re-aligns tables only
 ```
 
 ## Audience
@@ -219,6 +221,27 @@ gate reports all of them. The first two are warnings, because what replaces them
 depends on the sentence and is a decision for the writer. The list item form has
 one right answer and is an error that `--fix` resolves.
 
+**A missing comma after an abbreviation.** American usage writes "e.g.," and
+"i.e.," and "for example," with the comma, since each of them introduces the
+example that follows.
+
+**A repeated word**, as in "the volume is is migrated", and a **misspelling** from
+the list in `scripts/check-prose.py`. Both slip past a writer, because the eye
+supplies what the text is missing. **Two spaces between words** go the same way.
+
+**A double hyphen** is a typed em dash and is replaced the same way it is, by
+parentheses, a comma, or two sentences.
+
+**A compound in front of a noun is hyphenated**, and the same words standing
+alone as a noun are not: "a high-availability cluster" and "large-scale
+deployments", but "the cluster provides high availability". An adverb is never
+hyphenated to its adjective, so "highly available" and never
+"highly-available".
+
+The two deployment topologies are spelled `hyper-converged` and `disaggregated`.
+One carries the hyphen and the other does not, which is why both are written the
+wrong way about equally often.
+
 **A semicolon between two clauses.** Two full stops are easier to read, and a
 subordinate clause is easier still. The semicolon stays only where it separates
 items of a series that already carry commas.
@@ -249,6 +272,20 @@ one.
     - *Foo:* This is wrong too, the subject is bold and not italic
     - _Foo:_ Same thing with underscores
     - **Foo:** This is correct
+
+**An item starts as the sentence above it left off.** After a heading, a full
+stop, or a colon that sentence is finished and the item opens a new one in upper
+case. After a line that runs on into the list, the item is the rest of that
+sentence and stays lower case.
+
+    Data re-balancing uses three important principles:
+
+    - Always try to move the longest contiguous segments of data.
+
+    A volume is migrated when
+
+    - the source node is drained, or
+    - the operator picks a better target.
 
 A bold word that opens an item without a colon is part of the sentence and stays
 as it is: "- **Note** that the mode cannot be changed" is not a subject and is
@@ -391,6 +428,18 @@ worth knowing by hand:
   every later diff.
 - **A file ends with one newline** behind its last line of text. Not without one,
   which leaves the last line unterminated, and not with blank lines behind it.
+
+**A table is written with its pipes lined up.** Every cell carries one space of
+padding, and the separator row is as wide as its column. The rendered page looks
+the same either way, but a column that shifts by a character on every row cannot
+be read in the source, and a diff that touches one cell rewrites the whole block.
+`python3 scripts/check-mkdocs-syntax.py --fix` re-aligns them.
+
+```markdown
+| Parameter    | Type   | Default |
+|--------------|--------|---------|
+| `cluster_id` | string | -       |
+```
 
 A **horizontal rule** is not used at all. Sections are separated by their
 headings. The `---` between the title and the body of a Material grid card is a

@@ -31,14 +31,14 @@ When investigating a possible incident, start in this order:
 
 ## Monitoring Areas
 
-| Area | Typical Signals | Primary Source |
-|------|------------------|----------------|
-| Cluster health | degraded/suspended/offline state, failing health checks | CLI + Grafana |
-| Capacity | critical/warning capacity thresholds, provisioning pressure | CLI + alerts |
-| Storage node status | unreachable/offline nodes, node-level anomalies | CLI + alerts |
-| Logical volume status | volume health/offline conditions | CLI + Grafana |
-| Performance | throughput, IOPS, latency trends | CLI + Grafana |
-| Events and logs | operational events, service/component errors | Graylog |
+| Area                  | Typical Signals                                             | Primary Source |
+|-----------------------|-------------------------------------------------------------|----------------|
+| Cluster health        | degraded/suspended/offline state, failing health checks     | CLI + Grafana  |
+| Capacity              | critical/warning capacity thresholds, provisioning pressure | CLI + alerts   |
+| Storage node status   | unreachable/offline nodes, node-level anomalies             | CLI + alerts   |
+| Logical volume status | volume health/offline conditions                            | CLI + Grafana  |
+| Performance           | throughput, IOPS, latency trends                            | CLI + Grafana  |
+| Events and logs       | operational events, service/component errors                | Graylog        |
 
 ## Monitoring Guides
 

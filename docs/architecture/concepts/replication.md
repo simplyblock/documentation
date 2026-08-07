@@ -62,7 +62,7 @@ replicated volume, effectively providing access to the full volume on the target
 The RPO is based on the latest completed snapshot replication.
 The target volumes become primary and begin serving I/O.
 
-No manual action is required to trigger failover -- the operator detects the conditions and acts automatically.
+No manual action is required to trigger failover. The conditions are detected by the operator, which acts automatically.
 
 !!! warning
     After failover, any data written to the source cluster since the last successful snapshot replication will not be
@@ -76,7 +76,7 @@ any other site by setting up the replication path toward this new cluster. This 
 as a new replication.
 
 Failback refers to the option to replicate the delta accumulated in the target cluster back to the source in case the
-source cluster can be recovered at origin (e.g. after temporary outage or maintainance action).
+source cluster can be recovered at origin (e.g., after temporary outage or maintenance action).
 
 Failback is triggered **manually** by setting `action: failback` on the `SnapshotReplication` CRD after the
 source cluster has been restored.

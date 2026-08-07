@@ -33,20 +33,20 @@ The control plane provides the following functionality in two groups of distribu
         - Manages nodes and devices
         - Resize and reconfigure clusters
     - Lifecycle management of logical volumes and pools
-    - Raw IO Statistics, Capacity, Alerting, and Log Feeds
+    - Raw I/O Statistics, Capacity, Alerting, and Log Feeds
 - Observability Stack (optional)
     - Log Management (Graylog, OpenSearch, MongoDB, Thanos)
     - Performance Monitoring and Dashboarding (Grafana, Prometheus) with configurable alerting to email and Slack
 
 The observability stack is optional. It is typically used in PoC (proof of concept) or testing environments and for
-customers, who need to get started quickly. For large scale, multi-cluster deployments it is
+customers, who need to get started quickly. For large-scale, multi-cluster deployments it is
 rather recommended to integrate with pre-existing or targeted observability stacks.
 
 The control plane is layered and its distributed control plane services run on both Kubernetes and native Docker.
 The latter can be used for non-Kubernetes (Proxmox, OpenStack) or disaggregated deployments.
 All services are accessible via the Simplyblock CLI and Control Plane API.
 
-On top of those services sits a CSI driver and a Kubernetes operator within the Kubernetes-native operations model.
+On top of those services sit CSI driver and a Kubernetes operator within the Kubernetes-native operations model.
 It is entirely managed by Custom Resource Definitions (CRDs), however, internally uses the same Control Plane APIs.
 
 Communication between the Control Plane and the Storage Plane is performed via two separate access paths:
@@ -61,7 +61,7 @@ environments, simplyblock requires at least three management nodes for high avai
 a set of replicated, stateful services.
 
 For internal state storage, the control plane uses ([FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"}) as
-its key-value store. FoundationDB, by itself, operates in a replicated highly-available cluster across all management
+its key-value store. FoundationDB, by itself, operates in a replicated highly available cluster across all management
 nodes.
 
 Within Kubernetes deployments, the control plane can now also be deployed alongside the storage nodes on the same K8s

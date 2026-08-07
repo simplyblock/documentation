@@ -10,7 +10,7 @@ weight: 20600
 
 Simplyblock's documentation is publicly available, and contributions from the community to improve clarity,
 fix errors, and enhance its overall quality are welcome. While simplyblock itself is not open source, the
-documentation is publicly hosted  [GitHub](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"}. Feedback,
+documentation is publicly hosted [GitHub](https://github.com/simplyblock/documentation){:target="_blank" rel="noopener"}. Feedback,
 reported typos, suggested improvements, and fixes for documentation inconsistencies are all appreciated.
 
 ## How to Contribute

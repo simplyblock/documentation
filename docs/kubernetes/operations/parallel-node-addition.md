@@ -28,7 +28,7 @@ threshold, which would cause cluster unavailability.
 
 Parallelism for non-FDB workers is controlled by `StorageNode.spec.maxParallelNodeAdds`.
 
-| Value         | Behavior                                                        |
+| Value         | Behavior                                                         |
 |---------------|------------------------------------------------------------------|
 | `1` (default) | All workers added one at a time which is safe for all topologies |
 | `> 1`         | Up to `n` non-FDB workers added concurrently per reconcile pass  |

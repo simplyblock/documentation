@@ -18,7 +18,7 @@ It is recommended particularly for 1+1 EC schemas.
 
 ### ```--data-chunks-per-stripe, --parity-chunks-per-stripe```
 
-Those two parameters together make up the erasure coding schema of the cluster (e.g. 1+1, 2+2, 4+2). The schema is set
+Those two parameters together make up the erasure coding schema of the cluster (e.g., 1+1, 2+2, 4+2). The schema is set
 once at cluster creation and applies to all volumes in the cluster. It cannot be configured per volume.
 
 ### ```--cap-warn, --cap-crit```
@@ -85,14 +85,14 @@ recovery for the cluster.
 }
 ```
 
-| Key                  | Description                                                                | Required |
-|----------------------|----------------------------------------------------------------------------|----------|
-| `access_key_id`      | S3 access key ID.                                                         | Yes      |
-| `secret_access_key`  | S3 secret access key.                                                     | Yes      |
-| `bucket_name`        | S3 bucket name. Defaults to `simplyblock-backup-<CLUSTER_ID>` if omitted. | No       |
-| `local_endpoint`     | Custom S3 endpoint URL for MinIO or other S3-compatible storage.          | No       |
-| `with_compression`   | Enable compression for backup data. Default: `false`.                     | No       |
-| `snapshot_backups`   | Enable snapshot-based incremental backups. Default: `true`.               | No       |
+| Key                 | Description                                                               | Required |
+|---------------------|---------------------------------------------------------------------------|----------|
+| `access_key_id`     | S3 access key ID.                                                         | Yes      |
+| `secret_access_key` | S3 secret access key.                                                     | Yes      |
+| `bucket_name`       | S3 bucket name. Defaults to `simplyblock-backup-<CLUSTER_ID>` if omitted. | No       |
+| `local_endpoint`    | Custom S3 endpoint URL for MinIO or other S3-compatible storage.          | No       |
+| `with_compression`  | Enable compression for backup data. Default: `false`.                     | No       |
+| `snapshot_backups`  | Enable snapshot-based incremental backups. Default: `true`.               | No       |
 
 For more information on backup operations, see [Backup and Recovery](../non-kubernetes/operations/backup-recovery.md).
 

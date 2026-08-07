@@ -262,19 +262,19 @@ my-pvc-backup   Done    my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   backup-m
 
 #### Spec Fields
 
-| Field         | Type   | Description                                          |
-|---------------|--------|------------------------------------------------------|
-| `clusterName` | string | Name of the target StorageCluster. **Required**.     |
-| `pvcRef.name` | string | Name of the PVC to back up. **Required**.            |
+| Field         | Type   | Description                                      |
+|---------------|--------|--------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**. |
+| `pvcRef.name` | string | Name of the PVC to back up. **Required**.        |
 
 #### Status Fields
 
-| Column     | Description                                      |
-|------------|--------------------------------------------------|
-| `PHASE`    | Current phase: `InProgress` or `Done`.           |
-| `PVC`      | Name of the source PVC.                          |
-| `BACKUPID` | Backend backup identifier.                       |
-| `SNAPSHOT` | Name of the snapshot used for the backup.        |
+| Column     | Description                               |
+|------------|-------------------------------------------|
+| `PHASE`    | Current phase: `InProgress` or `Done`.    |
+| `PVC`      | Name of the source PVC.                   |
+| `BACKUPID` | Backend backup identifier.                |
+| `SNAPSHOT` | Name of the snapshot used for the backup. |
 
 ### BackupRestore CRD
 
@@ -320,14 +320,14 @@ to a pod.
 
 #### Spec Fields
 
-| Field                       | Type   | Description                                                                    |
-|-----------------------------|--------|--------------------------------------------------------------------------------|
-| `clusterName`               | string | Name of the target StorageCluster. **Required**.                               |
-| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                     |
-| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                |
-| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup.|
-| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                   |
-| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                       |
+| Field                       | Type   | Description                                                                     |
+|-----------------------------|--------|---------------------------------------------------------------------------------|
+| `clusterName`               | string | Name of the target StorageCluster. **Required**.                                |
+| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                      |
+| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                 |
+| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup. |
+| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                    |
+| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                        |
 
 !!! warning
     A backup can only be restored to the same namespace as the `BackupRestore` object.
@@ -354,12 +354,12 @@ EOF
 
 #### Spec Fields
 
-| Field         | Type   | Description                                                                       |
-|---------------|--------|-----------------------------------------------------------------------------------|
-| `clusterName` | string | Name of the target StorageCluster. **Required**.                                  |
-| `maxVersions` | int    | Maximum number of backup versions to retain.                                      |
-| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).                           |
-| `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs.                 |
+| Field         | Type   | Description                                                       |
+|---------------|--------|-------------------------------------------------------------------|
+| `clusterName` | string | Name of the target StorageCluster. **Required**.                  |
+| `maxVersions` | int    | Maximum number of backup versions to retain.                      |
+| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).            |
+| `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs. |
 
 The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
 take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).

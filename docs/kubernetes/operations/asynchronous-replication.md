@@ -85,7 +85,7 @@ At each configured interval:
 `SnapshotReplication.spec.timeout` limits the maximum runtime of a replication task. By default, the control plane
 uses `60` seconds if not explicitly configured.
 
-To avoid queue exhaustion from stacked tasks (for example when replication is slower than snapshot creation, or the
+To avoid queue exhaustion from stacked tasks (for example, when replication is slower than snapshot creation, or the
 target cluster is unreachable), set `timeout` lower than or up to a maximum of approximately `1.5x` the `interval`.
 
 ## Monitoring Replication Status

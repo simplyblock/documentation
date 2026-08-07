@@ -10,7 +10,7 @@ mechanisms, simplyblock ensures continuous data access, resilience against failu
 Fault tolerance is embedded at multiple levels of the system, from data redundancy to control plane and storage path
 resilience.
 
-## Fault Tolerance and High Availability Mechanisms
+## Fault Tolerance and High-Availability Mechanisms
 
 Simplyblock’s architecture provides robust fault tolerance and high availability by combining distributed erasure
 coding, multipath access with failover, and redundant management and storage planes. These capabilities ensure that
@@ -71,7 +71,7 @@ storage plane:
     - Data and workloads are automatically rebalanced and protected in case of node or device failures.
     - Failures are handled transparently with automatic recovery processes.
 
-## Benefits of Simplyblock’s High Availability Design
+## Benefits of Simplyblock’s High-Availability Design
 
 - No single point of failure across the control plane, storage plane, and data paths.
 - Seamless failover and recovery from node, network, or disk failures.
@@ -86,15 +86,15 @@ bandwidth and/or latency between sites do not allow for stretch clusters.
 The feature can be enabled selectively on a per-volume level at volume create time or later on. It requires the
 control plane to be distributed across two sites, serving one single-site storage cluster on each site.
 
-On disaster fail-over, workloads have to be restarted to reconnect after as short loss of IO  to the now
+On disaster fail-over, workloads have to be restarted to reconnect after as short loss of I/O to the now
 automatically redirected paths. Fail-back considers two scenarios:
 
 - old site cannot be recovered, a fresh storage cluster is redeployed. All data will be replicated back to the
-original site into the fresh cluster and ultimately fail-back is possible without io interrupt by rolling over the
+original site into the fresh cluster, and ultimately fail-back is possible without I/O interrupt by rolling over the
 NVMe-oF connections.
 
 - old site can be recovered, and in this scenario only the delta between old and new sites will be replicated back
-and again, ultimately fail-back is possible without io interrupt by rolling over the
+and again, ultimately fail-back is possible without I/O interrupt by rolling over the
 NVMe-oF connections.
 
 The feature also allows monitoring of active and completed replications and generally to control the backlog.
@@ -108,7 +108,7 @@ Older versions can be auto-merged into full backups. Backups can be restored:
 
 - using the latest or older generations of data
 - into the same storage cluster or a different storage cluster
-- managing encyrpted data via self-contained, encyrpted keys and an external KMS
+- managing encrypted data via self-contained, encrypted keys and an external KMS
 
 ### 6. Synchronous Replication (outlook)
 

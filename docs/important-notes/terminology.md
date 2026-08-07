@@ -78,7 +78,7 @@ using RDMA over Converged Ethernet (RoCE) to enable ultra-low-latency and high-t
 devices. By leveraging Remote Direct Memory Access (RDMA), NVMe/RoCE bypasses the CPU for data transfers, reducing
 latency and improving efficiency compared to traditional TCP-based storage protocols. This makes it ideal for
 high-performance computing (HPC), enterprise storage, and latency-sensitive applications such as financial trading and
-AI workloads. NVMe/RoCE requires lossless Ethernet networking and specialized NICs to fully utilize its performance
+AI workloads. NVMe/RoCE requires lossless Ethernet networking and specialized NICs to fully use its performance
 advantages.
 
 ### Multipathing

@@ -13,8 +13,8 @@ between storage nodes without service interruption and almost instantly. This is
 remote access to all devices in the cluster and thus exists essentially "in memory" only.
 
 Volume migrations are performed automatically based on operator decisions to either pre-serve data locality of workloads or
-to to balance I/O performance across cluster nodes. This is required since the front storage does the "heavy-lifting" in I/O processing
-and runs all the data services. Additionally, volume migration is is used to drain nodes in case they need to be removed from the cluster
+to balance I/O performance across cluster nodes. This is required since the front storage does the "heavy-lifting" in I/O processing
+and runs all the data services. Additionally, volume migration is used to drain nodes in case they need to be removed from the cluster
 (hardware replacement, infrastructure modernization).
 
 While most of the volume migrations happen "under the hood", users can also explicitly initiate migrations (e.g., to

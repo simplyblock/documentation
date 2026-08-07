@@ -37,7 +37,7 @@ When a host connects to the subsystem, each namespace appears as a separate bloc
 /dev/nvme0n2
 ```
 
-All namespaces on the same subsystem use the same network connections to transfer IO.
+All namespaces on the same subsystem use the same network connections to transfer I/O.
 
 It’s what is used for:
 

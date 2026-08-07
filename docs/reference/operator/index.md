@@ -13,17 +13,17 @@ the actual state of the simplyblock cluster.
 
 The operator manages the following Custom Resource Definitions (CRDs):
 
-| CRD                                             | Short Name | Description                                                           |
-|-------------------------------------------------|------------|-----------------------------------------------------------------------|
-| [`StorageCluster`](reference.md#storagecluster) | -          | Creates and manages a simplyblock storage cluster                     |
-| [`StorageNodeSet`](reference.md#storagenodeset) | -          | Fleet-level declarative management of storage nodes across workers    |
-| [`StorageNode`](reference.md#storagenode)       | -          | Represents a single backend storage node instance (auto-created)      |
-| [`StorageNodeOps`](reference.md#storagenodeops) | -          | One-shot operational action targeting a single storage node           |
-| [`Pool`](reference.md#pool)                     | -          | Creates and manages storage pools                                     |
-| [`Task`](reference.md#task)                     | -          | Monitors cluster tasks and their status                               |
-| [`StorageBackup`](reference.md#storagebackup)   | -          | Creates a one-time backup of a PVC to S3                              |
-| [`BackupRestore`](reference.md#backuprestore)   | -          | Restores a backup into a new PVC                                      |
-| [`BackupPolicy`](reference.md#backuppolicy)     | -          | Defines an automated backup schedule for PVCs                         |
+| CRD                                             | Short Name | Description                                                        |
+|-------------------------------------------------|------------|--------------------------------------------------------------------|
+| [`StorageCluster`](reference.md#storagecluster) | -          | Creates and manages a simplyblock storage cluster                  |
+| [`StorageNodeSet`](reference.md#storagenodeset) | -          | Fleet-level declarative management of storage nodes across workers |
+| [`StorageNode`](reference.md#storagenode)       | -          | Represents a single backend storage node instance (auto-created)   |
+| [`StorageNodeOps`](reference.md#storagenodeops) | -          | One-shot operational action targeting a single storage node        |
+| [`Pool`](reference.md#pool)                     | -          | Creates and manages storage pools                                  |
+| [`Task`](reference.md#task)                     | -          | Monitors cluster tasks and their status                            |
+| [`StorageBackup`](reference.md#storagebackup)   | -          | Creates a one-time backup of a PVC to S3                           |
+| [`BackupRestore`](reference.md#backuprestore)   | -          | Restores a backup into a new PVC                                   |
+| [`BackupPolicy`](reference.md#backuppolicy)     | -          | Defines an automated backup schedule for PVCs                      |
 
 All CRDs use the API group `storage.simplyblock.io/v1alpha1`.
 
@@ -107,8 +107,8 @@ over fleet defaults. They can be set in two ways:
 
 1. **Via `StorageNodeSet.spec.nodeConfigs`:** the operator propagates the matching entry to the `StorageNode` CR
    automatically.
-2. **Directly on a manually-created `StorageNode` CR:** useful for fine-grained control over a single
-   node, for example during expansion.
+2. **Directly on a manually created `StorageNode` CR:** useful for fine-grained control over a single
+   node, for example, during expansion.
 
 #### Overrides Reference
 

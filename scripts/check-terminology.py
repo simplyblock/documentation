@@ -73,6 +73,7 @@ class Term:
     canonical: str
     aliases: tuple = field(default_factory=tuple)
     plural: str = ""
+    wrong: tuple = field(default_factory=tuple)
 
 
 def terms(*entries):
@@ -83,8 +84,8 @@ def terms(*entries):
     ]
 
 
-def term(canonical, aliases=(), plural=""):
-    return Term(canonical, tuple(aliases), plural)
+def term(canonical, aliases=(), plural="", wrong=()):
+    return Term(canonical, tuple(aliases), plural, tuple(wrong))
 
 
 # Terms that are deliberately absent, because their lowercase spelling is an
@@ -229,6 +230,7 @@ TERMS = terms(
     "S3",
     "QoS",
     "IOPS",
+    term("I/O", wrong=("IO",)),
     "TCP",
     "UDP",
     "IP",
@@ -318,7 +320,17 @@ def spelling_pattern(spelling):
 
 
 def spellings_of(term):
+    """The spellings that resolve to a name of their own."""
     return (term.canonical,) + tuple(term.aliases)
+
+
+def matched_spellings_of(term):
+    """Everything the pattern looks for, including the spellings to correct.
+
+    A "wrong" spelling is matched but never indexed: stripped of its separators
+    it has the same key as the canonical one, so the index already resolves it.
+    """
+    return spellings_of(term) + tuple(term.wrong)
 
 
 def build_index():
@@ -354,7 +366,7 @@ def build_pattern():
     "NVMe/TCP" is one term and not the term "NVMe" followed by the term "TCP".
     A trailing plural "s" is part of the match, so that "CRDs" is checked too.
     """
-    spellings = [spelling for term in TERMS for spelling in spellings_of(term)]
+    spellings = [spelling for term in TERMS for spelling in matched_spellings_of(term)]
     alternatives = [
         spelling_pattern(spelling)
         for spelling in sorted(spellings, key=len, reverse=True)

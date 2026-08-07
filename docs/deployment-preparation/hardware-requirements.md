@@ -12,9 +12,9 @@ network bandwidth, and free space on the boot disk.
 
 ### Overview
 
-| Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage          | Network Performance | Free Boot Disk | Number of Nodes  |
-|---------------|---------|------------------------|-----------------------------------|---------------------|----------------|------------------|
-| Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> |
+| Node Type    | vCPU(s) | RAM (GB)               | Locally Attached Storage          | Network Performance | Free Boot Disk | Number of Nodes  |
+|--------------|---------|------------------------|-----------------------------------|---------------------|----------------|------------------|
+| Storage Node | 8+      | 6+ DDR4 <sup>(1)</sup> | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> |
 
 <span style="font-size: 0.8em;">
 <sup>1</sup> Simplyblock highly recommends DDR5 memory on storage nodes for optimal performance.<br>
@@ -99,16 +99,16 @@ The simplyblock control plane has different hardware requirements depending on t
 
     For a Kubernetes-based control plane, the minimum requirements per replica are:
 
-    | Service                      | Instances | vCPU(s)  | RAM (GB)  | Disk (GB) |
-    |------------------------------|-----------|----------|-----------|-----------|
-    | Simplyblock Operator         | 1         | 1        | 0.5       | 0.5       |
-    | Control Plane API            | 3         | 0.5      | 1         | 0.5       |
-    | Meta-Database (FoundationDB) | 3         | 1        | 1         | 5         |
-    | Task Runners                 | 11        | 0.25     | 0.1       | 0.5       |
-    | CSI Driver Services          | 1         | 0.5      | 0.2       | 0.5       |
-    | Admin Pods                   | 1         | 0.25     | 0.25      | 0.5       |
-    | Prometheus                   | 1         | 1        | 3         | 10        |
-    | **Total accross 3 nodes**    | **3**     | **10**   | **10.55** | **33.5**  |
+    | Service                      | Instances | vCPU(s) | RAM (GB)  | Disk (GB) |
+    |------------------------------|-----------|---------|-----------|-----------|
+    | Simplyblock Operator         | 1         | 1       | 0.5       | 0.5       |
+    | Control Plane API            | 3         | 0.5     | 1         | 0.5       |
+    | Meta-Database (FoundationDB) | 3         | 1       | 1         | 5         |
+    | Task Runners                 | 11        | 0.25    | 0.1       | 0.5       |
+    | CSI Driver Services          | 1         | 0.5     | 0.2       | 0.5       |
+    | Admin Pods                   | 1         | 0.25    | 0.25      | 0.5       |
+    | Prometheus                   | 1         | 1       | 3         | 10        |
+    | **Total across 3 nodes**     | **3**     | **10**  | **10.55** | **33.5**  |
 
 
     !!! important
@@ -131,9 +131,9 @@ The simplyblock control plane has different hardware requirements depending on t
     A control plane cluster of this size can manage up to 5 nodes, 1,000 logical volumes, and 2,500 snapshots. For
     larger deployments, increase the resources of the management nodes accordingly.
 
-    | Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  |
-    |---------------|---------|------------------------|--------------------------|---------------------|----------------|------------------|
-    | Control Plane | 4       | 16 DDR4                | -                        | 1 GBit/s            | 35 GB          | 3                |
+    | Node Type     | vCPU(s) | RAM (GB) | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes |
+    |---------------|---------|----------|--------------------------|---------------------|----------------|-----------------|
+    | Control Plane | 4       | 16 DDR4  | -                        | 1 GBit/s            | 35 GB          | 3               |
 
 
 ### Control Plane Scaling Triggers

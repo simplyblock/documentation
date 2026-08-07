@@ -42,7 +42,9 @@ By default all Markdown files below "docs/" and "snippets/" are scanned.
 Generated files are skipped, since they have to be corrected at their source.
 
 Usage:
-    python3 scripts/check-mkdocs-syntax.py [PATH ...]
+    python3 scripts/check-mkdocs-syntax.py [--fix] [PATH ...]
+
+"--fix" re-aligns the tables and changes nothing else.
 """
 
 import argparse
@@ -57,7 +59,9 @@ from markdown_common import (
     DEFAULT_TARGET_DIRS,
     SCANNED_EXTENSIONS,
     SEVERITY_WARNING,
+    FileFix,
     Violation,
+    apply_fixes_to_file,
     collect_files,
     drop_generated,
     indentation_of,
@@ -824,6 +828,129 @@ def check_file_ending(lines, rel):
     ]
 
 
+def split_table_row(line):
+    """Split a table row into its cells.
+
+    A pipe inside an inline code span or behind a backslash belongs to the cell,
+    not to the table, so the row is walked instead of split with a regex.
+    """
+    text = line.strip()
+    if text.startswith("|"):
+        text = text[1:]
+    if text.endswith("|") and not text.endswith("\\|"):
+        text = text[:-1]
+
+    cells, current, in_code = [], [], False
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char == "\\" and index + 1 < len(text):
+            current.append(text[index:index + 2])
+            index += 2
+            continue
+        if char == "`":
+            in_code = not in_code
+        if char == "|" and not in_code:
+            cells.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+        index += 1
+    cells.append("".join(current).strip())
+    return cells
+
+
+def format_table(rows):
+    """Render a table with one space of padding and its pipes lined up."""
+    indent = rows[0][: len(rows[0]) - len(rows[0].lstrip())]
+    grid = [split_table_row(row) for row in rows]
+    columns = max(len(cells) for cells in grid)
+    grid = [cells + [""] * (columns - len(cells)) for cells in grid]
+
+    # The separator row carries the alignment and not the content, so its own
+    # dashes are left out of the width.
+    widths = [
+        max(len(cells[column]) for index, cells in enumerate(grid) if index != 1)
+        for column in range(columns)
+    ]
+    widths = [max(width, 3) for width in widths]
+
+    formatted = []
+    for index, cells in enumerate(grid):
+        if index == 1:
+            rendered = []
+            for column, cell in enumerate(cells):
+                left, right = cell.startswith(":"), cell.endswith(":")
+                dashes = "-" * (widths[column] + 2)
+                if left:
+                    dashes = ":" + dashes[1:]
+                if right:
+                    dashes = dashes[:-1] + ":"
+                rendered.append(dashes)
+            formatted.append(indent + "|" + "|".join(rendered) + "|")
+        else:
+            rendered = [f" {cell.ljust(widths[column])} " for column, cell in enumerate(cells)]
+            formatted.append(indent + "|" + "|".join(rendered) + "|")
+    return formatted
+
+
+def check_table_formatting(lines, rel):
+    """A table is written with its pipes lined up under each other.
+
+    The rendered page looks the same either way. The source does not: a column
+    that shifts by a character on every row cannot be read, and a diff that
+    touches one cell rewrites the whole block.
+    """
+    violations = []
+    fixes = []
+    in_code_fence = False
+    block, start = [], 0
+
+    def flush():
+        if len(block) < 2 or not TABLE_SEPARATOR_PATTERN.match(block[1]):
+            return
+        for offset, (original, wanted) in enumerate(zip(block, format_table(block))):
+            if original.rstrip() == wanted:
+                continue
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=start + offset,
+                    column=1,
+                    check="table-format",
+                    reason="Table row is not aligned with the rest of its table",
+                    excerpt=original.strip()[:80],
+                )
+            )
+            fixes.append(
+                FileFix(
+                    line=start + offset,
+                    column=1,
+                    length=len(original),
+                    replacement=wanted,
+                )
+            )
+
+    for index, line in enumerate(lines):
+        if CODE_FENCE_PATTERN.match(line):
+            in_code_fence = not in_code_fence
+            flush()
+            block = []
+            continue
+        if in_code_fence:
+            continue
+        if line.strip().startswith("|"):
+            if not block:
+                start = index + 1
+            block.append(line)
+        else:
+            flush()
+            block = []
+    flush()
+
+    return violations, fixes
+
+
 def check_trailing_whitespace(lines, rel):
     """Trailing whitespace, wherever it sits.
 
@@ -1106,7 +1233,10 @@ def scan_file(file_path, placeholders, docs_root, include_dir, anchor_cache):
     lines = read_lines(file_path)
     rel = relative_path(file_path)
 
+    table_violations, fixes = check_table_formatting(lines, rel)
     violations = (
+        table_violations
+        +
         check_block_indentation(lines, rel)
         + check_placeholders(lines, rel, placeholders)
         + check_code_blocks(lines, rel)
@@ -1123,7 +1253,7 @@ def scan_file(file_path, placeholders, docs_root, include_dir, anchor_cache):
     if not is_snippet(file_path, include_dir):
         violations += check_frontmatter(lines, rel, file_path, docs_root) + check_headings(lines, rel)
 
-    return violations
+    return violations, fixes
 
 
 def report_generated(generated):
@@ -1135,6 +1265,12 @@ def report_generated(generated):
 def main():
     parser = argparse.ArgumentParser(
         description="Check mkdocs specific syntax in the documentation markdown files."
+    )
+    parser.add_argument(
+        "-f",
+        "--fix",
+        action="store_true",
+        help="re-align the tables, the only finding with one possible answer",
     )
     parser.add_argument(
         "--config",
@@ -1167,11 +1303,28 @@ def main():
     files = drop_generated(files, report=report_generated)
 
     anchor_cache = {}
-    violations = [
-        v
+    scans = {
+        file: scan_file(file, placeholders, docs_root, include_dir, anchor_cache)
         for file in files
-        for v in scan_file(file, placeholders, docs_root, include_dir, anchor_cache)
-    ]
+    }
+
+    if args.fix:
+        files_changed = 0
+        applied = 0
+        for file, (_, fixes) in scans.items():
+            written = apply_fixes_to_file(file, fixes)
+            if written:
+                files_changed += 1
+                applied += written
+        if applied:
+            print(f"Auto-fix mode: re-aligned {applied} table row(s) across {files_changed} file(s).")
+        anchor_cache = {}
+        scans = {
+            file: scan_file(file, placeholders, docs_root, include_dir, anchor_cache)
+            for file in files
+        }
+
+    violations = [v for violations, _ in scans.values() for v in violations]
 
     sys.exit(
         report_violations(
