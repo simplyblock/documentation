@@ -87,7 +87,7 @@ The complete set of `StorageNodeSet` fields is available in [StorageNodeSet refe
 
 The `StorageNode` resource represents a single backend storage node instance. One `StorageNode` CR is created
 automatically by the operator for each (worker, NUMA socket) combination declared in a `StorageNodeSet`. These
-CRs are read-mostly — their spec is set at creation and is effectively immutable.
+CRs are read-mostly: their spec is set at creation and is effectively immutable.
 
 ```bash title="List all StorageNode instances"
 kubectl get storagenodes -n simplyblock
@@ -105,9 +105,9 @@ simplyblock-node-worker-3.example.com-s0-n0            worker-3.example.com     
 `spec.overrides` allows any field from the parent `StorageNodeSet` to be tuned on a per-node basis. Overrides win
 over fleet defaults. They can be set in two ways:
 
-1. **Via `StorageNodeSet.spec.nodeConfigs`** — the operator propagates the matching entry to the `StorageNode` CR
+1. **Via `StorageNodeSet.spec.nodeConfigs`:** the operator propagates the matching entry to the `StorageNode` CR
    automatically.
-2. **Directly on a manually-created `StorageNode` CR** — useful for fine-grained control over a single
+2. **Directly on a manually-created `StorageNode` CR:** useful for fine-grained control over a single
    node, for example during expansion.
 
 #### Overrides Reference
@@ -215,8 +215,8 @@ The complete set of `StorageNode` fields is available in [StorageNode reference]
 ## StorageNodeOps
 
 The `StorageNodeOps` resource drives a single one-shot operation against one `StorageNode`. It is analogous to a
-Kubernetes `Job` — the operator executes the requested action, records the outcome, and the CR is left in a
-terminal state. Only one `StorageNodeOps` may be active for a given `StorageNode` at a time.
+Kubernetes `Job`, in that the requested action is executed by the operator, the outcome is recorded, and the CR is
+left in a terminal state. Only one `StorageNodeOps` may be active for a given `StorageNode` at a time.
 
 ```yaml title="Example: Restart a specific storage node"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -257,7 +257,7 @@ The complete set of `StorageNodeOps` fields is available in [StorageNodeOps refe
 
 The `migrate` action **relocates** a storage node to a different Kubernetes worker without removing it from the
 cluster. Unlike `remove`, the node retains its backend UUID, its data partitions, and its logical-volume
-assignments — no `VolumeMigration` CRs are created and no volumes are moved between nodes. The backend rebalance
+assignments, and no `VolumeMigration` CRs are created or volumes moved between nodes. The backend rebalance
 triggered by the final promote redistributes load automatically.
 
 ```yaml title="Example: Relocate a storage node to a different worker"
@@ -293,7 +293,7 @@ spec:
 PVCs annotated with `simplyblock.io/pinned-volume` affect the `remove` drain flow:
 
 - If the annotation value is a **valid storage node UUID** (different from the node being drained), the volume is
-  migrated to that specific node — drain proceeds normally.
+  migrated to that specific node and the drain proceeds normally.
 - If the annotation value is **empty, not a UUID, or self-referencing** (pointing to the node being drained),
   drain is blocked and a `PinnedVolumeBlocking` event is emitted naming the affected PVC.
 
@@ -355,7 +355,7 @@ The StorageClass is deleted when the pool is deleted.
 
 ### Snapshot Cloning
 
-When a volume is cloned from a snapshot, the `clonedFromSnapshot` and `sourceSnapshotName` fields in its status entry identify the origin. These fields are read-only and set by the backend at creation time — they cannot be specified in the `Lvol` spec.
+When a volume is cloned from a snapshot, the `clonedFromSnapshot` and `sourceSnapshotName` fields in its status entry identify the origin. These fields are read-only and set by the backend at creation time, so they cannot be specified in the `Lvol` spec.
 
 To see which volumes in a pool are snapshot clones:
 
@@ -435,8 +435,8 @@ The complete set of `BackupRestore` fields is available in [BackupRestore refere
 
 The `BackupPolicy` resource defines an automated backup schedule with retention settings. Policies are attached
 to PVCs using the `simplybk/backup-policy` Kubernetes annotation, which causes `StorageBackup` objects to be
-created automatically on schedule. Removing the annotation detaches the policy; updating it switches the PVC to
-the new policy.
+created automatically on schedule. Removing the annotation detaches the policy, and updating it switches the PVC
+to the new policy.
 
 ```yaml title="Example: Create a backup policy"
 apiVersion: storage.simplyblock.io/v1alpha1

@@ -116,10 +116,10 @@ The operator will migrate the volume to the specified target instead of blocking
 
 | Annotation value | Drain behavior |
 |---|---|
-| A valid storage node UUID (different from the node being drained) | Volume is migrated to that node; drain proceeds |
-| Empty string | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
-| A non-UUID value | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
-| The UUID of the node being drained | Drain is blocked; a `PinnedVolumeBlocking` event is emitted |
+| A valid storage node UUID (different from the node being drained) | Volume is migrated to that node, drain proceeds |
+| Empty string | Drain is blocked, a `PinnedVolumeBlocking` event is emitted |
+| A non-UUID value | Drain is blocked, a `PinnedVolumeBlocking` event is emitted |
+| The UUID of the node being drained | Drain is blocked, a `PinnedVolumeBlocking` event is emitted |
 
 A `PinnedVolumeBlocking` event names the affected PVC and states exactly what to fix:
 

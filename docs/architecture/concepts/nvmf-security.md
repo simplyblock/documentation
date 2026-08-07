@@ -75,8 +75,8 @@ enabled:
 
 Once a pool with security options is in place, hosts can be managed per storage pool:
 
-- **Add a host:** `{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>` — keys are auto-generated based on the pool's
-  security options.
+- **Add a host:** `{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>` (keys are auto-generated based on the pool's
+  security options).
 - **Remove a host:** `{{ cliname }} storage-pool remove-host <POOL_ID> <HOST_NQN>`
 
 ## Connecting a Volume

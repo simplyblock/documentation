@@ -47,7 +47,7 @@ separated from the original set and avoids mutating an existing resource.
 
 **Adding two new nodes:**
 
-```yaml title="expansion-nodeset.yaml — add 2 nodes"
+```yaml title="Example of a StorageNodeSet adding two nodes (expansion-nodeset.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNodeSet
 metadata:
@@ -66,7 +66,7 @@ spec:
 
 **Adding four new nodes:**
 
-```yaml title="expansion-nodeset.yaml — add 4 nodes"
+```yaml title="Example of a StorageNodeSet adding four nodes (expansion-nodeset.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNodeSet
 metadata:

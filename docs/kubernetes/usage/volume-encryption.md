@@ -63,8 +63,8 @@ annotations are required to encrypt a volume.
 
 ## Hardening Key Storage with an External KMS
 
-For environments that require stricter handling of key material — separation of duty between storage and key
-custodians, regular rotation, or audit trails — the cluster can be configured to keep encryption keys in an external
+For environments that require stricter handling of key material (separation of duty between storage and key
+custodians, regular rotation, or audit trails), the cluster can be configured to keep encryption keys in an external
 Hashicorp Vault or Openbao instance. The setup is configured once per `StorageCluster` and applies to every encrypted
 volume in that cluster.
 

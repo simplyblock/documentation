@@ -83,15 +83,15 @@ storage plane:
 This new feature allows to protect data stored in a cluster from a site disaster with only 60 seconds of RPO, if 
 bandwidth and/or latency between sites do not allow for stretch clusters. 
 
-The feature can be enabled selectively on a per-volume level at volume create time or later on; it requires the
+The feature can be enabled selectively on a per-volume level at volume create time or later on. It requires the
 control plane to be distributed across two sites, serving one single-site storage cluster on each site.
 
 On disaster fail-over, workloads have to be restarted to reconnect after as short loss of IO  to the now 
-automatically redirected paths; Fail-back considers two scenarios:
+automatically redirected paths. Fail-back considers two scenarios:
 - old site cannot be recovered, a fresh storage cluster is redeployed. All data will be replicated back to the
 original site into the fresh cluster and ultimately fail-back is possible without io interrupt by rolling over the
 NVMe-oF connections.
-- old site can be recovered; in this scenario, only the delta between old and new sites will be replicated back
+- old site can be recovered, and in this scenario only the delta between old and new sites will be replicated back
 and again, ultimately fail-back is possible without io interrupt by rolling over the
 NVMe-oF connections.
 

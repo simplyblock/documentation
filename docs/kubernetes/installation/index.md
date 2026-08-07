@@ -17,9 +17,9 @@ dedicated worker nodes either within the same or a different cluster.
 
 A typical Kubernetes deployment follows these steps:
 
-1. **[Install the Operator](k8s-control-plane.md)**: Deploy the simplyblock operator via the Helm chart. The operator
+1. **[Install the Operator](k8s-control-plane.md):** Deploy the simplyblock operator via the Helm chart. The operator
    watches for simplyblock CRDs and reconciles the desired state.
-2. **[Deploy Storage Nodes and CSI](k8s-storage-plane.md)**: Apply CRDs to create the storage cluster, add storage
+2. **[Deploy Storage Nodes and CSI](k8s-storage-plane.md):** Apply CRDs to create the storage cluster, add storage
    nodes, create storage pools, and deploy the CSI driver.
 
 For a detailed breakdown of every pod and service created by the Helm chart, see

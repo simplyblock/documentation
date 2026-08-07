@@ -45,8 +45,8 @@ helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
 |-----------------------------|-----------------------------------------------------------------|
 | `simplyblock-webappapi`     | 2 replicas, required pod anti-affinity across nodes             |
 | `simplyblock-admin-control` | 2 replicas, required pod anti-affinity across nodes             |
-| FoundationDB                | 3 storage + 3 log processes; survives loss of 1 storage process |
-| Monitoring / Tasks          | Single replica; task queue in FDB survives pod restarts         |
+| FoundationDB                | 3 storage + 3 log processes, survives loss of 1 storage process |
+| Monitoring / Tasks          | Single replica, task queue in FDB survives pod restarts         |
 | Prometheus                  | StatefulSet with persistent volume                              |
 
 In production deployments with 3+ control plane nodes, FDB runs in `triple` redundancy mode. Any single node can be

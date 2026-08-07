@@ -157,7 +157,7 @@ kubectl delete storagenodeops restart-worker-1 -n simplyblock
 ### Migrating a Node to a Different Worker
 
 The `migrate` action relocates a storage node to a different Kubernetes worker **without removing it** from the
-cluster. The node keeps its backend UUID and data — no volumes are moved between nodes. After the migration the
+cluster. The node keeps its backend UUID and data, and no volumes are moved between nodes. After the migration the
 backend triggers a rebalance automatically.
 
 ```bash title="Migrate a storage node to a different worker"

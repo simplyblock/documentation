@@ -150,7 +150,7 @@ By default, simplyblock clusters use the [Erasure Coding](../../deployment-prepa
 of `1+1` which requires at least three storage nodes to join the cluster.
 
 The operator automatically activates the cluster when at least three storage nodes are online. For other erasure
-coding schemes, the required number differs — see the erasure coding documentation for details.
+coding schemes, the required number differs (see the erasure coding documentation for details).
 
 ```bash title="Check the cluster status"
 kubectl get storagecluster -n simplyblock

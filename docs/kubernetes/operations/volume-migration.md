@@ -132,7 +132,7 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
   simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
-The annotation value must be a known storage node UUID; a validating webhook rejects the change otherwise.
+The annotation value must be a known storage node UUID. Any other value is rejected by a validating webhook.
 If the value is not a valid node, the operator records it and emits an `InvalidPinTarget` event.
 
 ## Auto-Rebalancing
@@ -245,8 +245,8 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
 
 | Annotation value                                                  | Removal behavior                                                |
 |-------------------------------------------------------------------|------------------------------------------------------------------|
-| A valid storage node UUID (different from the node being removed) | Volume is migrated to that node; removal proceeds.               |
-| Empty / absent                                                    | Volume is not pinned; the operator picks a target automatically. |
+| A valid storage node UUID (different from the node being removed) | Volume is migrated to that node, removal proceeds.               |
+| Empty / absent                                                    | Volume is not pinned, a target is picked by the operator.        |
 | A non-UUID value                                                  | Removal is blocked. An `InvalidPinTarget` event is emitted.      |
 | The UUID of the node being removed                                | Removal is blocked. A `PinnedVolumeBlocking` event is emitted.   |
 
@@ -286,7 +286,7 @@ filter on:
 | `MigrationRequested`        | A `VolumeMigration` was accepted and submitted.                        |
 | `MigrationStarted`          | The backend migration is running.                                      |
 | `MigrationCompleted`        | The volume finished migrating to the target node.                      |
-| `MigrationFailed`           | The migration failed; see the event message and `status.errorMessage`. |
+| `MigrationFailed`           | The migration failed. See the event message and `status.errorMessage`. |
 | `MigrationAborted`          | The migration was canceled via `spec.abort`.                          |
 | `MigrationStuck`            | A migration has not progressed within the expected time.               |
 | `VolumeRebalancingStarted`  | Auto-rebalancing began moving a volume.                                |
