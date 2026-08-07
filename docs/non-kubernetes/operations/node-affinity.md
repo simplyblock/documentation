@@ -59,3 +59,10 @@ The storage node UUID (or host id) can be found using the `{{ cliname }} storage
 ```bash title="List all storage nodes in a storage cluster"
 {{ cliname }} storage-node list --cluster-id=<CLUSTER_ID>
 ```
+
+!!! tip
+    On Kubernetes, a volume's primary node can also be pinned per-PVC with the
+    `simplyblock.io/selected-storage-node` annotation, and a new volume can be automatically co-located
+    with its consuming Pod via the `simplyblock.io/pod-affinity` annotation, independent of this page's
+    cluster-wide `--enable-node-affinity` setting. See
+    [Automatic Volume Placement](../../kubernetes/usage/volume-placement.md).

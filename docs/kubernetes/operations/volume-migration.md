@@ -193,6 +193,11 @@ spec:
     auto-rebalancing. A one-shot placement hint from initial provisioning does not pin a volume. Such volumes
     remain eligible for rebalancing.
 
+!!! note
+    Setting `latencyBenchmarkEnabled: true` also activates load-aware placement for newly created volumes,
+    independent of `enabled` (which only controls the continuous rebalancer above). See
+    [Automatic Volume Placement](../usage/volume-placement.md).
+
 ## Volume Migration During Node Draining and Removal
 
 When a storage node is removed, the operator evacuates its volumes onto the remaining nodes before the node
