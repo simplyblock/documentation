@@ -90,6 +90,33 @@ an administrator — the actors that must not be named anyway.
     Actor is the reader, so no "by" phrase:
                 "The cluster is created before the first volume is attached."
 
+**Vary the construction.** A page where every sentence is "X is done by Y" reads
+like a machine wrote it. The passive has more shapes than that one, and a
+paragraph is easier to follow when they alternate. All of these are passive:
+
+    By the flag or the condition, fronted:
+      "With `--force-format` the node addition is instructed to wipe partition
+       tables and filesystem signatures from those devices."
+      "In `lblk` mode, journal-on-device deployment is required."
+
+    By a relative clause, when a second fact hangs off the first:
+      "An IO timeout is enforced by the SPDK native NVMe driver, by which stuck
+       IO is converted into failed IO."
+      "The `--ssd-pcie` option, by which new devices are added during a restart,
+       is not supported."
+
+    By a participle, when the second half follows from the first:
+      "A device whose IO has made no progress is detected by queue-depth
+       sampling and marked unavailable, entering the same recovery machinery."
+
+    By the state, when no actor is worth naming at all:
+      "SMART health information is not available for AIO-backed devices."
+      "Device health checks are limited to liveness and IO statistics."
+
+Pick the shape that puts the fact the reader is looking for at the front of the
+sentence. What that fact is depends on the sentence, which is why no single form
+fits every one of them.
+
 An **imperative** is how a procedure step is written and stays as it is: "Create
 the `StorageCluster` resource", "Ensure the volume is mounted". It names no
 person, so it neither addresses the reader nor needs an actor.
