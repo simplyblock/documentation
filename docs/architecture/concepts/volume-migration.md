@@ -9,7 +9,7 @@ to volumes remotely via NVMe-oF (TCP, RoCEv2), and the back storage, which serve
 The front storage accesses back storage both locally and remotely. Remote access itself uses NVMe-oF.
 
 Volume migration in simplyblock enables the online relocation of logical volumes (front storage or "docking points") 
-between storage nodes without service interruption and almost instantly. This is possible, because front storage has
+between storage nodes without service interruption and almost instantly. This is possible because front storage has
 remote access to all devices in the cluster and thus exists essentially "in memory" only. 
 
 Volume migrations are performed automatically based on operator decisions to either pre-serve data locality of workloads or 
@@ -17,13 +17,13 @@ to to balance I/O performance across cluster nodes. This is required since the f
 and runs all the data services. Additionally, volume migration is is used to drain nodes in case they need to be removed from the cluster
 (hardware replacement, infrastructure modernization).
 
-While most of the volume migrations happen "under the hood", users can also explicitely initiate migrations (e.g., to 
+While most of the volume migrations happen "under the hood", users can also explicitly initiate migrations (e.g., to 
 move particular, I/O-heavy volumes to particular nodes).
 
 ## How Volume Migration Works
 
-When a volume migration is initiated, simplyblock transfers the volume's complete data lineage -- including its entire
-snapshot chain and the active volume data -- from the source node to a target node. The migration runs in the background
+When a volume migration is initiated, simplyblock transfers the volume's complete data lineage (including its entire
+snapshot chain and the active volume data) from the source node to a target node. The migration runs in the background
 while the volume continues to serve I/O through its existing NVMe-oF paths.
 
 The migration process follows these phases:
