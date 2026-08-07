@@ -33,6 +33,7 @@ can tell a product name from an identifier written without backticks:
 python3 scripts/check-simplyblock-spelling.py --fix
 python3 scripts/check-terminology.py --fix
 python3 scripts/check-american-english.py --fix
+python3 scripts/check-punctuation.py --fix
 ```
 
 ## Audience
@@ -172,10 +173,51 @@ that `Fibre Channel` is the name of a standard and keeps its spelling.
 
 **The Oxford comma** goes before the final `and`, `or`, or `nor` of a series of
 three or more items: "storage nodes, volumes, and snapshots". It belongs to a
-series and nowhere else — a comma before an `and` that joins two sentences is
+series and nowhere else. A comma before an `and` that joins two sentences is
 ordinary punctuation, and "graceful and ungraceful shutdowns" is two items with
-nothing to insert. This gate only warns, since telling the cases apart needs the
-sentence to be read.
+nothing to insert.
+
+## Punctuation to avoid
+
+Three habits make a page read as though nobody chose the words. The punctuation
+gate reports all of them. The first two are warnings, because what replaces them
+depends on the sentence and is a decision for the writer; the list item form has
+one right answer and is an error that `--fix` resolves.
+
+**A semicolon between two clauses.** Two full stops are easier to read, and a
+subordinate clause is easier still. The semicolon stays only where it separates
+items of a series that already carry commas.
+
+    Instead of: "Deploying a storage plane on Linux block devices follows the
+                 standard installation flow; only the differing steps are
+                 described here."
+    Write:      "Deploying a storage plane on Linux block devices follows the
+                 standard installation flow. Only the differing steps are
+                 described here."
+
+**An em dash setting off a clause.** Parentheses carry an aside without
+interrupting the sentence, and a comma carries it without any break at all.
+
+    Instead of: "What is encapsulated is the DMA target — the device writes real
+                 physical addresses."
+    Write:      "What is encapsulated is the DMA target (the device writes real
+                 physical addresses)."
+
+**The subject of a list item** is bold, and it is separated from its text by a
+colon that is bold with it. The colon belongs inside the asterisks, never behind
+them, and the subject is never italic — not even in a nested list under a bold
+one.
+
+    - **Foo** - This is wrong
+    - **Foo** — This is wrong as well
+    - **Foo**: This is still wrong
+    - *Foo:* This is wrong too, the subject is bold and not italic
+    - _Foo:_ Same thing with underscores
+    - **Foo:** This is correct
+
+A bold word that opens an item without a colon is part of the sentence and stays
+as it is: "- **Note** that the mode cannot be changed" is not a subject and is
+left alone.
 
 ## Page structure
 

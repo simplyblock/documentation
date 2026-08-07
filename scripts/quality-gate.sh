@@ -36,7 +36,7 @@ else
 fi
 
 # The available gates, in execution order.
-ALL_GATES=(spelling terminology american voice oxford syntax)
+ALL_GATES=(spelling terminology american voice punctuation syntax)
 
 gate_spelling_description="Brand name spelling and casing"
 gate_spelling() {
@@ -58,9 +58,9 @@ gate_voice() {
   "${PYTHON}" "${SCRIPT_DIR}/check-voice.py"
 }
 
-gate_oxford_description="Oxford comma candidates (warnings only)"
-gate_oxford() {
-  "${PYTHON}" "${SCRIPT_DIR}/check-oxford-comma.py"
+gate_punctuation_description="Oxford comma, semicolon, em dash, and list item punctuation"
+gate_punctuation() {
+  "${PYTHON}" "${SCRIPT_DIR}/check-punctuation.py"
 }
 
 gate_syntax_description="Markdown structure, links, frontmatter and placeholders"
