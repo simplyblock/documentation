@@ -8,7 +8,7 @@ weight: 30650
 
 A simplyblock storage cluster normally onboards storage as NVMe PCIe devices: at deployment, NVMe
 controllers are detected on the PCI bus, unbound from the kernel driver, and attached natively to the
-Simplyblock Storage Plane Container. The Linux block device mode (`lblk`) is an alternative,
+simplyblock storage plane container. The Linux block device mode (`lblk`) is an alternative,
 cluster-global device mode that accepts any Linux block device — SAS or SATA SSDs behind an HBA,
 virtualized disks (virtio, Xen), or cloud volumes such as Amazon EBS — without requiring NVMe
 hardware at all.
@@ -33,7 +33,7 @@ lists) or by their serial number at deploy time. The deployment process and clus
 otherwise identical.
 
 Because the devices remain owned by the Linux kernel in `lblk` mode, no kernel driver unbinding takes
-place, and no device is ever claimed by the Simplyblock Storage Plane PCI layer.
+place, and no device is ever claimed by the simplyblock storage plane PCI layer.
 
 ## Device Eligibility
 
