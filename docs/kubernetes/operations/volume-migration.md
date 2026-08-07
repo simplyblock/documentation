@@ -195,7 +195,7 @@ spec:
 
 !!! note
     Setting `latencyBenchmarkEnabled: true` also activates load-aware placement for newly created volumes,
-    independent of `enabled` (which only controls the continuous rebalancer above). See
+    independent of `migrationEnabled` (which only controls the continuous rebalancer above). See
     [Automatic Volume Placement](../usage/volume-placement.md).
 
 ## Volume Migration During Node Draining and Removal
