@@ -33,7 +33,7 @@ acceptable. It can also be used for local and global CDN-like data distribution 
 clusters.
 
 !!! info
-    Basic remote snapshot replication is available on any platform via CLI/API, but full asynchronous replication 
+    Basic remote snapshot replication is available on any platform via CLI/API, but full asynchronous replication
     with fail-over and fail-back is only available on Kubernetes.
 
 ## Replication Architecture
@@ -58,7 +58,7 @@ Failover is triggered **automatically** when the operator detects that the sourc
 - All storage nodes in the source cluster are `unreachable`.
 
 When both conditions are met, the operator initiates a one-time volume switch (`replicate_lvol`) for each
-replicated volume, effectively providing access to the full volume on the target cluster via new NVMe-oF paths. 
+replicated volume, effectively providing access to the full volume on the target cluster via new NVMe-oF paths.
 The RPO is based on the latest completed snapshot replication.
 The target volumes become primary and begin serving I/O.
 
@@ -76,7 +76,7 @@ any other site by setting up the replication path toward this new cluster. This 
 as a new replication.
 
 Failback refers to the option to replicate the delta accumulated in the target cluster back to the source in case the
-source cluster can be recovered at origin (e.g. after temporary outage or maintainance action). 
+source cluster can be recovered at origin (e.g. after temporary outage or maintainance action).
 
 Failback is triggered **manually** by setting `action: failback` on the `SnapshotReplication` CRD after the
 source cluster has been restored.

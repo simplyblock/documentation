@@ -41,14 +41,14 @@ IOPS in both disaggregated and hyper-converged environments.
 
 ### Data Locality
 
-Simplyblock uses NVMe/TCP or NVMe/RDMA (RoCEv2) to connect initiators (storage consumers) to the storage cluster. While those protocols 
-are networked and allow any type of distributed topology between clients and cluster nodes, simplyblock can ensure a 
+Simplyblock uses NVMe/TCP or NVMe/RDMA (RoCEv2) to connect initiators (storage consumers) to the storage cluster. While those protocols
+are networked and allow any type of distributed topology between clients and cluster nodes, simplyblock can ensure a
 maximum of data locality to minimize impacts of network latency and bandwidth utilization.
 
 In simplyblock, front storage (the remote "docking points" of the clients into the cluster) and back storage (the actual NVMe storage layer)
 are distributed. All cluster back storage devices can be accessed from any front storage entry point using cluster internal NVMe-oF.
 
-However, to achieve a maximum of data locality without compromising the advantages of a fully distributed system, such as scalability, 
+However, to achieve a maximum of data locality without compromising the advantages of a fully distributed system, such as scalability,
 several advanced mechanisms can be used within simplyblock:
 
 1. In a hyper-converged deployment, simplyblock tries to co-locate front storage volume entry points with the actual workload. In
@@ -63,7 +63,7 @@ several advanced mechanisms can be used within simplyblock:
 The relabalcing algorithm which moves data around is optimized for minimal overhead:
 
 * First, it tries to maximize transfer size, in fact turning smaller random writes into large sequential writes, which are much more efficient.
-* Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS). Therefore, its impact on 
+* Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS). Therefore, its impact on
   I/O performance is quite limited. This means that volumes ultimately converge toward full data locality whenever possible.
 * At the same time, this does not result in any hard limits.
     * For example, in a cluster with 2 PB of storage, it is still possible to create a single volume consuming all of these 2 PB.
@@ -141,4 +141,3 @@ undesired behavior. Still, it does not guarantee performance for a particular cl
 Service classes provide a much better degree of isolation under the consideration of dynamic workloads. As long as a
 particular service class is not overloaded, the general IO pressure on the cluster will not matter for the performance
 of volumes in that class.
-

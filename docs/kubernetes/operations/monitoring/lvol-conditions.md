@@ -10,7 +10,7 @@ critical for ensuring workload reliability, troubleshooting issues, and planning
 continuously monitors volume-level metrics and exposes them through both CLI and observability tools, giving operators
 detailed insight into system behavior.
 
-## Accessing Logical Volume Statistics 
+## Accessing Logical Volume Statistics
 
 To access a logical volume's performance and I/O statistics, the `{{ cliname }}` command line tool can be used:
 

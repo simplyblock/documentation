@@ -35,7 +35,7 @@ To see all available parameters for cluster creation, see
 [CLI reference](../../reference/cli/cluster.md).
 
 When the cluster was created with node affinity enabled, logical volumes can be created with node affinity, which will
-always try to locate data co-located with the requested storage node. 
+always try to locate data co-located with the requested storage node.
 
 ## Create a Node Affine Logical Volume
 

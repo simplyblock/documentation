@@ -18,7 +18,7 @@ On Kubernetes worker nodes, simplyblock requires a few kernel modules to be load
 machine:
   kernel:
     modules:
-      - name: nbd 
+      - name: nbd
       - name: uio_pci_generic
       - name: vfio_pci
       - name: vfio_iommu_type1
@@ -96,7 +96,7 @@ To activate the huge pages, the `talosctl` command should be used.
 
 Simyplyblock's CSI driver requires connecting NVMe over Fabrics devices, as well as mounting and formatting them.
 Therefore, the CSI driver has to run as a privileged container. Hence, Talos must be configured to start the
-simplyblock's CSI driver in privileged mode. 
+simplyblock's CSI driver in privileged mode.
 
 Talos allows overriding the pod security admission settings at a Kubernetes namespace level. To enable privileged mode
 and grant the required access to the simplyblock CSI driver, a specific simplyblock namespace with the appropriate

@@ -13,7 +13,7 @@ The architecture is purpose-built to support Kubernetes-native and OpenShift-bas
 integration.
 
 Furthermore, simplyblock support virtual and physical machines (bare metal) for storage-side and client-side
-deployments. 
+deployments.
 
 ## Control Plane
 
@@ -39,14 +39,14 @@ The control plane provides the following functionality in two groups of distribu
     - Performance Monitoring and Dashboarding (Grafana, Prometheus) with configurable alerting to email and Slack
 
 The observability stack is optional. It is typically used in PoC (proof of concept) or testing environments and for
-customers, who need to get started quickly. For large scale, multi-cluster deployments it is 
+customers, who need to get started quickly. For large scale, multi-cluster deployments it is
 rather recommended to integrate with pre-existing or targeted observability stacks.
-      
+
 The control plane is layered and its distributed control plane services run on both Kubernetes and native Docker.
 The latter can be used for non-Kubernetes (Proxmox, OpenStack) or disaggregated deployments.
 All services are accessible via the Simplyblock CLI and Control Plane API.
 
-On top of those services sits a CSI driver and a Kubernetes operator within the Kubernetes-native operations model. 
+On top of those services sits a CSI driver and a Kubernetes operator within the Kubernetes-native operations model.
 It is entirely managed by Custom Resource Definitions (CRDs), however, internally uses the same Control Plane APIs.
 
 Communication between the Control Plane and the Storage Plane is performed via two separate access paths:

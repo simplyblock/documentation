@@ -28,19 +28,19 @@ resources to the cluster. It provides a portion of the overall storage capacity 
 distribution, redundancy, and retrieval processes. In simplyblock, each logical volume is attached to particular primary
 and secondary storage nodes via the nmvf protocol. The nodes run the in-memory data services for this volume on the hot
 data path and provide access to underlying data. The data stored on such a volume is distributed within the cluster
-following a defined placement logic. 
+following a defined placement logic.
 
 ### Storage Pool
 
-A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, IOPS, and 
+A storage pool in simplyblock groups logical volumes and assigns them optional quotas (caps) of capacity, IOPS, and
 read-write throughput. Storage pools are defined on a cluster level and can span logical volumes across multiple
-storage nodes. Therefore, storage pools implement a tenant concept.   
+storage nodes. Therefore, storage pools implement a tenant concept.
 
 ### Storage Device
 
 A storage device is a physical or virtualized NVMe drive in simplyblock, but not a partition. It is identified by its
 PCIe address and serial number. Simplyblock currently supports a wide range of different types of NVMe drives with
-varying characteristics of performance, features, and capacities. 
+varying characteristics of performance, features, and capacities.
 
 ### NVMe (Non-Volatile Memory Express)
 
@@ -140,7 +140,7 @@ environments. By setting limits and priorities for Logical Volumes (LVs), simply
 storage resources efficiently, ensuring critical workloads maintain consistent performance even under high demand.
 This capability is essential for optimizing storage operations, improving reliability, and meeting service-level
 agreements (SLAs) in distributed cloud-native environments. In simplyblock, it is possible to limit (cap) IOPS or throughput
-of individual logical volumes or entire storage pools, and additionally to create QoS classes and provide a fair 
+of individual logical volumes or entire storage pools, and additionally to create QoS classes and provide a fair
 relative resource allocation (IOPS and/or throughput) to each class. Logical volumes can be assigned to classes.
 
 ### SPDK (Storage Performance Development Kit)

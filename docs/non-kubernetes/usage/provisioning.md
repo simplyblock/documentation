@@ -4,8 +4,8 @@ description: "Provisioning a Logical Volume: A logical volume (LV) in simplybloc
 weight: 30000
 ---
 
-A logical volume (LV) in simplyblock can be provisioned using the `{{ cliname }}` command line interface. 
-This allows administrators to create virtual NVMe block devices backed by simplyblock’s distributed storage, enabling 
+A logical volume (LV) in simplyblock can be provisioned using the `{{ cliname }}` command line interface.
+This allows administrators to create virtual NVMe block devices backed by simplyblock’s distributed storage, enabling
 high-performance and fault-tolerant storage for workloads.
 
 ## Prerequisites

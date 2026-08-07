@@ -33,7 +33,7 @@ To start a new storage node, follow the storage node installation according to t
 !!! danger
     All volumes on this storage node, which haven't been migrated before the removal, will become inaccessible!
 
-To remove the old storage node, use the `{{ cliname }}` command line tool. 
+To remove the old storage node, use the `{{ cliname }}` command line tool.
 
 ```bash title="Remove a storage node"
 {{ cliname }} storage-node remove <NODE_ID>

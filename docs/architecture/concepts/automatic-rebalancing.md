@@ -9,7 +9,7 @@ distribution of data and performance across storage nodes. This process ensures 
 and enhances system resilience by dynamically redistributing data in response to changes in cluster topology or workload
 patterns.
 
-In simplyblock, re-balancing concerns the re-balancing of back storage (for rebalancing of front storage or volume "docking points", see 
+In simplyblock, re-balancing concerns the re-balancing of back storage (for rebalancing of front storage or volume "docking points", see
 [volume migration](volume-migration.md) for details). Its behavior depends on whether local node affinity is turned on.
 
 If local node affinity is turned on, primary data chunks are re-balanced with a preference to the node at which also the front storage resides.
@@ -17,6 +17,7 @@ If local node affinity is turned off, all data and parity chunks are distributed
 levels across all NVMe devices in the cluster under consideration of failure domains and data protection rules.
 
 Data re-balancing uses three important principles:
+
 - always try to move the longest contigous segments of data to minimize random-access IOPS
 - do not use more than 20% of the cluster performance capacity, this is guaranteed by internal QoS
 - use maximum parallelism (during migration, load all devices in the cluster equally to maximize migration speed within the 20%)

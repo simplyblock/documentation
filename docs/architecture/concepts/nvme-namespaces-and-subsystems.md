@@ -7,17 +7,17 @@ weight: 30190
 Connecting to a storage volume, both locally and via NVMe over Fabrics (NVMe-oF), requires a subsystem and a namespace.
 
 An NVMe-oF subsystem is the exported entity that the host connects to over the fabric (RDMA, TCP).
-A subsystem is identified by its unique worldwide name (NQN) and can be roughly seen as a 
-controller, which exposes and connects one or multiple namespaces (actual volumes) to hosts. 
+A subsystem is identified by its unique worldwide name (NQN) and can be roughly seen as a
+controller, which exposes and connects one or multiple namespaces (actual volumes) to hosts.
 
-The NQN of a subsystem can contain the namespace UUID and is worldwide unique. 
+The NQN of a subsystem can contain the namespace UUID and is worldwide unique.
 In simplyblock, it looks as follows (the last part behind `:lvol:<uuid>` indicates the namespace representing the volume):
 
 ```plain title="Example NQN"
 qn.2023-02.io.simplyblock:136012a7-f386-4091-ae0f-4e763059e9c8:lvol:6809b758-1c73-451f-810c-210c18d6aa14
 ```
 
-Together with the IP address, the fully qualified subsystem address has to be given to connect, but 
+Together with the IP address, the fully qualified subsystem address has to be given to connect, but
 In simplyblock this process is either automated (CSI, OpenStack, or Proxmox) or guided (plain Linux initiators).
 
 It’s roughly equivalent to an NVMe controller or logical device that can contain one or more namespaces.
@@ -48,7 +48,7 @@ So the namespace is the thing data is actually read from and written to.
 !!! info
     In simplyblock, the number of namespace volumes to be created can be defined for a particular
     subsystem. This allows sharing of subsystems by Linux block devices (e.g., nvme0nX), where each of them
-    is less performance-critical. In Kubernetes, to use different relationships (e.g., 1:10) between subsystem 
+    is less performance-critical. In Kubernetes, to use different relationships (e.g., 1:10) between subsystem
     and namespace, different storage classes are required.
 
 Volumes can be created manually with multiple namespaces per subsystem:

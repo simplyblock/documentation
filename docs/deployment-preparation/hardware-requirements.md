@@ -12,9 +12,9 @@ network bandwidth, and free space on the boot disk.
 
 ### Overview
 
-| Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage          | Network Performance | Free Boot Disk | Number of Nodes  | 
+| Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage          | Network Performance | Free Boot Disk | Number of Nodes  |
 |---------------|---------|------------------------|-----------------------------------|---------------------|----------------|------------------|
-| Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> | 
+| Storage Node  | 8+      | 6+ DDR4 <sup>(1)</sup> | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> |
 
 <span style="font-size: 0.8em;">
 <sup>1</sup> Simplyblock highly recommends DDR5 memory on storage nodes for optimal performance.<br>
@@ -22,16 +22,14 @@ network bandwidth, and free space on the boot disk.
 <sup>3</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
 </span>
 
----
-
 !!! info
-    In cloud environments including GCP and AWS, instance types are pre-configured. In general,  
+    In cloud environments including GCP and AWS, instance types are pre-configured. In general,
     there are no restrictions on instance types as long as these system requirements are met. However, it is highly
     recommended to stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
 
     For [hyper-converged](../architecture/concepts/hyper-converged.md) deployments, it is important that node sizing
     applies to the dedicated resources consumed by simplyblock. Hyper-converged instances must provide enough of
-    resources to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the 
+    resources to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the
     operating system.
 
 ## Sizing Basics
@@ -63,7 +61,7 @@ Manual changes to the configuration are possible if the proposed configuration i
 
 ### Hyper-Converged Sizing Guidance
 
-As hyper-converged deployments have to share vCPUs, it is recommended to dedicate 15%-20%, but not less than 
+As hyper-converged deployments have to share vCPUs, it is recommended to dedicate 15%-20%, but not less than
 8 vCPU per socket to simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to
 12.5% of vCPU capacity per host. For very IO-intensive applications, this amount should be increased.
 
@@ -71,12 +69,12 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 
 !!! warning
     On storage nodes, required vCPUs will be automatically isolated from the operating system. No
-    kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs. In 
-    Kubernetes, the CPU Manager and Topology Manager are used for this purpose. 
+    kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs. In
+    Kubernetes, the CPU Manager and Topology Manager are used for this purpose.
 
 ### Storage Node Memory Sizing Formula
 
-For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on 
+For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on
 the assigned vCPUs and networking performance of the node. For each 10 GBit/s of dedicated network bandwidth
 it is recommended to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
 subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs).
@@ -100,7 +98,7 @@ The simplyblock control plane has different hardware requirements depending on t
 === "Kubernetes"
 
     For a Kubernetes-based control plane, the minimum requirements per replica are:
-    
+
     | Service                      | Instances | vCPU(s)  | RAM (GB)  | Disk (GB) |
     |------------------------------|-----------|----------|-----------|-----------|
     | Simplyblock Operator         | 1         | 1        | 0.5       | 0.5       |
@@ -133,9 +131,9 @@ The simplyblock control plane has different hardware requirements depending on t
     A control plane cluster of this size can manage up to 5 nodes, 1,000 logical volumes, and 2,500 snapshots. For
     larger deployments, increase the resources of the management nodes accordingly.
 
-    | Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  | 
+    | Node Type     | vCPU(s) | RAM (GB)               | Locally Attached Storage | Network Performance | Free Boot Disk | Number of Nodes  |
     |---------------|---------|------------------------|--------------------------|---------------------|----------------|------------------|
-    | Control Plane | 4       | 16 DDR4                | -                        | 1 GBit/s            | 35 GB          | 3                | 
+    | Control Plane | 4       | 16 DDR4                | -                        | 1 GBit/s            | 35 GB          | 3                |
 
 
 ### Control Plane Scaling Triggers
@@ -220,7 +218,7 @@ A full list of the supported architectures can be found in the
 
 ### NVMe Capacity and Performance Guidance
 
-NVMe devices must support 4KB native block size or devices that support 512b native block size with 
+NVMe devices must support 4KB native block size or devices that support 512b native block size with
 4KB write atomicity.
 
 The NVMe devices are recommended to be sized between 1.9 TiB and 7.68 TiB. Large NVMe devices are supported,

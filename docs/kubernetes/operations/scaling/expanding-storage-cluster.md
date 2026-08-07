@@ -13,7 +13,7 @@ designed to be minimal, it is still recommended to expand the cluster at times w
 full utilization.
 
 !!! info
-    Add storage nodes in **pairs** (i.e., 2, 4, 6, … nodes at a time).  
+    Add storage nodes in **pairs** (i.e., 2, 4, 6, … nodes at a time).
     Expansions with an odd number of nodes are **not supported**.
 
 To add a new storage node, follow the installation steps for the chosen deployment method up to the point where nodes are added to the cluster, then continue here:
@@ -36,8 +36,6 @@ After the expansion is complete, the cluster returns to **ACTIVE** and resumes n
 There are two ways to add nodes when using the Kubernetes operator: via the `StorageNodeSet` (recommended for
 adding multiple nodes) or by creating individual `StorageNode` CRs manually (useful for per-node
 overrides or want fine-grained control).
-
----
 
 ### Option A: Add Nodes via a New StorageNodeSet (recommended)
 
@@ -102,8 +100,6 @@ kubectl get storagenodeset simplyblock-node-expansion -n simplyblock -w
 kubectl get storagenodes -n simplyblock
 ```
 
----
-
 ### Option B: Add a Single Node via StorageNode CR
 
 For cases that need per-node overrides (custom `maxLogicalVolumeCount`, `spdkSystemMemory`, etc.) or a
@@ -142,8 +138,6 @@ kubectl get storagenode simplyblock-new-node-4-expansion \
 !!! note
     The `StorageNode` CR is normally auto-created by the operator when a worker is added to the `StorageNodeSet`.
     Create it manually only for per-node overrides that are not covered by `StorageNodeSet.spec.nodeConfigs`.
-
----
 
 ### Finalizing the Expansion
 

@@ -42,7 +42,7 @@ Direct changes to the documentation follow these steps:
 2. **Clone the Repository**
 
 - Clone the fork to a local machine:
-  ```sh
+  ```bash
   git clone https://github.com/YOUR_USERNAME/documentation.git
   cd documentation
   ```
@@ -50,7 +50,7 @@ Direct changes to the documentation follow these steps:
 3. **Create a New Branch**
 
 - Always create a new branch for the changes:
-  ```sh
+  ```bash
   git checkout -b update-docs
   ```
 
@@ -63,11 +63,11 @@ Direct changes to the documentation follow these steps:
 5. **Commit and Push the Changes**
 
 - Commit the changes with a clear message:
-  ```sh
+  ```bash
   git commit -m "Fix typo in installation guide"
   ```
 - Push the changes to the fork:
-  ```sh
+  ```bash
   git push origin update-docs
   ```
 
@@ -88,4 +88,3 @@ Direct changes to the documentation follow these steps:
 ## Getting in Touch
 
 Questions about contributing can be raised as an issue or through the simplyblock support channels.
-

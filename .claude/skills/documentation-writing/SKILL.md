@@ -296,6 +296,52 @@ is a manifest that gets saved, name it behind the description: `title="Example o
 a StorageCluster resource (storage-cluster.yaml)"`. `mermaid` diagrams need no
 title.
 
+**The language says what the block is.** A command is `bash`, a manifest is
+`yaml`, an API body is `json`, and everything a program prints back is `plain`.
+The content of a configuration file takes the language of that file, so an
+`ini` file is `ini` and a YAML file is `yaml`, whatever the command that writes
+it happens to be.
+Output is not shell: marking it `bash` colors hostnames and status words as if
+they were commands, and it tells the reader to type something that cannot be
+typed.
+
+A command and its output are two blocks, not one. Neither belongs inside the
+other, and each carries its own title:
+
+````markdown
+```bash title="Creating the persistent volume claim"
+kubectl create -f pvc-static.yaml
+```
+
+```plain title="Example output of the volume claim creation"
+persistentvolumeclaim/pvc-static created
+```
+````
+
+The house languages are `bash`, `yaml`, `plain`, `json`, and `ini`. An alias of
+one of them fails the syntax gate: write `bash` and not `sh`, `shell`, or `zsh`, `plain`
+and not `text`, `txt`, or `console`, and `yaml` and not `yml`.
+
+**A long command is split across lines.** A command that runs off the width of
+the block forces the reader to scroll sideways to find out what it does. Break it
+with a trailing backslash and indent every continuation by four spaces, so that
+the continuations line up under each other and read as one command:
+
+````markdown
+```bash title="Connecting a volume over NVMe/TCP"
+sudo nvme connect -t tcp \
+    -n <NVME_SUBSYS_NAME> \
+    -a <TARGET_IP> \
+    -s <TARGET_PORT>
+```
+````
+
+One option per line once a command is split. Half the flags on the first line and
+the rest below reads worse than either form on its own.
+
+Bash lines in the documentation have a median length of 40 characters and 95 in
+100 stay under 75. Past roughly 80, look for the split.
+
 Anything a reader would type or that names a file, a command, a parameter, a
 value, or an identifier belongs in backticks. That is also what keeps the
 spelling gates from rewriting it.
@@ -309,6 +355,47 @@ resolve — the syntax gate follows both, including the anchor:
 [Kubernetes docs](https://kubernetes.io/docs/){:target="_blank" rel="noopener"}
 [Hardware Requirements](../deployment-preparation/hardware-requirements.md#minimum-system-requirements)
 ```
+
+**Markdown that fails quietly.** python-markdown does not warn when a construct
+is not what it looks like. It renders a paragraph instead, the build succeeds,
+and the page is simply wrong. The syntax gate catches these, and all of them are
+worth knowing by hand:
+
+- **A nested list item is indented by four spaces.** One to three spaces make it
+  a sibling of the item above, eight or more make it part of that item's text.
+  Four is the only step that also survives another level below it.
+- **A list needs a blank line above it.** Written directly under a paragraph, its
+  items are read as more of that paragraph and come out as one run-on line.
+- **A list marker needs a space behind it.** `-Command` is text, `- Command` is
+  an item.
+- **A link carries no space between its halves.** `[text] (target)` prints the
+  brackets and the parentheses literally.
+- **A table carries its separator row** under the header, or the whole table
+  renders as a paragraph.
+- **A heading carries a space behind its hashes.** `##Heading` happens to work in
+  python-markdown, but not in the preview of a pull request, and a heading is
+  written one way like everything else.
+- **A code block needs a blank line above it too.** Written under a paragraph, it
+  is nested inside that paragraph and the html comes out broken.
+- **`<PLACEHOLDER>` needs backticks.** Outside a code span it is passed through as
+  html, and the browser drops it as an unknown tag: "for every subsystem <n>
+  namespaces" reaches the reader as "for every subsystem namespaces".
+- **A line of `===` or `---` under text turns that text into a heading.** A blank
+  line above the rule keeps it a rule.
+- **A marker with nothing behind it** renders as an empty bullet.
+- **Two spaces at the end of a line** insert a line break into the paragraph.
+- **A bare url is not a link.** python-markdown does not linkify on its own, so
+  the address is printed as text.
+- **Trailing whitespace** is removed everywhere, including inside a code block.
+  It changes nothing on the page, which is why it survives review and turns up in
+  every later diff.
+- **A file ends with one newline** behind its last line of text. Not without one,
+  which leaves the last line unterminated, and not with blank lines behind it.
+
+A **horizontal rule** is not used at all. Sections are separated by their
+headings. The `---` between the title and the body of a Material grid card is a
+different thing and stays: it is indented inside the card, and the check only
+looks at the margin.
 
 The body of an admonition (`!!! note`, `??? tip`) or a content tab (`=== "Title"`)
 is indented by four spaces relative to its marker, otherwise the text ends up

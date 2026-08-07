@@ -14,13 +14,13 @@ Before starting the deployment, make sure that the following prerequisites as de
 
 The first step when installing simplyblock on plain Linux (Docker) is to install the control plane. The control
 plane manages one or more storage clusters. If an existing control plane is available and the new cluster should be
-added to it, this section can be skipped. 
+added to it, this section can be skipped.
 
 In this case, the following section can be skipped to [Storage Plane Installation](install-sp.md).
 
 ### Firewall Configuration (CP)
 
-Simplyblock requires a number of TCP and UDP ports to be opened from certain networks. 
+Simplyblock requires a number of TCP and UDP ports to be opened from certain networks.
 
 The following is a list of all ports (TCP and UDP) required to operate as a management node. Attention is required, as
 this list is for management nodes only. Storage nodes have a different port configuration.
@@ -33,7 +33,7 @@ With the previously defined subnets, the following snippet configures the iptabl
     The example assumes an external firewall between the _admin_ network and the public internet!<br/>
     If this is not the case, ensure the correct source access for ports _22_ and _80_.
 
-```plain title="Network Configuration"
+```bash title="Network Configuration"
 #!/usr/bin/env bash
 
 # Clean up
@@ -94,7 +94,7 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-cp.sh | bash
 If the check succeeds, it's time to set up the primary management node:
 
 ```bash title="Deploy the primary management node"
-{{ cliname }} cluster create --ifname=<IF_NAME> 
+{{ cliname }} cluster create --ifname=<IF_NAME>
 ```
 
 Important cluster deployment options can be found in the [Cluster Deployment Options](../../deployment-preparation/cluster-deployment-options.md).

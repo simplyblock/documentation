@@ -90,13 +90,13 @@ When connecting a volume with host access control, the `--host-nqn` flag must be
 The connect command outputs the appropriate `nvme connect` command with the required authentication flags
 based on the host's configured keys:
 
-```bash title="Example Output"
+```bash title="Example of a connect command carrying the host's keys"
 nvme connect -t tcp -a 192.168.1.100 -s 4420 \
-  -n nqn.2023-02.io.simplyblock:lvol:abc123 \
-  --hostnqn=nqn.2023-02.io.example:host-1 \
-  --dhchap-secret=DHHC-1:01:<base64-key>: \
-  --dhchap-ctrl-secret=DHHC-1:01:<base64-key>: \
-  --ctrl-loss-tmo=-1
+    -n nqn.2023-02.io.simplyblock:lvol:abc123 \
+    --hostnqn=nqn.2023-02.io.example:host-1 \
+    --dhchap-secret=DHHC-1:01:<base64-key>: \
+    --dhchap-ctrl-secret=DHHC-1:01:<base64-key>: \
+    --ctrl-loss-tmo=-1
 ```
 
 The `--dhchap-secret` and `--dhchap-ctrl-secret` flags are included only when the volume belongs to a
@@ -105,8 +105,8 @@ the connect command returns a plain connection string without authentication par
 
 ## Clone Security Behavior
 
-When a clone is created from a DHCHAP-protected volume, it receives independent security settings. 
-A clone is treated as a new volume and inherits the pool’s `allowed_hosts` list at the time of creation. 
-However, its host access control is managed independently from the parent volume. Adding or removing hosts 
-on the parent volume does not affect existing clones, and adding or removing hosts on a clone does not 
+When a clone is created from a DHCHAP-protected volume, it receives independent security settings.
+A clone is treated as a new volume and inherits the pool’s `allowed_hosts` list at the time of creation.
+However, its host access control is managed independently from the parent volume. Adding or removing hosts
+on the parent volume does not affect existing clones, and adding or removing hosts on a clone does not
 affect the parent volume.

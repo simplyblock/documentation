@@ -3,7 +3,7 @@ Simplyblock requires a number of TCP and UDP ports to be opened from certain net
 to be disabled on management nodes.
 
 Following is a list of all ports (TCP and UDP) required for operation as a storage node. Attention is required, as this
-list is for storage nodes only. Management nodes have a different port configuration. 
+list is for storage nodes only. Management nodes have a different port configuration.
 
 {% include 'network-port-table.md' %}
 
@@ -13,7 +13,7 @@ With the previously defined subnets, the following snippet disables IPv6 and con
     The example assumes an external firewall between the _admin_ network and the public internet!<br/>
     If this is not the case, ensure the correct source access for port _22_.
 
-```plain title="Disable IPv6"
+```bash title="Disable IPv6"
 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 ```
@@ -53,7 +53,7 @@ stored as _/etc/systemd/system/simplyblock-iptables.service_.
 
 ```plain title="systemd script to set up iptables"
 [Unit]
-Description=Simplyblock Iptables Restrictions for Docker 
+Description=Simplyblock Iptables Restrictions for Docker
 After=docker.service
 BindsTo=docker.service
 ReloadPropagatedFrom=docker.service

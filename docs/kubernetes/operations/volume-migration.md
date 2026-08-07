@@ -117,7 +117,7 @@ An in-progress migration can be canceled by setting `spec.abort` to `true`. The 
 
 !!! important
     A volume migration can only be aborted while in the `Pending` or `Validating` phases. A running migration must be
-    able to complete to ensure data consistency. Hence, it cannot be aborted once running.  
+    able to complete to ensure data consistency. Hence, it cannot be aborted once running.
 
 ```bash title="Abort an in-progress migration"
 kubectl patch volumemigration migrate-pvc-968cff4f -n simplyblock \
@@ -255,7 +255,7 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
 | A non-UUID value                                                  | Removal is blocked. An `InvalidPinTarget` event is emitted.      |
 | The UUID of the node being removed                                | Removal is blocked. A `PinnedVolumeBlocking` event is emitted.   |
 
-Volumes whose backing logical volume has no corresponding PV (for example, a volume created outside 
+Volumes whose backing logical volume has no corresponding PV (for example, a volume created outside
 Kubernetes) also block removal, with an `UnmanagedVolumeBlocking` event, until they are resolved.
 
 ```bash title="Check for blocking events during a stalled removal"

@@ -9,14 +9,14 @@ weight: 30100
 **Symptom:** FoundationDB error. All services that rely upon the FoundationDB key-value storage are offline or refuse to start.
 
 1. Ensure that IPv6 is disabled:
-```plain title="Network Configuration"
+```bash title="Network Configuration"
 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 ```
 2. Ensure sufficient disk space on the root partition on all control plane nodes. Free disk space can be checked with `df -h`.
-   1. If not enough free disk space is available, start by checking the Graylog, MongoDB, and Elasticsearch containers. If those consume most of the disk space, old indices (2-3) can be deleted.
-   2. Increase the root partition size.
-   3. If the root partition size cannot be increased, remove any data or service not relevant to the simplyblock control plane and run a `docker system prune`.
+    1. If not enough free disk space is available, start by checking the Graylog, MongoDB, and Elasticsearch containers. If those consume most of the disk space, old indices (2-3) can be deleted.
+    2. Increase the root partition size.
+    3. If the root partition size cannot be increased, remove any data or service not relevant to the simplyblock control plane and run a `docker system prune`.
 3. Restart the Docker daemon: `systemctl restart docker`
 4. Reboot the node
 
@@ -28,7 +28,7 @@ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
 2. If short on available memory, stop services non-relevant to the simplyblock control plane.
 3. If that doesn't help, reboot the host.
 
-## Graylog Storage is Full 
+## Graylog Storage is Full
 **Symptom:** The Graylog service cannot start or is unresponsive, and the storage disk is full.
 
 1. Identify the cause of the disk running full. Run the following commands to find the largest files on the Graylog disk.
@@ -39,9 +39,9 @@ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
    du -sh /var/lib/docker/volumes
    ```
 2. Delete the old Graylog indices via the Graylog UI.
-       * Go to _System_ -> _Indices_
-       * Select the index set
-       * Adjust the _Max Number of Indices_ to a lower number
+    * Go to _System_ -> _Indices_
+    * Select the index set
+    * Adjust the _Max Number of Indices_ to a lower number
 3. Reduce Docker disk usage by removing unused Docker volumes and images, as well as old containers.
    ```bash title="Remove old Docker entities"
    docker volume prune -f
@@ -54,12 +54,12 @@ sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
    docker service update monitoring_graylog --replicas=0
    docker service update monitoring_opensearch --replicas=0
    docker service update monitoring_mongodb --replicas=0
-   
+
    # Remove old data
    rm -rf /var/lib/docker/volumes/monitoring_graylog_data
    rm -rf /var/lib/docker/volumes/monitoring_os_data
    rm -rf /var/lib/docker/volumes/monitoring_mongodb_data
-   
+
    # Restart services
    docker service update monitoring_mongodb --replicas=1
    docker service update monitoring_opensearch --replicas=1

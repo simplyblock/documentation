@@ -25,7 +25,7 @@ curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
 A simplyblock production cluster consists of three different types of nodes in the plain Linux (Docker) variant
 of the deployment:
 
-1. _Management nodes_ are part of the control plane which managed the cluster(s). 
+1. _Management nodes_ are part of the control plane which managed the cluster(s).
 2. _Storage nodes_ are part of a specific storage cluster and provide capacity to the distributed storage pool. A
    production cluster requires at least **three nodes**.
 3. _Secondary nodes_ are part of a specific storage cluster and enable automatic fail over for NVMe-oF connections. In a
@@ -46,14 +46,14 @@ More information on the control plane, storage plane, and the different node typ
 For network requirements,
 see [System Requirements](../../deployment-preparation/hardware-requirements.md#network-requirements).
 
-On storage nodes, simplyblock can use either one network interface for both storage and management 
+On storage nodes, simplyblock can use either one network interface for both storage and management
 or separate interfaces (VLANs or subnets).
 
 !!! Important
     It is possible to configure a storage cluster with NVMe-oF Multipathing. This requires two storage
     VLANs per host, routed via separate NIC ports and switches for fault tolerance. This configuration can
     be used as an alternative to a HA networking setup with link aggregation (such as LACP, MLAG, and similar).
-    
+
 To install simplyblock in a specific environment, these commands may have to be adopted to match its configuration.
 
 | Network interface | Network definition | Abbreviation | Subnet          |

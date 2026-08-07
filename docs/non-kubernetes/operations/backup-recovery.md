@@ -179,7 +179,7 @@ is especially useful for automated backup workflows integrated with Kubernetes-n
 
 Backups require an S3-compatible object storage endpoint. For local testing, a MinIO instance can be deployed:
 
-```sh title="Deploy a local MinIO instance for testing"
+```bash title="Deploy a local MinIO instance for testing"
 kubectl create ns minio
 
 kubectl -n minio create deployment minio \

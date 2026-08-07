@@ -15,7 +15,7 @@ Before starting the deployment, make sure that the following prerequisites as de
 The installation of a storage plane requires a functioning control plane. If no control plane cluster is available yet,
 it must be installed beforehand. Jump right to the [Control Plane Installation](install-cp.md).
 
-The following examples assume two subnets are available. 
+The following examples assume two subnets are available.
 
 ### Firewall Configuration (SP)
 
@@ -94,10 +94,10 @@ True
 ```
 
 A full set of the parameters for the `configure` subcommand can be found in the
-[CLI reference](../../reference/cli/storage-node.md). 
+[CLI reference](../../reference/cli/storage-node.md).
 
 It is also possible to adjust the configuration file manually, e.g., to remove NVMe devices.
-After the configuration has been created, the first stage deployment can be executed. 
+After the configuration has been created, the first stage deployment can be executed.
 
 ```bash title="Deploy the storage node"
 sudo {{ cliname }} storage-node deploy --ifname eth0

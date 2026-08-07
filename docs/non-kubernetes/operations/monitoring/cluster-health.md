@@ -21,7 +21,7 @@ To access a cluster's status, the `{{ cliname }}` command line tool can be used:
 All details of the command are available in the
 [CLI reference](../../../reference/cli/index.md).
 
-## Accessing Cluster Statistics 
+## Accessing Cluster Statistics
 
 To access a cluster's performance and I/O statistics, the `{{ cliname }}` command line tool can be used:
 
@@ -34,7 +34,7 @@ All details of the command are available in the
 
 The information is also available through Grafana in the cluster's dashboard.
 
-## Accessing Cluster I/O Statistics 
+## Accessing Cluster I/O Statistics
 
 To access a cluster's performance and I/O statistics, the `{{ cliname }}` command line tool can be used:
 

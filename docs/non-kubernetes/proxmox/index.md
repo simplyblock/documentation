@@ -23,7 +23,7 @@ apt repository, simplyblock offers a script to handle the repository registratio
 
 !!! info
     All the following commands require root permissions for execution. It is recommended to log in as root or open a
-    root shell using `sudo su`. 
+    root shell using `sudo su`.
 
 ```bash title="Automatically register the Simplyblock Debian Repository"
 curl https://install.simplyblock.io/install-debian-repository | bash

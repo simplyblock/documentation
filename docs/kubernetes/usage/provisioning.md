@@ -23,7 +23,7 @@ spec:
   resources:
     requests:
       storage: 256Mi
-  storageClassName: simplyblock-csi-sc     
+  storageClassName: simplyblock-csi-sc
 ```
 
 Afterward, the PVC can be used as a normal PVC and added to a pod.
@@ -139,8 +139,10 @@ spec:
   storageClassName: spdkcsi-sc
 ```
 
-```bash
-[demo@demo ~]# kubectl create -f pvc-static.yaml
-persistentvolumeclaim/pvc-static created
+```bash title="Creating the persistent volume claim"
+kubectl create -f pvc-static.yaml
 ```
 
+```plain title="Example output of the volume claim creation"
+persistentvolumeclaim/pvc-static created
+```

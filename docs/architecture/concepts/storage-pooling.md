@@ -34,5 +34,4 @@ Key characteristics of storage pooling include:
 
     As this characteristic is conflicting with the benefits of data locality, simplyblock still applies the principles
     of data locality. This is implemented as a best-effort manner and without damaging performance of parts of volumes
-    through localized bottlenecks. 
-
+    through localized bottlenecks.

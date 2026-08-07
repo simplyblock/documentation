@@ -22,7 +22,7 @@ created.
 
 ## CSI Driver System Requirements
 
-The CSI driver consists of two parts: 
+The CSI driver consists of two parts:
 
 - A controller part, which communicates to the control plane via the control plane API
 - A node part, which is deployed to and must be present on all nodes with pods attaching simplyblock storage (Daemonset)
@@ -177,13 +177,13 @@ Note that the `storagenode.create` parameter must be set to `false` (the default
 
 ## Multi Cluster Support
 
-The Simplyblock CSI driver now offers **multi-cluster support** and **zone-aware configurations**, allowing to connect with multiple simplyblock clusters based on ClusterID 
+The Simplyblock CSI driver now offers **multi-cluster support** and **zone-aware configurations**, allowing to connect with multiple simplyblock clusters based on ClusterID
 or based on their topology zone.
 Previously, the CSI driver could only connect to a single cluster.
 
 To enable interaction with multiple clusters, there are two key changes:
 
-1.  Parameter **`cluster_id` in a storage class:** A new parameter, `cluster_id`, has been added to the storage class. 
+1.  Parameter **`cluster_id` in a storage class:** A new parameter, `cluster_id`, has been added to the storage class.
     This parameter specifies which simplyblock cluster a given request should be directed to.
 2.  Secret **`simplyblock-csi-secret-v2`:** A new Kubernetes secret, `simplyblock-csi-secret-v2`, has been added to
     store credentials for all configured simplyblock clusters.
@@ -230,7 +230,7 @@ of three properties, `cluster_id`, `cluster_endpoint`, and `cluster_secret`.
 ```
 
 To add a new cluster, the current secret must be retrieved from Kubernetes, edited (adding the new cluster information),
-and uploaded to the Kubernetes cluster.  
+and uploaded to the Kubernetes cluster.
 
 
 ```bash title="Update and Reapply Cluster Secret"
@@ -240,7 +240,7 @@ kubectl get secret simplyblock-csi-secret-v2 \
     base64 --decode > secret.json
 
 # Edit the clusters and add the new cluster's cluster_id,
-# cluster_endpoint, cluster_secret vi secret.json 
+# cluster_endpoint, cluster_secret vi secret.json
 
 cat secret.json | base64 | tr -d '\n' > secret-encoded.json
 

@@ -1,20 +1,20 @@
-Simplyblock generally requires NVMe devices with support for 4K block size. This is the case for almost all Enterprise-grade NVMe devices, 
-nevertheless it is recommended to ensure support before deployment. 
+Simplyblock generally requires NVMe devices with support for 4K block size. This is the case for almost all Enterprise-grade NVMe devices,
+nevertheless it is recommended to ensure support before deployment.
 
-Alternatively, 512 bytes block only supporting devices can be used. However, they must provide 4K write atomiticy or 4K torn write protection. 
+Alternatively, 512 bytes block only supporting devices can be used. However, they must provide 4K write atomiticy or 4K torn write protection.
 
 !!! warning
     The only devices with 512 bytes block size, that are also known to support 4K torn write protection, are the NVMe devices provided by AWS.
 
-Devices must not contain active mount points under Linux. Simplyblock fails to claim devices that are moounted or otherwise marked as busy. 
+Devices must not contain active mount points under Linux. Simplyblock fails to claim devices that are moounted or otherwise marked as busy.
 
 Additionally, partitions must be removed from devices. Simplyblock can only claim unpartitioned devices. Alternatively, simplyblock can remove
 partitions during the optional formatting process as part of the deployment. However, partitioned devices will never be automatically selected.
 
 !!! danger
-    Simplyblock optionally performs a low-level format of selected devices during the deployment process. 
+    Simplyblock optionally performs a low-level format of selected devices during the deployment process.
     This erases all data on the devices without recovery option!
-    
+
 Use `lsblk` to identify available NVMe devices without active mount points.
 
 ```plain title="Example output of lsblk"
@@ -56,7 +56,7 @@ lbaf  6 : ms:16  lbads:12 rp:0
 lbaf  7 : ms:64  lbads:12 rp:0
 ```
 
-From this output, the required _lbaf_ configuration can be found. `lbads` must be 12. Simplyblock will automatically choose `lbads: 12` with any `ms > 0` if available, as 
+From this output, the required _lbaf_ configuration can be found. `lbads` must be 12. Simplyblock will automatically choose `lbads: 12` with any `ms > 0` if available, as
 this significantly improves performance if DIF (data integrity checking) is used.
 
 If only `ms: 0` is available, simplyblock will use this as a fallback option.

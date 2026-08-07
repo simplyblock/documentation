@@ -24,7 +24,7 @@ Key characteristics of the disaggregated storage solutions include:
 - **Independent Scalability:** Compute and storage can be scaled separately, optimizing resource utilization and
   reducing unnecessary hardware expansion. IO demand and compute sizing are treated independently.
 - **Independent Cluster Lifecycle:** Storage and compute can be maintained, upgraded, and replaced independently of each other.
-- **Controlled Storage Performance:** It is easier to control latency, throughput, and IOPS output in a disaggregated model. 
+- **Controlled Storage Performance:** It is easier to control latency, throughput, and IOPS output in a disaggregated model.
 - **Hardware Independence:** This feature is shared with hyper-converged storage. Hardware component and node replacements
   can be performed entirely independently of the software, choosing different vendors in accordance with procurement strategies,
   and supporting gradual and rolling replacements.

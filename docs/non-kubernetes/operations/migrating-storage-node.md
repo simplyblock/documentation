@@ -32,7 +32,7 @@ If the command finishes successfully, resume from the next section of this page.
 
 ### Preparing the New Storage Host
 
-The new storage host must be prepared before a storage node can be migrated. It must fulfill the 
+The new storage host must be prepared before a storage node can be migrated. It must fulfill the
 pre-requisites for a storage node according to the installation documentation for the selected
 installation method.
 
@@ -42,23 +42,23 @@ To prepare the new storage host, the following commands must be executed.
 {{ cliname }} storage-node configure \
     --max-lvol=<MAX_LVOL> \
     --max-size=<MAX_SIZE> \
-    [--nodes-per-socket=<NUM_OF_NODES>] 
+    [--nodes-per-socket=<NUM_OF_NODES>]
 ```
 
 ```bash title="Preparing the instance"
-{{ cliname }} storage-node deploy [--isolate-cores --ifname=<IFNAME>] 
+{{ cliname }} storage-node deploy [--isolate-cores --ifname=<IFNAME>]
 ```
 
-The full list of parameters for either command can be found in the 
+The full list of parameters for either command can be found in the
 [CLI documentation](../../reference/cli/storage-node.md).
 
 ### Restart Old Storage Node
 
 !!! warning
     Before migrating the storage node on a storage host, the old storage node must be put in offline state.
-    
+
     If the storage node is not yet offline, it can be forced into offline state using the following command.
-    
+
     ```bash title="Shutdown storage node on old instance"
     {{ cliname }} storage-node shutdown <NODE_ID> --force
     ```

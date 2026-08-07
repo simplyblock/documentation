@@ -53,19 +53,19 @@ following commands.
 
 ```bash title="Suspend and Shut Down Storage Node"
 sudo {{ cliname }} storage-node suspend <NODE_ID>
-sudo {{ cliname }} storage-node shutdown <NODE_ID> 
+sudo {{ cliname }} storage-node shutdown <NODE_ID>
 ```
 
 If the shutdown does not complete by itself, it can safely be forced using the `--force` parameter.
 
 ```bash title="Force Shut Down Storage Node"
-sudo {{ cliname }} storage-node shutdown <NODE_ID> --force 
+sudo {{ cliname }} storage-node shutdown <NODE_ID> --force
 ```
 
 Ensure the node has become offline before continuing.
 
 ```bash title="Verify Storage Node Offline State"
-sudo {{ cliname }} storage-node list 
+sudo {{ cliname }} storage-node list
 ```
 
 Next, a redeployment must be executed on the storage node itself. To do so, SSH into the storage node and run the
@@ -84,7 +84,7 @@ sudo {{ cliname }} --dev storage-node restart <NODE-ID> \
 
 !!! note
     The upgrade SPDK image is found in the `env_var` file on the storage node at:
-    
+
     ```plain
     /usr/local/lib/python3.9/site-packages/simplyblock_core/env_var
     ```

@@ -14,7 +14,7 @@ Amazon EBS is not recommended for high-performance clusters.
 
 !!! important
     If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of type
-    _Spread_! Otherwise there is no guarantee that multiple storage nodes won't be located in the same failure domain. 
+    _Spread_! Otherwise there is no guarantee that multiple storage nodes won't be located in the same failure domain.
 
 Generally, with AWS, there are three considerations when selecting virtual machine types:
 
@@ -38,12 +38,12 @@ Based on those criteria, simplyblock commonly recommends the following virtual m
 
 For hyper-converged AWS EC2-based Kubernetes workers (EKS, K3s, or other), any instance with a local SSD can be chosen.
 
-Keep the [minimum system requirements](./hardware-requirements.md)in mind. At least 8 vCPUs are required for simplyblock. 
+Keep the [minimum system requirements](./hardware-requirements.md)in mind. At least 8 vCPUs are required for simplyblock.
 
 ## Google Compute Engine Recommendations
 
 !!! critical
-    GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs! 
+    GCP deployments can currently not be used in production as GCP does not guarantee 4K write atomicity on their SSDs!
     Therefore, a "sudden power off" is not safe, data corruption may occur!
 
 In GCP, physical hosts are highly shared and sliced into virtual machines. This is true not only for CPU, RAM, and
@@ -51,7 +51,7 @@ network bandwidth, but also for virtualized NVMe devices. Google Compute Engine 
 of queue pairs (logical connections between the virtual machine and physical NVMe device) depending on the size of the
 disk. Hence, separately attached NVMe devices are highly recommended to achieve the required number of queue pairs of
 simplyblock.
-    
+
 Generally, with GCP, there are three considerations when selecting virtual machine types:
 
 - Minimum requirements of vCPU and RAM

@@ -5,12 +5,12 @@ weight: 2080
 ---
 
 Simplyblock offers a comprehensive API to manage and automate cluster operations. This includes all cluster-wide
-operations, logical volume-specific operations, health information, and 
+operations, logical volume-specific operations, health information, and
 
- - Retrieve information about the cluster and its health status
- - Automatically manage a logical volume lifecycle
- - Integrate simplyblock into deployment processes and workflow automations
- - Create custom alerts and warnings
+- Retrieve information about the cluster and its health status
+- Automatically manage a logical volume lifecycle
+- Integrate simplyblock into deployment processes and workflow automations
+- Create custom alerts and warnings
 
 ## Authentication
 
@@ -33,7 +33,7 @@ the simplyblock commandline interface tool `{{ cliname }}`.
 {{ cliname }} cluster get-secret CLUSTER_UUID
 ```
 
-## PUT and POST Requests 
+## PUT and POST Requests
 
 For requests that send a JSON payload to the backend endpoint, it is important to set the Content-Type header
 accordingly. Requests that require this header to be set are of type HTTP PUT or HTTP POST.

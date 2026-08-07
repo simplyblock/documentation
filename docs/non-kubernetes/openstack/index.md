@@ -5,7 +5,7 @@ weight: 30000
 ---
 
 !!! info
-    This driver is still not part of the official OpenStack support matrix. 
+    This driver is still not part of the official OpenStack support matrix.
 
     Work to get it there is ongoing.
 
@@ -21,7 +21,7 @@ before production rollout.
 
 The following list of features is supported:
 
-- Thin provisioning 
+- Thin provisioning
 - Creating a volume
 - Resizing (extend) a volume
 - Deleting a volume
@@ -50,10 +50,10 @@ Before deployment:
 - OpenStack control plane is healthy and Cinder is operational.
 - A reachable simplyblock endpoint is available.
 - Valid simplyblock backend values are prepared:
-  - `simplyblock_endpoint`
-  - `simplyblock_cluster_uuid`
-  - `simplyblock_cluster_secret`
-  - `simplyblock_pool_name`
+    - `simplyblock_endpoint`
+    - `simplyblock_cluster_uuid`
+    - `simplyblock_cluster_secret`
+    - `simplyblock_pool_name`
 - Network and firewall rules allow control and data-path communication.
 
 ## Prepare Hosts
@@ -86,7 +86,7 @@ For the RoCE/RDMA fabric or both fabrics, (also) run:
 
 ## Configure OpenStack (Kolla-Ansible)
 
-```bash title="Update globals.yaml"
+```yaml title="Example of the Cinder settings in globals.yaml"
 enable_cinder: "yes"
 ...
 #This is a fork of the cinder-volume driver container including Simplyblock:
@@ -95,7 +95,7 @@ cinder_volume_image: "docker.io/simplyblock/cinder-volume"
 skip_cinder_backend_check: "yes"
 ```
 
-```bash title="Update Cinder Override for Simplyblock Backend Located in /etc/kolla/config/cinder.conf"
+```ini title="Example of the simplyblock backend in /etc/kolla/config/cinder.conf"
 [DEFAULT]
 debug = True
 # Add Simplyblock to enabled_backends list

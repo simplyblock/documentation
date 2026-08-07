@@ -15,7 +15,7 @@ and ensuring balanced workload distribution across the storage cluster.
 
 QoS can be applied when creating a new logical volume:
 
-```sh
+```bash
 {{ cliname }} volume add \
   <VOLUME_NAME> \
   <VOLUME_SIZE> \
@@ -39,7 +39,7 @@ To see all available parameters when creating a logical volume, see [Provisionin
 
 QoS settings can also be updated on an existing logical volume:
 
-```sh
+```bash
 {{ cliname }} volume qos-set \
   <VOLUME_UUID> \
   --max-rw-iops MAX_RW_IOPS 5000 \
@@ -50,7 +50,7 @@ QoS settings can also be updated on an existing logical volume:
 
 To check the current QoS settings:
 
-```sh
+```bash
 {{ cliname }} volume get <VOLUME_UUID>
 ```
 

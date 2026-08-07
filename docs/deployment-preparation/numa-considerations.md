@@ -54,10 +54,10 @@ In the example above, the system has two NUMA nodes.
     If the system consists of multiple NUMA nodes, it is recommended to configure simplyblock with multiple storage
     nodes per storage host. The number of storage nodes should match the number of NUMA nodes.
 
-## Ensuring NUMA-Aware Devices 
+## Ensuring NUMA-Aware Devices
 
 For optimal performance, there should be a similar number of NVMe devices per NUMA node. Additionally, it is recommended
-to provide one Ethernet NIC per NUMA node. 
+to provide one Ethernet NIC per NUMA node.
 
 To check the NUMA assignment of PCI-e devices, the `lspci` tool and a small script can be used.
 

@@ -67,4 +67,4 @@ The following Linux distributions are considered tested and supported as NVMe-oF
 <span markdown style="font-size: small;"><sup>1</sup> Amazon Linux 2 and Amazon Linux 2023 have a bug with
 [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics
 on any Amazon Linux operates in a degraded state with the risk of connection outages. Alternatively,
-multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO.</span> 
+multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO.</span>

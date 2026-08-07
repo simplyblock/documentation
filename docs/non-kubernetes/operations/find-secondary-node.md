@@ -44,9 +44,9 @@ storage-node details and filtering for the secondary field:
 
 - If `secondary_node_id` is present and populated, that value is the paired secondary node.
 - If the field is missing or empty, possible reasons include:
-  - non-HA configuration,
-  - transitional state during migration/rebalancing,
-  - unavailable metadata due to API or cluster issues.
+    - non-HA configuration,
+    - transitional state during migration/rebalancing,
+    - unavailable metadata due to API or cluster issues.
 
 ## Validate the Secondary Node
 

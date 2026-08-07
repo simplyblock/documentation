@@ -28,7 +28,7 @@ PersistentVolume  ──► Bound
 !!! info
     Not all Kubernetes workers have to become part of the simplyblock storage cluster. It is possible and common to
     only use a subset of all Kubernetes worker nodes for storage.
-    
+
     It is also possible to use a separate Kubernetes worker node pool dedicated to storage. In this case, it is
     important to remember to taint the nodes accordingly to prevent other workloads from being scheduled on them.
 
@@ -52,8 +52,6 @@ It is required to use one or more separate VLANs for simplyblock. Ports within t
 firewall rules, but ports between the control plane and storage networks typically do.
 
 {% include 'network-port-table.md' %}
-
----
 
 ## Create the Storage Cluster
 
@@ -181,7 +179,7 @@ For a full list of configuration options see [Simplyblock Operator: StorageNodeS
 ## Create a Storage Pool
 
 A storage pool is a grouping of logical volumes and capacity limits within the cluster. An initial `Pool` resource must
-be created to define a storage pool before being able to provision volumes. 
+be created to define a storage pool before being able to provision volumes.
 
 ```yaml title="storage-pool.yaml"
 apiVersion: storage.simplyblock.io/v1alpha1

@@ -8,7 +8,7 @@ Simplyblock provides a Kubernetes operator that manages the full lifecycle of si
 operator is installed via a single Helm chart and uses Custom Resource Definitions (CRDs) to declaratively manage
 clusters, storage nodes, storage pools, and the CSI driver.
 
-For Kubernetes environments, a **simplyblock deployment** can be either hyper-converged or disaggregated. 
+For Kubernetes environments, a **simplyblock deployment** can be either hyper-converged or disaggregated.
 In the hyper-converged model, simplyblock storage services run on selected Kubernetes worker nodes, sharing
 resources with other workloads in the same Kubernetes cluster. In a disaggregated deployment, storage services run on
 dedicated worker nodes either within the same or a different cluster.

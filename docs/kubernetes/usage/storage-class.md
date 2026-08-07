@@ -52,15 +52,15 @@ Each cluster has a default schema, but each volume can optionally use an alterna
 
 See the [Erasure Coding Configuration](../../deployment-preparation/erasure-coding-scheme.md) for more details.
 
-See here how to configure [Service Classes](../../non-kubernetes/operations/qos-service-classes.md) and [QoS Limits](../../non-kubernetes/operations/limiting-iops-and-throughput.md). 
+See here how to configure [Service Classes](../../non-kubernetes/operations/qos-service-classes.md) and [QoS Limits](../../non-kubernetes/operations/limiting-iops-and-throughput.md).
 
-##Namespace Volumes
+## Namespace Volumes
 
 For a definition of namespace volumes, as well as the advantages and disadvantages of NVMe namespaces versus NVMe
 subsystems, see [Logical Volumes](../../architecture/concepts/logical-volumes.md).
 
 If `namespace-volumes` is set to `yes`, the number of namespaces per subsystem has to be defined as well (e.g.,
-`max_namespace_per_subsys: <n>`). This means that for every new subsystem <n> namespaces will be created. 
+`max_namespace_per_subsys: <n>`). This means that for every new subsystem `<n>` namespaces will be created.
 
 ## Available Parameters
 

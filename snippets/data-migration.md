@@ -14,7 +14,7 @@ successful and complete data transfers.
 A block-level copy duplicates the entire content of a source block device, including partition tables, file systems, and
 data. This method is ideal when migrating entire disks or volumes.
 
-```sh title="Creating a block-level clone of a block device"
+```bash title="Creating a block-level clone of a block device"
 dd if=/dev/source-device of=/dev/simplyblock-device bs=4M status=progress
 ```
 
@@ -153,6 +153,7 @@ Now, it's time to create the temporary RAID for disk synchronization. Anything b
 !!! warning
     Any service accessing the current block device or any of its partitions need to be shutdown and the block device
     and its partitions need to be unmounted. It is required for the device to not be busy.<br/><br/>
+
     ```bash title="Example of PostgreSQL shutdown and partition unmount"
     service postgresql stop
     umount /data/pg
@@ -255,12 +256,12 @@ Consistency Policy : resync
 ```
 
 ```plain title="Example output of a status check via /proc/mdstat"
-[root@demo ~]# cat /proc/mdstat 
-Personalities : [raid1] 
+[root@demo ~]# cat /proc/mdstat
+Personalities : [raid1]
 md0 : active raid1 sdb[1] nvme0n1[0]
       10484664 blocks super 1.2 [2/2] [UU]
       [========>............]  resync = 42.3% (4440832/10484664) finish=0.4min speed=201856K/sec
-      
+
 unused devices: <none>
 ```
 

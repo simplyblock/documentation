@@ -98,7 +98,7 @@ To create a new logical volume, the following command can be run on any control 
 
 ```plain title="Example of creating a logical volume"
 {{ cliname }} volume add \
-  --fabric tcp lvol01 1000G test  
+  --fabric tcp lvol01 1000G test
 ```
 
 In this example, a logical volume named `lvol01` with 1 TB of thinly provisioned capacity is created in the pool

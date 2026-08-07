@@ -61,4 +61,3 @@ Simplyblock offers tailored advantages to various sectors:
 
 - **Blockchain and Cryptocurrency:** Delivers cost efficiency, enhanced performance, scalability, and robust data
   security, addressing the unique storage demands of blockchain networks.
- 

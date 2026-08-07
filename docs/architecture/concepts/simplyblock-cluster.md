@@ -5,9 +5,9 @@ weight: 30000
 ---
 
 The simplyblock storage platform consists of three different types of cluster nodes and belongs to the control plane
-or storage plane. 
+or storage plane.
 
-A node, in simplyblock terminology, is either a set of pods in Kubernetes or a stack of Docker containers deployed under 
+A node, in simplyblock terminology, is either a set of pods in Kubernetes or a stack of Docker containers deployed under
 plain Linux.
 
 ## Control Plane
@@ -19,15 +19,15 @@ operations do not interfere with data processing. It facilitates provisioning, f
 while offering APIs and CLI tools for seamless integration with external management systems. A single control plane
 can manage multiple clusters.
 
-The control plane is distributed and can be deployed either on plain Linux (using Docker containers) or 
+The control plane is distributed and can be deployed either on plain Linux (using Docker containers) or
 into an existing Kubernetes cluster. Within Kubernetes, an operator is part of the control plane and uses its own API
 services.
 
 Using the operator, storage cluster operations are fully based on Custom Resource Definitions (CRDs) and become entirely
 Kubernetes-native.
 
-The control plane also contains an optional observability stack to get started quickly. For large deployments, users 
-usually integrate feeds of telemetry and logs with their own, often preexisting, observability stack. 
+The control plane also contains an optional observability stack to get started quickly. For large deployments, users
+usually integrate feeds of telemetry and logs with their own, often preexisting, observability stack.
 
 ## Storage Plane
 
@@ -39,7 +39,7 @@ NVMe-oF (TCP and RoCEv2) and software-defined storage principles, simplyblock’
 high availability, and resilience, making it ideal for cloud-native and high-performance computing environments.
 
 It either deploys onto plain Linux (Docker containers) or as pods into existing Kubernetes clusters, where it can be run
-on dedicated storage node workers or in a mix with compute (hyper-converged). 
+on dedicated storage node workers or in a mix with compute (hyper-converged).
 
 ## Management Node
 
@@ -65,5 +65,3 @@ provisions secondary nodes alongside primary nodes and assigns one secondary nod
 This includes the Kubernetes CSI driver, the Proxmox driver, and the OpenStack driver (experimental). Those drivers automate
 volume lifecycle operations such as creating, attaching, resizing, deleting, snapshotting, and cloning volumes. In Kubernetes,
 the Simplyblock Operator provides additional volume lifecycle management beyond the constraints of the standard CSI Model.
-
-

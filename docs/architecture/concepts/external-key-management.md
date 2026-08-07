@@ -14,6 +14,7 @@ storage cluster must not be in possession of the long-lived key material, the ke
 external Key Management Service (KMS).
 
 Simplyblock supports storing keys in external KMS solutions. Currently supported KMS backends are:
+
 - [HashiCorp Vault](https://www.vaultproject.io/){:target="_blank" rel="noopener"}
 - [OpenBao](https://openbao.org/){:target="_blank" rel="noopener"}
 

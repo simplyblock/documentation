@@ -6,24 +6,24 @@ weight: 10300
 
 Quality of Service (QoS) limits (IOPS, Read, Write, and ReadWrite limits) can be chosen on both volume and pool level.
 
-It is not allowed to set them on both. A volume assigned to a pool with an active QoS setting  
+It is not allowed to set them on both. A volume assigned to a pool with an active QoS setting
 cannot contain its own QoS settings or vice versa. It is possible to combine both approaches in
-one cluster, though. 
+one cluster, though.
 
 QoS settings on a pool limit the total consumption of all volumes in the pool, but they do not
-determine how resources are split within a pool. Some volumes require and receive more IOPS, while 
+determine how resources are split within a pool. Some volumes require and receive more IOPS, while
 others require and receive less. If the aggregate IO demand is beyond the limits set for a pool,
 all volumes will be relatively throttled.
 
 In Kubernetes, storage class-level QoS Settings are not allowed if the storage class is connected
 to a pool with QoS settings.
 
-Therefore, in Kubernetes, if the [Storage Class](../../kubernetes/usage/storage-class.md) references any pool, 
-which has QoS limits attached, it is not allowed to add them to the storage class as well. 
+Therefore, in Kubernetes, if the [Storage Class](../../kubernetes/usage/storage-class.md) references any pool,
+which has QoS limits attached, it is not allowed to add them to the storage class as well.
 The same applies to [OpenStack](../openstack/index.md) QoS Settings on the Volume Type.
 
-!!! warning  
-    Volumes for which pool-level QoS is active must be located on the same storage node 
+!!! warning
+    Volumes for which pool-level QoS is active must be located on the same storage node
     in the cluster. Currently, it is not possible to spread them across storage nodes.
 
 To set QoS limits when adding or changing a volume:

@@ -8,7 +8,18 @@ These rules fail the check:
   spaces. Without it the text ends up outside of the block. Indentation is
   measured relative to the marker and behind any blockquote prefix, so nested
   blocks are checked against their own position.
-* A code block must declare a language ("```yaml", "```bash", "```plain").
+* A code block must declare a language ("```yaml", "```bash", "```plain"), and
+  not an alias of one: "sh", "shell", "zsh", "console", "text", "txt", "yml".
+* A heading carries a space behind its hashes ("## Title").
+* A section is separated by a heading, not by a horizontal rule.
+* A line carries no trailing whitespace, and a file ends with exactly one newline
+  behind its last line of text.
+* A list has a blank line above it, a link carries no space between its text and
+  its target, and a table carries its separator row. Each of these renders as a
+  plain paragraph when it is missing, without any warning.
+* A nested list item is indented by four spaces per level. python-markdown reads
+  one to three spaces as a sibling and eight or more as text of the item above,
+  both without a warning.
 * A placeholder ("{{ cliname }}") must resolve against the "extra" section of
   mkdocs.yml. The macros plugin runs with "on_undefined: strict", so an unknown
   placeholder breaks the build.
@@ -62,6 +73,18 @@ MKDOCS_CONFIG_NAME = "mkdocs.yml"
 CODE_FENCE_INFO_PATTERN = re.compile(r"^\s*```(.*)$")
 # Diagrams carry no title attribute.
 UNTITLED_FENCE_LANGUAGES = {"mermaid"}
+
+# One thing is spelled one way. Each of these is a valid highlighter alias, and
+# each has a spelling the documentation uses instead.
+LANGUAGE_ALIASES = {
+    "sh": "bash",
+    "shell": "bash",
+    "zsh": "bash",
+    "console": "plain",
+    "text": "plain",
+    "txt": "plain",
+    "yml": "yaml",
+}
 
 # Blocks whose body has to be indented below their marker line. Admonitions use
 # "!!!" (always open), "???" (collapsed) and "???+" (expanded); content tabs use
@@ -130,6 +153,67 @@ ATTRIBUTE_LIST_PATTERN = re.compile(r"\{[^}]*\}")
 EMPHASIS_PATTERN = re.compile(r"[`*_~]")
 
 INCLUDE_PATTERN = re.compile(r"\{%\s*include\s+['\"]([^'\"]+)['\"]")
+
+# python-markdown nests a list item only when it is indented by four spaces
+# relative to the item above it. One to three spaces render it as a sibling, and
+# eight or more make it part of the text of the item above. Both fail silently,
+# so the indentation is checked rather than trusted.
+LIST_ITEM_PATTERN = re.compile(r"^(?P<indent>[ ]*)(?:[-*+]|\d+[.)])\s")
+# A marker without its space is not a list item at all, it is literal text.
+UNSPACED_MARKER_PATTERN = re.compile(r"^[ ]*[-*+][A-Za-z`\[]")
+LIST_INDENT_STEP = 4
+
+# A list needs a blank line above it. Without one, python-markdown reads its items
+# as more text of the paragraph and prints them as one run-on line.
+LIST_PREV_EXEMPT_PATTERN = re.compile(r"^\s*(?:!!!|\?\?\?\+?|===|>|\||#|\{%|<|```|:)")
+
+# "[text] (target)" with a space between the two halves is not a link, it is the
+# literal text of both.
+SPACED_LINK_PATTERN = re.compile(r"\]\s+\(")
+
+# A table needs its separator row, otherwise every row runs together as one
+# paragraph.
+TABLE_ROW_PATTERN = re.compile(r"^\s*\|")
+TABLE_SEPARATOR_PATTERN = re.compile(r"^\s*\|[\s:|-]+\|\s*$")
+
+# "##Heading" happens to render in python-markdown, but not in the preview of a
+# pull request, and a heading is written one way like everything else.
+# Up to three spaces, since four or more make the line an indented code block and
+# a "#" there is a comment, not a heading.
+UNSPACED_HEADING_PATTERN = re.compile(r"^ {0,3}#{1,6}[^#\s]")
+
+# "<POOL_ID>" outside a code span is passed through as raw html, and the browser
+# drops it as an unknown tag, so the reader never sees it.
+ANGLE_TOKEN_PATTERN = re.compile(r"<(/?)([A-Za-z_][\w.:-]*)\s*/?>")
+HTML_TAG_NAMES = {
+    "a", "b", "blockquote", "br", "code", "details", "div", "em", "figcaption",
+    "figure", "form", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "i", "iframe",
+    "img", "input", "label", "li", "ol", "p", "pre", "script", "small", "span",
+    "strong", "style", "sub", "summary", "sup", "table", "td", "th", "tr", "u",
+    "ul",
+}
+
+# A line of "===" or "---" under text is a setext heading, not a rule and not a
+# content tab. A single "-" is a list marker, so two are required here.
+SETEXT_PATTERN = re.compile(r"^\s*(?:=+|-{2,})\s*$")
+
+# A horizontal rule is not used to separate sections, a heading does that. The
+# same three characters divide the title of a Material grid card from its body,
+# and there they are indented, so only a rule at the margin is reported.
+HORIZONTAL_RULE_PATTERN = re.compile(r"^ {0,3}(?:-{3,}|\*{3,}|_{3,})\s*$")
+
+# A marker with nothing behind it renders as an empty bullet.
+EMPTY_LIST_ITEM_PATTERN = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s*$")
+
+# A url that is not inside a link is printed as text, python-markdown does not
+# turn it into a link on its own.
+BARE_URL_PATTERN = re.compile(r"(?<![(\[<\w])https?://")
+
+# Two spaces at the end of a line insert a line break into the middle of a
+# paragraph. The rest of the trailing whitespace changes nothing at all, which is
+# the reason to remove it: it is invisible, it lands in every diff, and it is the
+# only kind of change that can never be reviewed.
+TRAILING_BREAK_SPACES = 2
 
 
 def load_placeholder_names(config_path):
@@ -630,6 +714,332 @@ def check_placeholders(lines, rel, placeholders):
     return violations
 
 
+def check_list_indentation(lines, rel):
+    """A nested list item is indented by exactly one step of four spaces.
+
+    Only the step matters to the parser, and only up to seven spaces, but a step
+    of four is the one that stays readable and survives another level below it.
+    """
+    violations = []
+    in_code_fence = False
+    previous_indent = None
+
+    for index, line in enumerate(lines):
+        if CODE_FENCE_PATTERN.match(line):
+            in_code_fence = not in_code_fence
+            continue
+        if in_code_fence:
+            continue
+
+        if UNSPACED_MARKER_PATTERN.match(line):
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="list-item-marker",
+                    reason="List marker without a space behind it, this is not a list item",
+                    excerpt=line.strip(),
+                )
+            )
+            continue
+
+        match = LIST_ITEM_PATTERN.match(line)
+        if not match:
+            # A blank line keeps a list open, body text at the margin ends it.
+            if line.strip() and indentation_of(line) == 0:
+                previous_indent = None
+            continue
+
+        indent = len(match.group("indent"))
+
+        if indent % LIST_INDENT_STEP:
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="list-item-indent",
+                    reason=(
+                        f"List item is indented by {indent} spaces, which is not a "
+                        f"multiple of {LIST_INDENT_STEP}"
+                    ),
+                    excerpt=line.strip(),
+                )
+            )
+        elif previous_indent is not None and indent > previous_indent + LIST_INDENT_STEP:
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="list-item-indent",
+                    reason=(
+                        f"List item is indented by {indent} spaces below an item at "
+                        f"{previous_indent}, so it is read as text of that item"
+                    ),
+                    excerpt=line.strip(),
+                )
+            )
+
+        previous_indent = indent
+
+    return violations
+
+
+def check_file_ending(lines, rel):
+    """A file ends with exactly one newline behind its last line of text.
+
+    read_lines() keeps the text behind the last newline as its final element, so
+    a file that ends correctly has exactly one empty element there. No element
+    means the last line carries text and no newline follows it, and more than one
+    means the file ends in blank lines.
+    """
+    if not lines:
+        return []
+
+    trailing_blanks = 0
+    for line in reversed(lines):
+        if line.strip():
+            break
+        trailing_blanks += 1
+
+    if trailing_blanks == 1:
+        return []
+
+    if trailing_blanks == 0:
+        reason = "File does not end with a newline"
+    else:
+        reason = f"File ends with {trailing_blanks - 1} blank line(s) behind its last line"
+
+    return [
+        Violation(
+            file=rel,
+            line=len(lines),
+            column=1,
+            check="file-ending",
+            reason=reason,
+            excerpt=lines[-1].strip() or "(end of file)",
+        )
+    ]
+
+
+def check_trailing_whitespace(lines, rel):
+    """Trailing whitespace, wherever it sits.
+
+    Two spaces at the end of a line of prose insert a line break. The rest
+    changes nothing, which is exactly why it is reported: it is invisible in the
+    page, it is invisible in review, and it turns up in every later diff. Code
+    blocks and the frontmatter are checked as well, since a trailing space is
+    copied along with the snippet it sits in.
+    """
+    violations = []
+
+    for index, line in enumerate(lines):
+        if line == line.rstrip():
+            continue
+        stripped = line.strip()
+        breaks_line = (
+            stripped
+            and len(line) - len(line.rstrip()) >= TRAILING_BREAK_SPACES
+            and index + 1 < len(lines)
+            and lines[index + 1].strip()
+        )
+        violations.append(
+            Violation(
+                file=rel,
+                line=index + 1,
+                column=len(line.rstrip()) + 1,
+                check="trailing-spaces",
+                reason=(
+                    "Trailing spaces insert a line break into the paragraph"
+                    if breaks_line
+                    else "Trailing whitespace"
+                ),
+                excerpt=stripped or "(whitespace only)",
+            )
+        )
+
+    return violations
+
+
+def check_markdown_traps(lines, rel):
+    """Constructs that render as something other than what they look like.
+
+    Each of these is silent: the page builds, and the text simply comes out as a
+    paragraph, or as literal characters, instead of the list, link, or table that
+    was written.
+    """
+    violations = []
+    in_code_fence = False
+    _, body_start = frontmatter_bounds(lines)
+
+    for index, line in enumerate(lines):
+        if CODE_FENCE_PATTERN.match(line):
+            if not in_code_fence and index > 0:
+                above = lines[index - 1]
+                if above.strip() and not LIST_PREV_EXEMPT_PATTERN.match(above.strip()) \
+                        and not LIST_ITEM_PATTERN.match(above):
+                    violations.append(
+                        Violation(
+                            file=rel,
+                            line=index + 1,
+                            column=1,
+                            check="fence-blank-line",
+                            reason=(
+                                "Code block opens directly below a paragraph, which nests "
+                                "it inside that paragraph. A blank line is needed"
+                            ),
+                            excerpt=line.strip(),
+                        )
+                    )
+            in_code_fence = not in_code_fence
+            continue
+        if in_code_fence:
+            continue
+
+        if index < body_start:
+            continue
+
+        stripped = line.strip()
+
+        if UNSPACED_HEADING_PATTERN.match(line):
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="heading-marker",
+                    reason="Heading without a space behind its hashes",
+                    excerpt=stripped,
+                )
+            )
+
+        if SPACED_LINK_PATTERN.search(CODE_SPAN_PATTERN.sub("", line)):
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="link-spacing",
+                    reason="Space between the text and the target of a link, so it is not a link",
+                    excerpt=stripped,
+                )
+            )
+
+        if LIST_ITEM_PATTERN.match(line) and index > 0:
+            previous = lines[index - 1]
+            if (
+                previous.strip()
+                and not LIST_ITEM_PATTERN.match(previous)
+                and not LIST_PREV_EXEMPT_PATTERN.match(previous.strip())
+                and indentation_of(previous) <= indentation_of(line)
+            ):
+                violations.append(
+                    Violation(
+                        file=rel,
+                        line=index + 1,
+                        column=1,
+                        check="list-blank-line",
+                        reason=(
+                            "List opens directly below a paragraph, so its items are "
+                            "read as more of that paragraph. A blank line is needed"
+                        ),
+                        excerpt=stripped,
+                    )
+                )
+
+        for match in ANGLE_TOKEN_PATTERN.finditer(CODE_SPAN_PATTERN.sub("", line)):
+            if match.group(2).lower() in HTML_TAG_NAMES:
+                continue
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="raw-angle-token",
+                    reason=(
+                        f"'{match.group(0)}' outside a code span is passed through as "
+                        f"html and disappears in the browser, wrap it in backticks"
+                    ),
+                    excerpt=stripped,
+                )
+            )
+
+        if HORIZONTAL_RULE_PATTERN.match(line):
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="horizontal-rule",
+                    reason=(
+                        "Horizontal rule, the documentation separates sections with a "
+                        "heading instead"
+                    ),
+                    excerpt=stripped,
+                )
+            )
+
+        if EMPTY_LIST_ITEM_PATTERN.match(line):
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="empty-list-item",
+                    reason="List item with no content, this renders as an empty bullet",
+                    excerpt=stripped or repr(line),
+                )
+            )
+
+        if index > body_start and SETEXT_PATTERN.match(line) and lines[index - 1].strip():
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="setext-heading",
+                    reason=(
+                        "A line of '=' or '-' under text turns that text into a heading, "
+                        "leave a blank line above it"
+                    ),
+                    excerpt=stripped,
+                )
+            )
+
+        if BARE_URL_PATTERN.search(CODE_SPAN_PATTERN.sub("", line)):
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=1,
+                    check="bare-url",
+                    reason="Url outside a link is printed as text, write it as a markdown link",
+                    excerpt=stripped,
+                    severity=SEVERITY_WARNING,
+                )
+            )
+
+        if TABLE_ROW_PATTERN.match(line) and index + 1 < len(lines):
+            previous = lines[index - 1] if index else ""
+            if not TABLE_ROW_PATTERN.match(previous) and not TABLE_SEPARATOR_PATTERN.match(
+                lines[index + 1]
+            ):
+                violations.append(
+                    Violation(
+                        file=rel,
+                        line=index + 1,
+                        column=1,
+                        check="table-separator",
+                        reason="Table without a separator row below its header",
+                        excerpt=stripped,
+                    )
+                )
+
+    return violations
+
+
 def check_code_blocks(lines, rel):
     """Code blocks need a language, and are expected to carry a title."""
     violations = []
@@ -648,6 +1058,21 @@ def check_code_blocks(lines, rel):
         first_token = info.split()[0] if info else ""
         # An attribute is not a language, as in '```title="..."'.
         language = "" if "=" in first_token else first_token
+
+        if language in LANGUAGE_ALIASES:
+            violations.append(
+                Violation(
+                    file=rel,
+                    line=index + 1,
+                    column=indentation_of(line) + 1,
+                    check="code-block-language-alias",
+                    reason=(
+                        f"Code block language '{language}' is an alias, "
+                        f"write '{LANGUAGE_ALIASES[language]}'"
+                    ),
+                    excerpt=line.strip(),
+                )
+            )
 
         if not language:
             violations.append(
@@ -685,6 +1110,10 @@ def scan_file(file_path, placeholders, docs_root, include_dir, anchor_cache):
         check_block_indentation(lines, rel)
         + check_placeholders(lines, rel, placeholders)
         + check_code_blocks(lines, rel)
+        + check_list_indentation(lines, rel)
+        + check_markdown_traps(lines, rel)
+        + check_trailing_whitespace(lines, rel)
+        + check_file_ending(lines, rel)
         + check_links(lines, rel, file_path, docs_root, anchor_cache)
         + check_includes(lines, rel, include_dir)
     )
