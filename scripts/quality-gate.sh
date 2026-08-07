@@ -88,20 +88,37 @@ done
 
 cd "${DOCS_ROOT}"
 
+# Every gate writes into its own log, so that its errors can be listed again once
+# all gates have run. Without that, the first failure of a long run has scrolled
+# away by the time the last gate is done.
+LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/quality-gate.XXXXXX")"
+cleanup() {
+  rm -rf "${LOG_DIR}"
+}
+trap cleanup EXIT
+
 failed_count=0
-failed_gates=""
+failed_gates=()
+error_count=0
 
 for gate in "${gates[@]}"; do
   description="gate_${gate}_description"
   echo ""
   echo -e "${BOLD}▶ ${gate}: ${!description}${RESET}"
 
-  if "gate_${gate}"; then
+  # "pipefail" is set, so the status of the gate survives the pipe into tee.
+  if "gate_${gate}" 2>&1 | tee "${LOG_DIR}/${gate}.log"; then
     echo -e "${GREEN}✔ ${gate} passed${RESET}"
   else
-    echo -e "${RED}✘ ${gate} failed${RESET}"
+    gate_errors="$(grep -c "^ERROR" "${LOG_DIR}/${gate}.log" || true)"
+    if [ "${gate_errors}" -gt 0 ]; then
+      echo -e "${RED}✘ ${gate} failed with ${gate_errors} error(s)${RESET}"
+    else
+      echo -e "${RED}✘ ${gate} failed without reporting a finding${RESET}"
+    fi
     failed_count=$((failed_count + 1))
-    failed_gates="${failed_gates} ${gate}"
+    failed_gates+=("${gate}")
+    error_count=$((error_count + gate_errors))
   fi
 done
 
@@ -111,5 +128,26 @@ if [ "${failed_count}" -eq 0 ]; then
   exit 0
 fi
 
-echo -e "${RED}${failed_count} of ${#gates[@]} quality gate(s) failed:${failed_gates}${RESET}"
+# The collected errors of the whole run, so that the list to work through is in
+# one place instead of spread over the output of every gate.
+if [ "${error_count}" -gt 0 ]; then
+  echo -e "${BOLD}${RED}━━ ${error_count} error(s) in ${failed_count} of ${#gates[@]} quality gate(s) ━━${RESET}"
+else
+  echo -e "${BOLD}${RED}━━ ${failed_count} of ${#gates[@]} quality gate(s) failed ━━${RESET}"
+fi
+for gate in "${failed_gates[@]}"; do
+  echo ""
+  echo -e "${BOLD}${gate}:${RESET}"
+  if grep -q "^ERROR" "${LOG_DIR}/${gate}.log"; then
+    # Only the finding itself, its excerpt stays in the output of the gate above.
+    grep "^ERROR" "${LOG_DIR}/${gate}.log"
+  else
+    # A gate that fails without reporting a finding did not run to its end.
+    echo "  The gate itself failed, it reported no finding. Its last output was:"
+    tail -n 5 "${LOG_DIR}/${gate}.log" | sed 's/^/  /'
+  fi
+done
+
+echo ""
+echo -e "${RED}${failed_count} of ${#gates[@]} quality gate(s) failed: ${failed_gates[*]}${RESET}"
 exit 1

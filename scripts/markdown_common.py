@@ -76,6 +76,12 @@ GENERATED_MARKER_LINES = 15
 SEVERITY_ERROR = "error"
 SEVERITY_WARNING = "warning"
 
+# Every reported line opens with its severity, so that a finding stands out while
+# the gates scroll past, and so that quality-gate.sh can collect the errors of all
+# gates into one list at the end of a run.
+ERROR_PREFIX = "ERROR  "
+WARNING_PREFIX = "WARN   "
+
 
 CONTEXT_PROSE = "prose"
 CONTEXT_CODE = "code"
@@ -426,25 +432,34 @@ def report_violations(violations, check_name, files, success_message, group_warn
     warnings = [v for v in violations if v.severity == SEVERITY_WARNING]
 
     if errors:
-        print(f"{check_name} failed. Found problems:", file=sys.stderr)
+        print(f"{check_name} failed with {len(errors)} error(s):", file=sys.stderr)
         for v in errors:
+            # The "ERROR" token opens the line, so that a finding is obvious while
+            # the gates scroll past and can be collected again afterwards.
             print(
-                f"- {v.file}:{v.line}:{v.column} | {v.check} | {v.reason}\n  {v.excerpt}",
+                f"{ERROR_PREFIX} {v.file}:{v.line}:{v.column} | {v.check} | {v.reason}\n"
+                f"{' ' * (len(ERROR_PREFIX) + 1)}{v.excerpt}",
                 file=sys.stderr,
             )
         sys.stderr.flush()
 
     if warnings:
-        print(f"\nWarnings ({len(warnings)}), these do not fail the check yet:")
+        print(f"\n{len(warnings)} warning(s), these do not fail the check yet:")
         if group_warnings:
             grouped = {}
             for v in warnings:
                 grouped.setdefault((v.file, v.check), []).append(v.line)
             for (file, check), numbers in grouped.items():
-                print(f"  • {file} | {check} | line(s) {', '.join(str(n) for n in numbers)}")
+                print(
+                    f"{WARNING_PREFIX} {file} | {check} | "
+                    f"line(s) {', '.join(str(n) for n in numbers)}"
+                )
         else:
             for v in warnings:
-                print(f"  • {v.file}:{v.line}:{v.column} | {v.reason}\n    {v.excerpt}")
+                print(
+                    f"{WARNING_PREFIX} {v.file}:{v.line}:{v.column} | {v.reason}\n"
+                    f"{' ' * (len(WARNING_PREFIX) + 1)}{v.excerpt}"
+                )
         sys.stdout.flush()
 
     if errors:
