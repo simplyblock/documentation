@@ -20,18 +20,18 @@ QoS can be applied when creating a new logical volume:
   <VOLUME_NAME> \
   <VOLUME_SIZE> \
   <POOL_NAME> \
-  --max-rw-iops MAX_RW_IOPS 3500 \
-  --max-rw-mbytes MAX_RW_MBYTES 125
+  --max-rw-iops 3500 \
+  --max-rw-mbytes 125
 ```
 
 ### Parameters
 
-| Parameter                     | Description                        | Default |
-|-------------------------------|------------------------------------|---------|
-| --max-rw-iops MAX_RW_IOPS     | Maximum I/O operations per second. | 0       |
-| --max-rw-mbytes MAX_RW_MBYTES | Maximum read/write throughput.     | 0       |
-| --max-r-mbytes MAX_R_MBYTES   | Maximum read throughout.           | 0       |
-| --max-w-mbytes MAX_W_MBYTES   | Maximum write throughput.          | 0       |
+| Parameter                  | Description                        | Default |
+|----------------------------|------------------------------------|---------|
+| `--max-rw-iops <IOPS>`     | Maximum I/O operations per second. | 0       |
+| `--max-rw-mbytes <MBYTES>` | Maximum read/write throughput.     | 0       |
+| `--max-r-mbytes <MBYTES>`  | Maximum read throughput.           | 0       |
+| `--max-w-mbytes <MBYTES>`  | Maximum write throughput.          | 0       |
 
 To see all available parameters when creating a logical volume, see [Provisioning](provisioning.md).
 
@@ -42,8 +42,8 @@ QoS settings can also be updated on an existing logical volume:
 ```bash
 {{ cliname }} volume qos-set \
   <VOLUME_UUID> \
-  --max-rw-iops MAX_RW_IOPS 5000 \
-  --max-rw-mbytes MAX_RW_MBYTES 250
+  --max-rw-iops 5000 \
+  --max-rw-mbytes 250
 ```
 
 ## Verification

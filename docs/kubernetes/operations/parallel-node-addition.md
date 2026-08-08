@@ -26,7 +26,7 @@ threshold, which would cause cluster unavailability.
 
 ## Configuration
 
-Parallelism for non-FDB workers is controlled by `StorageNode.spec.maxParallelNodeAdds`.
+Parallelism for non-FDB workers is controlled by `StorageNodeSet.spec.maxParallelNodeAdds`.
 
 | Value         | Behavior                                                         |
 |---------------|------------------------------------------------------------------|

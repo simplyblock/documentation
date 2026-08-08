@@ -4,11 +4,11 @@ description: "Finding the Secondary Node: Simplyblock, in high-availability mode
 weight: 20070
 ---
 
-Simplyblock, in high-availability mode, creates two connections per logical volume: a primary and a secondary
-connection.
+Simplyblock, in high-availability mode, creates multiple connections per logical volume: a primary and a secondary
+connection, plus a tertiary connection on clusters with two parity chunks (FTT 2).
 
-The secondary connection will be used in case of issues or failures of the primary storage node which owns the logical
-volume.
+The secondary (and tertiary) connections will be used in case of issues or failures of the primary storage node
+which owns the logical volume.
 
 ## When to Use This
 

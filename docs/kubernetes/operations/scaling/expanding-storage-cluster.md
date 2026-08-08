@@ -13,8 +13,10 @@ designed to be minimal, it is still recommended to expand the cluster at times w
 full utilization.
 
 !!! info
-    Add storage nodes in **pairs** (i.e., 2, 4, 6, … nodes at a time).
-    Expansions with an odd number of nodes are **not supported**.
+    Storage nodes can be added **individually** (expansion mode, which integrates the new node by re-homing
+    existing failover paths) or **in groups**: at least two new nodes for clusters with one parity chunk, at
+    least three for clusters with two parity chunks (FTT 2). On clusters with failure domains, additional
+    balance rules apply. See [Failure Domains](../../../architecture/concepts/failure-domains.md).
 
 To add a new storage node, follow the installation steps for the chosen deployment method up to the point where nodes are added to the cluster, then continue here:
 
@@ -22,7 +24,7 @@ To add a new storage node, follow the installation steps for the chosen deployme
 - [Storage nodes on Linux](../../../non-kubernetes/installation/install-sp.md)
 
 After adding the **first** new storage node, the cluster transitions to **IN_EXPANSION** and starts background rebalancing.
-Add the remaining node(s) required for the expansion (storage nodes must be added in **pairs**).
+Add the remaining node(s) required for the expansion.
 Once all newly added nodes are healthy/ready, finalize the expansion:
 
 ```bash title="Finalize cluster expansion"

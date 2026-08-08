@@ -56,12 +56,19 @@ using either option (defined per volume or storage class), but the cluster inter
 
 ### ```--qpair-count```
 
-The default number of queue pairs (sockets) per volume for an initiator (host) to connect to the
-target (server). More queue pairs per volume increase concurrency and volume performance, but require more
-server resources (RAM, CPU) and thus limit the total number of volumes per storage node. The default is 3.
-For a few very performant volumes, increase the amount. For a large number of less performant
-volumes, decrease it. More than 12 parallel connections have limited impact on overall performance. Also, the
-host requires at least one core per queue pair.
+The default number of queue pairs (sockets) per volume used within the storage cluster. More queue pairs per
+volume increase concurrency and volume performance, but require more server resources (RAM, CPU) and thus limit
+the total number of volumes per storage node. The default is 32.
+For a few very performant volumes, increase the amount. For a large number of less performant volumes, decrease
+it. The number of queue pairs per client (initiator) connection is controlled separately via
+`--client-qpair-count` (default 3). The host requires at least one core per queue pair.
+
+### ```--enable-failure-domain```
+
+Enables failure-domain anti-affinity for the cluster. Each storage node must then be added with a
+`--failure-domain` tag (rack, cabinet, or availability zone), and data, journal copies, and failover paths are
+spread across distinct failure domains. This option is deploy-time only: a cluster cannot be upgraded into the
+feature, it must be redeployed. See [Failure Domains](../architecture/concepts/failure-domains.md).
 
 ### ```--use-backup```
 

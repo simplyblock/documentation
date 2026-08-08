@@ -68,7 +68,7 @@ enabled:
 - Host access control (`allow_any_host` is set to `false` for all volumes in the pool)
 
 ```bash title="Create Pool with DH-HMAC-CHAP Authentication"
-{{ cliname }} storage-pool add <POOL_NAME> --dhchap
+{{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_ID> --dhchap
 ```
 
 ## Host Management

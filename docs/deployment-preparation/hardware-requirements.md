@@ -77,7 +77,8 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on
 the assigned vCPUs and networking performance of the node. For each 10 GBit/s of dedicated network bandwidth
 it is recommended to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
-subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs).
+subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of 75 subsystems per
+node applies. See [Limits](../reference/limits.md).
 
 For storage nodes, simplyblock highly recommends DDR5 memory for optimal performance.
 
@@ -263,7 +264,7 @@ step. Low-level formating can also be executed manually.
 In production, simplyblock works with one of two options:
 
 - A **redundant network** for storage traffic (e.g., via LACP, Stacked Switches, MLAG, active/active or active/passive NICs, STP, or MSTP).
-- Two separate VLANs per node for storage traffic, connected via two separate NIC ports and switch paths, as well as configured as ***NVMe Multipathing***.
+- Two separate VLANs per node for storage traffic, connected via two separate NIC ports and switch paths, as well as configured as ***NVMe Multipathing*** (see [Storage Network Multipathing](../non-kubernetes/installation/storage-network-multipathing.md)).
   In such a setup simplyblock still recommend to provide a **redundant network for management traffic**, but it is not obligatory.
 
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux

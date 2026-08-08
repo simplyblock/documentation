@@ -90,6 +90,16 @@ MISSPELLINGS = {
     "disagregated": "disaggregated", "dissagregated": "disaggregated",
     "dissaggregated": "disaggregated",
     "dis-aggregation": "disaggregation", "dissaggregation": "disaggregation",
+    # Multipathing is one word, in the NVMe specification as well as in the
+    # "dm-multipath" and "nvme multipath" spellings it is written next to.
+    "multi-pathing": "multipathing", "multi pathing": "multipathing",
+    "multi-path": "multipath", "multi path": "multipath",
+    # The fault-tolerance level is written "FTT 1" or "FTT=1", never glued or
+    # hyphenated. "FTT+1" is left alone: it means the level plus one node, not a
+    # level of its own.
+    "ftt1": "FTT 1", "ftt2": "FTT 2",
+    "ftt-1": "FTT 1", "ftt-2": "FTT 2",
+    "ftt_1": "FTT 1", "ftt_2": "FTT 2",
 }
 MISSPELLING_PATTERN = re.compile(
     r"\b(?:"

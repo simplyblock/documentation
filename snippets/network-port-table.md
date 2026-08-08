@@ -1,7 +1,7 @@
 | Service              | Direction       | Hosts            | Network | Port(s)                         | Protocol(s) |
 |----------------------|-----------------|------------------|---------|---------------------------------|-------------|
 | ICMP                 | ingress         | control          | Control | -                               | ICMP        |
-| spdk-http-proxy      | ingress, egress | storage, control | Control | 5000                            | TCP         |
+| storage-node-api     | ingress, egress | storage, control | Control | 5000                            | TCP         |
 | NVMf (client-target) | egress          | client           | Storage | 4420-4499                       | TCP         |
 | NVMf (internal)      | ingress, egress | storage          | Storage | 4420-4499                       | TCP         |
 | FoundationDB         | ingress         | control          | Control | 4500                            | TCP         |
