@@ -274,6 +274,7 @@ TERMS = terms(
     "PVC",
     # Hardware.
     "CPU",
+    "vCPU",
     "GPU",
     "RAM",
     "NVIDIA",

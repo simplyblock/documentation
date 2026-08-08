@@ -90,6 +90,10 @@ MISSPELLINGS = {
     "disagregated": "disaggregated", "dissagregated": "disaggregated",
     "dissaggregated": "disaggregated",
     "dis-aggregation": "disaggregation", "dissaggregation": "disaggregation",
+    # Multipathing is one word, in the NVMe specification as well as in the
+    # "dm-multipath" and "nvme multipath" spellings it is written next to.
+    "multi-pathing": "multipathing", "multi pathing": "multipathing",
+    "multi-path": "multipath", "multi path": "multipath",
 }
 MISSPELLING_PATTERN = re.compile(
     r"\b(?:"
