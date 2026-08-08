@@ -202,6 +202,12 @@ TERMS = terms(
     term("NVMe-oF", ("NVMe over Fabrics", "NVMf"), plural="NVMe-oF connections"),
     term("NVMe/TCP", plural="NVMe/TCP connections"),
     term("NVMe/RDMA", plural="NVMe/RDMA connections"),
+    # The NVMe qualified name and the multipathing state. Their lowercase
+    # spellings are the flag, the key and the config value that carry them
+    # ("--host-nqn", "nqn.2023-02.io.simplyblock", "hardware_handler \"1 ana\""),
+    # and those are literals the check leaves alone.
+    "NQN",
+    term("ANA", plural="ANA states"),
     "SPDK",
     "DPDK",
     "iSCSI",
@@ -230,6 +236,8 @@ TERMS = terms(
     "S3",
     "QoS",
     "IOPS",
+    "RTO",
+    "RPO",
     # The fault-tolerance level. A number behind it is separated by a space or an
     # equals sign ("FTT 2", "FTT=2"), and "FTT+1" means the level plus one. The
     # glued and hyphenated spellings are corrected by check-prose.py, since a
@@ -249,6 +257,8 @@ TERMS = terms(
     "MTU",
     "NIC",
     "CIDR",
+    "LACP",
+    "MLAG",
     # Protocols, formats and interfaces.
     "TLS",
     "mTLS",
