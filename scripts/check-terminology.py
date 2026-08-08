@@ -230,6 +230,11 @@ TERMS = terms(
     "S3",
     "QoS",
     "IOPS",
+    # The fault-tolerance level. A number behind it is separated by a space or an
+    # equals sign ("FTT 2", "FTT=2"), and "FTT+1" means the level plus one. The
+    # glued and hyphenated spellings are corrected by check-prose.py, since a
+    # separator has to be inserted rather than a casing changed.
+    "FTT",
     term("I/O", wrong=("IO",)),
     "TCP",
     "UDP",
