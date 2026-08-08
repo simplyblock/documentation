@@ -270,7 +270,7 @@ unused devices: <none>
 Eventually, the synchronization finishes. At this point, the two devices (original and new) are kept in sync by the
 device mapper system.
 
-```plain title="Example out of a finished synchronzation"
+```plain title="Example out of a finished synchronization"
 [root@demo ~]# mdadm -D /dev/md127
 /dev/md127:
            Version :

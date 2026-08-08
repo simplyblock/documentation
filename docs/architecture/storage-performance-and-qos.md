@@ -60,7 +60,7 @@ several advanced mechanisms can be used within simplyblock:
 4. With node affinity enabled, if the front storage is moved, the back storage will not move instantly. However, once the cluster
    is rebalanced in the background, the data is moved to satisfy node affinity.
 
-The relabalcing algorithm which moves data around is optimized for minimal overhead:
+The rebalancing algorithm which moves data around is optimized for minimal overhead:
 
 * First, it tries to maximize transfer size, in fact turning smaller random writes into large sequential writes, which are much more efficient.
 * Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS). Therefore, its impact on
@@ -69,7 +69,7 @@ The relabalcing algorithm which moves data around is optimized for minimal overh
     * For example, in a cluster with 2 PB of storage, it is still possible to create a single volume consuming all of these 2 PB.
     * Also, it can be balanced against scalability and consistency. Meaning, if I/O-intensive workloads are not well-balanced across worker nodes,
       data locality could lead to actually worse performance. Therefore, data locality is not an absolute requirement, but remains a best effort,
-      and by the operatior is automatically balanced against an optimal I/O-performance balance across nodes.
+      and by the operator is automatically balanced against an optimal I/O-performance balance across nodes.
 
 ### Pseudo-Randomized, Distributed Data Placement With Fast Re-Balancing
 
@@ -102,10 +102,10 @@ per NUMA socket and utilize only socket-specific resources, meaning compute, mem
 All CPU cores assigned to simplyblock are isolated from the operating system (user-space compute and IRQ handling), and
 internal threads are pinned to cores. This avoids any scheduling-induced delays or variability in storage processing.
 
-### User-Space, Zero-Copy Framework (Kockless and Asynchronous)
+### User-Space, Zero-Copy Framework (Lockless and Asynchronous)
 
 Simplyblock uses a user-space framework ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"}). SPDK implemented a
-zero-copy model across the entire storage processing chain. This includes the data plane, the Kinux vfio driver, and the
+zero-copy model across the entire storage processing chain. This includes the data plane, the Linux vfio driver, and the
 entirely non-locking, asynchronous DPDK threading model. It enables avoiding Linux p-threads and any inter-thread
 synchronization, providing much higher latency predictability and a lower baseline latency.
 

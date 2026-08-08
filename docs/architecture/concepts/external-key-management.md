@@ -22,7 +22,7 @@ Simplyblock supports storing keys in external KMS solutions. Currently supported
 
 When an external KMS is configured, simplyblock applies a two-layer key model:
 
-- **Unseal Keys** are generated once and presented at the time of the KMS setup (for example, HashCorp Vault).
+- **Unseal Keys** are generated once and presented at the time of the KMS setup (for example, HashiCorp Vault).
   Typically, a certain number of all the unseal keys are required to unseal the KMS (e.g., 3 of 5 keys). These keys
   should be stored in separate secure locations.
 - **Data Encryption Keys (DEKs)** are generated per volume and used to encrypt the at-rest data blocks of that volume.

@@ -233,6 +233,13 @@ TERMS = terms(
     "Btrfs",
     "Ceph",
     "MinIO",
+    # The key management services. "Vault" is deliberately absent: on its own it
+    # is an English word, and "the vault" reads as one far more often than as the
+    # product. The lowercase "hashicorp" of "--hashicorp-vault-url" is a flag and
+    # the lowercase "openbao" of "https://openbao.org" is a host, and neither is
+    # looked at.
+    "HashiCorp",
+    "OpenBao",
     "S3",
     "QoS",
     "IOPS",

@@ -251,7 +251,7 @@ once simplyblock's storage nodes are running.
 ### NVMe Formatting Prerequisites
 
 Simplyblock can low-level format NVMe devices with 4KB block size before deploying simplyblock. This is an optional
-step. Low-level formating can also be executed manually.
+step. Low-level formatting can also be executed manually.
 
 !!! warning
     Low-level formatting destroys all data on the device. Ensure to back up any important data before formatting, if

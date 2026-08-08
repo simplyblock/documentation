@@ -51,7 +51,7 @@ The information is also available through Grafana in the cluster's dashboard.
 
 To access a cluster's capacity information, the `{{ cliname }}` command line tool can be used:
 
-```bash title="Accessing the capcity information of a cluster"
+```bash title="Accessing the capacity information of a cluster"
 {{ cliname }} cluster get-capacity <CLUSTER_ID>
 ```
 

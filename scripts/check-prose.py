@@ -46,7 +46,7 @@ MISSPELLINGS = {
     "accomodate": "accommodate", "accross": "across", "acheive": "achieve",
     "adress": "address", "alot": "a lot", "auxilary": "auxiliary",
     "avaliable": "available", "bandwith": "bandwidth", "begining": "beginning",
-    "calender": "calendar", "choosen": "chosen", "comitted": "committed",
+    "calender": "calendar", "capcity": "capacity", "choosen": "chosen", "comitted": "committed",
     "comming": "coming", "compatability": "compatibility", "completly": "completely", "contigous": "contiguous",
     "concurent": "concurrent", "consistant": "consistent", "controll": "control",
     "curently": "currently", "defualt": "default", "definately": "definitely",
@@ -55,15 +55,16 @@ MISSPELLINGS = {
     "environement": "environment", "excecute": "execute", "exisiting": "existing",
     "existance": "existence", "explicitely": "explicitly", "extention": "extension",
     "filesytem": "filesystem", "finaly": "finally", "folowing": "following",
-    "fucntion": "function", "hierachy": "hierarchy", "identifer": "identifier",
+    "formating": "formatting", "fucntion": "function", "hierachy": "hierarchy", "identifer": "identifier",
     "implementaion": "implementation", "independant": "independent",
     "informations": "information", "initalize": "initialize", "instace": "instance",
     "intergration": "integration", "interupt": "interrupt", "labled": "labeled",
     "lenght": "length", "libary": "library", "maintainance": "maintenance",
     "managment": "management", "mesage": "message", "minumum": "minimum",
+    "moounted": "mounted",
     "mutliple": "multiple", "neccesary": "necessary", "neccessary": "necessary",
     "occassion": "occasion", "occurance": "occurrence", "occured": "occurred",
-    "occurence": "occurrence", "orginal": "original", "paramaters": "parameters",
+    "occurence": "occurrence", "operatior": "operator", "orginal": "original", "paramaters": "parameters",
     "paramter": "parameter", "paramters": "parameters", "parrallel": "parallel",
     "particulary": "particularly", "perfomance": "performance",
     "performence": "performance", "permision": "permission", "persistant": "persistent",
@@ -74,12 +75,14 @@ MISSPELLINGS = {
     "requiered": "required", "resposne": "response", "retreive": "retrieve",
     "runing": "running", "seperate": "separate", "seperately": "separately",
     "seperation": "separation", "seperator": "separator", "similiar": "similar",
-    "specifiy": "specify", "sucess": "success", "sucessful": "successful",
+    "specifiy": "specify", "staticly": "statically", "sucess": "success", "sucessful": "successful",
     "sucessfully": "successfully", "successfull": "successful",
-    "successfuly": "successfully", "supress": "suppress", "temprary": "temporary",
+    "successfuly": "successfully", "supress": "suppress",
+    "synchronzation": "synchronization", "temprary": "temporary",
     "thier": "their", "threshhold": "threshold", "tolerence": "tolerance",
     "transfered": "transferred", "typicaly": "typically", "unkown": "unknown",
     "usally": "usually", "usefull": "useful", "verison": "version",
+    "volimes": "volumes",
     "wether": "whether", "wich": "which", "writting": "writing",
     # The two deployment topologies. One is hyphenated and the other is not, so
     # both are written the wrong way about equally often.
@@ -94,6 +97,14 @@ MISSPELLINGS = {
     # "dm-multipath" and "nvme multipath" spellings it is written next to.
     "multi-pathing": "multipathing", "multi pathing": "multipathing",
     "multi-path": "multipath", "multi path": "multipath",
+    # Misspelled names. The casing of each of these is held by
+    # check-terminology.py and check-simplyblock-spelling.py, but a missing or a
+    # swapped letter makes a different word, which only this check rewrites.
+    "kinux": "Linux", "kockless": "lockless", "hashcorp": "HashiCorp",
+    "relabalcing": "rebalancing", "relabalancing": "rebalancing",
+    "simyplyblock": "simplyblock", "simpylblock": "simplyblock",
+    "simplyblok": "simplyblock", "simplybock": "simplyblock",
+    "simpyblock": "simplyblock", "simplybloc": "simplyblock",
     # The fault-tolerance level is written "FTT 1" or "FTT=1", never glued or
     # hyphenated. "FTT+1" is left alone: it means the level plus one node, not a
     # level of its own.

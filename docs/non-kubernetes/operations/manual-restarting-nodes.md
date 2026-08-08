@@ -20,7 +20,7 @@ There are a few reasons to manually restart a storage node:
     - The cluster is suspended (e.g., two or more storage nodes are offline)
     - The RPC interface is responsive and the container is up, but the storage node has another health issue
     - The host or Docker service are not available or hanging (e.g., network issue)
-    - Too many retries (e.g., because there is a problem with the lvolstore recovering for some of the logical volimes)
+    - Too many retries (e.g., because there is a problem with the lvolstore recovering for some of the logical volumes)
 
     In these cases, a manual restart is required.
 

@@ -65,7 +65,7 @@ annotations are required to encrypt a volume.
 
 For environments that require stricter handling of key material (separation of duty between storage and key
 custodians, regular rotation, or audit trails), the cluster can be configured to keep encryption keys in an external
-Hashicorp Vault or Openbao instance. The setup is configured once per `StorageCluster` and applies to every encrypted
+HashiCorp Vault or OpenBao instance. The setup is configured once per `StorageCluster` and applies to every encrypted
 volume in that cluster.
 
 See [Securing the Control Plane: External KMS](../installation/security.md#external-key-management-kms) for the full setup, or

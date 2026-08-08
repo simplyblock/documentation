@@ -77,7 +77,7 @@ To create the static persistent volume, the following values need to be known:
 - `targetType`
 - Name of the logical volume
 
-```yaml title="Staticly provisioned persistent volume: pv-static.yaml"
+```yaml title="Statically provisioned persistent volume: pv-static.yaml"
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -123,7 +123,7 @@ persistentvolume/pv-static created
 
 ### Create static Persistent Volume Claim
 
-```yaml title="Staticly provisioned persistent volume claim: pvc-static.yaml"
+```yaml title="Statically provisioned persistent volume claim: pvc-static.yaml"
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:

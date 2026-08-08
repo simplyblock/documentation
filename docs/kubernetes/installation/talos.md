@@ -94,7 +94,7 @@ To activate the huge pages, the `talosctl` command should be used.
 
 ## Required Talos Permissions
 
-Simyplyblock's CSI driver requires connecting NVMe over Fabrics devices, as well as mounting and formatting them.
+Simplyblock's CSI driver requires connecting NVMe over Fabrics devices, as well as mounting and formatting them.
 Therefore, the CSI driver has to run as a privileged container. Hence, Talos must be configured to start the
 simplyblock's CSI driver in privileged mode.
 

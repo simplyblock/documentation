@@ -6,7 +6,7 @@ Alternatively, 512 bytes block only supporting devices can be used. However, the
 !!! warning
     The only devices with 512 bytes block size, that are also known to support 4K torn write protection, are the NVMe devices provided by AWS.
 
-Devices must not contain active mount points under Linux. Simplyblock fails to claim devices that are moounted or otherwise marked as busy.
+Devices must not contain active mount points under Linux. Simplyblock fails to claim devices that are mounted or otherwise marked as busy.
 
 Additionally, partitions must be removed from devices. Simplyblock can only claim unpartitioned devices. Alternatively, simplyblock can remove
 partitions during the optional formatting process as part of the deployment. However, partitioned devices will never be automatically selected.
