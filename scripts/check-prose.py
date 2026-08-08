@@ -100,6 +100,15 @@ MISSPELLINGS = {
     # Misspelled names. The casing of each of these is held by
     # check-terminology.py and check-simplyblock-spelling.py, but a missing or a
     # swapped letter makes a different word, which only this check rewrites.
+    # Graylog is spelled the American way by its owner, and "Greylog" is a
+    # different word rather than a casing of it, so the terminology gate cannot
+    # see it and check-american-english.py cannot either: its "grey" carries a
+    # word boundary, which "Greylog" does not have.
+    "greylog": "Graylog",
+    "graphana": "Grafana", "grafanna": "Grafana",
+    "promethius": "Prometheus", "prometeus": "Prometheus",
+    "kubernets": "Kubernetes", "kubenetes": "Kubernetes",
+    "kuberenetes": "Kubernetes", "openshfit": "OpenShift",
     "kinux": "Linux", "kockless": "lockless", "hashcorp": "HashiCorp",
     "relabalcing": "rebalancing", "relabalancing": "rebalancing",
     "simyplyblock": "simplyblock", "simpylblock": "simplyblock",
