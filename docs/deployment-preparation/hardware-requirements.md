@@ -14,11 +14,10 @@ network bandwidth, and free space on the boot disk.
 
 | Node Type    | vCPU(s) | RAM (GB)               | Locally Attached Storage          | Network Performance | Free Boot Disk | Number of Nodes  |
 |--------------|---------|------------------------|-----------------------------------|---------------------|----------------|------------------|
-| Storage Node | 8+      | 6+ DDR4 <sup>(1)</sup> | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> |
+| Storage Node | 8+      | 6+ DDR4 <sup>(1)       | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> |
 
 <span style="font-size: 0.8em;">
-<sup>1</sup> Simplyblock highly recommends DDR5 memory on storage nodes for optimal performance.<br>
-<sup>2</sup> It is possible to test with only one dedicated NVMe, but this is not approved for production.<br>
+<sup>2</sup> Test setups require a minimum of 1 nvme. From 26.3., we support non-nvme device clusters (any SATA or SAS linux block device), this feature is still experimental.<br>
 <sup>3</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
 </span>
 
@@ -49,16 +48,13 @@ simplyblock data plane (spdk_80xx containers) and the rest will remain under con
 Simplyblock auto-detects NUMA nodes. It will configure and deploy storage nodes per NUMA node.
 
 Each NUMA socket requires directly attached NVMe devices and NICs to deploy a storage node.
-For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
-
-It is recommended to deploy multiple storage nodes per storage host if there are more than 32 cores available
-per socket.
-
-During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the
-recommended deployment strategy, including the recommended amount of storage nodes per storage host based on the
 detected configuration. This file is later processed when adding the storage nodes to the storage host.
 Manual changes to the configuration are possible if the proposed configuration is not applicable.
 
+For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
+
+During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the
+recommended deployment strategy, including the recommended amount of storage nodes per storage host based on the
 ### Hyper-Converged Sizing Guidance
 
 As hyper-converged deployments have to share vCPUs, it is recommended to dedicate 15%-20%, but not less than
