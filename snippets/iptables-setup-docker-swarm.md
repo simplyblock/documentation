@@ -1,14 +1,15 @@
-Simplyblock requires a number of TCP and UDP ports to be opened from certain networks. Following is a list of all
-ports (TCP and UDP) required for operation as a storage node.
+Simplyblock requires a number of TCP and UDP ports to be reachable from the control and the storage network. The
+following table lists every port required for operation as a storage node.
 
 !!! note
     The NVMf port range is used twice. It is TCP for NVMe-oF/TCP and UDP for NVMe-oF/RDMA.
 
 {% include 'network-port-table-sn.md' %}
 
-The following script opens those ports with `iptables`.
+The following script opens those ports with `iptables`. No source address is enforced by it. Where a tighter rule
+set is required, the sources given in the Hosts and the Network column are applied on top.
 
-```bash title="Configuration script for iptables"
+```bash title="Opening the storage node ports with iptables"
 #!/usr/bin/env bash
 
 iptables -A INPUT -p icmp -j ACCEPT
