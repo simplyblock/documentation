@@ -49,8 +49,8 @@ HTML_TAG_PATTERN = re.compile(r"</?[a-zA-Z][^<>]*>")
 # a command from its arguments in the shell.
 CODE_COMMENT_PATTERN = re.compile(r"(?:^|\s)(?:#|//)\s")
 
-# Raw HTML blocks start with a tag on their own line. Their content is only
-# Markdown if the block carries the md_in_html "markdown" attribute.
+# Raw HTML blocks start with a block level tag on their own line. Their content
+# is only Markdown if the block carries the md_in_html "markdown" attribute.
 HTML_BLOCK_OPEN_PATTERN = re.compile(r"^\s*<([a-zA-Z][\w:-]*)((?:\"[^\"]*\"|'[^']*'|[^>\"'])*)>")
 MD_IN_HTML_ATTR_PATTERN = re.compile(
     r"(?:^|\s)markdown(?:\s*=\s*(?:\"[^\"]*\"|'[^']*'|\S+))?(?=\s|/|$)"
@@ -58,6 +58,15 @@ MD_IN_HTML_ATTR_PATTERN = re.compile(
 VOID_HTML_TAGS = {
     "area", "base", "br", "col", "embed", "hr", "img", "input",
     "link", "meta", "param", "source", "track", "wbr",
+}
+# Only a block level tag opens a raw HTML block, the same way mkdocs decides it.
+# An inline element is written in the middle of a sentence and carries the prose
+# with it, so a footnote that starts with "<sup>2</sup> Test setups require ..."
+# is a sentence and not a block, and is checked like any other line.
+INLINE_HTML_TAGS = {
+    "a", "abbr", "b", "bdi", "bdo", "cite", "code", "data", "del", "dfn", "em",
+    "i", "ins", "kbd", "mark", "q", "s", "samp", "small", "span", "strong",
+    "sub", "sup", "time", "u", "var",
 }
 
 # Frontmatter fields that hold prose. The remaining fields are configuration
@@ -370,11 +379,16 @@ def iter_prose_lines(lines, frontmatter_fields=FRONTMATTER_PROSE_FIELDS, include
             open_match = HTML_BLOCK_OPEN_PATTERN.match(line)
             if open_match and not MD_IN_HTML_ATTR_PATTERN.search(open_match.group(2)):
                 tag = open_match.group(1).lower()
-                if tag in VOID_HTML_TAGS or open_match.group(2).rstrip().endswith("/"):
+                if tag in INLINE_HTML_TAGS:
+                    # An inline element opens no block. The line is prose, and
+                    # the tag around it is masked like any other inline HTML.
+                    pass
+                elif tag in VOID_HTML_TAGS or open_match.group(2).rstrip().endswith("/"):
                     # Self-contained element, no block to skip over.
                     continue
-                html_skip_tag = tag
-                html_skip_depth = 0
+                else:
+                    html_skip_tag = tag
+                    html_skip_depth = 0
         if html_skip_tag is not None:
             html_skip_depth += len(
                 re.findall(rf"<{re.escape(html_skip_tag)}\b", line, re.IGNORECASE)
