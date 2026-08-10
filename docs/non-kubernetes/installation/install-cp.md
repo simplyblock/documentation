@@ -29,38 +29,34 @@ this list is for management nodes only. Storage nodes have a different port conf
 
 With the previously defined subnets, the following snippet configures the iptables automatically.
 
-!!! danger
-    The example assumes an external firewall between the _admin_ network and the public internet!<br/>
-    If this is not the case, ensure the correct source access for ports _22_ and _80_.
 
 ```bash title="Network Configuration"
-#!/usr/bin/env bash
+#!/bin/bash
 
-# Clean up
-sudo iptables -F SIMPLYBLOCK
-sudo iptables -D DOCKER-FORWARD -j SIMPLYBLOCK
-sudo iptables -X SIMPLYBLOCK
+# ICMP ingress
+iptables -A INPUT -p icmp -j ACCEPT
 
-# Setup
-sudo iptables -N SIMPLYBLOCK
-sudo iptables -I DOCKER-FORWARD 1 -j SIMPLYBLOCK
-sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-sudo iptables -A SIMPLYBLOCK -m state --state ESTABLISHED,RELATED -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 80 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 2375 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 2377 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 4500 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p udp --dport 4789 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p udp --dport 7946 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 9090 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 9200 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p udp --dport 12201 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 12202 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 13301 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -p tcp --dport 13302 -s 192.168.10.0/24,10.10.10.0/24 -j RETURN
-sudo iptables -A SIMPLYBLOCK -s 0.0.0.0/0 -j DROP
+# storage-node-api — TCP 5000, ingress + egress
+iptables -A INPUT  -p tcp --dport 5000 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 5000 -j ACCEPT
+
+# NVMf — TCP 4420-4499, ingress + egress
+iptables -A INPUT  -p tcp --dport 4420:4499 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 4420:4499 -j ACCEPT
+
+# FoundationDB — TCP 4500, ingress
+iptables -A INPUT -p tcp --dport 4500 -j ACCEPT
+
+# Control plane API — TCP 80, egress
+iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
+
+# Control plane RPC — TCP 8080-9044, ingress + egress
+iptables -A INPUT  -p tcp --dport 8080:9044 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 8080:9044 -j ACCEPT
+
+# Monitoring Stack — optional
+# iptables -A INPUT  -p tcp -m multiport --dports 12202,13301,13302,9200,9090 -j ACCEPT
+# iptables -A OUTPUT -p tcp -m multiport --dports 12202,13301,13302,9200,9090 -j ACCEPT
 ```
 
 ### Management Node Installation
