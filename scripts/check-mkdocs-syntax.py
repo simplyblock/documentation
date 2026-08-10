@@ -28,6 +28,9 @@ These rules fail the check:
 * An internal link points at a file that exists. Absolute links resolve against
   the docs directory, matching "absolute_links: relative_to_docs".
 * An included snippet ("{% include 'file.md' %}") exists.
+* An HTML tag is closed, and closes the tag that is open. mkdocs passes raw HTML
+  through untouched, so an unclosed "<sup>" or "<div>" renders a page wrongly
+  without failing its build.
 
 These rules are reported as a warning and do not fail the check yet:
 
@@ -57,14 +60,20 @@ from markdown_common import (
     CODE_FENCE_PATTERN,
     CODE_SPAN_PATTERN,
     DEFAULT_TARGET_DIRS,
+    HTML_COMMENT_PATTERN,
+    HTML_ELEMENT_TAGS,
+    HTML_RAW_TEXT_TAGS,
+    HTML_TAG_PAIR_PATTERN,
     SCANNED_EXTENSIONS,
     SEVERITY_WARNING,
+    VOID_HTML_TAGS,
     FileFix,
     Violation,
     apply_fixes_to_file,
     collect_files,
     drop_generated,
     indentation_of,
+    mask_ranges,
     read_lines,
     relative_path,
     report_violations,
@@ -155,6 +164,14 @@ HTML_ID_PATTERN = re.compile(r"\bid=[\"']([^\"']+)[\"']")
 MARKDOWN_LINK_TEXT_PATTERN = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
 ATTRIBUTE_LIST_PATTERN = re.compile(r"\{[^}]*\}")
 EMPHASIS_PATTERN = re.compile(r"[`*_~]")
+
+# The elements HTML lets a page leave open, because the next tag ends them on
+# its own ("<li>" ends at the next "<li>", "<td>" at the next "<td>"). Demanding
+# their end tag back would report valid markup.
+OPTIONAL_CLOSE_HTML_TAGS = {
+    "caption", "colgroup", "dd", "dt", "li", "optgroup", "option", "p",
+    "tbody", "td", "tfoot", "th", "thead", "tr",
+}
 
 INCLUDE_PATTERN = re.compile(r"\{%\s*include\s+['\"]([^'\"]+)['\"]")
 
@@ -951,6 +968,111 @@ def check_table_formatting(lines, rel):
     return violations, fixes
 
 
+def check_html_tags(lines, rel):
+    """Every HTML tag of a page is closed, and closes the tag that is open.
+
+    mkdocs passes raw HTML through untouched, so nothing reports a tag that was
+    left open. An unclosed "<sup>" pulls the rest of its line into superscript,
+    an unclosed "<div>" pulls the rest of the page into itself, and the build
+    stays green either way: the page still renders, only not as it was written.
+
+    Only the names of real elements are paired. A "<" in front of anything else
+    is a placeholder or an operator ("<CLUSTER_ID>", "a < b"), not a tag. The
+    body of a code block, of an inline code span and of a script is code, and
+    the elements whose end tag HTML makes optional ("<li>", "<td>", "<p>") are
+    not demanded back.
+    """
+    violations = []
+    stack = []
+    in_code_fence = False
+    in_comment = False
+    raw_text_tag = None
+
+    def unclosed(tag, line, column):
+        return Violation(
+            file=rel,
+            line=line,
+            column=column,
+            check="html-tag",
+            reason=f"'<{tag}>' is never closed",
+            excerpt=lines[line - 1].strip()[:80],
+        )
+
+    for index, line in enumerate(lines):
+        if CODE_FENCE_PATTERN.match(line):
+            in_code_fence = not in_code_fence
+            continue
+        if in_code_fence:
+            continue
+
+        # A comment and a code span hold no markup, so they are blanked out
+        # before the tags are read, keeping every column where it was.
+        text = mask_ranges(line, [match.span() for match in CODE_SPAN_PATTERN.finditer(line)])
+        if in_comment:
+            end = text.find("-->")
+            if end < 0:
+                continue
+            text = mask_ranges(text, [(0, end + 3)])
+            in_comment = False
+        text = HTML_COMMENT_PATTERN.sub(lambda match: " " * len(match.group(0)), text)
+        start = text.rfind("<!--")
+        if start >= 0:
+            text = mask_ranges(text, [(start, len(text))])
+            in_comment = True
+
+        for match in HTML_TAG_PAIR_PATTERN.finditer(text):
+            tag = match.group("tag").lower()
+            if tag not in HTML_ELEMENT_TAGS:
+                continue
+
+            # Inside a script or a style the only tag that counts is its end.
+            if raw_text_tag is not None:
+                if match.group("closing") and tag == raw_text_tag:
+                    raw_text_tag = None
+                continue
+
+            if match.group("closing"):
+                depth = next(
+                    (offset for offset, entry in enumerate(reversed(stack)) if entry[0] == tag),
+                    None,
+                )
+                if depth is None:
+                    # Nothing to close. An optional end tag is written for
+                    # symmetry and may stand on its own.
+                    if tag not in OPTIONAL_CLOSE_HTML_TAGS:
+                        violations.append(
+                            Violation(
+                                file=rel,
+                                line=index + 1,
+                                column=match.start() + 1,
+                                check="html-tag",
+                                reason=f"'</{tag}>' closes a tag that is not open",
+                                excerpt=line.strip()[:80],
+                            )
+                        )
+                    continue
+                # Everything the end tag reaches past was left open.
+                for _ in range(depth):
+                    open_tag, open_line, open_column = stack.pop()
+                    if open_tag not in OPTIONAL_CLOSE_HTML_TAGS:
+                        violations.append(unclosed(open_tag, open_line, open_column))
+                stack.pop()
+                continue
+
+            if tag in VOID_HTML_TAGS or match.group("attrs").rstrip().endswith("/"):
+                continue
+            if tag in HTML_RAW_TEXT_TAGS:
+                raw_text_tag = tag
+                continue
+            stack.append((tag, index + 1, match.start() + 1))
+
+    for open_tag, open_line, open_column in stack:
+        if open_tag not in OPTIONAL_CLOSE_HTML_TAGS:
+            violations.append(unclosed(open_tag, open_line, open_column))
+
+    return sorted(violations, key=lambda violation: (violation.line, violation.column))
+
+
 def check_trailing_whitespace(lines, rel):
     """Trailing whitespace, wherever it sits.
 
@@ -1242,6 +1364,7 @@ def scan_file(file_path, placeholders, docs_root, include_dir, anchor_cache):
         + check_code_blocks(lines, rel)
         + check_list_indentation(lines, rel)
         + check_markdown_traps(lines, rel)
+        + check_html_tags(lines, rel)
         + check_trailing_whitespace(lines, rel)
         + check_file_ending(lines, rel)
         + check_links(lines, rel, file_path, docs_root, anchor_cache)

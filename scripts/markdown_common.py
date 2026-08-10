@@ -68,6 +68,31 @@ INLINE_HTML_TAGS = {
     "i", "ins", "kbd", "mark", "q", "s", "samp", "small", "span", "strong",
     "sub", "sup", "time", "u", "var",
 }
+BLOCK_HTML_TAGS = {
+    "address", "article", "aside", "blockquote", "button", "canvas", "caption",
+    "colgroup", "dd", "details", "div", "dl", "dt", "fieldset", "figcaption",
+    "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header",
+    "iframe", "label", "legend", "li", "main", "nav", "noscript", "object",
+    "ol", "optgroup", "option", "p", "picture", "pre", "script", "section",
+    "select", "style", "summary", "svg", "table", "tbody", "td", "template",
+    "textarea", "tfoot", "th", "thead", "tr", "ul", "video",
+}
+# Every name that is an HTML element. A "<" followed by anything else is not a
+# tag but a placeholder, a shell redirect or a comparison ("<CLUSTER_ID>",
+# "< 4 KiB"), and a check that pairs tags has to leave those alone.
+HTML_ELEMENT_TAGS = VOID_HTML_TAGS | INLINE_HTML_TAGS | BLOCK_HTML_TAGS
+
+# Elements whose body is not markup. Everything between the two is code, and a
+# "<" inside it is an operator rather than the start of a tag.
+HTML_RAW_TEXT_TAGS = {"script", "style", "textarea"}
+
+# An HTML comment, which pairs on its own and holds no tags.
+HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
+# An opening or closing tag, with its name and the "/" of a self-closing one.
+HTML_TAG_PAIR_PATTERN = re.compile(
+    r"<(?P<closing>/?)(?P<tag>[a-zA-Z][\w:-]*)"
+    r"(?P<attrs>(?:\"[^\"]*\"|'[^']*'|[^>\"'])*)>"
+)
 
 # Frontmatter fields that hold prose. The remaining fields are configuration
 # (weight, redirects, ...) and are not written for a reader.
