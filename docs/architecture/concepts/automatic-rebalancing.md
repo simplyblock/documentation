@@ -9,7 +9,7 @@ distribution of data and performance across storage nodes. This process ensures 
 and enhances system resilience by dynamically redistributing data in response to changes in cluster topology or workload
 patterns.
 
-In simplyblock, re-balancing concerns the re-balancing of back storage (for rebalancing of front storage or volume "docking points", see
+In simplyblock, re-balancing concerns the re-balancing of back storage (for rebalancing of front storage or volume "docking points," see
 [volume migration](volume-migration.md) for details). Its behavior depends on whether local node affinity is turned on.
 
 If local node affinity is turned on, primary data chunks are re-balanced with a preference to the node at which also the front storage resides.

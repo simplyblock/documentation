@@ -218,12 +218,27 @@ nothing to insert.
 
 Three habits make a page read as though nobody chose the words. The punctuation
 gate reports all of them. The first two are warnings, because what replaces them
-depends on the sentence and is a decision for the writer. The list item form has
-one right answer and is an error that `--fix` resolves.
+depends on the sentence and is a decision for the writer. The list item form and
+the placement of a mark have one right answer and are errors that `--fix`
+resolves.
 
 **A missing comma after an abbreviation.** American usage writes "e.g.," and
 "i.e.," and "for example," with the comma, since each of them introduces the
 example that follows.
+
+**A comma and a full stop go inside the closing quotation mark**, whatever the
+quoted words are: "docking points," and never "docking points",. A colon and a
+semicolon stay outside, and a question mark belongs to whichever sentence asks
+the question. A value, a status, or an identifier takes backticks rather than
+quotation marks, which settles the question before it comes up.
+
+**A mark sits against the word it belongs to**: no space in front of a comma or a
+full stop, no mark typed twice, and no space just inside a parenthesis or a
+bracket, so "(as above)" and never "( as above )".
+
+**An empty pair of parentheses** is what is left of a macro or a name that went
+missing, as in "the command line interface ( )". Restore what belonged inside
+them, or drop them.
 
 **A repeated word**, as in "the volume is is migrated", and a **misspelling** from
 the list in `scripts/check-prose.py`. Both slip past a writer, because the eye

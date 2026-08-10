@@ -1,6 +1,6 @@
 ---
 title: "Operations"
-description: "Usage: Simplyblock provides powerful tools for managing Logical Volumes (LVs) through its command-line interface ( ) and Kubernetes CSI driver, enabling."
+description: "Usage: Simplyblock provides powerful tools for managing Logical Volumes (LVs) through its command-line interface and Kubernetes CSI driver, enabling."
 weight: 70000
 ---
 

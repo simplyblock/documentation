@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Look for punctuation that the house style avoids.
 
-Four habits are reported. For three of them the replacement depends on the
-sentence, so they are **warnings**: candidates for a human to look at, never a
-failed build. The fourth has exactly one right answer and is an **error** that
-"--fix" resolves.
+Two kinds of finding are reported. A **warning** is a candidate for a human to
+look at, never a failed build, because what replaces it depends on the sentence.
+An **error** has exactly one right answer and is resolved by "--fix".
+
+Reported as a warning:
 
 * A **missing Oxford comma**. The last item of a series is separated by a comma
   as well: "storage nodes, volumes, and snapshots".
@@ -12,9 +13,17 @@ failed build. The fourth has exactly one right answer and is an **error** that
   subordinate clause is easier still.
 * An **em dash** setting off a clause. A pair of parentheses or a comma carries
   the same aside without the interruption.
+* An **empty pair of parentheses**, usually a macro or a name that went missing.
+  What belongs inside them is not something a check can know.
+
+Reported as an error:
+
 * A **list item** whose subject is not written as "- **Foo:** bar": separated by
   a dash instead of a colon, carrying its colon outside the bold, or emphasized
   in italic rather than bold.
+* A **mark in the wrong place**: a comma or a full stop behind the closing
+  quotation mark instead of inside it, a space in front of a mark, a mark typed
+  twice, or a space just inside a parenthesis or a bracket.
 
 Whether "A, B and C" is a list of three items or a sentence that happens to
 contain a comma and an "and" is a question of grammar, not of spelling, and the
@@ -29,9 +38,10 @@ Generated files are skipped, since they have to be corrected at their source.
 Usage:
     python3 scripts/check-punctuation.py [--fix] [PATH ...]
 
-"--fix" rewrites the subject of a list item and nothing else. A semicolon, an em
-dash, and a missing Oxford comma are left alone: each of them is rewritten by
-choosing different words, which is a decision for the writer.
+"--fix" rewrites the subject of a list item and the placement of a mark. A
+semicolon, an em dash, a missing Oxford comma, and an empty pair of parentheses
+are left alone: each of them is rewritten by choosing different words, which is a
+decision for the writer.
 """
 
 import argparse
@@ -318,12 +328,153 @@ def check_list_punctuation(prose):
         return
 
 
+# ---------------------------------------------------------------------------
+# The placement of a mark
+# ---------------------------------------------------------------------------
+
+# Where a mark stands next to a quotation mark, a space, or a bracket, there is
+# one right place for it and the slip is a typing artifact rather than a choice.
+# These rules are therefore errors that "--fix" resolves.
+#
+# They read the line as it was written and not its masked copy: masking blanks
+# out a code span and a template expression, and the spaces left behind look
+# exactly like the slips below, so "({{ cliname }})" would read as an empty pair
+# of parentheses. A match that reaches into a blanked-out region is dropped.
+
+# American usage keeps a comma and a full stop inside the closing quotation mark:
+# "docking points," and not "docking points",. A colon and a semicolon stay
+# outside, and a question mark belongs to whichever sentence asks the question,
+# so only these two marks have a place that never changes.
+QUOTED_MARK_PATTERN = re.compile(r"(?P<quote>[\"”])\s*(?P<mark>[,.])")
+QUOTED_MARK_REASON = (
+    "A comma and a full stop go inside the closing quotation mark: write '{expected}'"
+)
+
+# A mark follows the word it belongs to without a gap. The word in front of the
+# space has to end in a letter, a digit, or a closing pair, so that the padding
+# of a table cell and the marker of an admonition are not read as a gap. A
+# quotation mark is left out of that list: a mark behind one is the rule above,
+# which moves it inside instead of only closing the gap.
+SPACED_MARK_PATTERN = re.compile(
+    r"(?P<space> +)(?P<mark>[,;:.!?])(?=[\s\"”)\]]|$)"
+)
+SPACED_MARK_LEAD = re.compile(r"[\w)\]’%]$")
+SPACED_MARK_REASON = "Space in front of '{mark}', a mark follows its word directly"
+
+# The same mark typed twice, as a hand returning to a comma that is already there.
+REPEATED_MARK_PATTERN = re.compile(r"(?P<mark>[,;])\s*[,;]")
+REPEATED_MARK_REASON = "'{found}' writes a mark that is read once"
+
+# A parenthesis and a bracket sit against their content: "(as above)" and not
+# "( as above )". Both patterns need something other than the other half of the
+# pair next to the space, so that an empty pair reaches the warning below instead
+# of being closed up into "()".
+OPEN_BRACKET_SPACE_PATTERN = re.compile(r"(?P<bracket>[(\[])(?P<space> +)(?=[^\s)\]])")
+CLOSE_BRACKET_SPACE_PATTERN = re.compile(
+    r"(?<=[^\s(\[])(?P<space> +)(?P<bracket>[)\]])"
+)
+BRACKET_SPACE_REASON = "Space just inside the {name}"
+BRACKET_NAMES = {
+    "(": "parentheses", ")": "parentheses", "[": "brackets", "]": "brackets",
+}
+
+# An empty pair of parentheses is what is left of a macro or a name that went
+# missing, as in "the command line interface ( )". Only the writer knows what
+# belonged there. The pair has to open a word of its own: "[]string" is a type
+# and "![](image.png)" is an image without an alt text, neither of which is a
+# question of punctuation.
+EMPTY_PARENTHESES_PATTERN = re.compile(r"(?:(?<=\s)|^)\(\s*\)")
+EMPTY_PARENTHESES_REASON = (
+    "Empty parentheses, restore what belongs inside them or drop them"
+)
+
+
+def is_prose_span(prose, start, end):
+    """Tell whether a span of the line is prose and not a blanked-out region."""
+    return prose.text[start:end] == prose.masked[start:end]
+
+
+def placement_matches(prose, pattern):
+    for match in pattern.finditer(prose.text):
+        if is_prose_span(prose, match.start(), match.end()):
+            yield match
+
+
+def placed_mark(match, check, reason, replacement):
+    return Finding(
+        column=match.start(),
+        check=check,
+        reason=reason,
+        severity=SEVERITY_ERROR,
+        length=len(match.group(0)),
+        replacement=replacement,
+    )
+
+
+def check_quoted_mark(prose):
+    for match in placement_matches(prose, QUOTED_MARK_PATTERN):
+        expected = f"{match.group('mark')}{match.group('quote')}"
+        yield placed_mark(
+            match,
+            "quoted-mark",
+            QUOTED_MARK_REASON.format(expected=expected),
+            expected,
+        )
+
+
+def check_spaced_mark(prose):
+    for match in placement_matches(prose, SPACED_MARK_PATTERN):
+        if not SPACED_MARK_LEAD.search(prose.text[: match.start()]):
+            continue
+        mark = match.group("mark")
+        yield placed_mark(
+            match, "spaced-mark", SPACED_MARK_REASON.format(mark=mark), mark
+        )
+
+
+def check_repeated_mark(prose):
+    for match in placement_matches(prose, REPEATED_MARK_PATTERN):
+        mark = match.group("mark")
+        yield placed_mark(
+            match,
+            "repeated-mark",
+            REPEATED_MARK_REASON.format(found=match.group(0)),
+            mark,
+        )
+
+
+def check_bracket_space(prose):
+    for pattern in (OPEN_BRACKET_SPACE_PATTERN, CLOSE_BRACKET_SPACE_PATTERN):
+        for match in placement_matches(prose, pattern):
+            bracket = match.group("bracket")
+            yield placed_mark(
+                match,
+                "bracket-space",
+                BRACKET_SPACE_REASON.format(name=BRACKET_NAMES[bracket]),
+                bracket,
+            )
+
+
+def check_empty_parentheses(prose):
+    for match in placement_matches(prose, EMPTY_PARENTHESES_PATTERN):
+        yield Finding(
+            column=match.start(),
+            check="empty-parentheses",
+            reason=EMPTY_PARENTHESES_REASON,
+        )
+
+
 RULES = (
     check_oxford_comma,
     check_semicolon,
     check_em_dash,
     check_double_hyphen,
     check_list_punctuation,
+    check_quoted_mark,
+    check_spaced_mark,
+    check_repeated_mark,
+    check_bracket_space,
+    check_empty_parentheses,
 )
 
 
@@ -388,6 +539,11 @@ def scan_file(file_path):
 
     for prose in iter_prose_lines(lines):
         findings = [finding for rule in RULES for finding in rule(prose)]
+        # Two rules can report the same spot, as a quotation mark in front of a
+        # doubled comma does. Both findings are worth reading, but only the first
+        # of them is rewritten: a second replacement over the same characters
+        # would be applied to a line that no longer looks the way it was read.
+        fixed_until = 0
         for finding in sorted(findings, key=lambda f: f.column):
             violations.append(
                 Violation(
@@ -400,7 +556,7 @@ def scan_file(file_path):
                     severity=finding.severity,
                 )
             )
-            if finding.replacement:
+            if finding.replacement and finding.column >= fixed_until:
                 fixes.append(
                     FileFix(
                         line=prose.number,
@@ -409,6 +565,7 @@ def scan_file(file_path):
                         replacement=finding.replacement,
                     )
                 )
+                fixed_until = finding.column + finding.length
 
     return violations, fixes
 
@@ -427,7 +584,7 @@ def main():
         "-f",
         "--fix",
         action="store_true",
-        help="rewrite the list item subjects, the only rule that has one answer",
+        help="rewrite the list item subjects and the misplaced marks",
     )
     parser.add_argument(
         "paths",
@@ -457,7 +614,7 @@ def main():
                 applied += written
         if applied:
             print(
-                f"Auto-fix mode: updated {applied} list item(s) "
+                f"Auto-fix mode: updated {applied} spot(s) "
                 f"across {files_changed} file(s)."
             )
         scans = {file: scan_file(file) for file in files}

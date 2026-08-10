@@ -17,7 +17,7 @@ to balance I/O performance across cluster nodes. This is required since the fron
 and runs all the data services. Additionally, volume migration is used to drain nodes in case they need to be removed from the cluster
 (hardware replacement, infrastructure modernization).
 
-While most of the volume migrations happen "under the hood", users can also explicitly initiate migrations (e.g., to
+While most of the volume migrations happen "under the hood," users can also explicitly initiate migrations (e.g., to
 move particular, I/O-heavy volumes to particular nodes).
 
 ## How Volume Migration Works

@@ -63,7 +63,7 @@ gate_voice() {
   "${PYTHON}" "${SCRIPT_DIR}/check-voice.py"
 }
 
-gate_punctuation_description="Oxford comma, semicolon, em dash, and list item punctuation"
+gate_punctuation_description="Oxford comma, semicolon, em dash, list item punctuation, and the placement of a mark"
 gate_punctuation() {
   "${PYTHON}" "${SCRIPT_DIR}/check-punctuation.py"
 }
