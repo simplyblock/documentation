@@ -50,17 +50,17 @@ mutually exclusive:
 
 ```bash title="Selecting block devices by name"
 sudo {{ cliname }} storage-node configure \
-    --lblk --blk-names sdb,sdc --max-lvol 50
+    --lblk --blk-names sdb,sdc --max-subsystem 50
 ```
 
 ```bash title="Selecting all eligible block devices except some"
 sudo {{ cliname }} storage-node configure \
-    --lblk --blk-names-exclude sda --max-lvol 50
+    --lblk --blk-names-exclude sda --max-subsystem 50
 ```
 
 ```bash title="Selecting block devices by serial number or WWN"
 sudo {{ cliname }} storage-node configure \
-    --lblk --blk-serials S3EVNX0M602707,S3EVNX0M602708 --max-lvol 50
+    --lblk --blk-serials S3EVNX0M602707,S3EVNX0M602708 --max-subsystem 50
 ```
 
 A requested device that is busy (mounted, held, or otherwise ineligible) is an error. The
@@ -78,7 +78,7 @@ eligible with `--force` at configuration time:
 
 ```bash title="Including a partitioned block device in the selection"
 sudo {{ cliname }} storage-node configure \
-    --lblk --blk-names sdb --force --max-lvol 50
+    --lblk --blk-names sdb --force --max-subsystem 50
 ```
 
 The wipe itself happens later, at node addition, where it has to be requested explicitly with
