@@ -24,6 +24,20 @@ simplyblock control plane to provision a logical volume matching the requested s
 the complexity of volume creation and ensures that workloads running in Kubernetes receive high-performance, resilient
 block storage directly backed by simplyblock.
 
+## StorageClass Created by a Storage Pool
+
+A StorageClass named `simplyblock-<namespace>-<clusterName>-<poolName>` is created automatically by the operator once
+a `StoragePool` resource becomes active, as described in
+[Create a Storage Pool](../installation/k8s-storage-plane.md#create-a-storage-pool). `cluster_id` and `pool_name` are
+always set from the storage pool and cannot be overridden. The rest of the parameters are copied from
+`StoragePool.spec.storageClassParameters`. Defaults for each field are listed at
+[Simplyblock Operator: StorageClassParameters](../../reference/operator/reference.md#storageclassparameters).
+
+Kubernetes does not allow the `parameters` of a StorageClass to be changed after creation, so
+`StoragePool.spec.storageClassParameters` is immutable once the storage pool is created. There is no supported way to
+reconfigure the generated StorageClass afterward. A new storage pool has to be created to provision volumes with
+different defaults.
+
 ## Example Usage
 
 A typical simplyblock StorageClass contains the name of the storage class, a filesystem type to automatically format
@@ -47,8 +61,8 @@ allowVolumeExpansion: true
 
 ## StorageClass Parameters
 
-Each cluster has a default schema, but each volume can optionally use an alternative schema. However, the schema must
-"fit" into the cluster, meaning `n+k` must be equal to (or better smaller) than the number of nodes in the cluster.
+The erasure coding schema (the number of data and parity chunks per stripe) is set once at cluster creation and
+applies to all volumes in the cluster. It cannot be configured per volume or through a StorageClass.
 
 See the [Erasure Coding Configuration](../../deployment-preparation/erasure-coding-scheme.md) for more details.
 
@@ -78,8 +92,7 @@ If `namespace-volumes` is set to `yes`, the number of namespaces per subsystem h
 | qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0        |
 | compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false    |
 | encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false    |
-| distr_ndcs                | int        | Defines the number of data chunks for the erasure coding scheme.                                                                                                                               | true     | 1        |
-| distr_npcs                | int        | Defines the number of parity chunks for the erasure coding scheme.                                                                                                                             | true     | 1        |
+| replicate                 | bool       | Defines if the logical volumes of this storage class are replicated.                                                                                                                           | true     | false    |
 | lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0        |
 | max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1        |
 | tune2fs_reserved_blocks   | int        | Defines the number of reserved blocks for tune2fs operations.                                                                                                                                  | true     | 0        |
