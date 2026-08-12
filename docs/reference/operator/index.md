@@ -19,7 +19,7 @@ The operator manages the following Custom Resource Definitions (CRDs):
 | [`StorageNodeSet`](reference.md#storagenodeset) | -          | Fleet-level declarative management of storage nodes across workers |
 | [`StorageNode`](reference.md#storagenode)       | -          | Represents a single backend storage node instance (auto-created)   |
 | [`StorageNodeOps`](reference.md#storagenodeops) | -          | One-shot operational action targeting a single storage node        |
-| [`Pool`](reference.md#storagepool)              | -          | Creates and manages storage pools                                  |
+| [`StoragePool`](reference.md#storagepool)       | -          | Creates and manages storage pools                                  |
 | [`Task`](reference.md#task)                     | -          | Monitors cluster tasks and their status                            |
 | [`StorageBackup`](reference.md#storagebackup)   | -          | Creates a one-time backup of a PVC to S3                           |
 | [`BackupRestore`](reference.md#backuprestore)   | -          | Restores a backup into a new PVC                                   |
@@ -292,13 +292,13 @@ See [Pinned Volume Migration During Node Removal](../../kubernetes/operations/no
 
 ## Storage Pool
 
-The `Pool` resource creates and manages storage pools. When a pool becomes active, the operator automatically
+The `StoragePool` resource creates and manages storage pools. When a pool becomes active, the operator automatically
 creates a Kubernetes `StorageClass` named `simplyblock-<namespace>-<clusterName>-<poolName>`. The StorageClass is deleted
 when the pool is deleted.
 
 ```yaml title="Example: Create a storage pool"
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: Pool
+kind: StoragePool
 metadata:
   name: production-pool
   namespace: simplyblock
@@ -313,11 +313,11 @@ spec:
       write: 1024
 ```
 
-The complete set of `Pool` fields is available in [Pool reference](reference.md#storagepool).
+The complete set of `StoragePool` fields is available in [StoragePool reference](reference.md#storagepool).
 
 ### Auto-Created StorageClass
 
-The pool identifier is the `Pool` resource name (`metadata.name`). The operator uses that name as the backend pool
+The pool identifier is the `StoragePool` resource name (`metadata.name`). The operator uses that name as the backend pool
 name and as the `pool_name` CSI StorageClass parameter.
 
 When the pool reaches an active state, the operator creates a `StorageClass` with:

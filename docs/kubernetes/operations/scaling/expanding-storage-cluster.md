@@ -56,7 +56,7 @@ metadata:
 spec:
   clusterName: simplyblock-cluster
   expand: true
-  maxLogicalVolumeCount: 20
+  maxSubsystemCount: 20
   partitions: 0
   corePercentage: 50
   workerNodes:
@@ -75,7 +75,7 @@ metadata:
 spec:
   clusterName: simplyblock-cluster
   expand: true
-  maxLogicalVolumeCount: 20
+  maxSubsystemCount: 20
   partitions: 0
   corePercentage: 50
   workerNodes:
@@ -104,7 +104,7 @@ kubectl get storagenodes -n simplyblock
 
 ### Option B: Add a Single Node via StorageNode CR
 
-For cases that need per-node overrides (custom `maxLogicalVolumeCount`, `spdkSystemMemory`, etc.) or a
+For cases that need per-node overrides (custom `maxSubsystemCount`, `spdkSystemMemory`, etc.) or a
 single node added manually, create a `StorageNode` CR directly. Set `overrides.expand: true` so the backend
 treats it as an expansion add rather than a fresh cluster node.
 
@@ -123,7 +123,7 @@ spec:
   socketIndex: 0
   overrides:
     expand: true
-    maxLogicalVolumeCount: 20
+    maxSubsystemCount: 20
 ```
 
 ```bash title="Apply the StorageNode CR"

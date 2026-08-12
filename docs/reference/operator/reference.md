@@ -2941,6 +2941,273 @@ allowedNodes:
 
 
 
+#### StoragePool
+
+
+
+StoragePool is the Schema for the storagepools API
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StoragePool
+metadata:
+  name: string
+spec:
+  clusterName: string
+  status: string
+  capacityLimit: string
+  logicalVolumeMaxSize: string
+  dhchap: boolean
+  allowedNodes:
+    - string
+  qos:
+    iops: integer
+    throughput:
+      read: integer
+      readWrite: integer
+      write: integer
+  action: string
+  storageClassParameters:
+    qosRwIops: string
+    qosRwMbytes: string
+    qosRMbytes: string
+    qosWMbytes: string
+    compression: string
+    encryption: boolean
+    replicate: boolean
+    lvolPriorityClass: string
+    fabric: string
+    maxNamespacePerSubsys: string
+    tune2fsReservedBlocks: string
+    filesystem: string
+status:
+  uuid: string
+  status: string
+  qos:
+    host: string
+    iops: integer
+    throughput:
+      read: integer
+      readWrite: integer
+      write: integer
+  allowedNodes:
+    - string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `StoragePool` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `spec` _[StoragePoolSpec](#storagepoolspec)_ | spec defines the desired state of StoragePool |  | Required: \{\} <br /> |
+| `status` _[StoragePoolStatus](#storagepoolstatus)_ | status defines the observed state of StoragePool |  | Optional: \{\} <br /> |
+
+
+#### StoragePoolQoSSpec
+
+
+
+StoragePoolQoSSpec defines pool QosSpec limits.
+
+
+
+_Appears in:_
+- [StoragePoolSpec](#storagepoolspec)
+
+_Example:_
+
+```yaml
+iops: integer
+throughput:
+  read: integer
+  readWrite: integer
+  write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `iops` _integer_ | IOPS is the IOPS limit for the pool. |  |  |
+| `throughput` _[StoragePoolQoSThroughputSpec](#storagepoolqosthroughputspec)_ | Throughput contains throughput limits for the pool. |  |  |
+
+
+#### StoragePoolQoSStatus
+
+
+
+StoragePoolQoSStatus defines observed pool QosSpec values.
+
+
+
+_Appears in:_
+- [StoragePoolStatus](#storagepoolstatus)
+
+_Example:_
+
+```yaml
+host: string
+iops: integer
+throughput:
+  read: integer
+  readWrite: integer
+  write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `host` _string_ | Host is the backend host handling pool QosSpec enforcement. |  |  |
+| `iops` _integer_ | IOPS is the observed/configured IOPS value. |  |  |
+| `throughput` _[StoragePoolQoSThroughputStatus](#storagepoolqosthroughputstatus)_ | Throughput contains observed/configured throughput values. |  |  |
+
+
+#### StoragePoolQoSThroughputSpec
+
+
+
+StoragePoolQoSThroughputSpec defines throughput QosSpec limits in MiB/s.
+
+
+
+_Appears in:_
+- [StoragePoolQoSSpec](#storagepoolqosspec)
+
+_Example:_
+
+```yaml
+read: integer
+readWrite: integer
+write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `read` _integer_ | Read is the read throughput limit for the pool. |  |  |
+| `readWrite` _integer_ | ReadWrite is the combined read/write throughput limit for the pool. |  |  |
+| `write` _integer_ | Write is the write throughput limit for the pool. |  |  |
+
+
+#### StoragePoolQoSThroughputStatus
+
+
+
+StoragePoolQoSThroughputStatus defines observed throughput QosSpec values in MiB/s.
+
+
+
+_Appears in:_
+- [StoragePoolQoSStatus](#storagepoolqosstatus)
+
+_Example:_
+
+```yaml
+read: integer
+readWrite: integer
+write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `read` _integer_ | Read is the observed/configured read throughput value. |  |  |
+| `readWrite` _integer_ | ReadWrite is the observed/configured combined read/write throughput value. |  |  |
+| `write` _integer_ | Write is the observed/configured write throughput value. |  |  |
+
+
+#### StoragePoolSpec
+
+
+
+StoragePoolSpec defines the desired state of StoragePool
+
+
+
+_Appears in:_
+- [StoragePool](#storagepool)
+
+_Example:_
+
+```yaml
+clusterName: string
+status: string
+capacityLimit: string
+logicalVolumeMaxSize: string
+dhchap: boolean
+allowedNodes:
+  - string
+qos:
+  iops: integer
+  throughput:
+    read: integer
+    readWrite: integer
+    write: integer
+action: string
+storageClassParameters:
+  qosRwIops: string
+  qosRwMbytes: string
+  qosRMbytes: string
+  qosWMbytes: string
+  compression: string
+  encryption: boolean
+  replicate: boolean
+  lvolPriorityClass: string
+  fabric: string
+  maxNamespacePerSubsys: string
+  tune2fsReservedBlocks: string
+  filesystem: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `clusterName` _string_ | ClusterName is the target storage cluster name. |  |  |
+| `status` _string_ | Status is an optional desired-status hint for backend workflows.<br />FIXME: Unused for now |  |  |
+| `capacityLimit` _string_ | CapacityLimit is the maximum aggregate capacity that can be allocated from this pool.<br />This maps to sbctl pool add --pool-max. Use sizes like 20M, 20G, or 0 for unlimited. |  |  |
+| `logicalVolumeMaxSize` _string_ | LogicalVolumeMaxSize is the maximum size allowed for any single logical volume<br />created in this pool. This maps to sbctl pool add --lvol-max. Use sizes like<br />20M, 20G, or 0 for unlimited. |  |  |
+| `dhchap` _boolean_ | DHCHAP enables DH-HMAC-CHAP key generation for the pool. Authentication is only<br />enforced when allowedNodes is non-empty. Also controls whether the StoragePool's StorageClass<br />gets an allowedTopologies restriction, which — like StorageClass Parameters — is<br />immutable in the Kubernetes API, hence this field is immutable too. | false |  |
+| `allowedNodes` _string array_ | AllowedNodes is the list of Kubernetes worker node names allowed to access volumes<br />in this pool. The operator resolves each node name to a deterministic NQN derived<br />from the node's UID: nqn.2014-08.io.simplyblock:uuid:<node-uid>.<br />The CSI node uses the same formula so no manual NQN management is required. |  |  |
+| `qos` _[StoragePoolQoSSpec](#storagepoolqosspec)_ | QosSpec defines QosSpec limits for the pool. |  |  |
+| `action` _string_ | Action triggers an imperative pool operation.<br />FIXME: Unused for now |  |  |
+| `storageClassParameters` _[StorageClassParameters](#storageclassparameters)_ | StorageClassParameters sets default StorageClass parameter values for volumes in this pool.<br />Immutable: the underlying StorageClass's Parameters/AllowedTopologies cannot be patched in<br />the Kubernetes API once created, so there is no supported way to change these after the<br />fact. Create a new StoragePool to provision volumes with different settings. | \{  \} |  |
+
+
+#### StoragePoolStatus
+
+
+
+StoragePoolStatus defines the observed state of StoragePool.
+
+
+
+_Appears in:_
+- [StoragePool](#storagepool)
+
+_Example:_
+
+```yaml
+uuid: string
+status: string
+qos:
+  host: string
+  iops: integer
+  throughput:
+    read: integer
+    readWrite: integer
+    write: integer
+allowedNodes:
+  - string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `uuid` _string_ | UUID is the backend pool UUID. |  |  |
+| `status` _string_ | Status is the backend lifecycle status. |  |  |
+| `qos` _[StoragePoolQoSStatus](#storagepoolqosstatus)_ | QoS contains observed/configured QoS values. |  |  |
+| `allowedNodes` _string array_ | AllowedNodes lists the Kubernetes node names currently registered on the backend. |  |  |
+
+
 
 
 
