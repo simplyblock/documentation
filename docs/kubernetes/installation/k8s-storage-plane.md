@@ -207,7 +207,7 @@ Once the pool is active, the operator automatically creates a StorageClass named
 `simplyblock-simplyblock-cluster-production-pool`.
 
 The StorageClass is automatically removed when the storage pool is deleted. For full details and customization options
-are available at [Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#pool).
+are available at [Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#storagepool).
 
 ```bash title="Check the StorageClass"
 kubectl get storageclass simplyblock-simplyblock-production-my-pool

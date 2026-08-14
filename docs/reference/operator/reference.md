@@ -1,6 +1,6 @@
 ---
 title: "Simplyblock Operator Reference"
-description: "Reference for Simplyblock operator Custom Resource Definitions (CRDs)."
+description: "Reference for Simplyblock Operator Custom Resource Definitions (CRDs)."
 weight: 20091
 ---
 
@@ -24,56 +24,17 @@ Package v1alpha1 contains API Schema definitions for the simplyblock v1alpha1 AP
 - [BackupPolicy](#backuppolicy)
 - [BackupRestore](#backuprestore)
 - [ControlPlane](#controlplane)
-- [Pool](#pool)
 - [SnapshotReplication](#snapshotreplication)
 - [StorageBackup](#storagebackup)
 - [StorageCluster](#storagecluster)
+- [StorageClusterOps](#storageclusterops)
 - [StorageNode](#storagenode)
 - [StorageNodeOps](#storagenodeops)
 - [StorageNodeSet](#storagenodeset)
+- [StoragePool](#storagepool)
 - [Task](#task)
 - [VolumeMigration](#volumemigration)
 
-
-
-#### ActionStatus
-
-
-
-
-
-
-
-_Appears in:_
-- [StorageClusterStatus](#storageclusterstatus)
-
-_Example:_
-
-```yaml
-action: string
-nodeUUID: string
-state: string
-message: string
-updatedAt: Time
-observedGeneration: integer
-triggered: boolean
-subPhase: string
-volumesMigrated: integer
-volumesPending: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `action` _string_ | Action is the requested action name. |  |  |
-| `nodeUUID` _string_ | NodeUUID is the target node UUID for the action. |  |  |
-| `state` _string_ |  |  |  |
-| `message` _string_ | Message is a human-readable action result or error. |  |  |
-| `updatedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | UpdatedAt is the timestamp of the last status transition. |  |  |
-| `observedGeneration` _integer_ | ObservedGeneration is the resource generation observed by this status. |  |  |
-| `triggered` _boolean_ | Triggered indicates whether the underlying backend action has been fired. |  |  |
-| `subPhase` _string_ | SubPhase tracks the active drain step within the remove action. |  | Enum: [Validating Suspending Migrating Verifying Removing] <br />Optional: \{\} <br /> |
-| `volumesMigrated` _integer_ | VolumesMigrated is the count of volumes successfully migrated so far. |  | Optional: \{\} <br /> |
-| `volumesPending` _integer_ | VolumesPending is the count of volumes still awaiting migration. |  | Optional: \{\} <br /> |
 
 
 #### AttachedLvol
@@ -887,16 +848,16 @@ lastUpdated: Time
 | `lastUpdated` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ |  |  |  |
 
 
-#### NodeRecycleSpec
+#### NodeRollingRestartSpec
 
 
 
-NodeRecycleSpec configures the node-recycle action behaviour.
+NodeRollingRestartSpec configures the node-rolling-restart action behaviour.
 
 
 
 _Appears in:_
-- [StorageClusterSpec](#storageclusterspec)
+- [StorageClusterOpsSpec](#storageclusteropsspec)
 
 _Example:_
 
@@ -906,20 +867,21 @@ refreshSNodeAPI: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `refreshSNodeAPI` _boolean_ | RefreshSNodeAPI restarts the storage-node DaemonSet pod on each node<br />after the backend node is shut down and before it is restarted, ensuring<br />the latest image is running before the node comes back online. |  |  |
+| `refreshSNodeAPI` _boolean_ | RefreshSNodeAPI restarts the storage-node DaemonSet pod on each node<br />after the backend node is shut down and before it is restarted, ensuring<br />the latest image is running before the node comes back online. |  | Optional: \{\} <br /> |
 
 
-#### NodeRecycleStatus
+#### NodeRollingRestartStatus
 
 
 
-NodeRecycleStatus tracks in-progress state for the node-recycle action.
-All fields are persisted in CR status so the reconciler can resume after a requeue.
+NodeRollingRestartStatus tracks in-progress state for the node-rolling-restart action.
+All fields are persisted in the StorageClusterOps status so the reconciler
+can resume after a requeue or operator restart.
 
 
 
 _Appears in:_
-- [StorageClusterStatus](#storageclusterstatus)
+- [StorageClusterOpsStatus](#storageclusteropsstatus)
 
 _Example:_
 
@@ -934,9 +896,9 @@ phaseTriggered: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `pendingNodes` _string array_ | PendingNodes is the ordered list of node UUIDs still to be recycled. |  |  |
-| `processedNodes` _string array_ | ProcessedNodes is the list of node UUIDs already recycled. |  |  |
-| `nodePhase` _string_ | NodePhase is the current step for the node being recycled:<br />"snode-refresh" \| "snode-refresh-wait" \| "shutting-down" \| "restarting" \| "rebalancing" |  |  |
+| `pendingNodes` _string array_ | PendingNodes is the ordered list of node UUIDs still to be restarted. |  |  |
+| `processedNodes` _string array_ | ProcessedNodes is the list of node UUIDs already restarted. |  |  |
+| `nodePhase` _string_ | NodePhase is the current step for the node being restarted:<br />"snode-refresh" \| "snode-refresh-wait" \| "shutting-down" \| "restarting" \| "rebalancing" |  |  |
 | `phaseTriggered` _boolean_ | PhaseTriggered indicates the API call for the current NodePhase was already sent. |  |  |
 
 
@@ -968,6 +930,7 @@ uptime: string
 hostname: string
 mgmtIp: string
 postedAt: Time
+failureDomain: integer
 ```
 
 | Field | Description | Default | Validation |
@@ -986,6 +949,7 @@ postedAt: Time
 | `hostname` _string_ | Hostname is the Kubernetes node hostname. |  |  |
 | `mgmtIp` _string_ | MgmtIp is the management IP address for the node. |  |  |
 | `postedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | PostedAt is when the storage-node add request was sent. Used to detect<br />timeout without blocking the reconcile goroutine. |  |  |
+| `failureDomain` _integer_ | FailureDomain is the effective failure-domain group index for this node,<br />reflected from spec.nodeConfigs[hostname].failureDomain or spec.nodeFailureDomains[hostname].<br />Zero means unset. |  | Optional: \{\} <br /> |
 
 
 #### PVCTemplate
@@ -1063,275 +1027,6 @@ namespace: string
 | --- | --- | --- | --- |
 | `name` _string_ | Name is the PVC name. |  |  |
 | `namespace` _string_ | Namespace overrides the backup resource namespace for the PVC lookup. |  |  |
-
-
-#### Pool
-
-
-
-Pool is the Schema for the pools API
-
-
-
-
-
-_Example:_
-
-```yaml
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: Pool
-metadata:
-  name: string
-spec:
-  clusterName: string
-  status: string
-  capacityLimit: string
-  logicalVolumeMaxSize: string
-  dhchap: boolean
-  allowedNodes:
-    - string
-  qos:
-    iops: integer
-    throughput:
-      read: integer
-      readWrite: integer
-      write: integer
-  action: string
-  storageClassParameters:
-    qosRwIops: string
-    qosRwMbytes: string
-    qosRMbytes: string
-    qosWMbytes: string
-    compression: string
-    encryption: boolean
-    replicate: boolean
-    numDataChunks: string
-    numParityChunks: string
-    lvolPriorityClass: string
-    fabric: string
-    maxNamespacePerSubsys: string
-    tune2fsReservedBlocks: string
-status:
-  uuid: string
-  status: string
-  qos:
-    host: string
-    iops: integer
-    throughput:
-      read: integer
-      readWrite: integer
-      write: integer
-  allowedNodes:
-    - string
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
-| `kind` _string_ | `Pool` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
-| `spec` _[PoolSpec](#poolspec)_ | spec defines the desired state of Pool |  | Required: \{\} <br /> |
-| `status` _[PoolStatus](#poolstatus)_ | status defines the observed state of Pool |  | Optional: \{\} <br /> |
-
-
-#### PoolQoSSpec
-
-
-
-PoolQoSSpec defines pool QosSpec limits.
-
-
-
-_Appears in:_
-- [PoolSpec](#poolspec)
-
-_Example:_
-
-```yaml
-iops: integer
-throughput:
-  read: integer
-  readWrite: integer
-  write: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `iops` _integer_ | IOPS is the IOPS limit for the pool. |  |  |
-| `throughput` _[PoolQoSThroughputSpec](#poolqosthroughputspec)_ | Throughput contains throughput limits for the pool. |  |  |
-
-
-#### PoolQoSStatus
-
-
-
-PoolQoSStatus defines observed pool QosSpec values.
-
-
-
-_Appears in:_
-- [PoolStatus](#poolstatus)
-
-_Example:_
-
-```yaml
-host: string
-iops: integer
-throughput:
-  read: integer
-  readWrite: integer
-  write: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `host` _string_ | Host is the backend host handling pool QosSpec enforcement. |  |  |
-| `iops` _integer_ | IOPS is the observed/configured IOPS value. |  |  |
-| `throughput` _[PoolQoSThroughputStatus](#poolqosthroughputstatus)_ | Throughput contains observed/configured throughput values. |  |  |
-
-
-#### PoolQoSThroughputSpec
-
-
-
-PoolQoSThroughputSpec defines throughput QosSpec limits in MiB/s.
-
-
-
-_Appears in:_
-- [PoolQoSSpec](#poolqosspec)
-
-_Example:_
-
-```yaml
-read: integer
-readWrite: integer
-write: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `read` _integer_ | Read is the read throughput limit for the pool. |  |  |
-| `readWrite` _integer_ | ReadWrite is the combined read/write throughput limit for the pool. |  |  |
-| `write` _integer_ | Write is the write throughput limit for the pool. |  |  |
-
-
-#### PoolQoSThroughputStatus
-
-
-
-PoolQoSThroughputStatus defines observed throughput QosSpec values in MiB/s.
-
-
-
-_Appears in:_
-- [PoolQoSStatus](#poolqosstatus)
-
-_Example:_
-
-```yaml
-read: integer
-readWrite: integer
-write: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `read` _integer_ | Read is the observed/configured read throughput value. |  |  |
-| `readWrite` _integer_ | ReadWrite is the observed/configured combined read/write throughput value. |  |  |
-| `write` _integer_ | Write is the observed/configured write throughput value. |  |  |
-
-
-#### PoolSpec
-
-
-
-PoolSpec defines the desired state of Pool
-
-
-
-_Appears in:_
-- [Pool](#pool)
-
-_Example:_
-
-```yaml
-clusterName: string
-status: string
-capacityLimit: string
-logicalVolumeMaxSize: string
-dhchap: boolean
-allowedNodes:
-  - string
-qos:
-  iops: integer
-  throughput:
-    read: integer
-    readWrite: integer
-    write: integer
-action: string
-storageClassParameters:
-  qosRwIops: string
-  qosRwMbytes: string
-  qosRMbytes: string
-  qosWMbytes: string
-  compression: string
-  encryption: boolean
-  replicate: boolean
-  numDataChunks: string
-  numParityChunks: string
-  lvolPriorityClass: string
-  fabric: string
-  maxNamespacePerSubsys: string
-  tune2fsReservedBlocks: string
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `clusterName` _string_ | ClusterName is the target storage cluster name. |  |  |
-| `status` _string_ | Status is an optional desired-status hint for backend workflows.<br />FIXME: Unused for now |  |  |
-| `capacityLimit` _string_ | CapacityLimit is the maximum aggregate capacity that can be allocated from this pool.<br />This maps to sbctl pool add --pool-max. Use sizes like 20M, 20G, or 0 for unlimited. |  |  |
-| `logicalVolumeMaxSize` _string_ | LogicalVolumeMaxSize is the maximum size allowed for any single logical volume<br />created in this pool. This maps to sbctl pool add --lvol-max. Use sizes like<br />20M, 20G, or 0 for unlimited. |  |  |
-| `dhchap` _boolean_ | DHCHAP enables DH-HMAC-CHAP key generation for the pool. Authentication is only<br />enforced when allowedNodes is non-empty | false |  |
-| `allowedNodes` _string array_ | AllowedNodes is the list of Kubernetes worker node names allowed to access volumes<br />in this pool. The operator resolves each node name to a deterministic NQN derived<br />from the node's UID: nqn.2014-08.io.simplyblock:uuid:<node-uid>.<br />The CSI node uses the same formula so no manual NQN management is required. |  |  |
-| `qos` _[PoolQoSSpec](#poolqosspec)_ | QosSpec defines QosSpec limits for the pool. |  |  |
-| `action` _string_ | Action triggers an imperative pool operation.<br />FIXME: Unused for now |  |  |
-| `storageClassParameters` _[StorageClassParameters](#storageclassparameters)_ | StorageClassParameters sets default StorageClass parameter values for volumes in this pool. | \{  \} |  |
-
-
-#### PoolStatus
-
-
-
-PoolStatus defines the observed state of Pool.
-
-
-
-_Appears in:_
-- [Pool](#pool)
-
-_Example:_
-
-```yaml
-uuid: string
-status: string
-qos:
-  host: string
-  iops: integer
-  throughput:
-    read: integer
-    readWrite: integer
-    write: integer
-allowedNodes:
-  - string
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `uuid` _string_ | UUID is the backend pool UUID. |  |  |
-| `status` _string_ | Status is the backend lifecycle status. |  |  |
-| `qos` _[PoolQoSStatus](#poolqosstatus)_ | QoS contains observed/configured QoS values. |  |  |
-| `allowedNodes` _string array_ | AllowedNodes lists the Kubernetes node names currently registered on the backend. |  |  |
 
 
 #### RebalancingMetrics
@@ -1696,10 +1391,15 @@ StorageClassParameters defines the default StorageClass parameter values for vol
 These are passed as-is to the CSI driver when the StorageClass is created.
 cluster_id and pool_name are always set automatically and cannot be overridden here.
 
+IMPORTANT: StorageClass Parameters are immutable in the Kubernetes API, so this whole field
+is immutable once set (see StoragePoolSpec.StorageClassParameters) — there's no supported way
+to change a pool's StorageClass defaults after the pool is created. Create a new StoragePool
+instead.
+
 
 
 _Appears in:_
-- [PoolSpec](#poolspec)
+- [StoragePoolSpec](#storagepoolspec)
 
 _Example:_
 
@@ -1711,12 +1411,11 @@ qosWMbytes: string
 compression: string
 encryption: boolean
 replicate: boolean
-numDataChunks: string
-numParityChunks: string
 lvolPriorityClass: string
 fabric: string
 maxNamespacePerSubsys: string
 tune2fsReservedBlocks: string
+filesystem: string
 ```
 
 | Field | Description | Default | Validation |
@@ -1728,12 +1427,11 @@ tune2fsReservedBlocks: string
 | `compression` _string_ | Compression enables compression for logical volumes. | False |  |
 | `encryption` _boolean_ | Encryption enables encryption for logical volumes. | false |  |
 | `replicate` _boolean_ | Replicate enables replication for logical volumes. | false |  |
-| `numDataChunks` _string_ | NumDataChunks is the number of data chunks (distr_ndcs). | 1 |  |
-| `numParityChunks` _string_ | NumParityChunks is the number of parity chunks (distr_npcs). | 1 |  |
 | `lvolPriorityClass` _string_ | LvolPriorityClass sets the logical volume priority class. | 0 |  |
 | `fabric` _string_ | Fabric is the transport fabric (e.g. tcp). | tcp |  |
 | `maxNamespacePerSubsys` _string_ | MaxNamespacePerSubsys limits namespaces per NVMf subsystem. | 1 |  |
-| `tune2fsReservedBlocks` _string_ | Tune2fsReservedBlocks sets the ext4 reserved-blocks percentage. | 0 |  |
+| `tune2fsReservedBlocks` _string_ | Tune2fsReservedBlocks sets the ext4 reserved-blocks percentage. Left unset, the node<br />plugin skips tune2fs entirely and mkfs.ext4's own default reserve applies, matching a<br />StorageClass that omits tune2fs_reserved_blocks. A default of "0" here would not be a<br />no-op: it actively runs `tune2fs -m 0` on every volume, since the node plugin only skips<br />the call when the parameter is empty (see stageVolume in the CSI driver), not when it's<br />"0". |  |  |
+| `filesystem` _string_ | Filesystem is the filesystem used to format logical volumes of this pool. | ext4 | Enum: [ext4 xfs] <br /> |
 
 
 #### StorageCluster
@@ -1759,9 +1457,6 @@ spec:
     dataChunks: integer
     parityChunks: integer
   haType: string
-  action: string
-  nodeRecycle:
-    refreshSNodeAPI: boolean
   isSingleNode: boolean
   strictNodeAntiAffinity: boolean
   qpairCount: integer
@@ -1831,24 +1526,7 @@ status:
   created: Time
   configured: boolean
   maxFaultTolerance: integer
-  actionStatus:
-    action: string
-    nodeUUID: string
-    state: string
-    message: string
-    updatedAt: Time
-    observedGeneration: integer
-    triggered: boolean
-    subPhase: string
-    volumesMigrated: integer
-    volumesPending: integer
-  nodeRecycleStatus:
-    pendingNodes:
-      - string
-    processedNodes:
-      - string
-    nodePhase: string
-    phaseTriggered: boolean
+  activeOpsRef: string
   rebalancingMetrics:
     avgDeviationPct: float
     maxDeviationPct: float
@@ -1873,6 +1551,140 @@ status:
 | `status` _[StorageClusterStatus](#storageclusterstatus)_ | status defines the observed state of StorageCluster |  | Optional: \{\} <br /> |
 
 
+#### StorageClusterOps
+
+
+
+StorageClusterOps is a one-shot operational CR targeting a single SimplyblocksStorageCluster.
+Analogous to a Kubernetes Job — it drives a cluster-level operation (activate, expand,
+shutdown, restart, node-rolling-restart) to completion and records the result. Only one
+StorageClusterOps can be active per cluster at a time.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StorageClusterOps
+metadata:
+  name: string
+spec:
+  clusterRef: string
+  action: string
+  nodeRollingRestart:
+    refreshSNodeAPI: boolean
+status:
+  phase: StorageClusterOpsPhase
+  triggered: boolean
+  message: string
+  startedAt: Time
+  completedAt: Time
+  nodeRollingRestartStatus:
+    pendingNodes:
+      - string
+    processedNodes:
+      - string
+    nodePhase: string
+    phaseTriggered: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `StorageClusterOps` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[StorageClusterOpsSpec](#storageclusteropsspec)_ |  |  |  |
+| `status` _[StorageClusterOpsStatus](#storageclusteropsstatus)_ |  |  |  |
+
+
+#### StorageClusterOpsPhase
+
+_Underlying type:_ _string_
+
+StorageClusterOpsPhase is the lifecycle phase of a StorageClusterOps.
+
+_Validation:_
+- Enum: [Pending Running Succeeded Failed]
+
+_Appears in:_
+- [StorageClusterOpsStatus](#storageclusteropsstatus)
+
+| Field | Description |
+| --- | --- |
+| `Pending` |  |
+| `Running` |  |
+| `Succeeded` |  |
+| `Failed` |  |
+
+
+#### StorageClusterOpsSpec
+
+
+
+StorageClusterOpsSpec defines the desired state of a StorageClusterOps.
+
+
+
+_Appears in:_
+- [StorageClusterOps](#storageclusterops)
+
+_Example:_
+
+```yaml
+clusterRef: string
+action: string
+nodeRollingRestart:
+  refreshSNodeAPI: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `clusterRef` _string_ | ClusterRef is the name of the target SimplyblocksStorageCluster. Immutable. |  | Required: \{\} <br /> |
+| `action` _string_ | Action is the operation to perform. Immutable. |  | Enum: [activate expand shutdown start restart node-rolling-restart] <br />Required: \{\} <br /> |
+| `nodeRollingRestart` _[NodeRollingRestartSpec](#noderollingrestartspec)_ | NodeRollingRestart configures behaviour specific to the node-rolling-restart action.<br />Ignored for all other actions. |  | Optional: \{\} <br /> |
+
+
+#### StorageClusterOpsStatus
+
+
+
+StorageClusterOpsStatus holds the observed state of a StorageClusterOps.
+
+
+
+_Appears in:_
+- [StorageClusterOps](#storageclusterops)
+
+_Example:_
+
+```yaml
+phase: StorageClusterOpsPhase
+triggered: boolean
+message: string
+startedAt: Time
+completedAt: Time
+nodeRollingRestartStatus:
+  pendingNodes:
+    - string
+  processedNodes:
+    - string
+  nodePhase: string
+  phaseTriggered: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phase` _[StorageClusterOpsPhase](#storageclusteropsphase)_ | Phase is the high-level lifecycle phase. |  | Enum: [Pending Running Succeeded Failed] <br />Optional: \{\} <br /> |
+| `triggered` _boolean_ | Triggered indicates the backend POST has been sent for this operation.<br />Guards against duplicate backend calls on retry. |  | Optional: \{\} <br /> |
+| `message` _string_ | Message is a human-readable description of the current state or failure reason. |  | Optional: \{\} <br /> |
+| `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the operation began. |  | Optional: \{\} <br /> |
+| `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the operation finished (successfully or not). |  | Optional: \{\} <br /> |
+| `nodeRollingRestartStatus` _[NodeRollingRestartStatus](#noderollingrestartstatus)_ | NodeRollingRestartStatus tracks per-node progress for the node-rolling-restart action.<br />Nil for all other actions. |  | Optional: \{\} <br /> |
+
+
 #### StorageClusterSpec
 
 
@@ -1892,9 +1704,6 @@ stripe:
   dataChunks: integer
   parityChunks: integer
 haType: string
-action: string
-nodeRecycle:
-  refreshSNodeAPI: boolean
 isSingleNode: boolean
 strictNodeAntiAffinity: boolean
 qpairCount: integer
@@ -1954,8 +1763,6 @@ enableFailureDomains: boolean
 | `enableNodeAffinity` _boolean_ | EnableNodeAffinity enables node-affinity placement for storage components. |  |  |
 | `stripe` _[StripeSpec](#stripespec)_ | StripeSpec configures erasure-coding data/parity chunk counts. |  |  |
 | `haType` _string_ | HAType defines the backend high-availability mode. |  |  |
-| `action` _string_ | Action triggers a cluster-level action. |  | Enum: [activate expand shutdown start restart node-recycle] <br /> |
-| `nodeRecycle` _[NodeRecycleSpec](#noderecyclespec)_ | NodeRecycle configures the node-recycle action. |  |  |
 | `isSingleNode` _boolean_ | IsSingleNode enables single-node cluster mode. |  |  |
 | `strictNodeAntiAffinity` _boolean_ | StrictNodeAntiAffinity enforces strict anti-affinity between storage nodes. |  |  |
 | `qpairCount` _integer_ | QpairCount defines the NVMe queue-pair count used by the cluster. |  |  |
@@ -2009,24 +1816,7 @@ lastUpdated: Time
 created: Time
 configured: boolean
 maxFaultTolerance: integer
-actionStatus:
-  action: string
-  nodeUUID: string
-  state: string
-  message: string
-  updatedAt: Time
-  observedGeneration: integer
-  triggered: boolean
-  subPhase: string
-  volumesMigrated: integer
-  volumesPending: integer
-nodeRecycleStatus:
-  pendingNodes:
-    - string
-  processedNodes:
-    - string
-  nodePhase: string
-  phaseTriggered: boolean
+activeOpsRef: string
 rebalancingMetrics:
   avgDeviationPct: float
   maxDeviationPct: float
@@ -2060,8 +1850,7 @@ rebalancingMetrics:
 | `created` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | Created is the backend creation timestamp.<br />FIXME: Unused for now (API update required?) |  |  |
 | `configured` _boolean_ | Configured indicates whether initial cluster setup completed. |  |  |
 | `maxFaultTolerance` _integer_ | MaxFaultTolerance is the backend-reported maximum number of nodes that can<br />be simultaneously offline (failed, drained, or restarted) without violating<br />the cluster's redundancy guarantees. |  |  |
-| `actionStatus` _[ActionStatus](#actionstatus)_ | ActionStatus tracks the most recent action execution state. |  |  |
-| `nodeRecycleStatus` _[NodeRecycleStatus](#noderecyclestatus)_ | NodeRecycleStatus tracks in-progress state for the node-recycle action. |  |  |
+| `activeOpsRef` _string_ | ActiveOpsRef is the name of the currently active ClusterOps on this cluster.<br />Empty when no operation is in progress. |  | Optional: \{\} <br /> |
 | `rebalancingMetrics` _[RebalancingMetrics](#rebalancingmetrics)_ | RebalancingMetrics is updated by the auto-rebalancer each evaluation cycle. |  | Optional: \{\} <br /> |
 
 
@@ -2091,7 +1880,7 @@ spec:
   nodeIndex: integer
   socketIndex: integer
   overrides:
-    maxLogicalVolumeCount: integer
+    maxSubsystemCount: integer
     maxSize: string
     spdkImage: string
     spdkProxyImage: string
@@ -2137,6 +1926,7 @@ status:
     baselineP50NS: integer
     baselineP99NS: integer
     baselineMeasuredAt: Time
+  failureDomain: integer
 ```
 
 | Field | Description | Default | Validation |
@@ -2339,7 +2129,7 @@ _Appears in:_
 _Example:_
 
 ```yaml
-maxLogicalVolumeCount: integer
+maxSubsystemCount: integer
 maxSize: string
 spdkImage: string
 spdkProxyImage: string
@@ -2366,7 +2156,7 @@ expand: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `maxLogicalVolumeCount` _integer_ | MaxLogicalVolumeCount overrides the maximum number of logical volumes for this node. |  | Optional: \{\} <br /> |
+| `maxSubsystemCount` _integer_ | MaxSubsystemCount overrides the maximum number of NVMe-oF subsystems for this node. |  | Optional: \{\} <br /> |
 | `maxSize` _string_ | MaxSize overrides the maximum allocatable size of huge pages for this node. |  | Optional: \{\} <br /> |
 | `spdkImage` _string_ | SpdkImage overrides the SPDK image for this node (e.g. for phased rollouts). |  | Optional: \{\} <br /> |
 | `spdkProxyImage` _string_ | SpdkProxyImage overrides the SPDK proxy image for this node. |  | Optional: \{\} <br /> |
@@ -2382,7 +2172,7 @@ expand: boolean
 | `reservedSystemCPU` _string_ | ReservedSystemCPU overrides the CPUs reserved for system workloads on this node. |  | Optional: \{\} <br /> |
 | `ubuntuHost` _boolean_ | UbuntuHost overrides the Ubuntu host OS flag for this node. |  | Optional: \{\} <br /> |
 | `skipKubeletConfiguration` _boolean_ | SkipKubeletConfiguration overrides whether kubelet configuration changes are<br />skipped for this node. |  | Optional: \{\} <br /> |
-| `failureDomain` _integer_ | FailureDomain is the failure-domain group index (≥ 1) for this node.<br />Required when the parent StorageCluster has enableFailureDomains=true.<br />Overrides StorageNodeSet.spec.nodeFailureDomains[workerNode] when both are set. |  | Minimum: 1 <br />Optional: \{\} <br /> |
+| `failureDomain` _integer_ | FailureDomain is the failure-domain group index (≥ 0) for this node.<br />Required when the parent StorageCluster has enableFailureDomains=true.<br />Overrides StorageNodeSet.spec.nodeFailureDomains[workerNode] when both are set. |  | Minimum: 0 <br />Optional: \{\} <br /> |
 | `expand` _boolean_ | Expand marks this node as a cluster-expansion add. When true the backend<br />node-add endpoint receives expand=true, triggering rebalancing behaviour<br />appropriate for in-place cluster growth. Overrides StorageNodeSet.spec.expand. |  | Optional: \{\} <br /> |
 
 
@@ -2462,7 +2252,7 @@ metadata:
 spec:
   clusterName: string
   clusterImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
-  maxLogicalVolumeCount: integer
+  maxSubsystemCount: integer
   maxSize: string
   spdkImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
   spdkProxyImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
@@ -2506,7 +2296,7 @@ spec:
   expand: boolean
   nodeConfigs:
     string:
-      maxLogicalVolumeCount: integer
+      maxSubsystemCount: integer
       maxSize: string
       spdkImage: string
       spdkProxyImage: string
@@ -2551,6 +2341,7 @@ status:
       hostname: string
       mgmtIp: string
       postedAt: Time
+      failureDomain: integer
   drainCoordination:
     - hostname: string
       phase: string
@@ -2593,7 +2384,7 @@ _Example:_
 ```yaml
 clusterName: string
 clusterImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
-maxLogicalVolumeCount: integer
+maxSubsystemCount: integer
 maxSize: string
 spdkImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 spdkProxyImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
@@ -2637,7 +2428,7 @@ nodeFailureDomains:
 expand: boolean
 nodeConfigs:
   string:
-    maxLogicalVolumeCount: integer
+    maxSubsystemCount: integer
     maxSize: string
     spdkImage: string
     spdkProxyImage: string
@@ -2666,7 +2457,7 @@ nodeConfigs:
 | --- | --- | --- | --- |
 | `clusterName` _string_ | ClusterName is the target storage cluster name. |  |  |
 | `clusterImage` _string_ | ClusterImage is the container image used for storage-node workloads.<br />Must reference one of the trusted registries (quay.io/simplyblock-io, docker.io/simplyblock, public.ecr.aws/simply-block); digest pinning (@sha256:...) is recommended. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br /> |
-| `maxLogicalVolumeCount` _integer_ | MaxLogicalVolumeCount is the maximum number of logical volumes per node. |  |  |
+| `maxSubsystemCount` _integer_ | MaxSubsystemCount is the maximum number of NVMe-oF subsystems per node. |  |  |
 | `maxSize` _string_ | MaxSize is the maximum allocatable size of huge pages. |  |  |
 | `spdkImage` _string_ | SpdkImage is the SPDK image reference used by node services.<br />Must reference one of the trusted registries (quay.io/simplyblock-io, docker.io/simplyblock, public.ecr.aws/simply-block); digest pinning (@sha256:...) is recommended. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br /> |
 | `spdkProxyImage` _string_ | SpdkProxyImage is the SPDK proxy image reference used by node services.<br />Must reference one of the trusted registries (quay.io/simplyblock-io, docker.io/simplyblock, public.ecr.aws/simply-block); digest pinning (@sha256:...) is recommended. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br /> |
@@ -2696,7 +2487,7 @@ nodeConfigs:
 | `containerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#resourcerequirements-v1-core)_ | ContainerResources sets CPU and memory requests/limits for the main storage-node container.<br />When omitted no limits are enforced, which preserves the previous behaviour. |  |  |
 | `initContainerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#resourcerequirements-v1-core)_ | InitContainerResources sets CPU and memory requests/limits for the init container.<br />When omitted no limits are enforced. |  |  |
 | `imagePullPolicy` _[PullPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#pullpolicy-v1-core)_ | ImagePullPolicy controls when the container image is pulled. Defaults to IfNotPresent. |  | Enum: [Always Never IfNotPresent] <br /> |
-| `nodeFailureDomains` _object (keys:string, values:integer)_ | NodeFailureDomains assigns each worker node to a failure-domain group (integer ≥ 1).<br />Required when the referenced StorageCluster has enableFailureDomains=true.<br />Keys are Kubernetes worker node names; values are the failure-domain group index.<br />Each node in the same physical failure domain (rack, AZ, power unit) should share<br />the same group index so the control plane can spread erasure-coding chunks across<br />independent fault groups. |  | Optional: \{\} <br /> |
+| `nodeFailureDomains` _object (keys:string, values:integer)_ | NodeFailureDomains assigns each worker node to a failure-domain group (integer ≥ 0).<br />Required when the referenced StorageCluster has enableFailureDomains=true.<br />Keys are Kubernetes worker node names; values are the failure-domain group index.<br />Each node in the same physical failure domain (rack, AZ, power unit) should share<br />the same group index so the control plane can spread erasure-coding chunks across<br />independent fault groups. |  | Optional: \{\} <br /> |
 | `expand` _boolean_ | Expand indicates that storage nodes added from this StorageNodeSet are being<br />added to expand an already-active cluster. When true the backend node-add<br />endpoint receives expand=true, which triggers the appropriate rebalancing<br />behaviour for in-place cluster growth. |  | Optional: \{\} <br /> |
 | `nodeConfigs` _object (keys:string, values:[StorageNodeOverrides](#storagenodeoverrides))_ | NodeConfigs allows per-worker-node configuration overrides keyed by the<br />Kubernetes worker node name. Entries are propagated to the corresponding<br />StorageNode.spec.overrides by the StorageNodeReconciler on every reconcile.<br />The StorageNodeSet is the single source of truth for all per-node config,<br />including failure domain assignment via nodeConfigs[worker].failureDomain. |  | MaxProperties: 200 <br />Optional: \{\} <br /> |
 
@@ -2736,6 +2527,7 @@ nodes:
     hostname: string
     mgmtIp: string
     postedAt: Time
+    failureDomain: integer
 drainCoordination:
   - hostname: string
     phase: string
@@ -2788,7 +2580,7 @@ socketId: string
 nodeIndex: integer
 socketIndex: integer
 overrides:
-  maxLogicalVolumeCount: integer
+  maxSubsystemCount: integer
   maxSize: string
   spdkImage: string
   spdkProxyImage: string
@@ -2859,6 +2651,7 @@ latencyMetrics:
   baselineP50NS: integer
   baselineP99NS: integer
   baselineMeasuredAt: Time
+failureDomain: integer
 ```
 
 | Field | Description | Default | Validation |
@@ -2873,6 +2666,274 @@ latencyMetrics:
 | `postedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | PostedAt is the timestamp when the node-add POST was sent.<br />Used as a provisioning guard against duplicate POSTs. |  | Optional: \{\} <br /> |
 | `activeOpsRef` _string_ | ActiveOpsRef is the name of the currently active StorageNodeOps CR targeting<br />this node. Empty when no operation is in progress. Used for mutual exclusion. |  | Optional: \{\} <br /> |
 | `latencyMetrics` _[NodeLatencyMetrics](#nodelatencymetrics)_ | LatencyMetrics holds the fio-measured baseline NVMe-oF latency for this node,<br />used by the volume rebalancer to make data-placement decisions. |  | Optional: \{\} <br /> |
+| `failureDomain` _integer_ | FailureDomain is the effective failure-domain group index for this node<br />as reported by the backend (≥ 0). Nil when the backend has not assigned one. |  | Optional: \{\} <br /> |
+
+
+#### StoragePool
+
+
+
+StoragePool is the Schema for the storagepools API
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StoragePool
+metadata:
+  name: string
+spec:
+  clusterName: string
+  status: string
+  capacityLimit: string
+  logicalVolumeMaxSize: string
+  dhchap: boolean
+  allowedNodes:
+    - string
+  qos:
+    iops: integer
+    throughput:
+      read: integer
+      readWrite: integer
+      write: integer
+  action: string
+  storageClassParameters:
+    qosRwIops: string
+    qosRwMbytes: string
+    qosRMbytes: string
+    qosWMbytes: string
+    compression: string
+    encryption: boolean
+    replicate: boolean
+    lvolPriorityClass: string
+    fabric: string
+    maxNamespacePerSubsys: string
+    tune2fsReservedBlocks: string
+    filesystem: string
+status:
+  uuid: string
+  status: string
+  qos:
+    host: string
+    iops: integer
+    throughput:
+      read: integer
+      readWrite: integer
+      write: integer
+  allowedNodes:
+    - string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `StoragePool` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
+| `spec` _[StoragePoolSpec](#storagepoolspec)_ | spec defines the desired state of StoragePool |  | Required: \{\} <br /> |
+| `status` _[StoragePoolStatus](#storagepoolstatus)_ | status defines the observed state of StoragePool |  | Optional: \{\} <br /> |
+
+
+#### StoragePoolQoSSpec
+
+
+
+StoragePoolQoSSpec defines pool QosSpec limits.
+
+
+
+_Appears in:_
+- [StoragePoolSpec](#storagepoolspec)
+
+_Example:_
+
+```yaml
+iops: integer
+throughput:
+  read: integer
+  readWrite: integer
+  write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `iops` _integer_ | IOPS is the IOPS limit for the pool. |  |  |
+| `throughput` _[StoragePoolQoSThroughputSpec](#storagepoolqosthroughputspec)_ | Throughput contains throughput limits for the pool. |  |  |
+
+
+#### StoragePoolQoSStatus
+
+
+
+StoragePoolQoSStatus defines observed pool QosSpec values.
+
+
+
+_Appears in:_
+- [StoragePoolStatus](#storagepoolstatus)
+
+_Example:_
+
+```yaml
+host: string
+iops: integer
+throughput:
+  read: integer
+  readWrite: integer
+  write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `host` _string_ | Host is the backend host handling pool QosSpec enforcement. |  |  |
+| `iops` _integer_ | IOPS is the observed/configured IOPS value. |  |  |
+| `throughput` _[StoragePoolQoSThroughputStatus](#storagepoolqosthroughputstatus)_ | Throughput contains observed/configured throughput values. |  |  |
+
+
+#### StoragePoolQoSThroughputSpec
+
+
+
+StoragePoolQoSThroughputSpec defines throughput QosSpec limits in MiB/s.
+
+
+
+_Appears in:_
+- [StoragePoolQoSSpec](#storagepoolqosspec)
+
+_Example:_
+
+```yaml
+read: integer
+readWrite: integer
+write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `read` _integer_ | Read is the read throughput limit for the pool. |  |  |
+| `readWrite` _integer_ | ReadWrite is the combined read/write throughput limit for the pool. |  |  |
+| `write` _integer_ | Write is the write throughput limit for the pool. |  |  |
+
+
+#### StoragePoolQoSThroughputStatus
+
+
+
+StoragePoolQoSThroughputStatus defines observed throughput QosSpec values in MiB/s.
+
+
+
+_Appears in:_
+- [StoragePoolQoSStatus](#storagepoolqosstatus)
+
+_Example:_
+
+```yaml
+read: integer
+readWrite: integer
+write: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `read` _integer_ | Read is the observed/configured read throughput value. |  |  |
+| `readWrite` _integer_ | ReadWrite is the observed/configured combined read/write throughput value. |  |  |
+| `write` _integer_ | Write is the observed/configured write throughput value. |  |  |
+
+
+#### StoragePoolSpec
+
+
+
+StoragePoolSpec defines the desired state of StoragePool
+
+
+
+_Appears in:_
+- [StoragePool](#storagepool)
+
+_Example:_
+
+```yaml
+clusterName: string
+status: string
+capacityLimit: string
+logicalVolumeMaxSize: string
+dhchap: boolean
+allowedNodes:
+  - string
+qos:
+  iops: integer
+  throughput:
+    read: integer
+    readWrite: integer
+    write: integer
+action: string
+storageClassParameters:
+  qosRwIops: string
+  qosRwMbytes: string
+  qosRMbytes: string
+  qosWMbytes: string
+  compression: string
+  encryption: boolean
+  replicate: boolean
+  lvolPriorityClass: string
+  fabric: string
+  maxNamespacePerSubsys: string
+  tune2fsReservedBlocks: string
+  filesystem: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `clusterName` _string_ | ClusterName is the target storage cluster name. |  |  |
+| `status` _string_ | Status is an optional desired-status hint for backend workflows.<br />FIXME: Unused for now |  |  |
+| `capacityLimit` _string_ | CapacityLimit is the maximum aggregate capacity that can be allocated from this pool.<br />This maps to sbctl pool add --pool-max. Use sizes like 20M, 20G, or 0 for unlimited. |  |  |
+| `logicalVolumeMaxSize` _string_ | LogicalVolumeMaxSize is the maximum size allowed for any single logical volume<br />created in this pool. This maps to sbctl pool add --lvol-max. Use sizes like<br />20M, 20G, or 0 for unlimited. |  |  |
+| `dhchap` _boolean_ | DHCHAP enables DH-HMAC-CHAP key generation for the pool. Authentication is only<br />enforced when allowedNodes is non-empty. Also controls whether the StoragePool's StorageClass<br />gets an allowedTopologies restriction, which — like StorageClass Parameters — is<br />immutable in the Kubernetes API, hence this field is immutable too. | false |  |
+| `allowedNodes` _string array_ | AllowedNodes is the list of Kubernetes worker node names allowed to access volumes<br />in this pool. The operator resolves each node name to a deterministic NQN derived<br />from the node's UID: nqn.2014-08.io.simplyblock:uuid:<node-uid>.<br />The CSI node uses the same formula so no manual NQN management is required. |  |  |
+| `qos` _[StoragePoolQoSSpec](#storagepoolqosspec)_ | QosSpec defines QosSpec limits for the pool. |  |  |
+| `action` _string_ | Action triggers an imperative pool operation.<br />FIXME: Unused for now |  |  |
+| `storageClassParameters` _[StorageClassParameters](#storageclassparameters)_ | StorageClassParameters sets default StorageClass parameter values for volumes in this pool.<br />Immutable: the underlying StorageClass's Parameters/AllowedTopologies cannot be patched in<br />the Kubernetes API once created, so there is no supported way to change these after the<br />fact. Create a new StoragePool to provision volumes with different settings. | \{  \} |  |
+
+
+#### StoragePoolStatus
+
+
+
+StoragePoolStatus defines the observed state of StoragePool.
+
+
+
+_Appears in:_
+- [StoragePool](#storagepool)
+
+_Example:_
+
+```yaml
+uuid: string
+status: string
+qos:
+  host: string
+  iops: integer
+  throughput:
+    read: integer
+    readWrite: integer
+    write: integer
+allowedNodes:
+  - string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `uuid` _string_ | UUID is the backend pool UUID. |  |  |
+| `status` _string_ | Status is the backend lifecycle status. |  |  |
+| `qos` _[StoragePoolQoSStatus](#storagepoolqosstatus)_ | QoS contains observed/configured QoS values. |  |  |
+| `allowedNodes` _string array_ | AllowedNodes lists the Kubernetes node names currently registered on the backend. |  |  |
 
 
 #### StripeSpec
