@@ -47,3 +47,35 @@ When connecting a volume with host access control enabled, the `--host-nqn` flag
 
 For a detailed explanation of the security mechanisms and configuration, see
 [NVMe-oF Security](../../../architecture/concepts/nvmf-security.md).
+
+## Configuring DHCHAP via the StoragePool CRD
+
+On Kubernetes deployments managed by the simplyblock operator, DHCHAP and host access control are configured
+declaratively on the `StoragePool` custom resource instead of via `{{ cliname }}` directly:
+
+```yaml title="Enable DHCHAP and restrict a pool to specific Kubernetes nodes"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: StoragePool
+metadata:
+  name: pool-a
+  namespace: simplyblock
+spec:
+  clusterName: cluster-a
+  dhchap: true
+  allowedNodes:
+    - worker-1
+    - worker-2
+```
+
+The operator reconciles this into everything the CLI-based flow above does manually:
+
+- Registers each node in `allowedNodes` as an allowed host, using a deterministic NQN derived from that
+  node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`) — no manual `--host-nqn` bookkeeping.
+- Labels each allowed node and creates a StorageClass restricted to those nodes (`allowedTopologies`), so a
+  Pod using this pool's PersistentVolumeClaim can only ever be scheduled onto an allowed node.
+- The CSI node plugin on each node automatically presents that node's own NQN and DHCHAP secret when
+  connecting — no `--host-nqn` needs to be supplied anywhere in the Kubernetes flow.
+
+`dhchap` and `allowedNodes` are immutable once set, the same as `StorageClassParameters`. See the
+[Operator Reference](../../../reference/operator/reference.md) for the full `StoragePool` field list, and
+[Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
