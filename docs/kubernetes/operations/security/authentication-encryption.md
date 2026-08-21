@@ -45,15 +45,12 @@ When connecting a volume with host access control enabled, the `--host-nqn` flag
 {{ cliname }} volume connect <VOLUME_ID> --host-nqn <HOST_NQN>
 ```
 
-For a detailed explanation of the security mechanisms and configuration, see
-[NVMe-oF Security](../../../architecture/concepts/nvmf-security.md).
-
 ## Configuring DHCHAP via the StoragePool CRD
 
-On Kubernetes deployments managed by the simplyblock operator, DHCHAP and host access control are configured
-declaratively on the `StoragePool` custom resource instead of via `{{ cliname }}` directly:
+On Kubernetes deployments managed by the Simplyblock Operator, DHCHAP and host access control are configured
+declaratively on the `StoragePool` custom resource instead of through `{{ cliname }}`.
 
-```yaml title="Enable DHCHAP and restrict a pool to specific Kubernetes nodes"
+```yaml title="Example of a StoragePool with DHCHAP enabled for two worker nodes"
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StoragePool
 metadata:
@@ -67,15 +64,25 @@ spec:
     - worker-2
 ```
 
-The operator reconciles this into everything the CLI-based flow above does manually:
+The keys are generated as soon as `dhchap` is set, but authentication is only enforced once `allowedNodes` is
+non-empty. Everything the flow above does by hand is then reconciled by the operator:
 
-- Registers each node in `allowedNodes` as an allowed host, using a deterministic NQN derived from that
-  node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`) — no manual `--host-nqn` bookkeeping.
-- Labels each allowed node and creates a StorageClass restricted to those nodes (`allowedTopologies`), so a
-  Pod using this pool's PersistentVolumeClaim can only ever be scheduled onto an allowed node.
-- The CSI node plugin on each node automatically presents that node's own NQN and DHCHAP secret when
-  connecting — no `--host-nqn` needs to be supplied anywhere in the Kubernetes flow.
+- Each node in `allowedNodes` is registered as an allowed host of the pool, under a deterministic NQN derived
+  from that node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`).
+- Each allowed node is labeled `simplyblock.io/pool.<namespace>.<cluster>.<pool>: allowed`, and the generated
+  `StorageClass` is restricted to that label through `allowedTopologies`. The first `Pod` to consume a
+  `PersistentVolumeClaim` of this pool can therefore only be scheduled onto an allowed node.
+- The same label is written into the `nodeAffinity` of the `PersistentVolume` when the volume is created, which
+  restricts every later scheduling decision on the already-bound volume.
+- The node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so no
+  `--host-nqn` has to be supplied anywhere in the Kubernetes flow.
 
-`dhchap` and `allowedNodes` are immutable once set, the same as `StorageClassParameters`. See the
-[Operator Reference](../../../reference/operator/reference.md) for the full `StoragePool` field list, and
-[Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
+`dhchap` is immutable, because the `parameters` and `allowedTopologies` of the generated `StorageClass` cannot
+be patched in the Kubernetes API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes
+and updates the pool's allowed hosts, and it never rewrites the `StorageClass`.
+
+See the [Operator Reference](../../../reference/operator/reference.md) for the full `StoragePool` field list,
+and [Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
+
+For a detailed explanation of the security mechanisms and configuration, see
+[NVMe-oF Security](../../../architecture/concepts/nvmf-security.md).
