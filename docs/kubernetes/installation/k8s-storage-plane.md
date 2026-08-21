@@ -204,8 +204,16 @@ Once the pool is active, the operator automatically creates a StorageClass named
 `simplyblock-<namespace>-<clusterName>-<poolName>`. In this example, the StorageClass is called
 `simplyblock-simplyblock-cluster-production-pool`.
 
-The StorageClass is automatically removed when the storage pool is deleted. For full details and customization options
-are available at [Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#storagepool).
+`cluster_id` and `pool_name` are set from the storage pool and cannot be overridden. The remaining StorageClass
+parameters are copied from `spec.storageClassParameters`. See
+[Storage Class: StorageClass Created by a Storage Pool](../usage/storage-class.md#storageclass-created-by-a-storage-pool)
+for the full parameter mapping.
+
+A StorageClass's parameters cannot be changed after creation, so `spec.storageClassParameters` is immutable
+once the storage pool is created. A new storage pool is required to provision volumes with different defaults.
+
+The StorageClass is automatically removed when the storage pool is deleted. Full details and customization
+options are available at [Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#storagepool).
 
 ```bash title="Check the StorageClass"
 kubectl get storageclass simplyblock-simplyblock-production-my-pool
