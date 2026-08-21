@@ -1,8 +1,13 @@
 ---
 title: Hardware Requirements
-description: "Hardware Requirements: In cloud environments including GCP and AWS, instance types are pre-configured."
+description: "Minimum vCPU, RAM, NVMe device, network, and boot disk requirements for simplyblock storage nodes and control plane nodes, per deployment model."
 weight: 29989
 ---
+
+The hardware requirements of a simplyblock cluster are defined per node and per plane. A storage node
+is sized by its vCPUs, RAM, locally attached NVMe devices, and network bandwidth. A control plane node
+is sized by the number of storage nodes and objects it manages. Beyond those resources, constraints
+apply to the CPU architecture, the NVMe devices, and the storage network.
 
 ## Minimum System Requirements
 
@@ -12,13 +17,13 @@ network bandwidth, and free space on the boot disk.
 
 ### Overview
 
-| Node Type    | vCPU(s) | RAM (GB)               | Locally Attached Storage          | Network Performance | Free Boot Disk | Number of Nodes  |
-|--------------|---------|------------------------|-----------------------------------|---------------------|----------------|------------------|
-| Storage Node | 8+      | 6+ DDR4 <sup>(1)       | 2x dedicated NVMe  <sup>(2)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(3)</sup> |
+| Node Type    | vCPU(s) | RAM (GB) | Locally Attached Storage         | Network Performance | Free Boot Disk | Number of Nodes  |
+|--------------|---------|----------|----------------------------------|---------------------|----------------|------------------|
+| Storage Node | 8+      | 6+ DDR4  | 2x dedicated NVMe <sup>(1)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(2)</sup> |
 
 <span style="font-size: 0.8em;">
-<sup>2</sup> Test setups require a minimum of 1 nvme. From 26.3., we support non-nvme device clusters (any SATA or SAS linux block device), this feature is still experimental.<br>
-<sup>3</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
+<sup>1</sup> One NVMe device is sufficient for a test setup, but it is not approved for production. Since Simplyblock 26.3, a cluster can also be deployed on any SATA or SAS Linux block device. See [Linux Block Devices (lblk)](../architecture/concepts/linux-block-devices.md).<br>
+<sup>2</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
 </span>
 
 !!! info
@@ -47,14 +52,17 @@ simplyblock data plane (spdk_80xx containers) and the rest will remain under con
 
 Simplyblock auto-detects NUMA nodes. It will configure and deploy storage nodes per NUMA node.
 
-Each NUMA socket requires directly attached NVMe devices and NICs to deploy a storage node.
-detected configuration. This file is later processed when adding the storage nodes to the storage host.
-Manual changes to the configuration are possible if the proposed configuration is not applicable.
+Each NUMA socket requires directly attached NVMe devices and NICs to deploy a storage node. If more
+than 32 cores are available per socket, multiple storage nodes per storage host are recommended.
+
+During deployment, simplyblock detects the underlying configuration and prepares a configuration file
+with the recommended deployment strategy, including the recommended amount of storage nodes per
+storage host based on the detected configuration. This file is later processed when adding the storage
+nodes to the storage host. Manual changes to the configuration are possible if the proposed
+configuration is not applicable.
 
 For more information on simplyblock on NUMA, see [NUMA Considerations](numa-considerations.md).
 
-During deployment, simplyblock detects the underlying configuration and prepares a configuration file with the
-recommended deployment strategy, including the recommended amount of storage nodes per storage host based on the
 ### Hyper-Converged Sizing Guidance
 
 As hyper-converged deployments have to share vCPUs, it is recommended to dedicate 15%-20%, but not less than
@@ -64,55 +72,58 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 ### Storage Node Isolation Behavior
 
 !!! warning
-    On storage nodes, required vCPUs can be isolated from the operating system. No
-    kernel-space, user-space processes, or interrupt handler can be scheduled on these vCPUs. 
-    On dedicated storage nodes in Non-Kubernetes deployments, the core isolation is performed
-    automatically on the host, if this option is chosen at deployment time. In
-    Kubernetes, the CPU Manager and Topology Manager are used per default, but core isolation has
-    to be opted-in and requires some additional administrator interventation on k8s and the host.
-    Core isolation can significantly improve tail latency and performance consistency.
+    On storage nodes, the required vCPUs can be isolated from the operating system. No kernel-space
+    process, user-space process, or interrupt handler is then scheduled on those vCPUs. Tail latency
+    and performance consistency are improved significantly by that isolation.
+
+    On dedicated storage nodes outside Kubernetes, core isolation is performed automatically on the
+    host if that option is chosen at deployment time. In Kubernetes, the CPU Manager and the Topology
+    Manager are used by default, but the core isolation itself is opt-in and requires additional
+    configuration on both the cluster and the host.
 
 ### Storage Node Memory Sizing Formula
 
 For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on
 the assigned vCPUs and networking performance of the node. For each 10 GBit/s of dedicated network bandwidth
 it is recommended to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
-subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of max. 75 subsystems per
+subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of 75 subsystems per
 node applies. See [Limits](../reference/limits.md).
 
-| Unit                                                     | Memory Requirement |
-|----------------------------------------------------------|--------------------|
-| Fixed amount                                             | 3 GiB              |
-| Per subsystem (cluster average per node)                 | 35 MiB             |
-| Per TB of storage capacity on the host                   | 0.5 GiB / TiB      |
+| Unit                                     | Memory Requirement |
+|------------------------------------------|--------------------|
+| Fixed amount                             | 3 GiB              |
+| Per subsystem (cluster average per node) | 35 MiB             |
+| Per TiB of storage capacity on the host  | 0.5 GiB            |
 
 ## Control Plane Requirements
 
-The simplyblock control plane has different hardware requirements depending on the deployment model.
+The minimum requirements of the simplyblock control plane are 4 vCPU, 8 GiB of RAM, and about 25 GiB
+of disk space per replica, on each of three nodes. Three nodes are the minimum for a highly available
+setup. In Kubernetes, the replicas are placed on workers or on Kubernetes control plane nodes, while
+in non-Kubernetes deployments the nodes are usually virtual machines.
 
-For the control plane, the minimum requirements per replica are 4 vcpu and 8 GiB of 
-RAM as well as about 25 GiB of disk space on each of three 3 nodes. 
-In Kubernetes, nodes can be workers or kubernetes control plane (OC) nodes. In Non-Kubernetes deployments,
-nodes are usually VMs. A minimum of three nodes is required for an HA setup. 
-
-The disk space also accounts for the State Database. In addition, an S3 bucket of at least 50 GB to store
-State Database Backups is highly recommended.
+The disk space also accounts for the state database. In addition, an S3 bucket of at least 50 GB is
+highly recommended to hold the backups of that database.
 
 !!! important
-        3 replicas across 3 nodes are mandatory for the Key-Value-Store. The WebAPI runs as
-        a Daemonset on all Workers, if no taint is applied. The Observability Stack can optionally be
-        replicated and the sb-services run without replication.
+    Three replicas across three nodes are mandatory for FoundationDB, the key-value store of the
+    control plane. The Management API runs as a DaemonSet on all workers, unless a taint is applied.
+    The observability stack can optionally be replicated, and the remaining control plane services
+    run without replication.
 
-A control plane cluster of the default size as provided below can manage up to 3 nodes and 
-18,000 objects (with up to 50% of objects being volumes). For larger deployments, 
-increase the resources of the management nodes accordingly. Add 1 vcpu and 2 GB  of RAM as well as 
-5 GB of disk space and 5 GB of backup space per managed storage node above 3. 
+### Control Plane Scaling Triggers
 
-Additionally, a non-production observability stack can optionally be deployed.
-It can be distributed across OC or worker nodes with only one service (Thanos) being replicated. 
-In total it requires at least 8 vCPU and 20 GB of RAM as well as 125 GB of disk space.
-The requirements for disk space will significantly increase with a custom retention period (>3 days) 
-and the number of nodes (>3). 
+A control plane cluster of that size manages up to three storage nodes and 18,000 objects, of which
+up to half can be logical volumes. For larger deployments, the resources of the management nodes are
+increased accordingly. Per managed storage node above three, 1 vCPU, 2 GB of RAM, 5 GB of disk space,
+and 5 GB of backup space are added.
+
+### Observability Stack Sizing
+
+Additionally, a non-production observability stack can be deployed. It is distributed across
+Kubernetes control plane nodes or workers, and Thanos is the only replicated service. In total, at
+least 8 vCPU, 20 GB of RAM, and 125 GB of disk space are required. The disk space requirement grows
+significantly with a retention period above three days and with more than three nodes.
 
 ## CPU & Platform Compatibility
 
@@ -155,16 +166,17 @@ Clusters are lightweight, and it is recommended to use different clusters for di
 hardware (NVMe, networking, compute) or with a different performance profile per TiB of raw storage.
 
 !!! info
-        From 26.3, Simplyblock also supports non-nvme devices (SATA/SAS linux block devices). This
-        feature is still experimental. 
+    Since Simplyblock 26.3, storage can also be onboarded from any Linux block device, such as a SATA
+    or SAS SSD, instead of an NVMe PCIe device. The device mode is chosen once per cluster, at cluster
+    creation. See [Linux Block Devices (lblk)](../architecture/concepts/linux-block-devices.md).
 
 ### NVMe Uniformity Recommendations
 
-In general, all NVMe used in a single cluster should exhibit a similar performance profile per TB.
-Therefore, within a single cluster, all NVMe devices are recommended to be of the same size,
+In general, all NVMe devices used in a single cluster should exhibit a similar performance profile
+per TB. Therefore, within a single cluster, all NVMe devices are recommended to be of the same size,
 but this is not a hard requirement.
 
-The same requirement applies to non-nvme devices, if non-nvme clusters are used.
+The same recommendation applies to the Linux block devices of a cluster running in `lblk` mode.
 
 ### NVMe Exclusivity Requirements
 
@@ -181,8 +193,9 @@ Additionally, devices will be detached from the operating system's control and w
 once simplyblock's storage nodes are running.
 
 !!! info
-       For non-nvme clusters, block devices will remain attached under Linux. They have to be unmounted and 
-       unpartitioned to be used. Partitioned devices can also be force-formatted at deployment time.
+    In a cluster running in `lblk` mode, the block devices remain attached under Linux. To become
+    eligible, they have to be unmounted and unpartitioned. A device that carries a partition table is
+    accepted only if it is explicitly force-formatted at node addition.
 
 ### NVMe Formatting Prerequisites
 
@@ -212,8 +225,9 @@ Simplyblock implements NVMe over Fabrics (NVMe-oF), either NVMe over TCP or NVMe
 interconnect. The fabric transport layers can be mixed, like cluster internal-traffic on NVMe over RoCEv2 and client to cluster over NVMe over TCP.
 
 !!! info
-    NICs with RDMA/ROCEv2 support such as NVIDIA Mellanox network adapters (ConnectX-6 or higher) can be used to deploy ROCEv2 fabrics over standard Ethernet infrastructure.
-    The latency and tail-latency of ROCEv2 fabrics is usually significantly lower than in TCP.
+    NICs with RDMA/RoCEv2 support, such as NVIDIA Mellanox network adapters (ConnectX-6 or higher),
+    can be used to deploy RoCEv2 fabrics over standard Ethernet infrastructure. Latency and tail
+    latency over a RoCEv2 fabric are usually significantly lower than over TCP.
 
 ### Management Traffic Network Requirements
 
@@ -221,9 +235,10 @@ It is recommended to use a separate physical NIC with two ports (bonded) and a h
 management traffic. For management traffic, a 1 GBit/s network is sufficient and a Linux Bridge may be used.
 
 !!! important "Highly Available Control Plane"
-    When simplyblock is deployed with an HA control plane in non-Kubernetes environments, an external load balancer is required to distribute
-    requests of users or storage drivers to active control plane nodes. This is required to ensure that the control plane
-    is not a single point of failure when one or more management nodes are down.
+    In non-Kubernetes environments, an external load balancer is required when simplyblock is deployed
+    with an HA control plane. Requests of users or storage drivers are distributed by it to the active
+    control plane nodes, so that the control plane is not a single point of failure while one or more
+    management nodes are down.
 
     For Simplyblock Operator-based deployments, the load balancer is not required, as it is already implemented as
     a Kubernetes Service.
@@ -231,7 +246,9 @@ management traffic. For management traffic, a 1 GBit/s network is sufficient and
 ### Layer 2 Constraints and Prohibited Topologies
 
 !!! warning
-    Any gateways, firewalls, or proxies higher than L2 on the network path should be avoided for performance reasons.
+    Any gateway, firewall, or proxy higher than L2 on the network path should be avoided for
+    performance reasons.
+
 ## Additional Hardware Guidance
 
 ### PCIe Version
