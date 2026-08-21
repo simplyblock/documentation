@@ -9,9 +9,14 @@ distribution unit, or an availability zone. When failure domains are enabled, si
 journal copies, and failover paths across the domains so that the loss of one entire domain does not interrupt
 the availability of the cluster.
 
-Failure domains are identified by a non-negative integer chosen by the operator. Simplyblock does not detect the
-physical topology itself: every storage node is explicitly tagged with the id of the domain it belongs to when it
-is added to the cluster.
+Each domain is identified by a label, such as `RACK1`, `AZ2`, or `HOST1`. Simplyblock does not detect the
+physical topology itself: every storage node is explicitly tagged with the label of the domain it belongs to when
+it is added to the cluster. The domain is created by the first node carrying a given label, and every later node
+naming that label joins it.
+
+Internally, each label maps to a cluster-unique integer id, which is what placement and the data plane key off.
+That id is assigned automatically and does not have to be tracked. It surfaces only in low-level logs and in the
+`failure_domain` field of the API, which keeps its integer type for compatibility.
 
 !!! important
     Failure-domain support is a deploy-time decision. It is enabled when the storage cluster is created and cannot
@@ -22,7 +27,7 @@ is added to the cluster.
 With failure domains enabled, placement decisions consider the domain tag in four independent dimensions:
 
 1. **Data and parity chunks:** The distributed erasure coding spreads the chunks of each stripe across distinct
-   failure domains, so that a full domain outage leaves enough chunks to reconstruct all data within the configured
+   failure domains so that a full domain outage leaves enough chunks to reconstruct all data within the configured
    erasure coding scheme.
 2. **Journal copies:** The copies of the high-availability write journal are balanced across domains with a
    per-domain cap, so that losing a whole domain always leaves enough journal copies to maintain the journal quorum.
@@ -66,7 +71,7 @@ a same-domain secondary path, and its tertiary path is still guaranteed to be cr
 
 !!! note
     Balance is counted in physical hosts, not storage nodes. On multi-socket hosts running two storage nodes, both
-    nodes count as one host and must carry the same failure-domain id. Dedicated secondary nodes are not counted
+    nodes count as one host and must carry the same failure-domain label. Dedicated secondary nodes are not counted
     toward the balance.
 
 ## Failure Domains and Erasure Coding Schemes
@@ -85,7 +90,7 @@ its loss would break the journal quorum.
 ## Domain Membership Is Immutable
 
 A host's failure domain cannot be changed while the host is part of the cluster. Moving a host between domains
-requires removing the node, restoring the domain balance, and re-adding it with the new failure-domain id. This
+requires removing the node, restoring the domain balance, and re-adding it with the new failure-domain label. This
 prevents accidental topology changes that would silently invalidate the placement of existing data.
 
 ## Recovery Behavior
