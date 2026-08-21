@@ -67,7 +67,6 @@ metadata:
 spec:
   mgmtIfname: eth0
   fabricType: tcp
-  haType: ha
   stripe:
     dataChunks: 2
     parityChunks: 1
@@ -119,8 +118,6 @@ metadata:
 spec:
   clusterName: simplyblock-cluster
   maxLogicalVolumeCount: 20
-  partitions: 0
-  corePercentage: 50
   workerNodes:
     - worker-1.example.com
     - worker-2.example.com
