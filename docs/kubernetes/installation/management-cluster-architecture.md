@@ -18,6 +18,7 @@ helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
     --create-namespace \
+    --set controlplane.enabled=true \
     --set operator.enabled=true
 ```
 
@@ -66,9 +67,7 @@ metadata:
 spec:
   mgmtIfname: eth0
   fabricType: tcp
-  isSingleNode: false
   enableNodeAffinity: false
-  strictNodeAntiAffinity: false
   warningThreshold:
     capacity: 80
     provisionedCapacity: 10
