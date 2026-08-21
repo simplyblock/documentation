@@ -90,7 +90,7 @@ bottlenecks specific to mixed I/O patterns on other protocols (such as iSCSI) an
 ### Support for ROCEv2
 
 Simplyblock also supports NVMe over RDMA (ROCEv2). RDMA, as a transport layer, offers significant latency and tail
-latency advantages over TCP. Today, RDMA can be used in most data center environments because it requires only specific
+latency advantages over TCP. Today, RDMA can be used in most datacenter environments because it requires only specific
 hardware features from NICs, which are available across a broad range of models. It runs over UDP/IP and, as such, does
 not require any changes to the networking.
 

@@ -10,9 +10,12 @@ the eye supplies what the text is missing:
 * A **repeated word**, as in "the volume is is migrated".
 * An **abbreviation or an introduction without its comma**: American usage writes
   "e.g.," and "i.e.," and "for example," with the comma.
+* A **compound the house writes as one word**, as in "data center". Both
+  spellings are correct English, so this is a house decision rather than a
+  misspelling, and the decision is that it is written "datacenter".
 
-All three have exactly one right answer, so all three are errors that "--fix"
-resolves.
+All of them have exactly one right answer, so all of them are errors that
+"--fix" resolves.
 
 By default all Markdown files below "docs/" and "snippets/" are scanned.
 Generated files are skipped, since they have to be corrected at their source.
@@ -166,12 +169,31 @@ COMPOUND_PATTERN = re.compile(
 # An adverb ending in "ly" is never hyphenated to the adjective behind it.
 ADVERB_HYPHEN_PATTERN = re.compile(r"\b(\w+ly)-(\w+)\b")
 
+# Compounds that both dictionaries accept in two spellings, and that the house
+# writes as one word. Neither form is wrong, which is exactly why one of them has
+# to be picked: a page that alternates between them reads as two pages. The
+# hyphenated spelling is matched as well, so "data-center" is caught next to
+# "data center", and a trailing plural "s" is part of the match. A leading
+# capital survives the rewrite, so a heading and the start of a sentence keep
+# theirs.
+ONE_WORD_COMPOUNDS = {"data center": "datacenter"}
+ONE_WORD_COMPOUND_PATTERN = re.compile(
+    r"\b(?:"
+    + "|".join(
+        re.escape(compound).replace(r"\ ", r"[\s\-]")
+        for compound in sorted(ONE_WORD_COMPOUNDS, key=len, reverse=True)
+    )
+    + r")s?\b",
+    re.IGNORECASE,
+)
+
 MISSPELLING_REASON = "Misspelling of '{expected}'"
 REPEATED_REASON = "The word '{word}' is repeated"
 COMMA_REASON = "'{phrase}' introduces an example and takes a comma"
 DOUBLE_SPACE_REASON = "Two spaces between words"
 COMPOUND_REASON = "'{compound}' describes '{next}' here, so it is hyphenated: '{expected}'"
 ADVERB_REASON = "An adverb is not hyphenated to its adjective: '{expected}'"
+ONE_WORD_REASON = "'{found}' is written as one word: '{expected}'"
 
 
 def scan_file(file_path):
@@ -250,6 +272,20 @@ def scan_file(file_path):
                 prose.number, match.start(), "adverb-hyphen",
                 ADVERB_REASON.format(expected=expected),
                 prose.text, len(match.group(0)), expected,
+            )
+
+        for match in ONE_WORD_COMPOUND_PATTERN.finditer(prose.masked):
+            found = match.group(0)
+            key = re.sub(r"[\s\-]", " ", found).lower()
+            # The trailing plural "s" is part of the match and not of the key.
+            plural = "" if key in ONE_WORD_COMPOUNDS else "s"
+            expected = ONE_WORD_COMPOUNDS[key.removesuffix(plural)] + plural
+            if found[0].isupper():
+                expected = expected[0].upper() + expected[1:]
+            report(
+                prose.number, match.start(), "one-word-compound",
+                ONE_WORD_REASON.format(found=found, expected=expected),
+                prose.text, len(found), expected,
             )
 
         for match in COMMA_PATTERN.finditer(prose.masked):
