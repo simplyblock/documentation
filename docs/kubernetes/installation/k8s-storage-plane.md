@@ -67,6 +67,8 @@ metadata:
 spec:
   mgmtIfname: eth0
   fabricType: tcp
+  maxSubsystemCount: 75
+  vcpuCount: 16
   stripe:
     dataChunks: 2
     parityChunks: 1
