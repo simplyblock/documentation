@@ -22,7 +22,7 @@ In simplyblock this process is either automated (CSI, OpenStack, or Proxmox) or 
 
 It’s roughly equivalent to an NVMe controller or logical device that can contain one or more namespaces.
 
-Now subsystems are backed by multiple queue pairs, each of which is backed by a network connection such as a TCP socket.
+Now, subsystems are backed by multiple queue pairs, each of which is backed by a network connection such as a TCP socket.
 More queue pairs require more resources from the cluster but make the volumes faster.
 
 Namespaces on the other side are actual block storage regions that hold user data.

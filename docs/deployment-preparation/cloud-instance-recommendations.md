@@ -14,7 +14,7 @@ Amazon EBS is not recommended for high-performance clusters.
 
 !!! important
     If local NVMe devices are chosen, make sure that the nodes in the cluster are provisioned into a placement group of type
-    _Spread_! Otherwise there is no guarantee that multiple storage nodes won't be located in the same failure domain.
+    _Spread_! Otherwise, there is no guarantee that multiple storage nodes won't be located in the same failure domain.
 
 Generally, with AWS, there are three considerations when selecting virtual machine types:
 

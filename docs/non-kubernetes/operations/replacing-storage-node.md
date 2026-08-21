@@ -31,7 +31,7 @@ To start a new storage node, follow the storage node installation according to t
 ## Remove the old Storage Node
 
 !!! important
-    A storage node can only be removed when it hosts no logical volumes or snapshots. Otherwise the removal is
+    A storage node can only be removed when it hosts no logical volumes or snapshots. Otherwise, the removal is
     refused, so all volumes have to be migrated off the node first (see
     [Volume Migration](volume-migration.md)). The node to be removed must be online or suspended, and all other
     storage nodes must be online.
