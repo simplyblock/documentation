@@ -30,7 +30,7 @@ There are a few reasons to manually restart a storage node:
     Nodes can only be restarted from `offline` state!
 
     It is important to ensure that the cluster is not in `degraded` state and all other nodes are `online`
-    before shutting down a storage node for maintenance or upgrades! Otherwise loss of availability - I/O interrupt - may occur!
+    before shutting down a storage node for maintenance or upgrades! Otherwise, loss of availability - I/O interrupt - may occur!
 
 Suspending a storage node and then shutting it down:
 

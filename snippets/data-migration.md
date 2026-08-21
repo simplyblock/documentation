@@ -198,7 +198,7 @@ same mount point as the original disk before, _/data/pg_ in this example.
     All services that require access to the data can be started again. The RAID itself is still in a degraded state, but
     it provides the same data security as the original device.
 
-Now the second, new device must be added to the RAID setup to start the re-silvering (data synchronization) process.
+Now, the second, new device must be added to the RAID setup to start the re-silvering (data synchronization) process.
 This is again done using `mdadm` tool.
 
 ```bash title="Add the new simplyblock block device to RAID-1"

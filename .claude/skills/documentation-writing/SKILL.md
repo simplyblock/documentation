@@ -208,6 +208,13 @@ so write `NVMe devices`.
 `behavior`, `labeled`, `enroll`, `artifact`, `program`, `license`, `gray`. Note
 that `Fibre Channel` is the name of a standard and keeps its spelling.
 
+**A compound with two accepted spellings is written the house way.** `datacenter`
+is one word, never "data center" or "data-center". Neither spelling is wrong,
+which is exactly why one of them is picked: a page that alternates between them
+reads as two pages. The list is `ONE_WORD_COMPOUNDS` in
+`scripts/check-prose.py`, and a new pair is added there rather than settled per
+page.
+
 **The Oxford comma** goes before the final `and`, `or`, or `nor` of a series of
 three or more items: "storage nodes, volumes, and snapshots". It belongs to a
 series and nowhere else. A comma before an `and` that joins two sentences is
@@ -216,15 +223,29 @@ nothing to insert.
 
 ## Punctuation to avoid
 
-Three habits make a page read as though nobody chose the words. The punctuation
-gate reports all of them. The first two are warnings, because what replaces them
-depends on the sentence and is a decision for the writer. The list item form and
-the placement of a mark have one right answer and are errors that `--fix`
+A handful of habits make a page read as though nobody chose the words, and the
+gates report all of them. The semicolon and the em dash below are warnings,
+because what replaces them depends on the sentence and is a decision for the
+writer. Everything else has one right answer and is an error that `--fix`
 resolves.
 
 **A missing comma after an abbreviation.** American usage writes "e.g.," and
 "i.e.," and "for example," with the comma, since each of them introduces the
 example that follows.
+
+**A missing comma after an opening connective or sentence adverb.** "However,",
+"Therefore,", "Otherwise,", "Internally,", "By default,", "Today,". The comma is
+what marks the word as a comment on the whole sentence rather than as part of
+it, and without it the reader parses the word as the subject and has to start
+over. The full list is in `scripts/check-prose.py`.
+
+The comma belongs to the word only where the word opens a clause. "Instead of",
+"Now that", "Together with" and "In addition to" are prepositions and
+conjunctions that carry the comma behind the whole phrase, and "Initially
+developed by Google" is an adverb modifying a participle. The check knows all
+three shapes and leaves them alone. "Then" and "First" are absent from it
+entirely, because they number the steps of a procedure: "Then apply the change"
+takes no comma.
 
 **A comma and a full stop go inside the closing quotation mark**, whatever the
 quoted words are: "docking points," and never "docking points",. A colon and a

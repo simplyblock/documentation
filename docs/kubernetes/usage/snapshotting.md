@@ -9,7 +9,7 @@ simplyblock's [copy-on-write](../../important-notes/terminology.md#cow-copy-on-w
 
 In simplyblock, a snapshot is comparable to the table of contents in a book, meaning that the snapshot refers to the same
 data as the original volume. If the volume diverges from the snapshot, the mutated data segment is duplicated, changed,
-and stored as a new data block. Now the volume refers to the new block, while the snapshot refers to the old one.
+and stored as a new data block. Now, the volume refers to the new block, while the snapshot refers to the old one.
 
 A deeper explanation can be found here:
 

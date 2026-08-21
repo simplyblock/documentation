@@ -10,9 +10,15 @@ the eye supplies what the text is missing:
 * A **repeated word**, as in "the volume is is migrated".
 * An **abbreviation or an introduction without its comma**: American usage writes
   "e.g.," and "i.e.," and "for example," with the comma.
+* An **opening connective or sentence adverb without its comma**: "However,",
+  "Therefore,", "Internally,". The comma is what marks the word as a comment on
+  the sentence rather than as part of it.
+* A **compound the house writes as one word**, as in "data center". Both
+  spellings are correct English, so this is a house decision rather than a
+  misspelling, and the decision is that it is written "datacenter".
 
-All three have exactly one right answer, so all three are errors that "--fix"
-resolves.
+All of them have exactly one right answer, so all of them are errors that
+"--fix" resolves.
 
 By default all Markdown files below "docs/" and "snippets/" are scanned.
 Generated files are skipped, since they have to be corrected at their source.
@@ -141,6 +147,69 @@ COMMA_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# A connective or a sentence adverb that opens a sentence is followed by a comma:
+# "However, the volume stays online", "Internally, each label maps to an id". The
+# comma is what marks the word as a comment on the whole sentence rather than as
+# part of it, and English readers expect it there.
+#
+# The words below are split by what they can be mistaken for. A connective can
+# only join clauses, so it is reported whatever follows it. A sentence adverb can
+# also modify the word behind it, and "Initially developed by Google" takes no
+# comma, so those are reported only when no modifiable word follows.
+CONNECTIVES = (
+    "However", "Therefore", "Moreover", "Furthermore", "Nevertheless",
+    "Nonetheless", "Consequently", "Otherwise", "Meanwhile", "Instead",
+    "Additionally", "Conversely", "Alternatively", "Likewise", "Accordingly",
+    "Hence", "Thus", "Regardless", "Overall", "Together", "In contrast",
+    "In addition", "As a result", "On the other hand", "For this reason",
+    "In practice", "In general", "In particular", "In this case", "In fact",
+    "In summary", "By default", "At the same time",
+)
+SENTENCE_ADVERBS = (
+    "Internally", "Externally", "Typically", "Optionally", "Ideally",
+    "Generally", "Normally", "Usually", "Occasionally", "Historically",
+    "Traditionally", "Originally", "Currently", "Previously", "Recently",
+    "Today", "Initially", "Subsequently", "Afterward", "Afterwards", "Finally",
+    "Ultimately", "Technically", "Practically", "Logically", "Physically",
+    "Functionally", "Operationally", "Effectively", "Importantly", "Notably",
+    "Specifically", "Similarly", "Now",
+)
+
+# Deliberately absent: "Then", "First", "Second" and "Third". They number the
+# steps of a procedure ("Then apply the change", "First run the health check"),
+# where the sequence is part of the instruction and takes no comma, and the last
+# three are ordinary adjectives on top of that.
+
+# The word behind the phrase that turns it into a preposition or a conjunction,
+# where the comma belongs behind the whole phrase and not behind its first word:
+# "Instead of", "Now that", "Together with", "In addition to", "However many".
+CONTINUATIONS = {
+    "of", "to", "with", "that", "than", "as", "much", "many", "long", "often",
+    "far", "large", "small", "enough",
+}
+
+# What marks the word behind a sentence adverb as the word it modifies rather
+# than the start of a clause. The suffixes catch a participle and most
+# adjectives ("developed", "using", "smaller", "identical"), and the words below
+# are the adjectives that carry none of them. Missing one of these only leaves a
+# comma unreported, while flagging one would insert a comma that is wrong.
+MODIFIER_SUFFIXES = ("ed", "ing", "er", "est", "ive", "able", "ible", "ous", "ic", "al")
+MODIFIER_WORDS = {
+    "separate", "similar", "same", "safe", "free", "open", "full", "close",
+    "equal", "aware", "specific", "distinct", "unique", "present", "absent",
+}
+
+# A sentence opens at the start of a line, behind a list marker, or behind the
+# full stop of the sentence before it. A phrase that already carries a mark, or
+# that is wrapped in the asterisks of a bold list subject, is left alone.
+INTRODUCTORY_PATTERN = re.compile(
+    r"(?:^[ \t]*(?:(?:[-*+]|\d+\.)[ \t]+)?|(?<=[.!?])[ \t])"
+    r"(?P<phrase>"
+    + "|".join(sorted(CONNECTIVES + SENTENCE_ADVERBS, key=len, reverse=True))
+    + r")"
+    r"(?![,:;.!?)\]*_`\w-])[ \t]+(?P<next>[A-Za-z][\w'-]*)"
+)
+
 # Two spaces between words are a typing artifact. Table columns and the wide
 # markers of a grid card are lined up on purpose, so those lines are left out.
 DOUBLE_SPACE_PATTERN = re.compile(r"(?<=[A-Za-z,.;:)\]`])( {2,})(?=[A-Za-z(\[`])")
@@ -166,12 +235,32 @@ COMPOUND_PATTERN = re.compile(
 # An adverb ending in "ly" is never hyphenated to the adjective behind it.
 ADVERB_HYPHEN_PATTERN = re.compile(r"\b(\w+ly)-(\w+)\b")
 
+# Compounds that both dictionaries accept in two spellings, and that the house
+# writes as one word. Neither form is wrong, which is exactly why one of them has
+# to be picked: a page that alternates between them reads as two pages. The
+# hyphenated spelling is matched as well, so "data-center" is caught next to
+# "data center", and a trailing plural "s" is part of the match. A leading
+# capital survives the rewrite, so a heading and the start of a sentence keep
+# theirs.
+ONE_WORD_COMPOUNDS = {"data center": "datacenter"}
+ONE_WORD_COMPOUND_PATTERN = re.compile(
+    r"\b(?:"
+    + "|".join(
+        re.escape(compound).replace(r"\ ", r"[\s\-]")
+        for compound in sorted(ONE_WORD_COMPOUNDS, key=len, reverse=True)
+    )
+    + r")s?\b",
+    re.IGNORECASE,
+)
+
 MISSPELLING_REASON = "Misspelling of '{expected}'"
 REPEATED_REASON = "The word '{word}' is repeated"
 COMMA_REASON = "'{phrase}' introduces an example and takes a comma"
+INTRODUCTORY_REASON = "'{phrase}' opens the sentence and takes a comma"
 DOUBLE_SPACE_REASON = "Two spaces between words"
 COMPOUND_REASON = "'{compound}' describes '{next}' here, so it is hyphenated: '{expected}'"
 ADVERB_REASON = "An adverb is not hyphenated to its adjective: '{expected}'"
+ONE_WORD_REASON = "'{found}' is written as one word: '{expected}'"
 
 
 def scan_file(file_path):
@@ -250,6 +339,35 @@ def scan_file(file_path):
                 prose.number, match.start(), "adverb-hyphen",
                 ADVERB_REASON.format(expected=expected),
                 prose.text, len(match.group(0)), expected,
+            )
+
+        for match in INTRODUCTORY_PATTERN.finditer(prose.masked):
+            phrase = match.group("phrase")
+            following = match.group("next").lower()
+            if following in CONTINUATIONS:
+                continue
+            if phrase in SENTENCE_ADVERBS and (
+                following in MODIFIER_WORDS or following.endswith(MODIFIER_SUFFIXES)
+            ):
+                continue
+            report(
+                prose.number, match.start("phrase"), "introductory-comma",
+                INTRODUCTORY_REASON.format(phrase=phrase),
+                prose.text, len(phrase), phrase + ",",
+            )
+
+        for match in ONE_WORD_COMPOUND_PATTERN.finditer(prose.masked):
+            found = match.group(0)
+            key = re.sub(r"[\s\-]", " ", found).lower()
+            # The trailing plural "s" is part of the match and not of the key.
+            plural = "" if key in ONE_WORD_COMPOUNDS else "s"
+            expected = ONE_WORD_COMPOUNDS[key.removesuffix(plural)] + plural
+            if found[0].isupper():
+                expected = expected[0].upper() + expected[1:]
+            report(
+                prose.number, match.start(), "one-word-compound",
+                ONE_WORD_REASON.format(found=found, expected=expected),
+                prose.text, len(found), expected,
             )
 
         for match in COMMA_PATTERN.finditer(prose.masked):

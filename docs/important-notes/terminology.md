@@ -18,7 +18,7 @@ fault-tolerant, and high-performance storage system. Unlike traditional single-n
 distribute data across multiple nodes, ensuring redundancy, load balancing, and resilience against hardware failures. To
 optimize data availability and efficiency, these clusters can be configured using different architectures, including
 replication and erasure coding. Storage clusters are commonly used in cloud storage, high-performance computing (HPC),
-and enterprise data centers, enabling seamless scalability and improved data accessibility across distributed
+and enterprise datacenters, enabling seamless scalability and improved data accessibility across distributed
 environments.
 
 ### Storage Node
@@ -67,7 +67,7 @@ infrastructures, providing fast and efficient remote storage access.
 NVMe/TCP (NVMe over TCP) is a transport protocol that extends NVMe over Fabrics (NVMe-oF) using standard TCP/IP networks
 to enable high-performance, low-latency access to remote NVMe storage. By leveraging existing Ethernet infrastructure,
 NVMe/TCP eliminates the need for specialized networking hardware such as RDMA (RoCE or iWARP) or Fibre Channel (FC),
-making it a cost-effective and easily deployable solution for cloud, enterprise, and data center storage environments.
+making it a cost-effective and easily deployable solution for cloud, enterprise, and datacenter storage environments.
 It maintains the efficiency of NVMe, providing scalable, high-throughput, and low-latency remote storage access while
 ensuring broad compatibility with modern network architectures.
 
@@ -309,7 +309,7 @@ software-defined system. Unlike traditional architectures that rely on separate 
 hyper-converged infrastructure (HCI) leverages virtualization and centralized management to streamline operations,
 improve scalability, and reduce complexity. This approach enhances performance, fault tolerance, and resource efficiency
 by distributing workloads across multiple nodes, allowing seamless scaling by adding more nodes. HCI is widely
-used in cloud environments, virtual desktop infrastructure (VDI), and enterprise data centers for its ease of
+used in cloud environments, virtual desktop infrastructure (VDI), and enterprise datacenters for its ease of
 deployment, automation capabilities, and cost-effectiveness.
 
 ### Disaggregated
@@ -319,5 +319,5 @@ independent components rather than tightly integrated within the same physical s
 for example, storage resources are managed independently of compute nodes, allowing for flexible scaling, improved
 resource utilization, and reduced hardware dependencies. This contrasts with traditional or hyper-converged
 architectures, where these resources are combined. Disaggregated architectures are widely used in cloud computing,
-high-performance computing (HPC), and modern data centers to enhance scalability, cost-efficiency, and operational
+high-performance computing (HPC), and modern datacenters to enhance scalability, cost-efficiency, and operational
 flexibility while optimizing performance for dynamic workloads.

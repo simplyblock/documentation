@@ -31,7 +31,7 @@ When the PVC is deleted, the PersistentVolume state must be checked. It should b
 kubectl get pv
 ```
 
-Now the PV can be deleted:
+Now, the PV can be deleted:
 
 ```bash title="Delete a PersistentVolume"
 kubectl delete pv <pv-name>

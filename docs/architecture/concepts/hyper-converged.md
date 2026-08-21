@@ -31,7 +31,7 @@ Key characteristics and benefits of hyper-converged storage include:
   New nodes can be added seamlessly, increasing both compute and storage capacity without complex
   reconfiguration. Storage capacity and performance grows and shrinks seamlessly with the size of the cluster.
   This provides a great deal of flexibility for customers with strong and unknown dynamics as well as those with a variety of different sizing
-  requirements from small edge clusters to large data center clusters.
+  requirements from small edge clusters to large datacenter clusters.
 -  **De-coupling from Hardware Lifecycle** Individual hardware components or units can be replaced choosing from different vendors
 without service interruption or degradation. Gradual replacement of hardware is supported.
 

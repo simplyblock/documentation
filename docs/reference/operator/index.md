@@ -41,7 +41,7 @@ the cluster's entry from the Secret automatically.
 
 ## Storage Nodes
 
-Storage node management uses three separate CRDs with distinct responsibilities. Together they form a three-tier model:
+Storage node management uses three separate CRDs with distinct responsibilities. Together, they form a three-tier model:
 
 ```plain
 StorageNodeSet   ──► declares which workers to use and how to configure them
