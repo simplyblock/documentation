@@ -53,6 +53,7 @@ Apply the values during the operator installation (see [Install Simplyblock Oper
 ```bash title="Install the operator with mTLS"
 helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
     --create-namespace \
+    --set controlplane.enabled=true \
     --set operator.enabled=true \
     --set tls.enabled=true \
     --set tls.mutual_enabled=true \
