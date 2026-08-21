@@ -72,9 +72,6 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: simplyblock-cluster
-  maxLogicalVolumeCount: 20
-  partitions: 0
-  corePercentage: 50
   workerNodes:
     - worker-1.example.com
     - worker-2.example.com
@@ -114,12 +111,9 @@ over fleet defaults. They can be set in two ways:
 
 | Field                   | Type     | Description                                                                                  |
 |-------------------------|----------|----------------------------------------------------------------------------------------------|
-| `maxLogicalVolumeCount` | int      | Maximum logical volumes for this node.                                                       |
-| `maxSize`               | string   | Maximum allocatable huge pages memory (e.g., `16G`).                                         |
 | `spdkImage`             | string   | SPDK image override (e.g., for phased rollouts of a new image version).                      |
 | `spdkProxyImage`        | string   | SPDK proxy image override.                                                                   |
 | `spdkSystemMemory`      | string   | SPDK huge-page memory allocation (e.g., `4G`, `512M`). Useful for nodes with less RAM.       |
-| `corePercentage`        | int      | Percentage of CPU cores allocated to SPDK (0–99).                                            |
 | `journalManager`        | object   | Journal manager tuning (`count`, `percentPerDevice`).                                        |
 | `pcieAllowList`         | []string | PCIe addresses allowed for this node.                                                        |
 | `pcieDenyList`          | []string | PCIe addresses excluded on this node.                                                        |
@@ -188,7 +182,6 @@ spec:
   socketIndex: 0
   overrides:
     expand: true
-    maxLogicalVolumeCount: 20
     spdkSystemMemory: "4G"
     failureDomain: 2
 ```
