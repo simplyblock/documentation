@@ -119,7 +119,6 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: simplyblock-cluster
-  maxSubsystemCount: 20
   workerNodes:
     - worker-1.example.com
     - worker-2.example.com
