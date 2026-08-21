@@ -28,6 +28,7 @@ helm repo update
 
 helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
     --create-namespace \
+    --set controlplane.enabled=true \
     --set operator.enabled=true
 ```
 
