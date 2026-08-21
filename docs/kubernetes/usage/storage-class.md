@@ -33,6 +33,26 @@ always set from the storage pool and cannot be overridden. The rest of the param
 `StoragePool.spec.storageClassParameters`. Defaults for each field are listed at
 [Simplyblock Operator: StorageClassParameters](../../reference/operator/reference.md#storageclassparameters).
 
+The CRD fields carry camel case names and are written to the StorageClass under the parameter names of the CSI driver:
+
+| `storageClassParameters` Field | StorageClass Parameter      |
+|--------------------------------|-----------------------------|
+| `qosRwIops`                    | `qos_rw_iops`               |
+| `qosRwMbytes`                  | `qos_rw_mbytes`             |
+| `qosRMbytes`                   | `qos_r_mbytes`              |
+| `qosWMbytes`                   | `qos_w_mbytes`              |
+| `compression`                  | `compression`               |
+| `encryption`                   | `encryption`                |
+| `replicate`                    | `replicate`                 |
+| `lvolPriorityClass`            | `lvol_priority_class`       |
+| `fabric`                       | `fabric`                    |
+| `maxNamespacePerSubsys`        | `max_namespace_per_subsys`  |
+| `tune2fsReservedBlocks`        | `tune2fs_reserved_blocks`   |
+| `filesystem`                   | `csi.storage.k8s.io/fstype` |
+
+For a storage pool with `dhchap` enabled and `allowedNodes` set, `dhchap_node_label` is added by the operator as well,
+and the generated StorageClass is restricted to those nodes through its allowed topologies.
+
 Kubernetes does not allow the `parameters` of a StorageClass to be changed after creation, so
 `StoragePool.spec.storageClassParameters` is immutable once the storage pool is created. There is no supported way to
 reconfigure the generated StorageClass afterward. A new storage pool has to be created to provision volumes with
@@ -92,7 +112,7 @@ If `namespace-volumes` is set to `yes`, the number of namespaces per subsystem h
 | qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0        |
 | compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false    |
 | encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false    |
-| replicate                 | bool       | Defines if the logical volumes of this storage class are replicated.                                                                                                                           | true     | false    |
+| replicate                 | bool       | Defines if the logical volume of this storage class will be replicated or not.                                                                                                                 | true     | false    |
 | lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0        |
 | max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1        |
 | tune2fs_reserved_blocks   | int        | Defines the number of reserved blocks for tune2fs operations.                                                                                                                                  | true     | 0        |
