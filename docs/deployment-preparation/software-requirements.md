@@ -40,8 +40,14 @@ For Kubernetes-based deployments, the following Kubernetes environments and dist
 | Google GKE           | 1.30 and higher - non production only! |
 | K3s                  | 1.33 and higher                        |
 | Kubernetes (vanilla) | 1.33 and higher                        |
+| RKE2                 | 1.33 and higher                        |
 | Talos                | 1.6.7 and higher                       |
 | OpenShift            | 4.19 and higher                        |
+
+!!! info
+    SUSE Rancher is a management plane, not a Kubernetes distribution. Simplyblock is installed into the downstream
+    cluster it manages, which must run a supported RKE2 or K3s version. For details, see
+    [SUSE Rancher and RKE2](../kubernetes/installation/rancher.md).
 
 Additionally, there are verified and supported operating systems for the Kubernetes worker nodes. A full reference is
 available at the [Supported Linux Distributions](../reference/supported-linux-distributions.md#kubernetes-hyper-converged-control-plane-and-storage-plane)
