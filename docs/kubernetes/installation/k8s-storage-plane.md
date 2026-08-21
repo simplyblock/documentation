@@ -119,7 +119,6 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: simplyblock-cluster
-  maxLogicalVolumeCount: 20
   workerNodes:
     - worker-1.example.com
     - worker-2.example.com
@@ -177,12 +176,12 @@ For a full list of configuration options see [Simplyblock Operator: StorageNodeS
 
 ## Create a Storage Pool
 
-A storage pool is a grouping of logical volumes and capacity limits within the cluster. An initial `Pool` resource must
+A storage pool is a grouping of logical volumes and capacity limits within the cluster. An initial `StoragePool` resource must
 be created to define a storage pool before being able to provision volumes.
 
 ```yaml title="storage-pool.yaml"
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: Pool
+kind: StoragePool
 metadata:
   name: production-pool
   namespace: simplyblock
@@ -198,7 +197,7 @@ kubectl apply -f storage-pool.yaml
 The status of the storage pool can be checked with:
 
 ```bash title="Check the pool status"
-kubectl get simplyblockpool -n simplyblock
+kubectl get storagepools -n simplyblock
 ```
 
 Once the pool is active, the operator automatically creates a StorageClass named
