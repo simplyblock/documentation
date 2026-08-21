@@ -1,9 +1,6 @@
 Simplyblock requires a number of TCP and UDP ports to be reachable from the control and the storage network. The
 following table lists every port required for operation as a storage node.
 
-!!! note
-    The NVMf port range is used twice. It is TCP for NVMe-oF/TCP and UDP for NVMe-oF/RDMA.
-
 {% include 'network-port-table-sn.md' %}
 
 The following script opens those ports with `iptables`. No source address is enforced by it. Where a tighter rule
