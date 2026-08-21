@@ -155,16 +155,6 @@ nodeConfigs:
     failureDomain: 2
 ```
 
-**Node-level volume limit**
-
-Limit the number of volumes on a specific node that has fewer or smaller devices:
-
-```yaml
-nodeConfigs:
-  small-worker.example.com:
-    maxLogicalVolumeCount: 5
-```
-
 **Expansion add (manual StorageNode CR)**
 
 When creating a `StorageNode` CR manually for cluster expansion, set `expand: true` so the backend applies
