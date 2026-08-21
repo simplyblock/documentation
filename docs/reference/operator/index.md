@@ -109,21 +109,21 @@ over fleet defaults. They can be set in two ways:
 
 #### Overrides Reference
 
-| Field                   | Type     | Description                                                                                  |
-|-------------------------|----------|----------------------------------------------------------------------------------------------|
-| `spdkImage`             | string   | SPDK image override (e.g., for phased rollouts of a new image version).                      |
-| `spdkProxyImage`        | string   | SPDK proxy image override.                                                                   |
-| `spdkSystemMemory`      | string   | SPDK huge-page memory allocation (e.g., `4G`, `512M`). Useful for nodes with less RAM.       |
-| `journalManager`        | object   | Journal manager tuning (`count`, `percentPerDevice`).                                        |
-| `pcieAllowList`         | []string | PCIe addresses allowed for this node.                                                        |
-| `pcieDenyList`          | []string | PCIe addresses excluded on this node.                                                        |
-| `pcieModel`             | string   | PCI model string filter for this node.                                                       |
-| `driveSizeRange`        | string   | Drive size range filter (e.g., `100G-2T`).                                                   |
-| `deviceNames`           | []string | Explicit NVMe namespace names (e.g., `["nvme0n1","nvme1n1"]`).                               |
-| `enableCpuTopology`     | bool     | Topology-aware CPU scheduling override.                                                      |
-| `reservedSystemCPU`     | string   | CPUs reserved for system workloads (e.g., `0,1`).                                            |
-| `failureDomain`         | int      | Failure-domain group index (≥ 1). Required when the cluster has `enableFailureDomains=true`. |
-| `expand`                | bool     | Mark this node as a cluster-expansion add (triggers rebalancing on the backend).             |
+| Field               | Type     | Description                                                                                  |
+|---------------------|----------|----------------------------------------------------------------------------------------------|
+| `spdkImage`         | string   | SPDK image override (e.g., for phased rollouts of a new image version).                      |
+| `spdkProxyImage`    | string   | SPDK proxy image override.                                                                   |
+| `spdkSystemMemory`  | string   | SPDK huge-page memory allocation (e.g., `4G`, `512M`). Useful for nodes with less RAM.       |
+| `journalManager`    | object   | Journal manager tuning (`count`, `percentPerDevice`).                                        |
+| `pcieAllowList`     | []string | PCIe addresses allowed for this node.                                                        |
+| `pcieDenyList`      | []string | PCIe addresses excluded on this node.                                                        |
+| `pcieModel`         | string   | PCI model string filter for this node.                                                       |
+| `driveSizeRange`    | string   | Drive size range filter (e.g., `100G-2T`).                                                   |
+| `deviceNames`       | []string | Explicit NVMe namespace names (e.g., `["nvme0n1","nvme1n1"]`).                               |
+| `enableCpuTopology` | bool     | Topology-aware CPU scheduling override.                                                      |
+| `reservedSystemCPU` | string   | CPUs reserved for system workloads (e.g., `0,1`).                                            |
+| `failureDomain`     | int      | Failure-domain group index (≥ 1). Required when the cluster has `enableFailureDomains=true`. |
+| `expand`            | bool     | Mark this node as a cluster-expansion add (triggers rebalancing on the backend).             |
 
 #### Use Cases
 

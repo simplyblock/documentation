@@ -51,7 +51,11 @@ stringData:
     }
 ```
 
-The path to the file is announced to the backup agents through the `FDB_BLOB_CREDENTIALS` environment variable.
+```bash title="Creating the blob store credentials secret"
+kubectl apply -f fdb-backup-credentials.yaml
+```
+
+The path to the file is passed to the backup agents through the `FDB_BLOB_CREDENTIALS` environment variable.
 
 ### Object Store Access for the Operator
 
@@ -90,11 +94,34 @@ kubectl -n simplyblock patch deployment simplyblock-fdb-controller-manager \
 ### TLS Material
 
 Backup agents connect to the cluster as ordinary FoundationDB clients. The `enableTls` flag of `mainContainer` and
-`sidecarContainer` applies to server processes and is ignored by them. When the control plane is installed with
-mutual TLS, the certificate, the key, and the CA file are read from the paths named by
+`sidecarContainer` applies to server processes and has no effect on the backup agents. When the control plane is
+installed with mutual TLS, the certificate, the key, and the CA file are read from the paths named by
 `FDB_TLS_CERTIFICATE_FILE`, `FDB_TLS_KEY_FILE`, and `FDB_TLS_CA_FILE`. The material is held in the
 `simplyblock-foundationdb-tls` secret and is mounted into the backup agent pods through `podTemplateSpec`. The same
 three variables are set on the operator deployment by the chart whenever mutual TLS is enabled.
+
+```yaml title="Example of the TLS material added to the backup agent pod template"
+spec:
+  podTemplateSpec:
+    spec:
+      volumes:
+        - name: tls-fdb
+          secret:
+            secretName: simplyblock-foundationdb-tls
+      containers:
+        - name: foundationdb
+          env:
+            - name: FDB_TLS_CERTIFICATE_FILE
+              value: /var/fdb/tls/tls.crt
+            - name: FDB_TLS_KEY_FILE
+              value: /var/fdb/tls/tls.key
+            - name: FDB_TLS_CA_FILE
+              value: /var/fdb/tls/ca.crt
+          volumeMounts:
+            - name: tls-fdb
+              mountPath: /var/fdb/tls
+              readOnly: true
+```
 
 The certificate and the key have to be parseable so that the TLS subsystem of the agents initializes. They are not
 used for the connection to the object store, which is verified against the CA file instead.
@@ -159,25 +186,25 @@ The destination is derived from `blobStoreConfiguration`. The backup is written 
 
 ### Spec Fields
 
-| Field                                  | Type   | Description                                                                                           |
-|----------------------------------------|--------|-------------------------------------------------------------------------------------------------------|
-| `clusterName`                          | string | Name of the `FoundationDBCluster` to back up. **Required**.                                           |
-| `version`                              | string | FoundationDB version of the backup agents. Has to match the cluster. **Required**.                    |
-| `blobStoreConfiguration.accountName`   | string | Account and endpoint of the object store, as `<ACCOUNT>@<HOST>:<PORT>`. **Required**.                 |
-| `blobStoreConfiguration.backupName`    | string | Name of the backup in the bucket. Defaults to the name of the resource.                               |
-| `blobStoreConfiguration.bucket`        | string | Bucket the backup is written to. Defaults to `fdb-backups`.                                           |
-| `blobStoreConfiguration.urlParameters` | list   | Additional backup URL parameters, each written as `<KEY>=<VALUE>`.                                    |
-| `agentCount`                           | int    | Number of backup agent pods. Defaults to `2`.                                                         |
-| `snapshotPeriodSeconds`                | int    | Interval between two snapshots, in seconds. Defaults to `864000`, ten days.                           |
-| `backupState`                          | string | Desired state of the backup: `Running`, `Stopped`, or `Paused`.                                       |
-| `backupType`                           | string | `backup_agent` (default) or `partitioned_log`.                                                        |
-| `deletionPolicy`                       | string | Action taken when the resource is deleted: `noop` (default), `stop`, or `cleanup`.                    |
-| `imageType`                            | string | `split` (default) or `unified`. Has to match the cluster.                                             |
-| `mainContainer`                        | object | Image configuration and TLS settings of the `foundationdb` container.                                 |
-| `podTemplateSpec`                      | object | Pod template of the backup agents, used for credential and certificate volumes.                       |
-| `customParameters`                     | list   | Additional command line parameters passed to the backup agents.                                       |
-| `backupDeploymentMetadata`             | object | Labels and annotations added to the backup agent deployment.                                          |
-| `encryptionKeyPath`                    | string | Path to the backup encryption key. Requires FoundationDB 7.4.6 or newer and is unavailable on 7.3.63. |
+| Field                                  | Type   | Description                                                                                                     |
+|----------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------|
+| `clusterName`                          | string | Name of the `FoundationDBCluster` to back up. **Required**.                                                     |
+| `version`                              | string | FoundationDB version of the backup agents. Has to match the cluster. **Required**.                              |
+| `blobStoreConfiguration.accountName`   | string | Account and endpoint of the object store, as `<ACCOUNT>@<HOST>:<PORT>`. **Required**.                           |
+| `blobStoreConfiguration.backupName`    | string | Name of the backup in the bucket. Defaults to the name of the resource.                                         |
+| `blobStoreConfiguration.bucket`        | string | Bucket the backup is written to. Defaults to `fdb-backups`.                                                     |
+| `blobStoreConfiguration.urlParameters` | list   | Additional backup URL parameters, each written as `<KEY>=<VALUE>`.                                              |
+| `agentCount`                           | int    | Number of backup agent pods. Defaults to `2`.                                                                   |
+| `snapshotPeriodSeconds`                | int    | Interval between two snapshots, in seconds. Defaults to `864000`, ten days.                                     |
+| `backupState`                          | string | Desired state of the backup: `Running`, `Stopped`, or `Paused`.                                                 |
+| `backupType`                           | string | `backup_agent` (default) or `partitioned_log`.                                                                  |
+| `deletionPolicy`                       | string | Action taken when the resource is deleted: `noop` (default), `stop`, or `cleanup`.                              |
+| `imageType`                            | string | `split` (default) or `unified`. Has to match the cluster.                                                       |
+| `mainContainer`                        | object | Image configuration and TLS settings of the `foundationdb` container.                                           |
+| `podTemplateSpec`                      | object | Pod template of the backup agents, used for credential and certificate volumes.                                 |
+| `customParameters`                     | list   | Additional command line parameters passed to the backup agents.                                                 |
+| `backupDeploymentMetadata`             | object | Labels and annotations added to the backup agent deployment.                                                    |
+| `encryptionKeyPath`                    | string | Path to the backup encryption key. Only passed when the FoundationDB version in use supports backup encryption. |
 
 ### Backup Types
 
@@ -212,8 +239,9 @@ deleted:
 | `cleanup` | The backup is aborted and its data is deleted from the object store.                                |
 
 With `stop` or `cleanup`, the `foundationdb.org/fdb-kubernetes-operator` finalizer is added to the resource.
-Removing that finalizer by hand risks an incomplete removal and is not recommended. The deletion step is carried out
-by the operator and can block for up to ten minutes before the reconciliation is retried.
+Removing that finalizer by hand risks an incomplete removal and is not recommended. The deletion is carried out by
+the operator. With `cleanup`, the removal of the backup data can block for up to ten minutes before the
+reconciliation is retried.
 
 !!! note
     A `noop` policy leaves the backup running while its agents are gone. As long as the cluster still takes writes,
@@ -300,17 +328,17 @@ keyspace is restored to the most recent restorable version of the backup.
 
 ### Spec Fields
 
-| Field                                  | Type   | Description                                                                               |
-|----------------------------------------|--------|-------------------------------------------------------------------------------------------|
-| `destinationClusterName`               | string | Name of the `FoundationDBCluster` the backup is restored into. **Required**.              |
-| `blobStoreConfiguration.accountName`   | string | Account and endpoint of the object store, as `<ACCOUNT>@<HOST>:<PORT>`. **Required**.     |
-| `blobStoreConfiguration.backupName`    | string | Name of the backup in the bucket to restore from.                                         |
-| `blobStoreConfiguration.bucket`        | string | Bucket the backup was written to. Defaults to `fdb-backups`.                              |
-| `blobStoreConfiguration.urlParameters` | list   | Additional backup URL parameters, each written as `<KEY>=<VALUE>`.                        |
-| `backupVersion`                        | int    | Version to restore to. Defaults to the highest restorable version of the backup.          |
-| `keyRanges`                            | list   | Key ranges to restore, each with a `start` and an `end`. Defaults to the entire keyspace. |
-| `customParameters`                     | list   | Additional command line parameters passed to the restore.                                 |
-| `encryptionKeyPath`                    | string | Path to the encryption key of the backup. Requires FoundationDB 7.4.6 or newer.           |
+| Field                                  | Type   | Description                                                                                                            |
+|----------------------------------------|--------|------------------------------------------------------------------------------------------------------------------------|
+| `destinationClusterName`               | string | Name of the `FoundationDBCluster` the backup is restored into. **Required**.                                           |
+| `blobStoreConfiguration.accountName`   | string | Account and endpoint of the object store, as `<ACCOUNT>@<HOST>:<PORT>`. **Required**.                                  |
+| `blobStoreConfiguration.backupName`    | string | Name of the backup in the bucket to restore from.                                                                      |
+| `blobStoreConfiguration.bucket`        | string | Bucket the backup was written to. Defaults to `fdb-backups`.                                                           |
+| `blobStoreConfiguration.urlParameters` | list   | Additional backup URL parameters, each written as `<KEY>=<VALUE>`.                                                     |
+| `backupVersion`                        | int    | Version to restore to. Defaults to the highest restorable version of the backup.                                       |
+| `keyRanges`                            | list   | Key ranges to restore, each with a `start` and an `end`. Defaults to the entire keyspace.                              |
+| `customParameters`                     | list   | Additional command line parameters passed to the restore.                                                              |
+| `encryptionKeyPath`                    | string | Path to the encryption key of the backup. Only passed when the FoundationDB version in use supports backup encryption. |
 
 A point in time is selected through `backupVersion`. Any version after the end of the first snapshot is restorable,
 which is what makes the continuous backup a point-in-time backup.
