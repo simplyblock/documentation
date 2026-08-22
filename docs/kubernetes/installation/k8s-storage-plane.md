@@ -211,6 +211,13 @@ for the full parameter mapping.
 A StorageClass's parameters cannot be changed after creation, so `spec.storageClassParameters` is immutable
 once the storage pool is created. A new storage pool is required to provision volumes with different defaults.
 
+!!! warning "Pool limits are read once"
+    `capacityLimit`, `logicalVolumeMaxSize`, and `qos` are sent to the control plane when the pool is created and are
+    not reconciled afterward. Patching one of them on an existing `StoragePool` is accepted by the API server and has
+    no effect on the pool, so a different capacity limit or a different set of QoS limits requires a new storage pool.
+    `allowedNodes` is the exception and is reconciled, see
+    [Host Authentication and Encryption](../operations/security/authentication-encryption.md#configuring-dhchap-via-the-storagepool-crd).
+
 The StorageClass is automatically removed when the storage pool is deleted. Full details and customization
 options are available at [Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#storagepool).
 
