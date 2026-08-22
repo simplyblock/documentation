@@ -99,11 +99,11 @@ metadata:
 
 ## Checking the Paths of a Volume
 
-The paths of a volume are inspected on the worker that consumes it. The subsystem carries the volume UUID in its NQN.
+The paths of a volume are inspected on the worker that consumes it, with `nvme-cli` installed there. The subsystem
+carries the volume UUID in its NQN.
 
 ```bash title="Listing the NVMe subsystems on a worker"
-kubectl debug node/worker-1.example.com -it --image=busybox -- \
-    nvme list-subsys
+sudo nvme list-subsys
 ```
 
 A subsystem that is connected but exports no namespace is the state the node plugin repairs. A subsystem that is
