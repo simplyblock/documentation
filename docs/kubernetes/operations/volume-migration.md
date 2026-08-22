@@ -201,7 +201,8 @@ spec:
 ## Volume Migration During Node Draining and Removal
 
 When a storage node is removed, the operator evacuates its volumes onto the remaining nodes before the node
-leaves the cluster. Removal is triggered by a `StorageNodeOps` resource with `action: remove`.
+leaves the cluster. Removal is triggered by a `StorageNodeOps` resource with `action: remove`, and the full workflow
+is described in [Removing a Storage Node](removing-a-storage-node.md).
 
 ```bash title="Remove a storage node (drains its volumes first)"
 kubectl apply -n simplyblock -f - <<EOF

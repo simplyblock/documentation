@@ -8,6 +8,10 @@ When a Kubernetes worker node is cordoned or drained, for example, during a roll
 the Simplyblock Operator automatically coordinates the shutdown and restart of the backend storage node running on
 that worker. No manual intervention is required.
 
+This is a temporary absence, after which the storage node returns to the same worker. Taking a node out of the
+cluster for good is a different operation, described in
+[Removing a Storage Node](removing-a-storage-node.md).
+
 Concurrency is controlled by `StorageCluster.spec.maxFaultTolerance`. It defines the at-most number of Kubernetes
 workers that can be drained at the same time. This prevents the cluster from entering a degraded state during bulk
 maintenance operations and restarting cycles.
