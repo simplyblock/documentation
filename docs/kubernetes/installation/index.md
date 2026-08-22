@@ -38,8 +38,7 @@ The operator manages the following resources:
 | `StorageNodeSet` | Fleet-level declarative configuration for a set of storage nodes |
 | `StorageNode`    | Represents a single backend storage node instance (auto-created) |
 | `StorageNodeOps` | One-shot operational action targeting a single storage node      |
-| `Pool`           | Creates and manages storage pools                                |
-| `Device`         | Manages NVMe devices on storage nodes                            |
+| `StoragePool`    | Creates and manages storage pools                                |
 | `Task`           | Monitors cluster tasks                                           |
 
 For detailed CRD documentation, see [Simplyblock Operator](../../reference/operator/index.md).

@@ -26,7 +26,7 @@ The Graylog installation uses the cluster secret as its password for the user _a
 When installed inside Kubernetes, the Graylog password can be retrieved using `kubectl` as follows:
 
 ```bash title="Retrieve the Graylog password"
-kubectl get secret -n simplyblock simplyblock-graylog``-secret \
+kubectl get secret -n simplyblock simplyblock-graylog -secret \
     -o jsonpath="{.data.GRAYLOG_PASSWORD_SECRET}" | base64 --decode
 ```
 

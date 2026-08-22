@@ -55,14 +55,14 @@ kubectl get storagenodeset simplyblock-node -n simplyblock \
 kubectl get storagenodeset simplyblock-node -n simplyblock -w
 ```
 
-## Configuring Fault Tolerance
+## Configuring Concurrent Worker Restarts
 
-To control the number of workers that can be simultaneously drained, the property `spec.maxFaultTolerance` on the
+To control the number of workers that can be simultaneously drained, the property `spec.maxConcurrentWorkerRestarts` on the
 `StorageCluster` resource can be configured.
 
 ```yaml title="Example: allow one worker in the drain window at a time"
 spec:
-  maxFaultTolerance: 1
+  maxConcurrentWorkerRestarts: 1
 ```
 
 A value of `1` is the safest default. The safe-maximum of this value depends on the selected erasure coding scheme and
@@ -71,7 +71,7 @@ traffic interruption.
 
 ## Pinned Volume Migration During Node Removal
 
-By default, a PVC annotated with `simplyblock.io/pinned-volume` blocks node drain. When draining a node (via a
+By default, a PVC annotated with `simplyblock.io/selected-storage-node` blocks node drain. When draining a node (via a
 `StorageNodeOps` with `action: remove`), the operator will not migrate a pinned volume and will instead emit a
 `PinnedVolumeBlocking` event until the annotation is removed.
 
@@ -85,7 +85,7 @@ Set the annotation value to the target `StorageNode` UUID before triggering drai
 
 ```bash title="Pin a PVC to a specific target node for migration"
 kubectl annotate pvc <pvc-name> -n <namespace> \
-  simplyblock.io/pinned-volume=<target-storage-node-uuid> --overwrite
+  simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
 Find the available storage node UUIDs with:
@@ -105,7 +105,7 @@ metadata:
   name: drain-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  storageNodeRef: simplyblock-node-mejue8
   action: remove
 EOF
 ```

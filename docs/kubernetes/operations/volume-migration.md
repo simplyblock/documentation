@@ -98,14 +98,14 @@ kubectl get volumemigration migrate-pvc-968cff4f \
 
 Each migration progresses through the following phases, tracked in `VolumeMigration.status.phase`:
 
-| Phase        | Description                                                                                             |
-|--------------|---------------------------------------------------------------------------------------------------------|
-| `Pending`    | The migration has been accepted. The operator is resolving the PV and submitting it.                    |
-| `Validating` | The new target-side NVMe-oF paths are being established and verified by a validation Job.               |
-| `Running`    | The backend is copying data and snapshots. `status.snapsMigrated` / `status.snapsTotal` track progress. |
-| `Completed`  | The volume now resides on the target node.                                                              |
-| `Failed`     | The migration could not complete. `status.errorMessage` holds the reason.                               |
-| `Aborted`    | The migration was canceled via `spec.abort`.                                                            |
+| Phase        | Description                                                                               |
+|--------------|-------------------------------------------------------------------------------------------|
+| `Pending`    | The migration has been accepted. The operator is resolving the PV and submitting it.      |
+| `Validating` | The new target-side NVMe-oF paths are being established and verified by a validation Job. |
+| `Running`    | The backend is copying data and snapshots.                                                |
+| `Completed`  | The volume now resides on the target node.                                                |
+| `Failed`     | The migration could not complete. `status.errorMessage` holds the reason.                 |
+| `Aborted`    | The migration was canceled via `spec.abort`.                                              |
 
 The status also records the resolved `sourceNodeUUID`, `volumeUUID`, `poolUUID`, `clusterUUID`, the backend
 `migrationUUID`, and `startedAt` / `completedAt` timestamps.
@@ -211,7 +211,7 @@ metadata:
   name: drain-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  storageNodeRef: simplyblock-node-mejue8
   action: remove
 EOF
 ```

@@ -121,7 +121,7 @@ metadata:
   name: restart-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  storageNodeRef: simplyblock-node-mejue8
   action: restart
 EOF
 ```
@@ -168,7 +168,7 @@ metadata:
   name: migrate-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  storageNodeRef: simplyblock-node-mejue8
   action: migrate
   targetWorkerNode: worker-5.example.com
 EOF
@@ -198,7 +198,7 @@ metadata:
   name: drain-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-worker-1.example.com-s0-n0
+  storageNodeRef: simplyblock-node-mejue8
   action: remove
 EOF
 ```

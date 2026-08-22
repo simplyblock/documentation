@@ -36,7 +36,7 @@ helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
 | `simplyblock-operator`               | [Simplyblock Operator](https://github.com/simplyblock/simplyblock-operator){:target="_blank" rel="noopener"}: reconciles CRDs (`StorageCluster`, `StorageNode`, `Pool`, etc.) into API calls. |
 | `simplyblock-fdb-cluster-*`          | [FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"} distributed key-value store. Backs all cluster state with ACID transactions. 10 Gi PV per pod.                 |
 | `simplyblock-monitoring-*`           | 11-container pod (`hostNetwork: true`) collecting node health, volume I/O stats, capacity, device health, and events. Pushes metrics to Prometheus.                                           |
-| `simplyblock-tasks-*`                | 13-container pod for the async task engine. Each container is a single-purpose runner for operations like node-add, migration, backup, and snapshot replication.                              |
+| `simplyblock-tasks-*`                | 18-container pod for the async task engine. Each container is a single-purpose runner for operations like node-add, migration, backup, and snapshot replication.                              |
 | `simplyblock-prometheus-*`           | [Prometheus](https://prometheus.io/){:target="_blank" rel="noopener"} + [Thanos](https://thanos.io/){:target="_blank" rel="noopener"} sidecar. 5 Gi persistent storage for metrics.           |
 | `simplyblock-reloader-*`             | [Stakater Reloader](https://github.com/stakater/Reloader){:target="_blank" rel="noopener"}. Watches ConfigMaps and triggers rolling restarts when the FDB connection string changes.          |
 
@@ -65,9 +65,9 @@ metadata:
   name: simplyblock-cluster
   namespace: default
 spec:
-  mgmtIfname: eth0
   fabricType: tcp
   enableNodeAffinity: false
+  ...
   warningThreshold:
     capacity: 80
     provisionedCapacity: 10

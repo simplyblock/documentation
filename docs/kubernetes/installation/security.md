@@ -45,7 +45,7 @@ tls:
   mutual_enabled: true
   provider: cert-manager
   cert-manager:
-    issuer: my-cluster-issuer
+    cluster-issuer: my-cluster-issuer
 ```
 
 Apply the values during the operator installation (see [Install Simplyblock Operator](k8s-control-plane.md)):
@@ -58,7 +58,7 @@ helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
     --set tls.enabled=true \
     --set tls.mutual_enabled=true \
     --set tls.provider=cert-manager \
-    --set tls.cert-manager.issuer=my-cluster-issuer
+    --set tls.cert-manager.cluster-issuer=my-cluster-issuer
 ```
 
 Replace `my-cluster-issuer` with the name of the `ClusterIssuer` the operator should use to obtain its certificates.
@@ -187,7 +187,7 @@ $CLI secrets enable -version=1 kv
 
 ### Point the StorageCluster to Vault
 
-Set `spec.hashicorpVaultSettings.base_url` on the `StorageCluster` resource:
+Set `spec.hashicorpVaultSettings.baseURL` on the `StorageCluster` resource:
 
 ```yaml title="StorageCluster with external KMS"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -197,11 +197,10 @@ metadata:
   namespace: simplyblock
 spec:
   clusterName: production
-  mgmtIfname: eth0
   fabricType: tcp
-  haType: ha
+  ...
   hashicorpVaultSettings:
-    base_url: "https://vault.vault:8200/"
+    baseURL: "https://vault.vault:8200/"
 ```
 
 This setting is automatically picked up by the operator during the next reconcilation cycle. From that point on, volume
