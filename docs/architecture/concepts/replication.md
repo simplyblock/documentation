@@ -5,9 +5,9 @@ weight: 30800
 ---
 
 Simplyblock supports asynchronous replication between clusters for multi-site disaster recovery and data
-availability. Replication ensures that snapshots of volumes on a source cluster are continuously transferred to a
-remote target cluster, enabling recovery from site-level failures with automatic failover detection and controlled
-failback.
+availability. Snapshots of the volumes on a source cluster are transferred continuously to a remote target cluster.
+After a site-level failure, the volumes are switched over to the target, and the switch is reversed once the source
+cluster has been recovered.
 
 ## Snapshot Replication
 
@@ -21,12 +21,12 @@ Key characteristics:
   seconds).
 - **Incremental:** Snapshots are chained on the target. Each replicated snapshot references its predecessor, enabling
   efficient copy-on-write storage.
-- **Pool or Volume Scope:** Replication can be enabled for specific volumes. All volumes with replication enabled in a
-  cluster are managed by a single replication relationship.
-- **Per-Volume Tracking:** The operator tracks replication status per volume, including last replicated snapshot,
-  replication count, and timestamps.
+- **Per-Volume Scope:** Replication is enabled per volume. Volumes of the same cluster can replicate to different
+  target clusters, and under different schedules.
+- **Per-Volume Tracking:** The replication state of every volume is tracked separately, including the timestamp of its
+  last replicated snapshot and the direction of its relationship.
 - **Automatic Task Management:** Each replication cycle creates a background task that handles the data transfer
-  asynchronously. The operator waits for the previous task to complete before triggering the next cycle.
+  asynchronously. The next cycle is only triggered once the previous task has completed.
 
 Snapshot replication is suitable for disaster recovery scenarios where a recovery point objective (RPO) of minutes is
 acceptable. It can also be used for local and global CDN-like data distribution processes or for the site migration of
@@ -34,15 +34,30 @@ clusters.
 
 !!! info
     Basic remote snapshot replication is available on any platform via CLI/API, but full asynchronous replication
-    with fail-over and fail-back is only available on Kubernetes.
+    with failover and failback is only available on Kubernetes.
+
+## Replication Relationships
+
+A replication relationship is described by three layers, and each of them is configured separately.
+
+- **The cluster pair** names the source and the target cluster. It provisions the replication target on the backend
+  and is reusable, so several schedules can replicate between the same two clusters.
+- **The policy** carries the cadence, the snapshot retention, and the mode of a pair. A `failover` policy keeps the
+  target a read-only standby for disaster recovery, while a `migration` policy prepares a planned cutover to the
+  target cluster.
+- **The slot** exists once per replicated volume. It holds the live state of that volume and the direction of its
+  relationship, which states whether the local cluster currently serves the volume or holds the replica.
+
+A volume is enrolled by naming a policy, either for a whole storage class or for a single volume. Both clusters have
+to be attached to the same control plane, since the relationship is resolved against the clusters it knows.
 
 ## Replication Architecture
 
 The replication system involves three components:
 
-1. **Simplyblock Operator** ([Simplyblock Operator](https://github.com/simplyblock/simplyblock-manager){:target="_blank" rel="noopener"}): A Kubernetes
-   operator that watches the `SnapshotReplication` CRD and orchestrates replication cycles. It detects
-   failover conditions and manages the failback process.
+1. **Simplyblock Operator** ([Simplyblock Operator](https://github.com/simplyblock/simplyblock-operator){:target="_blank" rel="noopener"}): A Kubernetes
+   operator that reconciles the replication resources into control plane calls. It attaches and detaches volumes,
+   tracks their state, and carries out the failover and failback operations that are requested of it.
 
 2. **Control Plane** (sbcli): The simplyblock management API handles the actual snapshot creation, data transfer via
    NVMe-oF connections, and snapshot chain management on both source and target clusters.
@@ -52,17 +67,13 @@ The replication system involves three components:
 
 ## Failover
 
-Failover is triggered **automatically** when the operator detects that the source cluster is in a failure state:
+Failover is never started by the operator on its own. Cluster state alone does not distinguish a lost site from a
+transient outage, so the switch is requested explicitly. A request covers a single volume, every volume of one policy,
+or every volume replicating to one target cluster.
 
-- The source cluster status is `suspended`, **or**
-- All storage nodes in the source cluster are `unreachable`.
-
-When both conditions are met, the operator initiates a one-time volume switch (`replicate_lvol`) for each
-replicated volume, effectively providing access to the full volume on the target cluster via new NVMe-oF paths.
-The RPO is based on the latest completed snapshot replication.
-The target volumes become primary and begin serving I/O.
-
-No manual action is required to trigger failover. The conditions are detected by the operator, which acts automatically.
+The request results in a one-time volume switch for each affected volume, which provides access to the full volume on
+the target cluster via new NVMe-oF paths. The target volumes become primary and begin serving I/O. The RPO is based on
+the latest completed snapshot replication.
 
 !!! warning
     After failover, any data written to the source cluster since the last successful snapshot replication will not be
@@ -76,31 +87,23 @@ any other site by setting up the replication path toward this new cluster. This 
 as a new replication.
 
 Failback refers to the option to replicate the delta accumulated in the target cluster back to the source in case the
-source cluster can be recovered at origin (e.g., after temporary outage or maintenance action).
+source cluster can be recovered at origin (e.g., after temporary outage or maintenance action). Like a failover, it is
+requested explicitly, and the volumes it covers are selected by the scope of the request.
 
-Failback is triggered **manually** by setting `action: failback` on the `SnapshotReplication` CRD after the
-source cluster has been restored.
+Failback runs in two phases per volume:
 
-The failback process for each volume:
-
-1. **Trigger replication on target:** Create a snapshot on the target and replicate it back to the source to capture
-   changes made during failover.
-2. **Wait for completion:** Poll until the replication task finishes.
-3. **Suspend target volume:** Freeze I/O on the target to prevent further changes.
-4. **Trigger final replication:** Capture and transfer the last delta since the previous replication.
-5. **Wait for completion:** Ensure all data is synchronized.
-6. **Delete target volume:** Remove the failover copy from the target cluster.
-7. **Resume on source:** Notify the source cluster to resume serving the volume.
-
-The failback process supports filtering volumes using `includeVolumeIDs` and `excludeVolumeIDs` for selective failback.
+1. **Reverse replication:** A snapshot is taken on the target and replicated back to the source, transferring the bulk
+   of the changes that accumulated while the target was serving I/O.
+2. **Commit:** The volume is frozen, the remaining delta is transferred, and the volume is handed back to the source
+   cluster, which resumes serving it as primary.
 
 !!! note
-    The two-phase replication (steps 1 and 4) minimizes the I/O freeze window. The first replication transfers the bulk
-    of changes while the target is still active. The second replication only needs to transfer the small delta
-    accumulated during the first transfer.
+    The two phases minimize the I/O freeze window. The first phase transfers the bulk of the changes while the target
+    is still active. The second phase only needs to transfer the small delta accumulated during the first transfer.
 
 ## Kubernetes Integration
 
-In Kubernetes environments, replication is managed through the `SnapshotReplication` CRD. For Kubernetes
-deployment and configuration details, see
-[Kubernetes Helm Chart Parameters](../../reference/kubernetes/index.md).
+On Kubernetes, every layer of a replication relationship is a custom resource, and a failover or a failback is
+requested by creating a one-shot operation resource. For those resources, their fields, and the annotation that
+enrolls a volume, see
+[Asynchronous Replication](../../kubernetes/operations/asynchronous-replication.md).

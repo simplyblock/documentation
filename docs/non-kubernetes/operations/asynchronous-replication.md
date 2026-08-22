@@ -14,7 +14,7 @@ and transferring them to the target cluster. On top of this mechanism, two workf
   without a disconnect.
 
 For the architecture background, see [Replication Concepts](../../architecture/concepts/replication.md). For
-Kubernetes environments, where replication is managed through the `SnapshotReplication` resource, see
+Kubernetes environments, where replication is declared through custom resources, see
 [Asynchronous Replication on Kubernetes](../../kubernetes/operations/asynchronous-replication.md).
 
 ## Prerequisites
