@@ -109,10 +109,7 @@ For details, see [Securing the Control Plane](../../kubernetes/installation/secu
 | `storagenode.daemonsets[1].tolerations.value`    | Sets the value of tolerations for the restart storage node.                                 | `<empty>`                             |
 | `storagenode.create`                             | Specifies whether to create storage node on Kubernetes worker node.                         | `false`                               |
 | `storagenode.ifname`                             | Sets the default interface to be used for binding the storage node to host interface.       | `eth0`                                |
-| `storagenode.maxLogicalVolumes`                  | Sets the default maximum number of logical volumes per storage node.                        | `10`                                  |
 | `storagenode.maxSnapshots`                       | Sets the default maximum number of snapshot per storage node.                               | `10`                                  |
-| `storagenode.maxSize`                            | Sets the max provisioning size of all storage nodes.                                        | `<empty>`                             |
-| `storagenode.numPartitions`                      | Sets the number of partitions to create per device.                                         | `1`                                   |
 | `storagenode.numDataChunks`                      | Sets default NDCS value used by storage-node automation.                                    | `1`                                   |
 | `storagenode.numParityChunks`                    | Sets default NPCS value used by storage-node automation.                                    | `1`                                   |
 | `storagenode.isolateCores`                       | Enables automatic core isolation.                                                           | `false`                               |
@@ -126,7 +123,6 @@ For details, see [Securing the Control Plane](../../kubernetes/installation/secu
 | `storagenode.format4k`                           | Enables 4K-format handling during storage-node setup.                                       | `false`                               |
 | `storagenode.socketsToUse`                       | Sets the list of sockets to use.                                                            | `<empty>`                             |
 | `storagenode.nodesPerSocket`                     | Sets the number of nodes to use per socket.                                                 | `<empty>`                             |
-| `storagenode.coresPercentage`                    | Sets the percentage of total cores (vCPUs) available to simplyblock storage node services.  | `<empty>`                             |
 | `storagenode.ubuntuHost`                         | Set to true if the worker node runs Ubuntu and needs the nvme-tcp kernel module installed.  | `false`                               |
 | `storagenode.enableCpuTopology`                  | Enables CPU topology configuration on storage nodes.                                        | `false`                               |
 | `storagenode.enableDevicePlugin`                 | Enables NUMA resource device plugin deployment.                                             | `true`                                |

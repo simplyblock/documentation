@@ -24,7 +24,10 @@ Package v1alpha1 contains API Schema definitions for the simplyblock v1alpha1 AP
 - [BackupPolicy](#backuppolicy)
 - [BackupRestore](#backuprestore)
 - [ControlPlane](#controlplane)
-- [SnapshotReplication](#snapshotreplication)
+- [ReplicationOps](#replicationops)
+- [ReplicationPair](#replicationpair)
+- [ReplicationPolicy](#replicationpolicy)
+- [ReplicationSlot](#replicationslot)
 - [StorageBackup](#storagebackup)
 - [StorageCluster](#storagecluster)
 - [StorageClusterOps](#storageclusterops)
@@ -361,7 +364,6 @@ status:
   pvcName: string
   pvcNamespace: string
   sourceClusterUUID: string
-  sourceSwitchedAt: Time
   startedAt: Time
   completedAt: Time
 ```
@@ -436,7 +438,6 @@ pvName: string
 pvcName: string
 pvcNamespace: string
 sourceClusterUUID: string
-sourceSwitchedAt: Time
 startedAt: Time
 completedAt: Time
 ```
@@ -455,8 +456,7 @@ completedAt: Time
 | `pvName` _string_ | PVName is the name of the PersistentVolume created by the controller. |  |  |
 | `pvcName` _string_ | PVCName is the name of the PersistentVolumeClaim created from pvcTemplate. |  |  |
 | `pvcNamespace` _string_ | PVCNamespace is the namespace of the created PVC. |  |  |
-| `sourceClusterUUID` _string_ | SourceClusterUUID is the UUID of the cluster that originally created the backup.<br />Copied from the referenced StorageBackup's status.sourceClusterUUID.<br />When non-empty, the controller performs source-switch before and after the restore. |  |  |
-| `sourceSwitchedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | SourceSwitchedAt records when the target cluster was switched to read from the<br />source cluster's S3 bucket. Cleared once source-switch local completes. |  |  |
+| `sourceClusterUUID` _string_ | SourceClusterUUID is the UUID of the cluster that originally created the backup.<br />Copied from the referenced StorageBackup's status.sourceClusterUUID. When non-empty<br />and different from ClusterUUID, the controller resolves that cluster's backup<br />credentials and sends them with the restore request, since the backup's bucket may<br />not be this cluster's own. |  |  |
 | `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the backend restore task was accepted. |  |  |
 | `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the PVC became bound. |  |  |
 
@@ -623,12 +623,14 @@ _Example:_
 ```yaml
 enabled: boolean
 interval: Duration
+minMoves: integer
 ```
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `enabled` _boolean_ | Enabled activates automatic post-migration data realignment for this cluster.<br />Defaults to true. |  | Optional: \{\} <br /> |
-| `interval` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#duration-v1-meta)_ | Interval is how often the operator checks whether a realignment is pending<br />(i.e. at least one volume has moved since the last successful realignment) and,<br />if so, triggers it. Explicit triggers (see the<br />simplyblock.io/trigger-realignment annotation) bypass this spacing. Defaults to<br />10m. |  | Optional: \{\} <br /> |
+| `interval` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#duration-v1-meta)_ | Interval is how often the operator checks whether a realignment is pending<br />(i.e. at least one volume has moved since the last successful realignment) and,<br />if so, triggers it. Explicit triggers (see the<br />simplyblock.io/trigger-realignment annotation) bypass this spacing. Defaults to<br />10m.<br />Note that this is a floor on the spacing between realignment *requests*, not a<br />ceiling on how long one takes: a realignment blocks all volume migrations for as<br />long as the control plane needs, which on a busy cluster has been measured at<br />tens of minutes. An interval shorter than that means the next realignment is<br />requested as soon as the previous one finishes and any volume has moved, which is<br />what MinMoves exists to damp. |  | Optional: \{\} <br /> |
+| `minMoves` _integer_ | MinMoves is how many volume moves must accumulate before a realignment is<br />triggered. Defaults to 1: every completed migration schedules a realignment.<br />Raise it to batch. Because the control plane refuses new migrations while a<br />realignment runs, a value of 1 makes the two alternate — one migration completes,<br />a realignment follows and blocks migrations until it is done. On a cluster where<br />realignment takes tens of minutes that is most of the available time, so a run<br />that migrates continuously spends the majority of it waiting. A higher value<br />trades realignment promptness (data structures stay unaligned for longer, so<br />fault-tolerance and node-affinity guarantees are restored later) for migration<br />throughput.<br />Explicit triggers (the simplyblock.io/trigger-realignment annotation) ignore this<br />threshold, so a drain or node removal still realigns immediately. |  | Minimum: 1 <br />Optional: \{\} <br /> |
 
 
 #### DrainOpsSpec
@@ -1069,35 +1071,14 @@ nodeMetrics:
 | `nodeMetrics` _[NodeLoadMetrics](#nodeloadmetrics) array_ |  |  |  |
 
 
-#### ReplicationError
+#### ReplicationOps
 
 
 
-ReplicationError stores timestamped error messages
-
-
-
-_Appears in:_
-- [VolumeReplicationStatus](#volumereplicationstatus)
-
-_Example:_
-
-```yaml
-timestamp: Time
-message: string
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `timestamp` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ |  |  |  |
-| `message` _string_ |  |  |  |
-
-
-#### SnapshotReplication
-
-
-
-SnapshotReplication is the Schema for the snapshotreplications API
+ReplicationOps is a one-shot user-driven CR for imperative replication operations:
+failover (planned or unplanned) and failback. The operator drives the backend calls
+to completion and records per-volume outcomes in status.results. Only one ReplicationOps
+may be active per ReplicationPolicy at a time, enforced via ReplicationPolicy.status.activeOpsRef.
 
 
 
@@ -1107,35 +1088,260 @@ _Example:_
 
 ```yaml
 apiVersion: storage.simplyblock.io/v1alpha1
-kind: SnapshotReplication
+kind: ReplicationOps
+metadata:
+  name: string
+spec:
+  action: string
+  scope: string
+  ref: string
+  sourceClusterID: string
+status:
+  phase: string
+  subphase: string
+  message: string
+  startedAt: Time
+  completedAt: Time
+  results:
+    - slotRef: string
+      status: string
+      detail: string
+      targetLvolID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `ReplicationOps` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationOpsSpec](#replicationopsspec)_ |  |  |  |
+| `status` _[ReplicationOpsStatus](#replicationopsstatus)_ |  |  |  |
+
+
+
+
+#### ReplicationOpsResult
+
+
+
+ReplicationOpsResult holds the outcome for a single volume in a ReplicationOps.
+
+
+
+_Appears in:_
+- [ReplicationOpsStatus](#replicationopsstatus)
+
+_Example:_
+
+```yaml
+slotRef: string
+status: string
+detail: string
+targetLvolID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `slotRef` _string_ | SlotRef is the name of the ReplicationSlot CR. |  |  |
+| `status` _string_ | Status is the outcome for this volume. |  | Enum: [succeeded skipped failed] <br /> |
+| `detail` _string_ | Detail is an optional human-readable note (error message or skip reason). |  | Optional: \{\} <br /> |
+| `targetLvolID` _string_ | TargetLvolID is the UUID of the volume on the target cluster (failover only). |  | Optional: \{\} <br /> |
+
+
+
+
+#### ReplicationOpsSpec
+
+
+
+ReplicationOpsSpec defines the desired state of a ReplicationOps.
+
+
+
+_Appears in:_
+- [ReplicationOps](#replicationops)
+
+_Example:_
+
+```yaml
+action: string
+scope: string
+ref: string
+sourceClusterID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `action` _string_ | Action is the operation to perform. Immutable. |  | Enum: [failover failback] <br />Required: \{\} <br /> |
+| `scope` _string_ | Scope controls which volumes are affected. Immutable.<br />target: all volumes across every policy that uses the named ReplicationPair.<br />policy: all volumes managed by the named ReplicationPolicy CR.<br />volume: a single ReplicationSlot (unplanned per-volume failover). |  | Enum: [target policy volume] <br />Required: \{\} <br /> |
+| `ref` _string_ | Ref is the name of the resource identified by Scope:<br />a ReplicationPair name for scope=target,<br />a ReplicationPolicy name for scope=policy,<br />or a ReplicationSlot name for scope=volume. Immutable. |  | Required: \{\} <br /> |
+| `sourceClusterID` _string_ | SourceClusterID is used for failback only. Omit to recover to the original source. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationOpsStatus
+
+
+
+ReplicationOpsStatus holds the observed state of a ReplicationOps.
+
+
+
+_Appears in:_
+- [ReplicationOps](#replicationops)
+
+_Example:_
+
+```yaml
+phase: string
+subphase: string
+message: string
+startedAt: Time
+completedAt: Time
+results:
+  - slotRef: string
+    status: string
+    detail: string
+    targetLvolID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phase` _string_ | Phase is the current lifecycle phase of this operation. |  | Enum: [Pending Running Succeeded Failed] <br />Optional: \{\} <br /> |
+| `subphase` _string_ | Subphase describes what the operation is currently doing within the phase<br />(e.g. "TriggeringFailover", "UpdatingSlotStatuses", "ReleasingLock"). |  | Optional: \{\} <br /> |
+| `message` _string_ | Message is a human-readable description of the current phase. |  | Optional: \{\} <br /> |
+| `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the operation began. |  | Optional: \{\} <br /> |
+| `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the operation finished (successfully or not). |  | Optional: \{\} <br /> |
+| `results` _[ReplicationOpsResult](#replicationopsresult) array_ | Results holds a per-volume summary of the operation outcome. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationPair
+
+
+
+ReplicationPair defines the source and target clusters for a replication relationship.
+It is reusable configuration — multiple ReplicationPolicies may reference the same pair
+to replicate volumes between the same two clusters with different schedules or retention.
+The operator ensures the corresponding backend ReplicationTarget exists and stores its ID
+in status.backendTargetID for use by ReplicationPolicy resources.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationPair
 metadata:
   name: string
 spec:
   sourceCluster: string
   targetCluster: string
-  targetPool: string
-  sourcePool: string
-  timeout: integer
-  interval: integer
-  action: string
-  includeVolumeIDs:
-    - string
-  excludeVolumeIDs:
-    - string
-  volumeIDs:
-    - string
 status:
-  configured: boolean
-  observedFailbackGeneration: integer
-  volumes:
-    - volumeID: string
-      phase: string
-      lastSnapshotID: string
-      lastReplicationTime: Time
-      replicatedCount: integer
-      errors:
-        - timestamp: Time
-          message: string
+  ready: boolean
+  backendTargetID: string
+  message: string
+  conditions:
+    - Condition
+  activeOpsRef: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `ReplicationPair` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationPairSpec](#replicationpairspec)_ |  |  |  |
+| `status` _[ReplicationPairStatus](#replicationpairstatus)_ |  |  |  |
+
+
+#### ReplicationPairSpec
+
+
+
+ReplicationPairSpec defines the source and target clusters for a replication relationship.
+
+
+
+_Appears in:_
+- [ReplicationPair](#replicationpair)
+
+_Example:_
+
+```yaml
+sourceCluster: string
+targetCluster: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `sourceCluster` _string_ | SourceCluster is the name of the local StorageCluster (the replication source). |  | Required: \{\} <br /> |
+| `targetCluster` _string_ | TargetCluster is the name or UUID of the remote cluster (the replication target).<br />Immutable after creation. |  | Required: \{\} <br /> |
+
+
+#### ReplicationPairStatus
+
+
+
+ReplicationPairStatus holds the observed state of a ReplicationPair.
+
+
+
+_Appears in:_
+- [ReplicationPair](#replicationpair)
+
+_Example:_
+
+```yaml
+ready: boolean
+backendTargetID: string
+message: string
+conditions:
+  - Condition
+activeOpsRef: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ready` _boolean_ | Ready is true when the backend ReplicationTarget has been created and is available. |  | Optional: \{\} <br /> |
+| `backendTargetID` _string_ | BackendTargetID is the UUID of the backend ReplicationTarget resource. |  | Optional: \{\} <br /> |
+| `message` _string_ | Message provides a human-readable description of the current state. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions holds standard Kubernetes condition types. |  | Optional: \{\} <br /> |
+| `activeOpsRef` _string_ | ActiveOpsRef is the name of the ReplicationOps currently holding the<br />target-scope lock on this pair. Only one scope=target ReplicationOps may<br />be active per pair at a time. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationPolicy
+
+
+
+ReplicationPolicy defines the replication schedule and retention for volumes replicated
+between the clusters defined by a ReplicationPair.
+A StorageClass or PVC references a policy via the storage.simplyblock.io/replication-policy
+annotation. The operator automatically creates one ReplicationSlot per bound PVC.
+Deletion is blocked while any ReplicationSlots reference this policy.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationPolicy
+metadata:
+  name: string
+spec:
+  pairRef: string
+  mode: string
+  interval: string
+  snapshotRetention: integer
+status:
+  ready: boolean
+  backendPolicyID: string
+  slotCount: integer
+  activeOpsRef: string
   conditions:
     - Condition
 ```
@@ -1143,90 +1349,183 @@ status:
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
-| `kind` _string_ | `SnapshotReplication` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  | Optional: \{\} <br /> |
-| `spec` _[SnapshotReplicationSpec](#snapshotreplicationspec)_ | spec defines the desired state of SnapshotReplication |  | Required: \{\} <br /> |
-| `status` _[SnapshotReplicationStatus](#snapshotreplicationstatus)_ | status defines the observed state of SnapshotReplication |  | Optional: \{\} <br /> |
+| `kind` _string_ | `ReplicationPolicy` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationPolicySpec](#replicationpolicyspec)_ |  |  |  |
+| `status` _[ReplicationPolicyStatus](#replicationpolicystatus)_ |  |  |  |
 
 
-#### SnapshotReplicationSpec
+#### ReplicationPolicySpec
 
 
 
-SnapshotReplicationSpec defines the desired state of SnapshotReplication
+ReplicationPolicySpec defines the desired replication schedule and retention.
 
 
 
 _Appears in:_
-- [SnapshotReplication](#snapshotreplication)
+- [ReplicationPolicy](#replicationpolicy)
 
 _Example:_
 
 ```yaml
-sourceCluster: string
-targetCluster: string
-targetPool: string
-sourcePool: string
-timeout: integer
-interval: integer
-action: string
-includeVolumeIDs:
-  - string
-excludeVolumeIDs:
-  - string
-volumeIDs:
-  - string
+pairRef: string
+mode: string
+interval: string
+snapshotRetention: integer
 ```
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `sourceCluster` _string_ | Source cluster for the snapshots |  |  |
-| `targetCluster` _string_ | Target cluster for replication |  |  |
-| `targetPool` _string_ | Target cluster pool for replication |  |  |
-| `sourcePool` _string_ | required for failback to a fresh source cluster |  |  |
-| `timeout` _integer_ | snapshot replication timeout |  |  |
-| `interval` _integer_ | snapshot replication interval in seconds (default: 300sec) |  |  |
-| `action` _string_ |  |  | Enum: [failback] <br /> |
-| `includeVolumeIDs` _string array_ | Optional: only these volumes are included in failback.<br />If empty, all volumes are candidates unless excluded below. |  |  |
-| `excludeVolumeIDs` _string array_ | Optional: volumes to exclude from failback. |  |  |
-| `volumeIDs` _string array_ | Optional: list of volumes to replicate. Empty means all volumes |  |  |
+| `pairRef` _string_ | PairRef is the name of the ReplicationPair that defines the source and target clusters.<br />Multiple ReplicationPolicies may reference the same pair with different schedules. |  | Required: \{\} <br /> |
+| `mode` _string_ | Mode controls replication semantics.<br />failover: target is a DR standby; volumes are read-only on the target.<br />migration: planned online cutover to the target cluster. | failover | Enum: [failover migration] <br />Optional: \{\} <br /> |
+| `interval` _string_ | Interval is how often a replication snapshot is taken (e.g. "5m", "1h"). | 5m | Optional: \{\} <br /> |
+| `snapshotRetention` _integer_ | SnapshotRetention is the minimum number of snapshots to retain on the target. | 3 | Minimum: 2 <br />Optional: \{\} <br /> |
 
 
-#### SnapshotReplicationStatus
+#### ReplicationPolicyStatus
 
 
 
-SnapshotReplicationStatus defines the observed state of SnapshotReplication.
+ReplicationPolicyStatus holds the observed state of a ReplicationPolicy.
 
 
 
 _Appears in:_
-- [SnapshotReplication](#snapshotreplication)
+- [ReplicationPolicy](#replicationpolicy)
 
 _Example:_
 
 ```yaml
-configured: boolean
-observedFailbackGeneration: integer
-volumes:
-  - volumeID: string
-    phase: string
-    lastSnapshotID: string
-    lastReplicationTime: Time
-    replicatedCount: integer
-    errors:
-      - timestamp: Time
-        message: string
+ready: boolean
+backendPolicyID: string
+slotCount: integer
+activeOpsRef: string
 conditions:
   - Condition
 ```
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `configured` _boolean_ |  |  |  |
-| `observedFailbackGeneration` _integer_ | The metadata.generation value for which failback was last processed. |  |  |
-| `volumes` _[VolumeReplicationStatus](#volumereplicationstatus) array_ | Per-volume replication status |  |  |
-| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions provides human-readable status conditions for kubectl get output. |  |  |
+| `ready` _boolean_ | Ready is true when the backend ReplicationPolicy has been created. |  | Optional: \{\} <br /> |
+| `backendPolicyID` _string_ | BackendPolicyID is the UUID of the backend ReplicationPolicy resource. |  | Optional: \{\} <br /> |
+| `slotCount` _integer_ | SlotCount is the number of ReplicationSlot CRs currently managed by this policy. |  | Optional: \{\} <br /> |
+| `activeOpsRef` _string_ | ActiveOpsRef is the name of the currently running ReplicationOps CR.<br />Empty when no operation is in progress. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions holds standard Kubernetes condition types. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationSlot
+
+
+
+ReplicationSlot tracks the live replication state for a single PVC.
+One ReplicationSlot is created per PVC by the PVCAnnotationWatcher controller when
+a PVC references a ReplicationPolicy via annotation. It is owned by its PVC, so
+deleting the PVC cascades deletion and triggers a backend detach via the slot finalizer.
+The ReplicationSlot reconciler drives all backend calls: attach, monitor, cutover,
+failover, and detach.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationSlot
+metadata:
+  name: string
+spec:
+  policyRef: string
+  pvcRef: string
+  volumeID: string
+status:
+  state: string
+  direction: string
+  sourceLvolID: string
+  targetLvolID: string
+  targetNQN: string
+  lastReplicatedAt: Time
+  message: string
+  conditions:
+    - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `ReplicationSlot` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationSlotSpec](#replicationslotspec)_ |  |  |  |
+| `status` _[ReplicationSlotStatus](#replicationslotstatus)_ |  |  |  |
+
+
+
+
+#### ReplicationSlotSpec
+
+
+
+ReplicationSlotSpec defines the identity of a per-volume replication slot.
+
+
+
+_Appears in:_
+- [ReplicationSlot](#replicationslot)
+
+_Example:_
+
+```yaml
+policyRef: string
+pvcRef: string
+volumeID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `policyRef` _string_ | PolicyRef is the name of the ReplicationPolicy governing this slot. Immutable. |  | Required: \{\} <br /> |
+| `pvcRef` _string_ | PVCRef is the name of the PVC being replicated. Immutable. |  | Required: \{\} <br /> |
+| `volumeID` _string_ | VolumeID is the backend lvol UUID of the source volume. Immutable.<br />Format: "<clusterUUID>:<poolUUID>:<volumeUUID>" |  | Required: \{\} <br /> |
+
+
+
+
+#### ReplicationSlotStatus
+
+
+
+ReplicationSlotStatus holds the observed state of a ReplicationSlot.
+
+
+
+_Appears in:_
+- [ReplicationSlot](#replicationslot)
+
+_Example:_
+
+```yaml
+state: string
+direction: string
+sourceLvolID: string
+targetLvolID: string
+targetNQN: string
+lastReplicatedAt: Time
+message: string
+conditions:
+  - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `state` _string_ | State is the current replication state for this slot. |  | Enum: [attaching replicating cutover_pending cutover_done failed_over detaching error] <br />Optional: \{\} <br /> |
+| `direction` _string_ | Direction is which side of the replication relationship this cluster holds. |  | Enum: [source target] <br />Optional: \{\} <br /> |
+| `sourceLvolID` _string_ | SourceLvolID is the UUID of the source volume on the source cluster. |  | Optional: \{\} <br /> |
+| `targetLvolID` _string_ | TargetLvolID is the UUID of the replicated volume on the target cluster. |  | Optional: \{\} <br /> |
+| `targetNQN` _string_ | TargetNQN is the NVMe NQN on the target cluster (populated after failover). |  | Optional: \{\} <br /> |
+| `lastReplicatedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastReplicatedAt is the timestamp of the last successful replication snapshot. |  | Optional: \{\} <br /> |
+| `message` _string_ | Message provides a human-readable description of the current state. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions holds standard Kubernetes condition types. |  | Optional: \{\} <br /> |
 
 
 #### StorageBackup
@@ -1431,7 +1730,7 @@ filesystem: string
 | `fabric` _string_ | Fabric is the transport fabric (e.g. tcp). | tcp |  |
 | `maxNamespacePerSubsys` _string_ | MaxNamespacePerSubsys limits namespaces per NVMf subsystem. | 1 |  |
 | `tune2fsReservedBlocks` _string_ | Tune2fsReservedBlocks sets the ext4 reserved-blocks percentage. Left unset, the node<br />plugin skips tune2fs entirely and mkfs.ext4's own default reserve applies, matching a<br />StorageClass that omits tune2fs_reserved_blocks. A default of "0" here would not be a<br />no-op: it actively runs `tune2fs -m 0` on every volume, since the node plugin only skips<br />the call when the parameter is empty (see stageVolume in the CSI driver), not when it's<br />"0". |  |  |
-| `filesystem` _string_ | Filesystem is the filesystem used to format logical volumes of this pool. | ext4 | Enum: [ext4 xfs] <br /> |
+| `filesystem` _string_ | Filesystem is the filesystem used to format logical volumes of this pool. | xfs | Enum: [ext4 xfs] <br /> |
 
 
 #### StorageCluster
@@ -1456,27 +1755,21 @@ spec:
   stripe:
     dataChunks: integer
     parityChunks: integer
-  haType: string
-  isSingleNode: boolean
-  strictNodeAntiAffinity: boolean
-  qpairCount: integer
-  blockSize: integer
-  pageSizeInBlocks: integer
-  maxQueueSize: integer
-  inflightIOThreshold: integer
   fabricType: string
   clientDataIfname: string
-  maxFaultTolerance: integer
   nvmfBasePort: integer
   rpcBasePort: integer
   snodeApiPort: integer
+  maxConcurrentWorkerRestarts: integer
+  maxSubsystemCount: integer
+  maxHugePagesSize: string
+  vcpuCount: integer
   warningThreshold:
     capacity: integer
     provisionedCapacity: integer
   criticalThreshold:
     capacity: integer
     provisionedCapacity: integer
-  clientQpairCount: integer
   backup:
     localEndpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
     snapshotBackups: boolean
@@ -1493,6 +1786,7 @@ spec:
     dataRealignment:
       enabled: boolean
       interval: Duration
+      minMoves: integer
   volumeAutoPlacement:
     enabled: boolean
     migrationEnabled: boolean
@@ -1519,13 +1813,15 @@ status:
   nqn: string
   status: string
   rebalancing: boolean
-  pendingDataRealignment: boolean
+  volumeMoveGeneration: integer
+  realignedGeneration: integer
   lastDataRealignmentAt: Time
   erasureCodingScheme: string
   lastUpdated: Time
   created: Time
   configured: boolean
   maxFaultTolerance: integer
+  maxConcurrentWorkerRestarts: integer
   activeOpsRef: string
   rebalancingMetrics:
     avgDeviationPct: float
@@ -1703,27 +1999,21 @@ enableNodeAffinity: boolean
 stripe:
   dataChunks: integer
   parityChunks: integer
-haType: string
-isSingleNode: boolean
-strictNodeAntiAffinity: boolean
-qpairCount: integer
-blockSize: integer
-pageSizeInBlocks: integer
-maxQueueSize: integer
-inflightIOThreshold: integer
 fabricType: string
 clientDataIfname: string
-maxFaultTolerance: integer
 nvmfBasePort: integer
 rpcBasePort: integer
 snodeApiPort: integer
+maxConcurrentWorkerRestarts: integer
+maxSubsystemCount: integer
+maxHugePagesSize: string
+vcpuCount: integer
 warningThreshold:
   capacity: integer
   provisionedCapacity: integer
 criticalThreshold:
   capacity: integer
   provisionedCapacity: integer
-clientQpairCount: integer
 backup:
   localEndpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   snapshotBackups: boolean
@@ -1740,6 +2030,7 @@ volumeMigrationSettings:
   dataRealignment:
     enabled: boolean
     interval: Duration
+    minMoves: integer
 volumeAutoPlacement:
   enabled: boolean
   migrationEnabled: boolean
@@ -1762,23 +2053,17 @@ enableFailureDomains: boolean
 | --- | --- | --- | --- |
 | `enableNodeAffinity` _boolean_ | EnableNodeAffinity enables node-affinity placement for storage components. |  |  |
 | `stripe` _[StripeSpec](#stripespec)_ | StripeSpec configures erasure-coding data/parity chunk counts. |  |  |
-| `haType` _string_ | HAType defines the backend high-availability mode. |  |  |
-| `isSingleNode` _boolean_ | IsSingleNode enables single-node cluster mode. |  |  |
-| `strictNodeAntiAffinity` _boolean_ | StrictNodeAntiAffinity enforces strict anti-affinity between storage nodes. |  |  |
-| `qpairCount` _integer_ | QpairCount defines the NVMe queue-pair count used by the cluster. |  |  |
-| `blockSize` _integer_ | BlockSize defines the logical block size in bytes. |  |  |
-| `pageSizeInBlocks` _integer_ | PageSizeInBlocks defines page size expressed in blocks. |  |  |
-| `maxQueueSize` _integer_ | MaxQueueSize defines the maximum backend queue size. |  |  |
-| `inflightIOThreshold` _integer_ | InflightIOThreshold defines the inflight I/O threshold. |  |  |
 | `fabricType` _string_ | FabricType defines the storage fabric type. |  |  |
 | `clientDataIfname` _string_ | ClientDataIfname defines the client data network interface. |  |  |
-| `maxFaultTolerance` _integer_ | MaxFaultTolerance defines the maximum tolerated concurrent faults. |  |  |
 | `nvmfBasePort` _integer_ | NvmfBasePort defines the base NVMf service port. |  |  |
 | `rpcBasePort` _integer_ | RpcBasePort defines the base RPC service port. |  |  |
 | `snodeApiPort` _integer_ | SnodeApiPort defines the storage-node API port. |  |  |
+| `maxConcurrentWorkerRestarts` _integer_ | MaxConcurrentWorkerRestarts is the maximum number of Kubernetes worker nodes the operator<br />may drain and restart simultaneously. The effective concurrency applied by the drain<br />coordinator is min(MaxConcurrentWorkerRestarts, MaxFaultTolerance).<br />Defaults to 1 when unset. |  | Minimum: 1 <br />Optional: \{\} <br /> |
+| `maxSubsystemCount` _integer_ | MaxSubsystemCount is the maximum number of NVMe-oF subsystems per storage<br />node. Applies to every storage node in the cluster. Required: it sizes huge<br />pages, and a node that receives no value fails config generation outright<br />rather than falling back to a default. |  | Maximum: 75 <br />Minimum: 10 <br />Required: \{\} <br /> |
+| `maxHugePagesSize` _string_ | MaxHugePagesSize is the maximum allocatable size of huge pages on each<br />storage node (e.g. "100G", "1T"; a bare number is interpreted as GB). It is<br />a floor, not a cap: the effective huge-page allocation is the larger of this<br />value and the minimum the node's device and subsystem count requires. When<br />omitted the computed minimum is used. |  | Optional: \{\} <br /> |
+| `vcpuCount` _integer_ | VCPUCount is the number of vCPUs allocated to SPDK on each storage node.<br />This is an explicit core count, not a percentage. Required: the core layout<br />it produces must match across the cluster, so it is stated rather than left<br />to a per-node heuristic. |  | Minimum: 8 <br />Required: \{\} <br /> |
 | `warningThreshold` _[CapacityThresholdSpec](#capacitythresholdspec)_ | WarningThresholdSpec defines warning-level capacity thresholds. |  |  |
 | `criticalThreshold` _[CapacityThresholdSpec](#capacitythresholdspec)_ | CriticalThresholdSpec defines critical-level capacity thresholds. |  |  |
-| `clientQpairCount` _integer_ | ClientQpairCount defines client-side queue-pair count. |  |  |
 | `backup` _[BackupSpec](#backupspec)_ | Backup specifies the specification for backup to S3 configuration |  |  |
 | `hashicorpVaultSettings` _[HashicorpVaultSettings](#hashicorpvaultsettings)_ | HashicorpVaultSettings configures the Vault endpoint used by the cluster for key storage. |  |  |
 | `volumeMigrationSettings` _[VolumeMigrationSettings](#volumemigrationsettings)_ | VolumeMigrationSettings controls volume migration for this cluster. |  | Optional: \{\} <br /> |
@@ -1809,13 +2094,15 @@ storageNodes: integer
 nqn: string
 status: string
 rebalancing: boolean
-pendingDataRealignment: boolean
+volumeMoveGeneration: integer
+realignedGeneration: integer
 lastDataRealignmentAt: Time
 erasureCodingScheme: string
 lastUpdated: Time
 created: Time
 configured: boolean
 maxFaultTolerance: integer
+maxConcurrentWorkerRestarts: integer
 activeOpsRef: string
 rebalancingMetrics:
   avgDeviationPct: float
@@ -1843,13 +2130,15 @@ rebalancingMetrics:
 | `nqn` _string_ | NQN is the cluster NVM subsystem qualified name. |  |  |
 | `status` _string_ | Status is the backend-reported lifecycle status. |  |  |
 | `rebalancing` _boolean_ | Rebalancing indicates whether cluster rebalancing is currently active. |  |  |
-| `pendingDataRealignment` _boolean_ | PendingDataRealignment indicates that at least one volume has been moved since<br />the last successful control-plane data realignment, so a realignment is due on<br />the next DataRealignment.Interval tick. It is persisted so a pending realignment<br />survives an operator restart, and is cleared once a realignment completes<br />successfully. |  | Optional: \{\} <br /> |
+| `volumeMoveGeneration` _integer_ | VolumeMoveGeneration counts completed volume moves. Every migration that reaches<br />Completed increments it, and nothing else writes it, so it only ever grows. |  | Optional: \{\} <br /> |
+| `realignedGeneration` _integer_ | RealignedGeneration is the VolumeMoveGeneration that the last successfully<br />requested realignment covers. A realignment is outstanding while<br />VolumeMoveGeneration exceeds it.<br />This is recorded from the value read *before* the request is sent, because that<br />is what the realignment can actually account for: a migration completing while<br />the request is in flight raises VolumeMoveGeneration past it and so correctly<br />leaves another realignment outstanding, instead of being swallowed by the one<br />already running. |  | Optional: \{\} <br /> |
 | `lastDataRealignmentAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastDataRealignmentAt is the time of the last successful control-plane data<br />realignment. It is used to space realignments by DataRealignment.Interval and to<br />avoid re-running at the end of an interval when nothing is pending. |  | Optional: \{\} <br /> |
 | `erasureCodingScheme` _string_ | ErasureCodingScheme is the active erasure-coding layout, for example "2x1". |  |  |
 | `lastUpdated` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastUpdated is the last backend update timestamp.<br />FIXME: Unused for now (API update required?) |  |  |
 | `created` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | Created is the backend creation timestamp.<br />FIXME: Unused for now (API update required?) |  |  |
 | `configured` _boolean_ | Configured indicates whether initial cluster setup completed. |  |  |
 | `maxFaultTolerance` _integer_ | MaxFaultTolerance is the backend-reported maximum number of nodes that can<br />be simultaneously offline (failed, drained, or restarted) without violating<br />the cluster's redundancy guarantees. |  |  |
+| `maxConcurrentWorkerRestarts` _integer_ | MaxConcurrentWorkerRestarts is the effective concurrent-restart limit applied<br />by the drain coordinator: min(spec.MaxConcurrentWorkerRestarts, MaxFaultTolerance).<br />Defaults to 1. Exposed here so controllers and tooling can read a single<br />authoritative value without re-computing it. |  | Optional: \{\} <br /> |
 | `activeOpsRef` _string_ | ActiveOpsRef is the name of the currently active ClusterOps on this cluster.<br />Empty when no operation is in progress. |  | Optional: \{\} <br /> |
 | `rebalancingMetrics` _[RebalancingMetrics](#rebalancingmetrics)_ | RebalancingMetrics is updated by the auto-rebalancer each evaluation cycle. |  | Optional: \{\} <br /> |
 
@@ -1880,11 +2169,8 @@ spec:
   nodeIndex: integer
   socketIndex: integer
   overrides:
-    maxSubsystemCount: integer
-    maxSize: string
     spdkImage: string
     spdkProxyImage: string
-    corePercentage: integer
     spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
     journalManager:
       count: integer
@@ -2129,11 +2415,8 @@ _Appears in:_
 _Example:_
 
 ```yaml
-maxSubsystemCount: integer
-maxSize: string
 spdkImage: string
 spdkProxyImage: string
-corePercentage: integer
 spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
 journalManager:
   count: integer
@@ -2156,11 +2439,8 @@ expand: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `maxSubsystemCount` _integer_ | MaxSubsystemCount overrides the maximum number of NVMe-oF subsystems for this node. |  | Optional: \{\} <br /> |
-| `maxSize` _string_ | MaxSize overrides the maximum allocatable size of huge pages for this node. |  | Optional: \{\} <br /> |
 | `spdkImage` _string_ | SpdkImage overrides the SPDK image for this node (e.g. for phased rollouts). |  | Optional: \{\} <br /> |
 | `spdkProxyImage` _string_ | SpdkProxyImage overrides the SPDK proxy image for this node. |  | Optional: \{\} <br /> |
-| `corePercentage` _integer_ | CorePercentage overrides the percentage of cores allocated to SPDK for this node (0-99). |  | Optional: \{\} <br /> |
 | `spdkSystemMemory` _string_ | SpdkSystemMemory overrides the SPDK huge-page memory allocation for this node<br />(e.g. "4G", "512M"). |  | Pattern: `^[0-9]+(G\|GI\|GB\|GiB\|M\|MI\|MB\|MiB\|g\|gi\|gb\|gib\|m\|mi\|mb\|mib)?$` <br />Optional: \{\} <br /> |
 | `journalManager` _[JournalManagerSpec](#journalmanagerspec)_ | JournalManagerSpec overrides journal manager tuning for this node. |  | Optional: \{\} <br /> |
 | `pcieAllowList` _string array_ | PcieAllowList overrides the list of PCI addresses allowed for use on this node. |  | Optional: \{\} <br /> |
@@ -2252,16 +2532,13 @@ metadata:
 spec:
   clusterName: string
   clusterImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
-  maxSubsystemCount: integer
-  maxSize: string
   spdkImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
   spdkProxyImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
   mgmtIfname: string
-  partitions: integer
+  enableJournalDevice: boolean
   journalManager:
     count: integer
     percentPerDevice: integer
-  corePercentage: integer
   pcieAllowList:
     - string
   pcieDenyList:
@@ -2296,11 +2573,8 @@ spec:
   expand: boolean
   nodeConfigs:
     string:
-      maxSubsystemCount: integer
-      maxSize: string
       spdkImage: string
       spdkProxyImage: string
-      corePercentage: integer
       spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
       journalManager:
         count: integer
@@ -2384,16 +2658,13 @@ _Example:_
 ```yaml
 clusterName: string
 clusterImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
-maxSubsystemCount: integer
-maxSize: string
 spdkImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 spdkProxyImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 mgmtIfname: string
-partitions: integer
+enableJournalDevice: boolean
 journalManager:
   count: integer
   percentPerDevice: integer
-corePercentage: integer
 pcieAllowList:
   - string
 pcieDenyList:
@@ -2428,11 +2699,8 @@ nodeFailureDomains:
 expand: boolean
 nodeConfigs:
   string:
-    maxSubsystemCount: integer
-    maxSize: string
     spdkImage: string
     spdkProxyImage: string
-    corePercentage: integer
     spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
     journalManager:
       count: integer
@@ -2457,14 +2725,11 @@ nodeConfigs:
 | --- | --- | --- | --- |
 | `clusterName` _string_ | ClusterName is the target storage cluster name. |  |  |
 | `clusterImage` _string_ | ClusterImage is the container image used for storage-node workloads.<br />Must reference one of the trusted registries (quay.io/simplyblock-io, docker.io/simplyblock, public.ecr.aws/simply-block); digest pinning (@sha256:...) is recommended. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br /> |
-| `maxSubsystemCount` _integer_ | MaxSubsystemCount is the maximum number of NVMe-oF subsystems per node. |  |  |
-| `maxSize` _string_ | MaxSize is the maximum allocatable size of huge pages. |  |  |
 | `spdkImage` _string_ | SpdkImage is the SPDK image reference used by node services.<br />Must reference one of the trusted registries (quay.io/simplyblock-io, docker.io/simplyblock, public.ecr.aws/simply-block); digest pinning (@sha256:...) is recommended. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br /> |
 | `spdkProxyImage` _string_ | SpdkProxyImage is the SPDK proxy image reference used by node services.<br />Must reference one of the trusted registries (quay.io/simplyblock-io, docker.io/simplyblock, public.ecr.aws/simply-block); digest pinning (@sha256:...) is recommended. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br /> |
 | `mgmtIfname` _string_ | MgmtIfname is the management interface name used by storage nodes. |  |  |
-| `partitions` _integer_ | Partitions is the number of partitions created per backend storage device. |  |  |
+| `enableJournalDevice` _boolean_ | EnableJournalDevice dedicates a whole NVMe device to the journal manager<br />instead of carving a journal partition out of every storage device. When<br />true the smallest device on the node becomes the journal device, and the<br />remaining devices are used whole; when false (the default) each device is<br />GPT-partitioned into a journal slice plus a storage slice. |  |  |
 | `journalManager` _[JournalManagerSpec](#journalmanagerspec)_ | JournalManagerSpec configures journal manager behavior. |  |  |
-| `corePercentage` _integer_ | CorePercentage is the percentage of cores to be used for spdk (0-99). |  |  |
 | `pcieAllowList` _string array_ | PcieAllowList is the list of PCI addresses allowed for use. |  |  |
 | `pcieDenyList` _string array_ | PcieDenyList is the list of PCI addresses excluded from use. |  |  |
 | `pcieModel` _string_ | PcieModel filters devices by PCI model. |  |  |
@@ -2580,11 +2845,8 @@ socketId: string
 nodeIndex: integer
 socketIndex: integer
 overrides:
-  maxSubsystemCount: integer
-  maxSize: string
   spdkImage: string
   spdkProxyImage: string
-  corePercentage: integer
   spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
   journalManager:
     count: integer
@@ -3094,6 +3356,34 @@ tasks:
 | `tasks` _[TaskEntry](#taskentry) array_ | Tasks is the currently reported task list for the query scope. |  |  |
 
 
+#### ValidationJob
+
+
+
+ValidationJob is one NVMe path-validation Job and the worker node it runs on.
+The node is a consumer of some volume in the migrated subsystem — the volume named
+in the spec, or one of its siblings sharing the same NVMe subsystem.
+
+
+
+_Appears in:_
+- [VolumeMigrationStatus](#volumemigrationstatus)
+
+_Example:_
+
+```yaml
+node: string
+jobName: string
+succeeded: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `node` _string_ | Node is the Kubernetes node name the Job is pinned to. |  |  |
+| `jobName` _string_ | JobName is the name of the Job object in the VolumeMigration's namespace. |  |  |
+| `succeeded` _boolean_ | Succeeded records that this node's validation passed. It is kept because the<br />Job's own existence is not a reliable record: Jobs are reaped, and re-reading a<br />reaped Job would otherwise look like "never validated" and start it again. |  | Optional: \{\} <br /> |
+
+
 #### VolumeAutoPlacementSettings
 
 
@@ -3174,9 +3464,9 @@ status:
   clusterUUID: string
   volumeUUID: string
   poolUUID: string
+  subsystemNQN: string
   sourceNodeUUID: string
-  snapsTotal: integer
-  snapsMigrated: integer
+  memberCount: integer
   errorMessage: string
   connections:
     - nqn: string
@@ -3188,7 +3478,11 @@ status:
       ctrlLossTmo: integer
       fastIOFailTmo: integer
       keepAliveTmo: integer
-  validationJobName: string
+  validationJobs:
+    - node: string
+      jobName: string
+      succeeded: boolean
+  deferredSince: Time
   startedAt: Time
   completedAt: Time
 ```
@@ -3245,6 +3539,7 @@ rebalancerImage: string
 dataRealignment:
   enabled: boolean
   interval: Duration
+  minMoves: integer
 ```
 
 | Field | Description | Default | Validation |
@@ -3299,9 +3594,9 @@ migrationUUID: string
 clusterUUID: string
 volumeUUID: string
 poolUUID: string
+subsystemNQN: string
 sourceNodeUUID: string
-snapsTotal: integer
-snapsMigrated: integer
+memberCount: integer
 errorMessage: string
 connections:
   - nqn: string
@@ -3313,7 +3608,11 @@ connections:
     ctrlLossTmo: integer
     fastIOFailTmo: integer
     keepAliveTmo: integer
-validationJobName: string
+validationJobs:
+  - node: string
+    jobName: string
+    succeeded: boolean
+deferredSince: Time
 startedAt: Time
 completedAt: Time
 ```
@@ -3325,47 +3624,14 @@ completedAt: Time
 | `clusterUUID` _string_ | ClusterUUID is the storage cluster UUID resolved from the PV. |  |  |
 | `volumeUUID` _string_ | VolumeUUID is the logical volume UUID resolved from the PV's CSI volume handle. |  |  |
 | `poolUUID` _string_ | PoolUUID is the storage pool UUID that contains the volume. |  |  |
+| `subsystemNQN` _string_ | SubsystemNQN is the NQN of the volume's NVMe subsystem, resolved from the<br />storage API when the migration is submitted. The migration is addressed by<br />it, and every volume sharing the subsystem moves with it. |  |  |
 | `sourceNodeUUID` _string_ | SourceNodeUUID is the storage node UUID where the volume resided before<br />migration, as reported by the storage API. |  |  |
-| `snapsTotal` _integer_ | SnapsTotal is the total number of snapshots to migrate, as reported by the API. |  |  |
-| `snapsMigrated` _integer_ | SnapsMigrated is the number of snapshots migrated so far. |  |  |
+| `memberCount` _integer_ | MemberCount is the number of volumes (namespaces) in the migrated<br />subsystem, as reported by the storage API. More than one means the<br />migration moves sibling volumes along with this one. |  |  |
 | `errorMessage` _string_ | ErrorMessage holds the failure reason when Phase is Failed. |  |  |
-| `connections` _[MigrationConnection](#migrationconnection) array_ | Connections holds the NVMe-oF connection parameters for the new target-side<br />paths returned by CreateMigration. Used during the Validating phase to<br />establish and verify the paths before calling ContinueMigration. |  |  |
-| `validationJobName` _string_ | ValidationJobName is the name of the Job that runs `nvme connect` for each<br />connection path and validates ANA state before ContinueMigration is called.<br />Set during the Validating phase; cleared when the phase advances to Running. |  |  |
+| `connections` _[MigrationConnection](#migrationconnection) array_ | Connections holds the NVMe-oF connection parameters for the new target-side<br />paths returned by CreateMigration. Used during the Validating phase to<br />establish and verify the paths before calling ContinueMigration, and again to<br />release them if the migration never cuts over.<br />These are the parameters the paths are actually connected with, not verbatim<br />what CreateMigration answered: ctrlLossTmo is replaced with the value every<br />path in this system uses, because a target path becomes the volume's data path<br />at cutover. The rest is passed through. |  |  |
+| `validationJobs` _[ValidationJob](#validationjob) array_ | ValidationJobs are the Jobs that run `nvme connect` for each connection path<br />and validate ANA state before ContinueMigration is called — one per worker<br />node that consumes a volume of the migrated subsystem. A subsystem migrates<br />as a unit, so every consuming node must have the new paths before cutover;<br />all of these Jobs must succeed. Set during the Validating phase; cleared when<br />the phase advances to Running. |  |  |
+| `deferredSince` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | DeferredSince is when the storage API first refused to accept this migration<br />because the cluster was busy with work that ends on its own (a data realignment<br />or another node migration). While set, the migration is being retried and has<br />not started. It bounds the retrying: past a fixed window the migration fails<br />rather than waiting forever. Cleared once the migration is submitted. |  |  |
 | `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is the time the migration was submitted to the storage API. |  |  |
 | `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is the time the migration finished (successfully or not). |  |  |
-
-
-#### VolumeReplicationStatus
-
-
-
-VolumeReplicationStatus tracks the replication state of an individual volume
-
-
-
-_Appears in:_
-- [SnapshotReplicationStatus](#snapshotreplicationstatus)
-
-_Example:_
-
-```yaml
-volumeID: string
-phase: string
-lastSnapshotID: string
-lastReplicationTime: Time
-replicatedCount: integer
-errors:
-  - timestamp: Time
-    message: string
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `volumeID` _string_ | Volume ID |  |  |
-| `phase` _string_ | Phase is the current replication phase for this volume. |  | Enum: [Pending Running TriggeringTargetReplication WaitingForTargetReplication ReplicatingToSource WaitingForTargetDeletion Completed Failed Paused] <br /> |
-| `lastSnapshotID` _string_ | Last snapshot ID replicated for this volume |  |  |
-| `lastReplicationTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | Timestamp of the last successful replication for this volume |  |  |
-| `replicatedCount` _integer_ | Number of snapshots successfully replicated |  |  |
-| `errors` _[ReplicationError](#replicationerror) array_ | Optional: list of errors encountered for this volume |  |  |
 
 
