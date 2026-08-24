@@ -1,5 +1,5 @@
 ---
-title: "Accessing I/O Stats ({{ cliname }})"
+title: "Accessing I/O Stats (sbctl)"
 description: "Accessing I/O Stats: Simplyblock's tool provides the option to retrieve some extensive I/O statistics."
 weight: 30300
 ---
