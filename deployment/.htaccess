@@ -29,6 +29,16 @@ RewriteCond %{HTTP_ACCEPT} text/markdown
 RewriteCond %{DOCUMENT_ROOT}/$1/index.md -f
 RewriteRule ^(.+?)/?$ /$1/index.md [L]
 
+# Both spellings of a twin resolve, whichever one a client guesses. A leaf page
+# mirrors to <page>.md and a section index to <section>/index.md, but an agent
+# that only sees the HTML URL cannot tell the two apart: a page whose HTML lives
+# at /a/b/ is guessed as both /a/b.md and /a/b/index.md. Each rule fires only
+# when the other spelling exists on disk, so a real file is never shadowed.
+RewriteCond %{DOCUMENT_ROOT}/$1.md -f
+RewriteRule ^(.+?)/index\.md$ /$1.md [L]
+RewriteCond %{DOCUMENT_ROOT}/$1/index.md -f
+RewriteRule ^(.+?)\.md$ /$1/index.md [L]
+
 # Advertise the twin to clients that never parse the HTML head, where the same
 # link sits as <link rel="alternate">.
 RewriteCond %{DOCUMENT_ROOT}/$1.md -f
@@ -63,13 +73,22 @@ RewriteRule ^latest/deployments/kubernetes/install-simplyblock /latest/deploymen
 RewriteRule ^latest/deployments/deployment-planning/node-sizing /latest/deployments/deployment-preparation/node-sizing/ [L,R=301]
 RewriteRule ^latest/deployments/deployment-planning/erasure-coding-scheme /latest/deployments/deployment-preparation/erasure-coding-scheme/ [L,R=301]
 
-# New internal redirects
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+# Caching. These apply to every response of the site and belong to no rule
+# below; they used to sit inside the rewrite block, where they read as part of
+# its condition chain.
 Header always set Cache-Control "no-cache, no-store, must-revalidate"
 Header always set Pragma "no-cache"
 Header always set Expires 0
-RewriteCond %{REQUEST_URI} !^/latest/
+
+# Unversioned URLs land on /latest. A path that already carries a version
+# prefix is left alone: prepending /latest/ to /dev/... or /26.2-PRE/... yields
+# /latest/dev/..., which can never exist, so a missing page under a version
+# would answer 301 into a dead end instead of 404.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/latest(/|$)
+RewriteCond %{REQUEST_URI} !^/dev(/|$)
+RewriteCond %{REQUEST_URI} !^/[0-9]
 RewriteRule (.+) /latest/$1 [L,R=301]
 RewriteCond %{REQUEST_URI} !^/latest/
 RewriteRule ^$ /latest/ [L,R=301]
