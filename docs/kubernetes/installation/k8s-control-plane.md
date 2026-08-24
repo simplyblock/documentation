@@ -23,10 +23,10 @@ When deploying onto an OpenShift cluster, ensure that the environment-specific i
 ## Installing the Operator
 
 ```bash title="Install the simplyblock operator"
-helm repo add simplyblock https://install.simplyblock.io/helm/csi
+helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 
-helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
+helm upgrade --install simplyblock -n simplyblock simplyblock/simplyblock-operator \
     --create-namespace \
     --set controlplane.enabled=true \
     --set operator.enabled=true
