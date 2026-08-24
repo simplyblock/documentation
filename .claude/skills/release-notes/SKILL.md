@@ -39,13 +39,17 @@ The first round settles what the page is:
 
 The second round settles where the entries come from, once the section is known:
 
-3. **Source location.** The checkout the entries are harvested from, one per
-   component in scope. Offer the pinned checkouts of the documentation
-   repository, the sibling checkouts, and `Other`.
+3. **Source location.** The path of the checkout the entries are harvested from,
+   one per component in scope. It is never assumed and never guessed from a
+   previous session: the answer is typed, and the pinned checkouts of the
+   documentation repository are offered only as a fallback, with the caveat
+   below. A supplied path is confirmed to be the expected repository before it
+   is used.
 4. **Previous reference.** The tag or the branch the previous release was cut
    from. This is the lower end of the git range.
 5. **Current reference.** The tag or the branch this release is cut from,
-   usually `main`. This is the upper end.
+   usually the release branch of the version being written. This is the upper
+   end.
 
 Echo the resolved range back before harvesting, as `<previous>..<current>` per
 repository, together with the commit count. A range that returns thousands of
@@ -61,13 +65,51 @@ question, not a guess.
 | Operator      | `simplyblock-operator`    | `operator/`, `helm-charts/`                                             |
 | CSI Driver    | `simplyblock-operator`    | `csi-driver/`, `atlas-lib/`, `shared/`                                  |
 
-Two of them are checked out by the documentation repository itself, at
-`scripts/sbcli-repo` and `scripts/operator-repo`. Both are created and updated by
+**Where those repositories are checked out is never assumed.** It differs per
+machine, so the path is asked for, one per component in scope, and the answer is
+verified before it is used:
+
+```bash title="Confirming that a supplied path is the expected repository"
+git -C <path> remote -v
+git -C <path> rev-parse --abbrev-ref HEAD
+```
+
+The documentation repository does keep its own checkouts, at `scripts/sbcli-repo`
+and `scripts/operator-repo`, created and updated by
 `./doc-builder update-repositories` and pinned through `scripts/sbcli.lock` and
-`scripts/operator.lock`, so a pinned checkout sits at the locked reference rather
-than at the head of a branch. Run `git fetch --tags` in it before a range is
-resolved. No checkout of the SPDK fork is managed here, so its path always has
-to be supplied.
+`scripts/operator.lock`. They can be offered as a fallback when no path is
+supplied, but they exist to generate the CLI and the operator reference, and
+**without a lock file they sit on `main`**. That makes them the wrong source for
+a release note and for verifying a page, since `main` carries the work of the
+*next* release. Run `git fetch --tags` before a range is resolved against them.
+
+No checkout of the SPDK fork is managed by the documentation repository, so its
+path always has to be supplied.
+
+**The release branch is the source of truth.** A release is cut on a branch, and
+what is on `main` may never reach it. The two diverge in both directions, so
+neither `git log` nor a field lookup on `main` proves anything about the release.
+
+**The two repositories name that branch differently**, and neither convention
+carries over to the other:
+
+| Repository                          | Branch                                | Example          |
+|-------------------------------------|---------------------------------------|------------------|
+| `simplyblock-operator` (and the CSI driver) | `release/<major>.<minor>.<patch>` | `release/26.3.0` |
+| `sbcli`                             | `R<major>.<minor>`                    | `R26.3`          |
+
+An `sbcli` branch also takes a suffix or a patch level of its own, as in
+`R26.2-PRE` and `R25.10-Hotfix`, so the branch is listed rather than constructed
+from the version. Resolve it per repository, then verify every claim against it:
+
+```bash title="Listing the release branches of a repository"
+git -C <repo> branch -a | grep -iE 'release/|/R[0-9]+\.'
+```
+
+```bash title="Measuring how far the release branch and main have diverged"
+git -C <repo> rev-list --count <release-branch>..main   # on main only
+git -C <repo> rev-list --count main..<release-branch>   # on the branch only
+```
 
 ## The page
 
@@ -260,7 +302,9 @@ Four traps are worth a deliberate check on every release:
   major release note is an editorial decision, so state which boundary was drawn
   and why.
 - **A commit subject is not the user-facing name.** Verify the name in the
-  source. For a resource or a field, read
+  source, and read it *at the release branch* with
+  `git show <release-branch>:<path>` rather than from the working tree, which may
+  sit on another branch. For a resource or a field, read
   `operator/api/v1alpha1/*_types.go`; for a command or a flag, read
   `simplyblock_cli/`; for an annotation, read the constants it is declared in. A
   field removed from a spec often survives in the status, which changes the
