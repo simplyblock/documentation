@@ -1,7 +1,7 @@
 ---
 title: "Volume Migration"
 description: "Migrate a logical volume between storage nodes with the simplyblock CLI: pre-create, client connect, continue, monitor, and cancel."
-weight: 20040
+weight: 10410
 ---
 
 Simplyblock can move a logical volume (including its snapshots) from one storage node to another while the
@@ -9,10 +9,10 @@ volume stays online. I/O is only frozen for the brief moment needed to transfer 
 migration.
 
 This page describes the CLI-driven migration between nodes of the **same cluster**. For moving volumes between
-**clusters**, see [Asynchronous Replication](asynchronous-replication.md), which provides a
+**clusters**, see [Asynchronous Replication](../data-protection/asynchronous-replication.md), which provides a
 replication-based cross-cluster migration. In Kubernetes environments, migrations are managed declaratively
 through the `VolumeMigration` resource. See
-[Volume Migration on Kubernetes](../../kubernetes/operations/volumes/volume-migration.md).
+[Volume Migration on Kubernetes](../../../kubernetes/operations/volumes/volume-migration.md).
 
 ## How a Migration Works
 

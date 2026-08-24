@@ -1,7 +1,7 @@
 ---
 title: "Trimming a Filesystem"
 description: "Trimming a Filesystem: Filesystem trimming is the process of informing the underlying storage system about unused blocks, allowing simplyblock to reclaim and."
-weight: 20090
+weight: 10430
 ---
 
 Filesystem trimming is the process of informing the underlying storage system about unused blocks, allowing simplyblock
@@ -67,7 +67,7 @@ After trimming:
 
 ## Related References
 
-- [Accessing I/O Stats ({{ cliname }})](monitoring/io-stats.md)
-- [Logical Volume Conditions](monitoring/lvol-conditions.md)
-- [Provisioning with Linux](../usage/index.md)
-- [Provisioning with Simplyblock CSI](../../kubernetes/usage/provisioning.md)
+- [Accessing I/O Stats ({{ cliname }})](../monitoring/io-stats.md)
+- [Logical Volume Conditions](../monitoring/lvol-conditions.md)
+- [Provisioning with Linux](../../usage/index.md)
+- [Provisioning with Simplyblock CSI](../../../kubernetes/usage/provisioning.md)

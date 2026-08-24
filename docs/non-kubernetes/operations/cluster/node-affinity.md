@@ -1,7 +1,7 @@
 ---
 title: "Configure Node Affinity"
 description: "Configure Node Affinity: Simplyblock features node affinity, sometimes also referred to as data locality."
-weight: 20060
+weight: 10130
 ---
 
 Simplyblock features node affinity, sometimes also referred to as data locality. This feature ensures that storage
@@ -32,7 +32,7 @@ To enable node affinity at creation time of the cluster, the `--enable-node-affi
 ```
 
 To see all available parameters for cluster creation, see
-[CLI reference](../../reference/cli/cluster.md).
+[CLI reference](../../../reference/cli/cluster.md).
 
 When the cluster was created with node affinity enabled, logical volumes can be created with node affinity, which will
 always try to locate data co-located with the requested storage node.
@@ -52,7 +52,7 @@ To create a co-located logical volume, the parameter `--host-id` needs to be add
 ```
 
 To see all available parameters for a logical volume creation, see
-[CLI reference](../../reference/cli/volume.md).
+[CLI reference](../../../reference/cli/volume.md).
 
 The storage node UUID (or host id) can be found using the `{{ cliname }} storage-node list` command.
 
@@ -65,4 +65,4 @@ The storage node UUID (or host id) can be found using the `{{ cliname }} storage
     `simplyblock.io/selected-storage-node` annotation, and a new volume can be automatically co-located
     with its consuming Pod via the `simplyblock.io/pod-affinity` annotation, independent of this page's
     cluster-wide `--enable-node-affinity` setting. See
-    [Automatic Volume Placement](../../kubernetes/usage/volume-placement.md).
+    [Automatic Volume Placement](../../../kubernetes/usage/volume-placement.md).

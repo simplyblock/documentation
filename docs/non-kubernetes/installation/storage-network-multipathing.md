@@ -104,6 +104,6 @@ CSI driver automatically use all paths. No storage-class parameter is required. 
 - Multipathing and [failure domains](../../architecture/concepts/failure-domains.md) are independent features
   that combine naturally: failure domains protect against the loss of a rack or site, multipathing against the
   loss of a network path.
-- During a [volume migration](../operations/volume-migration.md), the target subsystem is exposed on all data
+- During a [volume migration](../operations/volumes/volume-migration.md), the target subsystem is exposed on all data
   interfaces of the target node. All returned target paths must be connected on the client before the migration
   is continued, so that the cutover is seamless on every path.

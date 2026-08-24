@@ -7,7 +7,7 @@ weight: 10410
 The Simplyblock Operator can move a volume's backing logical volume from one storage node to another
 while the volume stays online (live migration). A migration relocates a logical volume (and its snapshots). It
 does not move the storage node itself. This is different from
-[Migrating a Storage Node](../../../non-kubernetes/operations/migrating-storage-node.md), which relocates an entire storage node identity to a
+[Migrating a Storage Node](../storage-nodes/migrating-a-storage-node.md), which relocates an entire storage node identity to a
 new host.
 
 A volume migration moves only the logical volume itself, not the actual data. Since data remains distributed in the back

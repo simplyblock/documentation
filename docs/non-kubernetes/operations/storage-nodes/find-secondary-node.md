@@ -1,7 +1,7 @@
 ---
 title: "Finding the Secondary Node"
 description: "Finding the Secondary Node: Simplyblock, in high-availability mode, creates two connections per logical volume: a primary and a secondary connection."
-weight: 20070
+weight: 10240
 ---
 
 Simplyblock, in high-availability mode, creates multiple connections per logical volume: a primary and a secondary
@@ -68,7 +68,7 @@ After obtaining the secondary node ID, verify that node is healthy:
 
 ## Related References
 
-- [Cluster Health](monitoring/cluster-health.md)
-- [Logical Volume Conditions](monitoring/lvol-conditions.md)
+- [Cluster Health](../monitoring/cluster-health.md)
+- [Logical Volume Conditions](../monitoring/lvol-conditions.md)
 - [Migrating a Storage Node](migrating-storage-node.md)
 - [Replacing a Storage Node](replacing-storage-node.md)

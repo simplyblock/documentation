@@ -1,11 +1,15 @@
 ---
 title: "Security"
-description: "Security is a core pillar of the simplyblock platform, designed to protect data across every layer of the storage stack."
-weight: 20200
+description: "Secure a simplyblock deployment outside Kubernetes: authenticate and encrypt the NVMe-oF transport, encrypt volumes, and isolate tenants from each other."
+weight: 10700
 ---
 
-Security is a core pillar of the simplyblock platform, designed to protect data across every layer of the storage
-stack. From encryption at rest to NVMe-oF transport security, multi-tenant isolation, and secure communications,
-simplyblock provides robust, enterprise-grade features that help meet stringent compliance and data protection
-requirements. Security is enforced by design, ensuring workloads and sensitive data remain protected against
-internal and external threats.
+Security covers three layers of the storage stack. The NVMe-oF transport between an initiator and a storage node is
+authenticated and encrypted, a logical volume is encrypted at rest, and the tenants of a cluster are isolated from each
+other through separate storage pools and credentials.
+
+| Topic                                                              | Purpose                                                           |
+|--------------------------------------------------------------------|-------------------------------------------------------------------|
+| [Host Authentication and Encryption](authentication-encryption.md) | Authenticating and encrypting the NVMe-oF transport of a cluster. |
+| [Multi-Tenancy](multi-tenancy.md)                                  | Isolating tenants from each other within one storage cluster.     |
+| [Volume Encryption](../../usage/encrypting.md)                     | Encrypting the data of a single logical volume at rest.           |

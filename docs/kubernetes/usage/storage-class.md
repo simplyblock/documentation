@@ -86,7 +86,7 @@ applies to all volumes in the cluster. It cannot be configured per volume or thr
 
 See the [Erasure Coding Configuration](../../deployment-preparation/erasure-coding-scheme.md) for more details.
 
-See here how to configure [Service Classes](../../non-kubernetes/operations/qos-service-classes.md) and [QoS Limits](../../non-kubernetes/operations/limiting-iops-and-throughput.md).
+See here how to configure [Service Classes](../../non-kubernetes/operations/volumes/qos-service-classes.md) and [QoS Limits](../../non-kubernetes/operations/volumes/limiting-iops-and-throughput.md).
 
 ## Namespace Volumes
 

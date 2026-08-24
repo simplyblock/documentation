@@ -10,7 +10,7 @@ need attention is the workload: a process holding a file descriptor across a lon
 that only a restart clears.
 
 Plain Linux clients reconnect their volumes by hand, as described in
-[Reconnecting Logical Volume](../../../non-kubernetes/operations/reconnect-nvme-device.md). On Kubernetes none of that
+[Reconnecting Logical Volume](../../../non-kubernetes/operations/volumes/reconnect-nvme-device.md). On Kubernetes none of that
 applies. The node plugin repairs the fabric itself, and the only decision left is whether affected pods should be
 restarted automatically.
 

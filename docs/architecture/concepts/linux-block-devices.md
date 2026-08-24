@@ -86,7 +86,7 @@ The device mode is cluster-global and deploy-time only: `nvme` and `lblk` device
 within one cluster, and the mode cannot be changed after cluster creation. In `lblk` mode,
 journal-on-device deployment (a dedicated device for the journal) is required. Device partitioning is
 not supported, and neither is growing a node's device set at restart time (see
-[Linux Block Device Operations](../../non-kubernetes/operations/lblk-device-operations.md)).
+[Linux Block Device Operations](../../non-kubernetes/operations/storage-nodes/lblk-device-operations.md)).
 
 SMART health telemetry is not available for AIO-backed devices. Device-level performance depends on
 the underlying block device and the kernel block layer, so higher latency than with SPDK-native NVMe

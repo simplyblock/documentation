@@ -1,11 +1,14 @@
 ---
 title: "Scaling"
-description: "Scaling: Simplyblock is designed with a scale-out architecture that enables seamless growth of both storage capacity and performance by simply adding more nodes."
-weight: 20100
+description: "Scale a simplyblock cluster outside Kubernetes by adding capacity to a storage pool, so that its logical volumes can grow beyond the current limit."
+weight: 10300
 ---
 
-Simplyblock is designed with a scale-out architecture that enables seamless growth of both storage capacity and
-performance by simply adding more nodes to the cluster. Built for modern, cloud-native environments, simplyblock
-supports linear scalability across compute, network, and storage layers, without downtime or disruption to active
-workloads. Whether scaling to accommodate petabytes of data, high IOPS requirements, or enhanced throughput,
-simplyblock delivers predictable performance and resilience at scale.
+A cluster scales out by adding storage nodes, and it scales its provisioning limit by growing a storage pool. Both are
+online operations, and the data is rebalanced onto the new capacity afterward. Adding the storage nodes themselves is
+part of the deployment, described under
+[Deploy a Storage Plane](../../installation/install-sp.md).
+
+| Topic                                                 | Purpose                                                    |
+|-------------------------------------------------------|------------------------------------------------------------|
+| [Expanding a Storage Pool](expanding-storage-pool.md) | Raising the capacity limit of a storage pool of a cluster. |

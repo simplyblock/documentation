@@ -76,4 +76,4 @@ If migration fails at any point, the target-side artifacts are cleaned up and th
 - **Infrastructure Upgrades:** Move volumes to newer, higher-performance hardware without downtime.
 
 For the operational procedure to migrate volumes, see
-[Migrating a Storage Node](../../non-kubernetes/operations/migrating-storage-node.md).
+[Migrating a Storage Node](../../non-kubernetes/operations/storage-nodes/migrating-storage-node.md).

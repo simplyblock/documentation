@@ -1,15 +1,15 @@
 ---
 title: "Linux Block Device Operations"
 description: "Operating lblk-mode clusters: node restarts with serial-based device resolution, adding block devices to a node, and handling failed devices."
-weight: 20090
+weight: 10250
 ---
 
 {{ experimental }}
 
 Day-2 operations specific to clusters in the Linux block device mode (`lblk`) are described below.
 Concepts and deployment are described under
-[Linux Block Devices (lblk)](../../architecture/concepts/linux-block-devices.md) and
-[Deploy with Linux Block Devices](../installation/linux-block-devices.md).
+[Linux Block Devices (lblk)](../../../architecture/concepts/linux-block-devices.md) and
+[Deploy with Linux Block Devices](../../installation/linux-block-devices.md).
 
 ## Node Restarts
 
@@ -45,7 +45,7 @@ time:
    redistributed onto it by the automatic rebalancing.
 
 Cluster capacity can alternatively be extended by
-[adding a new storage node](scaling/index.md) with its own devices.
+[adding a new storage node](../scaling/index.md) with its own devices.
 
 ## Failed Devices
 

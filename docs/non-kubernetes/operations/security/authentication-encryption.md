@@ -1,7 +1,7 @@
 ---
 title: Host Authentication and Encryption
 description: "Simplyblock provides host access control, DH-HMAC-CHAP authentication, and TLS/PSK encryption for NVMe-oF connections."
-weight: 30110
+weight: 10710
 ---
 
 Simplyblock supports NVMe-oF transport security to protect data in transit and restrict host access to storage

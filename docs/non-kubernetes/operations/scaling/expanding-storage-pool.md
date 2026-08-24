@@ -1,7 +1,7 @@
 ---
 title: "Expanding a Storage Pool"
 description: "Expanding a Storage Pool: Simplyblock is designed as on always-on a storage system."
-weight: 30000
+weight: 10310
 ---
 
 Simplyblock is designed as on always-on a storage system. Therefore, expanding a storage pool is an online operation and

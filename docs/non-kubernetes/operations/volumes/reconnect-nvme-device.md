@@ -1,7 +1,7 @@
 ---
 title: "Reconnecting Logical Volume"
 description: "Reconnecting Logical Volume: After outages of storage nodes, primary and secondary NVMe over Fabrics connections may need to be re-established."
-weight: 20080
+weight: 10420
 ---
 
 After outages of storage nodes, primary and secondary NVMe over Fabrics connections may need to be re-established. With

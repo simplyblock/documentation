@@ -1,7 +1,7 @@
 ---
 title: "Migrating a Storage Node"
 description: "Migrating a Storage Node: Simplyblock storage clusters are designed as always-on."
-weight: 20000
+weight: 10230
 ---
 
 Simplyblock storage clusters are designed as always-on. That means that a storage node migration is an online operation
@@ -27,8 +27,8 @@ To install the first stage of a storage node, the installation guide for the sel
 The process will diverge after executing the initial deployment command `{{ cliname }} storage-node deploy`.
 If the command finishes successfully, resume from the next section of this page.
 
-- [Storage nodes in Kubernetes](../../kubernetes/installation/index.md)
-- [Storage nodes on Linux](../installation/install-sp.md)
+- [Storage nodes in Kubernetes](../../../kubernetes/installation/index.md)
+- [Storage nodes on Linux](../../installation/install-sp.md)
 
 ### Preparing the New Storage Host
 
@@ -50,7 +50,7 @@ To prepare the new storage host, the following commands must be executed.
 ```
 
 The full list of parameters for either command can be found in the
-[CLI documentation](../../reference/cli/storage-node.md).
+[CLI documentation](../../../reference/cli/storage-node.md).
 
 ### Restart Old Storage Node
 

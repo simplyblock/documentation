@@ -101,7 +101,7 @@ recovery for the cluster.
 | `with_compression`  | Enable compression for backup data. Default: `false`.                     | No       |
 | `snapshot_backups`  | Enable snapshot-based incremental backups. Default: `true`.               | No       |
 
-For more information on backup operations, see [Backup and Recovery](../non-kubernetes/operations/backup-recovery.md).
+For more information on backup operations, see [Backup and Recovery](../non-kubernetes/operations/data-protection/backup-recovery.md).
 
 ### ```--name```
 

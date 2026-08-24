@@ -154,7 +154,7 @@ connections are established once per interface. See
 
 If the cluster was created with failure-domain support, every node must additionally be tagged with its
 failure-domain id via `--failure-domain <ID>`. See
-[Managing Failure Domains](../operations/failure-domains.md).
+[Managing Failure Domains](../operations/cluster/failure-domains.md).
 
 The output will look something like the following example:
 

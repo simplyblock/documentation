@@ -1,7 +1,7 @@
 ---
 title: "Quality of Service Limits"
 description: "Quality of Service Limits: Quality of Service (QoS) limits (IOPS, Read, Write, and ReadWrite limits) can be chosen on both volume and pool level."
-weight: 10300
+weight: 10440
 ---
 
 Quality of Service (QoS) limits (IOPS, Read, Write, and ReadWrite limits) can be chosen on both volume and pool level.
@@ -18,9 +18,9 @@ all volumes will be relatively throttled.
 In Kubernetes, storage class-level QoS Settings are not allowed if the storage class is connected
 to a pool with QoS settings.
 
-Therefore, in Kubernetes, if the [Storage Class](../../kubernetes/usage/storage-class.md) references any pool,
+Therefore, in Kubernetes, if the [Storage Class](../../../kubernetes/usage/storage-class.md) references any pool,
 which has QoS limits attached, it is not allowed to add them to the storage class as well.
-The same applies to [OpenStack](../openstack/index.md) QoS Settings on the Volume Type.
+The same applies to [OpenStack](../../openstack/index.md) QoS Settings on the Volume Type.
 
 !!! warning
     Volumes for which pool-level QoS is active must be located on the same storage node

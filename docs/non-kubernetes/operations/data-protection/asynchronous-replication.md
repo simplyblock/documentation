@@ -1,7 +1,7 @@
 ---
 title: "Asynchronous Replication"
 description: "Asynchronous replication between simplyblock clusters: disaster recovery, cross-cluster volume migration, failover, and failback."
-weight: 20045
+weight: 10520
 ---
 
 Simplyblock replicates volumes between two storage clusters by taking copy-on-write snapshots at regular intervals
@@ -13,9 +13,9 @@ and transferring them to the target cluster. On top of this mechanism, two workf
   The remaining delta is transferred under a brief I/O freeze, and the client fails over to the target paths
   without a disconnect.
 
-For the architecture background, see [Replication Concepts](../../architecture/concepts/replication.md). For
+For the architecture background, see [Replication Concepts](../../../architecture/concepts/replication.md). For
 Kubernetes environments, where replication is declared through custom resources, see
-[Asynchronous Replication on Kubernetes](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+[Asynchronous Replication on Kubernetes](../../../kubernetes/operations/data-protection/asynchronous-replication.md).
 
 ## Prerequisites
 

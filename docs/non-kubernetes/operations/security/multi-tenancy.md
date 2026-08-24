@@ -1,7 +1,7 @@
 ---
 title: "Multi-Tenancy"
 description: "Multi-Tenancy: Simplyblock is designed to support secure and efficient multitenancy, enabling multiple independent tenants to share the same physical."
-weight: 30100
+weight: 10720
 ---
 
 Simplyblock is designed to support secure and efficient multitenancy, enabling multiple independent tenants to share the

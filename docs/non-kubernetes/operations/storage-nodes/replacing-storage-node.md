@@ -1,7 +1,7 @@
 ---
 title: "Replacing a Storage Node"
 description: "Replacing a Storage Node: A simplyblock storage cluster is designed to be always up."
-weight: 20050
+weight: 10220
 ---
 
 A simplyblock storage cluster is designed to be always up. Hence, operations such as extending a cluster or
@@ -25,15 +25,15 @@ If a storage node failed and cannot be recovered, adding a new storage node is p
 
 To start a new storage node, follow the storage node installation according to the chosen setup:
 
-- [Storage nodes in Kubernetes](../../kubernetes/installation/index.md)
-- [Storage nodes on Linux](../installation/install-sp.md)
+- [Storage nodes in Kubernetes](../../../kubernetes/installation/index.md)
+- [Storage nodes on Linux](../../installation/install-sp.md)
 
 ## Remove the old Storage Node
 
 !!! important
     A storage node can only be removed when it hosts no logical volumes or snapshots. Otherwise, the removal is
     refused, so all volumes have to be migrated off the node first (see
-    [Volume Migration](volume-migration.md)). The node to be removed must be online or suspended, and all other
+    [Volume Migration](../volumes/volume-migration.md)). The node to be removed must be online or suspended, and all other
     storage nodes must be online.
 
 To remove the old storage node, use the `{{ cliname }}` command line tool.

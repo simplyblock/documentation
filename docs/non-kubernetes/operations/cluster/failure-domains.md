@@ -1,18 +1,18 @@
 ---
 title: "Managing Failure Domains"
 description: "Deploy and operate a simplyblock storage cluster with failure domains: cluster creation, node tagging, balance rules, expansion, and node removal."
-weight: 20055
+weight: 10120
 ---
 
 Failure domains group storage nodes by shared infrastructure (rack, cabinet, power unit, availability zone) so that
 simplyblock can spread data, journal copies, and failover paths across independent fault groups. The concept and
 the placement guarantees are described in
-[Failure Domains](../../architecture/concepts/failure-domains.md).
+[Failure Domains](../../../architecture/concepts/failure-domains.md).
 
 This page describes how to deploy and operate a failure-domain cluster with the CLI. In Kubernetes environments,
 failure domains are assigned declaratively through the Simplyblock Operator
 (`enableFailureDomains` on the `StorageCluster` and `failureDomain` per node). See the
-[Operator Reference](../../reference/operator/index.md).
+[Operator Reference](../../../reference/operator/index.md).
 
 ## Enabling Failure Domains
 

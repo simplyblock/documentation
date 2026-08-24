@@ -1,7 +1,7 @@
 ---
 title: "Accessing Graylog"
 description: "Accessing Graylog: Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation Graylog retrieves logs for all control plane and storage."
-weight: 30049
+weight: 10660
 ---
 
 Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation.
