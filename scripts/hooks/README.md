@@ -77,8 +77,25 @@ mirrors as `application/octet-stream`: browsers download them and some agents dr
 
 **Content negotiation.** A request carrying `Accept: text/markdown` gets the mirror of the
 page it asked for; everything else keeps the HTML. This is the only discovery path that
-requires the agent to know nothing at all — it requests the URL it already has. Claude Code,
-Cursor, and OpenCode send that header today.
+requires the agent to know nothing at all — it requests the URL it already has.
+
+Claude Code sends that header, measured rather than assumed:
+
+```
+Accept:     text/markdown, text/html, */*
+User-Agent: Claude-User (claude-code/2.1.228; +https://support.anthropic.com/)
+```
+
+Markdown comes first, so the negotiation applies to its fetches. Other agents are an open
+question — the claim that Cursor and OpenCode do the same is untested here, and the header
+is rare enough in the wild that negotiation should be treated as a bonus rather than the
+mechanism. What every agent does is follow a `.md` URL, which is why the mirrors sit at
+guessable paths and are advertised three ways.
+
+The match is a substring test, so any client mentioning `text/markdown` anywhere in its
+`Accept` header gets Markdown regardless of q-values. No browser sends it at all, so
+nothing regresses, but a client that lists it as a low-priority fallback would be taken at
+more than its word.
 
 A URL without its trailing slash still redirects once (`/kubernetes/installation` →
 `/kubernetes/installation/`) before the negotiation applies, because Apache canonicalizes

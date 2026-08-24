@@ -67,8 +67,8 @@ is why it is the recommended sequence.
 1. **Add the replacement node.** Create a `StorageNodeSet` for the new worker with `spec.expand: true`, or add the
    worker to an existing set, as described in
    [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md).
-2. **Finalize the expansion** with the `expand` action once the new node is online, see
-   [Storage Cluster Actions](../cluster/cluster-actions.md#expand).
+2. **Finalize the expansion** with the `expand` action, if the node was added without the expansion flag, see
+   [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md#finalizing-an-expansion-of-nodes-added-without-the-flag).
 3. **Drain and remove the old node** with a `StorageNodeOps` resource carrying `action: remove`. Its volumes are
    migrated onto the remaining nodes, including the one just added, before the node leaves the cluster. See
    [Removing a Storage Node](removing-a-storage-node.md).

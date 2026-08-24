@@ -1,6 +1,6 @@
 ---
 title: "Storage Node Actions"
-description: "Shut down, restart, suspend, and resume a single simplyblock storage node with the StorageNodeOps resource, and track the operation through its status."
+description: "Request an operation against a single simplyblock storage node with a StorageNodeOps resource, and track it through the phases of its status."
 weight: 10210
 ---
 
@@ -8,9 +8,9 @@ An operation against one storage node is requested by creating a `StorageNodeOps
 `StorageNode`, carries the action to perform, and is driven to completion by the Simplyblock Operator, which records
 the outcome in `status`. The resource behaves like a Kubernetes `Job`: it runs once and is then terminal.
 
-This page covers the four in-place actions. Relocating a node onto a different worker is described in
-[Migrating a Storage Node](migrating-a-storage-node.md), and taking one out of the cluster in
-[Removing a Storage Node](removing-a-storage-node.md).
+This page describes what every operation shares: how the target node is found, how a request is made, how the
+operations of one node exclude each other, and how one is tracked and cleaned up. What each action does is described
+on its own page.
 
 ## Finding the Target Node
 
@@ -33,7 +33,7 @@ instance. The `SOCKET` and `NODEIDX` columns tell them apart.
 
 ## Requesting an Action
 
-```bash title="Restarting a single storage node"
+```bash title="Requesting an operation against a storage node"
 kubectl apply -n simplyblock -f - <<EOF
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNodeOps
@@ -46,12 +46,14 @@ spec:
 EOF
 ```
 
-| Action     | Effect                                                           | Expected node status |
-|------------|------------------------------------------------------------------|----------------------|
-| `shutdown` | Stops the storage node.                                          | `offline`            |
-| `restart`  | Stops and starts the storage node.                               | `online`             |
-| `suspend`  | Keeps the node running but stops new volumes being placed on it. | `suspended`          |
-| `resume`   | Returns a suspended node to normal service.                      | `online`             |
+| Action     | Effect                                                           | Expected node status | Page                                                            |
+|------------|------------------------------------------------------------------|----------------------|-----------------------------------------------------------------|
+| `shutdown` | Stops the storage node.                                          | `offline`            | [Shutting Down a Storage Node](shutting-down-a-storage-node.md) |
+| `restart`  | Stops and starts the storage node.                               | `online`             | [Restarting a Storage Node](restarting-a-storage-node.md)       |
+| `suspend`  | Keeps the node running but stops new volumes being placed on it. | `suspended`          | [Suspending a Storage Node](suspending-a-storage-node.md)       |
+| `resume`   | Returns a suspended node to normal service.                      | `online`             | [Resuming a Storage Node](resuming-a-storage-node.md)           |
+| `migrate`  | Moves the node onto a different Kubernetes worker.               | `online`             | [Migrating a Storage Node](migrating-a-storage-node.md)         |
+| `remove`   | Drains the volumes off the node and removes it.                  | removed              | [Removing a Storage Node](removing-a-storage-node.md)           |
 
 `spec.storageNodeRef` and `spec.action` are immutable. A repeat of the same operation requires a new resource.
 
@@ -142,5 +144,5 @@ kubectl get storagenodeops -n simplyblock \
 |-------------|-------------------------------------------------------|
 | `OpsFailed` | The operation failed. The message carries the reason. |
 
-The actions on this page emit no events of their own on success. Their progress is read from `status.phase` and
+The in-place actions emit no events of their own on success. Their progress is read from `status.phase` and
 `status.message`. The events emitted during a migration or a removal are listed on their respective pages.

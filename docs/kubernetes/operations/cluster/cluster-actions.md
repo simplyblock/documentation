@@ -8,6 +8,8 @@ Cluster-wide lifecycle operations are requested declaratively on Kubernetes. Set
 `StorageCluster` resource makes the Simplyblock Operator call the corresponding backend API, poll until the cluster
 reaches the expected state, and record the outcome in `status.actionStatus`. The CLI is not involved.
 
+This page describes the mechanism that every action shares: how one is requested, executed, re-run, and monitored.
+
 Only one action can be requested at a time, since `spec.action` holds a single value.
 
 ## Requesting an Action
@@ -19,17 +21,17 @@ kubectl patch storagecluster simplyblock-cluster -n simplyblock \
     --type=merge -p '{"spec": {"action": "shutdown"}}'
 ```
 
-| Action         | Effect                                                                 | Expected cluster status |
-|----------------|------------------------------------------------------------------------|-------------------------|
-| `activate`     | Activates a cluster whose nodes have joined but which is not yet live. | `active`                |
-| `expand`       | Finalizes a cluster expansion after new storage nodes came online.     | `active`                |
-| `shutdown`     | Shuts the whole cluster down.                                          | `suspended`             |
-| `start`        | Starts a previously shut down cluster.                                 | `active`                |
-| `restart`      | Runs a shutdown followed by a start.                                   | `active`                |
-| `node-recycle` | Restarts every storage node of the cluster, one after another.         | `active`                |
+| Action         | Effect                                                                 | Expected cluster status | Page                                                                   |
+|----------------|------------------------------------------------------------------------|-------------------------|------------------------------------------------------------------------|
+| `activate`     | Activates a cluster whose nodes have joined but which is not yet live. | `active`                | [Activating a Storage Cluster](activating-a-cluster.md)                |
+| `shutdown`     | Shuts the whole cluster down.                                          | `suspended`             | [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)          |
+| `start`        | Starts a previously shut down cluster.                                 | `active`                | [Starting a Storage Cluster](starting-a-cluster.md)                    |
+| `restart`      | Runs a shutdown followed by a start.                                   | `active`                | [Restarting a Storage Cluster](restarting-a-cluster.md)                |
+| `node-recycle` | Restarts every storage node of the cluster, one after another.         | `active`                | [Rolling Restart](rolling-restart.md)                                  |
+| `expand`       | Finalizes a cluster expansion after new storage nodes came online.     | `active`                | [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md) |
 
-Any other value is rejected by the CRD schema. The `node-recycle` action has its own page, see
-[Rolling Restart](rolling-restart.md).
+Any other value is rejected by the CRD schema. What each action does is described on its own page, listed in the last
+column. This page covers what all of them share.
 
 ## How an Action Is Executed
 
@@ -69,80 +71,6 @@ kubectl patch storagecluster simplyblock-cluster -n simplyblock \
     action has succeeded, nothing further happens to the resource, and the remaining `status` fields are no longer
     refreshed from the backend. Clearing `spec.action` after a completed action returns the cluster to normal status
     reconciliation.
-
-## Shutdown
-
-A shutdown suspends the entire cluster. The operator calls the backend shutdown API and polls until the cluster
-reports `suspended`.
-
-```bash title="Shutting down the storage cluster"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "shutdown"}}'
-```
-
-!!! warning
-    A cluster shutdown takes every volume of the cluster offline. Workloads consuming those volumes lose their storage
-    for the duration of the shutdown. To take a single storage node out of service instead, see
-    [Storage Node Actions](../storage-nodes/storage-node-actions.md).
-
-## Start
-
-A start brings a suspended cluster back. The operator calls the backend start API and polls until the cluster reports
-`active`. The rebalancing flag reported by the backend is recorded in `status.rebalancing` once the cluster is up.
-
-```bash title="Starting a suspended storage cluster"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "start"}}'
-```
-
-## Restart
-
-A restart sequences a shutdown and a start. Both legs are driven by the same action, and the leg currently running is
-held in `status.actionStatus.message` as either `shutdown` or `start`. The action succeeds once the cluster is `active`
-again.
-
-```bash title="Restarting the storage cluster"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "restart"}}'
-```
-
-```bash title="Following the leg of a running restart"
-kubectl get storagecluster simplyblock-cluster -n simplyblock \
-    -o jsonpath='{.status.actionStatus.message}{"\n"}'
-```
-
-## Activate
-
-Activation is normally automatic. The operator activates a cluster on its own once every storage node declared in its
-`StorageNodeSet` is online and healthy, and the number of those nodes is at least the sum of the data chunks, the
-parity chunks, and one. See
-[Create a Storage Cluster](../../installation/k8s-storage-plane.md#when-does-the-cluster-become-active).
-
-The `activate` action exists for the case where that did not happen, for example, because nodes came online after the
-automatic check had already passed.
-
-```bash title="Activating a cluster manually"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "activate"}}'
-```
-
-!!! warning
-    A `StorageCluster` that is deleted while `spec.action` is `activate` has its finalizer removed without the backend
-    cluster being deleted. The cluster is then left behind on the control plane and has to be removed there. Clear
-    `spec.action` before deleting the resource.
-
-## Expand
-
-An expansion is finalized with the `expand` action, after the new storage nodes have been added and are online. The
-operator calls the backend expand API and polls until the cluster returns to `active`.
-
-```bash title="Finalizing a cluster expansion"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "expand"}}'
-```
-
-Adding the storage nodes themselves is the step before this one, described in
-[Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md).
 
 ## Monitoring an Action
 
