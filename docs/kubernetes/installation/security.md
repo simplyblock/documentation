@@ -93,8 +93,7 @@ either of them.
 
 ### Prerequisites
 
-- **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the vault is
-  authenticated to the cluster with a certificate issued by the operator's
+- **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the control plane authenticates to the KMS with a certificate issued by the operator's
   `simplyblock-certificate-authority-issuer`.
 - **A prepared instance:** A Vault or OpenBao instance reachable from the simplyblock namespace, initialized,
   unsealed, and configured as described in [Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md).
