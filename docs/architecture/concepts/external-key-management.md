@@ -1,6 +1,6 @@
 ---
 title: "External Key Management"
-description: "Data-at-rest encryption with external key management systems, enabling separation of duty, rotation, and audit."
+description: "How simplyblock encrypts data at rest against an external key management system, and what separation of duty, key rotation, and audit that buys."
 weight: 30220
 ---
 
@@ -41,4 +41,13 @@ must be configured on the control plane before an external KMS can be wired up.
 Operationally, this means the KMS team and the storage team share only the CA bundle and an agreed-upon DNS-name for
 the simplyblock client. No static passwords or long-lived tokens must be exchanged.
 
+## Where the KMS Runs
+
+A volume of the cluster is only usable once its DEK has been unwrapped, which makes the KMS a dependency of the data
+path. The KMS must therefore not store its own state on the cluster it holds the keys for. Such a deployment
+deadlocks on a cold start: the KMS waits for its data volume, and that volume waits for the KMS to unwrap its key.
+The state cannot be recovered from inside the cluster, so the KMS is placed on storage that is available before
+simplyblock is.
+
 For the setup steps, see [Securing the Control Plane: External KMS](../../kubernetes/installation/security.md#external-key-management-kms).
+A worked deployment of an instance is in [Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md).
