@@ -93,99 +93,27 @@ either of them.
 
 ### Prerequisites
 
-- [mTLS configured](#transport-layer-security-mutual-tls-mtls) is required, because the vault is authenticated to the cluster via
-  a certificate issued by the operator's `simplyblock-certificate-authority-issuer`.
-- A Vault or OpenBao instance reachable from the simplyblock namespace. The instance must be initialized and unsealed
-  before configuring authentication.
+- **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the vault is
+  authenticated to the cluster with a certificate issued by the operator's
+  `simplyblock-certificate-authority-issuer`.
+- **A prepared instance:** A Vault or OpenBao instance reachable from the simplyblock namespace, initialized,
+  unsealed, and configured as described in [Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md).
+- **Storage for that instance that is not simplyblock:** A KMS holding its own state on the cluster it serves
+  deadlocks on a cold start, as described in
+  [Where the KMS Runs](../../architecture/concepts/external-key-management.md#where-the-kms-runs).
 
-### Issue a TLS Certificate via Vault
+### Deploying the Instance
 
-Create a Cert-Manager `Certificate` resource that uses the operator-managed issuer. The resulting secret holds the
-TLS material that Vault serves to clients and is trusted by the simplyblock components because it chains to the same
-CA.
+The instance is deployed from the upstream Helm chart, initialized, unsealed, and configured with the policy, the
+certificate authentication, and the secret engines simplyblock expects. Every step of that is described in
+[Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md), for OpenBao as well as for Vault.
 
-```yaml title="vault-tls.yaml"
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: vault-tls
-  namespace: vault
-spec:
-  secretName: vault-tls
-  issuerRef:
-    name: simplyblock-certificate-authority-issuer
-    kind: ClusterIssuer
-  commonName: vault
-  dnsNames:
-    - vault
-    - vault.vault
-    - vault.vault.svc
-    - vault.vault.svc.cluster.local
-```
+The configuration is not free-form. The control plane expects the transit engine at `simplyblock/transit`, the
+key-value engine at `simplyblock/kv`, and a certificate role named `simplyblock-webappapi` that accepts a client whose
+certificate chains to the simplyblock certificate authority and whose DNS SAN is `simplyblock-webappapi`. None of the
+three is configurable through the operator, which exposes the endpoint URL alone.
 
-Mount the resulting `vault-tls` secret into the Vault deployment as its serving certificate. Mount the issuer's CA
-bundle (typically `ca.crt`) at a path the Vault can read. The example below assumes `/vault/tls/ca.crt` for Vault
-and `/bao/tls/ca.crt` for OpenBao.
-
-### Deploy the Vault
-
-Install Vault or OpenBao using their upstream Helm chart and expose it inside the cluster. For the rest of this guide
-the in-cluster service is assumed to be `vault.vault:8200`. Adjust the URL to match the actual deployment.
-
-### Configure Auth, Policy, and Secret Engines
-
-Configure the vault with a policy that grants simplyblock access to the `transit` and `kv` backends, enable the
-certificate authentication bound to the simplyblock CA, and enable the required secret engines. The script below
-works for both Vault (`vault`) and OpenBao (`bao`). Assign the appropriate CLI to the `$CLI` variable.
-
-```bash title="Configure the vault for simplyblock"
-CLI=vault   # or: CLI=bao
-
-# Policy granting access to the transit and kv backends
-$CLI policy write webappapi-policy - <<EOF
-path "transit/keys/*" {
-  capabilities = ["create", "update", "read", "delete"]
-}
-
-path "transit/datakey/plaintext/*" {
-  capabilities = ["create", "update"]
-}
-
-path "transit/datakey/wrapped/*" {
-  capabilities = ["create", "update"]
-}
-
-path "transit/decrypt/*" {
-  capabilities = ["create", "update"]
-}
-
-path "kv/*" {
-  capabilities = ["create", "read", "update", "delete"]
-}
-EOF
-
-# Certificate authentication, bound to the simplyblock cluster CA
-$CLI auth enable cert
-$CLI write auth/cert/certs/webappapi \
-    certificate=@/${CLI}/tls/ca.crt \
-    allowed_dns_sans="simplyblock-webappapi" \
-    token_policies=webappapi-policy \
-    token_ttl=10m \
-    token_max_ttl=30m
-
-# Secret engines used by simplyblock
-$CLI secrets enable transit
-$CLI secrets enable -version=1 kv
-```
-
-- The **policy** grants simplyblock the minimum capabilities it needs: managing keys, performing envelope
-  encryption on the `transit` backend, and storing per-volume key material on the `kv` backend.
-- The **cert auth** role only accepts clients that present a certificate chaining to the simplyblock CA *and* whose
-  DNS SAN is `simplyblock-webappapi`. Tokens are short-lived (10 min, 30 min maximum), so a compromised token expires
-  quickly.
-- **Transit** is used for wrapping data-encryption keys. The **kv** version 1 is used as the per-volume metadata store.
-
-### Point the StorageCluster to Vault
+### Point the StorageCluster to the KMS
 
 Set `spec.hashicorpVaultSettings.baseURL` on the `StorageCluster` resource:
 
