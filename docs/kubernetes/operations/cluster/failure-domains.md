@@ -1,7 +1,7 @@
 ---
 title: "Managing Failure Domains"
 description: "Enable failure-domain mode on a simplyblock cluster and assign Kubernetes workers to fault groups so erasure-coding chunks are spread across racks or zones."
-weight: 10600
+weight: 10140
 ---
 
 Failure-domain mode groups the storage nodes of a cluster into independent fault groups, so that the control plane
@@ -10,7 +10,7 @@ physical layout: a rack, a power unit, or an availability zone. Losing one group
 stripe.
 
 The placement contract, the balance rules, and the interaction with the erasure coding scheme are described in
-[Failure Domains](../../architecture/concepts/failure-domains.md). This page covers how the mode is turned on and how
+[Failure Domains](../../../architecture/concepts/failure-domains.md). This page covers how the mode is turned on and how
 workers are assigned to groups through the operator resources.
 
 ## Enabling Failure Domains
@@ -167,11 +167,11 @@ refused before any data moves.
 
 In practice, this means workers are added in whole rounds. On a balanced cluster one worker can be added to any domain,
 and the next worker has to go to a different one. The full rules are in
-[Failure Domains: Balance Rules](../../architecture/concepts/failure-domains.md#balance-rules).
+[Failure Domains: Balance Rules](../../../architecture/concepts/failure-domains.md#balance-rules).
 
 For the mechanics of adding the workers themselves, see
-[Expanding a Storage Cluster](scaling/expanding-storage-cluster.md), and for taking one out,
-[Removing a Storage Node](removing-a-storage-node.md).
+[Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md), and for taking one out,
+[Removing a Storage Node](../storage-nodes/removing-a-storage-node.md).
 
 !!! note
     Domain membership does not change on a live node. A worker that has to move to a different domain is drained and

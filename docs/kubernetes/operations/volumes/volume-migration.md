@@ -1,13 +1,13 @@
 ---
 title: "Volume Migration"
 description: "How the Simplyblock Operator migrates the backing logical volume of a volume between storage nodes, manually or automatically when a node is drained."
-weight: 10770
+weight: 10410
 ---
 
 The Simplyblock Operator can move a volume's backing logical volume from one storage node to another
 while the volume stays online (live migration). A migration relocates a logical volume (and its snapshots). It
 does not move the storage node itself. This is different from
-[Migrating a Storage Node](../../non-kubernetes/operations/migrating-storage-node.md), which relocates an entire storage node identity to a
+[Migrating a Storage Node](../../../non-kubernetes/operations/migrating-storage-node.md), which relocates an entire storage node identity to a
 new host.
 
 A volume migration moves only the logical volume itself, not the actual data. Since data remains distributed in the back
@@ -45,7 +45,7 @@ spec:
 
 ## Manual Volume Migration
 
-A manual migration is triggered by creating a [`VolumeMigration`](../../reference/operator/reference.md#volumemigration)
+A manual migration is triggered by creating a [`VolumeMigration`](../../../reference/operator/reference.md#volumemigration)
 resource (short name `vmig`) that names the `PersistentVolume` to move and the UUID of the destination storage node.
 
 ```bash title="Migrate a single volume to a target node"
@@ -196,13 +196,13 @@ spec:
 !!! note
     Setting `latencyBenchmarkEnabled: true` also activates load-aware placement for newly created volumes,
     independent of `migrationEnabled` (which only controls the continuous rebalancer above). See
-    [Automatic Volume Placement](../usage/volume-placement.md).
+    [Automatic Volume Placement](../../usage/volume-placement.md).
 
 ## Volume Migration During Node Draining and Removal
 
 When a storage node is removed, the operator evacuates its volumes onto the remaining nodes before the node
 leaves the cluster. Removal is triggered by a `StorageNodeOps` resource with `action: remove`, and the full workflow
-is described in [Removing a Storage Node](removing-a-storage-node.md).
+is described in [Removing a Storage Node](../storage-nodes/removing-a-storage-node.md).
 
 ```bash title="Remove a storage node (drains its volumes first)"
 kubectl apply -n simplyblock -f - <<EOF
@@ -238,7 +238,7 @@ kubectl get storagenodeops drain-worker-1 -n simplyblock \
 ```
 
 For how removal coordinates with Kubernetes node cordon/drain and `maxFaultTolerance`, see
-[Draining Coordination of a Kubernetes Worker Node](node-drain-coordination.md).
+[Draining Coordination of a Kubernetes Worker Node](../storage-nodes/node-drain-coordination.md).
 
 ### Pinned Volumes
 

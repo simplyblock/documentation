@@ -1,7 +1,7 @@
 ---
 title: "Configuring Node Affinity"
 description: "Enable node affinity on a simplyblock cluster so a volume's data stays local to the storage node that owns it, and combine it with per-PVC placement."
-weight: 10620
+weight: 10150
 ---
 
 Node affinity, also called data locality, keeps the data of a logical volume on the storage node that owns the volume,
@@ -52,7 +52,7 @@ On Kubernetes that decision is driven by PVC annotations:
   which is the combination a hyper-converged deployment usually wants.
 - `simplyblock.io/selected-storage-node` pins a volume to a named storage node.
 
-Both are described in [Automatic Volume Placement](../usage/volume-placement.md). They work whether or not node
+Both are described in [Automatic Volume Placement](../../usage/volume-placement.md). They work whether or not node
 affinity is enabled for the cluster, and the difference is what the backend then does with the data. Without node
 affinity the volume is owned by that node but its data is spread across the cluster. With node affinity the data
 follows the owner.
@@ -81,7 +81,7 @@ the node-affinity guarantees, and the operator triggers it automatically after v
 
 It applies to every move, whether the volume was migrated manually, relocated by auto-rebalancing, or evacuated from a
 node being drained. It is enabled by default and configured under `volumeMigrationSettings.dataRealignment`, described
-in [Volume Migration: Data Realignment](volume-migration.md#data-realignment).
+in [Volume Migration: Data Realignment](../volumes/volume-migration.md#data-realignment).
 
 On a cluster with node affinity this is not a detail to leave unattended. A cluster that moves volumes frequently and
 has realignment turned off keeps losing locality with every move, and never regains it.

@@ -1,7 +1,7 @@
 ---
 title: "Rolling Restart"
 description: "Restart every storage node of a simplyblock cluster in sequence with the node-recycle action, optionally refreshing the storage-node pod on each worker."
-weight: 10710
+weight: 10120
 ---
 
 A rolling restart restarts every backend storage node of a cluster, one node at a time, waiting for the cluster to
@@ -105,4 +105,4 @@ cleared with it. The rollout then starts again at the first node.
 !!! warning
     A rolling restart takes one storage node down at a time, so the cluster runs degraded for the duration of each
     node's turn. The cluster has to tolerate the loss of one node throughout, which the erasure coding scheme has to
-    allow for. See [Erasure Coding](../../deployment-preparation/erasure-coding-scheme.md).
+    allow for. See [Erasure Coding](../../../deployment-preparation/erasure-coding-scheme.md).

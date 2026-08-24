@@ -1,7 +1,7 @@
 ---
 title: "Logical Volume Conditions"
 description: "Logical Volume Conditions: Logical volumes are the core storage abstraction in simplyblock, representing high-performance, distributed NVMe block devices backed."
-weight: 30100
+weight: 10620
 ---
 
 Logical volumes are the core storage abstraction in simplyblock, representing high-performance, distributed NVMe

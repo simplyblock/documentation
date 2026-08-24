@@ -106,4 +106,4 @@ Failback runs in two phases per volume:
 On Kubernetes, every layer of a replication relationship is a custom resource, and a failover or a failback is
 requested by creating a one-shot operation resource. For those resources, their fields, and the annotation that
 enrolls a volume, see
-[Asynchronous Replication](../../kubernetes/operations/asynchronous-replication.md).
+[Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).

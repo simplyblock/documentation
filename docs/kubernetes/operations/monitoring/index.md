@@ -1,7 +1,7 @@
 ---
 title: "Monitoring"
 description: "Monitoring the health, performance, and resource utilization of a Simplyblock cluster is crucial for ensuring optimal operation, early issue detection, and."
-weight: 20200
+weight: 10600
 ---
 
 Monitoring the health, performance, and resource utilization of a simplyblock cluster is crucial for ensuring optimal

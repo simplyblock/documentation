@@ -287,7 +287,7 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
   simplyblock.io/pinned-volume=<target-storage-node-uuid> --overwrite
 ```
 
-See [Pinned Volume Migration During Node Removal](../../kubernetes/operations/node-drain-coordination.md#pinned-volume-migration-during-node-removal) for full details.
+See [Pinned Volume Migration During Node Removal](../../kubernetes/operations/storage-nodes/node-drain-coordination.md#pinned-volume-migration-during-node-removal) for full details.
 
 
 ## Storage Pool
@@ -367,7 +367,7 @@ The complete set of `Task` fields is available in [Task reference](reference.md#
 
 The `StorageBackup` resource creates a one-time backup of a PVC to the S3-compatible storage endpoint configured
 in the `StorageCluster`. For backup configuration prerequisites, see
-[Backup and Recovery](../../kubernetes/operations/backup-recovery.md).
+[Backup and Recovery](../../kubernetes/operations/data-protection/backup-recovery.md).
 
 ```yaml title="Example: Create a PVC backup"
 apiVersion: storage.simplyblock.io/v1alpha1

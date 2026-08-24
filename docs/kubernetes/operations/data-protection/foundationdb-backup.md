@@ -1,7 +1,7 @@
 ---
 title: "FoundationDB Backup and Restore"
 description: "Back up and restore the FoundationDB key-value store behind the simplyblock control plane with the FoundationDBBackup and FoundationDBRestore CRDs."
-weight: 20110
+weight: 10530
 ---
 
 All state of a simplyblock control plane is held in FoundationDB: the cluster topology, the logical volume metadata,
@@ -17,7 +17,7 @@ object storage through it. A backup is driven by the `FoundationDBBackup` resour
 The control plane ships FoundationDB 7.3.63 in a `FoundationDBCluster` resource named `simplyblock-fdb-cluster`,
 deployed in the `simplyblock` namespace with `imageType: unified`. All examples below use those values. For the
 surrounding components, see
-[Control Plane Cluster Architecture](../installation/management-cluster-architecture.md).
+[Control Plane Cluster Architecture](../../installation/management-cluster-architecture.md).
 
 ## Prerequisites
 

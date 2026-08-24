@@ -1,7 +1,7 @@
 ---
 title: "Cluster Health"
 description: "Cluster Health: A simplyblock cluster consists of interconnected management nodes (control plane) and storage nodes (storage plane) working together to deliver."
-weight: 30200
+weight: 10610
 ---
 
 A simplyblock cluster consists of interconnected management nodes (control plane) and storage nodes (storage plane)

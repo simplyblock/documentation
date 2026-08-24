@@ -12,7 +12,7 @@ This page describes the CLI-driven migration between nodes of the **same cluster
 **clusters**, see [Asynchronous Replication](asynchronous-replication.md), which provides a
 replication-based cross-cluster migration. In Kubernetes environments, migrations are managed declaratively
 through the `VolumeMigration` resource. See
-[Volume Migration on Kubernetes](../../kubernetes/operations/volume-migration.md).
+[Volume Migration on Kubernetes](../../kubernetes/operations/volumes/volume-migration.md).
 
 ## How a Migration Works
 

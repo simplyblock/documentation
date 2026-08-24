@@ -1,7 +1,7 @@
 ---
 title: "Replacing a Storage Node"
 description: "Replace the host under a simplyblock storage node, or retire a node and add a replacement, without making the logical volumes it owns inaccessible."
-weight: 10750
+weight: 10220
 ---
 
 A storage cluster is designed to stay up, so replacing a storage node is an online operation. Which operation it is
@@ -66,9 +66,9 @@ is why it is the recommended sequence.
 
 1. **Add the replacement node.** Create a `StorageNodeSet` for the new worker with `spec.expand: true`, or add the
    worker to an existing set, as described in
-   [Expanding a Storage Cluster](scaling/expanding-storage-cluster.md).
+   [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md).
 2. **Finalize the expansion** with the `expand` action once the new node is online, see
-   [Storage Cluster Actions](cluster-actions.md#expand).
+   [Storage Cluster Actions](../cluster/cluster-actions.md#expand).
 3. **Drain and remove the old node** with a `StorageNodeOps` resource carrying `action: remove`. Its volumes are
    migrated onto the remaining nodes, including the one just added, before the node leaves the cluster. See
    [Removing a Storage Node](removing-a-storage-node.md).
@@ -98,7 +98,7 @@ replacement carries the same group index as the node it replaces.
 
 Relocating a node is the simpler option here as well, since the node keeps its domain membership. A retired node that
 is replaced by a new one needs the group index set explicitly on the new worker, as described in
-[Managing Failure Domains](failure-domains.md#assigning-workers-to-a-domain).
+[Managing Failure Domains](../cluster/failure-domains.md#assigning-workers-to-a-domain).
 
 ## Verifying the Replacement
 
@@ -120,4 +120,4 @@ kubectl get pv -o custom-columns=NAME:.metadata.name,STATUS:.status.phase,CLAIM:
 
 A `PersistentVolume` that is `Bound` and whose consuming pod is running is served by a storage node. A volume that
 lost its paths during the replacement recovers on its own, as described in
-[Recovering from Path Loss](path-loss-recovery.md).
+[Recovering from Path Loss](../volumes/path-loss-recovery.md).

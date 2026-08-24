@@ -1,7 +1,7 @@
 ---
 title: "Removing a Storage Node"
 description: "Drain and remove a simplyblock storage node with the remove action, which evacuates its volumes onto the remaining nodes before the node leaves the cluster."
-weight: 10740
+weight: 10240
 ---
 
 The `remove` action of a `StorageNodeOps` resource takes a storage node out of the cluster. It is a drain, not a
@@ -59,7 +59,7 @@ The drain does not start while any volume blocks it:
 
 - **Pinned volume:** A PVC carrying the `simplyblock.io/selected-storage-node` annotation. A `PinnedVolumeBlocking`
   event names how many are affected, and the annotation has to be removed for the drain to proceed. See
-  [Pinned Volumes](volume-migration.md#pinned-volumes).
+  [Pinned Volumes](../volumes/volume-migration.md#pinned-volumes).
 - **Unmanaged volume:** A volume without a `PersistentVolume`. An `UnmanagedVolumeBlocking` event is emitted, and the
   volume has to be removed by hand.
 
@@ -87,7 +87,7 @@ kubectl get storagenodeops drain-worker-1 -n simplyblock \
 A migration that fails or is aborted is deleted and created again, which picks a new target, and a `MigrationRetry`
 event records it. Once every migration has completed, the completed resources are deleted and the operation advances.
 The individual migrations are observable while they run, as described in
-[Volume Migration](volume-migration.md#monitoring-a-migration).
+[Volume Migration](../volumes/volume-migration.md#monitoring-a-migration).
 
 If the cluster becomes unavailable during the evacuation, the drain pauses rather than failing. See
 [Pausing](#pausing) below.

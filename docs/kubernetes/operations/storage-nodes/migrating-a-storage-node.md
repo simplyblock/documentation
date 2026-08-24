@@ -1,7 +1,7 @@
 ---
 title: "Migrating a Storage Node"
 description: "Relocate a simplyblock storage node onto a different Kubernetes worker with the migrate action, keeping its backend identity, devices, and logical volumes."
-weight: 10730
+weight: 10230
 ---
 
 The `migrate` action of a `StorageNodeOps` resource moves a storage node onto a different Kubernetes worker without
@@ -10,7 +10,7 @@ volume is moved between nodes. What changes is the host the node runs on.
 
 This is the operation for replacing the hardware under a node, or for vacating a worker that has to be
 decommissioned. It is not the operation for moving individual volumes, which is
-[Volume Migration](volume-migration.md), and not the operation for taking a node out of the cluster, which is
+[Volume Migration](../volumes/volume-migration.md), and not the operation for taking a node out of the cluster, which is
 [Removing a Storage Node](removing-a-storage-node.md).
 
 !!! important

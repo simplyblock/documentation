@@ -15,7 +15,7 @@ and transferring them to the target cluster. On top of this mechanism, two workf
 
 For the architecture background, see [Replication Concepts](../../architecture/concepts/replication.md). For
 Kubernetes environments, where replication is declared through custom resources, see
-[Asynchronous Replication on Kubernetes](../../kubernetes/operations/asynchronous-replication.md).
+[Asynchronous Replication on Kubernetes](../../kubernetes/operations/data-protection/asynchronous-replication.md).
 
 ## Prerequisites
 

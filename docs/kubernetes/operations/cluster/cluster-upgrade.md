@@ -1,7 +1,7 @@
 ---
 title: "Upgrading a Cluster"
 description: "Upgrade the simplyblock operator, control plane, and CSI driver with Helm, then roll the new storage-node image across the storage plane one node at a time."
-weight: 10610
+weight: 10130
 ---
 
 A simplyblock deployment on Kubernetes upgrades in two parts. The control plane, the operator, and the CSI driver come
@@ -34,7 +34,7 @@ falls back to the chart default, which silently reverts settings such as the TLS
 !!! warning
     A chart upgrade re-renders every object the chart owns, which discards manual edits to them. A patch that has to
     survive an upgrade is reapplied afterward, for example, the credentials mount described in
-    [FoundationDB Backup and Restore](foundationdb-backup.md).
+    [FoundationDB Backup and Restore](../data-protection/foundationdb-backup.md).
 
 ### Confirming the Control Plane Is Ready
 

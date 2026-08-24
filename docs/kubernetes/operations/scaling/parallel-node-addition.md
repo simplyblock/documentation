@@ -1,7 +1,7 @@
 ---
 title: "Parallel Storage Node Addition"
 description: "How the Simplyblock operator adds storage nodes in parallel while preserving FoundationDB fault tolerance with sequential adds for FDB-hosting workers."
-weight: 10760
+weight: 10320
 ---
 
 When a `StorageNodeSet` resource is created with multiple worker nodes, the operator can add storage nodes on workers

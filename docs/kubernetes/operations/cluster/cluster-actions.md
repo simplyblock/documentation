@@ -1,7 +1,7 @@
 ---
 title: "Storage Cluster Actions"
 description: "Trigger cluster-wide lifecycle operations on a simplyblock storage cluster through the action field of the StorageCluster resource and track their outcome."
-weight: 10700
+weight: 10110
 ---
 
 Cluster-wide lifecycle operations are requested declaratively on Kubernetes. Setting `spec.action` on a
@@ -83,7 +83,7 @@ kubectl patch storagecluster simplyblock-cluster -n simplyblock \
 !!! warning
     A cluster shutdown takes every volume of the cluster offline. Workloads consuming those volumes lose their storage
     for the duration of the shutdown. To take a single storage node out of service instead, see
-    [Storage Node Actions](storage-node-actions.md).
+    [Storage Node Actions](../storage-nodes/storage-node-actions.md).
 
 ## Start
 
@@ -116,7 +116,7 @@ kubectl get storagecluster simplyblock-cluster -n simplyblock \
 Activation is normally automatic. The operator activates a cluster on its own once every storage node declared in its
 `StorageNodeSet` is online and healthy, and the number of those nodes is at least the sum of the data chunks, the
 parity chunks, and one. See
-[Create a Storage Cluster](../installation/k8s-storage-plane.md#when-does-the-cluster-become-active).
+[Create a Storage Cluster](../../installation/k8s-storage-plane.md#when-does-the-cluster-become-active).
 
 The `activate` action exists for the case where that did not happen, for example, because nodes came online after the
 automatic check had already passed.
@@ -142,7 +142,7 @@ kubectl patch storagecluster simplyblock-cluster -n simplyblock \
 ```
 
 Adding the storage nodes themselves is the step before this one, described in
-[Expanding a Storage Cluster](scaling/expanding-storage-cluster.md).
+[Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md).
 
 ## Monitoring an Action
 

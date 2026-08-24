@@ -1,7 +1,7 @@
 ---
 title: "Recovering from Path Loss"
 description: "How the simplyblock CSI node plugin restores NVMe-oF paths after a storage node outage, and how to opt a workload into an automatic pod restart."
-weight: 10820
+weight: 10430
 ---
 
 An NVMe-oF path breaks when the storage node serving a volume goes away, during a node restart, a worker reboot, or a
@@ -10,7 +10,7 @@ need attention is the workload: a process holding a file descriptor across a lon
 that only a restart clears.
 
 Plain Linux clients reconnect their volumes by hand, as described in
-[Reconnecting Logical Volume](../../non-kubernetes/operations/reconnect-nvme-device.md). On Kubernetes none of that
+[Reconnecting Logical Volume](../../../non-kubernetes/operations/reconnect-nvme-device.md). On Kubernetes none of that
 applies. The node plugin repairs the fabric itself, and the only decision left is whether affected pods should be
 restarted automatically.
 
@@ -110,10 +110,10 @@ A subsystem that is connected but exports no namespace is the state the node plu
 missing entirely means the volume is not staged on this worker.
 
 Further diagnosis of the CSI driver is covered in
-[Kubernetes CSI Troubleshooting](../../reference/troubleshooting/simplyblock-csi.md).
+[Kubernetes CSI Troubleshooting](../../../reference/troubleshooting/simplyblock-csi.md).
 
 ## Related Operations
 
 A path loss that follows from a planned operation is expected, and the operation itself reports its progress. See
-[Storage Node Actions](storage-node-actions.md) for a single node, [Rolling Restart](rolling-restart.md) for a whole
-cluster, and [Coordinated Worker Node Drain](node-drain-coordination.md) for a worker going down for maintenance.
+[Storage Node Actions](../storage-nodes/storage-node-actions.md) for a single node, [Rolling Restart](../cluster/rolling-restart.md) for a whole
+cluster, and [Coordinated Worker Node Drain](../storage-nodes/node-drain-coordination.md) for a worker going down for maintenance.

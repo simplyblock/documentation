@@ -1,7 +1,7 @@
 ---
 title: "Backup and Recovery"
 description: "Snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage, managed through Kubernetes CRDs or the Simplyblock CLI."
-weight: 20100
+weight: 10510
 ---
 
 Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. Backups can be
@@ -63,7 +63,7 @@ spec:
     withCompression: false
 ```
 
-See the [Operator Reference](../../reference/operator/reference.md#storagecluster) for all available `backup` spec fields.
+See the [Operator Reference](../../../reference/operator/reference.md#storagecluster) for all available `backup` spec fields.
 
 ### StorageBackup CRD
 

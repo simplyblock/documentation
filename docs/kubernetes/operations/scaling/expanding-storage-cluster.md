@@ -1,53 +1,47 @@
 ---
 title: "Expanding a Storage Cluster"
-description: "Expanding a Storage Cluster: Simplyblock is designed as an always-on storage solution."
-weight: 29001
+description: "Add storage nodes to a running simplyblock cluster on Kubernetes with an expansion StorageNodeSet, and follow the integration of every new node."
+weight: 10310
 ---
 
-Simplyblock is designed as an always-on storage solution. Hence, storage cluster expansion is an online operation
-without a need for maintenance downtime.
+A storage cluster is expanded while it serves I/O, so no maintenance window is required. Every new storage node is
+integrated by the control plane on its own, and the integration is followed by a rebalancing that moves data onto the
+new devices. The rebalancing runs at low priority, but it is still work on the data path, so an expansion is best
+started while the cluster is not fully utilized.
 
-However, every operation that changes the cluster topology comes with a set of migration tasks, moving data across
-the cluster to ensure equal usage distribution. While these migration tasks are low priority and their overhead is
-designed to be minimal, it is still recommended to expand the cluster at times when the storage cluster isn't under
-full utilization.
+## How an Expansion Runs
 
-!!! info
-    Storage nodes can be added **individually** (expansion mode, which integrates the new node by re-homing
-    existing failover paths) or **in groups**: at least two new nodes for clusters with one parity chunk, at
-    least three for clusters with two parity chunks (FTT 2). On clusters with failure domains, additional
-    balance rules apply. See [Failure Domains](../../../architecture/concepts/failure-domains.md).
+A worker is enrolled through a `StorageNodeSet` whose `spec.expand` is set to `true`. The flag reaches the control
+plane with the node addition and selects the expansion path, in which the cluster keeps the status `active` and one
+expansion task is queued for the new node.
 
-To add a new storage node, follow the installation steps for the chosen deployment method up to the point where nodes are added to the cluster, then continue here:
+That task re-wires the role rotation of the cluster. The secondary logical volume store moves to the direct successor
+of the new node, and the tertiary one to the second node in line. Both donors have to be torn down and rebuilt for it,
+which is why the cluster reports `in_expansion` while the rotation is rebuilt and returns to `active` afterward. Only
+then does the expansion migration start and move data onto the devices of the new node.
 
-- [Storage nodes in Kubernetes](../../installation/index.md)
-- [Storage nodes on Linux](../../../non-kubernetes/installation/install-sp.md)
+One expansion runs per cluster at a time. Several workers may be listed in the same `StorageNodeSet`: they are
+integrated one after another, since the addition of the next worker is refused while an expansion is open and retried
+by the operator every 20 seconds.
 
-After adding the **first** new storage node, the cluster transitions to **IN_EXPANSION** and starts background rebalancing.
-Add the remaining node(s) required for the expansion.
-Once all newly added nodes are healthy/ready, finalize the expansion:
+## Preconditions
 
-```bash title="Finalize cluster expansion"
-{{ cliname }} cluster complete-expand <CLUSTER_ID>
-```
+The role rotation is only safe on a quiescent and fully redundant cluster, so an expansion is refused unless
 
-After the expansion is complete, the cluster returns to **ACTIVE** and resumes normal operation mode.
+- the cluster is `active` and every storage node is `online`,
+- no data migration, logical volume migration, node restart, or backup task is open anywhere in the cluster, where
+  open means anything that has not finished, and
+- no deletion is in flight on the two donor nodes.
 
-## Adding Worker Nodes with the Kubernetes Operator
+The conditions are checked twice: cluster-wide when the node is added, and again with the donors of the planned role
+moves right before the rotation is executed.
 
-There are two ways to add nodes when using the Kubernetes operator: via the `StorageNodeSet` (recommended for
-adding multiple nodes) or by creating individual `StorageNode` CRs manually (useful for per-node
-overrides or want fine-grained control).
+## Enrolling the Expansion Workers
 
-### Option A: Add Nodes via a New StorageNodeSet (recommended)
+The expansion workers are declared in their own `StorageNodeSet`, which keeps them separate from the resource that
+carries the original nodes and leaves that resource untouched.
 
-Create a separate `StorageNodeSet` for the expansion workers. Setting `spec.expand: true` tells the operator to
-register each node as an expansion add rather than a fresh cluster node. This keeps the expansion cleanly
-separated from the original set and avoids mutating an existing resource.
-
-**Adding two new nodes:**
-
-```yaml title="Example of a StorageNodeSet adding two nodes (expansion-nodeset.yaml)"
+```yaml title="Example of a StorageNodeSet that expands a cluster (expansion-nodeset.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha1
 kind: StorageNodeSet
 metadata:
@@ -61,116 +55,87 @@ spec:
     - new-node-5.example.com
 ```
 
-**Adding four new nodes:**
-
-```yaml title="Example of a StorageNodeSet adding four nodes (expansion-nodeset.yaml)"
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNodeSet
-metadata:
-  name: simplyblock-node-expansion
-  namespace: simplyblock
-spec:
-  clusterName: simplyblock-cluster
-  expand: true
-  workerNodes:
-    - new-node-4.example.com
-    - new-node-5.example.com
-    - new-node-6.example.com
-    - new-node-7.example.com
-```
-
-```bash title="Apply the expansion StorageNodeSet"
+```bash title="Enrolling the expansion workers"
 kubectl apply -f expansion-nodeset.yaml
 ```
 
-The operator creates `StorageNode` CRs for each new worker, deploys the storage-node DaemonSet, and registers
-them with the backend one at a time.
+One `StorageNode` resource per worker is created by the operator, the storage node DaemonSet is rolled out on that
+worker, and the node is registered with the control plane. Every configuration field of the original `StorageNodeSet`
+that the new workers do not share has to be repeated in the expansion resource, since the two resources are
+independent.
 
-Monitor until all new nodes are online:
+On a cluster with `enableFailureDomains: true`, the expansion resource also has to assign every new worker to a
+failure domain, otherwise the addition is rejected. See
+[Managing Failure Domains](../cluster/failure-domains.md) for the assignment and the balance rules.
 
-```bash title="Watch the expansion StorageNodeSet"
-kubectl get storagenodeset simplyblock-node-expansion -n simplyblock -w
-```
-
-```bash title="Check individual StorageNode status"
-kubectl get storagenodes -n simplyblock
-```
-
-### Option B: Add a Single Node via StorageNode CR
-
-For cases that need per-node overrides (custom `spdkSystemMemory`, `failureDomain`, etc.) or a
-single node added manually, create a `StorageNode` CR directly. Set `overrides.expand: true` so the backend
-treats it as an expansion add rather than a fresh cluster node.
-
-`spec.storageNodeSetRef` must point to the existing `StorageNodeSet` and `spec.workerNode` must match the
-Kubernetes node hostname. The CR name is arbitrary.
-
-```yaml title="Add a single expansion node manually"
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNode
-metadata:
-  name: simplyblock-new-node-4-expansion
-  namespace: simplyblock
+```yaml title="Example of an expansion StorageNodeSet on a failure-domain cluster"
 spec:
-  storageNodeSetRef: simplyblock-node
-  workerNode: new-node-4.example.com
-  socketIndex: 0
-  overrides:
-    expand: true
-    spdkSystemMemory: "4G"
+  clusterName: simplyblock-cluster
+  expand: true
+  workerNodes:
+    - new-node-4.example.com
+    - new-node-5.example.com
+  nodeFailureDomains:
+    new-node-4.example.com: 0
+    new-node-5.example.com: 1
 ```
 
-```bash title="Apply the StorageNode CR"
-kubectl apply -f expansion-node.yaml
+## Following the Expansion
+
+The state of the new nodes is reported on the `StorageNode` resources:
+
+```bash title="Watching the storage nodes of the expansion"
+kubectl get storagenodes -n simplyblock -w
 ```
 
-The operator picks up the new CR and provisions the node. Watch the status:
+The cluster reports the rotation and the rebalancing that follow it. The status returns to `active` once the rotation
+is rebuilt, and `rebalancing` turns to `false` once the data has been moved:
 
-```bash title="Watch the new node's provisioning status"
-kubectl get storagenode simplyblock-new-node-4-expansion \
-  -n simplyblock -w
-```
-
-!!! note
-    The `StorageNode` CR is normally auto-created by the operator when a worker is added to the `StorageNodeSet`.
-    Create it manually only for per-node overrides that are not covered by `StorageNodeSet.spec.nodeConfigs`.
-
-### Finalizing the Expansion
-
-Once all newly added nodes are online (regardless of which method was used), finalize the expansion:
-
-The backend transitions to **IN_EXPANSION** once the first new node is registered. All new nodes must be online
-before finalizing.
-
-```bash title="Finalize expansion via the operator"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-  --type=merge -p '{"spec": {"action": "expand"}}'
-```
-
-Monitor until the cluster returns to `active`:
-
-```bash title="Watch expansion status"
+```bash title="Watching the cluster status and the rebalancing flag"
 kubectl get storagecluster simplyblock-cluster -n simplyblock \
-  -o jsonpath='{.status.status}{"\n"}' -w
+    -o jsonpath='{.status.status}{"\t"}{.status.rebalancing}{"\n"}' -w
 ```
 
-```plain title="Example output for finalizing cluster expansion"
-[demo@demo ~]# {{ cliname }} cluster complete-expand e2cda3fe-e9f2-42ce-bb2d-eecd10f58ccf
-2026-02-19 11:28:49,995: 139892426475328: INFO: Connecting to remote_jm_af8d10c1-6613-47a9-8ed0-ebdf1f873738
-2026-02-19 11:28:50,133: 139892426475328: INFO: Connecting to remote_jm_e17ffb0c-89aa-496d-98ec-700e58cb831f
-2026-02-19 11:28:50,786: 139892426475328: INFO: Connecting to remote_jm_86ccd3d3-378b-4ba1-ba26-a299e168a8cb
-2026-02-19 11:28:50,933: 139892426475328: INFO: Connecting to remote_jm_e17ffb0c-89aa-496d-98ec-700e58cb831f
-2026-02-19 11:28:51,357: 139892426475328: INFO: Creating hublvol on 86ccd3d3-378b-4ba1-ba26-a299e168a8cb
-2026-02-19 11:28:52,467: 139892426475328: INFO: Connecting node af8d10c1-6613-47a9-8ed0-ebdf1f873738 to hublvol on 86ccd3d3-378b-4ba1-ba26-a299e168a8cb
-2026-02-19 11:28:52,681: 139892426475328: INFO: Connecting to remote_jm_86ccd3d3-378b-4ba1-ba26-a299e168a8cb
-2026-02-19 11:28:52,687: 139892426475328: INFO: Connecting to remote_jm_6bc978d0-84ba-4815-8b25-697cc4de5d5d
-2026-02-19 11:28:52,841: 139892426475328: INFO: Connecting to remote_jm_e17ffb0c-89aa-496d-98ec-700e58cb831f
-2026-02-19 11:28:53,319: 139892426475328: INFO: Connecting to remote_jm_af8d10c1-6613-47a9-8ed0-ebdf1f873738
-2026-02-19 11:28:53,326: 139892426475328: INFO: Connecting to remote_jm_e17ffb0c-89aa-496d-98ec-700e58cb831f
-2026-02-19 11:28:53,344: 139892426475328: INFO: Connecting to remote_jm_6bc978d0-84ba-4815-8b25-697cc4de5d5d
-2026-02-19 11:28:53,873: 139892426475328: INFO: Creating hublvol on af8d10c1-6613-47a9-8ed0-ebdf1f873738
-2026-02-19 11:28:54,953: 139892426475328: INFO: Connecting node 86ccd3d3-378b-4ba1-ba26-a299e168a8cb to hublvol on af8d10c1-6613-47a9-8ed0-ebdf1f873738
-2026-02-19 11:28:55,098: 139892426475328: INFO: {"cluster_id": "e2cda3fe-e9f2-42ce-bb2d-eecd10f58ccf", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from in_expansion to active", "caused_by": "cli"}
-2026-02-19 11:28:55,100: 139892426475328: INFO: Cluster expanded successfully
-True
+## Configuring a Single Expansion Worker
+
+A worker that needs a configuration of its own is given an entry under `spec.nodeConfigs`, keyed by its name. The
+entry overrides the fleet defaults of the `StorageNodeSet` for that worker only, and it accepts `expand`,
+`failureDomain`, `spdkSystemMemory`, the PCI filters, and the device names.
+
+```yaml title="Example of a per-worker configuration in an expansion StorageNodeSet"
+spec:
+  clusterName: simplyblock-cluster
+  expand: true
+  workerNodes:
+    - new-node-4.example.com
+  nodeConfigs:
+    new-node-4.example.com:
+      spdkSystemMemory: "4G"
+      failureDomain: 0
 ```
+
+The `StorageNodeSet` is the single source of truth for this configuration. The entries are propagated into
+`StorageNode.spec.overrides` on every reconcile, so an override edited on a `StorageNode` directly is overwritten
+again. A `StorageNode` resource created by hand is kept, since the operator only deletes the resources it owns, but it
+is needed only for a worker that is deliberately absent from `spec.workerNodes`.
+
+## Finalizing an Expansion of Nodes Added Without the Flag
+
+A node added without `expand` follows the older path: the cluster is set to `in_expansion` when the node is
+registered, and the expansion is finalized with a cluster action once all new nodes are online.
+
+```bash title="Finalizing a cluster expansion"
+kubectl patch storagecluster simplyblock-cluster -n simplyblock \
+    --type=merge -p '{"spec": {"action": "expand"}}'
+```
+
+This path integrates all pending nodes at once, so it needs at least two new nodes, and at least three on a cluster
+with dual fault tolerance (FTT 2), to build the failover paths of every one of them. The outcome is reported in
+`status.actionStatus`, which holds the state `running`, `success`, or `failed` together with a message. The other
+actions of the resource are described in [Storage Cluster Actions](../cluster/cluster-actions.md).
+
+## Sequencing and Parallel Additions
+
+`maxParallelNodeAdds` governs how many workers of a `StorageNodeSet` are provisioned at the same time, as described in
+[Parallel Storage Node Addition](parallel-node-addition.md). It does not widen an expansion: the control plane
+integrates one new node at a time regardless of the value.

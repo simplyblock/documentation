@@ -1,7 +1,7 @@
 ---
 title: "Storage Node Actions"
 description: "Shut down, restart, suspend, and resume a single simplyblock storage node with the StorageNodeOps resource, and track the operation through its status."
-weight: 10720
+weight: 10210
 ---
 
 An operation against one storage node is requested by creating a `StorageNodeOps` resource. It names the target

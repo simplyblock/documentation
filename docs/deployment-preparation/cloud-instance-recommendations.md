@@ -38,7 +38,7 @@ Based on those criteria, simplyblock commonly recommends the following virtual m
 
 For hyper-converged AWS EC2-based Kubernetes workers (EKS, K3s, or other), any instance with a local SSD can be chosen.
 
-Keep the [minimum system requirements](./hardware-requirements.md)in mind. At least 8 vCPUs are required for simplyblock.
+Keep the [minimum system requirements](hardware-requirements.md)in mind. At least 8 vCPUs are required for simplyblock.
 
 ## Google Compute Engine Recommendations
 

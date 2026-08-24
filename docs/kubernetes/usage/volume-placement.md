@@ -25,7 +25,7 @@ A [clone or a snapshot restore](#clones-and-snapshot-restores) is placed outside
 ## Pinning a Volume to a Storage Node
 
 On a new PVC, `simplyblock.io/selected-storage-node` sets the primary node directly. On an already-bound PVC,
-a [migration](../operations/volume-migration.md#migrating-by-pinning-a-pvc) to the new node is triggered by
+a [migration](../operations/volumes/volume-migration.md#migrating-by-pinning-a-pvc) to the new node is triggered by
 this annotation instead.
 
 ```bash title="Pinning a new PVC to a specific storage node"
@@ -55,7 +55,7 @@ and it does not pin the volume. A node is eligible when it is online, passes its
 its configured logical volume limit.
 
 Load-aware placement is controlled by the same `StorageCluster` field that also feeds
-[auto-rebalancing's latency benchmark](../operations/volume-migration.md#auto-rebalancing):
+[auto-rebalancing's latency benchmark](../operations/volumes/volume-migration.md#auto-rebalancing):
 
 | Field                                         | Type | Default | Description                                                                                                                       |
 |-----------------------------------------------|------|---------|-----------------------------------------------------------------------------------------------------------------------------------|

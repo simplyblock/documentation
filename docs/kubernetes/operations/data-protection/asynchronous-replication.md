@@ -1,7 +1,7 @@
 ---
 title: "Asynchronous Replication"
 description: "Configure snapshot-based asynchronous replication between simplyblock clusters with the ReplicationPair, ReplicationPolicy, and ReplicationOps resources."
-weight: 10650
+weight: 10520
 ---
 
 Simplyblock replicates volumes between two storage clusters by transferring copy-on-write snapshots at a fixed
@@ -9,7 +9,7 @@ interval. For each interval, a snapshot is taken on the source cluster and repli
 the snapshots form an incremental chain. On Kubernetes, replication is declared through custom resources, and every
 backend call is issued by the Simplyblock Operator.
 
-For the architecture background, see [Replication Concepts](../../architecture/concepts/replication.md).
+For the architecture background, see [Replication Concepts](../../../architecture/concepts/replication.md).
 
 ## Scope and Prerequisites
 
@@ -151,7 +151,7 @@ the PVC deletes the slot and stops replication for that volume.
 !!! note
     The `replicate` StorageClass parameter is unrelated to this mechanism. It is a backend volume property and does
     not attach a volume to a `ReplicationPolicy`. See
-    [Storage Class: Available Parameters](../usage/storage-class.md#available-parameters).
+    [Storage Class: Available Parameters](../../usage/storage-class.md#available-parameters).
 
 ### Changing or Removing the Policy
 

@@ -1,7 +1,7 @@
 ---
 title: "Coordinated Worker Node Drain"
 description: "How the Simplyblock operator automatically protects storage availability during Kubernetes node maintenance such as cordon, drain, and rolling OS upgrades."
-weight: 10800
+weight: 10250
 ---
 
 When a Kubernetes worker node is cordoned or drained, for example, during a rolling OS upgrade or node replacement,
