@@ -10,6 +10,38 @@ RewriteEngine On
   Header set X-Robots-Tag "noindex" env=NOINDEX
 </IfModule>
 
+# Markdown mirrors for AI agents. Every page ships a Markdown twin next to its
+# HTML, written at build time by scripts/hooks/md_mirror.py. Reading a page as
+# Markdown costs a client roughly 5% of the tokens the themed HTML does.
+
+# Without an explicit type, Apache sends .md as application/octet-stream:
+# browsers download the file instead of showing it and some agents drop it.
+AddType text/markdown;charset=UTF-8 .md
+
+# Content negotiation: a client asking for Markdown gets the twin of the page
+# it requested, everyone else keeps the HTML. A leaf page mirrors to <page>.md,
+# a section index to <section>/index.md. Must stay above the catch-all redirect
+# at the bottom of this file.
+RewriteCond %{HTTP_ACCEPT} text/markdown
+RewriteCond %{DOCUMENT_ROOT}/$1.md -f
+RewriteRule ^(.+?)/?$ /$1.md [L]
+RewriteCond %{HTTP_ACCEPT} text/markdown
+RewriteCond %{DOCUMENT_ROOT}/$1/index.md -f
+RewriteRule ^(.+?)/?$ /$1/index.md [L]
+
+# Advertise the twin to clients that never parse the HTML head, where the same
+# link sits as <link rel="alternate">.
+RewriteCond %{DOCUMENT_ROOT}/$1.md -f
+RewriteRule ^(.+?)/?$ - [E=MD_ALT:/$1.md]
+RewriteCond %{ENV:MD_ALT} ^$
+RewriteCond %{DOCUMENT_ROOT}/$1/index.md -f
+RewriteRule ^(.+?)/?$ - [E=MD_ALT:/$1/index.md]
+
+<IfModule mod_headers.c>
+  Header set Link "<%{MD_ALT}e>; rel=\"alternate\"; type=\"text/markdown\", </latest/llms.txt>; rel=\"describedby\"" env=MD_ALT
+  Header merge Vary Accept
+</IfModule>
+
 # Old documentation redirects
 RewriteRule ^deployment/deployment /latest/deployments/ [L,R=301]
 RewriteRule ^deployment/requirements /latest/deployments/deployment-preparation/ [L,R=301]

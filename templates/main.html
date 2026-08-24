@@ -1,0 +1,18 @@
+{#-
+  Advertises the Markdown mirror of the current page, written by
+  scripts/hooks/md_mirror.py. Kept out of base.html, which is generated from
+  the theme and must not be edited by hand.
+
+  The mirror link stays relative to the page, so a reader of an archived
+  version is pointed at the Markdown of that same version, while the canonical
+  URL in base.html keeps consolidating on /latest/.
+-#}
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  {% if page and page.file %}
+    <link rel="alternate" type="text/markdown" title="Markdown (for AI agents)" href="{{ page.file.src_uri | url }}">
+  {% endif %}
+  <link rel="describedby" href="{{ 'llms.txt' | url }}">
+{% endblock %}

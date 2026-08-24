@@ -25,6 +25,10 @@ extra:
       link: https://mastodon.social/deck/@simplyblock
   cliname: sbctl
   experimental: "**Experimental**{.chip-experimental}"
+hooks:
+  # Writes a Markdown twin of every page into the built site, plus llms.txt
+  # and llms-full.txt. See scripts/hooks/README.md.
+  - scripts/hooks/md_mirror.py
 plugins:
   - search
   - mike
