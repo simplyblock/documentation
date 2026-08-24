@@ -1,7 +1,7 @@
 ---
 title: "Scaling"
 description: "Scale a simplyblock cluster outside Kubernetes by adding capacity to a storage pool, so that its logical volumes can grow beyond the current limit."
-weight: 10300
+weight: 10400
 ---
 
 A cluster scales out by adding storage nodes, and it scales its provisioning limit by growing a storage pool. Both are

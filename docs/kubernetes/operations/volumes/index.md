@@ -1,7 +1,7 @@
 ---
 title: "Volumes"
 description: "Operate simplyblock volumes on Kubernetes: migrate the backing logical volume, reclaim unused blocks, and recover a workload after a path loss."
-weight: 10400
+weight: 10300
 ---
 
 The lifecycle of a volume, from provisioning to deletion, is covered under [Usage](../../usage/index.md). This section

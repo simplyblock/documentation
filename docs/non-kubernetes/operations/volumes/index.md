@@ -1,7 +1,7 @@
 ---
 title: "Volumes"
 description: "Operate simplyblock logical volumes outside Kubernetes: migrate one between storage nodes, reconnect it, reclaim blocks, and limit its IOPS and throughput."
-weight: 10400
+weight: 10300
 ---
 
 The lifecycle of a logical volume, from provisioning to deletion, is covered under [Usage](../../usage/index.md). This
