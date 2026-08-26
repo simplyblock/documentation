@@ -167,6 +167,13 @@ hosted by the node being removed are relocated to other nodes. If the path being
 cross-domain path of its volume store, the replacement node **must** be in a different failure domain than the
 primary. If no such node exists, the removal is refused.
 
+Node removal separately triggers journal-copy replacement on every journal redundancy set that included the
+departed node's journal copy. This works in the opposite direction from failover-path relocation: the replacement
+prefers a candidate from the departed node's own failure domain, so the set's domain distribution is left
+unchanged rather than reshuffled. It is a best-effort preference, not a hard requirement, and never blocks the
+removal. See
+[Journal Copy Replacement on Removal](../../../architecture/concepts/failure-domains.md#journal-copy-replacement-on-removal).
+
 ## Moving a Host Between Domains
 
 A host's failure domain is immutable. Re-adding a host or one of its node slots with a different domain label is

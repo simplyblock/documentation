@@ -93,6 +93,19 @@ A host's failure domain cannot be changed while the host is part of the cluster.
 requires removing the node, restoring the domain balance, and re-adding it with the new failure-domain label. This
 prevents accidental topology changes that would silently invalidate the placement of existing data.
 
+## Journal Copy Replacement on Removal
+
+Removing a node also affects every journal redundancy set that included the departed node's journal copy. Each
+surviving node running a local copy of such a set picks a replacement member before the departed journal is
+retired.
+
+The replacement is chosen with the same domain-balance goal as the original placement: a candidate from the
+**same failure domain** as the departed node is preferred, so the set's domain distribution is left unchanged
+rather than reshuffled. This is a best-effort preference, not a hard requirement: if no same-domain candidate is
+available, a cross-domain one is used instead, and the removal itself is never blocked by it. This is the opposite
+direction from failover-path relocation (see [The Placement Contract](#the-placement-contract)), which sometimes
+requires a cross-domain target and refuses the removal if none exists.
+
 ## Recovery Behavior
 
 Failure domains also change how the cluster recovers from large outages:

@@ -169,6 +169,11 @@ In practice, this means workers are added in whole rounds. On a balanced cluster
 and the next worker has to go to a different one. The full rules are in
 [Failure Domains: Balance Rules](../../../architecture/concepts/failure-domains.md#balance-rules).
 
+Removing a node also triggers journal-copy replacement on every journal redundancy set that included its journal
+copy. Unlike failover-path relocation, which can require a cross-domain target, the journal replacement *prefers*
+a candidate from the departed node's own failure domain, to leave the set's domain distribution unchanged. See
+[Journal Copy Replacement on Removal](../../../architecture/concepts/failure-domains.md#journal-copy-replacement-on-removal).
+
 For the mechanics of adding the workers themselves, see
 [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md), and for taking one out,
 [Removing a Storage Node](../storage-nodes/removing-a-storage-node.md).
