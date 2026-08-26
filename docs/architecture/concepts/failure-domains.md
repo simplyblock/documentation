@@ -76,12 +76,39 @@ a same-domain secondary path, and its tertiary path is still guaranteed to be cr
 
 ## Failure Domains and Erasure Coding Schemes
 
-The number of failure domains should match the data protection goal:
+The number of failure domains determines both whether a cluster can activate with failure domains enabled at all,
+and how much simultaneous node or domain loss it can then absorb.
 
-| Goal                                                                            | Recommendation                                                                                                |
-|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| Survive one full domain outage                                                  | At least `parity chunks + 1` distinct failure domains                                                         |
-| Survive one full domain outage plus one further node or drive failure elsewhere | Erasure coding scheme with two parity chunks (e.g., `1+2`, `2+2`) and at least as many domains as data chunks |
+!!! important
+    Fresh activation requires **at least `parity chunks + 2` distinct failure domains**. Two domains are never
+    enough, at any parity-chunk count: with only `parity chunks + 1` domains the layout has no spare host, so the
+    very next node add or remove would strand a failover path with nowhere valid to go. Below the minimum,
+    activation is refused. Disable failure domains, or add hosts in further domains first.
+
+Once activated, tolerance for simultaneous node or domain outages follows from how evenly a stripe's
+`data chunks + parity chunks` spread across the available domains:
+
+- With **`data chunks + parity chunks` domains or more**, each domain holds at most one chunk per stripe, so the
+  cluster tolerates the **complete loss of up to `parity chunks` domains** at once (the same guarantee as running
+  without failure domains, now scoped to whole domains instead of individual nodes).
+- With **fewer domains than `data chunks + parity chunks`**, at least one domain necessarily holds more than one
+  chunk. A domain already carrying `⌈(data chunks + parity chunks) / domains⌉` down nodes has spent its entire
+  worst-case contribution: further nodes going down in that same domain cost nothing extra, but a different
+  domain going down spends a fresh share of the same budget. Any combination is tolerated as long as the summed
+  worst-case contribution of the affected domains stays within `parity chunks`.
+
+| Domains | 1+1             | 2+1             | 4+1             | 1+2             | 2+2             | 4+2             |
+|---------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| 1 – 2   | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate |
+| 3       | 1 whole domain  | 1 whole domain  | 1 node total    | cannot activate | cannot activate | cannot activate |
+| 4       | 1 whole domain  | 1 whole domain  | 1 node total    | 2 whole domains | 2 whole domains | 1 whole domain  |
+| 5       | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 1 whole domain  |
+| 6+      | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 2 whole domains |
+
+"1 whole domain" means every node in one domain, regardless of the domain's size, can go down at once and the
+cluster stays available. Spending the identical budget as individual nodes spread one-per-domain across that many
+domains is tolerated the same way. A cell short of a whole domain (`4+1` at 3 – 4 domains) instead means only that
+many individual nodes total, anywhere in the cluster, survive at once, not a domain's worth.
 
 The high-availability journal requires at least **four** journal copies on failure-domain clusters (instead of
 three), even with a single parity chunk. With three copies and two domains, one domain would hold two copies and

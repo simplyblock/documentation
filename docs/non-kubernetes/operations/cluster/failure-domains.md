@@ -165,7 +165,9 @@ before any change is made.
 Node removal applies the same balance rules (±1, minimum two hosts per domain). In addition, the failover paths
 hosted by the node being removed are relocated to other nodes. If the path being relocated is the only
 cross-domain path of its volume store, the replacement node **must** be in a different failure domain than the
-primary. If no such node exists, the removal is refused.
+primary. The control plane first looks for an idle host in the right domain. If none is free, it splices the path
+into an already-formed pairing instead, rebuilding that host's own path elsewhere to make room, rather than giving
+up immediately. Only when neither option exists is the removal refused.
 
 Node removal separately triggers journal-copy replacement on every journal redundancy set that included the
 departed node's journal copy. This works in the opposite direction from failover-path relocation: the replacement
