@@ -4,8 +4,6 @@ description: "Install the simplyblock Kubernetes operator via Helm. The operator
 weight: 30000
 ---
 
-{{ experimental }}
-
 The simplyblock operator is deployed via a single Helm chart. Once installed, it watches for simplyblock Custom
 Resources and manages the full lifecycle of clusters, storage nodes, pools, and the CSI driver.
 
