@@ -39,7 +39,7 @@ spec:
 The DH-HMAC-CHAP keys of the pool are generated as soon as `dhchap` is set. Authentication is only enforced once
 `allowedNodes` is non-empty.
 
-Both fields belong into the manifest that creates the pool. The `StorageClass` generated for the pool is only
+Both fields belong in the manifest that creates the pool. The `StorageClass` generated for the pool is only
 restricted to the allowed nodes when `dhchap` is `true` and `allowedNodes` is non-empty at the moment the class is
 created, and `parameters` and `allowedTopologies` cannot be patched afterward. A pool created with `dhchap: true` and
 an empty `allowedNodes` therefore keeps an unrestricted `StorageClass` for the rest of its life, even once nodes are
