@@ -1,6 +1,6 @@
 ---
 title: Host Authentication and Encryption
-description: "Simplyblock provides host access control, DH-HMAC-CHAP authentication, and TLS/PSK encryption for NVMe-oF connections."
+description: "Configure NVMe-oF host access control, DH-HMAC-CHAP authentication, and TLS/PSK encryption on Kubernetes through the StoragePool custom resource."
 weight: 10710
 ---
 
@@ -12,43 +12,13 @@ subsystems. This includes:
   authentication protocol (TP8018).
 - **TLS/PSK encryption:** encrypt data in transit using TLS 1.3 with Pre-Shared Keys.
 
+On Kubernetes, transport security is configured declaratively on the `StoragePool` custom resource and reconciled
+by the Simplyblock Operator. No host NQN has to be registered and no key has to be provisioned by hand.
+
 ## Enable Host Authentication and Encryption
 
-At cluster creation time, required security keys are automatically generated. No additional configuration is required.
-Adding allowed hosts to a storage pool automatically provisions the required security keys.
-
-However, host authentication and transport layer encryption can be configured at a storage pool level. That means, when
-a storage pool is created, security can be enabled for that pool. By default, host authentication and encryption are
-disabled.
-
-```bash title="Enable Host Authentication and Encryption"
-{{ cliname }} storage-pool add <POOL_ID> --dhchap
-```
-
-## Managed Allowed Hosts for Host Authentication
-
-Once an encryption-enabled storage pool is configured, hosts can be managed using the following commands:
-
-```bash title="Manage Allowed Hosts per Volume"
-# Add an allowed host
-{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>
-
-# Remove an allowed host
-{{ cliname }} storage-pool remove-host <POOL_ID> <HOST_NQN>
-```
-
-## Connecting a Volume with Host Access Control and Encryption
-
-When connecting a volume with host access control enabled, the `--host-nqn` flag is required:
-
-```bash title="Connect Volume with Host NQN"
-{{ cliname }} volume connect <VOLUME_ID> --host-nqn <HOST_NQN>
-```
-
-## Configuring DHCHAP via the StoragePool CRD
-
-On Kubernetes deployments managed by the Simplyblock Operator, DHCHAP and host access control are configured
-declaratively on the `StoragePool` custom resource instead of through `{{ cliname }}`.
+Security is configured per storage pool and is disabled by default. It is enabled by setting `dhchap` on the
+`StoragePool` and listing the worker nodes that are allowed to connect to the pool in `allowedNodes`.
 
 ```yaml title="Example of a StoragePool with DHCHAP enabled for two worker nodes"
 apiVersion: storage.simplyblock.io/v1alpha1
@@ -65,7 +35,11 @@ spec:
 ```
 
 The keys are generated as soon as `dhchap` is set, but authentication is only enforced once `allowedNodes` is
-non-empty. Everything the flow above does by hand is then reconciled by the operator:
+non-empty.
+
+## Reconciliation by the Operator
+
+Once the storage pool is created, host registration and node scheduling are reconciled by the operator:
 
 - Each node in `allowedNodes` is registered as an allowed host of the pool, under a deterministic NQN derived
   from that node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`).
@@ -74,8 +48,10 @@ non-empty. Everything the flow above does by hand is then reconciled by the oper
   `PersistentVolumeClaim` of this pool can therefore only be scheduled onto an allowed node.
 - The same label is written into the `nodeAffinity` of the `PersistentVolume` when the volume is created, which
   restricts every later scheduling decision on the already-bound volume.
-- The node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so no
-  `--host-nqn` has to be supplied anywhere in the Kubernetes flow.
+- The node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so no host
+  NQN has to be supplied anywhere in the Kubernetes flow.
+
+## Managing Allowed Nodes
 
 `dhchap` is immutable, because the `parameters` and `allowedTopologies` of the generated `StorageClass` cannot
 be patched in the Kubernetes API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes
@@ -85,4 +61,6 @@ See the [Operator Reference](../../../reference/operator/reference.md) for the f
 and [Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
 
 For a detailed explanation of the security mechanisms and configuration, see
-[NVMe-oF Security](../../../architecture/concepts/nvmf-security.md).
+[NVMe-oF Security](../../../architecture/concepts/nvmf-security.md). The equivalent flow for a plain Linux
+installation is described in
+[Host Authentication and Encryption ({{ cliname }})](../../../non-kubernetes/operations/security/authentication-encryption.md).

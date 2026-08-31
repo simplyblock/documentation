@@ -216,7 +216,7 @@ once the storage pool is created. A new storage pool is required to provision vo
     not reconciled afterward. Patching one of them on an existing `StoragePool` is accepted by the API server and has
     no effect on the pool, so a different capacity limit or a different set of QoS limits requires a new storage pool.
     `allowedNodes` is the exception and is reconciled, see
-    [Host Authentication and Encryption](../operations/security/authentication-encryption.md#configuring-dhchap-via-the-storagepool-crd).
+    [Host Authentication and Encryption](../operations/security/authentication-encryption.md#managing-allowed-nodes).
 
 The StorageClass is automatically removed when the storage pool is deleted. Full details and customization
 options are available at [Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#storagepool).
