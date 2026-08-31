@@ -169,9 +169,9 @@ In practice, this means workers are added in whole rounds. On a balanced cluster
 and the next worker has to go to a different one. The full rules are in
 [Failure Domains: Balance Rules](../../../architecture/concepts/failure-domains.md#balance-rules).
 
-Removing a node also triggers journal-copy replacement on every journal redundancy set that included its journal
-copy. Unlike failover-path relocation, which can require a cross-domain target, the journal replacement *prefers*
-a candidate from the departed node's own failure domain, to leave the set's domain distribution unchanged. See
+Removing a node also triggers journal-copy replacement on every journal redundancy set that referenced its
+journal copy. Failover-path relocation can require a cross-domain target. The journal replacement instead prefers
+a candidate from the departed node's own failure domain, which leaves the set's domain distribution as it was. See
 [Journal Copy Replacement on Removal](../../../architecture/concepts/failure-domains.md#journal-copy-replacement-on-removal).
 
 For the mechanics of adding the workers themselves, see

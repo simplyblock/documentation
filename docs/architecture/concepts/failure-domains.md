@@ -76,39 +76,40 @@ a same-domain secondary path, and its tertiary path is still guaranteed to be cr
 
 ## Failure Domains and Erasure Coding Schemes
 
-The number of failure domains determines both whether a cluster can activate with failure domains enabled at all,
-and how much simultaneous node or domain loss it can then absorb.
+The number of failure domains decides two things: whether a cluster can activate with failure domains enabled,
+and how much simultaneous node or domain loss it absorbs afterward.
 
 !!! important
     Fresh activation requires **at least `parity chunks + 2` distinct failure domains**. Two domains are never
-    enough, at any parity-chunk count: with only `parity chunks + 1` domains the layout has no spare host, so the
-    very next node add or remove would strand a failover path with nowhere valid to go. Below the minimum,
-    activation is refused. Disable failure domains, or add hosts in further domains first.
+    enough, at any parity-chunk count. With only `parity chunks + 1` domains the layout has no spare host left, so
+    the very next node addition or removal strands a failover path with nowhere valid to go. Below the minimum,
+    activation is refused. Either failure domains have to be disabled, or hosts in further domains have to be
+    added first. A reactivation of an existing layout is only warned about, never blocked.
 
-Once activated, tolerance for simultaneous node or domain outages follows from how evenly a stripe's
-`data chunks + parity chunks` spread across the available domains:
+A stripe consists of `data chunks + parity chunks` chunks, and placement spreads them as evenly as the available
+domains allow. How much loss an activated cluster absorbs follows from that spread:
 
-- With **`data chunks + parity chunks` domains or more**, each domain holds at most one chunk per stripe, so the
-  cluster tolerates the **complete loss of up to `parity chunks` domains** at once (the same guarantee as running
-  without failure domains, now scoped to whole domains instead of individual nodes).
-- With **fewer domains than `data chunks + parity chunks`**, at least one domain necessarily holds more than one
-  chunk. A domain already carrying `⌈(data chunks + parity chunks) / domains⌉` down nodes has spent its entire
-  worst-case contribution: further nodes going down in that same domain cost nothing extra, but a different
-  domain going down spends a fresh share of the same budget. Any combination is tolerated as long as the summed
-  worst-case contribution of the affected domains stays within `parity chunks`.
+- With **`data chunks + parity chunks` domains or more**, every domain holds at most one chunk of a stripe. The
+  **complete loss of up to `parity chunks` domains** at once is then tolerated. This is the same guarantee as
+  running without failure domains, scoped to whole domains instead of individual nodes.
+- With **fewer domains than `data chunks + parity chunks`**, at least one domain holds more than one chunk. Each
+  domain contributes at most `⌈(data chunks + parity chunks) / domains⌉` to a risk budget of `parity chunks`. A
+  domain that already has that many nodes down has spent its whole contribution, so further nodes in the same
+  domain cost nothing extra. A node in a different domain spends a fresh share of the same budget. Any combination
+  is tolerated while the summed contributions stay within `parity chunks`.
 
-| Domains | 1+1             | 2+1             | 4+1             | 1+2             | 2+2             | 4+2             |
-|---------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
-| 1 – 2   | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate |
-| 3       | 1 whole domain  | 1 whole domain  | 1 node total    | cannot activate | cannot activate | cannot activate |
-| 4       | 1 whole domain  | 1 whole domain  | 1 node total    | 2 whole domains | 2 whole domains | 1 whole domain  |
-| 5       | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 1 whole domain  |
-| 6+      | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 2 whole domains |
+| Domains    | 1+1             | 2+1             | 4+1             | 1+2             | 2+2             | 4+2             |
+|------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| 2 or fewer | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate |
+| 3          | 1 whole domain  | 1 whole domain  | 1 node total    | cannot activate | cannot activate | cannot activate |
+| 4          | 1 whole domain  | 1 whole domain  | 1 node total    | 2 whole domains | 2 whole domains | 1 whole domain  |
+| 5          | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 1 whole domain  |
+| 6+         | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 2 whole domains |
 
-"1 whole domain" means every node in one domain, regardless of the domain's size, can go down at once and the
-cluster stays available. Spending the identical budget as individual nodes spread one-per-domain across that many
-domains is tolerated the same way. A cell short of a whole domain (`4+1` at 3 – 4 domains) instead means only that
-many individual nodes total, anywhere in the cluster, survive at once, not a domain's worth.
+"1 whole domain" means every node of one domain, whatever its size, can go down at once and the cluster stays
+available. The same budget spent as individual nodes, one per domain across that many domains, is tolerated
+identically. A cell short of a whole domain (`4+1` on three or four domains) means only that many individual nodes
+anywhere in the cluster, not a domain's worth.
 
 The high-availability journal requires at least **four** journal copies on failure-domain clusters (instead of
 three), even with a single parity chunk. With three copies and two domains, one domain would hold two copies and
@@ -122,25 +123,25 @@ prevents accidental topology changes that would silently invalidate the placemen
 
 ## Journal Copy Replacement on Removal
 
-Removing a node also affects every journal redundancy set that included the departed node's journal copy. Each
-surviving node running a local copy of such a set picks a replacement member before the departed journal is
-retired.
+Removing a node affects every journal redundancy set that referenced the departed node's journal copy. One
+replacement member is picked per set, and every host running a local instance of that set applies the same
+decision, so the membership stays identical on all of them.
 
-The replacement is chosen with the same domain-balance goal as the original placement: a candidate from the
-**same failure domain** as the departed node is preferred, so the set's domain distribution is left unchanged
-rather than reshuffled. This is a best-effort preference, not a hard requirement: if no same-domain candidate is
-available, a cross-domain one is used instead, and the removal itself is never blocked by it. This is the opposite
-direction from failover-path relocation (see [The Placement Contract](#the-placement-contract)), which sometimes
-requires a cross-domain target and refuses the removal if none exists.
+The replacement is picked with the same domain-balance goal as the original placement. A candidate from the
+**same failure domain** as the departed node is preferred, which leaves the set's domain distribution as it was
+instead of reshuffling it. The preference is best-effort, not a requirement: if no same-domain candidate is free, a
+cross-domain one is used, and the removal is never blocked over it. Failover-path relocation works in the opposite
+direction (see [The Placement Contract](#the-placement-contract)), where a cross-domain target is sometimes
+mandatory and the removal is refused without one.
 
 ## Recovery Behavior
 
 Failure domains also change how the cluster recovers from large outages:
 
-- An outage confined to one domain (up to and including every node of the domain) keeps the cluster **degraded
-  but serving**. The cluster is not suspended.
-- With two parity chunks, the cluster additionally tolerates the loss of one entire domain **plus** one further
-  node or device outage in exactly one other domain.
+- An outage confined to one domain keeps the cluster **degraded but serving**, as long as that domain's
+  worst-case contribution fits the parity budget of the sizing table above. The cluster is not suspended.
+- With two parity chunks and at least `data chunks + parity chunks` domains, the loss of one entire domain
+  **plus** one further node or device outage in exactly one other domain is tolerated as well.
 - When a whole domain returns from an outage (for example, after a rack power loss), its nodes are restarted **in
   parallel** instead of strictly one-by-one, substantially shortening the recovery of large domains.
 
