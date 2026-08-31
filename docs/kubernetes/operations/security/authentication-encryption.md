@@ -51,7 +51,7 @@ Once the storage pool is created, host registration and node scheduling are reco
 
 - **Allowed hosts:** each node in `allowedNodes` is registered as an allowed host of the pool, under a deterministic
   NQN derived from that node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`).
-- **Node labels:** each allowed node is labeled `simplyblock.io/pool.<namespace>.<cluster>.<pool>: allowed`, and the
+- **Node labels:** each allowed node is labeled `simplyblock.io/pool.<namespace>.<cluster>.<pool>=allowed`, and the
   label is removed again from every node that leaves the list.
 - **First scheduling decision:** the generated `StorageClass` is restricted to that label through `allowedTopologies`,
   so the first `Pod` to consume a `PersistentVolumeClaim` of this pool can only be scheduled onto an allowed node.
