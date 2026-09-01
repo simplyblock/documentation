@@ -54,13 +54,21 @@ Then apply the change.
 kubectl apply -f pvc.yaml
 ```
 
-## Resize the Filesystem (If Required)
+!!! note
+    Simplyblock allocates logical volumes on GiB boundaries. A requested size is rounded up to the next full
+    GiB, so an expansion that stays inside the current GiB does not change the size of the logical volume.
 
-Certain filesystems, such as ext4, may require growing the filesystem after the underlying volume has been expanded.
-This can usually be handled automatically by the CSI driver or may require running filesystem-specific commands within
-the pod.
+## Resize the Filesystem
+
+For a volume mounted as a filesystem, the resize is performed by the CSI driver after the logical volume has
+been expanded. The filesystem is grown in place, and no filesystem-specific command has to be run inside the
+pod.
+
+For a raw block volume, no filesystem resize is performed. The block device is expanded at the storage layer,
+and the consuming application picks up the new size on its own.
 
 ## Shrinking a Volume
 
-Theoretically, it is possible to shrink a volume. It can, however, create issues with certain filesystems. When a volume
-needs to be shrunk, it is recommended to create a snapshot and restore it onto a new volume.
+A volume cannot be shrunk. Kubernetes rejects a decrease of `spec.resources.requests.storage` on an existing
+persistent volume claim. When a smaller volume is needed, a snapshot is created and restored onto a new
+volume of the smaller size.

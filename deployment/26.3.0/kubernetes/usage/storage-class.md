@@ -95,27 +95,40 @@ See here how to configure [Service Classes](../../non-kubernetes/operations/volu
 For a definition of namespace volumes, as well as the advantages and disadvantages of NVMe namespaces versus NVMe
 subsystems, see [Logical Volumes](../../architecture/concepts/logical-volumes.md).
 
-If `namespace-volumes` is set to `yes`, the number of namespaces per subsystem has to be defined as well (e.g.,
-`max_namespace_per_subsys: <n>`). This means that for every new subsystem `<n>` namespaces will be created.
+Namespace volumes are enabled through `max_namespace_per_subsys` alone. A value above one makes every volume of
+the storage class a namespace volume, sharing an NVMe subsystem with up to `<n>` siblings. At the default of one,
+each volume receives its own subsystem.
+
+!!! warning
+    A namespace volume cannot be migrated or rebalanced on its own, because moving it would disturb every other
+    volume sharing its subsystem.
 
 ## Available Parameters
 
-| Parameter Name            | Value Type | Description                                                                                                                                                                                    | Optional | Default  |
-|---------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|----------|
-| cluster_id                | string     | Defines the backing cluster id for the storage class. Required unless `zone_cluster_map` or `region_cluster_map` is used.                                                                      | true     |          |
-| zone_cluster_map          | string     | JSON map of Kubernetes zone to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                         | true     |          |
-| region_cluster_map        | string     | JSON map of Kubernetes region to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                       | true     |          |
-| fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                                                                                  | true     | `tcp`    |
-| csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                                                                            | true     |          |
-| pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                                                                              | false    | testing1 |
-| qos_rw_iops               | int        | Defines the maximum IOPS reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                                                     | true     | 0        |
-| qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0        |
-| qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                             | true     | 0        |
-| qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0        |
-| compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false    |
-| encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false    |
-| replicate                 | bool       | Defines if the logical volume of this storage class will be replicated or not.                                                                                                                 | true     | false    |
-| lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0        |
-| max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1        |
-| tune2fs_reserved_blocks   | int        | Defines the number of reserved blocks for tune2fs operations.                                                                                                                                  | true     | 0        |
-| dhchap_node_label         | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |          |
+A default in the table below is applied by the operator when it generates a StorageClass from a storage pool. A
+hand-written StorageClass that omits the parameter leaves the choice to the control plane.
+
+!!! warning
+    `tune2fs_reserved_blocks` is skipped only when it is absent. A value of `0` is not a no-op, it runs
+    `tune2fs -m 0` on every volume and removes the reserve that `mkfs` would have kept.
+
+| Parameter Name            | Value Type | Description                                                                                                                                                                                    | Optional | Default |
+|---------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------|
+| cluster_id                | string     | Defines the backing cluster id for the storage class. Required unless `zone_cluster_map` or `region_cluster_map` is used.                                                                      | true     |         |
+| zone_cluster_map          | string     | JSON map of Kubernetes zone to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                         | true     |         |
+| region_cluster_map        | string     | JSON map of Kubernetes region to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                       | true     |         |
+| fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                                                                                  | true     | `tcp`   |
+| csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                                                                            | true     |         |
+| pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                                                                              | false    |         |
+| max_size                  | string     | Caps the size a logical volume of this storage class can grow to. Accepts size suffixes, for example, `10G`.                                                                                   | true     |         |
+| qos_rw_iops               | int        | Defines the maximum IOPS reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                                                     | true     | 0       |
+| qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
+| qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                             | true     | 0       |
+| qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
+| compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false   |
+| encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false   |
+| replicate                 | bool       | Defines if the logical volume of this storage class will be replicated or not.                                                                                                                 | true     | false   |
+| lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0       |
+| max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1       |
+| tune2fs_reserved_blocks   | int        | Reserved-blocks percentage applied through `tune2fs -m` when the volume is staged. Left unset, tune2fs is skipped entirely.                                                                    | true     |         |
+| dhchap_node_label         | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |         |

@@ -6823,6 +6823,12 @@ class.</p>
 <span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256Mi</span>
 <span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simplyblock-csi-sc</span>
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Simplyblock allocates logical volumes on GiB boundaries. A requested size is rounded up to the next
+full GiB, so the claim above is backed by a logical volume of 1 GiB. The rounded size is what the
+persistent volume reports as its capacity.</p>
+</div>
 <p>Afterward, the PVC can be used as a normal PVC and added to a pod.</p>
 <div class="highlight"><span class="filename">Using the PersistentVolumeClaim</span><pre><span></span><code><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Pod</span>
 <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
@@ -6856,17 +6862,20 @@ class.</p>
 understanding of the consequences. Dynamic provisioning through the Simplyblock CSI driver is highly recommended.</p>
 </div>
 <h3 id="nvme-over-fabrics-target">NVMe over Fabrics Target</h3>
-<p>To create the static persistent volume, the following values need to be known:</p>
+<p>To create the static persistent volume, three values of the existing logical volume have to be known:</p>
 <ul>
-<li><code>model</code></li>
-<li><code>nqn</code></li>
-<li><code>lvol</code></li>
-<li><code>targetAddr</code></li>
-<li><code>targetPort</code></li>
-<li><code>targetType</code></li>
-<li>Name of the logical volume</li>
+<li>The UUID of the storage cluster holding the logical volume</li>
+<li>The UUID of the storage pool the logical volume was created in</li>
+<li>The UUID of the logical volume itself</li>
 </ul>
-<div class="highlight"><span class="filename">Statically provisioned persistent volume: pv-static.yaml</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
+<p>The three UUIDs are composed into <code>volumeHandle</code>, in the form <code>&lt;clusterID&gt;:&lt;poolID&gt;:&lt;lvolID&gt;</code>. A
+<code>volumeHandle</code> in any other form is rejected, and the volume is never staged.</p>
+<p>Everything required to attach the volume is resolved from the control plane at attach time: the
+subsystem NQN, the model number, the namespace ID, the transport type, and the addresses of the NVMe
+over Fabrics targets. None of it is carried in the persistent volume, and a value set there is
+overwritten. The only volume attribute read is <code>cluster_id</code>, and if it is missing, the cluster UUID is
+derived from the subsystem NQN.</p>
+<div class="highlight"><span class="filename">Example of a statically provisioned persistent volume (pv-static.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PersistentVolume</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
@@ -6878,28 +6887,22 @@ understanding of the consequences. Dynamic provisioning through the Simplyblock 
 <span class="w">  </span><span class="nt">accessModes</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span>
 <span class="w">  </span><span class="nt">capacity</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256Mi</span>
+<span class="w">    </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1Gi</span>
 <span class="w">  </span><span class="nt">csi</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">csi.simplyblock.io</span>
 <span class="w">    </span><span class="nt">fsType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ext4</span>
 <span class="w">    </span><span class="nt">volumeAttributes</span><span class="p">:</span>
-<span class="w">      </span><span class="c1"># MODEL_NUMBER, set by the `nvmf_create_subsystem` method</span>
-<span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aa481c21-26f8-4056-87fa-cd306f69a71e</span>
-<span class="w">      </span><span class="c1"># Subsystem NQN (ASCII), set by the `nvmf_create_subsystem` method</span>
-<span class="w">      </span><span class="nt">nqn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nqn.2020-04.io.spdk.csi:uuid:aa481c21-26f8-4056-87fa-cd306f69a71e</span>
-<span class="w">      </span><span class="c1"># The listen address to an NVMe-oF subsystemset, set by the `nvmf_subsystem_add_listener` method</span>
-<span class="w">      </span><span class="nt">targetAddr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">127.0.0.1</span>
-<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="s">"4420"</span>
-<span class="w">      </span><span class="c1"># transport type, TCP or RDMA</span>
-<span class="w">      </span><span class="nt">targetType</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TCP</span>
-<span class="w">    </span><span class="c1"># volumeHandle should be same as lvol store name(uuid)</span>
-<span class="w">    </span><span class="nt">volumeHandle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aa481c21-26f8-4056-87fa-cd306f69a71e</span>
+<span class="w">      </span><span class="c1"># UUID of the storage cluster holding the logical volume</span>
+<span class="w">      </span><span class="nt">cluster_id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8ffac363-0c46-4714-a71b-f9c0b58a1269</span>
+<span class="w">    </span><span class="c1"># &lt;clusterID&gt;:&lt;poolID&gt;:&lt;lvolID&gt; of the existing logical volume</span>
+<span class="w">    </span><span class="nt">volumeHandle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8ffac363-0c46-4714-a71b-f9c0b58a1269:df34f16c-1d5c-4e39-9a1e-2b0c7f8d9e10:aa481c21-26f8-4056-87fa-cd306f69a71e</span>
 <span class="w">  </span><span class="nt">persistentVolumeReclaimPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Retain</span>
-<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">spdkcsi-sc</span>
+<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simplyblock-csi-sc</span>
 <span class="w">  </span><span class="nt">volumeMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Filesystem</span>
 </code></pre></div>
-<div class="highlight"><span class="filename">Example output of applying the statically persistent volume</span><pre><span></span><code>[demo@demo ~]# kubectl create -f pv-static.yaml
-persistentvolume/pv-static created
+<div class="highlight"><span class="filename">Applying the statically provisioned persistent volume</span><pre><span></span><code>kubectl<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>pv-static.yaml
+</code></pre></div>
+<div class="highlight"><span class="filename">Example output of applying the statically provisioned persistent volume</span><pre><span></span><code>persistentvolume/pv-static created
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -6908,7 +6911,7 @@ persistentvolume/pv-static created
 volume delete attempt in csi-provisioner.</p>
 </div>
 <h3 id="create-static-persistent-volume-claim">Create static Persistent Volume Claim</h3>
-<div class="highlight"><span class="filename">Statically provisioned persistent volume claim: pvc-static.yaml</span><pre><span></span><code><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span>
+<div class="highlight"><span class="filename">Example of a statically provisioned persistent volume claim (pvc-static.yaml)</span><pre><span></span><code><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PersistentVolumeClaim</span>
 <span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pvc-static</span>
@@ -6917,10 +6920,10 @@ volume delete attempt in csi-provisioner.</p>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ReadWriteOnce</span>
 <span class="w">  </span><span class="nt">resources</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">requests</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">256Mi</span>
+<span class="w">      </span><span class="nt">storage</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1Gi</span>
 <span class="w">  </span><span class="c1"># As a functional test, volumeName is same as PV name</span>
 <span class="w">  </span><span class="nt">volumeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pv-static</span>
-<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">spdkcsi-sc</span>
+<span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simplyblock-csi-sc</span>
 </code></pre></div>
 <div class="highlight"><span class="filename">Creating the persistent volume claim</span><pre><span></span><code>kubectl<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>pvc-static.yaml
 </code></pre></div>
@@ -6946,7 +6949,7 @@ volume delete attempt in csi-provisioner.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 10:43:32 UTC">2026-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 16:11:57 UTC">2026-09-01</span>
   </span>
 
     

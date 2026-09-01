@@ -6908,9 +6908,22 @@ applies to all volumes in the cluster. It cannot be configured per volume or thr
 <h2 id="namespace-volumes">Namespace Volumes</h2>
 <p>For a definition of namespace volumes, as well as the advantages and disadvantages of NVMe namespaces versus NVMe
 subsystems, see <a href="../../../architecture/concepts/logical-volumes/">Logical Volumes</a>.</p>
-<p>If <code>namespace-volumes</code> is set to <code>yes</code>, the number of namespaces per subsystem has to be defined as well (e.g.,
-<code>max_namespace_per_subsys: &lt;n&gt;</code>). This means that for every new subsystem <code>&lt;n&gt;</code> namespaces will be created.</p>
+<p>Namespace volumes are enabled through <code>max_namespace_per_subsys</code> alone. A value above one makes every volume of
+the storage class a namespace volume, sharing an NVMe subsystem with up to <code>&lt;n&gt;</code> siblings. At the default of one,
+each volume receives its own subsystem.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>A namespace volume cannot be migrated or rebalanced on its own, because moving it would disturb every other
+volume sharing its subsystem.</p>
+</div>
 <h2 id="available-parameters">Available Parameters</h2>
+<p>A default in the table below is applied by the operator when it generates a StorageClass from a storage pool. A
+hand-written StorageClass that omits the parameter leaves the choice to the control plane.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code>tune2fs_reserved_blocks</code> is skipped only when it is absent. A value of <code>0</code> is not a no-op, it runs
+<code>tune2fs -m 0</code> on every volume and removes the reserve that <code>mkfs</code> would have kept.</p>
+</div>
 <table>
 <thead>
 <tr>
@@ -6962,7 +6975,14 @@ subsystems, see <a href="../../../architecture/concepts/logical-volumes/">Logica
 <td>string</td>
 <td>Defines the simplyblock storage pool name to use.</td>
 <td>false</td>
-<td>testing1</td>
+<td></td>
+</tr>
+<tr>
+<td>max_size</td>
+<td>string</td>
+<td>Caps the size a logical volume of this storage class can grow to. Accepts size suffixes, for example, <code>10G</code>.</td>
+<td>true</td>
+<td></td>
 </tr>
 <tr>
 <td>qos_rw_iops</td>
@@ -7030,9 +7050,9 @@ subsystems, see <a href="../../../architecture/concepts/logical-volumes/">Logica
 <tr>
 <td>tune2fs_reserved_blocks</td>
 <td>int</td>
-<td>Defines the number of reserved blocks for tune2fs operations.</td>
+<td>Reserved-blocks percentage applied through <code>tune2fs -m</code> when the volume is staged. Left unset, tune2fs is skipped entirely.</td>
 <td>true</td>
-<td>0</td>
+<td></td>
 </tr>
 <tr>
 <td>dhchap_node_label</td>
@@ -7063,7 +7083,7 @@ subsystems, see <a href="../../../architecture/concepts/logical-volumes/">Logica
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 10:43:32 UTC">2026-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 16:11:57 UTC">2026-09-01</span>
   </span>
 
     

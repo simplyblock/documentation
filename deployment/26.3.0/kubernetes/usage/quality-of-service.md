@@ -76,6 +76,14 @@ All parameters are optional. Default is `0` (no limit).
     Annotation values override StorageClass values per parameter. Use annotations only for the values to be
     overridden.
 
-!!! warning "Deprecated annotation prefix"
-    The `simplybk/` annotation prefix (e.g., `simplybk/qos-rw-iops`) is deprecated. Existing PVCs using the old prefix
-    continue to work for backward compatibility, but new deployments should use the `simplyblock.io/` prefix.
+!!! warning "Deprecated annotations"
+    The `simplybk/` annotations are deprecated. Existing PVCs using them continue to work for backward
+    compatibility, but new deployments have to use the `simplyblock.io/` annotations. The throughput
+    annotations were also renamed, so the deprecated names are not a plain prefix exchange:
+
+    | Deprecated Annotation    | Annotation                   |
+    |--------------------------|------------------------------|
+    | `simplybk/qos-rw-iops`   | `simplyblock.io/qos-rw-iops` |
+    | `simplybk/qos-rw-mbytes` | `simplyblock.io/qos-rw-mbps` |
+    | `simplybk/qos-r-mbytes`  | `simplyblock.io/qos-r-mbps`  |
+    | `simplybk/qos-w-mbytes`  | `simplyblock.io/qos-w-mbps`  |
