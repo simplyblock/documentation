@@ -4714,30 +4714,43 @@ See here how to configure [Service Classes](../../non-kubernetes/operations/volu
 For a definition of namespace volumes, as well as the advantages and disadvantages of NVMe namespaces versus NVMe
 subsystems, see [Logical Volumes](../../architecture/concepts/logical-volumes.md).
 
-If `namespace-volumes` is set to `yes`, the number of namespaces per subsystem has to be defined as well (e.g.,
-`max_namespace_per_subsys: <n>`). This means that for every new subsystem `<n>` namespaces will be created.
+Namespace volumes are enabled through `max_namespace_per_subsys` alone. A value above one makes every volume of
+the storage class a namespace volume, sharing an NVMe subsystem with up to `<n>` siblings. At the default of one,
+each volume receives its own subsystem.
+
+!!! warning
+    A namespace volume cannot be migrated or rebalanced on its own, because moving it would disturb every other
+    volume sharing its subsystem.
 
 ## Available Parameters
 
-| Parameter Name            | Value Type | Description                                                                                                                                                                                    | Optional | Default  |
-|---------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|----------|
-| cluster_id                | string     | Defines the backing cluster id for the storage class. Required unless `zone_cluster_map` or `region_cluster_map` is used.                                                                      | true     |          |
-| zone_cluster_map          | string     | JSON map of Kubernetes zone to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                         | true     |          |
-| region_cluster_map        | string     | JSON map of Kubernetes region to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                       | true     |          |
-| fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                                                                                  | true     | `tcp`    |
-| csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                                                                            | true     |          |
-| pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                                                                              | false    | testing1 |
-| qos_rw_iops               | int        | Defines the maximum IOPS reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                                                     | true     | 0        |
-| qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0        |
-| qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                             | true     | 0        |
-| qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0        |
-| compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false    |
-| encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false    |
-| replicate                 | bool       | Defines if the logical volume of this storage class will be replicated or not.                                                                                                                 | true     | false    |
-| lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0        |
-| max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1        |
-| tune2fs_reserved_blocks   | int        | Defines the number of reserved blocks for tune2fs operations.                                                                                                                                  | true     | 0        |
-| dhchap_node_label         | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |          |
+A default in the table below is applied by the operator when it generates a StorageClass from a storage pool. A
+hand-written StorageClass that omits the parameter leaves the choice to the control plane.
+
+!!! warning
+    `tune2fs_reserved_blocks` is skipped only when it is absent. A value of `0` is not a no-op, it runs
+    `tune2fs -m 0` on every volume and removes the reserve that `mkfs` would have kept.
+
+| Parameter Name            | Value Type | Description                                                                                                                                                                                    | Optional | Default |
+|---------------------------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|---------|
+| cluster_id                | string     | Defines the backing cluster id for the storage class. Required unless `zone_cluster_map` or `region_cluster_map` is used.                                                                      | true     |         |
+| zone_cluster_map          | string     | JSON map of Kubernetes zone to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                         | true     |         |
+| region_cluster_map        | string     | JSON map of Kubernetes region to simplyblock cluster id (for topology-aware multi-cluster provisioning).                                                                                       | true     |         |
+| fabric                    | string     | Defines the fabric type to connect to the storage cluster. Valid values are `tcp` and `rdma`.                                                                                                  | true     | `tcp`   |
+| csi.storage.k8s.io/fstype | string     | Defines the filesystem to format the logical volume. If not specific, a raw block device is given to the container.                                                                            | true     |         |
+| pool_name                 | string     | Defines the simplyblock storage pool name to use.                                                                                                                                              | false    |         |
+| max_size                  | string     | Caps the size a logical volume of this storage class can grow to. Accepts size suffixes, for example, `10G`.                                                                                   | true     |         |
+| qos_rw_iops               | int        | Defines the maximum IOPS reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                                                     | true     | 0       |
+| qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
+| qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                             | true     | 0       |
+| qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
+| compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false   |
+| encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false   |
+| replicate                 | bool       | Defines if the logical volume of this storage class will be replicated or not.                                                                                                                 | true     | false   |
+| lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0       |
+| max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1       |
+| tune2fs_reserved_blocks   | int        | Reserved-blocks percentage applied through `tune2fs -m` when the volume is staged. Left unset, tune2fs is skipped entirely.                                                                    | true     |         |
+| dhchap_node_label         | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |         |
 
 ---
 
@@ -4766,6 +4779,11 @@ spec:
       storage: 256Mi
   storageClassName: simplyblock-csi-sc
 ```
+
+!!! note
+    Simplyblock allocates logical volumes on GiB boundaries. A requested size is rounded up to the next
+    full GiB, so the claim above is backed by a logical volume of 1 GiB. The rounded size is what the
+    persistent volume reports as its capacity.
 
 Afterward, the PVC can be used as a normal PVC and added to a pod.
 
@@ -4808,17 +4826,22 @@ To create a new persistent volume claim from an existing and live volume, see th
 
 ### NVMe over Fabrics Target
 
-To create the static persistent volume, the following values need to be known:
+To create the static persistent volume, three values of the existing logical volume have to be known:
 
-- `model`
-- `nqn`
-- `lvol`
-- `targetAddr`
-- `targetPort`
-- `targetType`
-- Name of the logical volume
+- The UUID of the storage cluster holding the logical volume
+- The UUID of the storage pool the logical volume was created in
+- The UUID of the logical volume itself
 
-```yaml title="Statically provisioned persistent volume: pv-static.yaml"
+The three UUIDs are composed into `volumeHandle`, in the form `<clusterID>:<poolID>:<lvolID>`. A
+`volumeHandle` in any other form is rejected, and the volume is never staged.
+
+Everything required to attach the volume is resolved from the control plane at attach time: the
+subsystem NQN, the model number, the namespace ID, the transport type, and the addresses of the NVMe
+over Fabrics targets. None of it is carried in the persistent volume, and a value set there is
+overwritten. The only volume attribute read is `cluster_id`, and if it is missing, the cluster UUID is
+derived from the subsystem NQN.
+
+```yaml title="Example of a statically provisioned persistent volume (pv-static.yaml)"
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -4831,29 +4854,25 @@ spec:
   accessModes:
   - ReadWriteOnce
   capacity:
-    storage: 256Mi
+    storage: 1Gi
   csi:
     driver: csi.simplyblock.io
     fsType: ext4
     volumeAttributes:
-      # MODEL_NUMBER, set by the `nvmf_create_subsystem` method
-      model: aa481c21-26f8-4056-87fa-cd306f69a71e
-      # Subsystem NQN (ASCII), set by the `nvmf_create_subsystem` method
-      nqn: nqn.2020-04.io.spdk.csi:uuid:aa481c21-26f8-4056-87fa-cd306f69a71e
-      # The listen address to an NVMe-oF subsystemset, set by the `nvmf_subsystem_add_listener` method
-      targetAddr: 127.0.0.1
-      targetPort: "4420"
-      # transport type, TCP or RDMA
-      targetType: TCP
-    # volumeHandle should be same as lvol store name(uuid)
-    volumeHandle: aa481c21-26f8-4056-87fa-cd306f69a71e
+      # UUID of the storage cluster holding the logical volume
+      cluster_id: 8ffac363-0c46-4714-a71b-f9c0b58a1269
+    # <clusterID>:<poolID>:<lvolID> of the existing logical volume
+    volumeHandle: 8ffac363-0c46-4714-a71b-f9c0b58a1269:df34f16c-1d5c-4e39-9a1e-2b0c7f8d9e10:aa481c21-26f8-4056-87fa-cd306f69a71e
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: spdkcsi-sc
+  storageClassName: simplyblock-csi-sc
   volumeMode: Filesystem
 ```
 
-```plain title="Example output of applying the statically persistent volume"
-[demo@demo ~]# kubectl create -f pv-static.yaml
+```bash title="Applying the statically provisioned persistent volume"
+kubectl create -f pv-static.yaml
+```
+
+```plain title="Example output of applying the statically provisioned persistent volume"
 persistentvolume/pv-static created
 ```
 
@@ -4864,7 +4883,7 @@ persistentvolume/pv-static created
 
 ### Create static Persistent Volume Claim
 
-```yaml title="Statically provisioned persistent volume claim: pvc-static.yaml"
+```yaml title="Example of a statically provisioned persistent volume claim (pvc-static.yaml)"
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -4874,10 +4893,10 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 256Mi
+      storage: 1Gi
   # As a functional test, volumeName is same as PV name
   volumeName: pv-static
-  storageClassName: spdkcsi-sc
+  storageClassName: simplyblock-csi-sc
 ```
 
 ```bash title="Creating the persistent volume claim"
@@ -4979,7 +4998,7 @@ placement is used.
 | Order | Mechanism                                           | Annotation                             | Set by               | Applies when                                                                      |
 |-------|-----------------------------------------------------|----------------------------------------|----------------------|-----------------------------------------------------------------------------------|
 | 1     | [Pinning](#pinning-a-volume-to-a-storage-node)      | `simplyblock.io/selected-storage-node` | User                 | The annotation names a storage node.                                              |
-| 2     | [Load-aware placement](#load-aware-placement)       | `simplyblock.io/placement-hint`        | Operator (automatic) | Load-aware placement is enabled for the cluster and not disabled for the PVC.     |
+| 2     | [Load-aware placement](#load-aware-placement)       | `simplyblock.io/placement-hint`        | Operator (automatic) | Load-aware placement is enabled for the cluster and an eligible node exists.      |
 | 3     | [Pod co-location](#co-locating-a-volume-with-a-pod) | `simplyblock.io/pod-affinity`          | User                 | The annotation is set to `"true"` and the StorageClass is `WaitForFirstConsumer`. |
 | —     | Default placement                                   | *(none of the above)*                  | —                    | No annotation applies.                                                            |
 
@@ -5253,16 +5272,24 @@ Then apply the change.
 kubectl apply -f pvc.yaml
 ```
 
-## Resize the Filesystem (If Required)
+!!! note
+    Simplyblock allocates logical volumes on GiB boundaries. A requested size is rounded up to the next full
+    GiB, so an expansion that stays inside the current GiB does not change the size of the logical volume.
 
-Certain filesystems, such as ext4, may require growing the filesystem after the underlying volume has been expanded.
-This can usually be handled automatically by the CSI driver or may require running filesystem-specific commands within
-the pod.
+## Resize the Filesystem
+
+For a volume mounted as a filesystem, the resize is performed by the CSI driver after the logical volume has
+been expanded. The filesystem is grown in place, and no filesystem-specific command has to be run inside the
+pod.
+
+For a raw block volume, no filesystem resize is performed. The block device is expanded at the storage layer,
+and the consuming application picks up the new size on its own.
 
 ## Shrinking a Volume
 
-Theoretically, it is possible to shrink a volume. It can, however, create issues with certain filesystems. When a volume
-needs to be shrunk, it is recommended to create a snapshot and restore it onto a new volume.
+A volume cannot be shrunk. Kubernetes rejects a decrease of `spec.resources.requests.storage` on an existing
+persistent volume claim. When a smaller volume is needed, a snapshot is created and restored onto a new
+volume of the smaller size.
 
 ---
 
@@ -5383,9 +5410,17 @@ All parameters are optional. Default is `0` (no limit).
     Annotation values override StorageClass values per parameter. Use annotations only for the values to be
     overridden.
 
-!!! warning "Deprecated annotation prefix"
-    The `simplybk/` annotation prefix (e.g., `simplybk/qos-rw-iops`) is deprecated. Existing PVCs using the old prefix
-    continue to work for backward compatibility, but new deployments should use the `simplyblock.io/` prefix.
+!!! warning "Deprecated annotations"
+    The `simplybk/` annotations are deprecated. Existing PVCs using them continue to work for backward
+    compatibility, but new deployments have to use the `simplyblock.io/` annotations. The throughput
+    annotations were also renamed, so the deprecated names are not a plain prefix exchange:
+
+    | Deprecated Annotation    | Annotation                   |
+    |--------------------------|------------------------------|
+    | `simplybk/qos-rw-iops`   | `simplyblock.io/qos-rw-iops` |
+    | `simplybk/qos-rw-mbytes` | `simplyblock.io/qos-rw-mbps` |
+    | `simplybk/qos-r-mbytes`  | `simplyblock.io/qos-r-mbps`  |
+    | `simplybk/qos-w-mbytes`  | `simplyblock.io/qos-w-mbps`  |
 
 ---
 

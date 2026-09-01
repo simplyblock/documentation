@@ -18,7 +18,7 @@ placement is used.
 | Order | Mechanism                                           | Annotation                             | Set by               | Applies when                                                                      |
 |-------|-----------------------------------------------------|----------------------------------------|----------------------|-----------------------------------------------------------------------------------|
 | 1     | [Pinning](#pinning-a-volume-to-a-storage-node)      | `simplyblock.io/selected-storage-node` | User                 | The annotation names a storage node.                                              |
-| 2     | [Load-aware placement](#load-aware-placement)       | `simplyblock.io/placement-hint`        | Operator (automatic) | Load-aware placement is enabled for the cluster and not disabled for the PVC.     |
+| 2     | [Load-aware placement](#load-aware-placement)       | `simplyblock.io/placement-hint`        | Operator (automatic) | Load-aware placement is enabled for the cluster and an eligible node exists.      |
 | 3     | [Pod co-location](#co-locating-a-volume-with-a-pod) | `simplyblock.io/pod-affinity`          | User                 | The annotation is set to `"true"` and the StorageClass is `WaitForFirstConsumer`. |
 | —     | Default placement                                   | *(none of the above)*                  | —                    | No annotation applies.                                                            |
 
