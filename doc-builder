@@ -184,7 +184,10 @@ function deploy() {
   if [[ "$2" != "--force" ]]; then
     mv "./site" "./deployment/${version}"
   else
-    cp -R "./site/" "./deployment/${version}/"
+    # Note the "/." on the source: BSD cp (macOS) copies the contents of
+    # "./site/", GNU cp (Linux/CI) would copy the directory itself and nest it
+    # as "./deployment/${version}/site".
+    cp -R "./site/." "./deployment/${version}/"
   fi
 
   if [[ "$2" != "--force" ]]; then
