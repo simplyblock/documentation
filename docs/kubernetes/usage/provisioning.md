@@ -26,6 +26,11 @@ spec:
   storageClassName: simplyblock-csi-sc
 ```
 
+!!! note
+    Simplyblock allocates logical volumes on GiB boundaries. A requested size is rounded up to the next
+    full GiB, so the claim above is backed by a logical volume of 1 GiB. The rounded size is what the
+    persistent volume reports as its capacity.
+
 Afterward, the PVC can be used as a normal PVC and added to a pod.
 
 ```yaml title="Using the PersistentVolumeClaim"
@@ -67,17 +72,22 @@ To create a new persistent volume claim from an existing and live volume, see th
 
 ### NVMe over Fabrics Target
 
-To create the static persistent volume, the following values need to be known:
+To create the static persistent volume, three values of the existing logical volume have to be known:
 
-- `model`
-- `nqn`
-- `lvol`
-- `targetAddr`
-- `targetPort`
-- `targetType`
-- Name of the logical volume
+- The UUID of the storage cluster holding the logical volume
+- The UUID of the storage pool the logical volume was created in
+- The UUID of the logical volume itself
 
-```yaml title="Statically provisioned persistent volume: pv-static.yaml"
+The three UUIDs are composed into `volumeHandle`, in the form `<clusterID>:<poolID>:<lvolID>`. A
+`volumeHandle` in any other form is rejected, and the volume is never staged.
+
+Everything required to attach the volume is resolved from the control plane at attach time: the
+subsystem NQN, the model number, the namespace ID, the transport type, and the addresses of the NVMe
+over Fabrics targets. None of it is carried in the persistent volume, and a value set there is
+overwritten. The only volume attribute read is `cluster_id`, and if it is missing, the cluster UUID is
+derived from the subsystem NQN.
+
+```yaml title="Example of a statically provisioned persistent volume (pv-static.yaml)"
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -90,29 +100,25 @@ spec:
   accessModes:
   - ReadWriteOnce
   capacity:
-    storage: 256Mi
+    storage: 1Gi
   csi:
     driver: csi.simplyblock.io
     fsType: ext4
     volumeAttributes:
-      # MODEL_NUMBER, set by the `nvmf_create_subsystem` method
-      model: aa481c21-26f8-4056-87fa-cd306f69a71e
-      # Subsystem NQN (ASCII), set by the `nvmf_create_subsystem` method
-      nqn: nqn.2020-04.io.spdk.csi:uuid:aa481c21-26f8-4056-87fa-cd306f69a71e
-      # The listen address to an NVMe-oF subsystemset, set by the `nvmf_subsystem_add_listener` method
-      targetAddr: 127.0.0.1
-      targetPort: "4420"
-      # transport type, TCP or RDMA
-      targetType: TCP
-    # volumeHandle should be same as lvol store name(uuid)
-    volumeHandle: aa481c21-26f8-4056-87fa-cd306f69a71e
+      # UUID of the storage cluster holding the logical volume
+      cluster_id: 8ffac363-0c46-4714-a71b-f9c0b58a1269
+    # <clusterID>:<poolID>:<lvolID> of the existing logical volume
+    volumeHandle: 8ffac363-0c46-4714-a71b-f9c0b58a1269:df34f16c-1d5c-4e39-9a1e-2b0c7f8d9e10:aa481c21-26f8-4056-87fa-cd306f69a71e
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: spdkcsi-sc
+  storageClassName: simplyblock-csi-sc
   volumeMode: Filesystem
 ```
 
-```plain title="Example output of applying the statically persistent volume"
-[demo@demo ~]# kubectl create -f pv-static.yaml
+```bash title="Applying the statically provisioned persistent volume"
+kubectl create -f pv-static.yaml
+```
+
+```plain title="Example output of applying the statically provisioned persistent volume"
 persistentvolume/pv-static created
 ```
 
@@ -123,7 +129,7 @@ persistentvolume/pv-static created
 
 ### Create static Persistent Volume Claim
 
-```yaml title="Statically provisioned persistent volume claim: pvc-static.yaml"
+```yaml title="Example of a statically provisioned persistent volume claim (pvc-static.yaml)"
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -133,10 +139,10 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 256Mi
+      storage: 1Gi
   # As a functional test, volumeName is same as PV name
   volumeName: pv-static
-  storageClassName: spdkcsi-sc
+  storageClassName: simplyblock-csi-sc
 ```
 
 ```bash title="Creating the persistent volume claim"

@@ -33,7 +33,10 @@ jobs:
           echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
       - name: "Ensure Existing Release"
         run: |
-          [ ! -d ./deployment/${RELEASE_NAME} ] && echo "Release ${RELEASE_NAME} does not exist" && exit 1
+          if [ ! -d ./deployment/${RELEASE_NAME} ]; then
+            echo "Release ${RELEASE_NAME} does not exist"
+            exit 1
+          fi
       - name: "Prepare Documentation Builder"
         run: |
           ./doc-builder build-image
@@ -53,12 +56,12 @@ jobs:
           git config --global --add safe.directory $PWD
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git push --delete origin ${RELEASE_NAME}
-          git tag -d ${RELEASE_NAME}
+          git push --delete origin ${RELEASE_NAME} || echo "Remote tag ${RELEASE_NAME} does not exist"
+          git tag -d ${RELEASE_NAME} || echo "Local tag ${RELEASE_NAME} does not exist"
           git add deployment
           git add scripts/sbcli.lock
           if [ -f scripts/operator.lock ]; then git add scripts/operator.lock; fi
-          git commit -m "Auto-Build: Rebuild ${RELEASE_NAME}"
+          git commit -m "Auto-Build: Rebuild ${RELEASE_NAME}" || echo "Rebuild produced no changes to commit"
           git tag ${RELEASE_NAME}
           git rm scripts/sbcli.lock
           if [ -f scripts/operator.lock ]; then git rm scripts/operator.lock; fi
