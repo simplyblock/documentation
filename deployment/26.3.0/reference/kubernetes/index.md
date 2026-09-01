@@ -1,0 +1,182 @@
+---
+title: "Simplyblock Helm Chart Reference"
+description: "Kubernetes Helm Chart Parameters: Simplyblock provides a Helm chart to install one or more components into Kubernetes."
+source: "https://docs.simplyblock.io/latest/reference/kubernetes/"
+---
+
+# Simplyblock Helm Chart Reference
+
+Simplyblock provides a Helm chart to install one or more components into Kubernetes. Available components are the CSI
+driver and storage nodes.
+
+This reference provides an overview of all available parameters that can be set on the Helm chart during installation
+or upgrade.
+
+## CSI Parameters
+
+Commonly configured CSI driver parameters:
+
+| Parameter                                | Description                                                                                  | Default                                                     |
+|------------------------------------------|----------------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| `csiConfig.simplybk.uuid`                | Sets the simplyblock cluster id on which the volumes are provisioned.                        |                                                             |
+| `csiConfig.simplybk.ip`                  | Sets the HTTP(S) API Gateway endpoint connected to the management node.                      | `https://o5ls1ykzbb.execute-api.eu-central-1.amazonaws.com` |
+| `csiSecret.simplybk.secret`              | Sets the cluster secret associated with the cluster.                                         |                                                             |
+| `logicalVolume.encryption`               | Specifies whether logical volumes should be encrypted.                                       | `False`                                                     |
+| `csiSecret.simplybkPvc.crypto_key1`      | Sets the first encryption key.                                                               |                                                             |
+| `csiSecret.simplybkPvc.crypto_key2`      | Sets the second encryption key.                                                              |                                                             |
+| `logicalVolume.pool_name`                | Sets the storage pool name where logical volumes are created. This storage pool needs exist. | `testing1`                                                  |
+| `logicalVolume.qos_rw_iops`              | Sets the maximum read-write IOPS. Zero means unlimited.                                      | `0`                                                         |
+| `logicalVolume.qos_rw_mbytes`            | Sets the maximum read-write Mbps. Zero means unlimited.                                      | `0`                                                         |
+| `logicalVolume.qos_r_mbytes`             | Sets the maximum read Mbps. Zero means unlimited.                                            | `0`                                                         |
+| `logicalVolume.qos_w_mbytes`             | Sets the maximum write Mbps. Zero means unlimited.                                           | `0`                                                         |
+| `logicalVolume.numDataChunks`            | Sets the number of Erasure coding schema parameter k (distributed RAID).                     | `1`                                                         |
+| `logicalVolume.numParityChunks`          | Sets the number of Erasure coding schema parameter n (distributed RAID).                     | `1`                                                         |
+| `logicalVolume.lvol_priority_class`      | Sets the logical volume priority class.                                                      | `0`                                                         |
+| `logicalVolume.fabric`                   | Sets the NVMe-oF transport type.                                                             | `tcp`                                                       |
+| `logicalVolume.tune2fs_reserved_blocks`  | Sets the percentage of disk blocks reserved for system.                                      | `0`                                                         |
+| `logicalVolume.max_namespace_per_subsys` | Sets the maximum namespace per subsystem.                                                    | `1`                                                         |
+| `storageclass.create`                    | Specifies whether to create a StorageClass.                                                  | `true`                                                      |
+| `snapshotclass.create`                   | Specifies whether to create a SnapshotClass.                                                 | `true`                                                      |
+| `snapshotcontroller.create`              | Specifies whether to create a snapshot controller and CRD for snapshot support.              | `true`                                                      |
+| `storageclass.annotations`               | Adds annotations to the generated StorageClass object.                                       | `{}`                                                        |
+
+Additional, uncommonly configured CSI driver parameters:
+
+| Parameter                                | Description                                                                                                     | Default                |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------|------------------------|
+| `driverName`                             | Sets an alternative driver name.                                                                                | `csi.simplyblock.io`   |
+| `serviceAccount.create`                  | Specifies whether to create service account for the CSI controller.                                             | `true`                 |
+| `rbac.create`                            | Specifies whether to create RBAC permissions for the CSI controller.                                            | `true`                 |
+| `controller.replicas`                    | Sets the replica number of the CSI controller StatefulSet.                                                      | `1`                    |
+| `controller.tolerations.create`          | Specifies whether to create tolerations for the CSI controller.                                                 | `false`                |
+| `controller.tolerations.list[].effect`   | Sets the effect of tolerations on the CSI controller.                                                           | `<empty>`              |
+| `controller.tolerations.list[].key`      | Sets the key of tolerations for the CSI controller.                                                             | `<empty>`              |
+| `controller.tolerations.list[].operator` | Sets the operator for the CSI controller tolerations.                                                           | `Exists`               |
+| `controller.tolerations.list[].value`    | Sets the value of tolerations for the CSI controller.                                                           | `<empty>`              |
+| `controller.nodeSelector.create`         | Specifies whether to create nodeSelector for the CSI controller.                                                | `false`                |
+| `controller.nodeSelector.key`            | Sets the key of nodeSelector for the CSI controller.                                                            | `<empty>`              |
+| `controller.nodeSelector.value`          | Sets the value of nodeSelector for the CSI controller.                                                          | `<empty>`              |
+| `externallyManagedConfigmap.create`      | Specifies whether a externallyManagedConfigmap should be created.                                               | `true`                 |
+| `externallyManagedSecret.create`         | Specifies whether a externallyManagedSecret should be created.                                                  | `true`                 |
+| `podAnnotations`                         | Annotations to apply to all pods in the chart.                                                                  | `{}`                   |
+| `simplyBlockAnnotations`                 | Annotations to apply to simplyblock Kubernetes resources like DaemonSets, Deployments, or StatefulSets.         | `{}`                   |
+| `node.tolerations.create`                | Specifies whether to create tolerations for the CSI driver node.                                                | `false`                |
+| `node.tolerations.list[].effect`         | Sets the effect of tolerations on the CSI driver node.                                                          | `<empty>`              |
+| `node.tolerations.list[].key`            | Sets the key of tolerations for the CSI driver node.                                                            | `<empty>`              |
+| `node.tolerations.list[].operator`       | Sets the operator for the CSI node tolerations.                                                                 | `Exists`               |
+| `node.tolerations.list[].value`          | Sets the value of tolerations for the CSI driver node.                                                          | `<empty>`              |
+| `node.nodeSelector.create`               | Specifies whether to create nodeSelector for the CSI driver node.                                               | `false`                |
+| `node.nodeSelector.key`                  | Sets the key of nodeSelector for the CSI driver node.                                                           | `<empty>`              |
+| `node.nodeSelector.value`                | Sets the value of nodeSelector for the CSI driver node.                                                         | `<empty>`              |
+| `storageclass.volumeBindingMode`         | Sets when PersistentVolumes are bound and provisioned.                                                          | `WaitForFirstConsumer` |
+| `storageclass.zoneClusterMap`            | Sets the mapping between Kubernetes zones and simplyblock clusters for multi-cluster or multi-zone deployments. | `{}`                   |
+| `storageclass.allowedTopologyZones`      | Sets the list of topology zones where the StorageClass is allowed to provision volumes.                         | `[]`                   |
+| `spdkdev.create`                         | Specifies whether to deploy SPDK development/test resources.                                                    | `false`                |
+| `benchmarks`                             | Enables benchmark resources when set to non-zero.                                                               | `0`                    |
+| `autoClusterActivate`                    | Enables automatic cluster activation when sufficient nodes are up.                                              | `false`                |
+
+## Operator & Control Plane Parameters
+
+| Parameter                 | Description                                                                                                                             | Default     |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| `operator.enabled`        | Enables the simplyblock operator that manages StorageCluster, StorageNode, Pool, and Lvol CRDs.                                         | `false`     |
+| `tls.enabled`             | Enables TLS encryption for all control-plane internal communication.                                                                    | `false`     |
+| `tls.mutual_enabled`      | Enables mutual TLS (mTLS) authentication between control-plane components. Requires `tls.enabled=true` and `tls.provider=cert-manager`. | `false`     |
+| `tls.provider`            | TLS certificate provider. `cert-manager` for generic Kubernetes, `openshift` for OpenShift-managed certs.                               | `openshift` |
+| `tls.cert-manager.issuer` | Name of the cert-manager `ClusterIssuer` to use. **Required when `tls.provider=cert-manager`**.                                         | `<empty>`   |
+
+For details, see [Securing the Control Plane](../../kubernetes/installation/security.md).
+
+## Storage Node Parameters
+
+| Parameter                                        | Description                                                                                 | Default                               |
+|--------------------------------------------------|---------------------------------------------------------------------------------------------|---------------------------------------|
+| `storagenode.daemonsets[0].name`                 | Sets the name of the storage node DaemonSet.                                                | `simplyblock-storage-node-ds`         |
+| `storagenode.daemonsets[0].appLabel`             | Sets the label applied to the storage node DaemonSet for identification.                    | `storage-node`                        |
+| `storagenode.daemonsets[0].nodeSelector.key`     | Sets the key used in the nodeSelector to constrain which nodes the DaemonSet should run on. | `io.simplyblock.node-type`            |
+| `storagenode.daemonsets[0].nodeSelector.value`   | Sets the value for the nodeSelector key to match against specific nodes.                    | `simplyblock-storage-plane`           |
+| `storagenode.daemonsets[0].tolerations.create`   | Specifies whether to create tolerations for the storage node.                               | `false`                               |
+| `storagenode.daemonsets[0].tolerations.effect`   | Sets the effect of tolerations on the storage node.                                         | `<empty>`                             |
+| `storagenode.daemonsets[0].tolerations.key`      | Sets the key of tolerations for the storage node.                                           | `<empty>`                             |
+| `storagenode.daemonsets[0].tolerations.operator` | Sets the operator for the storage node tolerations.                                         | `Exists`                              |
+| `storagenode.daemonsets[0].tolerations.value`    | Sets the value of tolerations for the storage node.                                         | `<empty>`                             |
+| `storagenode.daemonsets[1].name`                 | Sets the name of the restart storage node DaemonSet.                                        | `simplyblock-storage-node-ds-restart` |
+| `storagenode.daemonsets[1].appLabel`             | Sets the label applied to the restart storage node DaemonSet for identification.            | `storage-node-restart`                |
+| `storagenode.daemonsets[1].nodeSelector.key`     | Sets the key used in the nodeSelector to constrain which nodes the DaemonSet should run on. | `io.simplyblock.node-type`            |
+| `storagenode.daemonsets[1].nodeSelector.value`   | Sets the value for the nodeSelector key to match against specific nodes.                    | `simplyblock-storage-plane-restart`   |
+| `storagenode.daemonsets[1].tolerations.create`   | Specifies whether to create tolerations for the restart storage node.                       | `false`                               |
+| `storagenode.daemonsets[1].tolerations.effect`   | Sets the effect of tolerations on the restart storage node.                                 | `<empty>`                             |
+| `storagenode.daemonsets[1].tolerations.key`      | Sets the key of tolerations for the restart storage node.                                   | `<empty>`                             |
+| `storagenode.daemonsets[1].tolerations.operator` | Sets the operator for the restart storage node tolerations.                                 | `Exists`                              |
+| `storagenode.daemonsets[1].tolerations.value`    | Sets the value of tolerations for the restart storage node.                                 | `<empty>`                             |
+| `storagenode.create`                             | Specifies whether to create storage node on Kubernetes worker node.                         | `false`                               |
+| `storagenode.ifname`                             | Sets the default interface to be used for binding the storage node to host interface.       | `eth0`                                |
+| `storagenode.maxSnapshots`                       | Sets the default maximum number of snapshot per storage node.                               | `10`                                  |
+| `storagenode.numDataChunks`                      | Sets default NDCS value used by storage-node automation.                                    | `1`                                   |
+| `storagenode.numParityChunks`                    | Sets default NPCS value used by storage-node automation.                                    | `1`                                   |
+| `storagenode.isolateCores`                       | Enables automatic core isolation.                                                           | `false`                               |
+| `storagenode.dataNic`                            | Sets the data interface name.                                                               | `<empty>`                             |
+| `storagenode.spdkImage`                          | Sets the SPDK image URI for storage-node services.                                          | `<empty>`                             |
+| `storagenode.spdkProxyImage`                     | Sets the SPDK proxy image URI for storage-node services.                                    | `<empty>`                             |
+| `storagenode.haJMCount`                          | Sets the number of HA journal managers.                                                     | `<empty>`                             |
+| `storagenode.pciAllowed`                         | Sets the list of allowed NVMe PCIe addresses.                                               | `<empty>`                             |
+| `storagenode.pciBlocked`                         | Sets the list of blocked NVMe PCIe addresses.                                               | `<empty>`                             |
+| `storagenode.deviceNames`                        | Sets an explicit list of device names for node bootstrap.                                   | `<empty>`                             |
+| `storagenode.format4k`                           | Enables 4K-format handling during storage-node setup.                                       | `false`                               |
+| `storagenode.socketsToUse`                       | Sets the list of sockets to use.                                                            | `<empty>`                             |
+| `storagenode.nodesPerSocket`                     | Sets the number of nodes to use per socket.                                                 | `<empty>`                             |
+| `storagenode.ubuntuHost`                         | Set to true if the worker node runs Ubuntu and needs the nvme-tcp kernel module installed.  | `false`                               |
+| `storagenode.enableCpuTopology`                  | Enables CPU topology configuration on storage nodes.                                        | `false`                               |
+| `storagenode.enableDevicePlugin`                 | Enables NUMA resource device plugin deployment.                                             | `true`                                |
+| `storagenode.skipKubeletConfiguration`           | Skips kubelet CPU-topology configuration if already configured.                             | `false`                               |
+| `storagenode.openShiftCluster`                   | Set to true if it an OpenShift Cluster and needs core isolation.                            | `false`                               |
+| `storagenode.reservedSystemCpu`                  | Sets CPU cores reserved for host/system and excluded from SPDK usage.                       | `<empty>`                             |
+| `storagenode.multiCluster.enable`                | Enables multi-cluster storage-node support.                                                 | `false`                               |
+| `storagenode.multiCluster.clusters[].cluster_id` | Sets the simplyblock cluster UUID in multi-cluster mode.                                    | `<empty>`                             |
+| `storagenode.multiCluster.clusters[].secret`     | Sets the cluster secret for multi-cluster mode.                                             | `<empty>`                             |
+| `storagenode.multiCluster.clusters[].workers`    | Sets worker node names assigned to the cluster in multi-cluster mode.                       | `<empty>`                             |
+
+## Image Overrides
+
+!!! danger
+    Overriding pinned image tags can result in an unusable state.
+    The following parameters should only be used after an explicit request from simplyblock.
+
+| Parameter                                   | Description                                               | Default                                                                 |
+|---------------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------------------|
+| `image.csi.repository`                      | Simplyblock CSI driver image.                             | `simplyblock/spdkcsi`                                                   |
+| `image.csi.tag`                             | Simplyblock CSI driver image tag.                         | `v0.2.4`                                                                |
+| `image.csi.pullPolicy`                      | Simplyblock CSI driver image pull policy.                 | `Always`                                                                |
+| `image.csiProvisioner.repository`           | CSI provisioner image.                                    | `registry.k8s.io/sig-storage/csi-provisioner`                           |
+| `image.csiProvisioner.tag`                  | CSI provisioner image tag.                                | `v4.0.1`                                                                |
+| `image.csiProvisioner.pullPolicy`           | CSI provisioner image pull policy.                        | `Always`                                                                |
+| `image.csiAttacher.repository`              | CSI attacher image.                                       | `gcr.io/k8s-staging-sig-storage/csi-attacher`                           |
+| `image.csiAttacher.tag`                     | CSI attacher image tag.                                   | `v4.5.1`                                                                |
+| `image.csiAttacher.pullPolicy`              | CSI attacher image pull policy.                           | `Always`                                                                |
+| `image.nodeDriverRegistrar.repository`      | CSI node driver registrar image.                          | `registry.k8s.io/sig-storage/csi-node-driver-registrar`                 |
+| `image.nodeDriverRegistrar.tag`             | CSI node driver registrar image tag.                      | `v2.10.1`                                                               |
+| `image.nodeDriverRegistrar.pullPolicy`      | CSI node driver registrar image pull policy.              | `Always`                                                                |
+| `image.csiSnapshotter.repository`           | CSI snapshotter image.                                    | `registry.k8s.io/sig-storage/csi-snapshotter`                           |
+| `image.csiSnapshotter.tag`                  | CSI snapshotter image tag.                                | `v8.2.0`                                                                |
+| `image.csiSnapshotter.pullPolicy`           | CSI snapshotter image pull policy.                        | `Always`                                                                |
+| `image.csiSnapshotterController.repository` | Snapshot-controller image repository.                     | `registry.k8s.io/sig-storage/snapshot-controller`                       |
+| `image.csiSnapshotterController.tag`        | Snapshot-controller image tag.                            | `v8.2.0`                                                                |
+| `image.csiSnapshotterController.pullPolicy` | Snapshot-controller image pull policy.                    | `Always`                                                                |
+| `image.csiResizer.repository`               | CSI resizer image.                                        | `gcr.io/k8s-staging-sig-storage/csi-resizer`                            |
+| `image.csiResizer.tag`                      | CSI resizer image tag.                                    | `v1.10.1`                                                               |
+| `image.csiResizer.pullPolicy`               | CSI resizer image pull policy.                            | `Always`                                                                |
+| `image.csiHealthMonitor.repository`         | CSI external health-monitor controller image.             | `gcr.io/k8s-staging-sig-storage/csi-external-health-monitor-controller` |
+| `image.csiHealthMonitor.tag`                | CSI external health-monitor controller image tag.         | `v0.11.0`                                                               |
+| `image.csiHealthMonitor.pullPolicy`         | CSI external health-monitor controller image pull policy. | `Always`                                                                |
+| `image.simplyblock.repository`              | Simplyblock management image.                             | `public.ecr.aws/simply-block/simplyblock`                               |
+| `image.simplyblock.tag`                     | Simplyblock management image tag.                         | `26.1.2`                                                                |
+| `image.simplyblock.pullPolicy`              | Simplyblock management image pull policy.                 | `Always`                                                                |
+| `image.storageNode.repository`              | Simplyblock storage-node controller image.                | `simplyblock/storage-node-handler`                                      |
+| `image.storageNode.tag`                     | Simplyblock storage-node controller image tag.            | `v0.1.9`                                                                |
+| `image.storageNode.pullPolicy`              | Simplyblock storage-node controller image pull policy.    | `Always`                                                                |
+| `image.numaResource.repository`             | Simplyblock NUMA resource plugin image repository.        | `simplyblock/numa-resource-plugin`                                      |
+| `image.numaResource.tag`                    | Simplyblock NUMA resource plugin image tag.               | `latest`                                                                |
+| `image.numaResource.pullPolicy`             | Simplyblock NUMA resource plugin image pull policy.       | `Always`                                                                |
+| `image.mgmtAPI.repository`                  | Simplyblock management API image.                         | `python`                                                                |
+| `image.mgmtAPI.tag`                         | Simplyblock management API image tag.                     | `3.10`                                                                  |
+| `image.mgmtAPI.pullPolicy`                  | Simplyblock management API image pull policy.             | `Always`                                                                |
