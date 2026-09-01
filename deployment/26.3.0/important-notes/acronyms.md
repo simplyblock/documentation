@@ -1,0 +1,58 @@
+---
+title: "Acronyms & Abbreviations"
+description: "Reference table of Simplyblock acronyms and abbreviations used across architecture, deployment, operations, Kubernetes, NVMe, and security documentation."
+source: "https://docs.simplyblock.io/latest/important-notes/acronyms/"
+---
+
+# Acronyms & Abbreviations
+
+| Acronym or Abbreviation | Explanation                                                     |
+|-------------------------|-----------------------------------------------------------------|
+| API                     | Application Programming Interface                               |
+| AWS                     | Amazon Web Services                                             |
+| CIDR                    | Classless Inter-Domain Routing                                  |
+| CLI                     | Command Line Interface                                          |
+| COW                     | Copy On Write                                                   |
+| CP                      | Control Plane                                                   |
+| CSI                     | Container Storage Interface                                     |
+| DH-HMAC-CHAP            | Diffie-Hellman HMAC Challenge-Handshake Authentication Protocol |
+| DMA                     | Direct Memory Access                                            |
+| EA                      | Erasure Coding                                                  |
+| HA                      | High Availability                                               |
+| HTTP                    | Hypertext Transfer Protocol                                     |
+| ID                      | Identifier                                                      |
+| I/O                     | Input-Output                                                    |
+| IOMMU                   | Input-Output Memory Management Unit                             |
+| IP                      | Internet Protocol                                               |
+| K8s                     | Kubernetes                                                      |
+| LV                      | Logical Volume                                                  |
+| MFT                     | Maximum Tolerable Failure                                       |
+| NIC                     | Network Interface Card                                          |
+| NQN                     | NVMe Qualified Name                                             |
+| NVMe                    | Non-Volatile Memory Express                                     |
+| NVMe-oF                 | NVMe over Fabrics                                               |
+| NVMe/RoCE               | NVMe over RDMA on Converged Ethernet                            |
+| NVMe/TCP                | NVMe over TCP                                                   |
+| OS                      | Operating System                                                |
+| PSK                     | Pre-Shared Key                                                  |
+| PV                      | Persistent Volume                                               |
+| PVC                     | Persistent Volume Claim                                         |
+| QoS                     | Quality of Service                                              |
+| RAID                    | Redundant Array of Independent Disks                            |
+| RDMA                    | Remote Direct Memory Access                                     |
+| ROW                     | Redirect On Write                                               |
+| ROX                     | Read Only Many                                                  |
+| RWO                     | Read Write Once                                                 |
+| RWX                     | Read Write Many                                                 |
+| SC                      | Storage Class                                                   |
+| SDK                     | Software Development Kit                                        |
+| SDS                     | Software Defined Storage                                        |
+| SP                      | Storage Plane                                                   |
+| SPDK                    | Storage Performance Development Kit                             |
+| SSD                     | Solid State Drive                                               |
+| SSL                     | Secure Socket Layer                                             |
+| TCP                     | Transmission Control Protocol                                   |
+| TLS                     | Transport Layer Security                                        |
+| UDP                     | User Datagram Protocol                                          |
+| UUID                    | Universally Unique Identifier                                   |
+| VM                      | Virtual Machine                                                 |
