@@ -148,11 +148,6 @@ The annotation is honored on a new PVC and on an already-bound one. A `Replicati
 is `Bound` and the named policy is ready, and it is named `<policy>-<pvc>`. The slot is owned by its PVC, so deleting
 the PVC deletes the slot and stops replication for that volume.
 
-!!! note
-    The `replicate` StorageClass parameter is unrelated to this mechanism. It is a backend volume property and does
-    not attach a volume to a `ReplicationPolicy`. See
-    [Storage Class: Available Parameters](../../usage/storage-class.md#available-parameters).
-
 ### Changing or Removing the Policy
 
 Pointing the annotation at a different policy is carried out as a detach followed by a fresh attach, which means the

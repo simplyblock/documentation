@@ -29,7 +29,6 @@ Commonly configured CSI driver parameters:
 | `logicalVolume.qos_w_mbytes`             | Sets the maximum write Mbps. Zero means unlimited.                                           | `0`                                                         |
 | `logicalVolume.numDataChunks`            | Sets the number of Erasure coding schema parameter k (distributed RAID).                     | `1`                                                         |
 | `logicalVolume.numParityChunks`          | Sets the number of Erasure coding schema parameter n (distributed RAID).                     | `1`                                                         |
-| `logicalVolume.lvol_priority_class`      | Sets the logical volume priority class.                                                      | `0`                                                         |
 | `logicalVolume.fabric`                   | Sets the NVMe-oF transport type.                                                             | `tcp`                                                       |
 | `logicalVolume.tune2fs_reserved_blocks`  | Sets the percentage of disk blocks reserved for system.                                      | `0`                                                         |
 | `logicalVolume.max_namespace_per_subsys` | Sets the maximum namespace per subsystem.                                                    | `1`                                                         |
