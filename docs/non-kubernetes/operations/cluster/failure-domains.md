@@ -162,6 +162,12 @@ before any change is made.
 
 ## Removing a Storage Node
 
+Removal is meant to take a host out of the cluster, either because it has failed for good or because the cluster is
+being shrunk. It is not a way to park a broken host: a failed host that is left in place still counts toward its
+domain's host total while serving nothing, and once a second host in the same domain fails, only one of the two can
+be removed at all. Remove a failed host promptly and then restore the balance. See
+[When to Remove a Node](../../../architecture/concepts/failure-domains.md#when-to-remove-a-node).
+
 Node removal applies the same balance rules (±1, minimum two hosts per domain). In addition, the failover paths
 hosted by the node being removed are relocated to other nodes. If the path being relocated is the only
 cross-domain path of its volume store, the replacement node **must** be in a different failure domain than the

@@ -121,6 +121,41 @@ A host's failure domain cannot be changed while the host is part of the cluster.
 requires removing the node, restoring the domain balance, and re-adding it with the new failure-domain label. This
 prevents accidental topology changes that would silently invalidate the placement of existing data.
 
+## When to Remove a Node
+
+Node removal takes a host out of the cluster permanently. It serves two purposes: retiring a **failed host** that
+is not coming back, and **shrinking** a cluster that has more storage nodes than it needs. A node that is offline
+or unreachable can still be removed, so removal is the intended way to resolve a dead host rather than a last
+resort.
+
+Leaving a dead node in the cluster is the case to avoid. Domain balance counts every host that has not been
+removed, whatever its state, so a dead node still occupies its domain's slot while serving nothing. The cluster
+stays degraded, and the balance rules then close the door behind it:
+
+- The first dead host in a domain can still be removed. Its domain drops to one host below the others, which the
+  ±1 rule permits.
+- If a **second** host in that same domain fails before the first is removed, only one of the two can go. Removing
+  the second would leave that domain two hosts below the others and, on a three-host domain, below the two-host
+  floor. Admission refuses it.
+
+At that point the degradation cannot be cleared by removal at all, and hosts have to be added before the cluster
+can be repaired. Remove a failed host promptly, then restore the balance one of two ways:
+
+- **Add a replacement host** in the same failure domain, returning the split to what it was.
+- **Rebalance** by removing hosts from the other domains until every domain is within ±1 again.
+
+The same reasoning applies to planned shrinking: reduce the domains evenly rather than emptying one, so the
+cluster never sits closer to the floor than it has to.
+
+A removal is admitted only when all of the following hold:
+
+- The node holds **no volumes and no snapshots**. Migrate or delete them first; removal does not move them.
+- The resulting per-domain host split stays within the **±1 rule** and keeps at least **two hosts per domain**.
+- Every failover path the node hosts for another volume store has a valid host-disjoint target to move to, after
+  the splice fallback described in [The Placement Contract](#the-placement-contract).
+- The cluster has enough node headroom above `data chunks + parity chunks` to absorb the loss, counting hosts that
+  are already not online.
+
 ## Journal Copy Replacement on Removal
 
 Removing a node affects every journal redundancy set that referenced the departed node's journal copy. One
