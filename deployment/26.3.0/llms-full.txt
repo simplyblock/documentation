@@ -22170,137 +22170,106 @@ to every deployment, including a Kubernetes-based one.
 
 ### New Features
 
-- **Control Plane:** Added asynchronous replication between two storage clusters. A named destination is registered
-  with `sbctl cluster replication-target-add`, the cadence and the retention with
-  `sbctl cluster replication-policy-add`, and a volume joins a policy through
-  `sbctl volume replication-policy-set`. Several destinations per cluster are supported, a failover is
-  requested for a single volume, a whole policy, or a whole target, and `sbctl volume replication-info`
-  reports the lag and the age of the backlog against the cadence target.
-- **Control Plane:** Added the planned cross-cluster cutover. Replication started with `--mode migration` prepares a
-  volume for a handover, and `sbctl volume replication-commit` shrinks the remaining delta, fences the
-  source, and moves the client to the target. `sbctl volume replication-failback` prepares the return to a
-  recovered source as a delta, or to a fresh cluster as a full copy.
-- **Control Plane:** Added support for failure domains. Domain anti-affinity is turned on with
-  `sbctl cluster create --enable-failure-domain`, and every storage node is then tagged with
-  `sbctl storage-node add-node --failure-domain`. Data chunks, parity chunks, journal copies, and the
-  secondary and tertiary nodes are spread across distinct domains, with a host-disjoint fallback and a warning where
-  that is not possible.
-- **Control Plane:** Added online storage node removal and single-node expansion. `sbctl storage-node remove`
-  runs as a resumable background task that re-hosts the lvstore replicas the node holds for others and migrates its
-  devices, and `sbctl storage-node add-node --expansion` adds a single node to an FTT 2 cluster by re-homing
-  existing secondary and tertiary roles. The addition of several nodes now runs in parallel, and only the cross-node
-  mesh wiring is serialized per cluster.
-- **Control Plane:** Added cluster-wide maintenance commands. `sbctl cluster restart` restarts every node in
-  parallel and reactivates the cluster, and `sbctl cluster op-stop` and `sbctl cluster op-start`
-  refuse and resume the creation, deletion, and modification of volumes, snapshots, clones, and pools. Read paths
-  and the restarts, migrations, and repairs a cluster performs on itself are unaffected.
-- **Control Plane:** Added release-specific upgrade plug-ins. `sbctl cluster update` runs their pre-update
-  step as its first action, and `sbctl cluster upgrade-complete` runs their completion step and records the
-  installed release on the cluster.
-- **Control Plane:** Added batch migration of namespaced volumes. `sbctl volume migrate --batch` moves every
-  volume that shares an NVMe-oF subsystem as one coordinated group, the groups are listed with
-  `sbctl volume migrate-group-list`, and `sbctl volume migrate-cleanup` idempotently removes what a
-  failed migration left behind on the target.
-- **Control Plane:** Added hard object limits, enforced at creation time instead of at placement time. An lvstore
-  serves at most 6000 objects, counting volumes, clones, and snapshots, a storage node at most 75 volume subsystems,
-  and one subsystem at most 50 namespaces.
+- **Control Plane:** Added asynchronous replication between two storage clusters. Several destinations per cluster
+  are supported, the cadence and the retention are set per replication policy, and a failover is requested for a
+  single volume, a whole policy, or a whole destination.
+- **Control Plane:** Added the planned cross-cluster cutover, by which a volume is handed over to another cluster
+  under control. The remaining delta is shrunk, the source is fenced, and the client is moved to the target. The
+  return to a recovered source runs as a delta, and the return to a fresh cluster as a full copy.
+- **Control Plane:** Added support for failure domains. Data chunks, parity chunks, journal copies, and the
+  secondary and tertiary nodes are spread across distinct domains, with a host-disjoint fallback and a warning
+  where that is not possible.
+- **Control Plane:** Added online storage node removal, which runs as a resumable background task and re-hosts the
+  replicas and devices the node holds, and the expansion of an FTT 2 cluster by a single node. Several nodes are
+  now added in parallel.
+- **Control Plane:** Added cluster-wide maintenance operations. Every node of a cluster is restarted in one step,
+  and the creation, deletion, and modification of volumes, snapshots, clones, and pools is refused and resumed for
+  the whole cluster. Read paths and the restarts, migrations, and repairs a cluster performs on itself are
+  unaffected.
+- **Control Plane:** Added release-specific upgrade plug-ins, which run their preparation step before a cluster
+  update and their completion step after it, and record the installed release on the cluster.
+- **Control Plane:** Added batch migration of namespaced volumes, by which every volume that shares an NVMe-oF
+  subsystem is moved as one coordinated group. What a failed migration left behind on the target is removed
+  idempotently.
 - **Control Plane:** Added quorum-based device exclusion. A device that draws I/O errors from a quorum of the other
   online nodes is excluded cluster-wide, independent of what its NVMe controller reports, which is the case a
   slow-but-connected device previously slipped through. A device whose latency deviates from the cluster average is
   reported as a warning event before it fails.
-- **Control Plane:** Added alerting from the cluster event log with `sbctl cluster event-alerts`, which
-  provisions Grafana rules that read the transition an entity made rather than the state it ended in. Journal events
-  are now collected into the event log next to the distrib events, with alerts for a synchronous delete that keeps
-  failing and for a journal compression backlog above 500 million records.
-- **Control Plane:** Added a FoundationDB exporter with its own dashboard, request metrics of the management API at
-  `/_meta/metrics`, `sbctl storage-node get-device-health-info` for the health information the storage plane
-  holds for a device, and a retention period of 30 days for cluster tasks and their logs.
+- **Control Plane:** Added alerting from the cluster event log, which provisions Grafana rules that read the
+  transition an entity made rather than the state it ended in. Journal events are now collected into the event log
+  next to the distrib events.
+- **Control Plane:** Added a FoundationDB exporter with its own dashboard, request metrics of the management API,
+  the device health information the storage plane holds, and a retention period of 30 days for cluster tasks and
+  their logs.
 - **Control Plane:** Added a rebalance operation to the cluster API, validation of the erasure coding scheme by the
-  management API, and independent NVMe device filters on `sbctl storage-node configure`, where
-  `--device-model` and `--size-range` are now accepted alone as well as together.
+  management API, and independent NVMe device filters for a storage node, where the device model and the size range
+  are accepted alone as well as together.
 - **Storage Plane:** The journal device of a node is now a RAID 0+1 stack instead of an N-way mirror across the
   journal partition of every drive. Write amplification is capped at two physical writes per journal record and per
-  node, independent of the drive count, where a ten-drive node at FTT 2 previously paid up to forty. A drive
-  lifecycle event rebuilds the affected leg instead of the whole mirror.
+  node, independent of the drive count, and a drive lifecycle event rebuilds the affected leg instead of the whole
+  mirror.
 - **Storage Plane:** Added a second generation of distrib write protection. A new cluster is created on it, and an
-  upgraded cluster is moved over with `sbctl cluster switch-write-protection`, which migrates every online
-  node and records the new generation only when all of them succeed. An offline node is brought over by its next
+  upgraded cluster is moved over once every online node has migrated. An offline node is brought over by its next
   restart.
-- **Storage Plane:** An ANA state change is now scoped to a namespace instead of the whole subsystem. A volume that
-  shares its subsystem with other volumes is failed over, suspended, and migrated without moving their I/O to the
-  other node.
+- **Storage Plane:** The ANA state change of a volume is now scoped to its namespace instead of the whole
+  subsystem. A volume that shares its subsystem with other volumes is failed over, suspended, and migrated without
+  moving their I/O to the other node.
 - **Storage Plane:** The core allocation of a storage node gives the distrib and poller threads their share before
-  alceml, which takes its device-scaled count from what is left. Below 22 vCPUs nothing changes, and explicit
-  layouts are added for hosts with two to five vCPUs.
-- **General:** Added diagnostics for a latency or crash investigation: the bdev latency histogram RPCs with a
-  per-layer probe script, by which a tail-latency spike is localized to a layer of the bdev stack, and the host
-  directory `/var/crash` mounted into the storage plane container, so that a core dump survives the container.
+  alceml, which takes its device-scaled count from what is left. Explicit layouts are added for hosts with two to
+  five vCPUs.
+- **General:** Added diagnostics for a latency or crash investigation: the bdev latency histograms with a per-layer
+  probe, by which a tail-latency spike is localized to a layer of the bdev stack, and the host directory
+  `/var/crash` mounted into the storage plane container, so that a core dump survives the container.
 - **General:** Updated the packages inherited from the container base images and dropped `wget` from the image, to
   resolve open CVEs.
 
 ### Fixes
 
-- **Control Plane:** Fixed the loss of I/O during a storage node restart. Every RPC issued inside the port fence is
-  now bounded, the fence carries a hard deadline below the client keep-alive, and the NVMe keep-alive timeout was
-  raised to eight seconds.
-- **Control Plane:** Improved the recovery of a cluster after a full reboot, from about 21 minutes to about one
-  minute. An activation that wedged is detected by a watchdog, automatic reactivation is gated on every node being
-  online, and a suspended cluster is drained to all-offline before it is restarted.
+- **Control Plane:** Fixed the loss of I/O during a storage node restart, where an unbounded operation inside the
+  port fence could outlast the client keep-alive.
+- **Control Plane:** Improved the recovery of a cluster after a full reboot. An activation that wedged is detected
+  by a watchdog, automatic reactivation is gated on every node being online, and a suspended cluster is drained to
+  all-offline before it is restarted.
 - **Control Plane:** Fixed storage nodes flapping to the down state on a health probe timeout, and a node that is
   down no longer counts toward the suspension of the cluster. The suspension is gated on an actual loss of the data
-  plane rather than on an unreachable management network, a rebooted host is detected faster, and the devices
-  stranded by such an outage are reconciled.
+  plane rather than on an unreachable management network.
 - **Control Plane:** Fixed three ways in which a highly available volume could silently lose one of its paths, and
-  the duplicate paths a repair left behind are now pruned. The recovery of an lvstore without a leader reloads the
-  primary from disk before granting leadership, and no leadership is granted while a restart or a recovery task owns
-  the movement of it.
+  the duplicate paths a repair left behind are now pruned. No leadership over an lvstore is granted while a restart
+  or a recovery task owns the movement of it.
 - **Control Plane:** Fixed the failover of a namespaced volume, which the kernel rejected with mismatching
-  identifiers. The namespace id, the namespace UUID, and the controller id of the target clone are now derived from
-  the source instead of being allocated fresh.
-- **Control Plane:** Fixed the deletion pipeline of volumes and snapshots. The asynchronous and the synchronous legs
-  are serialized, a delete the cluster cannot complete is refused rather than accepted, and a deferred delete
-  completes once the node it waited for returns. Concurrent operations on one snapshot chain are now mutually
-  exclusive, which closes a corruption of the blob tree, and a concurrent create waits for the lock instead of being
-  rejected.
+  identifiers.
+- **Control Plane:** Fixed the deletion pipeline of volumes and snapshots. A delete the cluster cannot complete is
+  refused rather than accepted, a deferred delete completes once the node it waited for returns, and concurrent
+  operations on one snapshot chain are mutually exclusive, which closes a corruption of the blob tree.
 - **Control Plane:** Fixed the migration of a volume whose snapshot chain spans several nodes, of an encrypted
   volume, and of a volume with a tertiary node. A migration whose source node goes offline is suspended instead of
-  being cleaned up on the target, and a migration that reported a failure despite a successful transfer is reported
-  correctly.
+  being cleaned up on the target.
 - **Control Plane:** Fixed the replication of the blob chain of a volume, which replicated only the snapshots of the
-  volume itself. A snapshot is chained to its predecessor on the target cluster, a predecessor is never pruned before
-  its successor is chained, a failover only ever targets a fully replicated and live snapshot, and a replication no
-  longer halts silently under back-pressure.
-- **Control Plane:** Fixed the addition and the restart of a storage node. An addition aborted on a lock timeout, on
-  a stale in-creation record, or on an already provisioned device slot, and it did not survive the CPU topology
-  reboot. A re-entry is idempotent now, the additions of one host are serialized against each other, a restart task
-  is no longer executed twice, and the status of a node, a device, a cluster, and a volume is written through a
+  volume itself. A failover only ever targets a fully replicated and live snapshot, and a replication no longer
+  halts silently under back-pressure.
+- **Control Plane:** Fixed the addition of a storage node, which aborted on a lock timeout, on a stale in-creation
+  record, or on an already provisioned device slot, and which did not survive the CPU topology reboot. A re-entry
+  is idempotent now, and the status of a node, a device, a cluster, and a volume is written through a
   compare-and-set operation, so that a crashed writer cannot leave a stale status behind.
-- **Control Plane:** Fixed the capacity reporting, which mixed raw with effective capacity, and the cluster admission
-  check, which did not count the utilization of snapshots. On a storage pool, the capacity check of a resize no
-  longer counts the volume being resized twice, a volume is connected to the pool that matches its QoS settings, and
-  an update with an omitted size no longer crashes.
+- **Control Plane:** Fixed the capacity reporting, which mixed raw with effective capacity, and the cluster
+  admission check, which did not count the utilization of snapshots. On a storage pool, the capacity check of a
+  resize no longer counts the volume being resized twice.
 - **Control Plane:** Fixed the cloning of an encrypted volume, for which the crypto layer was missing from the
   recorded bdev stack, the key management of the local KMS, and the rendering of secrets in the management API.
-- **Control Plane:** Fixed a forced storage node shutdown that could block indefinitely, a cluster that grew by being
-  reactivated, a cluster expansion that did not reattach the sibling failover of its donor node, and the leases of
-  long-running tasks, which expired while the task was still running. The shutdown API now returns `409` when its
-  preconditions are not met, and only a migration task blocks a shutdown.
-- **Control Plane:** Improved the throughput of the snapshot and volume monitors, which scope their exclusion to a
-  snapshot chain instead of a single object and therefore process chains and nodes in parallel. The logging to
-  Graylog is written non-blocking through a larger buffer, so that a slow log target no longer holds up the control
-  plane.
-- **Storage Plane:** Improved the reliability of the graceful startup and the graceful shutdown of the storage plane.
-  A storage plane whose RPC endpoint hangs on a live process is aborted instead of being waited for, an RPC is
-  bounded by the timeout of its caller so that it cannot starve the node, and the wait for the journal replication
-  of a peer is bounded so that it cannot defer a restart indefinitely.
+- **Control Plane:** Fixed a forced storage node shutdown that could block indefinitely, a cluster that grew by
+  being reactivated, a cluster expansion that did not reattach the sibling failover of its donor node, and the
+  leases of long-running tasks, which expired while the task was still running.
+- **Control Plane:** Improved the throughput of the snapshot and volume monitors, which process chains and nodes in
+  parallel, and the logging to Graylog, which is written non-blocking, so that a slow log target no longer holds up
+  the control plane.
+- **Storage Plane:** Improved the reliability of the graceful startup and the graceful shutdown of the storage
+  plane. A storage plane whose RPC endpoint hangs on a live process is aborted instead of being waited for, and the
+  wait for the journal replication of a peer is bounded, so that it cannot defer a restart indefinitely.
 - **Storage Plane:** Fixed the roles of the hub volumes, which are active on both sides within a node and passive
-  between nodes. The role of an lvstore is derived from the topology instead of from an index position, the hub
-  volume subsystem is no longer lost across a restart, and the name parameter of a hub volume is no longer sent to an
-  older storage plane.
+  between nodes, and the hub volume subsystem, which was lost across a restart.
 - **Storage Plane:** Fixed the re-admission of the devices of a node recovering from an outage, which was silently
-  refused while the node had not yet reached the online state. The memory footprint of a node also improved: the
-  small I/O buffers are sized from the subsystem count of the cluster, and the large ones were cut by a factor of
-  three.
+  refused while the node had not yet reached the online state. The memory footprint of a node improved as well,
+  since the small I/O buffers are sized from the subsystem count of the cluster.
 
 ## Kubernetes
 
@@ -22309,41 +22278,35 @@ Simplyblock CSI.
 
 ### New Features
 
-- **Operator:** Added support for failure domains. The mode is enabled through `spec.enableFailureDomains` on the
-  `StorageCluster`, and workers are assigned to a domain through the `StorageNodeSet`, so that erasure coding chunks
-  and failover paths are spread across racks or availability zones. The effective domain of a worker is reflected in
-  the status of the `StorageNode` and the `StorageNodeSet`.
-- **Operator:** Added support for multiple `StorageNodeSet` resources per storage cluster, by which workers with
-  different hardware or a different role are enrolled with their own configuration, and for parallel storage node
-  addition. The number of workers provisioned at the same time is taken from
-  `StorageNodeSet.spec.maxParallelNodeAdds`, and the `maxUnavailable` of the OpenShift `MachineConfigPool` is scaled
-  to match it.
-- **Operator:** Added support for live volume migration through the new `VolumeMigration` resource. The backing
-  logical volume is moved between storage nodes while the volume stays online. Before the migration is continued, the
-  new NVMe-oF paths on the target node are validated by a Job on every consuming worker.
+- **Operator:** Added support for failure domains, by which erasure coding chunks and failover paths are spread
+  across racks or availability zones. Workers are assigned to a domain through the `StorageNodeSet`, and the
+  effective domain of a worker is reflected in the status of the `StorageNode`.
+- **Operator:** Added support for several `StorageNodeSet` resources per storage cluster, by which workers with
+  different hardware or a different role are enrolled with their own configuration, and for the parallel addition
+  of storage nodes.
+- **Operator:** Added live volume migration through the new `VolumeMigration` resource, by which the backing
+  logical volume is moved between storage nodes while the volume stays online. The new NVMe-oF paths on the target
+  node are validated on every consuming worker before the migration is continued.
 - **Operator:** Added the storage node drain, removal, and host migration workflows, requested with a
-  `StorageNodeOps` resource and `action: remove` or `action: migrate`. A removal suspends the node, migrates its
-  volumes to the remaining nodes in round-robin order, verifies the result, and removes the node. A migration
-  relocates the identity of a storage node to a different worker. While the cluster is rebalancing or inactive, a
-  workflow is paused, and a warning event is emitted whenever a drain stalls.
-- **Operator:** Added support for asynchronous replication between two storage clusters. The relationship between the
-  clusters is declared with a `ReplicationPair`, the interval and the retention with a `ReplicationPolicy`, and every
-  replicated volume is tracked by a `ReplicationSlot`. Failover and failback are requested with a `ReplicationOps`
-  resource, scoped to a replication target, a policy, or a single volume. A PVC is enrolled into a policy through an
-  annotation.
-- **Operator:** Added automatic, latency-based volume rebalancing and back storage data realignment. Both are
+  `StorageNodeOps` resource. A removal suspends the node, migrates its volumes to the remaining nodes, verifies the
+  result, and removes the node, and a migration relocates the identity of a storage node to a different worker.
+- **Operator:** Added support for asynchronous replication between two storage clusters, declared with the new
+  `ReplicationPair`, `ReplicationPolicy`, and `ReplicationSlot` resources. Failover and failback are requested with
+  a `ReplicationOps` resource, scoped to a replication target, a policy, or a single volume, and a PVC is enrolled
+  into a policy through an annotation.
+- **Operator:** Added automatic, latency-based volume rebalancing and back storage data realignment, which are
   configured per cluster and triggered independently of each other.
-- **Operator:** Added support for topology-aware provisioning across multiple storage clusters, by which a volume is
-  provisioned in the cluster that matches the topology of the consuming workload, the option to skip the creation of
-  the FoundationDB cluster, and the adoption of an existing Helm-deployed storage cluster, storage pool, and storage
-  nodes into the operator resources.
-- **Operator:** Added configuration of the `imagePullPolicy`, the resource limits, and the SPDK system memory
-  (`spdkSysMem`) of the storage node workloads, and of a custom OpenShift `MachineConfigPool` through the
-  `openShiftMachineConfigPool` field, so that storage nodes are rebooted through a pool that is separate from the
-  remaining workers. Every image reference is validated against the trusted registries, and a field that cannot be
-  changed after creation is now rejected instead of being ignored silently.
-- **Operator:** The Thanos data of the monitoring stack is now stored in MinIO instead of a filesystem-backed object
-  store, and Prometheus can be deployed with more than one replica.
+- **Operator:** Added support for topology-aware provisioning across several storage clusters, by which a volume is
+  provisioned in the cluster that matches the topology of the consuming workload, the option to skip the creation
+  of the FoundationDB cluster, and the adoption of an existing Helm-deployed storage cluster, storage pool, and
+  storage nodes into the operator resources.
+- **Operator:** Added configuration of the image pull policy, the resource limits, and the SPDK system memory of
+  the storage node workloads, and of a custom OpenShift `MachineConfigPool`, so that storage nodes are rebooted
+  through a pool that is separate from the remaining workers. Every image reference is validated against the
+  trusted registries, and a field that cannot be changed after creation is rejected instead of being ignored
+  silently.
+- **Operator:** The Thanos data of the monitoring stack is now stored in MinIO instead of a filesystem-backed
+  object store, and Prometheus can be deployed with more than one replica.
 - **CSI Driver:** Added support for co-locating the primary storage node of a volume with the worker that runs the
   consuming pod, and for the migration of namespaced volumes together with the coordinated restart of all pods that
   share an NVMe subsystem.
@@ -22355,18 +22318,16 @@ Simplyblock CSI.
 
 - **Operator:** Fixed the release of the NVMe target paths of a migration that never reaches its cutover, and the
   rebuild of the storage node configuration after an operator restart with an in-flight storage node migration.
-- **Operator:** Fixed the `StoragePool` resource remaining in `Terminating` when its backend UUID was never set, and
-  the PVC validator, which did not accept all of the volume placement annotations.
-- **CSI Driver:** Fixed incompatibilities when formatting and mounting ext4 and XFS volumes, and the connection of a
-  volume in a cluster with more than one storage pool.
-- **CSI Driver:** Fixed the loss of the kernel module configuration on the host. The modules `vfio-pci` and
-  `uio_pci_generic` were written into the ephemeral filesystem of the storage node container and were gone after the
-  CPU topology reboot during a node addition. The configuration is now written through the host mount of
-  `/etc/modules-load.d`.
-- **CSI Driver:** Fixed the restart loop of the CSI controller container, caused by dangling snapshots and volumes of
-  a removed cluster. The automatic Guardian restart is skipped for a volume that shares its NVMe subsystem with
-  another volume, and a gRPC keepalive and a connection timeout detect a broken connection to a control plane
-  instead of blocking a request.
+- **Operator:** Fixed the `StoragePool` resource remaining in `Terminating` when its backend UUID was never set,
+  and the PVC validator, which did not accept all of the volume placement annotations.
+- **CSI Driver:** Fixed incompatibilities when formatting and mounting ext4 and XFS volumes, and the connection of
+  a volume in a cluster with more than one storage pool.
+- **CSI Driver:** Fixed the loss of the kernel module configuration on the host, which was written into the
+  ephemeral filesystem of the storage node container and was gone after the CPU topology reboot during a node
+  addition.
+- **CSI Driver:** Fixed the restart loop of the CSI controller container, caused by dangling snapshots and volumes
+  of a removed cluster. A gRPC keepalive and a connection timeout now detect a broken connection to a control
+  plane instead of blocking a request.
 - **Operator and CSI Driver:** Updated the container base images and the Go dependencies to resolve open CVEs.
 
 ## Important Changes
@@ -22427,20 +22388,21 @@ Simplyblock CSI.
 
 - The CSI driver added an extended check to prevent an accidental filesystem format onto an existing pre-formatted
   volume in one of the upstream CSI libraries. To ensure all existing volumes work as expected, users are highly
-  encouraged to run this script after upgrading to 26.3.0. [Annotate existing PVCs Script](https://install.simplyblock.io/scripts/backfill-on-disk-filesystem.sh)
+  encouraged to run this script after upgrading to 26.3.0. [Annotate existing PVCs Script](https://install.simplyblock.io/scripts/backfill-on-disk-filesystem.sh){:target="_blank" rel="noopener"}
 
 ## Known Issues
 
 - At the moment it is only possible to define one erasure coding schema per cluster.
 - When deleting pods with simplyblock-backed PVCs, it is important to delete the pod first, before deleting the PVC.
+
+    ```bash title="Deleting a pod before its persistent volume claim"
+    kubectl delete pod <pod-name> --wait=true
+    kubectl delete pvc <pvc-name> --wait=true
+    ```
+
 - A full FTT 1 or FTT 2 network outage can create a situation where surviving nodes lose access to the last journal
   records. This can cause loss of I/O availability until at least one node is restarted.
 - Node Removal currently only works with online nodes.
-
-  ```bash title="Deleting a pod before its persistent volume claim"
-  kubectl delete pod <pod-name> --wait=true
-  kubectl delete pvc <pvc-name> --wait=true
-  ```
 
 ## Features to Expect with Next Major Release
 
