@@ -8,6 +8,10 @@ Every page of this documentation is available as Markdown: append `.md` to any p
 
 - [Home](https://docs.simplyblock.io/latest/index.md): Home: Welcome to the Simplyblock Documentation, the comprehensive resource for understanding, deploying, and managing simplyblock's cloud-native platform.
 
+## Upgrades
+
+- [K8s Upgrade With Maintenance Window Upgrade (R25 to R26)](https://docs.simplyblock.io/latest/upgrades/upgrade-notes-r25-r26.md): Maintenance-window procedure to upgrade a Kubernetes cluster from the R25 Helm charts to the R26 Simplyblock Operator, from node shutdown to workload restart.
+
 ## Important Notes
 
 - [Important Notes](https://docs.simplyblock.io/latest/important-notes/index.md): Important Notes: Simplyblock is a high-performance distributed block storage optimized for Kubernetes that is compatible with any Linux.
