@@ -5,9 +5,11 @@ weight: 10500
 ---
 
 Data is protected on two levels outside Kubernetes. A logical volume is backed up to S3-compatible object storage as a
-chain of snapshots, and its snapshots are replicated to a second cluster, from which a failover can be served.
+chain of snapshots, and its snapshots are replicated to a second cluster, from which a failover can be served. The
+control-plane database itself is backed up periodically as well.
 
-| Topic                                                   | Purpose                                                                |
-|---------------------------------------------------------|------------------------------------------------------------------------|
-| [Backup and Recovery](backup-recovery.md)               | Backing up a volume to S3-compatible object storage, and restoring it. |
-| [Asynchronous Replication](asynchronous-replication.md) | Replicating snapshots to a second cluster for a failover.              |
+| Topic                                                    | Purpose                                                                |
+|----------------------------------------------------------|------------------------------------------------------------------------|
+| [Backup and Recovery](backup-recovery.md)                | Backing up a volume to S3-compatible object storage, and restoring it. |
+| [Asynchronous Replication](asynchronous-replication.md)  | Replicating snapshots to a second cluster for a failover.              |
+| [Control-Plane Database Backup](control-plane-backup.md) | Backing up and restoring the control plane's FoundationDB metadata.    |
