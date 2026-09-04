@@ -4,11 +4,11 @@ description: "Snapshot-based backup and recovery to Amazon S3 or S3-compatible o
 weight: 10510
 ---
 
-Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. Backups can be
-managed via the CLI or through Kubernetes CRDs.
-
-In Kubernetes environments, backups can be managed declaratively using Custom Resource Definitions (CRDs). This
-is especially useful for automated backup workflows integrated with Kubernetes-native tooling.
+Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. In
+Kubernetes environments, backups are managed declaratively using Custom Resource Definitions (CRDs). This is
+especially useful for automated backup workflows integrated with Kubernetes-native tooling. The same engine can
+also be driven through the CLI, see
+[Backup and Recovery on plain Linux](../../../non-kubernetes/operations/data-protection/backup-recovery.md).
 
 ### Prerequisites
 
@@ -63,6 +63,14 @@ spec:
     withCompression: false
 ```
 
+| Field                       | Default | Description                                                                      |
+|-----------------------------|---------|----------------------------------------------------------------------------------|
+| `credentialsSecretRef.name` | —       | Secret with `access_key_id` and `secret_access_key`. **Required**.               |
+| `localEndpoint`             | AWS S3  | Endpoint URL for S3-compatible storage (e.g., MinIO). Leave unset for Amazon S3. |
+| `snapshotBackups`           | `true`  | Allow snapshots to be used as backup sources.                                    |
+| `withCompression`           | `false` | Compress backup data before upload.                                              |
+| `secondaryTarget`           | `0`     | Secondary backup target selector (advanced).                                     |
+
 See the [Operator Reference](../../../reference/operator/reference.md#storagecluster) for all available `backup` spec fields.
 
 ### StorageBackup CRD
@@ -99,10 +107,14 @@ my-pvc-backup   Done    my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   backup-m
 
 #### Spec Fields
 
-| Field         | Type   | Description                                      |
-|---------------|--------|--------------------------------------------------|
-| `clusterName` | string | Name of the target StorageCluster. **Required**. |
-| `pvcRef.name` | string | Name of the PVC to back up. **Required**.        |
+| Field          | Type   | Description                                                      |
+|----------------|--------|------------------------------------------------------------------|
+| `clusterName`  | string | Name of the target StorageCluster. **Required**.                 |
+| `pvcRef.name`  | string | Name of the PVC to back up. **Required**.                        |
+| `snapshotName` | string | Overrides the name of the internally created snapshot. Optional. |
+
+The backup also records the source volume's filesystem type in its status (`fsType`), so a later restore mounts
+the restored volume with the same filesystem regardless of the target StorageClass defaults.
 
 #### Status Fields
 
@@ -153,18 +165,19 @@ my-restore   Done    my-pvc-backup   restored-pvc   79s
 ```
 
 The phase transitions from `InProgress` → `PVCBinding` → `Done`. Once `Done`, the new PVC is ready to attach
-to a pod.
+to a pod. The restored PersistentVolume is created with the filesystem type recorded in the source backup, and an
+encrypted source volume is restored encrypted.
 
 #### Spec Fields
 
-| Field                       | Type   | Description                                                                     |
-|-----------------------------|--------|---------------------------------------------------------------------------------|
-| `clusterName`               | string | Name of the target StorageCluster. **Required**.                                |
-| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                      |
-| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                 |
-| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup. |
-| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                    |
-| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                        |
+| Field                       | Type   | Description                                                                 |
+|-----------------------------|--------|-----------------------------------------------------------------------------|
+| `clusterName`               | string | Name of the target StorageCluster. **Required**.                            |
+| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                  |
+| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.             |
+| `targetNode`                | string | Storage node to restore to. Defaults to automatic placement in the cluster. |
+| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                |
+| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                    |
 
 !!! warning
     A backup can only be restored to the same namespace as the `BackupRestore` object.
@@ -194,12 +207,16 @@ EOF
 | Field         | Type   | Description                                                       |
 |---------------|--------|-------------------------------------------------------------------|
 | `clusterName` | string | Name of the target StorageCluster. **Required**.                  |
-| `maxVersions` | int    | Maximum number of backup versions to retain.                      |
-| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).            |
+| `maxVersions` | int    | Maximum number of completed backup versions to retain.            |
+| `maxAge`      | string | Maximum backup age (e.g., `7d`, `12h`, `30m`).                    |
 | `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs. |
 
-The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
-take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).
+The schedule format is a space-separated list of `interval,count` pairs with strictly increasing intervals. For
+example, `15m,4 60m,11 24h,7` means: take a backup every 15 minutes (keep the 4 most recent), every 60 minutes
+(keep 11), and every 24 hours (keep 7).
+
+Retention does not delete data: when `maxVersions` or `maxAge` is exceeded, the oldest backup is merged into the
+next one, so the number of restore points shrinks while the backup chain stays complete.
 
 #### Attaching a Policy to a PVC
 
@@ -228,3 +245,52 @@ To detach a policy from a PVC (existing backups are not deleted):
 ```bash title="Detach a backup policy"
 kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy-
 ```
+
+### BackupImport CRD (Cross-Cluster Restore)
+
+A `BackupImport` makes a backup taken on one simplyblock cluster restorable on another. Both clusters must be
+represented as `StorageCluster` resources managed by the same operator, and the target cluster's storage nodes
+must be able to reach the source cluster's S3 bucket.
+
+Find the backup to import on the source cluster (`BACKUPID` column of `kubectl get storagebackup`), then create
+the import against the target cluster:
+
+```yaml title="Import a backup from another cluster"
+kubectl apply -f - <<'MANIFEST'
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupImport
+metadata:
+  name: my-import
+  namespace: simplyblock
+spec:
+  sourceClusterName: cluster-a
+  sourceBackupID: 7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef
+  targetClusterName: cluster-b
+MANIFEST
+```
+
+The phase transitions from `Pending` → `Exporting` → `Importing` → `Done`. On completion, the controller has
+imported the backup metadata into the target cluster and created a `StorageBackup` resource marked as imported;
+its name is published in `status.storageBackupRef`.
+
+```bash title="Check the import"
+kubectl -n simplyblock get backupimport my-import -o jsonpath='{.status.storageBackupRef}'
+```
+
+Reference that `StorageBackup` in a regular [`BackupRestore`](#backuprestore-crd) to restore it. The restore
+controller detects the foreign source and reads from the source cluster's bucket using the source
+`StorageCluster`'s own backup credentials — unlike the CLI flow, no cluster-wide backup-source switch is needed,
+and local backups continue uninterrupted.
+
+#### Spec Fields
+
+| Field               | Type   | Description                                                            |
+|---------------------|--------|------------------------------------------------------------------------|
+| `sourceClusterName` | string | StorageCluster name of the cluster that owns the backup. **Required**. |
+| `sourceBackupID`    | string | Backup UUID on the source cluster. **Required**.                       |
+| `targetClusterName` | string | StorageCluster name of the cluster to import into. **Required**.       |
+
+## Control-Plane Backups
+
+The CRDs on this page protect volume data. The control-plane database itself is backed up separately, see
+[FoundationDB Backup and Restore](foundationdb-backup.md).
