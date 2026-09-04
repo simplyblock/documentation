@@ -36,6 +36,41 @@ access.
 
 ## Installation of Simplyblock
 
-To install the simplyblock components on OpenShift, follow the instructions to
-[install the Simplyblock Operator](k8s-control-plane.md) and follow the instructions to [deploy the storage nodes and
-CSI driver](k8s-storage-plane.md)
+The Simplyblock Operator is installed with the Helm chart or through the OpenShift OperatorHub, since
+simplyblock-operator is published in Red Hat's certified-operators catalog. Storage nodes, storage pools, and the CSI
+driver are deployed the same way regardless of which install method is used.
+
+=== "Helm"
+    To install the simplyblock components on OpenShift, follow the instructions to
+    [install the Simplyblock Operator](k8s-control-plane.md) and follow the instructions to [deploy the storage
+    nodes and CSI driver](k8s-storage-plane.md).
+
+=== "OperatorHub"
+    {{ experimental }}
+
+    The operator is installed from OperatorHub in the OpenShift web console. Only the `AllNamespaces` install mode
+    is supported, so the operator is installed into the `openshift-operators` namespace and reconciles resources
+    across the whole cluster. The container images referenced by the bundle are pulled from
+    `quay.io/simplyblock-io`, so no Red Hat entitlement or pull secret is required.
+
+    The same subscription is created directly with the following manifest:
+
+    ```yaml title="Example of a Subscription for the Simplyblock Operator (simplyblock-subscription.yaml)"
+    apiVersion: operators.coreos.com/v1alpha1
+    kind: Subscription
+    metadata:
+      name: simplyblock-operator
+      namespace: openshift-operators
+    spec:
+      channel: alpha
+      name: simplyblock-operator
+      source: certified-operators
+      sourceNamespace: openshift-marketplace
+    ```
+
+    ```bash title="Creating the subscription"
+    oc apply -f simplyblock-subscription.yaml
+    ```
+
+    The SCC permissions described above are still required, and storage nodes, storage pools, and the CSI driver
+    are still deployed by following [Deploy Storage Nodes and CSI](k8s-storage-plane.md).
