@@ -71,6 +71,33 @@ A node removed from `allowedNodes` loses its label, and its NQN is removed from 
 every volume in it. The node is rejected on its next connect attempt. A volume already connected on that node is not
 disconnected by the removal.
 
+## Enforcement Through a Custom Storage Class
+
+The restriction reaches a volume through the `dhchap_node_label` parameter, whose value the CSI driver writes into the
+`nodeAffinity` of every `PersistentVolume` it provisions from the class. It applies when a node mounts the volume, not
+when the claim is bound, and the operator always sets it on the class it generates.
+
+!!! warning "A custom storage class without `dhchap_node_label` is not enforced"
+
+    A `StorageClass` that names a DHCHAP pool in `pool_name` but omits `dhchap_node_label` provisions volumes with no
+    `nodeAffinity`, so no node restriction applies at all, even though the pool reports DHCHAP as enabled. A `Pod`
+    outside `allowedNodes` is scheduled and its volume is attached, and only the connection is refused, as described
+    in [Pods on a Disallowed Node](#pods-on-a-disallowed-node).
+
+## Worker Node Kernel Requirements
+
+Every node in `allowedNodes` needs a kernel built for DH-HMAC-CHAP. A newer kernel is not automatically a supported
+one, and [NVMe-oF Security](../../../architecture/concepts/nvmf-security.md) lists the option per kernel version. A
+node is checked through the CSI node plugin `Pod` running on it, which mounts the host's `/dev`:
+
+```bash title="Checking a worker node for DH-HMAC-CHAP support"
+kubectl exec -n simplyblock <CSI_NODE_POD> -c csi-node -- cat /dev/nvme-fabrics | grep -o dhchap_secret
+```
+
+Without the option, the volume is attached normally and only the mount fails, with `option "dhchap_secret" ignored`
+in the `FailedMount` event of a `Pod` left in `ContainerCreating`. Such a node is either left out of `allowedNodes`,
+or booted with a kernel that carries the option.
+
 ## Verifying the Configuration
 
 `status.allowedNodes` carries the node names last registered on the control plane. A difference to `spec.allowedNodes`

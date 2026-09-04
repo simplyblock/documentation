@@ -52,6 +52,33 @@ transferred between the host and the storage target is encrypted, providing conf
 PSK keys are automatically generated (256-bit random hex tokens) when a host is added to a volume in a pool with
 `psk` enabled in its security options.
 
+## Initiator Kernel Requirements
+
+DH-HMAC-CHAP and TLS/PSK are negotiated by the initiator's kernel, which has to be built for them. The kernel lists
+the connect options it understands, so a single command settles whether an initiator qualifies:
+
+```bash title="Check an initiator for DH-HMAC-CHAP support"
+grep -o dhchap_secret /dev/nvme-fabrics || echo "kernel has no in-band authentication support"
+```
+
+The kernel version does not settle it. A RHEL 9.6 kernel (5.14.0-570) supports DH-HMAC-CHAP, and the much newer Talos
+1.12 kernel (6.18) does not, because that image is built without the option.
+
+To read it off a kernel configuration instead, the option to look for depends on the kernel:
+
+| Feature      | Kernel        | Option                  |
+|--------------|---------------|-------------------------|
+| DH-HMAC-CHAP | 6.7 and later | `CONFIG_NVME_HOST_AUTH` |
+| DH-HMAC-CHAP | 6.0 to 6.6    | `CONFIG_NVME_AUTH`      |
+| TLS/PSK      | 6.7 and later | `CONFIG_NVME_TCP_TLS`   |
+
+On a kernel of 6.7 or later, `CONFIG_NVME_AUTH` means something else: the shared authentication library, which
+target-side support selects as well. On its own it does not make an initiator capable of authenticating.
+
+A kernel without the option reports no configuration error. The NVMe userspace library drops the authentication
+options with `option "dhchap_secret" ignored`, and the target then refuses the unauthenticated connection with
+`could not add new controller`.
+
 ## Configuration Levels
 
 NVMe-oF security is configured at the storage pool level and managed per volume/host. It is **not** configured at the cluster
