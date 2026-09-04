@@ -162,10 +162,24 @@ before any change is made.
 
 ## Removing a Storage Node
 
+Removal is meant to take a host out of the cluster, either because it has failed for good or because the cluster is
+being shrunk. It is not a way to park a broken host: a failed host that is left in place still counts toward its
+domain's host total while serving nothing, and once a second host in the same domain fails, only one of the two can
+be removed at all. Remove a failed host promptly and then restore the balance. See
+[When to Remove a Node](../../../architecture/concepts/failure-domains.md#when-to-remove-a-node).
+
 Node removal applies the same balance rules (±1, minimum two hosts per domain). In addition, the failover paths
 hosted by the node being removed are relocated to other nodes. If the path being relocated is the only
 cross-domain path of its volume store, the replacement node **must** be in a different failure domain than the
-primary. If no such node exists, the removal is refused.
+primary. An idle host in the required domain is looked for first. If none is free, the path is spliced into an
+already-formed pairing instead: a host that currently carries another node's failover path is taken over, and that
+path is moved onto the primary being repaired. Only when neither option exists is the removal refused.
+
+Node removal separately triggers journal-copy replacement on every journal redundancy set that referenced the
+departed node's journal copy. This works in the opposite direction from failover-path relocation. The replacement
+prefers a candidate from the departed node's own failure domain, which leaves the set's domain distribution as it
+was instead of reshuffling it. The preference is best-effort, not a requirement, and never blocks the removal. See
+[Journal Copy Replacement on Removal](../../../architecture/concepts/failure-domains.md#journal-copy-replacement-on-removal).
 
 ## Moving a Host Between Domains
 
