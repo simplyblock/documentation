@@ -3355,6 +3355,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#backupimport-crd-cross-cluster-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      BackupImport CRD (Cross-Cluster Restore)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BackupImport CRD (Cross-Cluster Restore)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spec-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Spec Fields
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-plane-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control-Plane Backups
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5030,6 +5063,8 @@
       
         
       
+        
+      
     
     
       
@@ -5106,6 +5141,28 @@
   
   <span class="md-ellipsis">
     Asynchronous Replication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../non-kubernetes/operations/data-protection/control-plane-backup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control-Plane Database Backup
     
   </span>
   
@@ -6444,6 +6501,8 @@
       
         
       
+        
+      
     
     
       
@@ -6484,6 +6543,28 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../release-notes/26-3/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    26.3
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -6944,6 +7025,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#backupimport-crd-cross-cluster-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      BackupImport CRD (Cross-Cluster Restore)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BackupImport CRD (Cross-Cluster Restore)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spec-fields_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Spec Fields
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-plane-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Control-Plane Backups
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6970,10 +7084,11 @@
 
   <h1>Backup and Recovery</h1>
 
-<p>Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. Backups can be
-managed via the CLI or through Kubernetes CRDs.</p>
-<p>In Kubernetes environments, backups can be managed declaratively using Custom Resource Definitions (CRDs). This
-is especially useful for automated backup workflows integrated with Kubernetes-native tooling.</p>
+<p>Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. In
+Kubernetes environments, backups are managed declaratively using Custom Resource Definitions (CRDs). This is
+especially useful for automated backup workflows integrated with Kubernetes-native tooling. The same engine can
+also be driven through the CLI, see
+<a href="../../../../non-kubernetes/operations/data-protection/backup-recovery/">Backup and Recovery on plain Linux</a>.</p>
 <h3 id="prerequisites">Prerequisites</h3>
 <h4 id="s3-compatible-object-storage">S3-Compatible Object Storage</h4>
 <p>Backups require an S3-compatible object storage endpoint. For local testing, a MinIO instance can be deployed:</p>
@@ -7014,6 +7129,42 @@ kubectl<span class="w"> </span>-n<span class="w"> </span>minio<span class="w"> <
 <span class="w">    </span><span class="nt">snapshotBackups</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">withCompression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>credentialsSecretRef.name</code></td>
+<td>—</td>
+<td>Secret with <code>access_key_id</code> and <code>secret_access_key</code>. <strong>Required</strong>.</td>
+</tr>
+<tr>
+<td><code>localEndpoint</code></td>
+<td>AWS S3</td>
+<td>Endpoint URL for S3-compatible storage (e.g., MinIO). Leave unset for Amazon S3.</td>
+</tr>
+<tr>
+<td><code>snapshotBackups</code></td>
+<td><code>true</code></td>
+<td>Allow snapshots to be used as backup sources.</td>
+</tr>
+<tr>
+<td><code>withCompression</code></td>
+<td><code>false</code></td>
+<td>Compress backup data before upload.</td>
+</tr>
+<tr>
+<td><code>secondaryTarget</code></td>
+<td><code>0</code></td>
+<td>Secondary backup target selector (advanced).</td>
+</tr>
+</tbody>
+</table>
 <p>See the <a href="../../../../reference/operator/reference/#storagecluster">Operator Reference</a> for all available <code>backup</code> spec fields.</p>
 <h3 id="storagebackup-crd">StorageBackup CRD</h3>
 <p>The <code>StorageBackup</code> resource creates a one-time backup of a PVC to the configured S3-compatible storage endpoint.</p>
@@ -7059,8 +7210,15 @@ my-pvc-backup   Done    my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   backup-m
 <td>string</td>
 <td>Name of the PVC to back up. <strong>Required</strong>.</td>
 </tr>
+<tr>
+<td><code>snapshotName</code></td>
+<td>string</td>
+<td>Overrides the name of the internally created snapshot. Optional.</td>
+</tr>
 </tbody>
 </table>
+<p>The backup also records the source volume's filesystem type in its status (<code>fsType</code>), so a later restore mounts
+the restored volume with the same filesystem regardless of the target StorageClass defaults.</p>
 <h4 id="status-fields">Status Fields</h4>
 <table>
 <thead>
@@ -7119,7 +7277,8 @@ same namespace as the <code>BackupRestore</code> object.</p>
 my-restore   Done    my-pvc-backup   restored-pvc   79s
 </code></pre></div>
 <p>The phase transitions from <code>InProgress</code> → <code>PVCBinding</code> → <code>Done</code>. Once <code>Done</code>, the new PVC is ready to attach
-to a pod.</p>
+to a pod. The restored PersistentVolume is created with the filesystem type recorded in the source backup, and an
+encrypted source volume is restored encrypted.</p>
 <h4 id="spec-fields_1">Spec Fields</h4>
 <table>
 <thead>
@@ -7148,7 +7307,7 @@ to a pod.</p>
 <tr>
 <td><code>targetNode</code></td>
 <td>string</td>
-<td>Storage node to restore to. Defaults to the node that held the original backup.</td>
+<td>Storage node to restore to. Defaults to automatic placement in the cluster.</td>
 </tr>
 <tr>
 <td><code>pvcTemplate.metadata.name</code></td>
@@ -7200,12 +7359,12 @@ to a pod.</p>
 <tr>
 <td><code>maxVersions</code></td>
 <td>int</td>
-<td>Maximum number of backup versions to retain.</td>
+<td>Maximum number of completed backup versions to retain.</td>
 </tr>
 <tr>
 <td><code>maxAge</code></td>
 <td>string</td>
-<td>Maximum backup age before cleanup (e.g., <code>7d</code>, <code>12h</code>).</td>
+<td>Maximum backup age (e.g., <code>7d</code>, <code>12h</code>, <code>30m</code>).</td>
 </tr>
 <tr>
 <td><code>schedule</code></td>
@@ -7214,8 +7373,11 @@ to a pod.</p>
 </tr>
 </tbody>
 </table>
-<p>The schedule format is a space-separated list of <code>interval,count</code> pairs. For example, <code>15m,4 60m,11 24h,7</code> means:
-take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).</p>
+<p>The schedule format is a space-separated list of <code>interval,count</code> pairs with strictly increasing intervals. For
+example, <code>15m,4 60m,11 24h,7</code> means: take a backup every 15 minutes (keep the 4 most recent), every 60 minutes
+(keep 11), and every 24 hours (keep 7).</p>
+<p>Retention does not delete data: when <code>maxVersions</code> or <code>maxAge</code> is exceeded, the oldest backup is merged into the
+next one, so the number of restore points shrinks while the backup chain stays complete.</p>
 <h4 id="attaching-a-policy-to-a-pvc">Attaching a Policy to a PVC</h4>
 <p>Apply the <code>simplyblock.io/backup-policy</code> annotation to start automatic backups for a PVC:</p>
 <div class="highlight"><span class="filename">Attach a backup policy</span><pre><span></span><code>kubectl<span class="w"> </span>annotate<span class="w"> </span>pvc<span class="w"> </span>my-pvc<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>simplyblock.io/backup-policy<span class="o">=</span>my-policy
@@ -7230,6 +7392,63 @@ take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 
 <p>To detach a policy from a PVC (existing backups are not deleted):</p>
 <div class="highlight"><span class="filename">Detach a backup policy</span><pre><span></span><code>kubectl<span class="w"> </span>annotate<span class="w"> </span>pvc<span class="w"> </span>my-pvc<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>simplyblock.io/backup-policy-
 </code></pre></div>
+<h3 id="backupimport-crd-cross-cluster-restore">BackupImport CRD (Cross-Cluster Restore)</h3>
+<p>A <code>BackupImport</code> makes a backup taken on one simplyblock cluster restorable on another. Both clusters must be
+represented as <code>StorageCluster</code> resources managed by the same operator, and the target cluster's storage nodes
+must be able to reach the source cluster's S3 bucket.</p>
+<p>Find the backup to import on the source cluster (<code>BACKUPID</code> column of <code>kubectl get storagebackup</code>), then create
+the import against the target cluster:</p>
+<div class="highlight"><span class="filename">Import a backup from another cluster</span><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">kubectl apply -f - &lt;&lt;'MANIFEST'</span>
+<span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">storage.simplyblock.io/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BackupImport</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-import</span>
+<span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simplyblock</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">sourceClusterName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cluster-a</span>
+<span class="w">  </span><span class="nt">sourceBackupID</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef</span>
+<span class="w">  </span><span class="nt">targetClusterName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cluster-b</span>
+<span class="l l-Scalar l-Scalar-Plain">MANIFEST</span>
+</code></pre></div>
+<p>The phase transitions from <code>Pending</code> → <code>Exporting</code> → <code>Importing</code> → <code>Done</code>. On completion, the controller has
+imported the backup metadata into the target cluster and created a <code>StorageBackup</code> resource marked as imported;
+its name is published in <code>status.storageBackupRef</code>.</p>
+<div class="highlight"><span class="filename">Check the import</span><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>get<span class="w"> </span>backupimport<span class="w"> </span>my-import<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.storageBackupRef}'</span>
+</code></pre></div>
+<p>Reference that <code>StorageBackup</code> in a regular <a href="#backuprestore-crd"><code>BackupRestore</code></a> to restore it. The restore
+controller detects the foreign source and reads from the source cluster's bucket using the source
+<code>StorageCluster</code>'s own backup credentials — unlike the CLI flow, no cluster-wide backup-source switch is needed,
+and local backups continue uninterrupted.</p>
+<h4 id="spec-fields_3">Spec Fields</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sourceClusterName</code></td>
+<td>string</td>
+<td>StorageCluster name of the cluster that owns the backup. <strong>Required</strong>.</td>
+</tr>
+<tr>
+<td><code>sourceBackupID</code></td>
+<td>string</td>
+<td>Backup UUID on the source cluster. <strong>Required</strong>.</td>
+</tr>
+<tr>
+<td><code>targetClusterName</code></td>
+<td>string</td>
+<td>StorageCluster name of the cluster to import into. <strong>Required</strong>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="control-plane-backups">Control-Plane Backups</h2>
+<p>The CRDs on this page protect volume data. The control-plane database itself is backed up separately, see
+<a href="../foundationdb-backup/">FoundationDB Backup and Restore</a>.</p>
 
 
 
@@ -7250,7 +7469,7 @@ take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 16:31:38 UTC">2026-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 4, 2026 10:02:39 UTC">2026-09-04</span>
   </span>
 
     

@@ -605,6 +605,51 @@ sbctl cluster set-shared-placement
 | --force| Bypass the rebalancing / non-online-node guards. Required when --disable is passed. | marker | False | - |
 
 
+## Provisions the Grafana alert rules read from the cluster event log.
+
+Adds eight alert rules that read the cluster event log through /api/v2/clusters/<id>/logs instead of the Thanos metrics the rules in alert_rules.yaml read. The event log carries the transition an entity made, which is what lets these rules tell an operator's shutdown apart from a fault that ended in the same state, and lets them report a device removal and the two journal-compression conditions that no metric carries. Opt-in: the rules need a REST data source, so Grafana downloads a plugin (~74 MB) on the next restart. Works on a running cluster -- the provisioning files are written to every management node and the Grafana task is recreated, so Grafana is unavailable for a few seconds. Run it once, from any management node; re-run it to change a setting.
+
+```bash
+sbctl cluster event-alerts
+    <CLUSTER_ID>
+    --disable
+    --log-limit=<LOG_LIMIT>
+    --interval=<INTERVAL>
+    --pending-period=<PENDING_PERIOD>
+    --plugin-url=<PLUGIN_URL>
+    --plugin-preinstalled
+```
+
+
+| Argument | Description | Data Type | Required |
+| -------- | ----------- | --------- | -------- |
+| CLUSTER_ID | The cluster id. | string | True |
+
+| Parameter | Description | Data Type | Required | Default |
+| --------- | ----------- | --------- | -------- | ------- |
+| --disable| Remove the event log alert rules and the data source. | marker | False | - |
+| --log-limit| Too low on a cluster that produces events quickly and an alert heals itself as soon as the transition that opened it scrolls out of the window. | integer | False | - |
+| --interval| How often the rules run, as a Grafana duration. Default: `1m`. | string | False | - |
+| --pending-period| How long a condition must hold before it notifies, as a Grafana duration. Default: `1m`. | string | False | - |
+| --plugin-url| Where to fetch the Infinity data source plugin from. | string | False | - |
+| --plugin-preinstalled| The data source plugin is already in the Grafana image; do not download it. | marker | False | - |
+
+
+## Activate v2 distrib write protection cluster-wide.
+
+Needed once after upgrading a cluster from a release without v2; new clusters are created on v2 already. Sends the runtime distr_write_protection_v2 RPC to every ONLINE storage node -- the only way an already-created distrib gains v2, since a create parameter cannot retrofit an existing bdev. Only if every online node succeeds is the generation recorded, on the cluster row and on every node's lvstore_stack distrib entries, so later (re-)creations use the v2 parameter. Partial success records nothing, so a retry is a plain re-run. Offline nodes are not an error: they have no running bdev to migrate and come back on v2 at their next restart.
+
+```bash
+sbctl cluster switch-write-protection
+    <CLUSTER_ID>
+```
+
+
+| Argument | Description | Data Type | Required |
+| -------- | ----------- | --------- | -------- |
+| CLUSTER_ID | The cluster id. | string | True |
+
+
 ## Assigns or changes a name to a cluster
 
 Assigns or changes a name to a cluster

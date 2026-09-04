@@ -4843,6 +4843,8 @@
       
         
       
+        
+      
     
     
       
@@ -4919,6 +4921,28 @@
   
   <span class="md-ellipsis">
     Asynchronous Replication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../non-kubernetes/operations/data-protection/control-plane-backup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control-Plane Database Backup
     
   </span>
   
@@ -5938,6 +5962,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#provisions-the-grafana-alert-rules-read-from-the-cluster-event-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      Provisions the Grafana alert rules read from the cluster event log.
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#activate-v2-distrib-write-protection-cluster-wide" class="md-nav__link">
+    <span class="md-ellipsis">
+      Activate v2 distrib write protection cluster-wide.
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#assigns-or-changes-a-name-to-a-cluster" class="md-nav__link">
     <span class="md-ellipsis">
       Assigns or changes a name to a cluster
@@ -6634,6 +6676,8 @@
       
         
       
+        
+      
     
     
       
@@ -6674,6 +6718,28 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../release-notes/26-3/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    26.3
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -7231,6 +7297,24 @@
   <a href="#enable-cluster-wide-per-chunk-data-placement-binding-for-distrib-bdevs-forward-only-upgrade-disable-is-reserved-for-debug" class="md-nav__link">
     <span class="md-ellipsis">
       Enable cluster-wide per-chunk data placement-binding for distrib bdevs (forward-only upgrade; --disable is reserved for debug).
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provisions-the-grafana-alert-rules-read-from-the-cluster-event-log" class="md-nav__link">
+    <span class="md-ellipsis">
+      Provisions the Grafana alert rules read from the cluster event log.
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#activate-v2-distrib-write-protection-cluster-wide" class="md-nav__link">
+    <span class="md-ellipsis">
+      Activate v2 distrib write protection cluster-wide.
     </span>
   </a>
   
@@ -8692,6 +8776,113 @@
 </tr>
 </tbody>
 </table>
+<h2 id="provisions-the-grafana-alert-rules-read-from-the-cluster-event-log">Provisions the Grafana alert rules read from the cluster event log.</h2>
+<p>Adds eight alert rules that read the cluster event log through /api/v2/clusters/<id>/logs instead of the Thanos metrics the rules in alert_rules.yaml read. The event log carries the transition an entity made, which is what lets these rules tell an operator's shutdown apart from a fault that ended in the same state, and lets them report a device removal and the two journal-compression conditions that no metric carries. Opt-in: the rules need a REST data source, so Grafana downloads a plugin (~74 MB) on the next restart. Works on a running cluster -- the provisioning files are written to every management node and the Grafana task is recreated, so Grafana is unavailable for a few seconds. Run it once, from any management node; re-run it to change a setting.</id></p>
+<div class="highlight"><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>event-alerts
+<span class="w">    </span>&lt;CLUSTER_ID&gt;
+<span class="w">    </span>--disable
+<span class="w">    </span>--log-limit<span class="o">=</span>&lt;LOG_LIMIT&gt;
+<span class="w">    </span>--interval<span class="o">=</span>&lt;INTERVAL&gt;
+<span class="w">    </span>--pending-period<span class="o">=</span>&lt;PENDING_PERIOD&gt;
+<span class="w">    </span>--plugin-url<span class="o">=</span>&lt;PLUGIN_URL&gt;
+<span class="w">    </span>--plugin-preinstalled
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+<th>Data Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLUSTER_ID</td>
+<td>The cluster id.</td>
+<td>string</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+<th>Data Type</th>
+<th>Required</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>--disable</td>
+<td>Remove the event log alert rules and the data source.</td>
+<td>marker</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--log-limit</td>
+<td>Too low on a cluster that produces events quickly and an alert heals itself as soon as the transition that opened it scrolls out of the window.</td>
+<td>integer</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--interval</td>
+<td>How often the rules run, as a Grafana duration. Default: <code>1m</code>.</td>
+<td>string</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--pending-period</td>
+<td>How long a condition must hold before it notifies, as a Grafana duration. Default: <code>1m</code>.</td>
+<td>string</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--plugin-url</td>
+<td>Where to fetch the Infinity data source plugin from.</td>
+<td>string</td>
+<td>False</td>
+<td>-</td>
+</tr>
+<tr>
+<td>--plugin-preinstalled</td>
+<td>The data source plugin is already in the Grafana image; do not download it.</td>
+<td>marker</td>
+<td>False</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h2 id="activate-v2-distrib-write-protection-cluster-wide">Activate v2 distrib write protection cluster-wide.</h2>
+<p>Needed once after upgrading a cluster from a release without v2; new clusters are created on v2 already. Sends the runtime distr_write_protection_v2 RPC to every ONLINE storage node -- the only way an already-created distrib gains v2, since a create parameter cannot retrofit an existing bdev. Only if every online node succeeds is the generation recorded, on the cluster row and on every node's lvstore_stack distrib entries, so later (re-)creations use the v2 parameter. Partial success records nothing, so a retry is a plain re-run. Offline nodes are not an error: they have no running bdev to migrate and come back on v2 at their next restart.</p>
+<div class="highlight"><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>switch-write-protection
+<span class="w">    </span>&lt;CLUSTER_ID&gt;
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+<th>Data Type</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLUSTER_ID</td>
+<td>The cluster id.</td>
+<td>string</td>
+<td>True</td>
+</tr>
+</tbody>
+</table>
 <h2 id="assigns-or-changes-a-name-to-a-cluster">Assigns or changes a name to a cluster</h2>
 <p>Assigns or changes a name to a cluster</p>
 <div class="highlight"><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>change-name
@@ -9142,7 +9333,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 16:33:30 UTC">2026-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 4, 2026 10:36:57 UTC">2026-09-04</span>
   </span>
 
     

@@ -1716,10 +1716,7 @@ qosRwIops: string
 qosRwMbytes: string
 qosRMbytes: string
 qosWMbytes: string
-compression: string
 encryption: boolean
-replicate: boolean
-lvolPriorityClass: string
 fabric: string
 maxNamespacePerSubsys: string
 tune2fsReservedBlocks: string
@@ -1732,10 +1729,7 @@ filesystem: string
 | `qosRwMbytes` _string_ | QosRwMbytes sets the read/write throughput limit in MB/s (0 = unlimited). | 0 |  |
 | `qosRMbytes` _string_ | QosRMbytes sets the read throughput limit in MB/s (0 = unlimited). | 0 |  |
 | `qosWMbytes` _string_ | QosWMbytes sets the write throughput limit in MB/s (0 = unlimited). | 0 |  |
-| `compression` _string_ | Compression enables compression for logical volumes. | False |  |
 | `encryption` _boolean_ | Encryption enables encryption for logical volumes. | false |  |
-| `replicate` _boolean_ | Replicate enables replication for logical volumes. | false |  |
-| `lvolPriorityClass` _string_ | LvolPriorityClass sets the logical volume priority class. | 0 |  |
 | `fabric` _string_ | Fabric is the transport fabric (e.g. tcp). | tcp |  |
 | `maxNamespacePerSubsys` _string_ | MaxNamespacePerSubsys limits namespaces per NVMf subsystem. | 1 |  |
 | `tune2fsReservedBlocks` _string_ | Tune2fsReservedBlocks sets the ext4 reserved-blocks percentage. Left unset, the node<br />plugin skips tune2fs entirely and mkfs.ext4's own default reserve applies, matching a<br />StorageClass that omits tune2fs_reserved_blocks. A default of "0" here would not be a<br />no-op: it actively runs `tune2fs -m 0` on every volume, since the node plugin only skips<br />the call when the parameter is empty (see stageVolume in the CSI driver), not when it's<br />"0". |  |  |
@@ -2977,10 +2971,7 @@ spec:
     qosRwMbytes: string
     qosRMbytes: string
     qosWMbytes: string
-    compression: string
     encryption: boolean
-    replicate: boolean
-    lvolPriorityClass: string
     fabric: string
     maxNamespacePerSubsys: string
     tune2fsReservedBlocks: string
@@ -3149,10 +3140,7 @@ storageClassParameters:
   qosRwMbytes: string
   qosRMbytes: string
   qosWMbytes: string
-  compression: string
   encryption: boolean
-  replicate: boolean
-  lvolPriorityClass: string
   fabric: string
   maxNamespacePerSubsys: string
   tune2fsReservedBlocks: string

@@ -43,10 +43,7 @@ The CRD fields carry camel case names and are written to the StorageClass under 
 | `qosRwMbytes`                  | `qos_rw_mbytes`             |
 | `qosRMbytes`                   | `qos_r_mbytes`              |
 | `qosWMbytes`                   | `qos_w_mbytes`              |
-| `compression`                  | `compression`               |
 | `encryption`                   | `encryption`                |
-| `replicate`                    | `replicate`                 |
-| `lvolPriorityClass`            | `lvol_priority_class`       |
 | `fabric`                       | `fabric`                    |
 | `maxNamespacePerSubsys`        | `max_namespace_per_subsys`  |
 | `tune2fsReservedBlocks`        | `tune2fs_reserved_blocks`   |
@@ -125,10 +122,7 @@ hand-written StorageClass that omits the parameter leaves the choice to the cont
 | qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
 | qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                             | true     | 0       |
 | qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
-| compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false   |
 | encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false   |
-| replicate                 | bool       | Defines if the logical volume of this storage class will be replicated or not.                                                                                                                 | true     | false   |
-| lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0       |
 | max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1       |
 | tune2fs_reserved_blocks   | int        | Reserved-blocks percentage applied through `tune2fs -m` when the volume is staged. Left unset, tune2fs is skipped entirely.                                                                    | true     |         |
 | dhchap_node_label         | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |         |

@@ -17,7 +17,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Configure NVMe-oF host access control, DH-HMAC-CHAP authentication, and TLS/PSK encryption on Kubernetes through the StoragePool custom resource.">
+        <meta name="description" content="Host access control and DH-HMAC-CHAP authentication for the NVMe-oF transport on Kubernetes, configured on a StoragePool and reconciled by the operator.">
       
       
       <link rel="canonical" href="https://docs.simplyblock.io/latest/kubernetes/operations/security/authentication-encryption/">
@@ -81,7 +81,7 @@
       
         <meta property="og:title" content="Host Authentication and Encryption - Simplyblock Documentation">
       
-        <meta property="og:description" content="Configure NVMe-oF host access control, DH-HMAC-CHAP authentication, and TLS/PSK encryption on Kubernetes through the StoragePool custom resource.">
+        <meta property="og:description" content="Host access control and DH-HMAC-CHAP authentication for the NVMe-oF transport on Kubernetes, configured on a StoragePool and reconciled by the operator.">
       
         <meta property="og:image" content="https://docs.simplyblock.io/26.3.0/assets/images/social/kubernetes/operations/security/authentication-encryption.png">
       
@@ -97,7 +97,7 @@
       
         <meta name="twitter:title" content="Host Authentication and Encryption - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Configure NVMe-oF host access control, DH-HMAC-CHAP authentication, and TLS/PSK encryption on Kubernetes through the StoragePool custom resource.">
+        <meta name="twitter:description" content="Host access control and DH-HMAC-CHAP authentication for the NVMe-oF transport on Kubernetes, configured on a StoragePool and reconciled by the operator.">
       
         <meta name="twitter:image" content="https://docs.simplyblock.io/26.3.0/assets/images/social/kubernetes/operations/security/authentication-encryption.png">
       
@@ -3557,6 +3557,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#verifying-the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying the Configuration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pods-on-a-disallowed-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pods on a Disallowed Node
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4916,6 +4934,8 @@
       
         
       
+        
+      
     
     
       
@@ -4992,6 +5012,28 @@
   
   <span class="md-ellipsis">
     Asynchronous Replication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../non-kubernetes/operations/data-protection/control-plane-backup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control-Plane Database Backup
     
   </span>
   
@@ -6330,6 +6372,8 @@
       
         
       
+        
+      
     
     
       
@@ -6370,6 +6414,28 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../release-notes/26-3/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    26.3
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -6716,6 +6782,24 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#verifying-the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verifying the Configuration
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pods-on-a-disallowed-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pods on a Disallowed Node
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6742,16 +6826,18 @@
 
   <h1>Host Authentication and Encryption</h1>
 
-<p>Simplyblock supports NVMe-oF transport security to protect data in transit and restrict host access to storage
-subsystems. This includes:</p>
-<ul>
-<li><strong>Host access control:</strong> restrict which hosts (by NQN) can connect to a volume's NVMe-oF subsystem.</li>
-<li><strong>DH-HMAC-CHAP authentication:</strong> mutual authentication between host and target using the NVMe standard
-  authentication protocol (TP8018).</li>
-<li><strong>TLS/PSK encryption:</strong> encrypt data in transit using TLS 1.3 with Pre-Shared Keys.</li>
-</ul>
-<p>On Kubernetes, transport security is configured declaratively on the <code>StoragePool</code> custom resource and reconciled
-by the Simplyblock Operator. No host NQN has to be registered and no key has to be provisioned by hand.</p>
+<p>Simplyblock protects the NVMe-oF transport between a worker node and a storage node with host access control and
+DH-HMAC-CHAP authentication. Only a host registered as an allowed host of a storage pool can connect to the NVMe-oF
+subsystem of a volume in that pool, and every connection is authenticated in both directions with the NVMe standard
+authentication protocol (TP8018).</p>
+<p>On Kubernetes, both are configured declaratively on the <code>StoragePool</code> custom resource and reconciled by the
+Simplyblock Operator. No host NQN has to be registered, and no key has to be provisioned by hand.</p>
+<div class="admonition note">
+<p class="admonition-title">Transport encryption and volume encryption</p>
+<p>TLS/PSK encryption of the NVMe-oF transport is not exposed through the <code>StoragePool</code>. Encryption of the volume
+data at rest is an unrelated, per-volume feature and is described in
+<a href="../../../usage/volume-encryption/">Volume Encryption</a>.</p>
+</div>
 <h2 id="enable-host-authentication-and-encryption">Enable Host Authentication and Encryption</h2>
 <p>Security is configured per storage pool and is disabled by default. It is enabled by setting <code>dhchap</code> on the
 <code>StoragePool</code> and listing the worker nodes that are allowed to connect to the pool in <code>allowedNodes</code>.</p>
@@ -6767,27 +6853,63 @@ by the Simplyblock Operator. No host NQN has to be registered and no key has to 
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-1</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">worker-2</span>
 </code></pre></div>
-<p>The keys are generated as soon as <code>dhchap</code> is set, but authentication is only enforced once <code>allowedNodes</code> is
-non-empty.</p>
+<p>The DH-HMAC-CHAP keys of the pool are generated as soon as <code>dhchap</code> is set. Authentication is only enforced once
+<code>allowedNodes</code> is non-empty.</p>
+<p>Both fields belong in the manifest that creates the pool. The <code>StorageClass</code> generated for the pool is only
+restricted to the allowed nodes when <code>dhchap</code> is <code>true</code> and <code>allowedNodes</code> is non-empty at the moment the class is
+created, and <code>parameters</code> and <code>allowedTopologies</code> cannot be patched afterward. A pool created with <code>dhchap: true</code> and
+an empty <code>allowedNodes</code> therefore keeps an unrestricted <code>StorageClass</code> for the rest of its life, even once nodes are
+added to the list. Recreating the pool is the only way to correct this.</p>
 <h2 id="reconciliation-by-the-operator">Reconciliation by the Operator</h2>
 <p>Once the storage pool is created, host registration and node scheduling are reconciled by the operator:</p>
 <ul>
-<li>Each node in <code>allowedNodes</code> is registered as an allowed host of the pool, under a deterministic NQN derived
-  from that node's Kubernetes UID (<code>nqn.2014-08.io.simplyblock:uuid:&lt;node-uid&gt;</code>).</li>
-<li>Each allowed node is labeled <code>simplyblock.io/pool.&lt;namespace&gt;.&lt;cluster&gt;.&lt;pool&gt;: allowed</code>, and the generated
-  <code>StorageClass</code> is restricted to that label through <code>allowedTopologies</code>. The first <code>Pod</code> to consume a
-  <code>PersistentVolumeClaim</code> of this pool can therefore only be scheduled onto an allowed node.</li>
-<li>The same label is written into the <code>nodeAffinity</code> of the <code>PersistentVolume</code> when the volume is created, which
-  restricts every later scheduling decision on the already-bound volume.</li>
-<li>The node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so no host
-  NQN has to be supplied anywhere in the Kubernetes flow.</li>
+<li><strong>Allowed hosts:</strong> each node in <code>allowedNodes</code> is registered as an allowed host of the pool, under a deterministic
+  NQN derived from that node's Kubernetes UID (<code>nqn.2014-08.io.simplyblock:uuid:&lt;node-uid&gt;</code>).</li>
+<li><strong>Node labels:</strong> each allowed node is labeled <code>simplyblock.io/pool.&lt;namespace&gt;.&lt;cluster&gt;.&lt;pool&gt;=allowed</code>, and the
+  label is removed again from every node that leaves the list.</li>
+<li><strong>First scheduling decision:</strong> the generated <code>StorageClass</code> is restricted to that label through <code>allowedTopologies</code>,
+  so the first <code>Pod</code> to consume a <code>PersistentVolumeClaim</code> of this pool can only be scheduled onto an allowed node.</li>
+<li><strong>Every later scheduling decision:</strong> the same label is written into the <code>nodeAffinity</code> of the <code>PersistentVolume</code>
+  when the volume is created, which restricts every scheduling decision on the already-bound volume, including a
+  restart, a recreate, and a drain.</li>
+<li><strong>Host NQN:</strong> the node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so
+  no host NQN has to be supplied anywhere in the Kubernetes flow.</li>
 </ul>
 <h2 id="managing-allowed-nodes">Managing Allowed Nodes</h2>
-<p><code>dhchap</code> is immutable, because the <code>parameters</code> and <code>allowedTopologies</code> of the generated <code>StorageClass</code> cannot
-be patched in the Kubernetes API once it exists. <code>allowedNodes</code> stays mutable. Changing it relabels the nodes
-and updates the pool's allowed hosts, and it never rewrites the <code>StorageClass</code>.</p>
-<p>See the <a href="../../../../reference/operator/reference/">Operator Reference</a> for the full <code>StoragePool</code> field list,
-and <a href="../../../usage/storage-class/">Storage Class</a> for the <code>dhchap_node_label</code> parameter this generates.</p>
+<p><code>dhchap</code> is immutable, because the <code>parameters</code> and <code>allowedTopologies</code> of the generated <code>StorageClass</code> cannot be
+patched in the Kubernetes API once it exists. <code>allowedNodes</code> stays mutable. Changing it relabels the nodes and updates
+the pool's allowed hosts, and it never rewrites the <code>StorageClass</code>.</p>
+<p>A node removed from <code>allowedNodes</code> loses its label, and its NQN is removed from the allowed hosts of the pool and of
+every volume in it. The node is rejected on its next connect attempt. A volume already connected on that node is not
+disconnected by the removal.</p>
+<h2 id="verifying-the-configuration">Verifying the Configuration</h2>
+<p><code>status.allowedNodes</code> carries the node names last registered on the control plane. A difference to <code>spec.allowedNodes</code>
+means the pool has not converged yet.</p>
+<div class="highlight"><span class="filename">Reading the allowed nodes registered for a storage pool</span><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>storagepool<span class="w"> </span>pool-a<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.allowedNodes}'</span>
+</code></pre></div>
+<p>The nodes carrying the pool's label are listed through a label selector. The result has to match <code>status.allowedNodes</code>.</p>
+<div class="highlight"><span class="filename">Listing the nodes labeled as allowed for a storage pool</span><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>nodes<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-l<span class="w"> </span>simplyblock.io/pool.simplyblock.cluster-a.pool-a<span class="o">=</span>allowed
+</code></pre></div>
+<p>Whether the generated <code>StorageClass</code> restricts scheduling at all is visible in its <code>allowedTopologies</code>. An empty result
+means the class was created while <code>allowedNodes</code> was empty.</p>
+<div class="highlight"><span class="filename">Checking the topology restriction of the generated storage class</span><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>storageclass<span class="w"> </span>simplyblock-simplyblock-cluster-a-pool-a<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.allowedTopologies}'</span>
+</code></pre></div>
+<h2 id="pods-on-a-disallowed-node">Pods on a Disallowed Node</h2>
+<p><code>allowedTopologies</code> and the <code>nodeAffinity</code> of the <code>PersistentVolume</code> keep a <code>Pod</code> off a node outside <code>allowedNodes</code>.
+If one lands there regardless, no <code>nvme connect</code> is ever built. <code>NodeStageVolume</code> derives the host NQN of its own node
+and requests the connection information from the control plane, which rejects the unknown NQN with an HTTP <code>404</code>. The
+<code>Pod</code> stays unscheduled with a <code>FailedMount</code> event.</p>
+<div class="highlight"><span class="filename">Example of a FailedMount event on a node outside the allowed nodes</span><pre><span></span><code>MountVolume.MountDevice failed for volume "pvc-...": rpc error: code = Internal
+desc = failed to fetch connection: GET 404: Host NQN
+nqn.2014-08.io.simplyblock:uuid:&lt;node-uid&gt; not found in allowed hosts for volume &lt;lvol-id&gt;
+</code></pre></div>
+<p>The node is either missing from <code>allowedNodes</code> or the pool has not converged yet. Both are checked as described in
+<a href="#verifying-the-configuration">Verifying the Configuration</a>.</p>
+<p>See the <a href="../../../../reference/operator/reference/">Operator Reference</a> for the full <code>StoragePool</code> field list, and
+<a href="../../../usage/storage-class/">Storage Class</a> for the <code>dhchap_node_label</code> parameter this generates.</p>
 <p>For a detailed explanation of the security mechanisms and configuration, see
 <a href="../../../../architecture/concepts/nvmf-security/">NVMe-oF Security</a>. The equivalent flow for a plain Linux
 installation is described in
@@ -6812,7 +6934,7 @@ installation is described in
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 16:31:38 UTC">2026-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 4, 2026 10:02:39 UTC">2026-09-04</span>
   </span>
 
     
