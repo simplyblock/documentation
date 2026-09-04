@@ -1344,6 +1344,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-to-remove-a-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      When to Remove a Node
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#journal-copy-replacement-on-removal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Journal Copy Replacement on Removal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#recovery-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       Recovery Behavior
@@ -4941,6 +4959,8 @@
       
         
       
+        
+      
     
     
       
@@ -5017,6 +5037,28 @@
   
   <span class="md-ellipsis">
     Asynchronous Replication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../non-kubernetes/operations/data-protection/control-plane-backup/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control-Plane Database Backup
     
   </span>
   
@@ -6355,6 +6397,8 @@
       
         
       
+        
+      
     
     
       
@@ -6395,6 +6439,28 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../release-notes/26-3/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    26.3
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -6760,6 +6826,24 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#when-to-remove-a-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      When to Remove a Node
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#journal-copy-replacement-on-removal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Journal Copy Replacement on Removal
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#recovery-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       Recovery Behavior
@@ -6857,25 +6941,92 @@ nodes count as one host and must carry the same failure-domain label. Dedicated 
 toward the balance.</p>
 </div>
 <h2 id="failure-domains-and-erasure-coding-schemes">Failure Domains and Erasure Coding Schemes</h2>
-<p>The number of failure domains should match the data protection goal:</p>
+<p>The number of failure domains decides two things: whether a cluster can activate with failure domains enabled,
+and how much simultaneous node or domain loss it absorbs afterward.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Fresh activation requires <strong>at least <code>parity chunks + 2</code> distinct failure domains</strong>. Two domains are never
+enough, at any parity-chunk count. With only <code>parity chunks + 1</code> domains the layout has no spare host left, so
+the very next node addition or removal strands a failover path with nowhere valid to go. Below the minimum,
+activation is refused. Either failure domains have to be disabled, or hosts in further domains have to be
+added first. A reactivation of an existing layout is only warned about, never blocked.</p>
+</div>
+<p>A stripe consists of <code>data chunks + parity chunks</code> chunks, and placement spreads them as evenly as the available
+domains allow. How much loss an activated cluster absorbs follows from that spread:</p>
+<ul>
+<li>With <strong><code>data chunks + parity chunks</code> domains or more</strong>, every domain holds at most one chunk of a stripe. The
+  <strong>complete loss of up to <code>parity chunks</code> domains</strong> at once is then tolerated. This is the same guarantee as
+  running without failure domains, scoped to whole domains instead of individual nodes.</li>
+<li>With <strong>fewer domains than <code>data chunks + parity chunks</code></strong>, at least one domain holds more than one chunk. Each
+  domain contributes at most <code>⌈(data chunks + parity chunks) / domains⌉</code> to a risk budget of <code>parity chunks</code>. A
+  domain that already has that many nodes down has spent its whole contribution, so further nodes in the same
+  domain cost nothing extra. A node in a different domain spends a fresh share of the same budget. Any combination
+  is tolerated while the summed contributions stay within <code>parity chunks</code>.</li>
+</ul>
 <table>
 <thead>
 <tr>
-<th>Goal</th>
-<th>Recommendation</th>
+<th>Domains</th>
+<th>1+1</th>
+<th>2+1</th>
+<th>4+1</th>
+<th>1+2</th>
+<th>2+2</th>
+<th>4+2</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Survive one full domain outage</td>
-<td>At least <code>parity chunks + 1</code> distinct failure domains</td>
+<td>2 or fewer</td>
+<td>cannot activate</td>
+<td>cannot activate</td>
+<td>cannot activate</td>
+<td>cannot activate</td>
+<td>cannot activate</td>
+<td>cannot activate</td>
 </tr>
 <tr>
-<td>Survive one full domain outage plus one further node or drive failure elsewhere</td>
-<td>Erasure coding scheme with two parity chunks (e.g., <code>1+2</code>, <code>2+2</code>) and at least as many domains as data chunks</td>
+<td>3</td>
+<td>1 whole domain</td>
+<td>1 whole domain</td>
+<td>1 node total</td>
+<td>cannot activate</td>
+<td>cannot activate</td>
+<td>cannot activate</td>
+</tr>
+<tr>
+<td>4</td>
+<td>1 whole domain</td>
+<td>1 whole domain</td>
+<td>1 node total</td>
+<td>2 whole domains</td>
+<td>2 whole domains</td>
+<td>1 whole domain</td>
+</tr>
+<tr>
+<td>5</td>
+<td>1 whole domain</td>
+<td>1 whole domain</td>
+<td>1 whole domain</td>
+<td>2 whole domains</td>
+<td>2 whole domains</td>
+<td>1 whole domain</td>
+</tr>
+<tr>
+<td>6+</td>
+<td>1 whole domain</td>
+<td>1 whole domain</td>
+<td>1 whole domain</td>
+<td>2 whole domains</td>
+<td>2 whole domains</td>
+<td>2 whole domains</td>
 </tr>
 </tbody>
 </table>
+<p>"1 whole domain" means every node of one domain, whatever its size, can go down at once and the cluster stays
+available. The same budget spent as individual nodes, one per domain across that many domains, is tolerated
+identically. A cell short of a whole domain (<code>4+1</code> on three or four domains) means only that many individual nodes
+anywhere in the cluster, not a domain's worth.</p>
 <p>The high-availability journal requires at least <strong>four</strong> journal copies on failure-domain clusters (instead of
 three), even with a single parity chunk. With three copies and two domains, one domain would hold two copies and
 its loss would break the journal quorum.</p>
@@ -6883,13 +7034,55 @@ its loss would break the journal quorum.</p>
 <p>A host's failure domain cannot be changed while the host is part of the cluster. Moving a host between domains
 requires removing the node, restoring the domain balance, and re-adding it with the new failure-domain label. This
 prevents accidental topology changes that would silently invalidate the placement of existing data.</p>
+<h2 id="when-to-remove-a-node">When to Remove a Node</h2>
+<p>Node removal takes a host out of the cluster permanently. It serves two purposes: retiring a <strong>failed host</strong> that
+is not coming back, and <strong>shrinking</strong> a cluster that has more storage nodes than it needs. A node that is offline
+or unreachable can still be removed, so removal is the intended way to resolve a dead host rather than a last
+resort.</p>
+<p>Leaving a dead node in the cluster is the case to avoid. Domain balance counts every host that has not been
+removed, whatever its state, so a dead node still occupies its domain's slot while serving nothing. The cluster
+stays degraded, and the balance rules then close the door behind it:</p>
+<ul>
+<li>The first dead host in a domain can still be removed. Its domain drops to one host below the others, which the
+  ±1 rule permits.</li>
+<li>If a <strong>second</strong> host in that same domain fails before the first is removed, only one of the two can go. Removing
+  the second would leave that domain two hosts below the others and, on a three-host domain, below the two-host
+  floor. Admission refuses it.</li>
+</ul>
+<p>At that point the degradation cannot be cleared by removal at all, and hosts have to be added before the cluster
+can be repaired. Remove a failed host promptly, then restore the balance one of two ways:</p>
+<ul>
+<li><strong>Add a replacement host</strong> in the same failure domain, returning the split to what it was.</li>
+<li><strong>Rebalance</strong> by removing hosts from the other domains until every domain is within ±1 again.</li>
+</ul>
+<p>The same reasoning applies to planned shrinking: reduce the domains evenly rather than emptying one, so the
+cluster never sits closer to the floor than it has to.</p>
+<p>A removal is admitted only when all of the following hold:</p>
+<ul>
+<li>The node holds <strong>no volumes and no snapshots</strong>. Migrate or delete them first; removal does not move them.</li>
+<li>The resulting per-domain host split stays within the <strong>±1 rule</strong> and keeps at least <strong>two hosts per domain</strong>.</li>
+<li>Every failover path the node hosts for another volume store has a valid host-disjoint target to move to, after
+  the splice fallback described in <a href="#the-placement-contract">The Placement Contract</a>.</li>
+<li>The cluster has enough node headroom above <code>data chunks + parity chunks</code> to absorb the loss, counting hosts that
+  are already not online.</li>
+</ul>
+<h2 id="journal-copy-replacement-on-removal">Journal Copy Replacement on Removal</h2>
+<p>Removing a node affects every journal redundancy set that referenced the departed node's journal copy. One
+replacement member is picked per set, and every host running a local instance of that set applies the same
+decision, so the membership stays identical on all of them.</p>
+<p>The replacement is picked with the same domain-balance goal as the original placement. A candidate from the
+<strong>same failure domain</strong> as the departed node is preferred, which leaves the set's domain distribution as it was
+instead of reshuffling it. The preference is best-effort, not a requirement: if no same-domain candidate is free, a
+cross-domain one is used, and the removal is never blocked over it. Failover-path relocation works in the opposite
+direction (see <a href="#the-placement-contract">The Placement Contract</a>), where a cross-domain target is sometimes
+mandatory and the removal is refused without one.</p>
 <h2 id="recovery-behavior">Recovery Behavior</h2>
 <p>Failure domains also change how the cluster recovers from large outages:</p>
 <ul>
-<li>An outage confined to one domain (up to and including every node of the domain) keeps the cluster <strong>degraded
-  but serving</strong>. The cluster is not suspended.</li>
-<li>With two parity chunks, the cluster additionally tolerates the loss of one entire domain <strong>plus</strong> one further
-  node or device outage in exactly one other domain.</li>
+<li>An outage confined to one domain keeps the cluster <strong>degraded but serving</strong>, as long as that domain's
+  worst-case contribution fits the parity budget of the sizing table above. The cluster is not suspended.</li>
+<li>With two parity chunks and at least <code>data chunks + parity chunks</code> domains, the loss of one entire domain
+  <strong>plus</strong> one further node or device outage in exactly one other domain is tolerated as well.</li>
 <li>When a whole domain returns from an outage (for example, after a rack power loss), its nodes are restarted <strong>in
   parallel</strong> instead of strictly one-by-one, substantially shortening the recovery of large domains.</li>
 </ul>
@@ -6917,7 +7110,7 @@ deployments, failure domains are assigned through the Simplyblock Operator. See 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 1, 2026 16:31:38 UTC">2026-09-01</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 3, 2026 08:11:54 UTC">2026-09-03</span>
   </span>
 
     

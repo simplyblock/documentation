@@ -30,7 +30,6 @@ Package v1alpha1 contains API Schema definitions for the simplyblock v1alpha1 AP
 - [ReplicationSlot](#replicationslot)
 - [StorageBackup](#storagebackup)
 - [StorageCluster](#storagecluster)
-- [StorageClusterOps](#storageclusterops)
 - [StorageNode](#storagenode)
 - [StorageNodeOps](#storagenodeops)
 - [StorageNodeSet](#storagenodeset)
@@ -38,6 +37,46 @@ Package v1alpha1 contains API Schema definitions for the simplyblock v1alpha1 AP
 - [Task](#task)
 - [VolumeMigration](#volumemigration)
 
+
+
+#### ActionStatus
+
+
+
+
+
+
+
+_Appears in:_
+- [StorageClusterStatus](#storageclusterstatus)
+
+_Example:_
+
+```yaml
+action: string
+nodeUUID: string
+state: string
+message: string
+updatedAt: Time
+observedGeneration: integer
+triggered: boolean
+subPhase: string
+volumesMigrated: integer
+volumesPending: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `action` _string_ | Action is the requested action name. |  |  |
+| `nodeUUID` _string_ | NodeUUID is the target node UUID for the action. |  |  |
+| `state` _string_ |  |  |  |
+| `message` _string_ | Message is a human-readable action result or error. |  |  |
+| `updatedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | UpdatedAt is the timestamp of the last status transition. |  |  |
+| `observedGeneration` _integer_ | ObservedGeneration is the resource generation observed by this status. |  |  |
+| `triggered` _boolean_ | Triggered indicates whether the underlying backend action has been fired. |  |  |
+| `subPhase` _string_ | SubPhase tracks the active drain step within the remove action. |  | Enum: [Validating Suspending Migrating Verifying Removing] <br />Optional: \{\} <br /> |
+| `volumesMigrated` _integer_ | VolumesMigrated is the count of volumes successfully migrated so far. |  | Optional: \{\} <br /> |
+| `volumesPending` _integer_ | VolumesPending is the count of volumes still awaiting migration. |  | Optional: \{\} <br /> |
 
 
 #### AttachedLvol
@@ -198,7 +237,11 @@ BackupPolicy is the Schema for the backuppolicies API.
 A BackupPolicy defines retention and scheduling parameters for Simplyblock
 backups. To apply a policy to a PVC, annotate the PVC with:
 
-	simplybk/backup-policy: <BackupPolicy-name>
+	simplyblock.io/backup-policy: <BackupPolicy-name>
+
+The deprecated simplybk/backup-policy annotation is still honoured for
+backwards compatibility; when both are set, simplyblock.io/backup-policy
+takes precedence.
 
 The BackupPolicy must be in the same namespace as the annotated PVC.
 The controller attaches and detaches the policy in the Simplyblock backend
@@ -850,16 +893,16 @@ lastUpdated: Time
 | `lastUpdated` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ |  |  |  |
 
 
-#### NodeRollingRestartSpec
+#### NodeRecycleSpec
 
 
 
-NodeRollingRestartSpec configures the node-rolling-restart action behaviour.
+NodeRecycleSpec configures the node-recycle action behaviour.
 
 
 
 _Appears in:_
-- [StorageClusterOpsSpec](#storageclusteropsspec)
+- [StorageClusterSpec](#storageclusterspec)
 
 _Example:_
 
@@ -869,21 +912,20 @@ refreshSNodeAPI: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `refreshSNodeAPI` _boolean_ | RefreshSNodeAPI restarts the storage-node DaemonSet pod on each node<br />after the backend node is shut down and before it is restarted, ensuring<br />the latest image is running before the node comes back online. |  | Optional: \{\} <br /> |
+| `refreshSNodeAPI` _boolean_ | RefreshSNodeAPI restarts the storage-node DaemonSet pod on each node<br />after the backend node is shut down and before it is restarted, ensuring<br />the latest image is running before the node comes back online. |  |  |
 
 
-#### NodeRollingRestartStatus
+#### NodeRecycleStatus
 
 
 
-NodeRollingRestartStatus tracks in-progress state for the node-rolling-restart action.
-All fields are persisted in the StorageClusterOps status so the reconciler
-can resume after a requeue or operator restart.
+NodeRecycleStatus tracks in-progress state for the node-recycle action.
+All fields are persisted in CR status so the reconciler can resume after a requeue.
 
 
 
 _Appears in:_
-- [StorageClusterOpsStatus](#storageclusteropsstatus)
+- [StorageClusterStatus](#storageclusterstatus)
 
 _Example:_
 
@@ -898,9 +940,9 @@ phaseTriggered: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `pendingNodes` _string array_ | PendingNodes is the ordered list of node UUIDs still to be restarted. |  |  |
-| `processedNodes` _string array_ | ProcessedNodes is the list of node UUIDs already restarted. |  |  |
-| `nodePhase` _string_ | NodePhase is the current step for the node being restarted:<br />"snode-refresh" \| "snode-refresh-wait" \| "shutting-down" \| "restarting" \| "rebalancing" |  |  |
+| `pendingNodes` _string array_ | PendingNodes is the ordered list of node UUIDs still to be recycled. |  |  |
+| `processedNodes` _string array_ | ProcessedNodes is the list of node UUIDs already recycled. |  |  |
+| `nodePhase` _string_ | NodePhase is the current step for the node being recycled:<br />"snode-refresh" \| "snode-refresh-wait" \| "shutting-down" \| "restarting" \| "rebalancing" |  |  |
 | `phaseTriggered` _boolean_ | PhaseTriggered indicates the API call for the current NodePhase was already sent. |  |  |
 
 
@@ -1096,6 +1138,7 @@ spec:
   scope: string
   ref: string
   sourceClusterID: string
+  deleteSource: boolean
 status:
   phase: string
   subphase: string
@@ -1168,14 +1211,16 @@ action: string
 scope: string
 ref: string
 sourceClusterID: string
+deleteSource: boolean
 ```
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `action` _string_ | Action is the operation to perform. Immutable. |  | Enum: [failover failback] <br />Required: \{\} <br /> |
-| `scope` _string_ | Scope controls which volumes are affected. Immutable.<br />target: all volumes across every policy that uses the named ReplicationPair.<br />policy: all volumes managed by the named ReplicationPolicy CR.<br />volume: a single ReplicationSlot (unplanned per-volume failover). |  | Enum: [target policy volume] <br />Required: \{\} <br /> |
+| `action` _string_ | Action is the operation to perform. Immutable.<br />failover:  unplanned — promote target clone, source may be down.<br />failback:  restore source as primary after a prior failover.<br />migration: planned cutover — calls replication_commit per volume; both clusters stay up.<br />           State progression: replicating → cutover_pending → cutover_done. |  | Enum: [failover failback migration] <br />Required: \{\} <br /> |
+| `scope` _string_ | Scope controls which volumes are affected. Immutable.<br />target: all volumes across every policy that uses the named ReplicationPair.<br />policy: all volumes managed by the named ReplicationPolicy CR.<br />volume: a single ReplicationSlot (planned or unplanned per-volume operation). |  | Enum: [target policy volume] <br />Required: \{\} <br /> |
 | `ref` _string_ | Ref is the name of the resource identified by Scope:<br />a ReplicationPair name for scope=target,<br />a ReplicationPolicy name for scope=policy,<br />or a ReplicationSlot name for scope=volume. Immutable. |  | Required: \{\} <br /> |
 | `sourceClusterID` _string_ | SourceClusterID is used for failback only. Omit to recover to the original source. |  | Optional: \{\} <br /> |
+| `deleteSource` _boolean_ | DeleteSource instructs the backend to delete the source volume after a<br />successful migration cutover. Only meaningful when action=migration. |  | Optional: \{\} <br /> |
 
 
 #### ReplicationOpsStatus
@@ -1749,6 +1794,9 @@ spec:
   stripe:
     dataChunks: integer
     parityChunks: integer
+  action: string
+  nodeRecycle:
+    refreshSNodeAPI: boolean
   fabricType: string
   clientDataIfname: string
   nvmfBasePort: integer
@@ -1816,7 +1864,24 @@ status:
   configured: boolean
   maxFaultTolerance: integer
   maxConcurrentWorkerRestarts: integer
-  activeOpsRef: string
+  actionStatus:
+    action: string
+    nodeUUID: string
+    state: string
+    message: string
+    updatedAt: Time
+    observedGeneration: integer
+    triggered: boolean
+    subPhase: string
+    volumesMigrated: integer
+    volumesPending: integer
+  nodeRecycleStatus:
+    pendingNodes:
+      - string
+    processedNodes:
+      - string
+    nodePhase: string
+    phaseTriggered: boolean
   rebalancingMetrics:
     avgDeviationPct: float
     maxDeviationPct: float
@@ -1841,140 +1906,6 @@ status:
 | `status` _[StorageClusterStatus](#storageclusterstatus)_ | status defines the observed state of StorageCluster |  | Optional: \{\} <br /> |
 
 
-#### StorageClusterOps
-
-
-
-StorageClusterOps is a one-shot operational CR targeting a single SimplyblocksStorageCluster.
-Analogous to a Kubernetes Job — it drives a cluster-level operation (activate, expand,
-shutdown, restart, node-rolling-restart) to completion and records the result. Only one
-StorageClusterOps can be active per cluster at a time.
-
-
-
-
-
-_Example:_
-
-```yaml
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageClusterOps
-metadata:
-  name: string
-spec:
-  clusterRef: string
-  action: string
-  nodeRollingRestart:
-    refreshSNodeAPI: boolean
-status:
-  phase: StorageClusterOpsPhase
-  triggered: boolean
-  message: string
-  startedAt: Time
-  completedAt: Time
-  nodeRollingRestartStatus:
-    pendingNodes:
-      - string
-    processedNodes:
-      - string
-    nodePhase: string
-    phaseTriggered: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
-| `kind` _string_ | `StorageClusterOps` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
-| `spec` _[StorageClusterOpsSpec](#storageclusteropsspec)_ |  |  |  |
-| `status` _[StorageClusterOpsStatus](#storageclusteropsstatus)_ |  |  |  |
-
-
-#### StorageClusterOpsPhase
-
-_Underlying type:_ _string_
-
-StorageClusterOpsPhase is the lifecycle phase of a StorageClusterOps.
-
-_Validation:_
-- Enum: [Pending Running Succeeded Failed]
-
-_Appears in:_
-- [StorageClusterOpsStatus](#storageclusteropsstatus)
-
-| Field | Description |
-| --- | --- |
-| `Pending` |  |
-| `Running` |  |
-| `Succeeded` |  |
-| `Failed` |  |
-
-
-#### StorageClusterOpsSpec
-
-
-
-StorageClusterOpsSpec defines the desired state of a StorageClusterOps.
-
-
-
-_Appears in:_
-- [StorageClusterOps](#storageclusterops)
-
-_Example:_
-
-```yaml
-clusterRef: string
-action: string
-nodeRollingRestart:
-  refreshSNodeAPI: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `clusterRef` _string_ | ClusterRef is the name of the target SimplyblocksStorageCluster. Immutable. |  | Required: \{\} <br /> |
-| `action` _string_ | Action is the operation to perform. Immutable. |  | Enum: [activate expand shutdown start restart node-rolling-restart] <br />Required: \{\} <br /> |
-| `nodeRollingRestart` _[NodeRollingRestartSpec](#noderollingrestartspec)_ | NodeRollingRestart configures behaviour specific to the node-rolling-restart action.<br />Ignored for all other actions. |  | Optional: \{\} <br /> |
-
-
-#### StorageClusterOpsStatus
-
-
-
-StorageClusterOpsStatus holds the observed state of a StorageClusterOps.
-
-
-
-_Appears in:_
-- [StorageClusterOps](#storageclusterops)
-
-_Example:_
-
-```yaml
-phase: StorageClusterOpsPhase
-triggered: boolean
-message: string
-startedAt: Time
-completedAt: Time
-nodeRollingRestartStatus:
-  pendingNodes:
-    - string
-  processedNodes:
-    - string
-  nodePhase: string
-  phaseTriggered: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `phase` _[StorageClusterOpsPhase](#storageclusteropsphase)_ | Phase is the high-level lifecycle phase. |  | Enum: [Pending Running Succeeded Failed] <br />Optional: \{\} <br /> |
-| `triggered` _boolean_ | Triggered indicates the backend POST has been sent for this operation.<br />Guards against duplicate backend calls on retry. |  | Optional: \{\} <br /> |
-| `message` _string_ | Message is a human-readable description of the current state or failure reason. |  | Optional: \{\} <br /> |
-| `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the operation began. |  | Optional: \{\} <br /> |
-| `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the operation finished (successfully or not). |  | Optional: \{\} <br /> |
-| `nodeRollingRestartStatus` _[NodeRollingRestartStatus](#noderollingrestartstatus)_ | NodeRollingRestartStatus tracks per-node progress for the node-rolling-restart action.<br />Nil for all other actions. |  | Optional: \{\} <br /> |
-
-
 #### StorageClusterSpec
 
 
@@ -1993,6 +1924,9 @@ enableNodeAffinity: boolean
 stripe:
   dataChunks: integer
   parityChunks: integer
+action: string
+nodeRecycle:
+  refreshSNodeAPI: boolean
 fabricType: string
 clientDataIfname: string
 nvmfBasePort: integer
@@ -2045,8 +1979,10 @@ enableFailureDomains: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `enableNodeAffinity` _boolean_ | EnableNodeAffinity enables node-affinity placement for storage components. |  |  |
+| `enableNodeAffinity` _boolean_ | EnableNodeAffinity enables node-affinity placement for storage components. |  | Optional: \{\} <br /> |
 | `stripe` _[StripeSpec](#stripespec)_ | StripeSpec configures erasure-coding data/parity chunk counts. |  |  |
+| `action` _string_ | Action triggers a cluster-level action. |  | Enum: [activate expand shutdown start restart node-recycle] <br /> |
+| `nodeRecycle` _[NodeRecycleSpec](#noderecyclespec)_ | NodeRecycle configures the node-recycle action. |  |  |
 | `fabricType` _string_ | FabricType defines the storage fabric type. |  |  |
 | `clientDataIfname` _string_ | ClientDataIfname defines the client data network interface. |  |  |
 | `nvmfBasePort` _integer_ | NvmfBasePort defines the base NVMf service port. |  |  |
@@ -2055,7 +1991,7 @@ enableFailureDomains: boolean
 | `maxConcurrentWorkerRestarts` _integer_ | MaxConcurrentWorkerRestarts is the maximum number of Kubernetes worker nodes the operator<br />may drain and restart simultaneously. The effective concurrency applied by the drain<br />coordinator is min(MaxConcurrentWorkerRestarts, MaxFaultTolerance).<br />Defaults to 1 when unset. |  | Minimum: 1 <br />Optional: \{\} <br /> |
 | `maxSubsystemCount` _integer_ | MaxSubsystemCount is the maximum number of NVMe-oF subsystems per storage<br />node. Applies to every storage node in the cluster. Required: it sizes huge<br />pages, and a node that receives no value fails config generation outright<br />rather than falling back to a default. |  | Maximum: 75 <br />Minimum: 10 <br />Required: \{\} <br /> |
 | `maxHugePagesSize` _string_ | MaxHugePagesSize is the maximum allocatable size of huge pages on each<br />storage node (e.g. "100G", "1T"; a bare number is interpreted as GB). It is<br />a floor, not a cap: the effective huge-page allocation is the larger of this<br />value and the minimum the node's device and subsystem count requires. When<br />omitted the computed minimum is used. |  | Optional: \{\} <br /> |
-| `vcpuCount` _integer_ | VCPUCount is the number of vCPUs allocated to SPDK on each storage node.<br />This is an explicit core count, not a percentage. Required: the core layout<br />it produces must match across the cluster, so it is stated rather than left<br />to a per-node heuristic. |  | Minimum: 8 <br />Required: \{\} <br /> |
+| `vcpuCount` _integer_ | VCPUCount is the number of vCPUs allocated to SPDK on each storage node.<br />This is an explicit core count, not a percentage. Required: the core layout<br />it produces must match across the cluster, so it is stated rather than left<br />to a per-node heuristic. |  | Minimum: 6 <br />Required: \{\} <br /> |
 | `warningThreshold` _[CapacityThresholdSpec](#capacitythresholdspec)_ | WarningThresholdSpec defines warning-level capacity thresholds. |  |  |
 | `criticalThreshold` _[CapacityThresholdSpec](#capacitythresholdspec)_ | CriticalThresholdSpec defines critical-level capacity thresholds. |  |  |
 | `backup` _[BackupSpec](#backupspec)_ | Backup specifies the specification for backup to S3 configuration |  |  |
@@ -2097,7 +2033,24 @@ created: Time
 configured: boolean
 maxFaultTolerance: integer
 maxConcurrentWorkerRestarts: integer
-activeOpsRef: string
+actionStatus:
+  action: string
+  nodeUUID: string
+  state: string
+  message: string
+  updatedAt: Time
+  observedGeneration: integer
+  triggered: boolean
+  subPhase: string
+  volumesMigrated: integer
+  volumesPending: integer
+nodeRecycleStatus:
+  pendingNodes:
+    - string
+  processedNodes:
+    - string
+  nodePhase: string
+  phaseTriggered: boolean
 rebalancingMetrics:
   avgDeviationPct: float
   maxDeviationPct: float
@@ -2133,7 +2086,8 @@ rebalancingMetrics:
 | `configured` _boolean_ | Configured indicates whether initial cluster setup completed. |  |  |
 | `maxFaultTolerance` _integer_ | MaxFaultTolerance is the backend-reported maximum number of nodes that can<br />be simultaneously offline (failed, drained, or restarted) without violating<br />the cluster's redundancy guarantees. |  |  |
 | `maxConcurrentWorkerRestarts` _integer_ | MaxConcurrentWorkerRestarts is the effective concurrent-restart limit applied<br />by the drain coordinator: min(spec.MaxConcurrentWorkerRestarts, MaxFaultTolerance).<br />Defaults to 1. Exposed here so controllers and tooling can read a single<br />authoritative value without re-computing it. |  | Optional: \{\} <br /> |
-| `activeOpsRef` _string_ | ActiveOpsRef is the name of the currently active ClusterOps on this cluster.<br />Empty when no operation is in progress. |  | Optional: \{\} <br /> |
+| `actionStatus` _[ActionStatus](#actionstatus)_ | ActionStatus tracks the most recent action execution state. |  |  |
+| `nodeRecycleStatus` _[NodeRecycleStatus](#noderecyclestatus)_ | NodeRecycleStatus tracks in-progress state for the node-recycle action. |  |  |
 | `rebalancingMetrics` _[RebalancingMetrics](#rebalancingmetrics)_ | RebalancingMetrics is updated by the auto-rebalancer each evaluation cycle. |  | Optional: \{\} <br /> |
 
 

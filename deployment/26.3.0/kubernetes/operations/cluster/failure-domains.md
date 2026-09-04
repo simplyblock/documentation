@@ -171,6 +171,17 @@ In practice, this means workers are added in whole rounds. On a balanced cluster
 and the next worker has to go to a different one. The full rules are in
 [Failure Domains: Balance Rules](../../../architecture/concepts/failure-domains.md#balance-rules).
 
+Removal is meant to take a worker out of the cluster, either because it has failed for good or because the cluster
+is being shrunk. A failed worker that is left in place still counts toward its domain's host total while serving
+nothing, and if a second worker in the same domain fails before the first is removed, only one of the two can be
+removed at all. See
+[When to Remove a Node](../../../architecture/concepts/failure-domains.md#when-to-remove-a-node).
+
+Removing a node also triggers journal-copy replacement on every journal redundancy set that referenced its
+journal copy. Failover-path relocation can require a cross-domain target. The journal replacement instead prefers
+a candidate from the departed node's own failure domain, which leaves the set's domain distribution as it was. See
+[Journal Copy Replacement on Removal](../../../architecture/concepts/failure-domains.md#journal-copy-replacement-on-removal).
+
 For the mechanics of adding the workers themselves, see
 [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md), and for taking one out,
 [Removing a Storage Node](../storage-nodes/removing-a-storage-node.md).

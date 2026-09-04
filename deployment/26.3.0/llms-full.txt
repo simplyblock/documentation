@@ -569,10 +569,11 @@ loss and irreversible damage.
 
 # Known Issues
 
-## Kubernetes
-
-- Currently, it is not possible to resize a logical volume clone. The resize command does not fail and the new size
-  is shown by `lsblk`. But when remounting the filesystem with the option to resize, it fails.
+- Currently, it is not possible to resize a logical volume clone. The resize command does not fail and the new size is
+  shown by `lsblk`. But when remounting the filesystem with the option to resize, it fails.
+- A full FTT1/FTT2 network outage can create a situation where surviving nodes lose access to last journal records. This
+  can cause loss of IO availability until at least one node is restarted.
+- Node Removal currently only works with online nodes.
 
 ---
 
@@ -2019,12 +2020,40 @@ a same-domain secondary path, and its tertiary path is still guaranteed to be cr
 
 ## Failure Domains and Erasure Coding Schemes
 
-The number of failure domains should match the data protection goal:
+The number of failure domains decides two things: whether a cluster can activate with failure domains enabled,
+and how much simultaneous node or domain loss it absorbs afterward.
 
-| Goal                                                                            | Recommendation                                                                                                |
-|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| Survive one full domain outage                                                  | At least `parity chunks + 1` distinct failure domains                                                         |
-| Survive one full domain outage plus one further node or drive failure elsewhere | Erasure coding scheme with two parity chunks (e.g., `1+2`, `2+2`) and at least as many domains as data chunks |
+!!! important
+    Fresh activation requires **at least `parity chunks + 2` distinct failure domains**. Two domains are never
+    enough, at any parity-chunk count. With only `parity chunks + 1` domains the layout has no spare host left, so
+    the very next node addition or removal strands a failover path with nowhere valid to go. Below the minimum,
+    activation is refused. Either failure domains have to be disabled, or hosts in further domains have to be
+    added first. A reactivation of an existing layout is only warned about, never blocked.
+
+A stripe consists of `data chunks + parity chunks` chunks, and placement spreads them as evenly as the available
+domains allow. How much loss an activated cluster absorbs follows from that spread:
+
+- With **`data chunks + parity chunks` domains or more**, every domain holds at most one chunk of a stripe. The
+  **complete loss of up to `parity chunks` domains** at once is then tolerated. This is the same guarantee as
+  running without failure domains, scoped to whole domains instead of individual nodes.
+- With **fewer domains than `data chunks + parity chunks`**, at least one domain holds more than one chunk. Each
+  domain contributes at most `⌈(data chunks + parity chunks) / domains⌉` to a risk budget of `parity chunks`. A
+  domain that already has that many nodes down has spent its whole contribution, so further nodes in the same
+  domain cost nothing extra. A node in a different domain spends a fresh share of the same budget. Any combination
+  is tolerated while the summed contributions stay within `parity chunks`.
+
+| Domains    | 1+1             | 2+1             | 4+1             | 1+2             | 2+2             | 4+2             |
+|------------|-----------------|-----------------|-----------------|-----------------|-----------------|-----------------|
+| 2 or fewer | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate | cannot activate |
+| 3          | 1 whole domain  | 1 whole domain  | 1 node total    | cannot activate | cannot activate | cannot activate |
+| 4          | 1 whole domain  | 1 whole domain  | 1 node total    | 2 whole domains | 2 whole domains | 1 whole domain  |
+| 5          | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 1 whole domain  |
+| 6+         | 1 whole domain  | 1 whole domain  | 1 whole domain  | 2 whole domains | 2 whole domains | 2 whole domains |
+
+"1 whole domain" means every node of one domain, whatever its size, can go down at once and the cluster stays
+available. The same budget spent as individual nodes, one per domain across that many domains, is tolerated
+identically. A cell short of a whole domain (`4+1` on three or four domains) means only that many individual nodes
+anywhere in the cluster, not a domain's worth.
 
 The high-availability journal requires at least **four** journal copies on failure-domain clusters (instead of
 three), even with a single parity chunk. With three copies and two domains, one domain would hold two copies and
@@ -2036,14 +2065,62 @@ A host's failure domain cannot be changed while the host is part of the cluster.
 requires removing the node, restoring the domain balance, and re-adding it with the new failure-domain label. This
 prevents accidental topology changes that would silently invalidate the placement of existing data.
 
+## When to Remove a Node
+
+Node removal takes a host out of the cluster permanently. It serves two purposes: retiring a **failed host** that
+is not coming back, and **shrinking** a cluster that has more storage nodes than it needs. A node that is offline
+or unreachable can still be removed, so removal is the intended way to resolve a dead host rather than a last
+resort.
+
+Leaving a dead node in the cluster is the case to avoid. Domain balance counts every host that has not been
+removed, whatever its state, so a dead node still occupies its domain's slot while serving nothing. The cluster
+stays degraded, and the balance rules then close the door behind it:
+
+- The first dead host in a domain can still be removed. Its domain drops to one host below the others, which the
+  ±1 rule permits.
+- If a **second** host in that same domain fails before the first is removed, only one of the two can go. Removing
+  the second would leave that domain two hosts below the others and, on a three-host domain, below the two-host
+  floor. Admission refuses it.
+
+At that point the degradation cannot be cleared by removal at all, and hosts have to be added before the cluster
+can be repaired. Remove a failed host promptly, then restore the balance one of two ways:
+
+- **Add a replacement host** in the same failure domain, returning the split to what it was.
+- **Rebalance** by removing hosts from the other domains until every domain is within ±1 again.
+
+The same reasoning applies to planned shrinking: reduce the domains evenly rather than emptying one, so the
+cluster never sits closer to the floor than it has to.
+
+A removal is admitted only when all of the following hold:
+
+- The node holds **no volumes and no snapshots**. Migrate or delete them first; removal does not move them.
+- The resulting per-domain host split stays within the **±1 rule** and keeps at least **two hosts per domain**.
+- Every failover path the node hosts for another volume store has a valid host-disjoint target to move to, after
+  the splice fallback described in [The Placement Contract](#the-placement-contract).
+- The cluster has enough node headroom above `data chunks + parity chunks` to absorb the loss, counting hosts that
+  are already not online.
+
+## Journal Copy Replacement on Removal
+
+Removing a node affects every journal redundancy set that referenced the departed node's journal copy. One
+replacement member is picked per set, and every host running a local instance of that set applies the same
+decision, so the membership stays identical on all of them.
+
+The replacement is picked with the same domain-balance goal as the original placement. A candidate from the
+**same failure domain** as the departed node is preferred, which leaves the set's domain distribution as it was
+instead of reshuffling it. The preference is best-effort, not a requirement: if no same-domain candidate is free, a
+cross-domain one is used, and the removal is never blocked over it. Failover-path relocation works in the opposite
+direction (see [The Placement Contract](#the-placement-contract)), where a cross-domain target is sometimes
+mandatory and the removal is refused without one.
+
 ## Recovery Behavior
 
 Failure domains also change how the cluster recovers from large outages:
 
-- An outage confined to one domain (up to and including every node of the domain) keeps the cluster **degraded
-  but serving**. The cluster is not suspended.
-- With two parity chunks, the cluster additionally tolerates the loss of one entire domain **plus** one further
-  node or device outage in exactly one other domain.
+- An outage confined to one domain keeps the cluster **degraded but serving**, as long as that domain's
+  worst-case contribution fits the parity budget of the sizing table above. The cluster is not suspended.
+- With two parity chunks and at least `data chunks + parity chunks` domains, the loss of one entire domain
+  **plus** one further node or device outage in exactly one other domain is tolerated as well.
 - When a whole domain returns from an outage (for example, after a rack power loss), its nodes are restarted **in
   parallel** instead of strictly one-by-one, substantially shortening the recovery of large domains.
 
@@ -4662,10 +4739,7 @@ The CRD fields carry camel case names and are written to the StorageClass under 
 | `qosRwMbytes`                  | `qos_rw_mbytes`             |
 | `qosRMbytes`                   | `qos_r_mbytes`              |
 | `qosWMbytes`                   | `qos_w_mbytes`              |
-| `compression`                  | `compression`               |
 | `encryption`                   | `encryption`                |
-| `replicate`                    | `replicate`                 |
-| `lvolPriorityClass`            | `lvol_priority_class`       |
 | `fabric`                       | `fabric`                    |
 | `maxNamespacePerSubsys`        | `max_namespace_per_subsys`  |
 | `tune2fsReservedBlocks`        | `tune2fs_reserved_blocks`   |
@@ -4744,10 +4818,7 @@ hand-written StorageClass that omits the parameter leaves the choice to the cont
 | qos_rw_mbytes             | int        | Defines the maximum total throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
 | qos_r_mbytes              | int        | Defines the maximum read throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                             | true     | 0       |
 | qos_w_mbytes              | int        | Defines the maximum write throughput in megabytes reserved for a logical volume of this storage class. A zero (0) means no maximum.                                                            | true     | 0       |
-| compression               | bool       | Defines if the logical volume of this storage class will be stored compressed or not.                                                                                                          | true     | false   |
 | encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false   |
-| replicate                 | bool       | Defines if the logical volume of this storage class will be replicated or not.                                                                                                                 | true     | false   |
-| lvol_priority_class       | int        | Defines the priority class of a logical volume of this storage class.                                                                                                                          | true     | 0       |
 | max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1       |
 | tune2fs_reserved_blocks   | int        | Reserved-blocks percentage applied through `tune2fs -m` when the volume is staged. Left unset, tune2fs is skipped entirely.                                                                    | true     |         |
 | dhchap_node_label         | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |         |
@@ -6120,6 +6191,17 @@ refused before any data moves.
 In practice, this means workers are added in whole rounds. On a balanced cluster one worker can be added to any domain,
 and the next worker has to go to a different one. The full rules are in
 [Failure Domains: Balance Rules](../../../architecture/concepts/failure-domains.md#balance-rules).
+
+Removal is meant to take a worker out of the cluster, either because it has failed for good or because the cluster
+is being shrunk. A failed worker that is left in place still counts toward its domain's host total while serving
+nothing, and if a second worker in the same domain fails before the first is removed, only one of the two can be
+removed at all. See
+[When to Remove a Node](../../../architecture/concepts/failure-domains.md#when-to-remove-a-node).
+
+Removing a node also triggers journal-copy replacement on every journal redundancy set that referenced its
+journal copy. Failover-path relocation can require a cross-domain target. The journal replacement instead prefers
+a candidate from the departed node's own failure domain, which leaves the set's domain distribution as it was. See
+[Journal Copy Replacement on Removal](../../../architecture/concepts/failure-domains.md#journal-copy-replacement-on-removal).
 
 For the mechanics of adding the workers themselves, see
 [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md), and for taking one out,
@@ -7920,11 +8002,11 @@ FoundationDB and is backed up separately, since a cluster cannot be rebuilt from
 
 # Backup and Recovery
 
-Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. Backups can be
-managed via the CLI or through Kubernetes CRDs.
-
-In Kubernetes environments, backups can be managed declaratively using Custom Resource Definitions (CRDs). This
-is especially useful for automated backup workflows integrated with Kubernetes-native tooling.
+Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. In
+Kubernetes environments, backups are managed declaratively using Custom Resource Definitions (CRDs). This is
+especially useful for automated backup workflows integrated with Kubernetes-native tooling. The same engine can
+also be driven through the CLI, see
+[Backup and Recovery on plain Linux](../../../non-kubernetes/operations/data-protection/backup-recovery.md).
 
 ### Prerequisites
 
@@ -7979,6 +8061,14 @@ spec:
     withCompression: false
 ```
 
+| Field                       | Default | Description                                                                      |
+|-----------------------------|---------|----------------------------------------------------------------------------------|
+| `credentialsSecretRef.name` | —       | Secret with `access_key_id` and `secret_access_key`. **Required**.               |
+| `localEndpoint`             | AWS S3  | Endpoint URL for S3-compatible storage (e.g., MinIO). Leave unset for Amazon S3. |
+| `snapshotBackups`           | `true`  | Allow snapshots to be used as backup sources.                                    |
+| `withCompression`           | `false` | Compress backup data before upload.                                              |
+| `secondaryTarget`           | `0`     | Secondary backup target selector (advanced).                                     |
+
 See the [Operator Reference](../../../reference/operator/reference.md#storagecluster) for all available `backup` spec fields.
 
 ### StorageBackup CRD
@@ -8015,10 +8105,14 @@ my-pvc-backup   Done    my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   backup-m
 
 #### Spec Fields
 
-| Field         | Type   | Description                                      |
-|---------------|--------|--------------------------------------------------|
-| `clusterName` | string | Name of the target StorageCluster. **Required**. |
-| `pvcRef.name` | string | Name of the PVC to back up. **Required**.        |
+| Field          | Type   | Description                                                      |
+|----------------|--------|------------------------------------------------------------------|
+| `clusterName`  | string | Name of the target StorageCluster. **Required**.                 |
+| `pvcRef.name`  | string | Name of the PVC to back up. **Required**.                        |
+| `snapshotName` | string | Overrides the name of the internally created snapshot. Optional. |
+
+The backup also records the source volume's filesystem type in its status (`fsType`), so a later restore mounts
+the restored volume with the same filesystem regardless of the target StorageClass defaults.
 
 #### Status Fields
 
@@ -8069,18 +8163,19 @@ my-restore   Done    my-pvc-backup   restored-pvc   79s
 ```
 
 The phase transitions from `InProgress` → `PVCBinding` → `Done`. Once `Done`, the new PVC is ready to attach
-to a pod.
+to a pod. The restored PersistentVolume is created with the filesystem type recorded in the source backup, and an
+encrypted source volume is restored encrypted.
 
 #### Spec Fields
 
-| Field                       | Type   | Description                                                                     |
-|-----------------------------|--------|---------------------------------------------------------------------------------|
-| `clusterName`               | string | Name of the target StorageCluster. **Required**.                                |
-| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                      |
-| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                 |
-| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup. |
-| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                    |
-| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                        |
+| Field                       | Type   | Description                                                                 |
+|-----------------------------|--------|-----------------------------------------------------------------------------|
+| `clusterName`               | string | Name of the target StorageCluster. **Required**.                            |
+| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                  |
+| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.             |
+| `targetNode`                | string | Storage node to restore to. Defaults to automatic placement in the cluster. |
+| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                |
+| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                    |
 
 !!! warning
     A backup can only be restored to the same namespace as the `BackupRestore` object.
@@ -8110,12 +8205,16 @@ EOF
 | Field         | Type   | Description                                                       |
 |---------------|--------|-------------------------------------------------------------------|
 | `clusterName` | string | Name of the target StorageCluster. **Required**.                  |
-| `maxVersions` | int    | Maximum number of backup versions to retain.                      |
-| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).            |
+| `maxVersions` | int    | Maximum number of completed backup versions to retain.            |
+| `maxAge`      | string | Maximum backup age (e.g., `7d`, `12h`, `30m`).                    |
 | `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs. |
 
-The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
-take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).
+The schedule format is a space-separated list of `interval,count` pairs with strictly increasing intervals. For
+example, `15m,4 60m,11 24h,7` means: take a backup every 15 minutes (keep the 4 most recent), every 60 minutes
+(keep 11), and every 24 hours (keep 7).
+
+Retention does not delete data: when `maxVersions` or `maxAge` is exceeded, the oldest backup is merged into the
+next one, so the number of restore points shrinks while the backup chain stays complete.
 
 #### Attaching a Policy to a PVC
 
@@ -8144,6 +8243,55 @@ To detach a policy from a PVC (existing backups are not deleted):
 ```bash title="Detach a backup policy"
 kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy-
 ```
+
+### BackupImport CRD (Cross-Cluster Restore)
+
+A `BackupImport` makes a backup taken on one simplyblock cluster restorable on another. Both clusters must be
+represented as `StorageCluster` resources managed by the same operator, and the target cluster's storage nodes
+must be able to reach the source cluster's S3 bucket.
+
+Find the backup to import on the source cluster (`BACKUPID` column of `kubectl get storagebackup`), then create
+the import against the target cluster:
+
+```yaml title="Import a backup from another cluster"
+kubectl apply -f - <<'MANIFEST'
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: BackupImport
+metadata:
+  name: my-import
+  namespace: simplyblock
+spec:
+  sourceClusterName: cluster-a
+  sourceBackupID: 7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef
+  targetClusterName: cluster-b
+MANIFEST
+```
+
+The phase transitions from `Pending` → `Exporting` → `Importing` → `Done`. On completion, the controller has
+imported the backup metadata into the target cluster and created a `StorageBackup` resource marked as imported;
+its name is published in `status.storageBackupRef`.
+
+```bash title="Check the import"
+kubectl -n simplyblock get backupimport my-import -o jsonpath='{.status.storageBackupRef}'
+```
+
+Reference that `StorageBackup` in a regular [`BackupRestore`](#backuprestore-crd) to restore it. The restore
+controller detects the foreign source and reads from the source cluster's bucket using the source
+`StorageCluster`'s own backup credentials — unlike the CLI flow, no cluster-wide backup-source switch is needed,
+and local backups continue uninterrupted.
+
+#### Spec Fields
+
+| Field               | Type   | Description                                                            |
+|---------------------|--------|------------------------------------------------------------------------|
+| `sourceClusterName` | string | StorageCluster name of the cluster that owns the backup. **Required**. |
+| `sourceBackupID`    | string | Backup UUID on the source cluster. **Required**.                       |
+| `targetClusterName` | string | StorageCluster name of the cluster to import into. **Required**.       |
+
+## Control-Plane Backups
+
+The CRDs on this page protect volume data. The control-plane database itself is backed up separately, see
+[FoundationDB Backup and Restore](foundationdb-backup.md).
 
 ---
 
@@ -8294,11 +8442,6 @@ kubectl annotate pvc my-pvc -n simplyblock \
 The annotation is honored on a new PVC and on an already-bound one. A `ReplicationSlot` is created as soon as the PVC
 is `Bound` and the named policy is ready, and it is named `<policy>-<pvc>`. The slot is owned by its PVC, so deleting
 the PVC deletes the slot and stops replication for that volume.
-
-!!! note
-    The `replicate` StorageClass parameter is unrelated to this mechanism. It is a backend volume property and does
-    not attach a volume to a `ReplicationPolicy`. See
-    [Storage Class: Available Parameters](../../usage/storage-class.md#available-parameters).
 
 ### Changing or Removing the Policy
 
@@ -9236,16 +9379,18 @@ tenants of a cluster are isolated from each other through separate storage pools
 
 # Host Authentication and Encryption
 
-Simplyblock supports NVMe-oF transport security to protect data in transit and restrict host access to storage
-subsystems. This includes:
+Simplyblock protects the NVMe-oF transport between a worker node and a storage node with host access control and
+DH-HMAC-CHAP authentication. Only a host registered as an allowed host of a storage pool can connect to the NVMe-oF
+subsystem of a volume in that pool, and every connection is authenticated in both directions with the NVMe standard
+authentication protocol (TP8018).
 
-- **Host access control:** restrict which hosts (by NQN) can connect to a volume's NVMe-oF subsystem.
-- **DH-HMAC-CHAP authentication:** mutual authentication between host and target using the NVMe standard
-  authentication protocol (TP8018).
-- **TLS/PSK encryption:** encrypt data in transit using TLS 1.3 with Pre-Shared Keys.
+On Kubernetes, both are configured declaratively on the `StoragePool` custom resource and reconciled by the
+Simplyblock Operator. No host NQN has to be registered, and no key has to be provisioned by hand.
 
-On Kubernetes, transport security is configured declaratively on the `StoragePool` custom resource and reconciled
-by the Simplyblock Operator. No host NQN has to be registered and no key has to be provisioned by hand.
+!!! note "Transport encryption and volume encryption"
+    TLS/PSK encryption of the NVMe-oF transport is not exposed through the `StoragePool`. Encryption of the volume
+    data at rest is an unrelated, per-volume feature and is described in
+    [Volume Encryption](../../usage/volume-encryption.md).
 
 ## Enable Host Authentication and Encryption
 
@@ -9266,31 +9411,84 @@ spec:
     - worker-2
 ```
 
-The keys are generated as soon as `dhchap` is set, but authentication is only enforced once `allowedNodes` is
-non-empty.
+The DH-HMAC-CHAP keys of the pool are generated as soon as `dhchap` is set. Authentication is only enforced once
+`allowedNodes` is non-empty.
+
+Both fields belong in the manifest that creates the pool. The `StorageClass` generated for the pool is only
+restricted to the allowed nodes when `dhchap` is `true` and `allowedNodes` is non-empty at the moment the class is
+created, and `parameters` and `allowedTopologies` cannot be patched afterward. A pool created with `dhchap: true` and
+an empty `allowedNodes` therefore keeps an unrestricted `StorageClass` for the rest of its life, even once nodes are
+added to the list. Recreating the pool is the only way to correct this.
 
 ## Reconciliation by the Operator
 
 Once the storage pool is created, host registration and node scheduling are reconciled by the operator:
 
-- Each node in `allowedNodes` is registered as an allowed host of the pool, under a deterministic NQN derived
-  from that node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`).
-- Each allowed node is labeled `simplyblock.io/pool.<namespace>.<cluster>.<pool>: allowed`, and the generated
-  `StorageClass` is restricted to that label through `allowedTopologies`. The first `Pod` to consume a
-  `PersistentVolumeClaim` of this pool can therefore only be scheduled onto an allowed node.
-- The same label is written into the `nodeAffinity` of the `PersistentVolume` when the volume is created, which
-  restricts every later scheduling decision on the already-bound volume.
-- The node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so no host
-  NQN has to be supplied anywhere in the Kubernetes flow.
+- **Allowed hosts:** each node in `allowedNodes` is registered as an allowed host of the pool, under a deterministic
+  NQN derived from that node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`).
+- **Node labels:** each allowed node is labeled `simplyblock.io/pool.<namespace>.<cluster>.<pool>=allowed`, and the
+  label is removed again from every node that leaves the list.
+- **First scheduling decision:** the generated `StorageClass` is restricted to that label through `allowedTopologies`,
+  so the first `Pod` to consume a `PersistentVolumeClaim` of this pool can only be scheduled onto an allowed node.
+- **Every later scheduling decision:** the same label is written into the `nodeAffinity` of the `PersistentVolume`
+  when the volume is created, which restricts every scheduling decision on the already-bound volume, including a
+  restart, a recreate, and a drain.
+- **Host NQN:** the node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so
+  no host NQN has to be supplied anywhere in the Kubernetes flow.
 
 ## Managing Allowed Nodes
 
-`dhchap` is immutable, because the `parameters` and `allowedTopologies` of the generated `StorageClass` cannot
-be patched in the Kubernetes API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes
-and updates the pool's allowed hosts, and it never rewrites the `StorageClass`.
+`dhchap` is immutable, because the `parameters` and `allowedTopologies` of the generated `StorageClass` cannot be
+patched in the Kubernetes API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes and updates
+the pool's allowed hosts, and it never rewrites the `StorageClass`.
 
-See the [Operator Reference](../../../reference/operator/reference.md) for the full `StoragePool` field list,
-and [Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
+A node removed from `allowedNodes` loses its label, and its NQN is removed from the allowed hosts of the pool and of
+every volume in it. The node is rejected on its next connect attempt. A volume already connected on that node is not
+disconnected by the removal.
+
+## Verifying the Configuration
+
+`status.allowedNodes` carries the node names last registered on the control plane. A difference to `spec.allowedNodes`
+means the pool has not converged yet.
+
+```bash title="Reading the allowed nodes registered for a storage pool"
+kubectl get storagepool pool-a -n simplyblock \
+    -o jsonpath='{.status.allowedNodes}'
+```
+
+The nodes carrying the pool's label are listed through a label selector. The result has to match `status.allowedNodes`.
+
+```bash title="Listing the nodes labeled as allowed for a storage pool"
+kubectl get nodes \
+    -l simplyblock.io/pool.simplyblock.cluster-a.pool-a=allowed
+```
+
+Whether the generated `StorageClass` restricts scheduling at all is visible in its `allowedTopologies`. An empty result
+means the class was created while `allowedNodes` was empty.
+
+```bash title="Checking the topology restriction of the generated storage class"
+kubectl get storageclass simplyblock-simplyblock-cluster-a-pool-a \
+    -o jsonpath='{.allowedTopologies}'
+```
+
+## Pods on a Disallowed Node
+
+`allowedTopologies` and the `nodeAffinity` of the `PersistentVolume` keep a `Pod` off a node outside `allowedNodes`.
+If one lands there regardless, no `nvme connect` is ever built. `NodeStageVolume` derives the host NQN of its own node
+and requests the connection information from the control plane, which rejects the unknown NQN with an HTTP `404`. The
+`Pod` stays unscheduled with a `FailedMount` event.
+
+```plain title="Example of a FailedMount event on a node outside the allowed nodes"
+MountVolume.MountDevice failed for volume "pvc-...": rpc error: code = Internal
+desc = failed to fetch connection: GET 404: Host NQN
+nqn.2014-08.io.simplyblock:uuid:<node-uid> not found in allowed hosts for volume <lvol-id>
+```
+
+The node is either missing from `allowedNodes` or the pool has not converged yet. Both are checked as described in
+[Verifying the Configuration](#verifying-the-configuration).
+
+See the [Operator Reference](../../../reference/operator/reference.md) for the full `StoragePool` field list, and
+[Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
 
 For a detailed explanation of the security mechanisms and configuration, see
 [NVMe-oF Security](../../../architecture/concepts/nvmf-security.md). The equivalent flow for a plain Linux
@@ -11367,10 +11565,24 @@ before any change is made.
 
 ## Removing a Storage Node
 
+Removal is meant to take a host out of the cluster, either because it has failed for good or because the cluster is
+being shrunk. It is not a way to park a broken host: a failed host that is left in place still counts toward its
+domain's host total while serving nothing, and once a second host in the same domain fails, only one of the two can
+be removed at all. Remove a failed host promptly and then restore the balance. See
+[When to Remove a Node](../../../architecture/concepts/failure-domains.md#when-to-remove-a-node).
+
 Node removal applies the same balance rules (±1, minimum two hosts per domain). In addition, the failover paths
 hosted by the node being removed are relocated to other nodes. If the path being relocated is the only
 cross-domain path of its volume store, the replacement node **must** be in a different failure domain than the
-primary. If no such node exists, the removal is refused.
+primary. An idle host in the required domain is looked for first. If none is free, the path is spliced into an
+already-formed pairing instead: a host that currently carries another node's failover path is taken over, and that
+path is moved onto the primary being repaired. Only when neither option exists is the removal refused.
+
+Node removal separately triggers journal-copy replacement on every journal redundancy set that referenced the
+departed node's journal copy. This works in the opposite direction from failover-path relocation. The replacement
+prefers a candidate from the departed node's own failure domain, which leaves the set's domain distribution as it
+was instead of reshuffling it. The preference is best-effort, not a requirement, and never blocks the removal. See
+[Journal Copy Replacement on Removal](../../../architecture/concepts/failure-domains.md#journal-copy-replacement-on-removal).
 
 ## Moving a Host Between Domains
 
@@ -12421,12 +12633,14 @@ If expansion does not behave as expected:
 # Data Protection
 
 Data is protected on two levels outside Kubernetes. A logical volume is backed up to S3-compatible object storage as a
-chain of snapshots, and its snapshots are replicated to a second cluster, from which a failover can be served.
+chain of snapshots, and its snapshots are replicated to a second cluster, from which a failover can be served. The
+control-plane database itself is backed up periodically as well.
 
-| Topic                                                   | Purpose                                                                |
-|---------------------------------------------------------|------------------------------------------------------------------------|
-| [Backup and Recovery](backup-recovery.md)               | Backing up a volume to S3-compatible object storage, and restoring it. |
-| [Asynchronous Replication](asynchronous-replication.md) | Replicating snapshots to a second cluster for a failover.              |
+| Topic                                                    | Purpose                                                                |
+|----------------------------------------------------------|------------------------------------------------------------------------|
+| [Backup and Recovery](backup-recovery.md)                | Backing up a volume to S3-compatible object storage, and restoring it. |
+| [Asynchronous Replication](asynchronous-replication.md)  | Replicating snapshots to a second cluster for a failover.              |
+| [Control-Plane Database Backup](control-plane-backup.md) | Backing up and restoring the control plane's FoundationDB metadata.    |
 
 ---
 
@@ -12434,17 +12648,50 @@ chain of snapshots, and its snapshots are replicated to a second cluster, from w
 
 # Backup and Recovery
 
-Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. Backups can be
-managed via the CLI or through Kubernetes CRDs.
+Simplyblock provides snapshot-based backup and recovery to Amazon S3 or S3-compatible object storage. A backup is
+an incremental copy of a volume snapshot; restoring reconstructs the data from the backup chain into a new volume.
 
-For Kubernetes deployment and configuration details, see
-[Kubernetes Helm Chart Parameters](../../../reference/kubernetes/index.md).
+On plain Linux, backups are managed through the CLI. In Kubernetes environments, the same engine is driven
+declaratively through CRDs, see
+[Backup and Recovery on Kubernetes](../../../kubernetes/operations/data-protection/backup-recovery.md).
 
-## CLI Operations
+## Configuring the Backup Target
 
-### Creating a Backup
+The S3 target is configured at cluster creation time by passing a JSON configuration file:
 
-Backups are created from existing volume snapshots. First, create a snapshot of the volume, then back it up:
+```bash title="Enable backups at cluster creation"
+sbctl cluster create ... --use-backup backup-config.json
+```
+
+The same parameter is available on `cluster add`. The configuration file has the following format:
+
+```json title="backup-config.json"
+{
+  "access_key_id": "<S3_ACCESS_KEY>",
+  "secret_access_key": "<S3_SECRET_KEY>",
+  "local_endpoint": "http://minio.internal:9000",
+  "bucket_name": "my-backup-bucket",
+  "with_compression": false,
+  "snapshot_backups": true
+}
+```
+
+| Key                 | Default                           | Description                                                                      |
+|---------------------|-----------------------------------|----------------------------------------------------------------------------------|
+| `access_key_id`     | —                                 | S3 access key. **Required**.                                                     |
+| `secret_access_key` | —                                 | S3 secret key. **Required**.                                                     |
+| `local_endpoint`    | AWS S3                            | Endpoint URL for S3-compatible storage (e.g., MinIO). Leave unset for Amazon S3. |
+| `bucket_name`       | `simplyblock-backup-<CLUSTER_ID>` | Bucket for backup data. Created automatically if it does not exist.              |
+| `with_compression`  | `false`                           | Compress backup data before upload.                                              |
+| `snapshot_backups`  | `true`                            | Allow snapshots to be used as backup sources.                                    |
+| `secondary_target`  | `0`                               | Secondary backup target selector (advanced).                                     |
+
+All storage nodes of the cluster must be able to reach the configured endpoint, since backups are written
+directly from the storage nodes.
+
+## Creating a Backup
+
+Backups are created from volume snapshots. Create a snapshot and back it up in one step:
 
 ```bash title="Create a snapshot and back it up"
 sbctl snapshot add <VOLUME_ID> <SNAPSHOT_NAME> --backup
@@ -12457,12 +12704,16 @@ sbctl snapshot backup <SNAPSHOT_ID>
 ```
 
 The backup runs asynchronously in the background. Simplyblock automatically resolves the snapshot's ancestry chain
-and backs up any parent snapshots that have not yet been backed up.
+and backs up any parent snapshots that have not yet been backed up, so every backup is incremental against the
+previous one.
+
+Backups of encrypted volumes stay encrypted: the volume's data encryption keys are preserved through the cluster's
+key management system and are applied again on restore.
 
 !!! important
     Once a snapshot or its chain is backed up (completed), it can be deleted without impact on the backup itself.
 
-### Listing Backups
+## Listing Backups
 
 To list all backups in the cluster:
 
@@ -12470,44 +12721,50 @@ To list all backups in the cluster:
 sbctl backup list [--cluster-id <CLUSTER_ID>]
 ```
 
-This may also reference imported (external) backups taken on another cluster.
+The list may also contain imported (external) backups taken on another cluster, see
+[Cross-Cluster Backup](#cross-cluster-backup).
 
-### Restoring from a Backup
+## Restoring from a Backup
 
 Restoring a backup creates a new logical volume with the data reconstructed from the S3 backup chain:
 
 ```bash title="Restore a backup"
 sbctl backup restore <BACKUP_ID> \
-  --lvol <NEW_VOLUME_NAME> --pool <POOL_ID> --cluster-id <CLUSTER_ID> \
+  --lvol <NEW_VOLUME_NAME> --pool <POOL_NAME_OR_ID> \
   [--node <TARGET_NODE_ID>]
 ```
 
-The `--lvol`, `--pool`, and `--cluster-id` parameters are required. Any node of the cluster can restore any
-backup. Without `--node`, the node that took the backup is used.
+The `--lvol` and `--pool` parameters are required. The target cluster is derived from the pool. Any node of the
+cluster can restore any backup; without `--node`, a node is selected automatically by the regular volume placement.
 
-The restore process downloads and applies each backup in the chain. The new volume is set to a restoring state during
-the transfer and transitions to online once complete.
+The restore process downloads and applies each backup of the chain, newest first. The new volume is in the
+`restoring` state during the transfer and transitions to online once complete.
+
+A restore is only accepted when every backup in the chain has completed, and when the backup's source cluster
+matches the currently active S3 backup source (see [Cross-Cluster Backup](#cross-cluster-backup) for restoring
+backups taken on another cluster).
 
 !!! warning
     The restore operation creates a new volume. It does not overwrite or modify any existing volume.
 
 !!! note
-    The restored volume is created with the default high-availability type and NVMe/TCP, regardless of the
-    settings of the original volume. Deleting the original snapshot or volume does not affect its backups.
+    The restored volume is created with the cluster's default high-availability type and NVMe/TCP, regardless of
+    the settings of the original volume. Encryption and the allowed-host list of the original volume are preserved.
+    Deleting the original snapshot or volume does not affect its backups.
 
-### Deleting Backups
+## Deleting Backups
 
-To delete all backups for a specific volume:
+To delete all backups for a specific volume, including the backup data in S3:
 
 ```bash title="Delete backups for a volume"
 sbctl backup delete <LVOL_ID>
 ```
 
-### Backup Policies
+## Backup Policies
 
 Backup policies automate backup creation and retention management.
 
-#### Creating a Policy
+### Creating a Policy
 
 ```bash title="Create a backup policy"
 sbctl backup policy-add \
@@ -12519,14 +12776,17 @@ sbctl backup policy-add \
 
 Parameters:
 
-- `--versions`: Maximum number of backup versions to retain (e.g., `10`).
-- `--age`: Maximum backup age before cleanup (e.g., `7d`, `12h`, `1w`).
+- `--versions`: Maximum number of completed backup versions to retain (e.g., `10`).
+- `--age`: Maximum backup age (e.g., `7d`, `12h`, `1w`).
 - `--schedule`: Tiered backup schedule (e.g., `"15m,4 60m,11 24h,7"`).
 
 The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
 take a backup every 15 minutes (keep 4), every 60 minutes (keep 11), and every 24 hours (keep 7).
 
-#### Attaching a Policy
+Retention does not delete data: when a policy's version or age limit is exceeded, the oldest backup is merged
+into the next one, so the number of restore points shrinks while the backup chain stays complete.
+
+### Attaching a Policy
 
 Policies can be attached to individual volumes or entire storage pools:
 
@@ -12538,7 +12798,7 @@ sbctl backup policy-attach <POLICY_ID> pool <POOL_ID>
 sbctl backup policy-attach <POLICY_ID> lvol <LVOL_ID>
 ```
 
-#### Detaching a Policy
+### Detaching a Policy
 
 ```bash title="Detach a policy"
 sbctl backup policy-detach <POLICY_ID> pool <POOL_ID>
@@ -12547,7 +12807,7 @@ sbctl backup policy-detach <POLICY_ID> lvol <LVOL_ID>
 
 Detaching a policy does not impact existing backups!
 
-#### Listing and Removing Policies
+### Listing and Removing Policies
 
 ```bash title="List backup policies"
 sbctl backup policy-list [--cluster-id <CLUSTER_ID>]
@@ -12557,11 +12817,11 @@ sbctl backup policy-list [--cluster-id <CLUSTER_ID>]
 sbctl backup policy-remove <POLICY_ID>
 ```
 
-### Cross-Cluster Backup
+## Cross-Cluster Backup
 
 Cross-cluster backup enables restoring data on a different simplyblock cluster using backups stored in S3.
 
-#### Exporting Backup Metadata
+### Exporting Backup Metadata
 
 Export backup metadata from the source cluster:
 
@@ -12574,7 +12834,7 @@ sbctl backup export \
 
 This produces a JSON file containing backup metadata (not the actual data, which remains in S3).
 
-#### Importing Backup Metadata
+### Importing Backup Metadata
 
 On the target cluster, import the metadata:
 
@@ -12582,7 +12842,7 @@ On the target cluster, import the metadata:
 sbctl backup import <METADATA_FILE> --cluster-id <TARGET_CLUSTER_ID>
 ```
 
-#### Switching the Backup Source
+### Switching the Backup Source
 
 Before restoring imported backups, switch the target cluster's S3 source to read from the original cluster's
 bucket:
@@ -12591,8 +12851,10 @@ bucket:
 sbctl backup source-switch <SOURCE_CLUSTER_ID> [--cluster-id <TARGET_CLUSTER_ID>]
 ```
 
-The switch changes only the bucket that is read. The target cluster's own S3 credentials and endpoint are reused,
-so they must have access to the source cluster's bucket. To list available backup sources:
+The switch changes only the bucket that is read; the target cluster's own S3 credentials and endpoint are reused,
+so they must have access to the source cluster's bucket. Attempting to restore an imported backup without
+switching the source first is rejected with a message naming the required source. To list available backup
+sources:
 
 ```bash title="List backup sources"
 sbctl backup source-list [--cluster-id <CLUSTER_ID>]
@@ -12602,9 +12864,8 @@ sbctl backup source-list [--cluster-id <CLUSTER_ID>]
     While the backup source is switched to an external cluster, new backups cannot be created on the local cluster.
     Switch back to the local source after completing restore operations.
 
-After switching the source, use the standard `backup restore` command to restore from the imported backups. For a
-cross-cluster restore, pass `--node <TARGET_NODE_ID>` explicitly, since the node recorded in the backup belongs to
-the source cluster.
+After switching the source, use the standard `backup restore` command to restore from the imported backups. The
+target node is selected automatically in the target cluster; `--node` may be passed to pin one.
 
 Once the restores are complete, switch the source back:
 
@@ -12612,229 +12873,11 @@ Once the restores are complete, switch the source back:
 sbctl backup source-switch local [--cluster-id <TARGET_CLUSTER_ID>]
 ```
 
-## Kubernetes CRD Operations
+## Kubernetes
 
-In Kubernetes environments, backups can be managed declaratively using Custom Resource Definitions (CRDs). This
-is especially useful for automated backup workflows integrated with Kubernetes-native tooling.
-
-### Prerequisites
-
-#### S3-Compatible Object Storage
-
-Backups require an S3-compatible object storage endpoint. For local testing, a MinIO instance can be deployed:
-
-```bash title="Deploy a local MinIO instance for testing"
-kubectl create ns minio
-
-kubectl -n minio create deployment minio \
-  --image=minio/minio \
-  -- /bin/sh -c "minio server /data --console-address :9001"
-
-kubectl -n minio expose deploy/minio --port 9000
-
-kubectl -n minio set env deploy/minio \
-  MINIO_ROOT_USER=minioadmin \
-  MINIO_ROOT_PASSWORD=minioadmin123
-```
-
-#### Backup Credentials Secret
-
-Store the S3 credentials in a Kubernetes Secret in the same namespace as the `StorageCluster`:
-
-```yaml title="Create backup credentials secret"
-kubectl apply -f - <<'EOF'
-apiVersion: v1
-kind: Secret
-metadata:
-  name: backup-credentials
-  namespace: simplyblock
-type: Opaque
-stringData:
-  access_key_id: <YOUR_ACCESS_KEY>
-  secret_access_key: <YOUR_SECRET_KEY>
-EOF
-```
-
-#### StorageCluster Backup Configuration
-
-Include a `backup` section in the `StorageCluster` spec referencing the credentials secret:
-
-```yaml title="StorageCluster backup configuration"
-spec:
-  # ... other fields ...
-  backup:
-    credentialsSecretRef:
-      name: backup-credentials
-    localEndpoint: http://minio.minio.svc.cluster.local:9000
-    snapshotBackups: true
-    withCompression: false
-```
-
-See the [Operator Reference](../../../reference/operator/reference.md#storagecluster) for all available `backup` spec fields.
-
-### StorageBackup CRD
-
-The `StorageBackup` resource creates a one-time backup of a PVC to the configured S3-compatible storage endpoint.
-
-```yaml title="Create a backup for a PVC"
-kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageBackup
-metadata:
-  name: my-pvc-backup
-  namespace: simplyblock
-spec:
-  clusterName: simplyblock-cluster
-  pvcRef:
-    name: my-pvc
-EOF
-```
-
-Monitor the backup status:
-
-```bash title="List backups"
-kubectl -n simplyblock get storagebackup
-```
-
-```plain
-NAME            PHASE   PVC      BACKUPID                               SNAPSHOT              AGE
-my-pvc-backup   Done    my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   backup-my-pvc-backup  3m
-```
-
-!!! note
-    The first backup may take longer to complete as there is no prior incremental state.
-
-#### Spec Fields
-
-| Field         | Type   | Description                                      |
-|---------------|--------|--------------------------------------------------|
-| `clusterName` | string | Name of the target StorageCluster. **Required**. |
-| `pvcRef.name` | string | Name of the PVC to back up. **Required**.        |
-
-#### Status Fields
-
-| Column     | Description                               |
-|------------|-------------------------------------------|
-| `PHASE`    | Current phase: `InProgress` or `Done`.    |
-| `PVC`      | Name of the source PVC.                   |
-| `BACKUPID` | Backend backup identifier.                |
-| `SNAPSHOT` | Name of the snapshot used for the backup. |
-
-### BackupRestore CRD
-
-The `BackupRestore` resource restores a `StorageBackup` into a new PVC. The restored PVC is created in the
-same namespace as the `BackupRestore` object.
-
-```yaml title="Restore a backup to a new PVC"
-kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: BackupRestore
-metadata:
-  name: my-restore
-  namespace: simplyblock
-spec:
-  clusterName: simplyblock-cluster
-  backupRef:
-    name: my-pvc-backup
-  pvcTemplate:
-    metadata:
-      name: restored-pvc
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
-EOF
-```
-
-Monitor the restore status:
-
-```bash title="List restores"
-kubectl -n simplyblock get backuprestore
-```
-
-```plain
-NAME         PHASE   BACKUP          PVC            AGE
-my-restore   Done    my-pvc-backup   restored-pvc   79s
-```
-
-The phase transitions from `InProgress` → `PVCBinding` → `Done`. Once `Done`, the new PVC is ready to attach
-to a pod.
-
-#### Spec Fields
-
-| Field                       | Type   | Description                                                                     |
-|-----------------------------|--------|---------------------------------------------------------------------------------|
-| `clusterName`               | string | Name of the target StorageCluster. **Required**.                                |
-| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                      |
-| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.                 |
-| `targetNode`                | string | Storage node to restore to. Defaults to the node that held the original backup. |
-| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                    |
-| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                        |
-
-!!! warning
-    A backup can only be restored to the same namespace as the `BackupRestore` object.
-
-### BackupPolicy CRD
-
-A `BackupPolicy` defines an automated backup schedule with retention settings. Attach it to a PVC using the
-`simplyblock.io/backup-policy` annotation to automatically create `StorageBackup` objects on schedule.
-
-```yaml title="Create a backup policy"
-kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: BackupPolicy
-metadata:
-  name: my-policy
-  namespace: simplyblock
-spec:
-  clusterName: simplyblock-cluster
-  maxVersions: 10
-  maxAge: "7d"
-  schedule: "15m,4 60m,11 24h,7"
-EOF
-```
-
-#### Spec Fields
-
-| Field         | Type   | Description                                                       |
-|---------------|--------|-------------------------------------------------------------------|
-| `clusterName` | string | Name of the target StorageCluster. **Required**.                  |
-| `maxVersions` | int    | Maximum number of backup versions to retain.                      |
-| `maxAge`      | string | Maximum backup age before cleanup (e.g., `7d`, `12h`).            |
-| `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs. |
-
-The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
-take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).
-
-#### Attaching a Policy to a PVC
-
-Apply the `simplyblock.io/backup-policy` annotation to start automatic backups for a PVC:
-
-```bash title="Attach a backup policy"
-kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=my-policy
-```
-
-The policy will begin creating `StorageBackup` objects automatically. View them with:
-
-```bash title="List auto-created backups"
-kubectl get storagebackup -n simplyblock
-```
-
-#### Updating and Detaching Policies
-
-To switch a PVC to a different policy (detaches from the old policy and attaches to the new one):
-
-```bash title="Switch to a different policy"
-kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=new-policy --overwrite
-```
-
-To detach a policy from a PVC (existing backups are not deleted):
-
-```bash title="Detach a backup policy"
-kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy-
-```
+In Kubernetes environments, the same backup engine is managed declaratively through the `StorageBackup`,
+`BackupRestore`, `BackupPolicy`, and `BackupImport` custom resources. See
+[Backup and Recovery on Kubernetes](../../../kubernetes/operations/data-protection/backup-recovery.md).
 
 ---
 
@@ -13006,6 +13049,92 @@ sbctl snapshot delete-replication-only <SNAPSHOT_ID>
 
 The replication status of individual snapshots is available with
 `sbctl snapshot replication-status <CLUSTER_ID>` and `sbctl snapshot list --with-details`.
+
+---
+
+<!-- source: https://docs.simplyblock.io/latest/non-kubernetes/operations/data-protection/control-plane-backup/ -->
+
+# Control-Plane Database Backup
+
+The simplyblock control plane stores all cluster metadata — clusters, nodes, pools, volumes, snapshots, tasks — in
+a FoundationDB key-value store on the management nodes. Volume data is not affected by the loss of this database,
+but the cluster cannot be managed without it. Simplyblock therefore takes periodic backups of the control-plane
+database, which can be written to a local path or to Amazon S3.
+
+On plain Linux (Docker-based deployments), these backups are managed with the `sbctl db-backup` commands
+described here. On Kubernetes, control-plane backups are handled by the FoundationDB operator instead, see
+[FoundationDB Backup and Restore](../../../kubernetes/operations/data-protection/foundationdb-backup.md).
+
+## Configuring the Backup Destination
+
+By default, backups are written every three hours to `/etc/foundationdb/backup/<CLUSTER_ID>` on the management
+node. Both the destination and the frequency can be changed:
+
+```bash title="Configure a local backup path and frequency"
+sbctl db-backup config <CLUSTER_ID> \
+  --backup-path /mnt/backup/fdb \
+  --backup-frequency 3h
+```
+
+```bash title="Configure Amazon S3 as the backup destination"
+sbctl db-backup config <CLUSTER_ID> \
+  --s3-bucket <BUCKET_NAME> \
+  --s3-region <REGION> \
+  --s3-credentials <API_KEY>:<API_SECRET> \
+  --backup-frequency 1d
+```
+
+| Parameter            | Default                    | Description                                            |
+|----------------------|----------------------------|--------------------------------------------------------|
+| `--backup-path`      | `/etc/foundationdb/backup` | Local backup directory on the management node.         |
+| `--backup-frequency` | `3h`                       | Interval between automatic backups (e.g., `3h`, `1d`). |
+| `--s3-bucket`        | —                          | Amazon S3 bucket name.                                 |
+| `--s3-region`        | —                          | Amazon S3 region.                                      |
+| `--s3-credentials`   | —                          | S3 API key and secret in the form `KEY:SECRET`.        |
+
+The local path and S3 are mutually exclusive destinations: configuring a local path clears any stored S3
+settings. When S3 is configured, access to the bucket is verified first and the configuration is rejected if the
+bucket cannot be listed with the given credentials.
+
+!!! note
+    A local backup path only protects against database corruption, not against the loss of the management node.
+    Place it on storage that is independent of the management node, or use S3.
+
+## Automatic Backups
+
+Once configured, the control plane takes a backup automatically whenever the last one is older than the
+configured frequency. No further setup is required. Backup creation, restore, and failure events appear in the
+cluster event log.
+
+## Manual Operations
+
+```bash title="Create a backup now"
+sbctl db-backup create <CLUSTER_ID>
+```
+
+```bash title="List available backups"
+sbctl db-backup list <CLUSTER_ID>
+```
+
+```bash title="Show the status of the running backup system"
+sbctl db-backup status
+```
+
+## Restoring the Control-Plane Database
+
+A restore replaces the complete content of the control-plane database with the backup:
+
+```bash title="Restore a backup"
+sbctl db-backup restore <BACKUP_NAME> <CLUSTER_ID>
+```
+
+`<BACKUP_NAME>` is a backup as reported by `db-backup list`.
+
+!!! danger
+    The restore first **clears the entire control-plane database** and then loads the backup. All metadata changes
+    made after the backup was taken are lost — volumes, snapshots, or nodes added since then become unknown to the
+    control plane, while their data continues to exist on the storage nodes. Only restore the database as part of a
+    guided disaster recovery, and never while management services are actively modifying the cluster.
 
 ---
 
@@ -15304,6 +15433,51 @@ sbctl cluster set-shared-placement
 | --force| Bypass the rebalancing / non-online-node guards. Required when --disable is passed. | marker | False | - |
 
 
+## Provisions the Grafana alert rules read from the cluster event log.
+
+Adds eight alert rules that read the cluster event log through /api/v2/clusters/<id>/logs instead of the Thanos metrics the rules in alert_rules.yaml read. The event log carries the transition an entity made, which is what lets these rules tell an operator's shutdown apart from a fault that ended in the same state, and lets them report a device removal and the two journal-compression conditions that no metric carries. Opt-in: the rules need a REST data source, so Grafana downloads a plugin (~74 MB) on the next restart. Works on a running cluster -- the provisioning files are written to every management node and the Grafana task is recreated, so Grafana is unavailable for a few seconds. Run it once, from any management node; re-run it to change a setting.
+
+```bash
+sbctl cluster event-alerts
+    <CLUSTER_ID>
+    --disable
+    --log-limit=<LOG_LIMIT>
+    --interval=<INTERVAL>
+    --pending-period=<PENDING_PERIOD>
+    --plugin-url=<PLUGIN_URL>
+    --plugin-preinstalled
+```
+
+
+| Argument | Description | Data Type | Required |
+| -------- | ----------- | --------- | -------- |
+| CLUSTER_ID | The cluster id. | string | True |
+
+| Parameter | Description | Data Type | Required | Default |
+| --------- | ----------- | --------- | -------- | ------- |
+| --disable| Remove the event log alert rules and the data source. | marker | False | - |
+| --log-limit| Too low on a cluster that produces events quickly and an alert heals itself as soon as the transition that opened it scrolls out of the window. | integer | False | - |
+| --interval| How often the rules run, as a Grafana duration. Default: `1m`. | string | False | - |
+| --pending-period| How long a condition must hold before it notifies, as a Grafana duration. Default: `1m`. | string | False | - |
+| --plugin-url| Where to fetch the Infinity data source plugin from. | string | False | - |
+| --plugin-preinstalled| The data source plugin is already in the Grafana image; do not download it. | marker | False | - |
+
+
+## Activate v2 distrib write protection cluster-wide.
+
+Needed once after upgrading a cluster from a release without v2; new clusters are created on v2 already. Sends the runtime distr_write_protection_v2 RPC to every ONLINE storage node -- the only way an already-created distrib gains v2, since a create parameter cannot retrofit an existing bdev. Only if every online node succeeds is the generation recorded, on the cluster row and on every node's lvstore_stack distrib entries, so later (re-)creations use the v2 parameter. Partial success records nothing, so a retry is a plain re-run. Offline nodes are not an error: they have no running bdev to migrate and come back on v2 at their next restart.
+
+```bash
+sbctl cluster switch-write-protection
+    <CLUSTER_ID>
+```
+
+
+| Argument | Description | Data Type | Required |
+| -------- | ----------- | --------- | -------- |
+| CLUSTER_ID | The cluster id. | string | True |
+
+
 ## Assigns or changes a name to a cluster
 
 Assigns or changes a name to a cluster
@@ -17569,7 +17743,6 @@ Package v1alpha1 contains API Schema definitions for the simplyblock v1alpha1 AP
 - [ReplicationSlot](#replicationslot)
 - [StorageBackup](#storagebackup)
 - [StorageCluster](#storagecluster)
-- [StorageClusterOps](#storageclusterops)
 - [StorageNode](#storagenode)
 - [StorageNodeOps](#storagenodeops)
 - [StorageNodeSet](#storagenodeset)
@@ -17577,6 +17750,46 @@ Package v1alpha1 contains API Schema definitions for the simplyblock v1alpha1 AP
 - [Task](#task)
 - [VolumeMigration](#volumemigration)
 
+
+
+#### ActionStatus
+
+
+
+
+
+
+
+_Appears in:_
+- [StorageClusterStatus](#storageclusterstatus)
+
+_Example:_
+
+```yaml
+action: string
+nodeUUID: string
+state: string
+message: string
+updatedAt: Time
+observedGeneration: integer
+triggered: boolean
+subPhase: string
+volumesMigrated: integer
+volumesPending: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `action` _string_ | Action is the requested action name. |  |  |
+| `nodeUUID` _string_ | NodeUUID is the target node UUID for the action. |  |  |
+| `state` _string_ |  |  |  |
+| `message` _string_ | Message is a human-readable action result or error. |  |  |
+| `updatedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | UpdatedAt is the timestamp of the last status transition. |  |  |
+| `observedGeneration` _integer_ | ObservedGeneration is the resource generation observed by this status. |  |  |
+| `triggered` _boolean_ | Triggered indicates whether the underlying backend action has been fired. |  |  |
+| `subPhase` _string_ | SubPhase tracks the active drain step within the remove action. |  | Enum: [Validating Suspending Migrating Verifying Removing] <br />Optional: \{\} <br /> |
+| `volumesMigrated` _integer_ | VolumesMigrated is the count of volumes successfully migrated so far. |  | Optional: \{\} <br /> |
+| `volumesPending` _integer_ | VolumesPending is the count of volumes still awaiting migration. |  | Optional: \{\} <br /> |
 
 
 #### AttachedLvol
@@ -18393,16 +18606,16 @@ lastUpdated: Time
 | `lastUpdated` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ |  |  |  |
 
 
-#### NodeRollingRestartSpec
+#### NodeRecycleSpec
 
 
 
-NodeRollingRestartSpec configures the node-rolling-restart action behaviour.
+NodeRecycleSpec configures the node-recycle action behaviour.
 
 
 
 _Appears in:_
-- [StorageClusterOpsSpec](#storageclusteropsspec)
+- [StorageClusterSpec](#storageclusterspec)
 
 _Example:_
 
@@ -18412,21 +18625,20 @@ refreshSNodeAPI: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `refreshSNodeAPI` _boolean_ | RefreshSNodeAPI restarts the storage-node DaemonSet pod on each node<br />after the backend node is shut down and before it is restarted, ensuring<br />the latest image is running before the node comes back online. |  | Optional: \{\} <br /> |
+| `refreshSNodeAPI` _boolean_ | RefreshSNodeAPI restarts the storage-node DaemonSet pod on each node<br />after the backend node is shut down and before it is restarted, ensuring<br />the latest image is running before the node comes back online. |  |  |
 
 
-#### NodeRollingRestartStatus
+#### NodeRecycleStatus
 
 
 
-NodeRollingRestartStatus tracks in-progress state for the node-rolling-restart action.
-All fields are persisted in the StorageClusterOps status so the reconciler
-can resume after a requeue or operator restart.
+NodeRecycleStatus tracks in-progress state for the node-recycle action.
+All fields are persisted in CR status so the reconciler can resume after a requeue.
 
 
 
 _Appears in:_
-- [StorageClusterOpsStatus](#storageclusteropsstatus)
+- [StorageClusterStatus](#storageclusterstatus)
 
 _Example:_
 
@@ -18441,9 +18653,9 @@ phaseTriggered: boolean
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `pendingNodes` _string array_ | PendingNodes is the ordered list of node UUIDs still to be restarted. |  |  |
-| `processedNodes` _string array_ | ProcessedNodes is the list of node UUIDs already restarted. |  |  |
-| `nodePhase` _string_ | NodePhase is the current step for the node being restarted:<br />"snode-refresh" \| "snode-refresh-wait" \| "shutting-down" \| "restarting" \| "rebalancing" |  |  |
+| `pendingNodes` _string array_ | PendingNodes is the ordered list of node UUIDs still to be recycled. |  |  |
+| `processedNodes` _string array_ | ProcessedNodes is the list of node UUIDs already recycled. |  |  |
+| `nodePhase` _string_ | NodePhase is the current step for the node being recycled:<br />"snode-refresh" \| "snode-refresh-wait" \| "shutting-down" \| "restarting" \| "rebalancing" |  |  |
 | `phaseTriggered` _boolean_ | PhaseTriggered indicates the API call for the current NodePhase was already sent. |  |  |
 
 
@@ -19253,10 +19465,7 @@ qosRwIops: string
 qosRwMbytes: string
 qosRMbytes: string
 qosWMbytes: string
-compression: string
 encryption: boolean
-replicate: boolean
-lvolPriorityClass: string
 fabric: string
 maxNamespacePerSubsys: string
 tune2fsReservedBlocks: string
@@ -19269,10 +19478,7 @@ filesystem: string
 | `qosRwMbytes` _string_ | QosRwMbytes sets the read/write throughput limit in MB/s (0 = unlimited). | 0 |  |
 | `qosRMbytes` _string_ | QosRMbytes sets the read throughput limit in MB/s (0 = unlimited). | 0 |  |
 | `qosWMbytes` _string_ | QosWMbytes sets the write throughput limit in MB/s (0 = unlimited). | 0 |  |
-| `compression` _string_ | Compression enables compression for logical volumes. | False |  |
 | `encryption` _boolean_ | Encryption enables encryption for logical volumes. | false |  |
-| `replicate` _boolean_ | Replicate enables replication for logical volumes. | false |  |
-| `lvolPriorityClass` _string_ | LvolPriorityClass sets the logical volume priority class. | 0 |  |
 | `fabric` _string_ | Fabric is the transport fabric (e.g. tcp). | tcp |  |
 | `maxNamespacePerSubsys` _string_ | MaxNamespacePerSubsys limits namespaces per NVMf subsystem. | 1 |  |
 | `tune2fsReservedBlocks` _string_ | Tune2fsReservedBlocks sets the ext4 reserved-blocks percentage. Left unset, the node<br />plugin skips tune2fs entirely and mkfs.ext4's own default reserve applies, matching a<br />StorageClass that omits tune2fs_reserved_blocks. A default of "0" here would not be a<br />no-op: it actively runs `tune2fs -m 0` on every volume, since the node plugin only skips<br />the call when the parameter is empty (see stageVolume in the CSI driver), not when it's<br />"0". |  |  |
@@ -19301,6 +19507,9 @@ spec:
   stripe:
     dataChunks: integer
     parityChunks: integer
+  action: string
+  nodeRecycle:
+    refreshSNodeAPI: boolean
   fabricType: string
   clientDataIfname: string
   nvmfBasePort: integer
@@ -19368,7 +19577,24 @@ status:
   configured: boolean
   maxFaultTolerance: integer
   maxConcurrentWorkerRestarts: integer
-  activeOpsRef: string
+  actionStatus:
+    action: string
+    nodeUUID: string
+    state: string
+    message: string
+    updatedAt: Time
+    observedGeneration: integer
+    triggered: boolean
+    subPhase: string
+    volumesMigrated: integer
+    volumesPending: integer
+  nodeRecycleStatus:
+    pendingNodes:
+      - string
+    processedNodes:
+      - string
+    nodePhase: string
+    phaseTriggered: boolean
   rebalancingMetrics:
     avgDeviationPct: float
     maxDeviationPct: float
@@ -19393,140 +19619,6 @@ status:
 | `status` _[StorageClusterStatus](#storageclusterstatus)_ | status defines the observed state of StorageCluster |  | Optional: \{\} <br /> |
 
 
-#### StorageClusterOps
-
-
-
-StorageClusterOps is a one-shot operational CR targeting a single SimplyblocksStorageCluster.
-Analogous to a Kubernetes Job — it drives a cluster-level operation (activate, expand,
-shutdown, restart, node-rolling-restart) to completion and records the result. Only one
-StorageClusterOps can be active per cluster at a time.
-
-
-
-
-
-_Example:_
-
-```yaml
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageClusterOps
-metadata:
-  name: string
-spec:
-  clusterRef: string
-  action: string
-  nodeRollingRestart:
-    refreshSNodeAPI: boolean
-status:
-  phase: StorageClusterOpsPhase
-  triggered: boolean
-  message: string
-  startedAt: Time
-  completedAt: Time
-  nodeRollingRestartStatus:
-    pendingNodes:
-      - string
-    processedNodes:
-      - string
-    nodePhase: string
-    phaseTriggered: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
-| `kind` _string_ | `StorageClusterOps` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
-| `spec` _[StorageClusterOpsSpec](#storageclusteropsspec)_ |  |  |  |
-| `status` _[StorageClusterOpsStatus](#storageclusteropsstatus)_ |  |  |  |
-
-
-#### StorageClusterOpsPhase
-
-_Underlying type:_ _string_
-
-StorageClusterOpsPhase is the lifecycle phase of a StorageClusterOps.
-
-_Validation:_
-- Enum: [Pending Running Succeeded Failed]
-
-_Appears in:_
-- [StorageClusterOpsStatus](#storageclusteropsstatus)
-
-| Field | Description |
-| --- | --- |
-| `Pending` |  |
-| `Running` |  |
-| `Succeeded` |  |
-| `Failed` |  |
-
-
-#### StorageClusterOpsSpec
-
-
-
-StorageClusterOpsSpec defines the desired state of a StorageClusterOps.
-
-
-
-_Appears in:_
-- [StorageClusterOps](#storageclusterops)
-
-_Example:_
-
-```yaml
-clusterRef: string
-action: string
-nodeRollingRestart:
-  refreshSNodeAPI: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `clusterRef` _string_ | ClusterRef is the name of the target SimplyblocksStorageCluster. Immutable. |  | Required: \{\} <br /> |
-| `action` _string_ | Action is the operation to perform. Immutable. |  | Enum: [activate expand shutdown start restart node-rolling-restart] <br />Required: \{\} <br /> |
-| `nodeRollingRestart` _[NodeRollingRestartSpec](#noderollingrestartspec)_ | NodeRollingRestart configures behaviour specific to the node-rolling-restart action.<br />Ignored for all other actions. |  | Optional: \{\} <br /> |
-
-
-#### StorageClusterOpsStatus
-
-
-
-StorageClusterOpsStatus holds the observed state of a StorageClusterOps.
-
-
-
-_Appears in:_
-- [StorageClusterOps](#storageclusterops)
-
-_Example:_
-
-```yaml
-phase: StorageClusterOpsPhase
-triggered: boolean
-message: string
-startedAt: Time
-completedAt: Time
-nodeRollingRestartStatus:
-  pendingNodes:
-    - string
-  processedNodes:
-    - string
-  nodePhase: string
-  phaseTriggered: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `phase` _[StorageClusterOpsPhase](#storageclusteropsphase)_ | Phase is the high-level lifecycle phase. |  | Enum: [Pending Running Succeeded Failed] <br />Optional: \{\} <br /> |
-| `triggered` _boolean_ | Triggered indicates the backend POST has been sent for this operation.<br />Guards against duplicate backend calls on retry. |  | Optional: \{\} <br /> |
-| `message` _string_ | Message is a human-readable description of the current state or failure reason. |  | Optional: \{\} <br /> |
-| `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the operation began. |  | Optional: \{\} <br /> |
-| `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the operation finished (successfully or not). |  | Optional: \{\} <br /> |
-| `nodeRollingRestartStatus` _[NodeRollingRestartStatus](#noderollingrestartstatus)_ | NodeRollingRestartStatus tracks per-node progress for the node-rolling-restart action.<br />Nil for all other actions. |  | Optional: \{\} <br /> |
-
-
 #### StorageClusterSpec
 
 
@@ -19545,6 +19637,9 @@ enableNodeAffinity: boolean
 stripe:
   dataChunks: integer
   parityChunks: integer
+action: string
+nodeRecycle:
+  refreshSNodeAPI: boolean
 fabricType: string
 clientDataIfname: string
 nvmfBasePort: integer
@@ -19599,6 +19694,8 @@ enableFailureDomains: boolean
 | --- | --- | --- | --- |
 | `enableNodeAffinity` _boolean_ | EnableNodeAffinity enables node-affinity placement for storage components. |  | Optional: \{\} <br /> |
 | `stripe` _[StripeSpec](#stripespec)_ | StripeSpec configures erasure-coding data/parity chunk counts. |  |  |
+| `action` _string_ | Action triggers a cluster-level action. |  | Enum: [activate expand shutdown start restart node-recycle] <br /> |
+| `nodeRecycle` _[NodeRecycleSpec](#noderecyclespec)_ | NodeRecycle configures the node-recycle action. |  |  |
 | `fabricType` _string_ | FabricType defines the storage fabric type. |  |  |
 | `clientDataIfname` _string_ | ClientDataIfname defines the client data network interface. |  |  |
 | `nvmfBasePort` _integer_ | NvmfBasePort defines the base NVMf service port. |  |  |
@@ -19649,7 +19746,24 @@ created: Time
 configured: boolean
 maxFaultTolerance: integer
 maxConcurrentWorkerRestarts: integer
-activeOpsRef: string
+actionStatus:
+  action: string
+  nodeUUID: string
+  state: string
+  message: string
+  updatedAt: Time
+  observedGeneration: integer
+  triggered: boolean
+  subPhase: string
+  volumesMigrated: integer
+  volumesPending: integer
+nodeRecycleStatus:
+  pendingNodes:
+    - string
+  processedNodes:
+    - string
+  nodePhase: string
+  phaseTriggered: boolean
 rebalancingMetrics:
   avgDeviationPct: float
   maxDeviationPct: float
@@ -19685,7 +19799,8 @@ rebalancingMetrics:
 | `configured` _boolean_ | Configured indicates whether initial cluster setup completed. |  |  |
 | `maxFaultTolerance` _integer_ | MaxFaultTolerance is the backend-reported maximum number of nodes that can<br />be simultaneously offline (failed, drained, or restarted) without violating<br />the cluster's redundancy guarantees. |  |  |
 | `maxConcurrentWorkerRestarts` _integer_ | MaxConcurrentWorkerRestarts is the effective concurrent-restart limit applied<br />by the drain coordinator: min(spec.MaxConcurrentWorkerRestarts, MaxFaultTolerance).<br />Defaults to 1. Exposed here so controllers and tooling can read a single<br />authoritative value without re-computing it. |  | Optional: \{\} <br /> |
-| `activeOpsRef` _string_ | ActiveOpsRef is the name of the currently active ClusterOps on this cluster.<br />Empty when no operation is in progress. |  | Optional: \{\} <br /> |
+| `actionStatus` _[ActionStatus](#actionstatus)_ | ActionStatus tracks the most recent action execution state. |  |  |
+| `nodeRecycleStatus` _[NodeRecycleStatus](#noderecyclestatus)_ | NodeRecycleStatus tracks in-progress state for the node-recycle action. |  |  |
 | `rebalancingMetrics` _[RebalancingMetrics](#rebalancingmetrics)_ | RebalancingMetrics is updated by the auto-rebalancer each evaluation cycle. |  | Optional: \{\} <br /> |
 
 
@@ -20514,10 +20629,7 @@ spec:
     qosRwMbytes: string
     qosRMbytes: string
     qosWMbytes: string
-    compression: string
     encryption: boolean
-    replicate: boolean
-    lvolPriorityClass: string
     fabric: string
     maxNamespacePerSubsys: string
     tune2fsReservedBlocks: string
@@ -20686,10 +20798,7 @@ storageClassParameters:
   qosRwMbytes: string
   qosRMbytes: string
   qosWMbytes: string
-  compression: string
   encryption: boolean
-  replicate: boolean
-  lvolPriorityClass: string
   fabric: string
   maxNamespacePerSubsys: string
   tune2fsReservedBlocks: string
@@ -21211,7 +21320,6 @@ Commonly configured CSI driver parameters:
 | `logicalVolume.qos_w_mbytes`             | Sets the maximum write Mbps. Zero means unlimited.                                           | `0`                                                         |
 | `logicalVolume.numDataChunks`            | Sets the number of Erasure coding schema parameter k (distributed RAID).                     | `1`                                                         |
 | `logicalVolume.numParityChunks`          | Sets the number of Erasure coding schema parameter n (distributed RAID).                     | `1`                                                         |
-| `logicalVolume.lvol_priority_class`      | Sets the logical volume priority class.                                                      | `0`                                                         |
 | `logicalVolume.fabric`                   | Sets the NVMe-oF transport type.                                                             | `tcp`                                                       |
 | `logicalVolume.tune2fs_reserved_blocks`  | Sets the percentage of disk blocks reserved for system.                                      | `0`                                                         |
 | `logicalVolume.max_namespace_per_subsys` | Sets the maximum namespace per subsystem.                                                    | `1`                                                         |
@@ -22044,6 +22152,300 @@ Simplyblock regularly provides new releases with new features, performance enhan
 This section provides detailed information about each simplyblock release, including new features, enhancements, bug
 fixes, and known issues. Stay informed about the latest developments to ensure optimal performance and take full
 advantage of simplyblock's capabilities.
+
+---
+
+<!-- source: https://docs.simplyblock.io/latest/release-notes/26-3/ -->
+
+# 26.3
+
+Simplyblock is happy to release Simplyblock 26.3. The changes are grouped by the component they belong to: the
+simplyblock control plane and storage plane, and the Kubernetes components, meaning the Simplyblock Operator and
+Simplyblock CSI.
+
+## Simplyblock
+
+The control plane and the storage plane are released together and share a version number. The changes below apply
+to every deployment, including a Kubernetes-based one.
+
+### New Features
+
+- **Control Plane:** Added asynchronous replication between two storage clusters. A named destination is registered
+  with `sbctl cluster replication-target-add`, the cadence and the retention with
+  `sbctl cluster replication-policy-add`, and a volume joins a policy through
+  `sbctl volume replication-policy-set`. Several destinations per cluster are supported, a failover is
+  requested for a single volume, a whole policy, or a whole target, and `sbctl volume replication-info`
+  reports the lag and the age of the backlog against the cadence target.
+- **Control Plane:** Added the planned cross-cluster cutover. Replication started with `--mode migration` prepares a
+  volume for a handover, and `sbctl volume replication-commit` shrinks the remaining delta, fences the
+  source, and moves the client to the target. `sbctl volume replication-failback` prepares the return to a
+  recovered source as a delta, or to a fresh cluster as a full copy.
+- **Control Plane:** Added support for failure domains. Domain anti-affinity is turned on with
+  `sbctl cluster create --enable-failure-domain`, and every storage node is then tagged with
+  `sbctl storage-node add-node --failure-domain`. Data chunks, parity chunks, journal copies, and the
+  secondary and tertiary nodes are spread across distinct domains, with a host-disjoint fallback and a warning where
+  that is not possible.
+- **Control Plane:** Added online storage node removal and single-node expansion. `sbctl storage-node remove`
+  runs as a resumable background task that re-hosts the lvstore replicas the node holds for others and migrates its
+  devices, and `sbctl storage-node add-node --expansion` adds a single node to an FTT 2 cluster by re-homing
+  existing secondary and tertiary roles. The addition of several nodes now runs in parallel, and only the cross-node
+  mesh wiring is serialized per cluster.
+- **Control Plane:** Added cluster-wide maintenance commands. `sbctl cluster restart` restarts every node in
+  parallel and reactivates the cluster, and `sbctl cluster op-stop` and `sbctl cluster op-start`
+  refuse and resume the creation, deletion, and modification of volumes, snapshots, clones, and pools. Read paths
+  and the restarts, migrations, and repairs a cluster performs on itself are unaffected.
+- **Control Plane:** Added release-specific upgrade plug-ins. `sbctl cluster update` runs their pre-update
+  step as its first action, and `sbctl cluster upgrade-complete` runs their completion step and records the
+  installed release on the cluster.
+- **Control Plane:** Added batch migration of namespaced volumes. `sbctl volume migrate --batch` moves every
+  volume that shares an NVMe-oF subsystem as one coordinated group, the groups are listed with
+  `sbctl volume migrate-group-list`, and `sbctl volume migrate-cleanup` idempotently removes what a
+  failed migration left behind on the target.
+- **Control Plane:** Added hard object limits, enforced at creation time instead of at placement time. An lvstore
+  serves at most 6000 objects, counting volumes, clones, and snapshots, a storage node at most 75 volume subsystems,
+  and one subsystem at most 50 namespaces.
+- **Control Plane:** Added quorum-based device exclusion. A device that draws I/O errors from a quorum of the other
+  online nodes is excluded cluster-wide, independent of what its NVMe controller reports, which is the case a
+  slow-but-connected device previously slipped through. A device whose latency deviates from the cluster average is
+  reported as a warning event before it fails.
+- **Control Plane:** Added alerting from the cluster event log with `sbctl cluster event-alerts`, which
+  provisions Grafana rules that read the transition an entity made rather than the state it ended in. Journal events
+  are now collected into the event log next to the distrib events, with alerts for a synchronous delete that keeps
+  failing and for a journal compression backlog above 500 million records.
+- **Control Plane:** Added a FoundationDB exporter with its own dashboard, request metrics of the management API at
+  `/_meta/metrics`, `sbctl storage-node get-device-health-info` for the health information the storage plane
+  holds for a device, and a retention period of 30 days for cluster tasks and their logs.
+- **Control Plane:** Added a rebalance operation to the cluster API, validation of the erasure coding scheme by the
+  management API, and independent NVMe device filters on `sbctl storage-node configure`, where
+  `--device-model` and `--size-range` are now accepted alone as well as together.
+- **Storage Plane:** The journal device of a node is now a RAID 0+1 stack instead of an N-way mirror across the
+  journal partition of every drive. Write amplification is capped at two physical writes per journal record and per
+  node, independent of the drive count, where a ten-drive node at FTT 2 previously paid up to forty. A drive
+  lifecycle event rebuilds the affected leg instead of the whole mirror.
+- **Storage Plane:** Added a second generation of distrib write protection. A new cluster is created on it, and an
+  upgraded cluster is moved over with `sbctl cluster switch-write-protection`, which migrates every online
+  node and records the new generation only when all of them succeed. An offline node is brought over by its next
+  restart.
+- **Storage Plane:** An ANA state change is now scoped to a namespace instead of the whole subsystem. A volume that
+  shares its subsystem with other volumes is failed over, suspended, and migrated without moving their I/O to the
+  other node.
+- **Storage Plane:** The core allocation of a storage node gives the distrib and poller threads their share before
+  alceml, which takes its device-scaled count from what is left. Below 22 vCPUs nothing changes, and explicit
+  layouts are added for hosts with two to five vCPUs.
+- **General:** Added diagnostics for a latency or crash investigation: the bdev latency histogram RPCs with a
+  per-layer probe script, by which a tail-latency spike is localized to a layer of the bdev stack, and the host
+  directory `/var/crash` mounted into the storage plane container, so that a core dump survives the container.
+- **General:** Updated the packages inherited from the container base images and dropped `wget` from the image, to
+  resolve open CVEs.
+
+### Fixes
+
+- **Control Plane:** Fixed the loss of I/O during a storage node restart. Every RPC issued inside the port fence is
+  now bounded, the fence carries a hard deadline below the client keep-alive, and the NVMe keep-alive timeout was
+  raised to eight seconds.
+- **Control Plane:** Improved the recovery of a cluster after a full reboot, from about 21 minutes to about one
+  minute. An activation that wedged is detected by a watchdog, automatic reactivation is gated on every node being
+  online, and a suspended cluster is drained to all-offline before it is restarted.
+- **Control Plane:** Fixed storage nodes flapping to the down state on a health probe timeout, and a node that is
+  down no longer counts toward the suspension of the cluster. The suspension is gated on an actual loss of the data
+  plane rather than on an unreachable management network, a rebooted host is detected faster, and the devices
+  stranded by such an outage are reconciled.
+- **Control Plane:** Fixed three ways in which a highly available volume could silently lose one of its paths, and
+  the duplicate paths a repair left behind are now pruned. The recovery of an lvstore without a leader reloads the
+  primary from disk before granting leadership, and no leadership is granted while a restart or a recovery task owns
+  the movement of it.
+- **Control Plane:** Fixed the failover of a namespaced volume, which the kernel rejected with mismatching
+  identifiers. The namespace id, the namespace UUID, and the controller id of the target clone are now derived from
+  the source instead of being allocated fresh.
+- **Control Plane:** Fixed the deletion pipeline of volumes and snapshots. The asynchronous and the synchronous legs
+  are serialized, a delete the cluster cannot complete is refused rather than accepted, and a deferred delete
+  completes once the node it waited for returns. Concurrent operations on one snapshot chain are now mutually
+  exclusive, which closes a corruption of the blob tree, and a concurrent create waits for the lock instead of being
+  rejected.
+- **Control Plane:** Fixed the migration of a volume whose snapshot chain spans several nodes, of an encrypted
+  volume, and of a volume with a tertiary node. A migration whose source node goes offline is suspended instead of
+  being cleaned up on the target, and a migration that reported a failure despite a successful transfer is reported
+  correctly.
+- **Control Plane:** Fixed the replication of the blob chain of a volume, which replicated only the snapshots of the
+  volume itself. A snapshot is chained to its predecessor on the target cluster, a predecessor is never pruned before
+  its successor is chained, a failover only ever targets a fully replicated and live snapshot, and a replication no
+  longer halts silently under back-pressure.
+- **Control Plane:** Fixed the addition and the restart of a storage node. An addition aborted on a lock timeout, on
+  a stale in-creation record, or on an already provisioned device slot, and it did not survive the CPU topology
+  reboot. A re-entry is idempotent now, the additions of one host are serialized against each other, a restart task
+  is no longer executed twice, and the status of a node, a device, a cluster, and a volume is written through a
+  compare-and-set operation, so that a crashed writer cannot leave a stale status behind.
+- **Control Plane:** Fixed the capacity reporting, which mixed raw with effective capacity, and the cluster admission
+  check, which did not count the utilization of snapshots. On a storage pool, the capacity check of a resize no
+  longer counts the volume being resized twice, a volume is connected to the pool that matches its QoS settings, and
+  an update with an omitted size no longer crashes.
+- **Control Plane:** Fixed the cloning of an encrypted volume, for which the crypto layer was missing from the
+  recorded bdev stack, the key management of the local KMS, and the rendering of secrets in the management API.
+- **Control Plane:** Fixed a forced storage node shutdown that could block indefinitely, a cluster that grew by being
+  reactivated, a cluster expansion that did not reattach the sibling failover of its donor node, and the leases of
+  long-running tasks, which expired while the task was still running. The shutdown API now returns `409` when its
+  preconditions are not met, and only a migration task blocks a shutdown.
+- **Control Plane:** Improved the throughput of the snapshot and volume monitors, which scope their exclusion to a
+  snapshot chain instead of a single object and therefore process chains and nodes in parallel. The logging to
+  Graylog is written non-blocking through a larger buffer, so that a slow log target no longer holds up the control
+  plane.
+- **Storage Plane:** Improved the reliability of the graceful startup and the graceful shutdown of the storage plane.
+  A storage plane whose RPC endpoint hangs on a live process is aborted instead of being waited for, an RPC is
+  bounded by the timeout of its caller so that it cannot starve the node, and the wait for the journal replication
+  of a peer is bounded so that it cannot defer a restart indefinitely.
+- **Storage Plane:** Fixed the roles of the hub volumes, which are active on both sides within a node and passive
+  between nodes. The role of an lvstore is derived from the topology instead of from an index position, the hub
+  volume subsystem is no longer lost across a restart, and the name parameter of a hub volume is no longer sent to an
+  older storage plane.
+- **Storage Plane:** Fixed the re-admission of the devices of a node recovering from an outage, which was silently
+  refused while the node had not yet reached the online state. The memory footprint of a node also improved: the
+  small I/O buffers are sized from the subsystem count of the cluster, and the large ones were cut by a factor of
+  three.
+
+## Kubernetes
+
+The changes below apply to Kubernetes-based deployments only. They are delivered by the Simplyblock Operator and by
+Simplyblock CSI.
+
+### New Features
+
+- **Operator:** Added support for failure domains. The mode is enabled through `spec.enableFailureDomains` on the
+  `StorageCluster`, and workers are assigned to a domain through the `StorageNodeSet`, so that erasure coding chunks
+  and failover paths are spread across racks or availability zones. The effective domain of a worker is reflected in
+  the status of the `StorageNode` and the `StorageNodeSet`.
+- **Operator:** Added support for multiple `StorageNodeSet` resources per storage cluster, by which workers with
+  different hardware or a different role are enrolled with their own configuration, and for parallel storage node
+  addition. The number of workers provisioned at the same time is taken from
+  `StorageNodeSet.spec.maxParallelNodeAdds`, and the `maxUnavailable` of the OpenShift `MachineConfigPool` is scaled
+  to match it.
+- **Operator:** Added support for live volume migration through the new `VolumeMigration` resource. The backing
+  logical volume is moved between storage nodes while the volume stays online. Before the migration is continued, the
+  new NVMe-oF paths on the target node are validated by a Job on every consuming worker.
+- **Operator:** Added the storage node drain, removal, and host migration workflows, requested with a
+  `StorageNodeOps` resource and `action: remove` or `action: migrate`. A removal suspends the node, migrates its
+  volumes to the remaining nodes in round-robin order, verifies the result, and removes the node. A migration
+  relocates the identity of a storage node to a different worker. While the cluster is rebalancing or inactive, a
+  workflow is paused, and a warning event is emitted whenever a drain stalls.
+- **Operator:** Added support for asynchronous replication between two storage clusters. The relationship between the
+  clusters is declared with a `ReplicationPair`, the interval and the retention with a `ReplicationPolicy`, and every
+  replicated volume is tracked by a `ReplicationSlot`. Failover and failback are requested with a `ReplicationOps`
+  resource, scoped to a replication target, a policy, or a single volume. A PVC is enrolled into a policy through an
+  annotation.
+- **Operator:** Added automatic, latency-based volume rebalancing and back storage data realignment. Both are
+  configured per cluster and triggered independently of each other.
+- **Operator:** Added support for topology-aware provisioning across multiple storage clusters, by which a volume is
+  provisioned in the cluster that matches the topology of the consuming workload, the option to skip the creation of
+  the FoundationDB cluster, and the adoption of an existing Helm-deployed storage cluster, storage pool, and storage
+  nodes into the operator resources.
+- **Operator:** Added configuration of the `imagePullPolicy`, the resource limits, and the SPDK system memory
+  (`spdkSysMem`) of the storage node workloads, and of a custom OpenShift `MachineConfigPool` through the
+  `openShiftMachineConfigPool` field, so that storage nodes are rebooted through a pool that is separate from the
+  remaining workers. Every image reference is validated against the trusted registries, and a field that cannot be
+  changed after creation is now rejected instead of being ignored silently.
+- **Operator:** The Thanos data of the monitoring stack is now stored in MinIO instead of a filesystem-backed object
+  store, and Prometheus can be deployed with more than one replica.
+- **CSI Driver:** Added support for co-locating the primary storage node of a volume with the worker that runs the
+  consuming pod, and for the migration of namespaced volumes together with the coordinated restart of all pods that
+  share an NVMe subsystem.
+- **CSI Driver:** Added the detection and the repair of stale NVMe-oF subsystems and controllers on a worker.
+- **CSI Driver:** The presence of a device is registered when the volume is connected, instead of only by polling,
+  and the host NQN and the DH-CHAP secrets are forwarded at that point.
+
+### Fixes
+
+- **Operator:** Fixed the release of the NVMe target paths of a migration that never reaches its cutover, and the
+  rebuild of the storage node configuration after an operator restart with an in-flight storage node migration.
+- **Operator:** Fixed the `StoragePool` resource remaining in `Terminating` when its backend UUID was never set, and
+  the PVC validator, which did not accept all of the volume placement annotations.
+- **CSI Driver:** Fixed incompatibilities when formatting and mounting ext4 and XFS volumes, and the connection of a
+  volume in a cluster with more than one storage pool.
+- **CSI Driver:** Fixed the loss of the kernel module configuration on the host. The modules `vfio-pci` and
+  `uio_pci_generic` were written into the ephemeral filesystem of the storage node container and were gone after the
+  CPU topology reboot during a node addition. The configuration is now written through the host mount of
+  `/etc/modules-load.d`.
+- **CSI Driver:** Fixed the restart loop of the CSI controller container, caused by dangling snapshots and volumes of
+  a removed cluster. The automatic Guardian restart is skipped for a volume that shares its NVMe subsystem with
+  another volume, and a gRPC keepalive and a connection timeout detect a broken connection to a control plane
+  instead of blocking a request.
+- **Operator and CSI Driver:** Updated the container base images and the Go dependencies to resolve open CVEs.
+
+## Important Changes
+
+- The storage plane sizing of a node moves to the cluster. The flags `--max-subsys`, `--hugepages-mem`, and
+  `--vcpu-count` are set on `sbctl cluster create` and `sbctl cluster add`, and a node adopts them
+  when it is added and on every restart. `--max-subsys`, `--max-size`, and `--cores-percentage` are removed from
+  `sbctl storage-node configure`, and `--max-subsys` and `--max-size` from
+  `sbctl storage-node restart`. The flag `--max-lvol` is renamed to `--max-subsys`, which is what it has
+  always limited.
+- The core budget of the storage plane is an absolute vCPU count instead of a percentage. A node that cannot satisfy
+  the count of its cluster, plus one core for the system, is refused instead of running on fewer cores than
+  requested. `sbctl cluster update --vcpu-count` does not exist, because rewriting the core mask of every
+  node belongs to a deliberate redeployment.
+- A configured subsystem limit above 75 per storage node is rejected, where it was accepted and then clamped
+  silently before, so a node reserved huge pages for subsystems it could never serve. An lvstore serves at most 6000
+  objects, counting volumes, clones, and snapshots, and a create beyond that limit is refused.
+- Failure domains are a deploy-time feature. A cluster cannot be upgraded into them, and `--enable-failure-domain`
+  has to be set at creation time. Once it is set, `--failure-domain` is mandatory on every
+  `sbctl storage-node add-node` and rejected on a cluster without the feature.
+- `sbctl storage-node remove` no longer migrates the data of the node. The node has to host no volumes and no
+  snapshots, and those are migrated beforehand. The flag `--force-remove` no longer removes volumes and snapshots,
+  it cancels the active tasks of the node before the removal starts.
+- The commands `sbctl storage-node resume`, `sbctl storage-node get-bdevs`, and
+  `sbctl storage-node unload` are removed. Instead of `resume`, `sbctl storage-node restart` has to
+  be used.
+- The command `sbctl cluster add-replication` is deprecated. Instead, the commands
+  `sbctl cluster replication-target-add` and `sbctl cluster replication-policy-add` have to be used,
+  which support more than one destination per cluster.
+- `sbctl volume migrate` only pre-creates the target subsystem and returns the migration id and the NVMe
+  connect strings. The flags `--deadline` and `--max-retries` move to `sbctl volume migrate-continue`, which
+  advances the migration once the client is connected.
+- After `sbctl cluster update`, two commands have to be run. `sbctl cluster upgrade-complete`
+  releases the journal compression hold the update took across its rolling restart and records the installed
+  release, and `sbctl cluster switch-write-protection` moves the cluster to the second generation of distrib
+  write protection, on which it does not land by itself.
+- The flag `--all` is removed from `sbctl snapshot list`, which gained `--lvol-id`, `--node-id`, and
+  `--json`. The flag `--cluster-id` is removed from `sbctl backup restore`, whose cluster is derived from the
+  backup.
+- The `Pool` resource is renamed to `StoragePool`, and the resource enrolling a group of workers is renamed from
+  `StorageNode` to `StorageNodeSet`. The name `StorageNode` is now used for the per-worker resource that is created
+  by the operator.
+- The field `maxLogicalVolumeCount` is renamed to `maxSubsystemCount`, and the field `corePercentage` is removed.
+  Storage node sizing is moved from the `StorageNodeSet` to the cluster scope, and the field `partitions` is replaced
+  by `enableJournalDevice`.
+- The deprecated `StorageCluster` fields `blockSize`, `qpairCount`, `pageSizeInBlocks`, `maxQueueSize`,
+  `inflightIOThreshold`, `strictNodeAntiAffinity`, `haType`, `isSingleNode`, and `clientQpairCount` are removed.
+- The `StorageCluster` spec field `maxFaultTolerance` is replaced by `maxConcurrentWorkerRestarts`, which is capped
+  at the fault tolerance of the cluster. The backend-reported `maxFaultTolerance` remains part of the status.
+- The field `unpinBeforeDrain` is removed. A pinned volume has to be unpinned manually before its storage node is
+  drained.
+- The volume placement annotations are unified into `simplyblock.io/selected-storage-node`. On a new PVC, a host id
+  supplied through `simplyblock.io/host-id` or `simplybk/host-id` is rewritten into that annotation and treated as a
+  pin. On a pre-existing PVC, both legacy annotations are still honored as the lowest-priority source of the primary
+  storage node.
+
+## Upgrade Considerations
+
+- The CSI driver added an extended check to prevent an accidental filesystem format onto an existing pre-formatted
+  volume in one of the upstream CSI libraries. To ensure all existing volumes work as expected, users are highly
+  encouraged to run this script after upgrading to 26.3.0. [Annotate existing PVCs Script](https://install.simplyblock.io/scripts/backfill-on-disk-filesystem.sh)
+
+## Known Issues
+
+- At the moment it is only possible to define one erasure coding schema per cluster.
+- When deleting pods with simplyblock-backed PVCs, it is important to delete the pod first, before deleting the PVC.
+- A full FTT 1 or FTT 2 network outage can create a situation where surviving nodes lose access to the last journal
+  records. This can cause loss of I/O availability until at least one node is restarted.
+- Node Removal currently only works with online nodes.
+
+  ```bash title="Deleting a pod before its persistent volume claim"
+  kubectl delete pod <pod-name> --wait=true
+  kubectl delete pvc <pvc-name> --wait=true
+  ```
+
+## Features to Expect with Next Major Release
+
+- The ability to use different erasure coding schemas within the same cluster.
+- Inline data integrity validation to prevent silent data corruption.
 
 ---
 
