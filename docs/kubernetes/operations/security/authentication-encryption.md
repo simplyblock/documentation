@@ -138,13 +138,6 @@ kubectl get storageclass simplyblock-<namespace>-<storageCluster CR name>-<pool 
     volumes, but their `nodeAffinity` matches nothing, so every `Pod` consuming one stays `Pending` with
     `didn't match PersistentVolume's node affinity`. Reading the key off the cluster avoids the typo.
 
-!!! warning "`dhchap_node_label` is the deprecated name of this parameter"
-
-    The parameter was originally called `dhchap_node_label`. That name is still read, so an existing
-    `StorageClass` keeps gating its volumes, and it cannot be renamed in place because StorageClass parameters
-    are immutable, so the class has to be replaced. `dhchap_node_selector` takes precedence when a class carries
-    both, and is the only name the operator writes. Use it for anything written from now on.
-
 ## Worker Node Kernel Requirements
 
 Every node in `allowedNodes` needs a kernel built for DH-HMAC-CHAP. A newer kernel is not automatically a supported
