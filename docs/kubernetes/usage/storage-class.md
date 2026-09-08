@@ -48,14 +48,19 @@ The CRD fields carry camel case names and are written to the StorageClass under 
 | `filesystem`                   | `csi.storage.k8s.io/fstype` |
 
 For a storage pool with `dhchap` enabled and `allowedNodes` set, `dhchap_node_label` is added by the operator as well,
-and the generated StorageClass is restricted to those nodes through its allowed topologies.
+and volumes provisioned from the generated StorageClass are restricted to those nodes through their node affinity.
 
 !!! warning "`dhchap_node_label` enforces a DHCHAP pool's allowed nodes"
 
     The CSI driver copies the value of this parameter into the `nodeAffinity` of every `PersistentVolume` it
     provisions. A hand-written StorageClass that omits it provisions volumes with no `nodeAffinity`, so no node
-    restriction applies, even though the pool reports DHCHAP as enabled. See
-    [Host Authentication and Encryption](../operations/security/authentication-encryption.md).
+    restriction applies, even though the pool reports DHCHAP as enabled.
+
+    The value is the label key the operator writes onto the pool's allowed nodes, which is derived from the pool as
+    `simplyblock.io/pool.<namespace>.<storageCluster CR name>.<pool name>`, for example
+    `simplyblock.io/pool.simplyblock.cluster-a.pool-a`. See
+    [The Value to Set](../operations/security/authentication-encryption.md#the-value-to-set) for how to read it off
+    the cluster instead of deriving it.
 
 Kubernetes does not allow the `parameters` of a StorageClass to be changed after creation, so
 `StoragePool.spec.storageClassParameters` is immutable once the storage pool is created. There is no supported way to

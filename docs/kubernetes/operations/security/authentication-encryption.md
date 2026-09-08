@@ -39,11 +39,11 @@ spec:
 The DH-HMAC-CHAP keys of the pool are generated as soon as `dhchap` is set. Authentication is only enforced once
 `allowedNodes` is non-empty.
 
-Both fields belong in the manifest that creates the pool. The `StorageClass` generated for the pool is only
-restricted to the allowed nodes when `dhchap` is `true` and `allowedNodes` is non-empty at the moment the class is
-created, and `parameters` and `allowedTopologies` cannot be patched afterward. A pool created with `dhchap: true` and
-an empty `allowedNodes` therefore keeps an unrestricted `StorageClass` for the rest of its life, even once nodes are
-added to the list. Recreating the pool is the only way to correct this.
+Both fields belong in the manifest that creates the pool. The `StorageClass` generated for the pool only carries
+`dhchap_node_label` when `dhchap` is `true` and `allowedNodes` is non-empty at the moment the class is created, and
+`parameters` cannot be patched afterward. A pool created with `dhchap: true` and an empty `allowedNodes` therefore
+keeps an unrestricted `StorageClass` for the rest of its life, even once nodes are added to the list. Recreating the
+pool is the only way to correct this.
 
 ## Reconciliation by the Operator
 
@@ -53,19 +53,22 @@ Once the storage pool is created, host registration and node scheduling are reco
   NQN derived from that node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`).
 - **Node labels:** each allowed node is labeled `simplyblock.io/pool.<namespace>.<cluster>.<pool>=allowed`, and the
   label is removed again from every node that leaves the list.
-- **First scheduling decision:** the generated `StorageClass` is restricted to that label through `allowedTopologies`,
-  so the first `Pod` to consume a `PersistentVolumeClaim` of this pool can only be scheduled onto an allowed node.
-- **Every later scheduling decision:** the same label is written into the `nodeAffinity` of the `PersistentVolume`
-  when the volume is created, which restricts every scheduling decision on the already-bound volume, including a
-  restart, a recreate, and a drain.
+- **Volume placement:** the same label is written into the `nodeAffinity` of the `PersistentVolume` when the volume is
+  created, which is what restricts the volume to the allowed nodes.
+- **First scheduling decision:** the first `Pod` to consume a `PersistentVolumeClaim` of this pool is placed before
+  its volume exists, so it may be assigned to any node. The scheduler then rejects that assignment against the new
+  volume's `nodeAffinity` (`node affinity doesn't match node`) without binding the `Pod`, and reschedules it onto an
+  allowed node. A one-off `FailedScheduling` event during this hand-off is expected and self-correcting.
+- **Every later scheduling decision:** the volume now exists, so its `nodeAffinity` filters candidate nodes from the
+  first attempt, including on a restart, a recreate, and a drain.
 - **Host NQN:** the node's own NQN and the pool's DHCHAP secrets are presented by the CSI node plugin on connect, so
   no host NQN has to be supplied anywhere in the Kubernetes flow.
 
 ## Managing Allowed Nodes
 
-`dhchap` is immutable, because the `parameters` and `allowedTopologies` of the generated `StorageClass` cannot be
-patched in the Kubernetes API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes and updates
-the pool's allowed hosts, and it never rewrites the `StorageClass`.
+`dhchap` is immutable, because the `parameters` of the generated `StorageClass` cannot be patched in the Kubernetes
+API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes and updates the pool's allowed hosts,
+and it never rewrites the `StorageClass`.
 
 A node removed from `allowedNodes` loses its label, and its NQN is removed from the allowed hosts of the pool and of
 every volume in it. The node is rejected on its next connect attempt. A volume already connected on that node is not
@@ -83,6 +86,57 @@ when the claim is bound, and the operator always sets it on the class it generat
     `nodeAffinity`, so no node restriction applies at all, even though the pool reports DHCHAP as enabled. A `Pod`
     outside `allowedNodes` is scheduled and its volume is attached, and only the connection is refused, as described
     in [Pods on a Disallowed Node](#pods-on-a-disallowed-node).
+
+### The Value to Set
+
+The parameter takes the label **key** the operator writes onto the pool's allowed nodes. It is not a node name, and
+it is not the label's value. The driver always matches the fixed value `allowed`. The key is derived from the pool:
+
+```plain title="Format of the dhchap_node_label value"
+simplyblock.io/pool.<namespace>.<storageCluster CR name>.<pool name>
+```
+
+| Segment                    | Source                                                                             |
+|----------------------------|------------------------------------------------------------------------------------|
+| `<namespace>`              | the namespace of the `StoragePool`, which is also its `StorageCluster`'s namespace |
+| `<storageCluster CR name>` | `StoragePool.spec.clusterName`, the name of the `StorageCluster` CR, not its UUID  |
+| `<pool name>`              | `StoragePool.metadata.name`, the CR name, not the pool's `status.uuid`             |
+
+For the `pool-a` example above, created in namespace `simplyblock` against `StorageCluster` `cluster-a`, the key is
+`simplyblock.io/pool.simplyblock.cluster-a.pool-a`:
+
+```yaml title="Custom StorageClass for a DHCHAP pool"
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: custom-dhchap-sc
+provisioner: csi.simplyblock.io
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  cluster_id: <STORAGE_CLUSTER_UUID>
+  pool_name: pool-a
+  dhchap_node_label: simplyblock.io/pool.simplyblock.cluster-a.pool-a
+```
+
+Rather than deriving the key, it can be read off the cluster. Either from an allowed node:
+
+```bash title="Read the key from an allowed node"
+kubectl get node <ALLOWED_NODE> -o jsonpath='{.metadata.labels}' \
+  | tr ',' '\n' | grep 'simplyblock.io/pool\.'
+```
+
+Or from the `StorageClass` the operator already generated for the same pool, which is the authoritative value:
+
+```bash title="Read the key from the generated StorageClass"
+kubectl get storageclass simplyblock-<namespace>-<storageCluster CR name>-<pool name> \
+  -o jsonpath='{.parameters.dhchap_node_label}'
+```
+
+!!! note "A wrong key is silently unsatisfiable"
+
+    The key is not validated against the pool. A `StorageClass` carrying a key no node holds still provisions
+    volumes, but their `nodeAffinity` matches nothing, so every `Pod` consuming one stays `Pending` with
+    `didn't match PersistentVolume's node affinity`. Reading the key off the cluster avoids the typo.
 
 ## Worker Node Kernel Requirements
 
@@ -115,18 +169,18 @@ kubectl get nodes \
     -l simplyblock.io/pool.simplyblock.cluster-a.pool-a=allowed
 ```
 
-Whether the generated `StorageClass` restricts scheduling at all is visible in its `allowedTopologies`. An empty result
-means the class was created while `allowedNodes` was empty.
+Whether the generated `StorageClass` restricts scheduling at all is visible in its `dhchap_node_label` parameter. An
+empty result means the class was created while `allowedNodes` was empty.
 
-```bash title="Checking the topology restriction of the generated storage class"
+```bash title="Checking the node restriction of the generated storage class"
 kubectl get storageclass simplyblock-simplyblock-cluster-a-pool-a \
-    -o jsonpath='{.allowedTopologies}'
+    -o jsonpath='{.parameters.dhchap_node_label}'
 ```
 
 ## Pods on a Disallowed Node
 
-`allowedTopologies` and the `nodeAffinity` of the `PersistentVolume` keep a `Pod` off a node outside `allowedNodes`.
-If one lands there regardless, no `nvme connect` is ever built. `NodeStageVolume` derives the host NQN of its own node
+The `nodeAffinity` of the `PersistentVolume` keeps a `Pod` off a node outside `allowedNodes`. If one lands there
+regardless (pinned there by a `nodeSelector`, for instance), no `nvme connect` is ever built. `NodeStageVolume` derives the host NQN of its own node
 and requests the connection information from the control plane, which rejects the unknown NQN with an HTTP `404`. The
 `Pod` stays unscheduled with a `FailedMount` event.
 
