@@ -40,7 +40,7 @@ The DH-HMAC-CHAP keys of the pool are generated as soon as `dhchap` is set. Auth
 `allowedNodes` is non-empty.
 
 Both fields belong in the manifest that creates the pool. The `StorageClass` generated for the pool only carries
-`dhchap_node_label` when `dhchap` is `true` and `allowedNodes` is non-empty at the moment the class is created, and
+`dhchap_node_selector` when `dhchap` is `true` and `allowedNodes` is non-empty at the moment the class is created, and
 `parameters` cannot be patched afterward. A pool created with `dhchap: true` and an empty `allowedNodes` therefore
 keeps an unrestricted `StorageClass` for the rest of its life, even once nodes are added to the list. Recreating the
 pool is the only way to correct this.
@@ -76,23 +76,23 @@ disconnected by the removal.
 
 ## Enforcement Through a Custom Storage Class
 
-The restriction reaches a volume through the `dhchap_node_label` parameter, whose value the CSI driver writes into the
-`nodeAffinity` of every `PersistentVolume` it provisions from the class. It applies when a node mounts the volume, not
-when the claim is bound, and the operator always sets it on the class it generates.
+The restriction reaches a volume through the `dhchap_node_selector` parameter, whose value the CSI driver writes
+into the `nodeAffinity` of every `PersistentVolume` it provisions from the class. It applies when a node mounts
+the volume, not when the claim is bound, and the operator always sets it on the class it generates.
 
-!!! warning "A custom storage class without `dhchap_node_label` is not enforced"
+!!! warning "A custom storage class without `dhchap_node_selector` is not enforced"
 
-    A `StorageClass` that names a DHCHAP pool in `pool_name` but omits `dhchap_node_label` provisions volumes with no
-    `nodeAffinity`, so no node restriction applies at all, even though the pool reports DHCHAP as enabled. A `Pod`
-    outside `allowedNodes` is scheduled and its volume is attached, and only the connection is refused, as described
-    in [Pods on a Disallowed Node](#pods-on-a-disallowed-node).
+    A `StorageClass` that names a DHCHAP pool in `pool_name` but omits `dhchap_node_selector` provisions volumes
+    with no `nodeAffinity`, so no node restriction applies at all, even though the pool reports DHCHAP as
+    enabled. A `Pod` outside `allowedNodes` is scheduled and its volume is attached, and only the connection is
+    refused, as described in [Pods on a Disallowed Node](#pods-on-a-disallowed-node).
 
 ### The Value to Set
 
 The parameter takes the label **key** the operator writes onto the pool's allowed nodes. It is not a node name, and
 it is not the label's value. The driver always matches the fixed value `allowed`. The key is derived from the pool:
 
-```plain title="Format of the dhchap_node_label value"
+```plain title="Format of the dhchap_node_selector value"
 simplyblock.io/pool.<namespace>.<storageCluster CR name>.<pool name>
 ```
 
@@ -115,7 +115,7 @@ volumeBindingMode: WaitForFirstConsumer
 parameters:
   cluster_id: <STORAGE_CLUSTER_UUID>
   pool_name: pool-a
-  dhchap_node_label: simplyblock.io/pool.simplyblock.cluster-a.pool-a
+  dhchap_node_selector: simplyblock.io/pool.simplyblock.cluster-a.pool-a
 ```
 
 Rather than deriving the key, it can be read off the cluster. Either from an allowed node:
@@ -129,7 +129,7 @@ Or from the `StorageClass` the operator already generated for the same pool, whi
 
 ```bash title="Read the key from the generated StorageClass"
 kubectl get storageclass simplyblock-<namespace>-<storageCluster CR name>-<pool name> \
-  -o jsonpath='{.parameters.dhchap_node_label}'
+  -o jsonpath='{.parameters.dhchap_node_selector}'
 ```
 
 !!! note "A wrong key is silently unsatisfiable"
@@ -137,6 +137,13 @@ kubectl get storageclass simplyblock-<namespace>-<storageCluster CR name>-<pool 
     The key is not validated against the pool. A `StorageClass` carrying a key no node holds still provisions
     volumes, but their `nodeAffinity` matches nothing, so every `Pod` consuming one stays `Pending` with
     `didn't match PersistentVolume's node affinity`. Reading the key off the cluster avoids the typo.
+
+!!! warning "`dhchap_node_label` is the deprecated name of this parameter"
+
+    The parameter was originally called `dhchap_node_label`. That name is still read, so an existing
+    `StorageClass` keeps gating its volumes, and it cannot be renamed in place because StorageClass parameters
+    are immutable, so the class has to be replaced. `dhchap_node_selector` takes precedence when a class carries
+    both, and is the only name the operator writes. Use it for anything written from now on.
 
 ## Worker Node Kernel Requirements
 
@@ -169,20 +176,20 @@ kubectl get nodes \
     -l simplyblock.io/pool.simplyblock.cluster-a.pool-a=allowed
 ```
 
-Whether the generated `StorageClass` restricts scheduling at all is visible in its `dhchap_node_label` parameter. An
+Whether the generated `StorageClass` restricts scheduling at all is visible in its `dhchap_node_selector` parameter. An
 empty result means the class was created while `allowedNodes` was empty.
 
 ```bash title="Checking the node restriction of the generated storage class"
 kubectl get storageclass simplyblock-simplyblock-cluster-a-pool-a \
-    -o jsonpath='{.parameters.dhchap_node_label}'
+    -o jsonpath='{.parameters.dhchap_node_selector}'
 ```
 
 ## Pods on a Disallowed Node
 
 The `nodeAffinity` of the `PersistentVolume` keeps a `Pod` off a node outside `allowedNodes`. If one lands there
-regardless (pinned there by a `nodeSelector`, for instance), no `nvme connect` is ever built. `NodeStageVolume` derives the host NQN of its own node
-and requests the connection information from the control plane, which rejects the unknown NQN with an HTTP `404`. The
-`Pod` stays unscheduled with a `FailedMount` event.
+regardless (pinned by a `nodeSelector`, for instance), no `nvme connect` is ever built. `NodeStageVolume` derives
+the host NQN of its own node and requests the connection information from the control plane, which rejects the
+unknown NQN with an HTTP `404`. The `Pod` stays unscheduled with a `FailedMount` event.
 
 ```plain title="Example of a FailedMount event on a node outside the allowed nodes"
 MountVolume.MountDevice failed for volume "pvc-...": rpc error: code = Internal
@@ -194,7 +201,7 @@ The node is either missing from `allowedNodes` or the pool has not converged yet
 [Verifying the Configuration](#verifying-the-configuration).
 
 See the [Operator Reference](../../../reference/operator/reference.md) for the full `StoragePool` field list, and
-[Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
+[Storage Class](../../usage/storage-class.md) for the `dhchap_node_selector` parameter this generates.
 
 For a detailed explanation of the security mechanisms and configuration, see
 [NVMe-oF Security](../../../architecture/concepts/nvmf-security.md). The equivalent flow for a plain Linux

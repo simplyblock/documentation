@@ -47,10 +47,11 @@ The CRD fields carry camel case names and are written to the StorageClass under 
 | `tune2fsReservedBlocks`        | `tune2fs_reserved_blocks`   |
 | `filesystem`                   | `csi.storage.k8s.io/fstype` |
 
-For a storage pool with `dhchap` enabled and `allowedNodes` set, `dhchap_node_label` is added by the operator as well,
-and volumes provisioned from the generated StorageClass are restricted to those nodes through their node affinity.
+For a storage pool with `dhchap` enabled and `allowedNodes` set, `dhchap_node_selector` is added by the operator
+as well, and volumes provisioned from the generated StorageClass are restricted to those nodes through their
+node affinity.
 
-!!! warning "`dhchap_node_label` enforces a DHCHAP pool's allowed nodes"
+!!! warning "`dhchap_node_selector` enforces a DHCHAP pool's allowed nodes"
 
     The CSI driver copies the value of this parameter into the `nodeAffinity` of every `PersistentVolume` it
     provisions. A hand-written StorageClass that omits it provisions volumes with no `nodeAffinity`, so no node
@@ -135,4 +136,4 @@ hand-written StorageClass that omits the parameter leaves the choice to the cont
 | encryption                | bool       | Defines if the logical volume of this storage class will be encrypted or not.                                                                                                                  | true     | false   |
 | max_namespace_per_subsys  | int        | Defines the number of namespaces per NVMe subsystem.                                                                                                                                           | true     | 1       |
 | tune2fs_reserved_blocks   | int        | Reserved-blocks percentage applied through `tune2fs -m` when the volume is staged. Left unset, tune2fs is skipped entirely.                                                                    | true     |         |
-| dhchap_node_label         | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |         |
+| dhchap_node_selector      | string     | Node label key carried by the allowed nodes of a DHCHAP pool, restricting volumes of this class to those nodes. Set by the operator from a `StoragePool`'s `dhchap` and `allowedNodes` fields. | true     |         |
