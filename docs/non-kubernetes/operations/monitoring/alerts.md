@@ -33,3 +33,18 @@ The following pre-defined alerts are available:
 
 It is possible to configure the Slack webhook for alerting during cluster creation or to modify it at a later point in
 time.
+
+## Querying Alerts Directly
+
+The pre-defined alerts above are evaluated by Grafana and pushed to a contact point. The control plane also
+exposes the currently active conditions as a REST resource, which answers what is wrong right now without going
+through Grafana:
+
+```plain title="Alerts endpoint"
+GET /api/v2/clusters/<CLUSTER_UUID>/alerts/
+```
+
+It suppresses the states an operator caused on purpose, such as a node that was shut down or a device that was
+removed, and it drops each alert as soon as the condition ends. See
+[Alerts Endpoint](../../../reference/api/alerts.md) for the full list of alert kinds, the query parameters, and
+how to forward the alerts to a Slack webhook.
