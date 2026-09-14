@@ -17,31 +17,31 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Back up and restore the FoundationDB key-value store behind the simplyblock control plane on plain Linux with the sbctl db-backup commands.">
+        <meta name="description" content="REST endpoint returning the conditions in a simplyblock cluster that currently need an operator, suppressing operator-initiated states, with Slack integration.">
       
       
-      <link rel="canonical" href="https://docs.simplyblock.io/latest/non-kubernetes/operations/data-protection/control-plane-backup/">
+      <link rel="canonical" href="https://docs.simplyblock.io/latest/reference/api/alerts/">
       
       
-        <link rel="prev" href="../asynchronous-replication/">
+        <link rel="prev" href="../">
       
       
-        <link rel="next" href="../../monitoring/">
+        <link rel="next" href="../reference/">
       
       
-      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
     
     
       
-        <title>Control-Plane Database Backup - Simplyblock Documentation</title>
+        <title>Alerts Endpoint - Simplyblock Documentation</title>
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.8608ea7d.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.8608ea7d.min.css">
       
         
-        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -66,11 +66,11 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/extra.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/extra.css">
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/swagger-theme.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/swagger-theme.css">
     
-    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -79,11 +79,11 @@
       
         <meta property="og:type" content="website">
       
-        <meta property="og:title" content="Control-Plane Database Backup - Simplyblock Documentation">
+        <meta property="og:title" content="Alerts Endpoint - Simplyblock Documentation">
       
-        <meta property="og:description" content="Back up and restore the FoundationDB key-value store behind the simplyblock control plane on plain Linux with the sbctl db-backup commands.">
+        <meta property="og:description" content="REST endpoint returning the conditions in a simplyblock cluster that currently need an operator, suppressing operator-initiated states, with Slack integration.">
       
-        <meta property="og:image" content="https://docs.simplyblock.io/26.3/assets/images/social/non-kubernetes/operations/data-protection/control-plane-backup.png">
+        <meta property="og:image" content="https://docs.simplyblock.io/26.3/assets/images/social/reference/api/alerts.png">
       
         <meta property="og:image:type" content="image/png">
       
@@ -91,25 +91,25 @@
       
         <meta property="og:image:height" content="630">
       
-        <meta property="og:url" content="https://docs.simplyblock.io/26.3/non-kubernetes/operations/data-protection/control-plane-backup/">
+        <meta property="og:url" content="https://docs.simplyblock.io/26.3/reference/api/alerts/">
       
         <meta name="twitter:card" content="summary_large_image">
       
-        <meta name="twitter:title" content="Control-Plane Database Backup - Simplyblock Documentation">
+        <meta name="twitter:title" content="Alerts Endpoint - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Back up and restore the FoundationDB key-value store behind the simplyblock control plane on plain Linux with the sbctl db-backup commands.">
+        <meta name="twitter:description" content="REST endpoint returning the conditions in a simplyblock cluster that currently need an operator, suppressing operator-initiated states, with Slack integration.">
       
-        <meta name="twitter:image" content="https://docs.simplyblock.io/26.3/assets/images/social/non-kubernetes/operations/data-protection/control-plane-backup.png">
+        <meta name="twitter:image" content="https://docs.simplyblock.io/26.3/assets/images/social/reference/api/alerts.png">
       
     
     
   
   
-    <link rel="alternate" type="text/markdown" title="Markdown (for AI agents)" href="../control-plane-backup.md">
+    <link rel="alternate" type="text/markdown" title="Markdown (for AI agents)" href="../alerts.md">
   
-  <link rel="describedby" href="../../../../llms.txt">
+  <link rel="describedby" href="../../../llms.txt">
 
-  <link href="../../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+  <link href="../../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
             html.glightbox-open { overflow: initial; height: 100%; }
             .gslide-title { margin-top: 0px; user-select: text; }
             .gslide-desc { color: #666; user-select: text; }
@@ -139,7 +139,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#configuring-the-backup-destination" class="md-skip">
+        <a href="#getting-the-current-alerts" class="md-skip">
           Skip to content
         </a>
       
@@ -161,7 +161,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="https://www.simplyblock.io" title="Simplyblock" class="md-header__button md-logo" aria-label="Simplyblock" data-md-component="logo">
       
-  <img src="../../../../assets/simplyblock-logo-horizontal.svg" alt="logo">
+  <img src="../../../assets/simplyblock-logo-horizontal.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -274,7 +274,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../.." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
     
@@ -293,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../../upgrades/upgrade-notes-r25-r26/" class="md-tabs__link">
+        <a href="../../../upgrades/upgrade-notes-r25-r26/" class="md-tabs__link">
           
   
     
@@ -313,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../../important-notes/" class="md-tabs__link">
+        <a href="../../../important-notes/" class="md-tabs__link">
           
   
     
@@ -333,7 +333,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../../architecture/" class="md-tabs__link">
+        <a href="../../../architecture/" class="md-tabs__link">
           
   
     
@@ -353,7 +353,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../../deployment-preparation/" class="md-tabs__link">
+        <a href="../../../deployment-preparation/" class="md-tabs__link">
           
   
     
@@ -373,7 +373,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../../kubernetes/" class="md-tabs__link">
+        <a href="../../../kubernetes/" class="md-tabs__link">
           
   
     
@@ -389,13 +389,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../non-kubernetes/" class="md-tabs__link">
           
   
     
@@ -415,7 +413,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../../tutorials/" class="md-tabs__link">
+        <a href="../../../tutorials/" class="md-tabs__link">
           
   
     
@@ -431,11 +429,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../../reference/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
     
@@ -455,7 +455,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../../release-notes/" class="md-tabs__link">
+        <a href="../../../release-notes/" class="md-tabs__link">
           
   
     
@@ -517,7 +517,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -581,7 +581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../upgrades/upgrade-notes-r25-r26/" class="md-nav__link">
+      <a href="../../../upgrades/upgrade-notes-r25-r26/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -641,7 +641,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../important-notes/" class="md-nav__link ">
+            <a href="../../../important-notes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -675,7 +675,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../important-notes/terminology/" class="md-nav__link">
+      <a href="../../../important-notes/terminology/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -697,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../important-notes/acronyms/" class="md-nav__link">
+      <a href="../../../important-notes/acronyms/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -719,7 +719,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../important-notes/documentation-conventions/" class="md-nav__link">
+      <a href="../../../important-notes/documentation-conventions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -741,7 +741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../important-notes/known-issues/" class="md-nav__link">
+      <a href="../../../important-notes/known-issues/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -763,7 +763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../important-notes/contributing/" class="md-nav__link">
+      <a href="../../../important-notes/contributing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -823,7 +823,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../architecture/" class="md-nav__link ">
+            <a href="../../../architecture/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -857,7 +857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/what-is-simplyblock/" class="md-nav__link">
+      <a href="../../../architecture/what-is-simplyblock/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -879,7 +879,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/simplyblock-architecture/" class="md-nav__link">
+      <a href="../../../architecture/simplyblock-architecture/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -901,7 +901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/storage-performance-and-qos/" class="md-nav__link">
+      <a href="../../../architecture/storage-performance-and-qos/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -923,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/high-availability-fault-tolerance/" class="md-nav__link">
+      <a href="../../../architecture/high-availability-fault-tolerance/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -998,7 +998,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../architecture/concepts/" class="md-nav__link ">
+            <a href="../../../architecture/concepts/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -1032,7 +1032,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/simplyblock-cluster/" class="md-nav__link">
+      <a href="../../../architecture/concepts/simplyblock-cluster/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1054,7 +1054,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/storage-pooling/" class="md-nav__link">
+      <a href="../../../architecture/concepts/storage-pooling/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1076,7 +1076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/logical-volumes/" class="md-nav__link">
+      <a href="../../../architecture/concepts/logical-volumes/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1098,7 +1098,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/nvme-namespaces-and-subsystems/" class="md-nav__link">
+      <a href="../../../architecture/concepts/nvme-namespaces-and-subsystems/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1120,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/nvmf-security/" class="md-nav__link">
+      <a href="../../../architecture/concepts/nvmf-security/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1142,7 +1142,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/persistent-volumes/" class="md-nav__link">
+      <a href="../../../architecture/concepts/persistent-volumes/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1164,7 +1164,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/external-key-management/" class="md-nav__link">
+      <a href="../../../architecture/concepts/external-key-management/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1186,7 +1186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/hyper-converged/" class="md-nav__link">
+      <a href="../../../architecture/concepts/hyper-converged/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1208,7 +1208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/disaggregated/" class="md-nav__link">
+      <a href="../../../architecture/concepts/disaggregated/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1230,7 +1230,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/snapshots-clones/" class="md-nav__link">
+      <a href="../../../architecture/concepts/snapshots-clones/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1252,7 +1252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/erasure-coding/" class="md-nav__link">
+      <a href="../../../architecture/concepts/erasure-coding/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1274,7 +1274,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/linux-block-devices/" class="md-nav__link">
+      <a href="../../../architecture/concepts/linux-block-devices/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1296,7 +1296,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/automatic-rebalancing/" class="md-nav__link">
+      <a href="../../../architecture/concepts/automatic-rebalancing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1318,7 +1318,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/volume-migration/" class="md-nav__link">
+      <a href="../../../architecture/concepts/volume-migration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1340,7 +1340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/failure-domains/" class="md-nav__link">
+      <a href="../../../architecture/concepts/failure-domains/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1362,7 +1362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../architecture/concepts/replication/" class="md-nav__link">
+      <a href="../../../architecture/concepts/replication/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1436,7 +1436,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../deployment-preparation/" class="md-nav__link ">
+            <a href="../../../deployment-preparation/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -1470,7 +1470,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment-preparation/hardware-requirements/" class="md-nav__link">
+      <a href="../../../deployment-preparation/hardware-requirements/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1492,7 +1492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment-preparation/software-requirements/" class="md-nav__link">
+      <a href="../../../deployment-preparation/software-requirements/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1514,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment-preparation/cloud-instance-recommendations/" class="md-nav__link">
+      <a href="../../../deployment-preparation/cloud-instance-recommendations/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1536,7 +1536,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment-preparation/erasure-coding-scheme/" class="md-nav__link">
+      <a href="../../../deployment-preparation/erasure-coding-scheme/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1558,7 +1558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment-preparation/cluster-deployment-options/" class="md-nav__link">
+      <a href="../../../deployment-preparation/cluster-deployment-options/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1580,7 +1580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../deployment-preparation/numa-considerations/" class="md-nav__link">
+      <a href="../../../deployment-preparation/numa-considerations/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1623,7 +1623,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../deployment-preparation/air-gap/" class="md-nav__link ">
+            <a href="../../../deployment-preparation/air-gap/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -1681,7 +1681,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../deployment-preparation/data-migration/" class="md-nav__link ">
+            <a href="../../../deployment-preparation/data-migration/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -1752,7 +1752,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/" class="md-nav__link ">
+            <a href="../../../kubernetes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -1823,7 +1823,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/installation/" class="md-nav__link ">
+            <a href="../../../kubernetes/installation/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -1857,7 +1857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/management-cluster-architecture/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/management-cluster-architecture/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1879,7 +1879,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/k8s-control-plane/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/k8s-control-plane/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1901,7 +1901,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/security/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/security/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1923,7 +1923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/k8s-storage-plane/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/k8s-storage-plane/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1945,7 +1945,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/install-csi/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/install-csi/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1967,7 +1967,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/openshift/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/openshift/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1989,7 +1989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/rancher/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/rancher/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2011,7 +2011,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/installation/talos/" class="md-nav__link">
+      <a href="../../../kubernetes/installation/talos/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2080,7 +2080,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/usage/" class="md-nav__link ">
+            <a href="../../../kubernetes/usage/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -2114,7 +2114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/storage-class/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/storage-class/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2136,7 +2136,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/provisioning/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/provisioning/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2158,7 +2158,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/volume-encryption/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/volume-encryption/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2180,7 +2180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/volume-placement/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/volume-placement/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2202,7 +2202,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/snapshotting/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/snapshotting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2224,7 +2224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/cloning/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/cloning/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2246,7 +2246,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/expanding/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/expanding/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2268,7 +2268,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/removing/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/removing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2290,7 +2290,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/usage/quality-of-service/" class="md-nav__link">
+      <a href="../../../kubernetes/usage/quality-of-service/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2355,7 +2355,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -2428,7 +2428,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/cluster/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/cluster/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -2462,7 +2462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/cluster-actions/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/cluster-actions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2484,7 +2484,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/activating-a-cluster/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/activating-a-cluster/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2506,7 +2506,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/shutting-down-a-cluster/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/shutting-down-a-cluster/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2528,7 +2528,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/starting-a-cluster/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/starting-a-cluster/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2550,7 +2550,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/restarting-a-cluster/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/restarting-a-cluster/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2572,7 +2572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/rolling-restart/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/rolling-restart/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2594,7 +2594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/cluster-upgrade/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/cluster-upgrade/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2616,7 +2616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/failure-domains/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/failure-domains/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2638,7 +2638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/cluster/node-affinity/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/cluster/node-affinity/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2707,7 +2707,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/storage-nodes/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/storage-nodes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -2741,7 +2741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/storage-node-actions/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/storage-node-actions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2763,7 +2763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/shutting-down-a-storage-node/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/shutting-down-a-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2785,7 +2785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/restarting-a-storage-node/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/restarting-a-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2807,7 +2807,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/suspending-a-storage-node/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/suspending-a-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2829,7 +2829,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/resuming-a-storage-node/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/resuming-a-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2851,7 +2851,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/replacing-a-storage-node/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/replacing-a-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2873,7 +2873,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/migrating-a-storage-node/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/migrating-a-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2895,7 +2895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/removing-a-storage-node/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/removing-a-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2917,7 +2917,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/storage-nodes/node-drain-coordination/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/storage-nodes/node-drain-coordination/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2974,7 +2974,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/volumes/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/volumes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3008,7 +3008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/volumes/volume-migration/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/volumes/volume-migration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3030,7 +3030,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/volumes/trimming/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/volumes/trimming/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3052,7 +3052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/volumes/path-loss-recovery/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/volumes/path-loss-recovery/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3107,7 +3107,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/scaling/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/scaling/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3141,7 +3141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/scaling/expanding-storage-cluster/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/scaling/expanding-storage-cluster/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3163,7 +3163,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/scaling/parallel-node-addition/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/scaling/parallel-node-addition/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3220,7 +3220,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/data-protection/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/data-protection/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3254,7 +3254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/data-protection/backup-recovery/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/data-protection/backup-recovery/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3276,7 +3276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/data-protection/asynchronous-replication/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/data-protection/asynchronous-replication/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3298,7 +3298,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/data-protection/foundationdb-backup/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/data-protection/foundationdb-backup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3359,7 +3359,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/monitoring/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/monitoring/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3393,7 +3393,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/monitoring/cluster-health/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/monitoring/cluster-health/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3415,7 +3415,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/monitoring/lvol-conditions/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/monitoring/lvol-conditions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3437,7 +3437,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/monitoring/alerts/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/monitoring/alerts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3459,7 +3459,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/monitoring/accessing-grafana/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/monitoring/accessing-grafana/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3481,7 +3481,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/monitoring/accessing-graylog/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/monitoring/accessing-graylog/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3536,7 +3536,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../kubernetes/operations/security/" class="md-nav__link ">
+            <a href="../../../kubernetes/operations/security/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3570,7 +3570,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/security/authentication-encryption/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/security/authentication-encryption/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3592,7 +3592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../kubernetes/operations/security/multi-tenancy/" class="md-nav__link">
+      <a href="../../../kubernetes/operations/security/multi-tenancy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3634,8 +3634,6 @@
       
   
   
-    
-  
   
   
     
@@ -3660,22 +3658,19 @@
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked="">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7">
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../" class="md-nav__link ">
+            <a href="../../../non-kubernetes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3687,13 +3682,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             Non-Kubernetes
@@ -3738,7 +3733,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../installation/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/installation/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3772,7 +3767,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/install-cp/" class="md-nav__link">
+      <a href="../../../non-kubernetes/installation/install-cp/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3794,7 +3789,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/install-sp/" class="md-nav__link">
+      <a href="../../../non-kubernetes/installation/install-sp/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3816,7 +3811,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/linux-block-devices/" class="md-nav__link">
+      <a href="../../../non-kubernetes/installation/linux-block-devices/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3838,7 +3833,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../installation/storage-network-multipathing/" class="md-nav__link">
+      <a href="../../../non-kubernetes/installation/storage-network-multipathing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -3889,7 +3884,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../linux-initiators/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/linux-initiators/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -3947,7 +3942,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../openstack/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/openstack/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4005,7 +4000,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../proxmox/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/proxmox/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4077,7 +4072,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../usage/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/usage/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4111,7 +4106,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/provisioning/" class="md-nav__link">
+      <a href="../../../non-kubernetes/usage/provisioning/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4133,7 +4128,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/snapshotting/" class="md-nav__link">
+      <a href="../../../non-kubernetes/usage/snapshotting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4155,7 +4150,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/cloning/" class="md-nav__link">
+      <a href="../../../non-kubernetes/usage/cloning/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4177,7 +4172,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/expanding/" class="md-nav__link">
+      <a href="../../../non-kubernetes/usage/expanding/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4199,7 +4194,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/removing/" class="md-nav__link">
+      <a href="../../../non-kubernetes/usage/removing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4221,7 +4216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/encrypting/" class="md-nav__link">
+      <a href="../../../non-kubernetes/usage/encrypting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4243,7 +4238,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../usage/quality-of-service/" class="md-nav__link">
+      <a href="../../../non-kubernetes/usage/quality-of-service/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4270,8 +4265,6 @@
                 
   
   
-    
-  
   
   
     
@@ -4301,16 +4294,16 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_7" checked="">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_7">
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4328,7 +4321,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7_7">
             <span class="md-nav__icon md-icon"></span>
             Operations
@@ -4371,7 +4364,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../cluster/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/cluster/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4405,7 +4398,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cluster/cluster-upgrade/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/cluster/cluster-upgrade/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4427,7 +4420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cluster/failure-domains/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/cluster/failure-domains/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4449,7 +4442,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cluster/node-affinity/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/cluster/node-affinity/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4510,7 +4503,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../storage-nodes/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/storage-nodes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4544,7 +4537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage-nodes/manual-restarting-nodes/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/storage-nodes/manual-restarting-nodes/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4566,7 +4559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage-nodes/replacing-storage-node/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/storage-nodes/replacing-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4588,7 +4581,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage-nodes/migrating-storage-node/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/storage-nodes/migrating-storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4610,7 +4603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage-nodes/find-secondary-node/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/storage-nodes/find-secondary-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4632,7 +4625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../storage-nodes/lblk-device-operations/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/storage-nodes/lblk-device-operations/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4693,7 +4686,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../volumes/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/volumes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4727,7 +4720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../volumes/volume-migration/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/volumes/volume-migration/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4749,7 +4742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../volumes/reconnect-nvme-device/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/volumes/reconnect-nvme-device/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4771,7 +4764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../volumes/trimming/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/volumes/trimming/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4793,7 +4786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../volumes/limiting-iops-and-throughput/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/volumes/limiting-iops-and-throughput/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4815,7 +4808,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../volumes/qos-service-classes/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/volumes/qos-service-classes/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4868,7 +4861,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../scaling/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/scaling/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4902,7 +4895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../scaling/expanding-storage-pool/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/scaling/expanding-storage-pool/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -4929,8 +4922,6 @@
                 
   
   
-    
-  
   
   
     
@@ -4952,16 +4943,16 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_7_6" checked="">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_7_6">
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/data-protection/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -4979,7 +4970,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_7_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_7_7_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7_7_6">
             <span class="md-nav__icon md-icon"></span>
             Data Protection
@@ -4995,7 +4986,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../backup-recovery/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/data-protection/backup-recovery/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5017,7 +5008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../asynchronous-replication/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/data-protection/asynchronous-replication/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5036,29 +5027,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Control-Plane Database Backup
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../non-kubernetes/operations/data-protection/control-plane-backup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5068,60 +5040,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
-      
-        <li class="md-nav__item">
-  <a href="#configuring-the-backup-destination" class="md-nav__link">
-    <span class="md-ellipsis">
-      Configuring the Backup Destination
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#automatic-backups" class="md-nav__link">
-    <span class="md-ellipsis">
-      Automatic Backups
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#manual-operations" class="md-nav__link">
-    <span class="md-ellipsis">
-      Manual Operations
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#restoring-the-control-plane-database" class="md-nav__link">
-    <span class="md-ellipsis">
-      Restoring the Control-Plane Database
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -5175,7 +5093,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../monitoring/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/monitoring/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -5209,7 +5127,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../monitoring/cluster-health/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/monitoring/cluster-health/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5231,7 +5149,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../monitoring/lvol-conditions/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/monitoring/lvol-conditions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5253,7 +5171,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../monitoring/io-stats/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/monitoring/io-stats/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5275,7 +5193,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../monitoring/alerts/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/monitoring/alerts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5297,7 +5215,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../monitoring/accessing-grafana/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/monitoring/accessing-grafana/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5319,7 +5237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../monitoring/accessing-graylog/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/monitoring/accessing-graylog/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5374,7 +5292,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../security/" class="md-nav__link ">
+            <a href="../../../non-kubernetes/operations/security/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -5408,7 +5326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../security/authentication-encryption/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/security/authentication-encryption/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5430,7 +5348,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../security/multi-tenancy/" class="md-nav__link">
+      <a href="../../../non-kubernetes/operations/security/multi-tenancy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5500,7 +5418,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../tutorials/" class="md-nav__link ">
+            <a href="../../../tutorials/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -5534,7 +5452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../tutorials/simplyblock-intro/" class="md-nav__link">
+      <a href="../../../tutorials/simplyblock-intro/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5556,7 +5474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../tutorials/openbao-kms/" class="md-nav__link">
+      <a href="../../../tutorials/openbao-kms/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5582,6 +5500,8 @@
       
   
   
+    
+  
   
   
     
@@ -5614,19 +5534,22 @@
     
     
       
+        
+        
+      
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked="">
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../reference/" class="md-nav__link ">
+            <a href="../../" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -5638,13 +5561,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Reference
@@ -5657,6 +5580,8 @@
                 
   
   
+    
+  
   
   
     
@@ -5676,16 +5601,16 @@
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_2">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9_2" checked="">
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../reference/api/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -5703,7 +5628,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_9_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9_2">
             <span class="md-nav__icon md-icon"></span>
             API / Developer SDK
@@ -5716,10 +5641,29 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../../reference/api/alerts/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Alerts Endpoint
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -5729,6 +5673,108 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#getting-the-current-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Getting the Current Alerts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#query-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query Parameters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alert-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alert Kinds
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alert Kinds">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-operator-initiated-states-are-not-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Operator-Initiated States Are Not Alerts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alerts-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alerts Resolve
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sending-alerts-to-slack" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sending Alerts to Slack
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sending Alerts to Slack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-grafana-event-log-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 1: Grafana Event Log Rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-poll-the-endpoint-and-post-to-a-slack-webhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 2: Poll the Endpoint and Post to a Slack Webhook
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -5741,7 +5787,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/api/reference/" class="md-nav__link">
+      <a href="../reference/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5810,7 +5856,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../reference/cli/" class="md-nav__link ">
+            <a href="../../cli/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -5844,7 +5890,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/storage-node/" class="md-nav__link">
+      <a href="../../cli/storage-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5866,7 +5912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/cluster/" class="md-nav__link">
+      <a href="../../cli/cluster/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5888,7 +5934,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/volume/" class="md-nav__link">
+      <a href="../../cli/volume/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5910,7 +5956,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/control-plane/" class="md-nav__link">
+      <a href="../../cli/control-plane/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5932,7 +5978,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/storage-pool/" class="md-nav__link">
+      <a href="../../cli/storage-pool/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5954,7 +6000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/snapshot/" class="md-nav__link">
+      <a href="../../cli/snapshot/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5976,7 +6022,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/backup/" class="md-nav__link">
+      <a href="../../cli/backup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -5998,7 +6044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/qos/" class="md-nav__link">
+      <a href="../../cli/qos/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6020,7 +6066,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/cli/db-backup/" class="md-nav__link">
+      <a href="../../cli/db-backup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6073,7 +6119,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../reference/operator/" class="md-nav__link ">
+            <a href="../../operator/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -6107,7 +6153,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/operator/reference/" class="md-nav__link">
+      <a href="../../operator/reference/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6158,7 +6204,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../reference/kubernetes/" class="md-nav__link ">
+            <a href="../../kubernetes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -6195,7 +6241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/limits/" class="md-nav__link">
+      <a href="../../limits/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6217,7 +6263,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/upgrade-matrix/" class="md-nav__link">
+      <a href="../../upgrade-matrix/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6239,7 +6285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/supported-linux-distributions/" class="md-nav__link">
+      <a href="../../supported-linux-distributions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6261,7 +6307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/supported-linux-kernels/" class="md-nav__link">
+      <a href="../../supported-linux-kernels/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6283,7 +6329,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/nvme-low-level-format/" class="md-nav__link">
+      <a href="../../nvme-low-level-format/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6332,7 +6378,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../reference/troubleshooting/" class="md-nav__link ">
+            <a href="../../troubleshooting/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -6366,7 +6412,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/troubleshooting/control-plane/" class="md-nav__link">
+      <a href="../../troubleshooting/control-plane/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6388,7 +6434,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/troubleshooting/storage-plane/" class="md-nav__link">
+      <a href="../../troubleshooting/storage-plane/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6410,7 +6456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../reference/troubleshooting/simplyblock-csi/" class="md-nav__link">
+      <a href="../../troubleshooting/simplyblock-csi/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6496,7 +6542,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../../release-notes/" class="md-nav__link ">
+            <a href="../../../release-notes/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -6530,7 +6576,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/26-3/" class="md-nav__link">
+      <a href="../../../release-notes/26-3/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6552,7 +6598,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/26-2/" class="md-nav__link">
+      <a href="../../../release-notes/26-2/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6574,7 +6620,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-10-5/" class="md-nav__link">
+      <a href="../../../release-notes/25-10-5/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6596,7 +6642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-10-4/" class="md-nav__link">
+      <a href="../../../release-notes/25-10-4/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6618,7 +6664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-10-3/" class="md-nav__link">
+      <a href="../../../release-notes/25-10-3/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6640,7 +6686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-10-2/" class="md-nav__link">
+      <a href="../../../release-notes/25-10-2/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6662,7 +6708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-7-6/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-6/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6684,7 +6730,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-7-5/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-5/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6706,7 +6752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-7-4/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-4/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6728,7 +6774,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-7-3/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-3/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6750,7 +6796,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-7-2/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-2/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6772,7 +6818,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-7-1/" class="md-nav__link">
+      <a href="../../../release-notes/25-7-1/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6794,7 +6840,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-6-ga/" class="md-nav__link">
+      <a href="../../../release-notes/25-6-ga/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6816,7 +6862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../release-notes/25-3-pre/" class="md-nav__link">
+      <a href="../../../release-notes/25-3-pre/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -6863,38 +6909,86 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#configuring-the-backup-destination" class="md-nav__link">
+  <a href="#getting-the-current-alerts" class="md-nav__link">
     <span class="md-ellipsis">
-      Configuring the Backup Destination
+      Getting the Current Alerts
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#automatic-backups" class="md-nav__link">
+  <a href="#query-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Automatic Backups
+      Query Parameters
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#manual-operations" class="md-nav__link">
+  <a href="#alert-kinds" class="md-nav__link">
     <span class="md-ellipsis">
-      Manual Operations
+      Alert Kinds
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Alert Kinds">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-operator-initiated-states-are-not-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Operator-Initiated States Are Not Alerts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alerts-resolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alerts Resolve
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#restoring-the-control-plane-database" class="md-nav__link">
+  <a href="#sending-alerts-to-slack" class="md-nav__link">
     <span class="md-ellipsis">
-      Restoring the Control-Plane Database
+      Sending Alerts to Slack
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Sending Alerts to Slack">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-grafana-event-log-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 1: Grafana Event Log Rules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-poll-the-endpoint-and-post-to-a-slack-webhook" class="md-nav__link">
+    <span class="md-ellipsis">
+      Option 2: Poll the Endpoint and Post to a Slack Webhook
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -6914,7 +7008,7 @@
 
 
   
-    <a href="https://github.com/simplyblock/documentation/edit/main/docs/non-kubernetes/operations/data-protection/control-plane-backup.md" title="Edit this page" class="md-content__button md-icon">
+    <a href="https://github.com/simplyblock/documentation/edit/main/docs/reference/api/alerts.md" title="Edit this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"></path></svg>
     </a>
@@ -6922,94 +7016,275 @@
   
 
 
-  <h1>Control-Plane Database Backup</h1>
+  <h1>Alerts Endpoint</h1>
 
-<p>The simplyblock control plane stores all cluster metadata — clusters, nodes, pools, volumes, snapshots, tasks — in
-a FoundationDB key-value store on the management nodes. Volume data is not affected by the loss of this database,
-but the cluster cannot be managed without it. Simplyblock therefore takes periodic backups of the control-plane
-database, which can be written to a local path or to Amazon S3.</p>
-<p>On plain Linux (Docker-based deployments), these backups are managed with the <code>sbctl db-backup</code> commands
-described here. On Kubernetes, control-plane backups are handled by the FoundationDB operator instead, see
-<a href="../../../../kubernetes/operations/data-protection/foundationdb-backup/">FoundationDB Backup and Restore</a>.</p>
-<h2 id="configuring-the-backup-destination">Configuring the Backup Destination</h2>
-<p>By default, backups are written every three hours to <code>/etc/foundationdb/backup/&lt;CLUSTER_ID&gt;</code> on the management
-node. Both the destination and the frequency can be changed:</p>
-<div class="highlight"><span class="filename">Configure a local backup path and frequency</span><pre><span></span><code>sbctl<span class="w"> </span>db-backup<span class="w"> </span>config<span class="w"> </span>&lt;CLUSTER_ID&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--backup-path<span class="w"> </span>/mnt/backup/fdb<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--backup-frequency<span class="w"> </span>3h
+<p>The cluster event log is a journal. It records what happened, keeps it, and never retracts anything. Answering
+<em>"what is wrong right now"</em> from it means reading the whole history and working out which entries still apply.</p>
+<p>The alerts endpoint answers that question directly. It returns the conditions that are true at this moment,
+suppresses the ones an operator caused on purpose, and removes each entry as soon as it stops being true.</p>
+<div class="highlight"><span class="filename">Endpoint</span><pre><span></span><code>GET /api/v2/clusters/&lt;CLUSTER_UUID&gt;/alerts/
 </code></pre></div>
-<div class="highlight"><span class="filename">Configure Amazon S3 as the backup destination</span><pre><span></span><code>sbctl<span class="w"> </span>db-backup<span class="w"> </span>config<span class="w"> </span>&lt;CLUSTER_ID&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--s3-bucket<span class="w"> </span>&lt;BUCKET_NAME&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--s3-region<span class="w"> </span>&lt;REGION&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--s3-credentials<span class="w"> </span>&lt;API_KEY&gt;:&lt;API_SECRET&gt;<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--backup-frequency<span class="w"> </span>1d
+<p>Authorization is the standard cluster header described in <a href="../">API / Developer SDK</a>.</p>
+<h2 id="getting-the-current-alerts">Getting the Current Alerts</h2>
+<p>By default, the endpoint returns only what is wrong now. Every entry has <code>status: firing</code>.</p>
+<div class="highlight"><span class="filename">What is wrong right now</span><pre><span></span><code>curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: </span><span class="nv">$CLUSTER_UUID</span><span class="s2"> </span><span class="nv">$CLUSTER_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://</span><span class="nv">$MGMT_IP</span><span class="s2">/api/v2/clusters/</span><span class="nv">$CLUSTER_UUID</span><span class="s2">/alerts/"</span>
 </code></pre></div>
+<div class="highlight"><span class="filename">Response</span><pre><span></span><code><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"node_offline:08820485-de07-42b7-b43e-1d96113db000"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"kind"</span><span class="p">:</span><span class="w"> </span><span class="s2">"node_offline"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"severity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"critical"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"firing"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"node worker-3 offline"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"cluster_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"d6e9a1c4-..."</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"node_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"08820485-de07-42b7-b43e-1d96113db000"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"device_id"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"since"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-09-12 13:46:13.930000+00:00"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"first_seen"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-09-12 13:46:19.210000+00:00"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"resolved_at"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"details"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"status"</span><span class="p">:</span><span class="w"> </span><span class="s2">"offline"</span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+<p>An empty array means nothing is wrong.</p>
+<p>The <code>id</code> is derived from the alert kind and the object it concerns, so it is stable across polls. A consumer can
+deduplicate on it without keeping any state of its own. Critical alerts sort before warnings, and firing alerts
+before resolved ones.</p>
+<h2 id="query-parameters">Query Parameters</h2>
 <table>
 <thead>
 <tr>
 <th>Parameter</th>
+<th>Type</th>
 <th>Default</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--backup-path</code></td>
-<td><code>/etc/foundationdb/backup</code></td>
-<td>Local backup directory on the management node.</td>
+<td><code>severity</code></td>
+<td><code>critical</code>/<code>warning</code></td>
+<td>all</td>
+<td>Return only alerts of this severity.</td>
 </tr>
 <tr>
-<td><code>--backup-frequency</code></td>
-<td><code>3h</code></td>
-<td>Interval between automatic backups (e.g., <code>3h</code>, <code>1d</code>).</td>
+<td><code>status</code></td>
+<td><code>firing</code>/<code>resolved</code></td>
+<td>all</td>
+<td>Return only alerts in this state.</td>
 </tr>
 <tr>
-<td><code>--s3-bucket</code></td>
+<td><code>history</code></td>
+<td>boolean</td>
+<td><code>false</code></td>
+<td>Also return alerts that have already resolved.</td>
+</tr>
+<tr>
+<td><code>history_seconds</code></td>
+<td>integer ≥ 1</td>
 <td>—</td>
-<td>Amazon S3 bucket name.</td>
-</tr>
-<tr>
-<td><code>--s3-region</code></td>
-<td>—</td>
-<td>Amazon S3 region.</td>
-</tr>
-<tr>
-<td><code>--s3-credentials</code></td>
-<td>—</td>
-<td>S3 API key and secret in the form <code>KEY:SECRET</code>.</td>
+<td>Limit the history to alerts resolved within this many seconds. Implies <code>history=true</code>.</td>
 </tr>
 </tbody>
 </table>
-<p>The local path and S3 are mutually exclusive destinations: configuring a local path clears any stored S3
-settings. When S3 is configured, access to the bucket is verified first and the configuration is rejected if the
-bucket cannot be listed with the given credentials.</p>
+<div class="highlight"><span class="filename">Only the page-worthy ones</span><pre><span></span><code>curl<span class="w"> </span>...<span class="w"> </span><span class="s2">"/api/v2/clusters/</span><span class="nv">$CLUSTER_UUID</span><span class="s2">/alerts/?severity=critical"</span>
+</code></pre></div>
+<div class="highlight"><span class="filename">Everything, including what has already resolved</span><pre><span></span><code>curl<span class="w"> </span>...<span class="w"> </span><span class="s2">"/api/v2/clusters/</span><span class="nv">$CLUSTER_UUID</span><span class="s2">/alerts/?history=true"</span>
+</code></pre></div>
+<div class="highlight"><span class="filename">What happened in the last hour</span><pre><span></span><code>curl<span class="w"> </span>...<span class="w"> </span><span class="s2">"/api/v2/clusters/</span><span class="nv">$CLUSTER_UUID</span><span class="s2">/alerts/?history_seconds=3600"</span>
+</code></pre></div>
+<div class="highlight"><span class="filename">Only the things that cleared in the last hour</span><pre><span></span><code>curl<span class="w"> </span>...<span class="w"> </span><span class="s2">"/api/v2/clusters/</span><span class="nv">$CLUSTER_UUID</span><span class="s2">/alerts/?history_seconds=3600&amp;status=resolved"</span>
+</code></pre></div>
+<p>History is bounded: resolved alerts are kept for seven days, and at most 200 entries per cluster. For anything
+older, the cluster event log holds an <code>ALERT_RAISED</code> and an <code>ALERT_RESOLVED</code> entry for every transition.</p>
+<h2 id="alert-kinds">Alert Kinds</h2>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Severity</th>
+<th>Fires when</th>
+<th>Stays quiet when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>node_offline</code></td>
+<td>critical</td>
+<td>A storage node is offline.</td>
+<td>An operator stopped it with <code>storage-node shutdown</code>.</td>
+</tr>
+<tr>
+<td><code>node_restart_hung</code></td>
+<td>critical</td>
+<td>A node has been restarting for more than three minutes.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>node_unavailable</code></td>
+<td>critical</td>
+<td>A storage node is unreachable.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>node_down</code></td>
+<td>critical</td>
+<td>A node has been down for more than 60 seconds.</td>
+<td>Another node is restarting or shutting down.</td>
+</tr>
+<tr>
+<td><code>cluster_degraded</code></td>
+<td>critical</td>
+<td>The cluster is degraded.</td>
+<td>A node was stopped by an operator.</td>
+</tr>
+<tr>
+<td><code>cluster_suspended</code></td>
+<td>critical</td>
+<td>The cluster is suspended.</td>
+<td>Never. A suspended cluster serves no I/O.</td>
+</tr>
+<tr>
+<td><code>device_unavailable</code></td>
+<td>critical</td>
+<td>A device on an <strong>online</strong> node is unavailable, failed or removed.</td>
+<td>The operator removed it, or the node itself is not online.</td>
+</tr>
+<tr>
+<td><code>node_jc_compression_error</code></td>
+<td>critical</td>
+<td>The journal reported a compression error.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>node_unrecoverable_io_error</code></td>
+<td>critical</td>
+<td>An unrecoverable I/O error (a <em>distr error</em> in the event log).</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>node_unrecoverable_jc_error</code></td>
+<td>critical</td>
+<td>An unrecoverable journal error.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>api_slow</code></td>
+<td>critical</td>
+<td>Mean control plane API request latency above 15 seconds.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>cluster_capacity_critical</code></td>
+<td>warning</td>
+<td>Absolute capacity passed <code>--cap-crit</code>.</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>cluster_provisioned_capacity_critical</code></td>
+<td>warning</td>
+<td>Provisioned capacity passed <code>--prov-cap-crit</code>.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="why-operator-initiated-states-are-not-alerts">Why Operator-Initiated States Are Not Alerts</h3>
+<p>Every condition in the table above is also produced deliberately, many times a day, by ordinary operations. An
+operator shuts a node down, so the node is offline and the cluster is degraded. A node restarts, so its peers go
+briefly down. An operator pulls a device, so the device is unavailable.</p>
+<p>An alert feed that fires on those is noise, and a noisy feed is one nobody reads. The endpoint therefore
+suppresses each of them, using the record of the operator's intent rather than guessing:</p>
+<ul>
+<li>A node stopped with <code>sbctl storage-node shutdown</code> is marked as deliberately stopped until it comes back
+  online. Neither the node nor the cluster degradation it causes raises an alert.</li>
+<li>A device removed with <code>sbctl storage-node remove-device</code> is marked as administratively removed.</li>
+<li>Device alerts are raised <strong>only for online nodes</strong>. A graceful shutdown marks every device on the node
+  unavailable on purpose, and an offline node cannot report anything meaningful about its devices. In those cases
+  the node is the alert, and one node operation must not become a storm of device alerts.</li>
+</ul>
+<p>A cluster in <code>suspended</code> is the deliberate exception: it is not serving I/O, so it alerts whatever the cause.</p>
+<h2 id="alerts-resolve">Alerts Resolve</h2>
+<p>An alert that only ever appears is a problem report with no end. Whoever was notified has no way to learn from
+the same channel that the problem is over.</p>
+<p>Each alert therefore has two transitions, and both are recorded in the cluster event log:</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Level</th>
+<th>Written when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ALERT_RAISED</code></td>
+<td>Critical or Warning</td>
+<td>A condition starts.</td>
+</tr>
+<tr>
+<td><code>ALERT_RESOLVED</code></td>
+<td>Info</td>
+<td>The same condition stops.</td>
+</tr>
+</tbody>
+</table>
+<p>Only transitions are written. A condition that persists for a week produces two event log entries, not one per
+poll.</p>
+<h2 id="sending-alerts-to-slack">Sending Alerts to Slack</h2>
+<p>Simplyblock clusters already send Grafana alerts to Slack through the contact point configured at cluster
+creation, described in <a href="../../../kubernetes/operations/monitoring/alerts/">Alerting</a>. That covers the pre-defined
+metric and event log rules. To get the alerts endpoint itself into Slack, use one of the following.</p>
+<h3 id="option-1-grafana-event-log-rules">Option 1: Grafana Event Log Rules</h3>
+<p>The endpoint writes <code>ALERT_RAISED</code> and <code>ALERT_RESOLVED</code> into the cluster event log, and Grafana can already read
+that log through a REST data source. Enable the event log rules once, from any management node:</p>
+<div class="highlight"><span class="filename">Enable the event log alert rules</span><pre><span></span><code>sbctl<span class="w"> </span>cluster<span class="w"> </span>event-alerts<span class="w"> </span>&lt;CLUSTER_UUID&gt;<span class="w"> </span>--enable
+</code></pre></div>
+<p>Alerts then reach the same Slack channel as every other Grafana alert, and no additional component is needed.
+Grafana downloads a plugin on the next restart, so it is briefly unavailable.</p>
+<h3 id="option-2-poll-the-endpoint-and-post-to-a-slack-webhook">Option 2: Poll the Endpoint and Post to a Slack Webhook</h3>
+<p>To work with the alert objects themselves, create a Slack
+<a href="https://api.slack.com/messaging/webhooks" rel="noopener" target="_blank">Incoming Webhook&nbsp;⧉</a> for the target
+channel and poll the endpoint. Each alert carries a stable <code>id</code>, so posting only the ones not already reported is
+a set difference.</p>
+<div class="highlight"><span class="filename">/usr/local/bin/simplyblock-slack-alerts.sh</span><pre><span></span><code><span class="ch">#!/usr/bin/env bash</span>
+<span class="nb">set</span><span class="w"> </span>-euo<span class="w"> </span>pipefail
+
+:<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">CLUSTER_UUID</span><span class="p">:?</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">CLUSTER_SECRET</span><span class="p">:?</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">MGMT_IP</span><span class="p">:?</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">SLACK_WEBHOOK_URL</span><span class="p">:?</span><span class="si">}</span><span class="s2">"</span>
+<span class="nv">STATE</span><span class="o">=</span>/var/lib/simplyblock/alerts.seen
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>dirname<span class="w"> </span><span class="s2">"</span><span class="nv">$STATE</span><span class="s2">"</span><span class="k">)</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span>touch<span class="w"> </span><span class="s2">"</span><span class="nv">$STATE</span><span class="s2">"</span>
+
+curl<span class="w"> </span>-fsS<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: </span><span class="nv">$CLUSTER_UUID</span><span class="s2"> </span><span class="nv">$CLUSTER_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">"https://</span><span class="nv">$MGMT_IP</span><span class="s2">/api/v2/clusters/</span><span class="nv">$CLUSTER_UUID</span><span class="s2">/alerts/?severity=critical"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | "\(.id)\t\(.message)"'</span><span class="w"> </span>&gt;<span class="w"> </span>/tmp/alerts.now
+
+<span class="c1"># New alerts: firing now, not reported last time.</span>
+comm<span class="w"> </span>-13<span class="w"> </span>&lt;<span class="o">(</span>sort<span class="w"> </span><span class="s2">"</span><span class="nv">$STATE</span><span class="s2">"</span><span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>sort<span class="w"> </span>/tmp/alerts.now<span class="o">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nv">IFS</span><span class="o">=</span><span class="s1">$'\t'</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>-r<span class="w"> </span>id<span class="w"> </span>message<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span>jq<span class="w"> </span>-n<span class="w"> </span>--arg<span class="w"> </span>t<span class="w"> </span><span class="s2">":rotating_light: </span><span class="nv">$message</span><span class="s2">"</span><span class="w"> </span><span class="s1">'{text: $t}'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>curl<span class="w"> </span>-fsS<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span>@-<span class="w"> </span><span class="s2">"</span><span class="nv">$SLACK_WEBHOOK_URL</span><span class="s2">"</span>
+<span class="k">done</span>
+
+<span class="c1"># Resolved alerts: reported last time, gone now.</span>
+comm<span class="w"> </span>-23<span class="w"> </span>&lt;<span class="o">(</span>sort<span class="w"> </span><span class="s2">"</span><span class="nv">$STATE</span><span class="s2">"</span><span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>sort<span class="w"> </span>/tmp/alerts.now<span class="o">)</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="nv">IFS</span><span class="o">=</span><span class="s1">$'\t'</span><span class="w"> </span><span class="nb">read</span><span class="w"> </span>-r<span class="w"> </span>id<span class="w"> </span>message<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span>jq<span class="w"> </span>-n<span class="w"> </span>--arg<span class="w"> </span>t<span class="w"> </span><span class="s2">":white_check_mark: resolved: </span><span class="nv">$message</span><span class="s2">"</span><span class="w"> </span><span class="s1">'{text: $t}'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="p">|</span><span class="w"> </span>curl<span class="w"> </span>-fsS<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span>-d<span class="w"> </span>@-<span class="w"> </span><span class="s2">"</span><span class="nv">$SLACK_WEBHOOK_URL</span><span class="s2">"</span>
+<span class="k">done</span>
+
+mv<span class="w"> </span>/tmp/alerts.now<span class="w"> </span><span class="s2">"</span><span class="nv">$STATE</span><span class="s2">"</span>
+</code></pre></div>
+<p>Run it on a timer, for example, every minute:</p>
+<div class="highlight"><span class="filename">Run every minute</span><pre><span></span><code>*/1<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span>*<span class="w"> </span><span class="nv">CLUSTER_UUID</span><span class="o">=</span>...<span class="w"> </span><span class="nv">CLUSTER_SECRET</span><span class="o">=</span>...<span class="w"> </span><span class="nv">MGMT_IP</span><span class="o">=</span>...<span class="w"> </span><span class="nv">SLACK_WEBHOOK_URL</span><span class="o">=</span>...<span class="w"> </span>/usr/local/bin/simplyblock-slack-alerts.sh
+</code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>A local backup path only protects against database corruption, not against the loss of the management node.
-Place it on storage that is independent of the management node, or use S3.</p>
+<p>Keep the Slack webhook URL out of the crontab itself. Anyone who can read it can post to the channel. Put it
+in a root-owned environment file and source it from the script.</p>
 </div>
-<h2 id="automatic-backups">Automatic Backups</h2>
-<p>Once configured, the control plane takes a backup automatically whenever the last one is older than the
-configured frequency. No further setup is required. Backup creation, restore, and failure events appear in the
-cluster event log.</p>
-<h2 id="manual-operations">Manual Operations</h2>
-<div class="highlight"><span class="filename">Create a backup now</span><pre><span></span><code>sbctl<span class="w"> </span>db-backup<span class="w"> </span>create<span class="w"> </span>&lt;CLUSTER_ID&gt;
-</code></pre></div>
-<div class="highlight"><span class="filename">List available backups</span><pre><span></span><code>sbctl<span class="w"> </span>db-backup<span class="w"> </span>list<span class="w"> </span>&lt;CLUSTER_ID&gt;
-</code></pre></div>
-<div class="highlight"><span class="filename">Show the status of the running backup system</span><pre><span></span><code>sbctl<span class="w"> </span>db-backup<span class="w"> </span>status
-</code></pre></div>
-<h2 id="restoring-the-control-plane-database">Restoring the Control-Plane Database</h2>
-<p>A restore replaces the complete content of the control-plane database with the backup:</p>
-<div class="highlight"><span class="filename">Restore a backup</span><pre><span></span><code>sbctl<span class="w"> </span>db-backup<span class="w"> </span>restore<span class="w"> </span>&lt;BACKUP_NAME&gt;<span class="w"> </span>&lt;CLUSTER_ID&gt;
-</code></pre></div>
-<p><code>&lt;BACKUP_NAME&gt;</code> is a backup as reported by <code>db-backup list</code>.</p>
-<div class="admonition danger">
-<p class="admonition-title">Danger</p>
-<p>The restore first <strong>clears the entire control-plane database</strong> and then loads the backup. All metadata changes
-made after the backup was taken are lost — volumes, snapshots, or nodes added since then become unknown to the
-control plane, while their data continues to exist on the storage nodes. Only restore the database as part of a
-guided disaster recovery, and never while management services are actively modifying the cluster.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>A poll interval of 30 to 60 seconds is a good default. The endpoint evaluates the cluster state on each
+request, and its alert lifecycle advances when it is polled, so a very long interval delays both the alert
+and its resolution.</p>
 </div>
 
 
@@ -7167,12 +7442,12 @@ guided disaster recovery, and never while management services are actively modif
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tracking", "navigation.path", "navigation.indexes", "navigation.top", "navigation.tabs", "navigation.tabs.link", "navigation.tabs.sticky", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.tooltips", "content.code.copy", "content.code.annotate", "content.action.edit"], "search": "../../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tracking", "navigation.path", "navigation.indexes", "navigation.top", "navigation.tabs", "navigation.tabs.link", "navigation.tabs.sticky", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.tooltips", "content.code.copy", "content.code.annotate", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.f1b6f286.min.js"></script>
       
-        <script src="../../../../assets/javascripts/cpumask-calculator.js"></script>
+        <script src="../../../assets/javascripts/cpumask-calculator.js"></script>
       
     
   
