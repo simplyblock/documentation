@@ -5591,6 +5591,8 @@
       
         
       
+        
+      
     
     
       
@@ -5631,6 +5633,28 @@
           </label>
           <ul class="md-nav__list" data-md-scrollfix="">
             
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/alerts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Alerts Endpoint
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
               
             
               
@@ -6141,6 +6165,15 @@
   <a href="#hard-per-node-object-limits" class="md-nav__link">
     <span class="md-ellipsis">
       Hard Per-Node Object Limits
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hard-per-object-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hard Per-Object Limits
     </span>
   </a>
   
@@ -6853,6 +6886,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#hard-per-object-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hard Per-Object Limits
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configured-subsystem-limit-per-node" class="md-nav__link">
     <span class="md-ellipsis">
       Configured Subsystem Limit per Node
@@ -6957,6 +6999,51 @@ max_namespace_per_subsys=64 exceeds the hard limit of 50 namespaces per subsyste
 <li>When volume placement finds no node below its subsystem limit, volume creation fails with
   <code>No nodes found with enough resources to create the LVol</code>.</li>
 </ul>
+<h2 id="hard-per-object-limits">Hard Per-Object Limits</h2>
+<p>Independent of the per-node limits, single objects are bounded in size and in how many dependants they may have:</p>
+<table>
+<thead>
+<tr>
+<th>Limit</th>
+<th style="text-align: right;">Value</th>
+<th>Applies to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Volume size</td>
+<td style="text-align: right;">70 TiB</td>
+<td>Volume creation, resize, and clone with <code>--size</code></td>
+</tr>
+<tr>
+<td>Snapshots per volume</td>
+<td style="text-align: right;">100</td>
+<td>Active (non-deleted) snapshots taken from one volume</td>
+</tr>
+<tr>
+<td>Clones per snapshot</td>
+<td style="text-align: right;">500</td>
+<td>Active (non-deleted) clones created from one snapshot</td>
+</tr>
+</tbody>
+</table>
+<p>A volume and its snapshots form one blob chain, and every snapshot deepens the chain that reads of that volume
+and of its clones must walk. The snapshot and clone limits bound that chain.</p>
+<div class="highlight"><span class="filename">Per-object limit errors</span><pre><span></span><code>Volume size 80.0 TiB exceeds the maximum of 70.0 TiB per volume
+Snapshot limit reached for volume &lt;VOLUME_ID&gt;: 100 active snapshots; the hard limit is 100 per volume. Delete snapshots before creating more
+Clone limit reached for snapshot &lt;SNAPSHOT_ID&gt;: 500 active clones; the hard limit is 500 per snapshot
+</code></pre></div>
+<p>Notes:</p>
+<ul>
+<li>The volume size limit applies to the <strong>provisioned</strong> size. It does not cap <code>--max-size</code>, the growth ceiling of a
+  thin-provisioned volume, because the command line and the CSI driver pass a large default there when no value is
+  given. Growth is bounded where it happens instead, so a resize beyond the limit is rejected.</li>
+<li>Internal snapshots taken by replication and volume migration are exempt from the snapshot limit, so a volume at
+  the limit can still be replicated and migrated. They are transient and removed by the operation that created them.</li>
+<li>Every limit that refuses an operation also raises a warning in the cluster event log, so a volume that silently
+  fails to appear can be traced. Repeated refusals of the same limit on the same object are collapsed, because a
+  retrying client would otherwise fill the log.</li>
+</ul>
 <h2 id="configured-subsystem-limit-per-node">Configured Subsystem Limit per Node</h2>
 <p>The 75-subsystem ceiling applies on top of the per-node configured maximum, set at host configuration time:</p>
 <div class="highlight"><span class="filename">Configure the maximum number of subsystems per node</span><pre><span></span><code>sbctl<span class="w"> </span>storage-node<span class="w"> </span>configure<span class="w"> </span>--max-subsys<span class="w"> </span>&lt;N&gt;<span class="w"> </span>&lt;FURTHER_OPTIONS&gt;
@@ -6972,6 +7059,10 @@ ceiling of 50:</p>
 </code></pre></div>
 <p>When a shared subsystem is full, the next volume automatically starts a new subsystem (which then counts against
 the node's subsystem limit).</p>
+<p>A shared subsystem belongs to exactly one storage pool. A namespaced volume only ever joins a subsystem whose
+volumes all belong to its own pool, and a pool fills one of its subsystems completely before a new one is opened.
+Volumes of two different pools therefore never share an NVMe-oF subsystem, which keeps a host connection to one
+pool from exposing another pool's namespaces.</p>
 <h2 id="vcpu-dependent-limits">vCPU-Dependent Limits</h2>
 <p>On top of the hard object limits, several resource limits scale with the vCPU count of the storage node:</p>
 <table>
@@ -7101,7 +7192,7 @@ nodes or clusters.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 14, 2026 18:02:44 UTC">2026-09-14</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 14, 2026 19:12:03 UTC">2026-09-14</span>
   </span>
 
     

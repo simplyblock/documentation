@@ -185,6 +185,7 @@ Every page of this documentation is available as Markdown: append `.md` to any p
 
 - [Reference](https://docs.simplyblock.io/latest/reference/index.md): Reference: Simplyblock provides multiple interfaces for managing and interacting with its distributed storage system, including the command-line interface (CLI).
 - [API / Developer SDK](https://docs.simplyblock.io/latest/reference/api/index.md): API / Developer SDK: Simplyblock offers a comprehensive API to manage and automate cluster operations.
+- [API / Developer SDK / Alerts Endpoint](https://docs.simplyblock.io/latest/reference/api/alerts.md): REST endpoint returning the conditions in a simplyblock cluster that currently need an operator, suppressing operator-initiated states, with Slack integration.
 - [API / Developer SDK / API Reference](https://docs.simplyblock.io/latest/reference/api/reference.md): Interactive Simplyblock API reference generated from OpenAPI, with endpoint details, request/response schemas, and integration-oriented examples.
 - [CLI / Command-line interface](https://docs.simplyblock.io/latest/reference/cli/index.md): CLI / Command-line interface: Simplyblock provides a feature-rich CLI (command line interface) client to manage all aspects of the storage cluster.
 - [CLI / Command-line interface / Storage Node Commands](https://docs.simplyblock.io/latest/reference/cli/storage-node.md): Aliases: sn
