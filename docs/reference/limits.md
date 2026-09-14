@@ -32,6 +32,36 @@ Notes on what counts against the limits:
 - When volume placement finds no node below its subsystem limit, volume creation fails with
   `No nodes found with enough resources to create the LVol`.
 
+## Hard Per-Object Limits
+
+Independent of the per-node limits, single objects are bounded in size and in how many dependants they may have:
+
+| Limit                | Value  | Applies to                                            |
+|----------------------|-------:|-------------------------------------------------------|
+| Volume size          | 70 TiB | Volume creation, resize, and clone with `--size`      |
+| Snapshots per volume | 100    | Active (non-deleted) snapshots taken from one volume  |
+| Clones per snapshot  | 500    | Active (non-deleted) clones created from one snapshot |
+
+A volume and its snapshots form one blob chain, and every snapshot deepens the chain that reads of that volume
+and of its clones must walk. The snapshot and clone limits bound that chain.
+
+```plain title="Per-object limit errors"
+Volume size 80.0 TiB exceeds the maximum of 70.0 TiB per volume
+Snapshot limit reached for volume <VOLUME_ID>: 100 active snapshots; the hard limit is 100 per volume. Delete snapshots before creating more
+Clone limit reached for snapshot <SNAPSHOT_ID>: 500 active clones; the hard limit is 500 per snapshot
+```
+
+Notes:
+
+- The volume size limit applies to the **provisioned** size. It does not cap `--max-size`, the growth ceiling of a
+  thin-provisioned volume, because the command line and the CSI driver pass a large default there when no value is
+  given. Growth is bounded where it happens instead, so a resize beyond the limit is rejected.
+- Internal snapshots taken by replication and volume migration are exempt from the snapshot limit, so a volume at
+  the limit can still be replicated and migrated. They are transient and removed by the operation that created them.
+- Every limit that refuses an operation also raises a warning in the cluster event log, so a volume that silently
+  fails to appear can be traced. Repeated refusals of the same limit on the same object are collapsed, because a
+  retrying client would otherwise fill the log.
+
 ## Configured Subsystem Limit per Node
 
 The 75-subsystem ceiling applies on top of the per-node configured maximum, set at host configuration time:
@@ -56,6 +86,11 @@ ceiling of 50:
 
 When a shared subsystem is full, the next volume automatically starts a new subsystem (which then counts against
 the node's subsystem limit).
+
+A shared subsystem belongs to exactly one storage pool. A namespaced volume only ever joins a subsystem whose
+volumes all belong to its own pool, and a pool fills one of its subsystems completely before a new one is opened.
+Volumes of two different pools therefore never share an NVMe-oF subsystem, which keeps a host connection to one
+pool from exposing another pool's namespaces.
 
 ## vCPU-Dependent Limits
 
