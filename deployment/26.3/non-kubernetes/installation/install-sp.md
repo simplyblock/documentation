@@ -1,0 +1,301 @@
+---
+title: "Install Storage Plane"
+description: "Install Storage Plane: The installation of a storage plane requires a functioning control plane."
+source: "https://docs.simplyblock.io/latest/non-kubernetes/installation/install-sp/"
+---
+
+# Install Storage Plane
+
+### Prerequisites
+
+Before starting the deployment, make sure that the following prerequisites as described in the
+[hardware prerequisites](../../deployment-preparation/hardware-requirements.md) and
+[software prerequisites](../../deployment-preparation/software-requirements.md) section are met.
+
+## Storage Plane Installation
+
+The installation of a storage plane requires a functioning control plane. If no control plane cluster is available yet,
+it must be installed beforehand. Jump right to the [Control Plane Installation](install-cp.md).
+
+The following examples assume two subnets are available.
+
+### Firewall Configuration (SP)
+
+Simplyblock requires a number of TCP and UDP ports to be reachable from the control and the storage network. The
+following table lists every port required for operation as a storage node.
+
+| Service              | Direction       | Hosts            | Network | Port(s)   | Protocol(s)             |
+|----------------------|-----------------|------------------|---------|-----------|-------------------------|
+| ICMP                 | ingress         | control          | Control | -         | ICMP                    |
+| storage-node-api     | ingress         | control          | Control | 5000      | TCP                     |
+| NVMf (client-target) | ingress         | client           | Storage | 4420-4499 | TCP, UDP <sup>(1)</sup> |
+| NVMf (internal)      | ingress, egress | storage          | Storage | 4420-4499 | TCP, UDP <sup>(1)</sup> |
+| storage-node-RPC     | ingress         | storage, control | Control | 8080-9044 | TCP                     |
+
+<span style="font-size: 0.8em;">
+<sup>1</sup> The NVMf port range carries both transports. NVMe-oF/TCP uses it over TCP, NVMe-oF/RDMA
+over UDP. Only the protocol of the transport in use has to be opened.
+</span>
+
+The following script opens those ports with `iptables`. No source address is enforced by it. Where a tighter rule
+set is required, the sources given in the Hosts and the Network column are applied on top.
+
+```bash title="Opening the storage node ports with iptables"
+#!/usr/bin/env bash
+
+iptables -A INPUT -p icmp -j ACCEPT
+iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
+iptables -A INPUT -p tcp --dport 4420:4499 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 4420:4499 -j ACCEPT
+iptables -A INPUT -p tcp --dport 8080:9044 -j ACCEPT
+```
+
+### Storage Node Installation
+
+Now that the network is configured, the storage node software can be installed.
+
+!!! info
+    All storage nodes can be prepared at this point, as they are added to the cluster in the next step. Therefore, it
+    is recommended to execute this step on all storage nodes before moving to the next step.
+
+Simplyblock provides a command line interface called `sbctl`. It's built in Python and requires
+Python 3 and Pip (the Python package manager) are installed on the machine. This can be achieved with `yum`.
+
+
+```bash title="Install Python and Pip"
+sudo yum -y install python3-pip pciutils nvme-cli
+```
+
+Afterward, the `sbctl` command line interface can be installed. Upgrading the CLI later on uses the
+same command.
+
+```bash title="Install Simplyblock CLI"
+sudo pip install sbctl --upgrade
+```
+
+!!! recommendation
+    Simplyblock recommends to only upgrade `sbctl` if a system upgrade is executed to prevent potential
+    incompatibilities between the running simplyblock cluster and the version of `sbctl`.
+
+At this point, a quick check with the simplyblock provided system check can reveal potential issues quickly.
+
+```bash title="Automatically check the configuration"
+curl -s -L https://install.simplyblock.io/scripts/prerequisites-sn.sh | bash
+```
+
+#### NVMe Device Preparation
+
+Simplyblock generally requires NVMe devices with support for 4K block size. This is the case for almost all Enterprise-grade NVMe devices,
+nevertheless it is recommended to ensure support before deployment.
+
+Alternatively, 512 bytes block only supporting devices can be used. However, they must provide 4K write atomiticy or 4K torn write protection.
+
+!!! warning
+    The only devices with 512 bytes block size, that are also known to support 4K torn write protection, are the NVMe devices provided by AWS.
+
+Devices must not contain active mount points under Linux. Simplyblock fails to claim devices that are mounted or otherwise marked as busy.
+
+Additionally, partitions must be removed from devices. Simplyblock can only claim unpartitioned devices. Alternatively, simplyblock can remove
+partitions during the optional formatting process as part of the deployment. However, partitioned devices will never be automatically selected.
+
+!!! danger
+    Simplyblock optionally performs a low-level format of selected devices during the deployment process.
+    This erases all data on the devices without recovery option!
+
+Use `lsblk` to identify available NVMe devices without active mount points.
+
+```plain title="Example output of lsblk"
+[demo@demo-3 ~]# sudo lsblk
+NAME        MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+sda           8:0    0   30G  0 disk
+├─sda1        8:1    0    1G  0 part /boot
+└─sda2        8:2    0   29G  0 part
+  ├─rl-root 253:0    0   26G  0 lvm  /
+  └─rl-swap 253:1    0    3G  0 lvm  [SWAP]
+nvme3n1     259:0    0  6.5G  0 disk
+nvme2n1     259:1    0   70G  0 disk
+nvme1n1     259:2    0   70G  0 disk
+nvme0n1     259:3    0   70G  0 disk
+```
+
+The example shows four NVMe devices. Three devices of 70 GiB each and one device with 6.5 GiB storage capacity.
+None of those devices have any active mount points and partitions.
+
+To find the correct LBA format (_lbaf_) for each of the devices, the `nvme` CLI can be used.
+
+```bash title="Show NVMe namespace information"
+sudo nvme id-ns /dev/nvmeXnY
+```
+
+The output depends on the NVMe device itself, but looks something like this:
+
+```plain title="Example output of NVMe namespace information"
+[demo@demo-3 ~]# sudo nvme id-ns /dev/nvme0n1
+NVME Identify Namespace 1:
+...
+lbaf  0 : ms:0   lbads:9  rp:0
+lbaf  1 : ms:8   lbads:9  rp:0
+lbaf  2 : ms:16  lbads:9  rp:0
+lbaf  3 : ms:64  lbads:9  rp:0
+lbaf  4 : ms:0   lbads:12 rp:0 (in use)
+lbaf  5 : ms:8   lbads:12 rp:0
+lbaf  6 : ms:16  lbads:12 rp:0
+lbaf  7 : ms:64  lbads:12 rp:0
+```
+
+From this output, the required _lbaf_ configuration can be found. `lbads` must be 12. Simplyblock will automatically choose `lbads: 12` with any `ms > 0` if available, as
+this significantly improves performance if DIF (data integrity checking) is used.
+
+If only `ms: 0` is available, simplyblock will use this as a fallback option.
+
+!!! warning
+    This operation needs to be repeated for each NVMe device that will be handled by simplyblock.
+
+#### Configuration and Deployment
+
+The low-level format of the devices is required only once.
+
+With all NVMe devices prepared, the storage node software can be deployed.
+
+The actual deployment process happens in three steps:
+
+- Creating the storage node configuration
+- Deploy the first stage (the storage node API)
+- Deploy the second stage (the actual storage node services). Remember that this step is performed from a control plane node.
+
+The configuration process creates the configuration file, which contains all the assignments of NVMe devices, NICs, and
+potentially available [NUMA nodes](../../deployment-preparation/numa-considerations.md). By default, simplyblock
+will configure one storage node per NUMA node.
+
+```bash title="Configure the storage node"
+sudo sbctl storage-node configure \
+  --max-subsys <MAX_SUBSYSTEMS>
+```
+
+The `--max-subsys` parameter defines the maximum number of NVMe-oF subsystems (and hence, in the default
+one-volume-per-subsystem layout, logical volumes) this node will serve. It drives the node's memory reservation
+and is capped by a hard limit of 75 subsystems per node (see [Limits](../../reference/limits.md)).
+
+```plain title="Example output of storage node configure"
+[demo@demo-3 ~]# sudo sbctl storage-node configure --nodes-per-socket=2 --max-subsys=50
+2025-05-14 10:40:17,460: INFO: 0000:00:04.0 is already bound to nvme.
+0000:00:1e.0
+0000:00:1e.0
+0000:00:1f.0
+0000:00:1f.0
+0000:00:1e.0
+0000:00:1f.0
+2025-05-14 10:40:17,841: INFO: JSON file successfully written to /etc/simplyblock/sn_config_file
+2025-05-14 10:40:17,905: INFO: JSON file successfully written to /etc/simplyblock/system_info
+True
+```
+
+A full set of the parameters for the `configure` subcommand can be found in the
+[CLI reference](../../reference/cli/storage-node.md).
+
+It is also possible to adjust the configuration file manually, e.g., to remove NVMe devices.
+After the configuration has been created, the first stage deployment can be executed.
+
+```bash title="Deploy the storage node"
+sudo sbctl storage-node deploy --ifname eth0
+```
+
+The output will look something like the following example:
+
+```plain title="Example output of a storage node deployment"
+[demo@demo-3 ~]# sudo sbctl storage-node deploy --ifname eth0
+2025-02-26 13:35:06,991: INFO: NVMe SSD devices found on node:
+2025-02-26 13:35:07,038: INFO: Installing dependencies...
+2025-02-26 13:35:13,508: INFO: Node IP: 192.168.10.2
+2025-02-26 13:35:13,623: INFO: Pulling image public.ecr.aws/simply-block/simplyblock:hmdi
+2025-02-26 13:35:15,219: INFO: Recreating SNodeAPI container
+2025-02-26 13:35:15,543: INFO: Pulling image public.ecr.aws/simply-block/ultra:main-latest
+192.168.10.2:5000
+```
+
+On a successful deployment, the last line will provide the storage node's control channel address. This should be noted
+for all storage nodes, as it is required in the next step to attach the storage node to the simplyblock storage cluster.
+
+When all storage nodes are added, it's finally time to activate the storage plane.
+
+### Attach the Storage Node to the Control Plane
+
+When all storage nodes are prepared, they can be added to the storage cluster.
+
+!!! warning
+    The following commands are executed from a management node. Attaching a storage node to a control plane is executed
+    from a management node.
+
+```bash title="Attaching a storage node to the storage plane"
+sudo sbctl storage-node add-node <CLUSTER_ID> <SN_CTR_ADDR> <MGT_IF> \
+  --data-nics <DATA_IF>[,<DATA_IF2>]
+```
+
+If separate NICs (e.g., a BOND device, or dedicated interfaces per storage VLAN) are used for storage traffic
+(no matter if in the cluster or between hosts and cluster nodes), the `--data-nics` parameter must be specified.
+Without it, the management interface carries all traffic. Multiple interfaces are given as a comma-separated
+list (e.g., `--data-nics eth1,eth2`), in which case all NVMe-oF subsystems listen on every data interface and
+connections are established once per interface. See
+[Storage Network Multipathing](storage-network-multipathing.md).
+
+!!! info
+    By default, simplyblock auto-creates small journal partitions on the NVMe data devices (a maximum of 3% of
+    the total available raw disk space). If a storage node has a separate journaling device (e.g., an SLC NVMe
+    device), pass `--enable-journal-device` to use the smallest NVMe device of the node exclusively for the
+    journal. This improves performance and prevents device sharing between the journal and the actual data
+    storage location.
+
+If the cluster was created with failure-domain support, every node must additionally be tagged with its
+failure-domain id via `--failure-domain <ID>`. See
+[Managing Failure Domains](../operations/cluster/failure-domains.md).
+
+The output will look something like the following example:
+
+```plain title="Example output of adding a storage node to the storage plane"
+[demo@demo ~]# sudo sbctl storage-node add-node 7bef076c-82b7-46a5-9f30-8c938b30e655 192.168.10.2:5000 eth0 --data-nics eth1
+2025-02-26 14:55:17,236: INFO: Adding Storage node: 192.168.10.2:5000
+2025-02-26 14:55:17,340: INFO: Instance id: 0b0c825e-3d16-4d91-a237-51e55c6ffefe
+2025-02-26 14:55:17,341: INFO: Instance cloud: None
+2025-02-26 14:55:17,341: INFO: Instance type: None
+2025-02-26 14:55:17,342: INFO: Instance privateIp: 192.168.10.2
+2025-02-26 14:55:17,342: INFO: Instance public_ip: 192.168.10.2
+2025-02-26 14:55:17,347: INFO: Node Memory info
+2025-02-26 14:55:17,347: INFO: Total: 24.3 GB
+2025-02-26 14:55:17,348: INFO: Free: 23.2 GB
+2025-02-26 14:55:17,348: INFO: Minimum required huge pages memory is : 14.8 GB
+2025-02-26 14:55:17,349: INFO: Joining docker swarm...
+2025-02-26 14:55:21,060: INFO: Deploying SPDK
+2025-02-26 14:55:31,969: INFO: adding alceml_2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
+2025-02-26 14:55:32,010: INFO: creating subsystem nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4
+2025-02-26 14:55:32,022: INFO: adding listener for nqn.2023-02.io.simplyblock:vm12:dev:2d1c235a-1f4d-44c7-9ac1-1db40e23a2c4 on IP 10.10.10.2
+2025-02-26 14:55:32,303: INFO: Connecting to remote devices
+2025-02-26 14:55:32,321: INFO: Connecting to remote JMs
+2025-02-26 14:55:32,342: INFO: Make other nodes connect to the new devices
+2025-02-26 14:55:32,346: INFO: Setting node status to Active
+2025-02-26 14:55:32,357: INFO: {"cluster_id": "3196b77c-e6ee-46c3-8291-736debfe2472", "event": "STATUS_CHANGE", "object_name": "StorageNode", "message": "Storage node status changed from: in_creation to: online", "caused_by": "monitor"}
+2025-02-26 14:55:32,361: INFO: Sending event updates, node: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5, status: online
+2025-02-26 14:55:32,368: INFO: Sending to: 37b404b9-36aa-40b3-8b74-7f3af86bd5a5
+2025-02-26 14:55:32,389: INFO: Connecting to remote devices
+2025-02-26 14:55:32,442: WARNING: The cluster status is not active (unready), adding the node without distribs and lvstore
+2025-02-26 14:55:32,443: INFO: Done
+```
+
+Repeat this process for all prepared storage nodes to add them to the storage plane.
+
+### Activate the Storage Cluster
+
+The last step, after all nodes are added to the storage cluster, is to activate the storage plane.
+
+```bash title="Storage cluster activation"
+sudo sbctl cluster activate <CLUSTER_ID>
+```
+
+The command output should look like this, and respond with a successful activation of the storage cluster
+
+```plain title="Example output of a storage cluster activation"
+[demo@demo ~]# sbctl cluster activate 7bef076c-82b7-46a5-9f30-8c938b30e655
+2025-02-28 13:35:26,053: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from unready to in_activation", "caused_by": "cli"}
+2025-02-28 13:35:26,322: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to 2f4dafb1-d610-42a7-9a53-13732459523e
+2025-02-28 13:35:31,133: INFO: Connecting remote_jm_43560b0a-f966-405f-b27a-2c571a2bb4eb to b7db725a-96e2-40d1-b41b-738495d97093
+2025-02-28 13:35:55,791: INFO: {"cluster_id": "7bef076c-82b7-46a5-9f30-8c938b30e655", "event": "STATUS_CHANGE", "object_name": "Cluster", "message": "Cluster status changed from in_activation to active", "caused_by": "cli"}
+```
