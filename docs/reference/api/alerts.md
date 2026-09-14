@@ -1,6 +1,6 @@
 ---
 title: "Alerts Endpoint"
-description: "REST endpoint returning the conditions in a simplyblock cluster that currently need an operator, with suppression of operator-initiated states and Slack integration."
+description: "REST endpoint returning the conditions in a simplyblock cluster that currently need an operator, suppressing operator-initiated states, with Slack integration."
 weight: 20100
 ---
 
