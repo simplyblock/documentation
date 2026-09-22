@@ -37,6 +37,16 @@ Once an encryption-enabled storage pool is configured, hosts can be managed usin
 {{ cliname }} storage-pool remove-host <POOL_ID> <HOST_NQN>
 ```
 
+## Initiator Kernel Requirements
+
+An initiator needs a kernel built with `CONFIG_NVME_HOST_AUTH` for DH-HMAC-CHAP, and `CONFIG_NVME_TCP_TLS` for
+TLS/PSK. These are build options rather than a kernel version requirement, and a newer kernel is not necessarily a
+supported one, as described in [NVMe-oF Security](../../../architecture/concepts/nvmf-security.md).
+
+```bash title="Check an initiator for DH-HMAC-CHAP support"
+grep -o dhchap_secret /dev/nvme-fabrics || echo "kernel has no in-band authentication support"
+```
+
 ## Connecting a Volume with Host Access Control and Encryption
 
 When connecting a volume with host access control enabled, the `--host-nqn` flag is required:
