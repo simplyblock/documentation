@@ -31,8 +31,6 @@ helm upgrade --install simplyblock -n simplyblock simplyblock/simplyblock-operat
 ```
 
 !!! important "TLS Encryption"
-    {{ experimental }}
-
     All internal control plane traffic can be encrypted with TLS. On OpenShift, the cluster's built-in certificate
     manager is used out of the box. Mutual TLS (mTLS), where components additionally authenticate each other with
     client certificates, is only works with Cert-Manager. That means that on OpenShift, the Cert-Manager must be
