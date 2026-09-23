@@ -13,8 +13,6 @@ certificate issued by the operator-managed certificate authority, which is only 
 
 ## Transport Layer Security (Mutual TLS / mTLS)
 
-{{ experimental }}
-
 Internal control-plane traffic between the control plane, the operator, and the storage-node handlers can be encrypted
 with TLS. Additionally, when mutual TLS is enabled, every component must present a valid client certificate, which
 means components authenticate each other rather than relying on network position alone.
@@ -79,8 +77,6 @@ section.
     requires `tls.provider=cert-manager` regardless of the underlying Kubernetes distribution.
 
 ## External Key Management (KMS)
-
-{{ experimental }}
 
 By default, simplyblock manages volume encryption keys internally. For environments that require stricter key handling,
 the cluster can be configured to keep the key-encryption material in an external KMS. This especially includes

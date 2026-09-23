@@ -4227,8 +4227,6 @@ helm upgrade --install simplyblock -n simplyblock simplyblock/simplyblock-operat
 ```
 
 !!! important "TLS Encryption"
-    **Experimental**{.chip-experimental}
-
     All internal control plane traffic can be encrypted with TLS. On OpenShift, the cluster's built-in certificate
     manager is used out of the box. Mutual TLS (mTLS), where components additionally authenticate each other with
     client certificates, is only works with Cert-Manager. That means that on OpenShift, the Cert-Manager must be
@@ -4263,8 +4261,6 @@ mTLS must be configured before an external KMS can be wired up: the KMS authenti
 certificate issued by the operator-managed certificate authority, which is only provisioned when mTLS is active.
 
 ## Transport Layer Security (Mutual TLS / mTLS)
-
-**Experimental**{.chip-experimental}
 
 Internal control-plane traffic between the control plane, the operator, and the storage-node handlers can be encrypted
 with TLS. Additionally, when mutual TLS is enabled, every component must present a valid client certificate, which
@@ -4330,8 +4326,6 @@ section.
     requires `tls.provider=cert-manager` regardless of the underlying Kubernetes distribution.
 
 ## External Key Management (KMS)
-
-**Experimental**{.chip-experimental}
 
 By default, simplyblock manages volume encryption keys internally. For environments that require stricter key handling,
 the cluster can be configured to keep the key-encryption material in an external KMS. This especially includes
@@ -14411,8 +14405,6 @@ users get started with simplyblock.
 <!-- source: https://docs.simplyblock.io/latest/tutorials/openbao-kms/ -->
 
 # Deploying OpenBao as a KMS
-
-**Experimental**{.chip-experimental}
 
 This tutorial deploys [OpenBao](https://openbao.org/){:target="_blank" rel="noopener"} into a Kubernetes cluster and
 wires it into simplyblock as the external key management system for volume encryption. It starts from a running

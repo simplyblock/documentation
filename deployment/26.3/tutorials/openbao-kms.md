@@ -6,8 +6,6 @@ source: "https://docs.simplyblock.io/latest/tutorials/openbao-kms/"
 
 # Deploying OpenBao as a KMS
 
-**Experimental**{.chip-experimental}
-
 This tutorial deploys [OpenBao](https://openbao.org/){:target="_blank" rel="noopener"} into a Kubernetes cluster and
 wires it into simplyblock as the external key management system for volume encryption. It starts from a running
 simplyblock cluster with mutual TLS enabled and ends with an encrypted volume whose key material is stored in OpenBao
