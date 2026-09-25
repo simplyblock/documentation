@@ -5,9 +5,9 @@ weight: 20100
 ---
 
 This tutorial deploys [OpenBao](https://openbao.org/){:target="_blank" rel="noopener"} into a Kubernetes cluster and
-wires it into simplyblock as the external key management system for volume encryption. It starts from a running
-simplyblock cluster with mutual TLS enabled and ends with an encrypted volume whose key material is stored in OpenBao
-rather than in the cluster. Plan for about 30 minutes.
+wires it into simplyblock as the external key management system for volume encryption. It starts from an installed
+Simplyblock Operator with mutual TLS enabled, before the storage cluster is created, and ends with an encrypted volume
+whose key material is stored in OpenBao rather than in the cluster. Plan for about 30 minutes.
 
 The same steps apply to [HashiCorp Vault](https://www.vaultproject.io/){:target="_blank" rel="noopener"}. The few
 places where the two differ are collected in [Using HashiCorp Vault Instead](#using-hashicorp-vault-instead) at the
@@ -25,7 +25,7 @@ end.
 
 ## Before Starting
 
-Four things have to be in place. The commands confirm each of them.
+Five things have to be in place. The commands confirm each of them.
 
 **Mutual TLS on the simplyblock cluster.** The control plane authenticates to OpenBao with a certificate from the
 operator's certificate authority, so the authority has to exist. See
@@ -55,6 +55,17 @@ kubectl get storageclass
 ```bash title="Confirming Helm is available"
 helm version --short
 ```
+
+**A storage cluster that has not been created yet.** The operator hands the KMS endpoint to the control plane only
+when it creates the storage cluster, so the endpoint has to be part of the `ClusterDeploymentConfig` before it is
+approved. An existing storage cluster cannot be moved to an external KMS. See
+[Create a Storage Cluster](../kubernetes/installation/k8s-storage-plane.md) for the discovery that produces the draft.
+
+```bash title="Confirming the deployment config is still a draft"
+kubectl -n simplyblock get clusterdeploymentconfig
+```
+
+The document to use is in phase `Draft` and has `spec.approved: false`.
 
 The namespace `vault` is used throughout, for OpenBao as well, because the upstream charts and their service names are
 built around it. A different namespace has to be carried through every DNS name below.
@@ -278,16 +289,50 @@ Leave the shell with `exit` once both engines appear.
 
 ## Step 9: Point the Cluster at OpenBao
 
-The cluster learns about the instance through one field on its `StorageCluster` resource.
+The storage cluster learns about the instance through `kms.vault.endpoint` in the cluster template of the
+`ClusterDeploymentConfig`. The expansion copies the block to `StorageCluster.spec.kms`, and the operator sends the
+endpoint to the control plane when it creates the cluster. The examples use the draft
+`discovered-initial-discovery` from [Create a Storage Cluster](../kubernetes/installation/k8s-storage-plane.md), whose
+cluster template names the cluster `production`.
 
-```bash title="Wiring the storage cluster to the OpenBao endpoint"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock --type=merge \
-    -p '{"spec": {"hashicorpVaultSettings": {"baseURL": "https://openbao.vault:8200/"}}}'
+```bash title="Adding the OpenBao endpoint to the draft deployment config"
+kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery --type=merge \
+    -p '{"spec": {"cluster": {"kms": {"vault": {"endpoint": "https://openbao.vault.svc:8200"}}}}}'
 ```
 
-The operator picks the setting up on its next reconciliation. From that point on, the encryption keys of newly created
-volumes are wrapped against the transit engine instead of being held in the cluster. Volumes that already exist keep
-their keys where they are.
+The same block, written into the manifest of the document instead:
+
+```yaml title="Cluster template of a ClusterDeploymentConfig with the OpenBao endpoint"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
+metadata:
+  name: discovered-initial-discovery
+  namespace: simplyblock
+spec:
+  approved: false
+  cluster:
+    name: production
+    # ... other cluster template fields ...
+    kms:
+      vault:
+        endpoint: "https://openbao.vault.svc:8200"
+  # ... nodeSets ...
+```
+
+With the endpoint in place, the draft is approved as usual:
+
+```bash title="Approving the deployment config"
+kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery \
+    --type=merge -p '{"spec": {"approved": true}}'
+```
+
+The endpoint must be an `http` or `https` URL whose host name resolves from the operator. Loopback and link-local
+addresses are rejected, and a refused endpoint shows up as an `InvalidConfig` event on the `StorageCluster`. From then
+on, the encryption keys of new volumes are wrapped against the transit engine instead of being held in the cluster.
+
+!!! warning "The KMS setting is immutable"
+    Once `spec.kms` is set on a `StorageCluster`, it cannot be changed or removed, and an approved
+    `ClusterDeploymentConfig` cannot be changed either. The endpoint has to be correct before approval.
 
 ## Step 10: Verify the Whole Path
 
@@ -301,8 +346,9 @@ metadata:
   name: simplyblock-encrypted
 provisioner: csi.simplyblock.io
 parameters:
-  encryption: "True"
-  pool_name: <POOL_NAME>
+  cluster_id: <CLUSTER_UUID>
+  pool_name: production-default
+  encryption: "true"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -338,12 +384,12 @@ kubectl -n vault exec openbao-0 -- \
     bao list simplyblock/transit/keys
 ```
 
-The cluster UUID comes from `kubectl get storagecluster simplyblock-cluster -n simplyblock -o jsonpath='{.status.uuid}'`.
-An entry per encrypted volume and a `pool-<POOL_UUID>` key mean the path works end to end. An empty listing means the
+The cluster UUID comes from `kubectl get storagecluster production -n simplyblock -o jsonpath='{.status.uuid}'`. The
+example uses the default pool of the cluster, `production-default`. An entry per encrypted volume and a `pool-<POOL_UUID>` key mean the path works end to end. An empty listing means the
 control plane never reached the instance, and the reason is in its log:
 
 ```bash title="Reading the control plane log after a failed key operation"
-kubectl logs -n simplyblock deploy/simplyblock-operator
+kubectl logs -n simplyblock deploy/simplyblock-webappapi
 ```
 
 Delete the claim and the storage class once the check is done.
@@ -362,8 +408,8 @@ Vault is configured identically and differs in four places:
   `vault-server-tls`.
 - **The commands.** The binary is `vault` rather than `bao`, the address variable is `VAULT_ADDR`, the token variable
   is `VAULT_TOKEN`, and the pod is `vault-0`.
-- **The endpoint.** The service is `https://vault.vault:8200/`, which is what `spec.hashicorpVaultSettings.baseURL`
-  then carries.
+- **The endpoint.** The service is `https://vault.vault.svc:8200`, which is what `spec.cluster.kms.vault.endpoint`
+  of the `ClusterDeploymentConfig` then carries.
 
 ```bash title="Installing Vault into the vault namespace"
 helm repo add hashicorp https://helm.releases.hashicorp.com
@@ -379,5 +425,5 @@ helm install vault hashicorp/vault \
 - [External Key Management](../architecture/concepts/external-key-management.md) explains the two key layers and what
   separation of duty the setup buys.
 - [Securing the Control Plane](../kubernetes/installation/security.md#external-key-management-kms) is the reference
-  for the `StorageCluster` field and the behavior of existing volumes.
+  for the `kms` block and its immutability.
 - [Volume Encryption](../kubernetes/usage/volume-encryption.md) covers encrypting volumes through a `StorageClass`.
