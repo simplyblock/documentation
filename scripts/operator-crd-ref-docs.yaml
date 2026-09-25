@@ -8,3 +8,9 @@ processor:
 render:
   showExampleYAML: true
   kubernetesVersion: 1.36
+  knownTypes:
+    # The state-machine snapshot every *Ops status carries is declared in
+    # atlas-lib, outside the scanned API packages, so it is linked, not rendered.
+    - name: KubeSnapshot
+      package: github.com/simplyblock/atlas/statemachine
+      link: https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go
