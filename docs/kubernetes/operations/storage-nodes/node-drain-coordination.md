@@ -1,132 +1,115 @@
 ---
 title: "Coordinated Worker Node Drain"
-description: "How the Simplyblock operator automatically protects storage availability during Kubernetes node maintenance such as cordon, drain, and rolling OS upgrades."
+description: "How the Simplyblock Operator protects storage availability with a HostMaintenance operation when a Kubernetes worker is cordoned and drained."
 weight: 10250
 ---
 
-When a Kubernetes worker node is cordoned or drained, for example, during a rolling OS upgrade or node replacement,
-the Simplyblock Operator automatically coordinates the shutdown and restart of the backend storage node running on
-that worker. No manual intervention is required.
+When a Kubernetes worker is cordoned or drained, for example, during a rolling OS upgrade, the Simplyblock Operator
+takes the storage node on that worker down gracefully, lets the drain proceed, and brings the node back once the
+worker returns. The sequence is a `StorageNodeOps` with the action `HostMaintenance`, which the operator raises on its
+own. No manual intervention is required.
 
 This is a temporary absence, after which the storage node returns to the same worker. Taking a node out of the
-cluster for good is a different operation, described in
-[Removing a Storage Node](removing-a-storage-node.md).
+cluster for good is a different operation, described in [Removing a Storage Node](removing-a-storage-node.md).
 
-Concurrency is controlled by `StorageCluster.spec.maxFaultTolerance`. It defines the at-most number of Kubernetes
-workers that can be drained at the same time. This prevents the cluster from entering a degraded state during bulk
-maintenance operations and restarting cycles.
+## How It Is Triggered
 
-## How It Works
+The operator watches the Kubernetes nodes. When the worker of a registered storage node is cordoned, it creates a
+`StorageNodeOps` named `<storage-node>-maintenance` with the action `HostMaintenance`, owned by the `StorageNode`. A
+worker that hosts several storage nodes gets one operation per node.
 
-When the operator detects that a worker node has become cordoned, it executes the following sequence:
+```bash title="Cordoning and draining a worker"
+kubectl cordon worker-1.example.com
+kubectl drain worker-1.example.com --ignore-daemonsets --delete-emptydir-data
+```
 
-1. Creates a `PodDisruptionBudget` to prevent premature pod eviction.
-2. Calls the simplyblock shutdown API for the backend storage node and wait until `offline`.
-3. Relaxes the `PodDisruptionBudget` to allow pod eviction. Kubernetes can now drain the worker.
-4. Waits for the worker to return to a ready, uncordoned state.
-5. Calls the simplyblock restart API and wait until the storage nodes are `online` and cluster `rebalancing` is `false`.
-6. Marks drain coordination `complete` and remove the `PodDisruptionBudget`.
+```bash title="Following the maintenance window"
+kubectl get storagenodeops simplyblock-cluster-worker-1-0-maintenance -n simplyblock -o wide -w
+```
+
+A `HostMaintenance` operation can also be created by hand, and it then behaves identically, which is useful for
+testing the flow without cordoning anything.
 
 !!! warning
-    If another worker is already in the drain window and `maxFaultTolerance` would be exceeded, the operator holds
-    the new worker in the `detected` phase until an in-progress drain completes to ensure that the cluster remains
-    available and connection loss is mitigated.
+    The operator raises the operation only if no object named `<storage-node>-maintenance` exists yet. A completed
+    maintenance record is therefore deleted before the next maintenance window of the same worker, otherwise that
+    window is not coordinated.
 
-## Drain Phases
+    ```bash title="Deleting the record of a completed maintenance window"
+    kubectl delete storagenodeops simplyblock-cluster-worker-1-0-maintenance -n simplyblock
+    ```
 
-Each worker being drained progresses through the following phases, tracked in
-`StorageNodeSet.status.drainCoordination`:
+## Steps
 
-| Phase             | Description                                                                   |
-|-------------------|-------------------------------------------------------------------------------|
-| `detected`        | Worker is cordoned. Waiting for a drain slot within `maxFaultTolerance`.      |
-| `shutdown_called` | Backend shutdown API has been called. Waiting for `offline`.                  |
-| `draining`        | Shutdown confirmed. `PodDisruptionBudget` relaxed. Kubernetes may evict pods. |
-| `restart_called`  | Worker is back. Backend restart API has been called. Waiting for `online`.    |
-| `complete`        | Node is back online and cluster rebalancing has finished.                     |
-| `failed`          | An unrecoverable error occurred. Manual intervention may be required.         |
+| Step           | Deadline   | Description                                                                                                 |
+|----------------|------------|-------------------------------------------------------------------------------------------------------------|
+| `Holding`      | 6 hours    | Waits for a maintenance slot, so that no more workers than allowed are in maintenance at once.              |
+| `ShuttingDown` | 15 minutes | Blocks the eviction of the storage-node pod with a `PodDisruptionBudget`, then shuts the backend node down. |
+| `Releasing`    | 15 minutes | Relaxes the budget, so that the drain can evict the pod, and waits until the pod is gone.                   |
+| `AwaitingHost` | 4 hours    | Waits until the storage-node API on the worker answers again after the reboot.                              |
+| `Restarting`   | 45 minutes | Restarts the backend node, and waits until it is `online`.                                                  |
+| `Cleanup`      | 5 minutes  | Removes the disruption budgets the window put in place.                                                     |
 
-## Monitoring Drain State
+The `PodDisruptionBudget` runs backward from the usual one. It allows no disruption and is created before the
+shutdown, so that `kubectl drain` blocks on the storage-node pod while the backend node is being taken down
+gracefully. Relaxing it in `Releasing` is what lets the drain proceed. On a hyper-converged worker, the operator also
+protects its own pod in the same way until `Releasing`, so that the drain cannot evict the operator before the storage
+node is safely offline.
 
-The progress of the drain coordination can be monitored using the `StorageNodeSet` custom resource.
+`spec.force` and `spec.reattachVolume` of the operation apply to the restart in `Restarting`.
 
-```bash title="Inspecting drain coordination status"
-kubectl get storagenodeset simplyblock-node -n simplyblock \
-  -o jsonpath='{.status.drainCoordination}' | jq .
-```
+!!! note
+    If the worker does not come back within the four hours of `AwaitingHost`, the operation fails and the node stays
+    offline. It is then recovered with a [Restart](restarting-a-storage-node.md) once the worker is back.
 
-```bash title="Streaming live changes"
-kubectl get storagenodeset simplyblock-node -n simplyblock -w
-```
+## Concurrent Maintenance Windows
 
-## Configuring Concurrent Worker Restarts
+How many workers may be in maintenance at the same time is capped by the `StorageCluster`. A window that has passed
+`Holding` holds a slot, counted by distinct worker, so the storage nodes of a multi-socket worker share one slot. A
+window that has to wait holds in `Holding` with a `MaintenanceQueued` event, and it continues once a slot frees up.
 
-To control the number of workers that can be simultaneously drained, the property `spec.maxConcurrentWorkerRestarts` on the
-`StorageCluster` resource can be configured.
+| Field                                | Description                                                                         |
+|--------------------------------------|-------------------------------------------------------------------------------------|
+| `spec.maxConcurrentWorkerRestarts`   | The number of workers that may be in maintenance at once. Minimum `1`, default `1`. |
+| `status.maxFaultTolerance`           | The fault tolerance the control plane reports for the cluster.                      |
+| `status.maxConcurrentWorkerRestarts` | The effective cap: the smaller of the two values above.                             |
 
-```yaml title="Example: allow one worker in the drain window at a time"
-spec:
-  maxConcurrentWorkerRestarts: 1
-```
-
-A value of `1` is the safest default. The safe-maximum of this value depends on the selected erasure coding scheme and
-replication factor. It reflects the maximum number of toleratable simultaneous node outages without connection loss and
-traffic interruption.
-
-## Pinned Volume Migration During Node Removal
-
-By default, a PVC annotated with `simplyblock.io/selected-storage-node` blocks node drain. When draining a node (via a
-`StorageNodeOps` with `action: remove`), the operator will not migrate a pinned volume and will instead emit a
-`PinnedVolumeBlocking` event until the annotation is removed.
-
-**User-directed placement** specifies exactly which node the volume should migrate _to_ during drain
-by setting the annotation value to the target storage node UUID. The operator then migrates the volume to that
-specific node instead of blocking.
-
-### Specifying a Migration Target
-
-Set the annotation value to the target `StorageNode` UUID before triggering drain:
-
-```bash title="Pin a PVC to a specific target node for migration"
-kubectl annotate pvc <pvc-name> -n <namespace> \
-  simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
-```
-
-Find the available storage node UUIDs with:
-
-```bash title="List storage node UUIDs"
-kubectl get storagenodeset simplyblock-node -n simplyblock \
-  -o jsonpath='{.status.nodes[*].uuid}' | tr ' ' '\n'
-```
-
-Once annotated, trigger the drain as usual:
-
-```bash title="Remove the node"
-kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNodeOps
+```yaml title="Example of allowing two workers in maintenance at a time"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageCluster
 metadata:
-  name: drain-worker-1
+  name: simplyblock-cluster
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: remove
-EOF
+  maxConcurrentWorkerRestarts: 2
 ```
 
-The operator will migrate the volume to the specified target instead of blocking.
+```bash title="Reading the effective number of concurrent maintenance windows"
+kubectl get storagecluster simplyblock-cluster -n simplyblock \
+    -o jsonpath='{.status.maxConcurrentWorkerRestarts}{" of ftt="}{.status.maxFaultTolerance}{"\n"}'
+```
 
-### Annotation Rules
+A value of `1` is the safest setting. The effective value never exceeds the number of simultaneous node outages the
+erasure coding scheme of the cluster tolerates, so a higher setting only takes effect on a cluster that can afford it.
 
-| Annotation value                                                  | Drain behavior                                              |
-|-------------------------------------------------------------------|-------------------------------------------------------------|
-| A valid storage node UUID (different from the node being drained) | Volume is migrated to that node, drain proceeds             |
-| Empty string                                                      | Drain is blocked, a `PinnedVolumeBlocking` event is emitted |
-| A non-UUID value                                                  | Drain is blocked, a `PinnedVolumeBlocking` event is emitted |
-| The UUID of the node being drained                                | Drain is blocked, a `PinnedVolumeBlocking` event is emitted |
+Like the other node operations, a maintenance window also holds with a `ClusterNotReady` event while the cluster is not
+`active` or is rebalancing.
 
-A `PinnedVolumeBlocking` event names the affected PVC and states exactly what to fix:
+## Aborting a Maintenance Window
 
-```bash title="Check for pinned volume blocking events"
-kubectl get events -n simplyblock --field-selector reason=PinnedVolumeBlocking
+A maintenance window can be aborted only in `Holding`, before the node has been taken down. From `ShuttingDown`
+onward, the node is going down for a reboot that nothing else brings it back from, so an abort is not honored, and the
+webhook refuses deleting the operation until it is terminal.
+
+## Monitoring Maintenance Windows
+
+```bash title="Listing the maintenance windows of a namespace"
+kubectl get storagenodeops -n simplyblock \
+    -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeRef,ACTION:.spec.action,PHASE:.status.phase,STEP:.status.step.state \
+    | grep -E 'NAME|HostMaintenance'
+```
+
+```bash title="Checking for queued maintenance windows"
+kubectl get events -n simplyblock \
+    --field-selector reason=MaintenanceQueued
 ```

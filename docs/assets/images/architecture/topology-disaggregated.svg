@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="552" viewBox="0 0 960 552" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">Disaggregated deployment</title>
+<defs>
+<marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="551" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">Disaggregated deployment</text>
+<rect x="24" y="72" width="380" height="360" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="38" y="94" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Compute Kubernetes cluster</text>
+<rect x="556" y="72" width="380" height="360" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="570" y="94" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Storage Kubernetes cluster</text>
+<rect x="40" y="104" width="150" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="115" y="126.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI controller</text>
+<rect x="572" y="104" width="140" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="642" y="126.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Control plane</text>
+<rect x="728" y="104" width="192" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="824" y="126.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
+<path d="M190,122 L572,122" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="318.8" y="112" width="124.4" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="381" y="126.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">provisioning API</text>
+<rect x="40" y="160" width="348" height="76" rx="10" fill="#ffffff" stroke="#afb8c1" stroke-width="1.5"/>
+<text x="54" y="182" font-size="13" font-weight="600" fill="#57606a" text-anchor="start">Worker node 1</text>
+<rect x="56" y="192" width="80" height="36" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="96" y="214.5" font-size="13" font-weight="600" fill="#1b5e20" text-anchor="middle">Apps</text>
+<rect x="264" y="192" width="108" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="318" y="214.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI node</text>
+<rect x="572" y="160" width="348" height="76" rx="10" fill="#ffffff" stroke="#afb8c1" stroke-width="1.5"/>
+<text x="586" y="182" font-size="13" font-weight="600" fill="#57606a" text-anchor="start">Storage node 1</text>
+<rect x="588" y="192" width="132" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="654" y="214.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage pod</text>
+<rect x="730" y="192" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="757" y="214.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<rect x="792" y="192" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="819" y="214.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<rect x="854" y="192" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="881" y="214.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<path d="M372,210 L588,210" fill="none" stroke="#3949ab" stroke-width="2" marker-start="url(#arr-sb)" marker-end="url(#arr-sb)"/>
+<rect x="40" y="252" width="348" height="76" rx="10" fill="#ffffff" stroke="#afb8c1" stroke-width="1.5"/>
+<text x="54" y="274" font-size="13" font-weight="600" fill="#57606a" text-anchor="start">Worker node 2</text>
+<rect x="56" y="284" width="80" height="36" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="96" y="306.5" font-size="13" font-weight="600" fill="#1b5e20" text-anchor="middle">Apps</text>
+<rect x="264" y="284" width="108" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="318" y="306.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI node</text>
+<rect x="572" y="252" width="348" height="76" rx="10" fill="#ffffff" stroke="#afb8c1" stroke-width="1.5"/>
+<text x="586" y="274" font-size="13" font-weight="600" fill="#57606a" text-anchor="start">Storage node 2</text>
+<rect x="588" y="284" width="132" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="654" y="306.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage pod</text>
+<rect x="730" y="284" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="757" y="306.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<rect x="792" y="284" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="819" y="306.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<rect x="854" y="284" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="881" y="306.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<path d="M372,302 L588,302" fill="none" stroke="#3949ab" stroke-width="2" marker-start="url(#arr-sb)" marker-end="url(#arr-sb)"/>
+<rect x="446.4" y="292" width="67.2" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="480" y="306.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">NVMe/TCP</text>
+<rect x="40" y="344" width="348" height="76" rx="10" fill="#ffffff" stroke="#afb8c1" stroke-width="1.5"/>
+<text x="54" y="366" font-size="13" font-weight="600" fill="#57606a" text-anchor="start">Worker node 3</text>
+<rect x="56" y="376" width="80" height="36" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="96" y="398.5" font-size="13" font-weight="600" fill="#1b5e20" text-anchor="middle">Apps</text>
+<rect x="264" y="376" width="108" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="318" y="398.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI node</text>
+<rect x="572" y="344" width="348" height="76" rx="10" fill="#ffffff" stroke="#afb8c1" stroke-width="1.5"/>
+<text x="586" y="366" font-size="13" font-weight="600" fill="#57606a" text-anchor="start">Storage node 3</text>
+<rect x="588" y="376" width="132" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="654" y="398.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage pod</text>
+<rect x="730" y="376" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="757" y="398.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<rect x="792" y="376" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="819" y="398.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<rect x="854" y="376" width="54" height="36" rx="6" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="881" y="398.5" font-size="13" font-weight="600" fill="#424a53" text-anchor="middle">NVMe</text>
+<path d="M372,394 L588,394" fill="none" stroke="#3949ab" stroke-width="2" marker-start="url(#arr-sb)" marker-end="url(#arr-sb)"/>
+<rect x="556" y="446" width="380" height="36" rx="8" fill="none" stroke="#8c959f" stroke-width="1.25" stroke-dasharray="4 4"/>
+<text x="746" y="469" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle" font-style="italic">or: dedicated node pool in the same cluster</text>
+<line x1="24" y1="508" x2="936" y2="508" stroke="#d0d7de" stroke-width="1"/>
+<rect x="24" y="519" width="20" height="14" rx="3" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.25"/>
+<text x="52" y="530.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">Kubernetes cluster</text>
+<rect x="198.70000000000002" y="519" width="20" height="14" rx="3" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="226.7" y="530.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">simplyblock</text>
+<rect x="323.35" y="519" width="20" height="14" rx="3" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="351.35" y="530.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">apps</text>
+<rect x="397.95000000000005" y="519" width="20" height="14" rx="3" fill="#ffffff" stroke="#8c959f" stroke-width="1.25"/>
+<text x="425.95" y="530.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">NVMe device</text>
+<path d="M522.6,526 L548.6,526" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)" fill="none"/>
+<text x="556.6" y="530.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">control</text>
+<path d="M624.6500000000001,526 L650.6500000000001,526" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)" fill="none"/>
+<text x="658.65" y="530.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">NVMe/TCP</text>
+</svg>

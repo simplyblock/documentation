@@ -1,162 +1,160 @@
 ---
 title: "Removing a Storage Node"
-description: "Drain and remove a simplyblock storage node with the remove action, which evacuates its volumes onto the remaining nodes before the node leaves the cluster."
+description: "Drain and remove a simplyblock storage node with a Remove operation, which evacuates its volumes onto the remaining nodes before the node leaves the cluster."
 weight: 10240
 ---
 
-The `remove` action of a `StorageNodeOps` resource takes a storage node out of the cluster. It is a drain, not a
+The `Remove` action of a `StorageNodeOps` resource takes a storage node out of the cluster. It is a drain, not a
 delete: the node's volumes are migrated onto the remaining nodes first, and only an empty node is removed. The
-operation runs through five sub-phases and reports how far the evacuation has progressed.
+operation runs through five steps and reports how far the evacuation has progressed.
 
-!!! danger
-    A storage node that is removed without being drained makes the logical volumes it owns inaccessible. The `remove`
+!!! warning
+    A storage node that is removed without being drained makes the logical volumes it owns inaccessible. The `Remove`
     action is the only supported way to take a node out of a cluster. To move a node to a different host instead, use
     [Migrating a Storage Node](migrating-a-storage-node.md), which keeps the node and its volumes.
 
 ## Requesting a Removal
 
-```bash title="Removing a storage node"
-kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+A removal is requested either with a `StorageNodeOps` or by deleting the `StorageNode` resource.
+
+```yaml title="Example of a node removal (remove-node.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
-  name: drain-worker-1
+  name: remove-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: remove
-EOF
+  nodeRef: simplyblock-cluster-worker-1-0
+  action: Remove
 ```
 
-The name of the target `StorageNode` is read from the cluster, as described in
-[Storage Node Actions](storage-node-actions.md#finding-the-target-node).
+```bash title="Removing a storage node"
+kubectl apply -f remove-node.yaml
+```
 
-| Field                           | Type   | Default               | Description                                                                            |
-|---------------------------------|--------|-----------------------|----------------------------------------------------------------------------------------|
-| `drain.systemVolumeFilterRegex` | string | `^sb-fio-baseline-.*` | Go regular expression matched against backend volume names to identify system volumes. |
+| Field                                 | Type   | Default               | Description                                                                            |
+|---------------------------------------|--------|-----------------------|----------------------------------------------------------------------------------------|
+| `spec.remove.systemVolumeFilterRegex` | string | `^sb-fio-baseline-.*` | Go regular expression matched against backend volume names to identify system volumes. |
 
-A removal always runs unforced, so `spec.force` has no effect on it.
+### Deleting the StorageNode
 
-## Sub-Phases
+Deleting a `StorageNode` that is registered with the control plane does not delete the backend node directly. The
+operator raises a `StorageNodeOps` named `<storage-node>-remove` with the action `Remove`, owned by the node, and holds
+the finalizer of the `StorageNode` until that operation has reached a terminal phase. A `StorageNode` that never
+received a backend UUID is deleted at once.
 
-The removal progresses through the sub-phases below, tracked in `status.subPhase` while `status.phase` is `Running`.
+```bash title="Removing a storage node by deleting it"
+kubectl delete storagenode simplyblock-cluster-worker-1-0 -n simplyblock --wait=false
+kubectl get storagenodeops simplyblock-cluster-worker-1-0-remove -n simplyblock -w
+```
 
-| Sub-phase    | Description                                                                      |
-|--------------|----------------------------------------------------------------------------------|
-| `Validating` | The node's volumes are classified and the preconditions for a drain are checked. |
-| `Suspending` | The node is suspended so that no new volume is placed on it.                     |
-| `Migrating`  | The volumes are migrated off the node, one `VolumeMigration` per volume.         |
-| `Verifying`  | The node is confirmed empty, and the system volumes left on it are deleted.      |
-| `Removing`   | The empty node is deleted from the cluster.                                      |
+A removal that fails leaves the operation as the record of why, and the `StorageNode` is released anyway, so the object
+is not held by a drain nobody retries.
+
+## Steps
+
+The removal walks the steps below, tracked in `status.step.state` while `status.phase` is `Running`.
+
+| Step               | Deadline   | Description                                                                      |
+|--------------------|------------|----------------------------------------------------------------------------------|
+| `Validating`       | 24 hours   | The node's volumes are classified and the preconditions for a drain are checked. |
+| `Suspending`       | 15 minutes | The node is suspended so that no new volume is placed on it.                     |
+| `MigratingVolumes` | 12 hours   | The volumes are migrated off the node, one `PersistentVolumeOps` per volume.     |
+| `Verifying`        | 30 minutes | The system volumes are deleted, and the node is confirmed empty.                 |
+| `Removing`         | 30 minutes | The empty node is removed from the cluster.                                      |
+
+Unlike the other node operations, a removal runs whatever the state of the cluster, since removing a node is sometimes
+what makes an unready cluster ready again. A node that the control plane no longer knows counts as removed, so every
+step succeeds at once for a node that is already gone.
 
 ### Validating
 
-Every volume the backend reports on the node is sorted into one of three groups. A volume whose name matches the
-system volume filter is ignored entirely. A volume that has a `PersistentVolume` is migratable. A volume without one is
-unmanaged, for example, because it was created outside Kubernetes.
+Every volume the control plane reports on the node is sorted into one of four groups.
 
-The drain does not start while any volume blocks it:
+- **System:** The volume name matches `spec.remove.systemVolumeFilterRegex`. It is skipped by the migration and deleted
+  in `Verifying`.
+- **Managed:** A `PersistentVolume` accounts for the volume. It is migrated.
+- **Pinned:** The claim of the volume carries the `storage.simplyblock.io/selected-storage-node` annotation. It blocks
+  the drain.
+- **Unmanaged:** No `PersistentVolume` accounts for the volume, for example, because it was created outside Kubernetes.
+  It blocks the drain.
 
-- **Pinned volume:** A PVC carrying the `simplyblock.io/selected-storage-node` annotation. A `PinnedVolumeBlocking`
-  event names how many are affected, and the annotation has to be removed for the drain to proceed. See
-  [Pinned Volumes](../volumes/volume-migration.md#pinned-volumes).
-- **Unmanaged volume:** A volume without a `PersistentVolume`. An `UnmanagedVolumeBlocking` event is emitted, and the
-  volume has to be removed by hand.
+While any volume blocks, the step holds with a `DrainBlocked` warning that names the volumes and what to do about them.
+The node is not suspended yet, so it stays fully in service while the blocker is resolved. A pinned volume is resolved
+by removing the annotation, or by changing it to the UUID of another storage node, which moves the volume there. An
+unmanaged volume has to be removed by hand. See [Automatic Volume Placement](../../usage/volume-placement.md) for
+pinning.
 
-Both checks are rechecked every 60 seconds, so a drain that is blocked resumes on its own once the cause is cleared.
+At the end of the step, the number of managed volumes is written to `status.drain.volumesTotal`.
 
 ### Suspending
 
 The node is suspended, which stops new volumes from being placed on it while its existing ones are moved. A node that
-is already suspended is not asked again. The phase holds until the backend confirms the suspension, emitting
-`DrainSuspendPending` while it waits.
+is already suspended or offline is not asked again.
 
-### Migrating
+### MigratingVolumes
 
-One `VolumeMigration` resource is created per migratable volume, labeled with the UUID of the node being drained and
-owned by the `StorageNodeOps`. Targets are assigned round-robin across the online nodes of the cluster, excluding the
-node being drained, so the evacuated volumes spread rather than landing on one node.
+One cluster-scoped `PersistentVolumeOps` with the action `Migrate` is created per managed volume. It is labeled
+`storage.simplyblock.io/drain-node` with the UUID of the node being drained, and it names the removal in its
+`spec.creatorRef`. Targets are spread round-robin across the online peers of the node, so the evacuated volumes do not
+land on one node.
 
-Progress is counted in the operation status.
-
-```bash title="Watching the evacuation progress"
-kubectl get storagenodeops drain-worker-1 -n simplyblock \
-    -o jsonpath='{.status.subPhase}{" migrated="}{.status.volumesMigrated}{" pending="}{.status.volumesPending}{"\n"}' -w
+```bash title="Listing the volume migrations of a drain"
+kubectl get persistentvolumeops \
+    -l storage.simplyblock.io/drain-node=82198a36-fcbb-43e3-949c-0260bf40f0ac
 ```
 
-A migration that fails or is aborted is deleted and created again, which picks a new target, and a `MigrationRetry`
-event records it. Once every migration has completed, the completed resources are deleted and the operation advances.
-The individual migrations are observable while they run, as described in
-[Volume Migration](../volumes/volume-migration.md#monitoring-a-migration).
+```bash title="Watching the evacuation progress"
+kubectl get storagenodeops remove-worker-1 -n simplyblock \
+    -o jsonpath='{.status.step.state}{" migrated="}{.status.drain.volumesMigrated}{" total="}{.status.drain.volumesTotal}{"\n"}'
+```
 
-If the cluster becomes unavailable during the evacuation, the drain pauses rather than failing. See
-[Pausing](#pausing) below.
+A migration that fails is deleted and created again against another peer, and a `MigrationRetried` event records it.
+Completed migrations are deleted once all of them have finished, and `status.drain.volumesMigrated` keeps the count.
+While no online peer is available, the step holds with a `NoMigrationTarget` event, and it continues once one returns.
+A `DrainCompleted` event is emitted when every volume has been moved. The individual migrations are described in
+[Volume Migration](../volumes/volume-migration.md).
 
 ### Verifying
 
-The backend is asked again which volumes remain on the node. A non-system volume that is still there holds the phase,
-with a `DrainVerifyPending` event, until the backend confirms it is gone. The system volumes that were skipped during
-the drain are then deleted in place, since they are benchmark artifacts and are not worth migrating.
+The system volumes that were skipped during the drain are deleted, since they are per-node benchmark volumes and are
+not worth migrating. A system volume that cannot be deleted fails the operation. Any other volume still reported on the
+node holds the step with a `DrainBlocked` event, until the control plane confirms it is gone.
 
 ### Removing
 
-The empty node is deleted from the cluster, which emits `NodeRemoved` and completes the operation.
+The empty node is removed from the cluster. A removal that the control plane refuses, for example, because the
+failure domains of the cluster would no longer be balanced, fails the operation.
 
-## Pausing
+## Failure and Abort Handling
 
-A drain only runs against a healthy cluster. Before each reconcile the operator checks the cluster, and if its status
-is anything other than `active`, or if it is rebalancing, the drain pauses. A `DrainPaused` event records the reason,
-`status.message` carries it, and the operation is retried every 60 seconds until the cluster is ready again.
-
-The same check applies when a volume migration has failed. The failed migrations are deleted, and their recreation
-waits for the cluster instead of retrying against an unhealthy one.
-
-## Failure Handling
-
-A drain that fails after the node has been suspended does not leave it suspended. The operator resumes the node,
-emits `NodeResumed`, and only then marks the operation `Failed` with the reason in `status.message`. The cluster is
+A removal that fails or is aborted after the node has been suspended does not leave it suspended. The operator resumes
+the node before it marks the operation `Failed` or `Aborted`, with the reason in `status.message`. The cluster is
 therefore left with the node in service, which is the safe outcome, and the removal can be retried with a new
-`StorageNodeOps` resource once the cause has been addressed.
+`StorageNodeOps` once the cause has been addressed. If the resume itself fails, a `NodeResumeFailed` event is emitted,
+and the node is brought back with [Resuming a Storage Node](resuming-a-storage-node.md).
 
-Transient backend errors do not fail the operation. They are classified, and a retryable error is retried rather than
-treated as a failure.
+A removal can be aborted in every step except `Removing`. Deleting a running removal aborts its volume migrations
+first. Transient errors of the control plane do not fail the operation, they are retried.
 
 ## Checking a Stalled Removal
 
-A removal that makes no progress is nearly always blocked by a volume or paused by the cluster. The events say which.
+A removal that makes no progress is nearly always blocked by a volume or waiting for a peer. The events say which.
 
 ```bash title="Checking for blocking volumes"
 kubectl get events -n simplyblock \
-    --field-selector reason=PinnedVolumeBlocking
-kubectl get events -n simplyblock \
-    --field-selector reason=UnmanagedVolumeBlocking
+    --field-selector reason=DrainBlocked
 ```
 
-```bash title="Checking whether the drain is paused"
+```bash title="Checking for a missing migration target"
 kubectl get events -n simplyblock \
-    --field-selector reason=DrainPaused
+    --field-selector reason=NoMigrationTarget
 ```
 
 ```bash title="Reading the current message of the operation"
-kubectl get storagenodeops drain-worker-1 -n simplyblock \
+kubectl get storagenodeops remove-worker-1 -n simplyblock \
     -o jsonpath='{.status.message}{"\n"}'
 ```
-
-## Events
-
-| Reason                    | Meaning                                                                 |
-|---------------------------|-------------------------------------------------------------------------|
-| `PinnedVolumeBlocking`    | A pinned volume prevents the drain from starting.                       |
-| `UnmanagedVolumeBlocking` | A volume without a `PersistentVolume` prevents the drain from starting. |
-| `DrainPaused`             | The drain is waiting for the cluster to become active.                  |
-| `DrainSuspendPending`     | The node has not reported itself suspended yet.                         |
-| `DrainNoMigrationTarget`  | No online node is available to receive the evacuated volumes.           |
-| `MigrationRetry`          | A volume migration failed and was recreated against a new target.       |
-| `MigrationCompleted`      | Every volume migration of the drain has completed.                      |
-| `DrainVerifyPending`      | Volumes are still reported on the node after the evacuation.            |
-| `NodeRemoved`             | The node was removed from the cluster.                                  |
-| `NodeResumed`             | The drain failed and the node was resumed.                              |
-| `OpsFailed`               | The removal failed. The message carries the reason.                     |
 
 ## Coordination with Kubernetes Node Drains
 

@@ -1,8 +1,9 @@
 ---
 title: "Talos"
-description: "Talos: Talos Linux is a minimal Linux distribution optimized for Kubernetes."
+description: "Run simplyblock on Talos Linux: required kernel modules, huge pages, CPU topology, privileged namespace, and the Talos environment setting."
 weight: 40200
 ---
+
 [Talos Linux](https://www.talos.dev/){:target="_blank" rel="noopener"} is a minimal Linux distribution optimized for Kubernetes. Built as an immutable
 distribution image, it provides a minimal attack surface but requires some changes to the image to run simplyblock.
 
@@ -10,8 +11,8 @@ Simplyblock requires a set of additional Linux kernel modules, as well as tools 
 That means that a custom Talos image has to be built to run simplyblock. The following section explains the required
 changes to make Talos compliant.
 
-
 ## Required Kernel Modules (Worker Node)
+
 On Kubernetes worker nodes, simplyblock requires a few kernel modules to be loaded.
 
 ```yaml title="Content of kernel-module-config.yaml"
@@ -29,7 +30,8 @@ machine:
 Simplyblock requires huge pages memory to operate. The storage engine expects to find huge pages of 2 MiB page size. The
 required amount of huge pages depends on a number of factors.
 
-After installing the Kubernetes control plane, the required huge pages can be calculated from the admin control pod (see the [Kubernetes Control Plane installation guide](k8s-control-plane.md) for how to find and exec into the pod).
+After [installing the Simplyblock Operator](k8s-control-plane.md) and waiting for the control plane to become
+`Available`, the required huge pages can be calculated from the `simplyblock-admin-control` pod of the control plane.
 
 Run the following command on the admin control pod to calculate the huge pages required on the host:
 
@@ -39,6 +41,7 @@ Run the following command on the admin control pod to calculate the huge pages r
   --max-subsys <MAX_SUBSYSTEMS> \
   --number-of-devices <NUMBER_OF_DEVICES>
 ```
+
 The following flags also affect the huge page calculation:
 
 - `--nodes-per-socket (default: 1)`
@@ -74,6 +77,9 @@ To activate the huge pages, the `talosctl` command should be used.
 To ensure highest performance, simplyblock requires the Kubernetes kubelet on Talos to be configured to use a static
 CPU manager and to use a single NUMA node topology manager.
 
+Because Talos has no writable kubelet configuration, the storage nodes do not configure the kubelet themselves on
+Talos, and the configuration has to be applied through the Talos machine configuration.
+
 ```yaml title="Content of enable-cpu-topology.yaml"
 machine:
   kubelet:
@@ -84,7 +90,7 @@ machine:
       topology-manager-scope: "pod"
 ```
 
-To activate the huge pages, the `talosctl` command should be used.
+To activate the CPU topology configuration, the `talosctl` command should be used.
 
 ```bash title="Enable CPU Topology Manager"
 [demo@demo ~]# talosctl patch mc --nodes <WORKER_NODE_IP> \
@@ -121,3 +127,41 @@ To enable the required permissions, apply the namespace configuration using `kub
 ```bash title="Enabled privileged mode for simplyblock"
 [demo@demo ~]# kubectl apply -f simplyblock-namespace.yaml
 ```
+
+The namespace is created before the operator is installed. Otherwise, the Helm chart creates an unlabeled namespace of
+its own, and the exemptions never take effect.
+
+## Talos Environment
+
+The `ClusterDeploymentConfig` that describes the storage cluster must name the environment `Talos`. Discovery writes
+the detected distribution into the draft, but it should be checked during the review:
+
+```yaml title="ClusterDeploymentConfig for Talos (excerpt)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
+metadata:
+  name: simplyblock-deployment
+  namespace: simplyblock
+spec:
+  approved: false
+  environment: Talos
+  cluster:
+    name: simplyblock-cluster
+    maxSubsystemCount: 50
+    vcpuCount: 8
+  nodeSets:
+    - name: storage
+      groups:
+        - name: default
+          workers: [worker-1, worker-2, worker-3]
+          devices:
+            nvme: ["0000:01:00.0", "0000:02:00.0"]
+```
+
+With `environment: Talos`, the expansion sets `enableKubeletConfiguration: false` on
+`StorageCluster.spec.storageNodes`, so the storage nodes rely on the kubelet configuration applied above.
+
+## Installation of Simplyblock
+
+To install the simplyblock components on Talos, follow the instructions to
+[install the Simplyblock Operator](k8s-control-plane.md) and to [create a storage cluster](k8s-storage-plane.md).

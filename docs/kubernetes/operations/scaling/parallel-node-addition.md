@@ -1,100 +1,129 @@
 ---
 title: "Parallel Storage Node Addition"
-description: "How the Simplyblock operator adds storage nodes in parallel while preserving FoundationDB fault tolerance with sequential adds for FDB-hosting workers."
+description: "How the Simplyblock Operator adds storage nodes in parallel within a node-provisioning budget, while workers that host FoundationDB are added one at a time."
 weight: 10320
 ---
 
-When a `StorageNodeSet` resource is created with multiple worker nodes, the operator can add storage nodes on workers
-concurrently rather than sequentially. This significantly reduces cluster provisioning time for large deployments.
+When a deployment document creates storage nodes on several workers, the Simplyblock Operator can add them
+concurrently rather than one after another. This significantly reduces the provisioning time of large deployments and
+expansions.
 
-This concurrency, however, is only available to non-FoundationDB workers. FDB workers are always added one at a time.
-This requires that, in case of a worker node restart, the FoundationDB cluster has enough coordinators to remain
-available.
+A node addition reboots its host, so the concurrency is capped by a node-provisioning budget. Workers that host a
+FoundationDB pod are always added one at a time, regardless of the budget, so that the control plane's own datastore
+keeps enough coordinators to remain available.
 
-## How It Works
+## Configuring the Budget
 
-The operator classifies each worker node into one of two groups before starting the added process:
+The budget is `spec.storageNodes.nodeProvisioningBudget` of the `StorageCluster`. A deployment document sets it for a
+new cluster with `spec.cluster.nodeProvisioningBudget`.
 
-- **Non-FDB workers:** workers that do not host any FoundationDB process pods. These are added in parallel up
-  to the configured `maxParallelNodeAdds` limit.
-- **FDB workers:** workers running pods labeled `foundationdb.org/fdb-cluster-name`. These are always added
-  one at a time, in sequence.
+| Value         | Behavior                                                           |
+|---------------|--------------------------------------------------------------------|
+| `1` (default) | Workers are added one at a time, which is safe for all topologies. |
+| `n > 1`       | Up to `n` workers are in the node-add process at the same time.    |
 
-The sequential constraint for FDB workers exists because the storage node add process triggers a worker reboot.
-Rebooting multiple FDB nodes simultaneously reduces the number of available FDB coordinators below the quorum
-threshold, which would cause cluster unavailability.
-
-## Configuration
-
-Parallelism for non-FDB workers is controlled by `StorageNodeSet.spec.maxParallelNodeAdds`.
-
-| Value         | Behavior                                                         |
-|---------------|------------------------------------------------------------------|
-| `1` (default) | All workers added one at a time which is safe for all topologies |
-| `> 1`         | Up to `n` non-FDB workers added concurrently per reconcile pass  |
-
-```yaml title="Enable parallel node addition"
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNodeSet
+```yaml title="Example of a deployment document with a budget of four workers"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
 metadata:
-  name: simplyblock-node
+  name: simplyblock-deployment
   namespace: simplyblock
 spec:
-  clusterName: simplyblock-cluster
-  maxParallelNodeAdds: 5   # add up to 5 non-FDB workers at a time
-  workerNodes:
-    - worker-1
-    - worker-2
-    - worker-3
-    - worker-4
-    - worker-5
-    - worker-6
-    - worker-7
-    - worker-8
+  approved: false
+  cluster:
+    name: simplyblock-cluster
+    maxSubsystemCount: 50
+    vcpuCount: 8
+    nodeProvisioningBudget: 4
+  nodeSets:
+    - name: rack-a
+      groups:
+        - name: default
+          workers:
+            - worker-1
+            - worker-2
+            - worker-3
+            - worker-4
+            - worker-5
+            - worker-6
+            - worker-7
+            - worker-8
+          devices:
+            nvme: ["0000:01:00.0"]
 ```
+
+```bash title="Raising the budget of an existing cluster"
+kubectl patch storagecluster simplyblock-cluster -n simplyblock --type=merge \
+    -p '{"spec": {"storageNodes": {"nodeProvisioningBudget": 4}}}'
+```
+
+The budget counts workers, not storage nodes. A worker with two NUMA sockets, or with several nodes per socket, is
+added with one request and consumes one slot.
+
+## How Slots Are Taken
+
+A new storage node walks its provisioning steps `CheckingHost`, `CheckingConfig`, `AwaitingSlot`, `Posting`, and
+`Resolving`. In `AwaitingSlot`, it waits until it can take a slot of the budget, and it holds the slot from the moment
+its node addition is posted until it has received a backend UUID or its addition has given up. The slot stays taken
+while the worker reboots.
+
+The slots in use are recorded in `StorageCluster.status.provisioningSlots`, each with the `worker` it was taken for,
+the `node` that took it, and the time `takenAt`.
+
+```bash title="Listing the slots in use"
+kubectl get storagecluster simplyblock-cluster -n simplyblock \
+    -o jsonpath='{range .status.provisioningSlots[*]}{.worker}{"\t"}{.node}{"\t"}{.takenAt}{"\n"}{end}'
+```
+
+A node that waits for a slot emits an `AwaitingSlot` event, which names how many slots are in flight and which
+workers hold them. Waiting workers go first in the order of their names, so a worker that is told to wait is not
+overtaken by one that arrived later. `AwaitingSlot` has a deadline of four hours.
+
+```bash title="Checking which nodes wait for a slot"
+kubectl get events -n simplyblock \
+    --field-selector reason=AwaitingSlot
+```
+
+## FoundationDB Workers
+
+A worker counts as a FoundationDB worker when it runs a pod labeled `foundationdb.org/fdb-cluster-name`. Such a worker
+waits, with an `AwaitingSlot` event, while any other FoundationDB worker is being added, even when the budget has free
+slots. Rebooting several FoundationDB hosts at once would reduce the number of available coordinators below the quorum
+and make the control plane unavailable.
 
 !!! note
-    `maxParallelNodeAdds` applies only to non-FDB workers. Workers hosting FoundationDB processes are always
-    added sequentially, regardless of this value.
+    The FoundationDB rule is independent of the budget. On a cluster where FoundationDB runs on every worker, the
+    additions are sequential whatever the budget says.
 
-## Pinning FDB to Dedicated Nodes
+## Pinning FoundationDB to Dedicated Workers
 
-For the parallelism to be most effective, run FoundationDB on a dedicated subset of storage nodes rather than
-spreading it across all workers. Label the FDB-dedicated nodes before installation:
+For the parallelism to be most effective, FoundationDB runs on a dedicated subset of workers rather than on all of
+them. The node selector of the control plane, `ControlPlane.spec.source.local.nodeSelector`, also applies to the
+FoundationDB pods. The Helm chart renders it from `controlplane.nodeSelector`, so the dedicated workers are labeled
+before the installation.
 
-```bash
-kubectl label node worker-1 worker-2 worker-4 simplyblock.io/fdb-node=true
+```bash title="Labeling the workers dedicated to the control plane"
+kubectl label node worker-1 worker-2 worker-4 simplyblock-control-plane=true
 ```
 
-Then configure the `FoundationDBCluster` resource to use only those nodes via a `nodeSelector`:
-
-```yaml
-spec:
-  processes:
-    general:
-      podTemplate:
-        spec:
-          nodeSelector:
-            simplyblock.io/fdb-node: "true"
+```bash title="Installing with a control-plane node selector"
+helm install simplyblock-operator simplyblock/simplyblock-operator \
+    -n simplyblock --create-namespace \
+    --set controlplane.nodeSelector.create=true \
+    --set controlplane.nodeSelector.key=simplyblock-control-plane \
+    --set controlplane.nodeSelector.value=true
 ```
 
-With this setup, only the three labeled nodes are treated as FDB workers. All remaining workers are added
-in parallel.
+With this setup, only the labeled workers host FoundationDB and are added one at a time. All remaining workers are
+added in parallel within the budget. The installation itself is described in
+[Install the Control Plane](../../installation/k8s-control-plane.md).
 
-## Validation
+## Verifying the Parallelism
 
-The following example shows a cluster with eight storage workers where six non-FDB workers started in parallel.
-All SPDK pods entered `ContainerCreating` within the same reconcile pass:
-
-```plain
-NAME                        NODE                    STATUS
-snode-spdk-pod-4420-cb5317  worker-7   ContainerCreating
-snode-spdk-pod-4421-cb5317  worker-6   ContainerCreating
-snode-spdk-pod-4422-cb5317  worker-3   ContainerCreating
-snode-spdk-pod-4423-cb5317  worker-5   ContainerCreating
-snode-spdk-pod-4424-cb5317  worker-1   ContainerCreating
-snode-spdk-pod-4425-cb5317  worker-8   ContainerCreating
+```bash title="Watching the provisioning steps of the new nodes"
+kubectl get storagenodes -n simplyblock -w
 ```
 
-The two FDB workers (nodes 2 and 4) were then added sequentially. All eight nodes came online and the cluster
-reached `ACTIVE` status.
+While the additions run, up to the budget of workers show the step `Posting` or `Resolving` at the same time, and the
+others show `AwaitingSlot`. The control plane integrates an expansion of an active cluster one node at a time
+regardless of the budget, as described in [Expanding a Storage Cluster](expanding-storage-cluster.md).

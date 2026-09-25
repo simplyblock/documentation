@@ -1,43 +1,45 @@
 ---
 title: "Accessing Graylog"
-description: "Accessing Graylog: Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation Graylog retrieves logs for all control plane and storage."
+description: "Reach the Graylog log search of a simplyblock control plane on Kubernetes through a port-forward and retrieve its admin password."
 weight: 10650
 ---
 
-Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation.
+The observability stack of a local simplyblock control plane includes Prometheus, Grafana, and Graylog. Graylog
+collects the logs of all control plane and storage node services. Like Grafana, it is installed when the Helm value
+`controlplane.observability.enabled` is `true` (see [Accessing Grafana](accessing-grafana.md)).
 
-Graylog retrieves logs for all control plane and storage node services.
+## How to Access Graylog
 
-The standard retention period for metrics is 7 days. However, this can be changed when creating a cluster.
+Graylog is served by the `simplyblock-graylog` Service on port 9000 in the namespace of the control plane. For a quick
+look, the Service is forwarded to the local machine:
 
-## How to access Graylog
-
-Graylog can be accessed through all management node API. It is recommended to set up a load balancer with session
-stickyness in front of the Graylog installation(s).
-
-```plain title="Graylog URLs"
-http://<MGMT_NODE_IP>/graylog
+```bash title="Forwarding the Graylog Service"
+kubectl -n simplyblock port-forward svc/simplyblock-graylog 9000:9000
 ```
+
+Graylog is then reachable at `http://localhost:9000`. For permanent access, the Service is exposed through the ingress
+controller or load balancer of the Kubernetes cluster, with session stickiness when several replicas are served.
 
 ### Credentials
 
-The Graylog installation uses the cluster secret as its password for the user _admin_.
+Graylog is logged in to as the user _admin_. Its password is the monitoring secret of the control plane, the same
+password Grafana uses, which is held in the `simplyblock-grafana-secrets` Secret:
 
-When installed inside Kubernetes, the Graylog password can be retrieved using `kubectl` as follows:
-
-```bash title="Retrieve the Graylog password"
-kubectl get secret -n simplyblock simplyblock-graylog -secret \
-    -o jsonpath="{.data.GRAYLOG_PASSWORD_SECRET}" | base64 --decode
+```bash title="Retrieving the Graylog password"
+kubectl get secret -n simplyblock simplyblock-grafana-secrets \
+    -o jsonpath="{.data.MONITORING_SECRET}" | base64 --decode
 ```
 
-The resulting password can be used to log in to Graylog.
-
-```plain title="Example output for Graylog password"
-[root@demo ~]# kubectl get secret -n simplyblock simplyblock-graylog-secret \
-    -o jsonpath="{.data.GRAYLOG_PASSWORD_SECRET}" | base64 --decode
-is6SP2EdWg0NdmVGv6CEp5h87d7g9sdassem4t9pouMqDQnHwXMSomas1qcbKSt5yISr8eBHv4Y7Dbswhyz84Ut0TW6kqsiPs
-```
+Graylog itself checks the SHA-256 hash of that password, which is stored as `GRAYLOG_ROOT_PASSWORD_SHA2` in the
+`simplyblock-graylog-secret` Secret. The `GRAYLOG_PASSWORD_SECRET` key of the same Secret is the internal secret Graylog
+uses to secure stored user passwords, not a login password.
 
 **Credentials**<br/>
 Username: `admin`<br/>
 Password: `<PASSWORD>`
+
+!!! warning
+    The chart ships default values for `controlplane.observability.secret`,
+    `controlplane.observability.graylog.rootPasswordSha2`, and `controlplane.observability.graylog.passwordSecret`.
+    All three should be replaced on every installation, and `rootPasswordSha2` has to stay the SHA-256 hash of the
+    monitoring secret.

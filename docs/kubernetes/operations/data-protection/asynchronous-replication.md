@@ -11,6 +11,17 @@ backend call is issued by the Simplyblock Operator.
 
 For the architecture background, see [Replication Concepts](../../../architecture/concepts/replication.md).
 
+!!! note "API version"
+    The replication kinds (`ReplicationPair`, `ReplicationPolicy`, `ReplicationSlot`, and `ReplicationOps`) remain on
+    `storage.simplyblock.io/v1alpha1` and keep their lowercase enum values (for example, `mode: failover` and
+    `action: failback`). They were not moved to `v1alpha2` together with the other operator kinds. The clusters they
+    reference are `StorageCluster` objects of either version.
+
+!!! info "Application-level disaster recovery"
+    The replication described here works per volume between two clusters of one control plane. Protecting whole
+    applications (volumes together with their Kubernetes objects) across sites, with planned and unplanned failover,
+    tests, and relocation, is covered by [Disaster Recovery](../../../disaster-recovery/index.md).
+
 ## Scope and Prerequisites
 
 Asynchronous replication with controlled failover and failback is a Kubernetes-only feature, managed by the
@@ -21,6 +32,12 @@ resources, which means both are attached to the same simplyblock control plane. 
 of its `StorageCluster`, and its UUID has to be reported in `status.uuid` before replication can be configured.
 Cross-namespace references are not supported. Both clusters have to be active with their storage nodes online, and
 the two clusters need network interconnectivity.
+
+!!! warning
+    With the `v1alpha2` API, a namespace admits one `StorageCluster` only, while a `ReplicationPair` resolves both of
+    its clusters in its own namespace. Until the replication kinds follow the new API, a pair between two
+    `StorageCluster` objects cannot be declared on a fresh `v1alpha2` installation. Confirm the supported setup with
+    simplyblock support before planning replication.
 
 !!! note
     For multi-site setups, such as disaster recovery or offsite failover, a distributed control plane is highly

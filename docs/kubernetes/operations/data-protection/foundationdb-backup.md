@@ -60,8 +60,8 @@ The path to the file is passed to the backup agents through the `FDB_BLOB_CREDEN
 ### Object Store Access for the Operator
 
 The `fdbbackup` and `fdbrestore` commands are run by the FoundationDB operator itself, so the same credentials have
-to be reachable from the `simplyblock-fdb-controller-manager` deployment. That deployment is rendered by the control
-plane chart without a credentials mount and has to be patched:
+to be reachable from the `simplyblock-fdb-controller-manager` deployment. That deployment is installed by the
+Simplyblock Operator as part of the local control plane, without a credentials mount, and has to be patched:
 
 ```yaml title="Example of a patch mounting the credentials into the operator (fdb-operator-credentials.yaml)"
 spec:
@@ -88,8 +88,8 @@ kubectl -n simplyblock patch deployment simplyblock-fdb-controller-manager \
 ```
 
 !!! note
-    The patch is overwritten by the next `helm upgrade` of the control plane chart and has to be reapplied
-    afterward.
+    The patch can be overwritten when the control plane is reinstalled or upgraded (a `helm upgrade` or a
+    `ControlPlaneOps` operation with `action: Upgrade`), and has to be reapplied afterward.
 
 ### TLS Material
 
@@ -260,6 +260,57 @@ spec:
     accountName: account@object-store.example:80
     urlParameters:
       - "secure_connection=0"
+```
+
+## Triggering a Backup with ControlPlaneOps
+
+A backup of a local control plane (a `ControlPlane` with `spec.source.local`) can also be started through the
+Simplyblock Operator, with a `ControlPlaneOps` operation and `action: Backup`. The operation is refused at admission for
+a managed control plane, and when `spec.backup.blobStore` is missing.
+
+```yaml title="Example of a control plane backup operation (cp-backup.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ControlPlaneOps
+metadata:
+  name: fdb-backup
+  namespace: simplyblock
+spec:
+  controlPlaneRef: simplyblock
+  action: Backup
+  backup:
+    blobStore: account@object-store.example:443
+    backupName: simplyblock-fdb-cluster
+```
+
+```bash title="Starting the backup through the operator"
+kubectl apply -f cp-backup.yaml
+```
+
+| Field               | Description                                                                                        |
+|---------------------|----------------------------------------------------------------------------------------------------|
+| `controlPlaneRef`   | Name of the `ControlPlane`, which the chart creates as `simplyblock`. Required.                    |
+| `backup.blobStore`  | Destination, passed to `blobStoreConfiguration.accountName` of the `FoundationDBBackup`. Required. |
+| `backup.backupName` | Name of the `FoundationDBBackup` to create or trigger. Defaults to `simplyblock-fdb-cluster`.      |
+
+The operation runs the steps `Requesting` and `Awaiting`:
+
+- **Requesting:** when a `FoundationDBBackup` of that name exists, its `backupState` is set to `Running` (a backup
+  already running is left alone). Otherwise, a new `FoundationDBBackup` is created that names the cluster
+  `simplyblock-fdb-cluster` and the blob store account, and nothing else.
+- **Awaiting:** the operation succeeds once the `FoundationDBBackup` reports that it is taking snapshots.
+
+The name of the `FoundationDBBackup` is recorded in `status.backupRef`. The `FoundationDBBackup` is not owned by the
+operation, so deleting the `ControlPlaneOps` leaves the backup configuration in place.
+
+!!! note
+    A `FoundationDBBackup` created by the operation carries no credentials, TLS material, version, or image
+    configuration. The recommended flow is to apply the complete `FoundationDBBackup` described in
+    [Creating a Backup](#creating-a-backup) first, with `backupState: Stopped` if no backup should run yet, and to use
+    the `ControlPlaneOps` operation to start it. The operator never restores FoundationDB. A restore is always
+    performed through `FoundationDBRestore`, as described below.
+
+```bash title="Watching the control plane operation"
+kubectl get controlplaneops -n simplyblock -w
 ```
 
 ## Checking the Backup Status

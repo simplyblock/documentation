@@ -7,19 +7,26 @@ weight: 10090
 Proper deployment planning is essential for ensuring the performance, scalability, and resilience of a simplyblock
 storage cluster.
 
-## Deployment Models
+## Deployment Model
 
-Two deployment options are supported:
+Simplyblock is deployed on Kubernetes and OpenShift and is managed through the Simplyblock Operator and its custom
+resources. Both **disaggregated** deployments, with dedicated workers or clusters for storage nodes, and
+**hyper-converged** deployments, co-located with compute workloads, are supported, as well as a hybrid of both. A
+wide range of Kubernetes distributions and operating systems is supported. If the same cluster is used to serve and
+consume the storage, there is no essential difference between the models from a deployment perspective: the choice
+becomes a question of node selection only. The topologies are described in
+[Deployment Topologies](../architecture/deployment-topologies/index.md).
 
-- **Plain Linux:** In this mode, which is also called Docker mode, all nodes are deployed to separate hosts. Storage
-  nodes are usually bare-metal, and control plane nodes are usually VMs.Basic Docker knowledge is helpful, but all
-  management can be performed within the system via its CLI or API.
+## Deployment Architectures and Disaster Recovery
 
-- **Kubernetes:** In Kubernetes, both **disaggregated** deployments with dedicated workers or clusters for storage
-  nodes, or **hyper-converged deployments** (co-located with compute workloads) are supported. A wide range of
-  Kubernetes distros and operating systems are supported. There is no essential difference between the two models from a
-  deployment perspective, if the same cluster is used to serve and consume the storage: it becomes a question of
-  node tagging only.
+Before sizing individual nodes, the overall architecture has to be chosen: how many Kubernetes clusters and storage
+clusters are involved, where the control plane runs, and whether a hub cluster coordinates disaster recovery between
+sites.
+
+- **[Deployment Architectures](deployment-architectures.md):** Supported architectures with and without disaster
+  recovery, from a single cluster to a hub with several site clusters, and a decision table.
+- **[Disaster Recovery Requirements](dr-requirements.md):** Hub cluster sizing, Kubernetes versions, site cluster
+  prerequisites, S3, networking, and site labeling for simplyblock Disaster Recovery.
 
 ## General Information on Requirements
 
@@ -32,5 +39,5 @@ efficiency, redundancy, and recovery performance. Other critical considerations,
 high-availability strategies, and workload-specific optimizations, are also covered to assist in designing a simplyblock
 deployment that meets both operational and business needs.
 
-This guidance applies to all deployment models, with special sizing notes for hyper-converged Kubernetes/OpenShift
-deployments where compute and storage share cluster nodes.
+This guidance applies to all deployment topologies, with special sizing notes for hyper-converged Kubernetes and
+OpenShift deployments, where compute and storage share cluster nodes.
