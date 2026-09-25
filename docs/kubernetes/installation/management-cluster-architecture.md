@@ -1,83 +1,124 @@
 ---
 title: "Control Plane Cluster Architecture"
-description: "A deep dive into the simplyblock control plane. The control plane foundation installed via Helm orchestrates an infinite number of storage clusters."
+description: "The simplyblock control plane on Kubernetes: the ControlPlane resource with its two sources, the installed components, and FoundationDB redundancy."
 weight: 29900
 ---
 
-Simplyblock uses a **two-tier model**: a single **control plane cluster** acts as the control plane, and one or more
-**storage clusters** run on top of it. The control plane holds all state, exposes the Management API, runs health
-checks, collects metrics, and executes administrative tasks. But performs no NVMe I/O itself.
+Simplyblock uses a **two-tier model**: a **control plane** holds all state, exposes the Management API, runs health
+checks, collects metrics, and executes administrative tasks, while one or more **storage clusters** run the storage
+nodes that serve NVMe-oF I/O. The control plane performs no NVMe I/O itself.
 
-A storage class must exist in the cluster before installation. FoundationDB provisions a 10 Gi `ReadWriteOnce`
-persistent volume for each of its log and storage processes. This is where all cluster states (topology, volume
-metadata, task queues) is durably stored and must survive pod restarts. Prometheus similarly requires a 5 Gi
-volume for its time-series data.
+On Kubernetes, the control plane is described by a single `ControlPlane` resource named `simplyblock` in the
+operator's namespace. The Helm chart creates it, and the operator reconciles it. No storage resource is reconciled
+before the control plane reports the phase `Available`.
 
-```bash title="Install the control plane cluster"
-helm repo add simplyblock https://install.simplyblock.io/helm
-helm repo update
-helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
-    --create-namespace \
-    --set controlplane.enabled=true \
-    --set operator.enabled=true
+## Local and Managed Control Planes
+
+`ControlPlane.spec.source` contains exactly one of two members. The choice is made at installation with the Helm value
+`deployment.profile` and is immutable afterward.
+
+- **`local` (Helm profile `standalone`):** The operator installs the control plane in this Kubernetes cluster:
+  FoundationDB, the object store, and the management API with its companion services.
+- **`managed` (Helm profile `managed`):** The control plane runs elsewhere. The operator installs nothing, only
+  resolves and probes `spec.source.managed.endpoint` with the optional `credentialsSecretRef` and
+  `caBundleSecretRef`, and reports the result. `ControlPlaneOps` actions are rejected for a managed control plane.
+  See [Connecting to an External Control Plane](install-csi.md).
+
+```yaml title="ControlPlane as rendered by the Helm chart (standalone profile)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ControlPlane
+metadata:
+  name: simplyblock
+  namespace: simplyblock
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  source:
+    local:
+      image: "quay.io/simplyblock-io/simplyblock:<version>"
+      imagePullPolicy: Always
+      foundationDB:
+        replicas: 3
+      tls:
+        enableTLS: true
+        enableMutualTLS: true
+        provider: cert-manager
 ```
+
+The `local` member also accepts `replicas` for the management API (default 2), `resources`, `tolerations`,
+`nodeSelector`, and `foundationDB.storageClassName` and `foundationDB.resources`.
 
 ## Architecture Diagram
 
 ![Control Plane Cluster Architecture](../../assets/images/simplyblock-controlplane-architecture-k8s.jpg)
 
+## Installation Order
+
+For a local control plane, the operator applies the components in a fixed order, reported in `status.step.state`:
+`ApplyingFoundationDB`, `AwaitingFoundationDB`, `ApplyingDatastore`, `ApplyingAPI`, and `AwaitingAPI`. The database
+has to reach quorum before the management API starts, so the first installation takes a few minutes.
+
+```bash title="Watch the control plane"
+kubectl -n simplyblock get controlplane simplyblock -w
+kubectl -n simplyblock get controlplane simplyblock -o jsonpath='{.status.components}'
+```
+
+The phase is `Installing` during the installation and `Available` once the control plane answers. `Degraded` means
+that it answers while a component behind it is short. `Unavailable` means that the control plane does not answer or that an essential
+component is down.
+
 ## Component Reference
 
-| Component                            | Description                                                                                                                                                                                   |
-|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `simplyblock-webappapi` ×2           | The Management API on `:5000` is stateless. All state lives in FoundationDB. Pod anti-affinity across nodes.                                                                                  |
-| `simplyblock-admin-control` ×2       | In-cluster control shell with `hostNetwork: true` for direct NVMe-oF access. Pod anti-affinity across nodes.                                                                                  |
-| `simplyblock-fdb-controller-manager` | [FoundationDB Operator](https://github.com/FoundationDB/fdb-kubernetes-operator){:target="_blank" rel="noopener"}. Provisions, heals, and upgrades the FDB cluster.                           |
-| `simplyblock-operator`               | [Simplyblock Operator](https://github.com/simplyblock/simplyblock-operator){:target="_blank" rel="noopener"}: reconciles CRDs (`StorageCluster`, `StorageNode`, `Pool`, etc.) into API calls. |
-| `simplyblock-fdb-cluster-*`          | [FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"} distributed key-value store. Backs all cluster state with ACID transactions. 10 Gi PV per pod.                 |
-| `simplyblock-monitoring-*`           | 11-container pod (`hostNetwork: true`) collecting node health, volume I/O stats, capacity, device health, and events. Pushes metrics to Prometheus.                                           |
-| `simplyblock-tasks-*`                | 18-container pod for the async task engine. Each container is a single-purpose runner for operations like node-add, migration, backup, and snapshot replication.                              |
-| `simplyblock-prometheus-*`           | [Prometheus](https://prometheus.io/){:target="_blank" rel="noopener"} + [Thanos](https://thanos.io/){:target="_blank" rel="noopener"} sidecar. 5 Gi persistent storage for metrics.           |
-| `simplyblock-reloader-*`             | [Stakater Reloader](https://github.com/stakater/Reloader){:target="_blank" rel="noopener"}. Watches ConfigMaps and triggers rolling restarts when the FDB connection string changes.          |
+The operator reports every component it installs in `status.components`, together with the desired and ready
+replicas and whether the component is essential.
+
+| Component                            | Essential | Description                                                                                                                                                                                                                                             |
+|--------------------------------------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `simplyblock-fdb-cluster`            | Yes       | [FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"} distributed key-value store. Backs all cluster state (topology, volume metadata, task queues) with ACID transactions.                                                    |
+| `simplyblock-webappapi`              | Yes       | The Management API on port 5000. Stateless, with all state in FoundationDB. Two replicas by default, spread across nodes.                                                                                                                               |
+| `simplyblock-fdb-controller-manager` | No        | The [FoundationDB Operator](https://github.com/FoundationDB/fdb-kubernetes-operator){:target="_blank" rel="noopener"}, which provisions, heals, and upgrades the FoundationDB cluster. Only applied if the Kubernetes cluster does not already run one. |
+| `simplyblock-tasks`                  | No        | The asynchronous task runner for operations such as node addition, migration, and backup. Work is queued in FoundationDB, so a stopped task runner defers work instead of dropping it.                                                                  |
+| `simplyblock-monitoring`             | No        | Monitors and collectors for node health, volume I/O statistics, capacity, device health, and events.                                                                                                                                                    |
+| `simplyblock-admin-control`          | No        | A long-lived administrative pod with the control plane tooling.                                                                                                                                                                                         |
+| `simplyblock-minio`                  | No        | The object store the control plane keeps long-term data in.                                                                                                                                                                                             |
+| `simplyblock-fdb-exporter`           | No        | Exports FoundationDB status as Prometheus metrics.                                                                                                                                                                                                      |
+
+In addition, the Helm chart installs the `simplyblock-operator`, which reconciles the simplyblock custom resources into
+Management API calls, and, depending on its values, the following components:
+
+- **Prometheus (`prometheus.enabled`):** [Prometheus](https://prometheus.io/){:target="_blank" rel="noopener"} with a
+  [Thanos](https://thanos.io/){:target="_blank" rel="noopener"} sidecar that stores the metrics the control plane
+  pushes.
+- **Reloader (`reloader.enabled`):** [Stakater Reloader](https://github.com/stakater/Reloader){:target="_blank" rel="noopener"}
+  rolls the workloads that mount the FoundationDB cluster file when the coordinators move.
+- **Observability stack (`controlplane.observability.enabled`):** The optional logging and dashboard stack with
+  Graylog, Grafana, and a log collector. Only available with the `standalone` profile.
 
 ## High Availability
 
-| Component                   | HA Mechanism                                                    |
-|-----------------------------|-----------------------------------------------------------------|
-| `simplyblock-webappapi`     | 2 replicas, required pod anti-affinity across nodes             |
-| `simplyblock-admin-control` | 2 replicas, required pod anti-affinity across nodes             |
-| FoundationDB                | 3 storage + 3 log processes, survives loss of 1 storage process |
-| Monitoring / Tasks          | Single replica, task queue in FDB survives pod restarts         |
-| Prometheus                  | StatefulSet with persistent volume                              |
+| Component               | HA mechanism                                                        |
+|-------------------------|---------------------------------------------------------------------|
+| `simplyblock-webappapi` | 2 replicas by default, spread across nodes and rolled one at a time |
+| FoundationDB            | 3 or 5 coordinators, depending on the redundancy mode               |
+| Tasks and monitoring    | Task queue in FoundationDB survives pod restarts                    |
+| Prometheus              | StatefulSet with persistent volume                                  |
 
-In production deployments with 3+ control plane nodes, FDB runs in `triple` redundancy mode. Any single node can be
-lost without data loss or API downtime.
+The FoundationDB redundancy is set with the Helm value `controlplane.foundationdb.redundancyMode`, which the chart
+translates into `spec.source.local.foundationDB.replicas`:
+
+- **`double` (default):** 3 coordinators. Suitable for 3 workers, tolerates the loss of one.
+- **`triple`:** 5 coordinators. Suitable for 5 or more workers, tolerates the loss of two.
+
+FoundationDB stores its data on persistent volumes of the StorageClass set with `controlplane.storageclass.name`.
+
+## Control Plane Operations
+
+A local control plane is restarted, upgraded, or backed up with a `ControlPlaneOps` resource and the actions
+`Restart`, `Upgrade`, or `Backup`. See [Cluster Upgrade](../operations/cluster/cluster-upgrade.md) and
+[FoundationDB Backup](../operations/data-protection/foundationdb-backup.md).
 
 ## Creating Storage Clusters
 
-The control plane ships with no storage configured. Storage clusters are added via CRDs:
-
-```bash title="Create a storage cluster"
-kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageCluster
-metadata:
-  name: simplyblock-cluster
-  namespace: default
-spec:
-  fabricType: tcp
-  enableNodeAffinity: false
-  ...
-  warningThreshold:
-    capacity: 80
-    provisionedCapacity: 10
-  criticalThreshold:
-    capacity: 90
-    provisionedCapacity: 50
-EOF
-```
-
-The `simplyblock-operator` picks up the new resource, calls the Management API to bootstrap the cluster, and registers it
-in FoundationDB. Storage nodes, pools, and volumes are then added incrementally via additional CRDs.
-
-For next steps, see [Deploy Storage Nodes and CSI](k8s-storage-plane.md).
+The control plane ships with no storage configured. Storage clusters are created from an approved
+`ClusterDeploymentConfig`, which the operator expands into a `StorageCluster`, its `StorageNode` resources, and a
+default storage pool. For the full process, see [Create a Storage Cluster](k8s-storage-plane.md).

@@ -1,12 +1,15 @@
 ---
 title: "Scaling"
-description: "Scale a simplyblock cluster on Kubernetes by enrolling additional workers as storage nodes, and control how many of them are provisioned at a time."
+description: "Scale a simplyblock cluster on Kubernetes by adding workers with a growth ClusterDeploymentConfig, and control how many are provisioned at a time."
 weight: 10400
 ---
 
-A storage cluster scales out by enrolling additional Kubernetes workers as storage nodes, which adds capacity and
-performance at the same time. The cluster keeps serving I/O throughout, and the data is rebalanced onto the new devices
-afterward.
+A storage cluster scales out by adding Kubernetes workers as storage nodes, which adds capacity and performance at the
+same time. New workers are described in a growth `ClusterDeploymentConfig` that names the existing cluster, either
+written by hand or drafted by a discovery run. The cluster keeps serving I/O throughout, and the data is rebalanced onto
+the new devices afterward.
+
+## Topics
 
 | Topic                                                       | Purpose                                                                    |
 |-------------------------------------------------------------|----------------------------------------------------------------------------|

@@ -1,6 +1,6 @@
 ---
 title: "Securing the Control Plane"
-description: "Configure mTLS for simplyblock control plane communication and offload at-rest encryption keys to an external KMS (HashiCorp Vault or OpenBao)."
+description: "Configure TLS and mutual TLS for simplyblock control plane traffic on Kubernetes and store volume encryption keys in HashiCorp Vault or OpenBao."
 weight: 30050
 ---
 
@@ -13,29 +13,44 @@ certificate issued by the operator-managed certificate authority, which is only 
 
 ## Transport Layer Security (Mutual TLS / mTLS)
 
-Internal control-plane traffic between the control plane, the operator, and the storage-node handlers can be encrypted
-with TLS. Additionally, when mutual TLS is enabled, every component must present a valid client certificate, which
-means components authenticate each other rather than relying on network position alone.
+Internal traffic between the control plane, the operator, the CSI driver, and the storage nodes is encrypted with TLS.
+When mutual TLS is enabled, every component must additionally present a valid client certificate, which means
+components authenticate each other rather than relying on network position alone.
+
+TLS and mutual TLS are **enabled by default**. The settings are made with the `tls.*` Helm values at installation. The
+chart copies them into the `tls` block of the `ControlPlane` resource (`spec.source.local.tls`) and of the
+`SimplyblockDriver` resource (`spec.tls`):
+
+| Helm value                                | Default        | Resource field                             |
+|-------------------------------------------|----------------|--------------------------------------------|
+| `tls.enabled`                             | `true`         | `enableTLS`                                |
+| `tls.mutual_enabled`                      | `true`         | `enableMutualTLS`                          |
+| `tls.provider`                            | `cert-manager` | `provider` (`cert-manager` or `OpenShift`) |
+| `tls.cert-manager.cluster-issuer`         | `selfsigned`   |                                            |
+| `tls.cert-manager.createSelfSignedIssuer` | `true`         |                                            |
+| `tls.cert-manager.namespace`              | `cert-manager` |                                            |
+
+The chart refuses to render if TLS is enabled but the provider is not available: `tls.provider=cert-manager`
+requires that the cluster serves `cert-manager.io/v1`, and `tls.provider=openshift` requires an OpenShift cluster. A
+cluster that has neither must set `tls.enabled=false`.
 
 !!! important "Mutual TLS on OpenShift"
-    **mTLS is only supported using the Cert-Manager certificate provider.**
+    **mTLS is only supported with the cert-manager certificate provider.**
 
-    On OpenShift, the cluster's built-in certificate manager provides one-way TLS (server certificates) but does not
-    issue the client certificates required for mutual authentication. To enable mTLS on OpenShift,
-    [Cert-Manager](https://cert-manager.io/){:target="_blank" rel="noopener"} must be installed and the certificate
-    provider must be switched over.
+    On OpenShift, the built-in service CA provides one-way TLS (server certificates) but does not issue the client
+    certificates required for mutual authentication. With `tls.provider=openshift`, the value `tls.mutual_enabled`
+    must be set to `false`. To enable mTLS on OpenShift,
+    [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} must be installed and the certificate
+    provider must be switched to `cert-manager`.
 
 ### Prerequisites
 
-- Cert-Manager must be installed in the cluster.
-- A `ClusterIssuer` (or namespaced `Issuer`) for Cert-Manager to be able to mint certificates must exist. Most
-  installations point this at an internal corporate certificate authority (CA) or at the cluster-local self-signed
-  issuer. Any issuer that simplyblock components trust via the CA is acceptable.
+- **Cert-manager:** cert-manager must be installed in the cluster.
+- **Issuer:** By default, the chart creates a self-signed `ClusterIssuer` named `selfsigned`. To use an existing
+  issuer instead, for example, one backed by an internal corporate certificate authority (CA), set
+  `tls.cert-manager.createSelfSignedIssuer=false` and name the issuer in `tls.cert-manager.cluster-issuer`.
 
-### Enabling mTLS
-
-Mutual TLS (mTLS) is configured at Helm install time by setting four values on the operator chart. Either with setting
-the `tls` field directly in the values.yaml or via the `--set` flags on the Helm command line.
+### Enabling mTLS With an Existing Issuer
 
 ```yaml title="Helm values for mTLS"
 tls:
@@ -43,38 +58,39 @@ tls:
   mutual_enabled: true
   provider: cert-manager
   cert-manager:
+    createSelfSignedIssuer: false
     cluster-issuer: my-cluster-issuer
 ```
 
 Apply the values during the operator installation (see [Install Simplyblock Operator](k8s-control-plane.md)):
 
 ```bash title="Install the operator with mTLS"
-helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
+helm install simplyblock-operator simplyblock/simplyblock-operator \
+    --namespace simplyblock \
     --create-namespace \
-    --set controlplane.enabled=true \
-    --set operator.enabled=true \
     --set tls.enabled=true \
     --set tls.mutual_enabled=true \
     --set tls.provider=cert-manager \
+    --set tls.cert-manager.createSelfSignedIssuer=false \
     --set tls.cert-manager.cluster-issuer=my-cluster-issuer
 ```
 
-Replace `my-cluster-issuer` with the name of the `ClusterIssuer` the operator should use to obtain its certificates.
+Replace `my-cluster-issuer` with the name of the `ClusterIssuer` the chart should use to mint its CA certificate.
 
-### What the Operator Provisions
+### What Gets Provisioned
 
-When mTLS is enabled, the operator creates a dedicated `ClusterIssuer` named
-`simplyblock-certificate-authority-issuer` and issues all internal component certificates signed with the configured
-certificate authority. The same issuer can be used to mint certificates for other workloads that need to talk to
-simplyblock. These workloads specifically include external key management systems (KMS), as described in the next
-section.
+With `tls.provider=cert-manager`, the chart mints a CA certificate from the configured issuer and creates a dedicated
+`ClusterIssuer` named `simplyblock-certificate-authority-issuer`, which signs all internal component certificates. With
+mutual TLS, client certificates are issued for the operator, the two CSI plugins, Prometheus, and the FoundationDB
+peers. The same issuer can be used to mint certificates for other workloads that need to talk to simplyblock, in
+particular an external KMS, as described in the next section.
 
-!!! note "OpenShift"
-    On OpenShift, setting `tls.enabled=true` with the default `tls.provider=openshift` only activates one-way TLS using
-    OpenShift-managed certificates.
+### Checking the Effective Settings
 
-    Mutual TLS is **not** available with the OpenShift default provider. To use `tls.mutual_enabled=true`
-    requires `tls.provider=cert-manager` regardless of the underlying Kubernetes distribution.
+```bash title="Show the TLS settings of the control plane and the CSI driver"
+kubectl -n simplyblock get controlplane simplyblock -o jsonpath='{.spec.source.local.tls}'
+kubectl -n simplyblock get simplyblockdriver simplyblock -o jsonpath='{.spec.tls}'
+```
 
 ## External Key Management (KMS)
 
@@ -89,8 +105,8 @@ either of them.
 
 ### Prerequisites
 
-- **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the control plane authenticates to the KMS with a certificate issued by the operator's
-  `simplyblock-certificate-authority-issuer`.
+- **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the control
+  plane authenticates to the KMS with a certificate issued by the `simplyblock-certificate-authority-issuer`.
 - **A prepared instance:** A Vault or OpenBao instance reachable from the simplyblock namespace, initialized,
   unsealed, and configured as described in [Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md).
 - **Storage for that instance that is not simplyblock:** A KMS holding its own state on the cluster it serves
@@ -108,41 +124,58 @@ key-value engine at `simplyblock/kv`, and a certificate role named `simplyblock-
 certificate chains to the simplyblock certificate authority and whose DNS SAN is `simplyblock-webappapi`. None of the
 three is configurable through the operator, which exposes the endpoint URL alone.
 
-### Point the StorageCluster to the KMS
+### Point the Storage Cluster to the KMS
 
-Set `spec.hashicorpVaultSettings.baseURL` on the `StorageCluster` resource:
+The KMS is configured with `kms.vault.endpoint`. It is set in the cluster template of the
+`ClusterDeploymentConfig` before approving it (see [Create a Storage Cluster](k8s-storage-plane.md)):
 
-```yaml title="StorageCluster with external KMS"
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageCluster
+```yaml title="ClusterDeploymentConfig with an external KMS"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
 metadata:
-  name: simplyblock-cluster
+  name: production-deployment
   namespace: simplyblock
 spec:
-  clusterName: production
-  fabricType: tcp
-  ...
-  hashicorpVaultSettings:
-    baseURL: "https://vault.vault:8200/"
+  approved: false
+  cluster:
+    name: production
+    maxSubsystemCount: 50
+    vcpuCount: 8
+    kms:
+      vault:
+        endpoint: "https://vault.vault.svc:8200"
+  nodeSets:
+    - name: rack-a
+      groups:
+        - name: default
+          workers: [worker-1, worker-2, worker-3]
+          devices:
+            nvme: ["0000:01:00.0"]
 ```
 
-This setting is automatically picked up by the operator during the next reconcilation cycle. From that point on, volume
-encryption keys for this cluster are wrapped against the vault's transit backend instead of being held inside the
-cluster.
+The expansion copies the block to `StorageCluster.spec.kms`. The operator hands the KMS endpoint to the control
+plane when it creates the storage cluster, so the KMS has to be configured before the cluster is created.
 
-!!! warning "Important Note"
-    Only encryption keys for volumes that are created after the vault is wired up are wrapped and stored in the vault.
-    Existing volumes are not affected.
+The endpoint must be an `http` or `https` URL whose host name resolves. Loopback and link-local addresses are
+rejected.
+
+!!! warning "The KMS setting is immutable"
+    Once `spec.kms` is set on a `StorageCluster`, it cannot be changed or removed. An approved
+    `ClusterDeploymentConfig` cannot be changed either.
+
+!!! warning "Existing volumes are not affected"
+    Only encryption keys for volumes that are created after the KMS is wired up are wrapped and stored in the KMS.
+    Existing volumes keep their internally managed keys.
 
 ### Verification
 
-Once configured, check the operator and webappapi pod logs for vault connection messages and watch the cluster
-status:
+Once configured, check the cluster status and the operator logs:
 
 ```bash title="Verify the KMS connection"
-kubectl get storagecluster -n simplyblock
-kubectl logs -n simplyblock deploy/simplyblock-operator
+kubectl -n simplyblock get storagecluster production -o jsonpath='{.status.message}'
+kubectl -n simplyblock logs deploy/simplyblock-operator
 ```
 
-Creating a new encrypted volume after the vault is wired up exercises the path end-to-end. The volume's encryption key
-material is then stored in the vault rather than alongside the cluster.
+Creating a new encrypted volume after the KMS is wired up exercises the path end-to-end. The volume's encryption key
+material is then stored in the KMS rather than alongside the cluster. See
+[Volume Encryption](../usage/volume-encryption.md).

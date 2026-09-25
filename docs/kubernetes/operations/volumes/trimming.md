@@ -1,6 +1,6 @@
 ---
 title: "Trimming a Filesystem"
-description: "Trimming a Filesystem: Filesystem trimming is the process of informing the underlying storage system about unused blocks, allowing simplyblock to reclaim and."
+description: "Reclaim the unused blocks of a thin-provisioned simplyblock volume by trimming its filesystem with fstrim."
 weight: 10420
 ---
 
@@ -48,7 +48,7 @@ filesystem type. Below are common examples:
 
 === "XFS"
     ```bash title="Trimming an XFS filesystem"
-    xfs_fsr -v /mount/point
+    fstrim -v /mount/point
     ```
 
 ## Verification
@@ -56,7 +56,8 @@ filesystem type. Below are common examples:
 After trimming:
 
 - Confirm the command output reports completed trim activity for the expected mountpoint.
-- Verify reclaimed capacity through the monitoring workflow (CLI metrics and dashboards).
+- Verify reclaimed capacity through the monitoring workflow, for example, the `used` capacity of the claim in
+  `kubectl get lvm <pvc-name> -n <namespace> -o yaml` (see [Capacity Metrics API](../monitoring/index.md#capacity-metrics-api)).
 - If reclaim appears lower than expected, re-check mountpoint, filesystem type, and timing of backend metric updates.
 
 ## Common Pitfalls
@@ -67,7 +68,5 @@ After trimming:
 
 ## Related References
 
-- [Accessing I/O Stats ({{ cliname }})](../../../non-kubernetes/operations/monitoring/io-stats.md)
 - [Logical Volume Conditions](../monitoring/lvol-conditions.md)
-- [Provisioning with Linux](../../../non-kubernetes/usage/index.md)
 - [Provisioning with Simplyblock CSI](../../usage/provisioning.md)

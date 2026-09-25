@@ -1,6 +1,6 @@
 ---
 title: "Expanding"
-description: "Expanding a Persistent Volume (PV) in Kubernetes allows for increasing the size of a volume without downtime, ensuring applications continue running with."
+description: "Expand a simplyblock-backed PersistentVolume online by raising the size of its claim, with the filesystem grown in place by the CSI driver."
 weight: 40300
 ---
 
@@ -16,20 +16,29 @@ through its CSI driver, making it possible to resize volumes dynamically as stor
 To enable volume expansion, the [StorageClass](storage-class.md) has to be configured accordingly. To enable volume
 expansion, the property `allowVolumeExpansion` has to be set to true.
 
+The StorageClass the operator creates for a cluster's default pool (`simplyblock-<namespace>-<cluster>`) already
+allows volume expansion. An authored StorageClass sets the property itself:
+
 ```yaml title="Allowing volume expansion in StorageClass"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: encrypted-volumes
+  name: tenant-a-fast
+  labels:
+    storage.simplyblock.io/namespace: simplyblock
+    storage.simplyblock.io/cluster: production
+    storage.simplyblock.io/pool: tenant-a
 provisioner: csi.simplyblock.io
 parameters:
-  encryption: "True"
-  csi.storage.k8s.io/fstype: ext4
-  ... other parameters
+  cluster_id: <CLUSTER_UUID>
+  pool_name: tenant-a
+  csi.storage.k8s.io/fstype: xfs
 reclaimPolicy: Delete
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true # <- Enable volume expansion
 ```
+
+A volume cannot grow beyond the `max_size` parameter of its StorageClass, when it is set.
 
 ## Expand a PersistentVolume
 
