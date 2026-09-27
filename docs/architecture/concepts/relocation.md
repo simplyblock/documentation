@@ -38,6 +38,16 @@ are described in [Failover](failover.md).
     machines and the live migration of volumes from one simplyblock cluster to another, without restarting the
     workload. Until it is available, workloads move between clusters with a restart-based DR relocation.
 
+## Volume Cutover Between Clusters
+
+Below the application level, the storage-level asynchronous replication of simplyblock can prepare a planned cutover
+of individual volumes to another storage cluster of the same control plane. A replication policy in `migration` mode
+replicates the volumes to the target cluster while they keep serving I/O on the source. The cutover itself is then
+committed per volume: the volume is frozen briefly, the remaining delta is transferred, and the target cluster serves
+the volume from then on. The workload has to reconnect to the volume on the target cluster, so this is not an online
+migration of the workload. See
+[Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+
 ## Volume Migration Within a Cluster
 
 Within one simplyblock storage cluster, volumes can already be migrated online between storage nodes without service

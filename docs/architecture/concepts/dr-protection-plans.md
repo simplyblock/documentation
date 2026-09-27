@@ -44,6 +44,23 @@ A plan cannot mix `sync` and `async` methods, since a storage class carries exac
 `snapshot-s3` method can be declared alongside either of them. The replication types and their parameters are
 described in [Replication Types](../../disaster-recovery/configuration/replication-types.md).
 
+### Storage-Level and Application-Level Protection
+
+The replication methods protect whole applications. Simplyblock DR replicates the Kubernetes objects of an
+application together with its volumes, restarts the application on the target site in a defined order, checks its
+health, and fails it back.
+
+Underneath, asynchronous replication between simplyblock clusters is snapshot-based. At every interval, a
+copy-on-write snapshot of each volume is taken on the source cluster and transferred to the target cluster, where the
+snapshots form an incremental chain. The data gap after an unplanned failover therefore equals the replication
+interval plus any time the replication was behind schedule.
+
+The same storage-level replication can also be used on its own, without simplyblock DR, per volume between two
+storage clusters of one control plane. Volumes of one cluster can replicate to different target clusters and on
+different schedules. Typical uses are disaster recovery with an RPO of minutes for volumes whose applications are
+recovered by other means, the distribution of data to other sites, and the migration of volumes to another cluster.
+See [Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+
 ## S3 Profiles
 
 Ramen stores the Kubernetes metadata of protected volumes, and Velero stores the captured Kubernetes objects, in an S3
