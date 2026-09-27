@@ -32,6 +32,7 @@ Key characteristics of storage pooling include:
     pool is 2 PB in size, a single volume can be sized 2 PB or 10,000 small volumes can be created. Also it means that
     capacity and total performance of a pool scales linearly when the pool is expanded.
 
-    As this characteristic is conflicting with the benefits of data locality, simplyblock still applies the principles
-    of data locality. This is implemented as a best-effort manner and without damaging performance of parts of volumes
-    through localized bottlenecks.
+    As this characteristic conflicts with the benefits of data locality, data locality is turned off by default, and
+    data is distributed for a fully balanced load. When enabled, data locality is applied on a best-effort basis and
+    without damaging the performance of parts of volumes through localized bottlenecks (see
+    [Data Locality](../storage-performance-and-qos.md#data-locality)).
