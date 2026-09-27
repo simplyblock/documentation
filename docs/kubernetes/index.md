@@ -23,7 +23,7 @@ own status.
 
 Both **hyper-converged** and **disaggregated** topologies are supported. In a hyper-converged deployment, simplyblock
 storage services share Kubernetes worker nodes with application workloads. In a disaggregated deployment, they run on
-dedicated workers, either within the same cluster or in a separate one. A wide range of Kubernetes distributions is
+dedicated workers, by default within the same cluster, or optionally in a separate storage cluster. A wide range of Kubernetes distributions is
 supported, including OpenShift, SUSE Rancher (RKE2 and K3s), and Talos.
 
 Before deploying, review the node sizing, network, and erasure coding guidance in

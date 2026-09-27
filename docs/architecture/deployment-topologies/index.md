@@ -35,8 +35,8 @@ The details and a comparison are in [Control Plane and Operator](control-plane-a
 
 - **Hyper-converged (HCI):** Storage nodes run on the same Kubernetes workers as the applications. See
   [HCI (Hyper-Converged)](hci.md).
-- **Disaggregated:** Storage nodes run on dedicated workers or in a dedicated storage cluster, and applications
-  access them over NVMe-oF. See [Disaggregated](disaggregated.md).
+- **Disaggregated:** Storage nodes run on dedicated workers, by default in the same Kubernetes cluster as the
+  applications, which access them over NVMe-oF. See [Disaggregated](disaggregated.md).
 - **Hybrid:** Some workers host both storage and applications, while others are storage-only or compute-only. The
   hybrid model is a matter of node selection and does not require a different installation.
 
