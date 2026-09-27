@@ -1,4 +1,9 @@
 processor:
+  # Only the v1alpha2 API is documented. v1alpha1 is still served by the
+  # operator for compatibility, but the conversion webhook translates it into
+  # v1alpha2, so the reference describes the storage version alone.
+  ignoreGroupVersions:
+    - "/v1alpha1$"
   ignoreTypes:
     - ".*List$"
   ignoreFields:
