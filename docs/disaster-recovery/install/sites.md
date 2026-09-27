@@ -22,6 +22,7 @@ Before a site joins, the following must be in place on the site cluster:
 - **Snapshot support:** The snapshot controller and the VolumeSnapshot and VolumeGroupSnapshot CRDs. They are
   installed together with simplyblock by the Simplyblock Operator Helm chart (`snapshotcontroller.create`, enabled by
   default).
+- **csi-addons:** The csi-addons controller and CRDs. They are installed together with simplyblock storage.
 - **Protected StorageClasses:** The StorageClasses and VolumeSnapshotClasses to be protected carry a selectable label,
   for example, `simplyblock.io/replicated: "true"`. The protection plan selects the classes by this label (see
   [Labeling the StorageClasses](#labeling-the-storageclasses)).
@@ -29,8 +30,7 @@ Before a site joins, the following must be in place on the site cluster:
 - **Optional components:** KubeVirt for virtual machines, and Multus with an isolated
   NetworkAttachmentDefinition for test failovers of VMs with secondary networks.
 
-csi-addons, the Ramen Recipe CRD, and Velero do not have to be installed in advance. They are part of the site
-stack.
+The Ramen Recipe CRD and Velero do not have to be installed in advance. They are part of the site stack.
 
 ## Creating a Join Token
 
@@ -59,7 +59,7 @@ helm --kube-context site-a install dr-simplyblock-spoke simplyblock/dr-simplyblo
   --set hub.apiserver=https://hub.example.com:6443 \
   --set hub.token="$TOKEN" \
   --set hub.caData="$HUB_CA" \
-  --set 'stackOmit={snapshotter}'
+  --set 'stackOmit={snapshotter,csi-addons-crds,csi-addons-controller}'
 ```
 
 Clusters that join with a bootstrap token are approved automatically. No `clusteradm accept` step is needed.
@@ -93,8 +93,8 @@ It then installs the site stack, which consists of the following components:
 | Component               | Content                                                                                                                                                                                                           |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `snapshotter`           | external-snapshotter v8.6.0 with volume group snapshots enabled. Not needed on a simplyblock site, which already runs the snapshot controller of the Simplyblock Operator chart. Always omitted with `stackOmit`. |
-| `csi-addons-crds`       | csi-addons v0.14.0 CRDs.                                                                                                                                                                                          |
-| `csi-addons-controller` | csi-addons v0.14.0 controller.                                                                                                                                                                                    |
+| `csi-addons-crds`       | csi-addons v0.14.0 CRDs. Not needed on a simplyblock site, which already runs csi-addons. Always omitted with `stackOmit`.                                                                                        |
+| `csi-addons-controller` | csi-addons v0.14.0 controller. Not needed on a simplyblock site. Always omitted with `stackOmit`.                                                                                                                 |
 | `recipe-crd`            | The Ramen Recipe CRD.                                                                                                                                                                                             |
 | `velero`                | Velero v1.16.1 with velero-plugin-for-aws v1.12.0, kubevirt-velero-plugin v0.8.0, and Kopia. No default backup storage location is configured.                                                                    |
 | `olm-stubs`             | Stub CRDs for the OLM kinds that the Ramen DR cluster operator expects.                                                                                                                                           |
@@ -128,7 +128,7 @@ helm --kube-context site-b install dr-simplyblock-spoke simplyblock/dr-simplyblo
   --set hub.apiserver=https://hub.example.com:6443 \
   --set hub.token="$TOKEN" \
   --set hub.caData="$HUB_CA" \
-  --set 'stackOmit={snapshotter,velero}'
+  --set 'stackOmit={snapshotter,csi-addons-crds,csi-addons-controller,velero}'
 ```
 
 ```bash title="Turning off the site stack for a managed cluster"

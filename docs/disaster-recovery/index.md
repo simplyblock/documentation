@@ -19,9 +19,9 @@ configuration and drives every action. The sites run the applications and the si
 
 - **Hub cluster:** Runs dr-hub, the Open Cluster Management (OCM) hub, and the Ramen hub operator. The hub never
   holds a kubeconfig of a site.
-- **Site clusters:** Run the OCM klusterlet, dr-agent, the Ramen DR cluster operator, Velero, csi-addons, and
-  simplyblock with its CSI driver and snapshot controller. dr-hub installs the site software stack (csi-addons,
-  Recipe CRD, Velero, Ramen DR cluster operator) on every joined site.
+- **Site clusters:** Run the OCM klusterlet, dr-agent, the Ramen DR cluster operator, Velero, and simplyblock with
+  its CSI driver, snapshot controller, and csi-addons. dr-hub installs the site software stack (Recipe CRD, Velero,
+  Ramen DR cluster operator) on every joined site.
 - **Open Cluster Management (OCM):** Registers the sites with the hub and carries all traffic between them.
 - **Ramen:** Orchestrates volume replication, protection of Kubernetes objects, and the promotion of volumes on the
   target site during a failover or relocation.
