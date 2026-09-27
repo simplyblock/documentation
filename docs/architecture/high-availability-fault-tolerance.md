@@ -71,10 +71,12 @@ two networks, or six with two failover paths). This provides an alternative to l
 To ensure cluster-wide availability, simplyblock operates with full redundancy in both its control plane and
 storage plane:
 
-- **Control Plane (Management Nodes):**
-    - Deployed as a highly available set of management nodes, typically in a quorum-based configuration.
+- **Control Plane:**
+    - Runs as replicated pods: the management API with two replicas by default and a FoundationDB cluster with three
+      or five coordinators.
     - Responsible for cluster health, topology management, and coordination.
-    - Remains operational even if one or more management nodes fail.
+    - Remains operational if a single pod or Kubernetes worker fails, and is not in the I/O path: volumes keep
+      serving I/O while it is unavailable.
 
 - **Storage Plane (Storage Nodes):**
     - Storage services are distributed across multiple storage nodes.
