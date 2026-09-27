@@ -5,8 +5,8 @@ weight: 10420
 ---
 
 A planned failover moves a healthy application from its current site to the DR site while both sites are available.
-In simplyblock DR, it is a `RecoveryAction` of kind `Relocate` along a forward DR path. Ramen performs a final sync of
-the volumes before the target takes over, so no data is lost. The application is stopped on the source and restarted
+In simplyblock DR, it is a `RecoveryAction` of kind `Relocate` along a forward DR path. A final sync of the volumes
+runs before the target takes over, so no data is lost. The application is stopped on the source and restarted
 on the target, and the downtime is the RTO of the action.
 
 ## Use Cases
@@ -51,8 +51,7 @@ spec:
 ```
 
 The action is created in the namespace of the ProtectedApplication (`ramen-ops` for discovered applications). The
-specification is immutable. The admission webhook records the creator in the annotation
-`dr.simplyblock.io/created-by`. Several applications are moved together with a
+specification is immutable. The creator is recorded in the annotation `dr.simplyblock.io/created-by`. Several applications are moved together with a
 [recovery plan](recovery-plans.md).
 
 ## Phases
@@ -60,11 +59,10 @@ specification is immutable. The admission webhook records the creator in the ann
 1. **PreFlight:** Re-checks the path, binding, lock, current site, and readiness. A failure changes nothing.
 2. **PreSource:** Runs the application's `externalHooks.preSource` hooks on the source site, for example, draining
    clients or withdrawing a virtual IP. A failing hook fails the action, and nothing is moved.
-3. **RamenHandoff:** Sets the DRPlacementControl to `Relocate` with the target as preferred cluster. Ramen then
-   performs the final sync, demotes the volumes on the source, promotes them on the target, and restores the
-   Kubernetes objects in the order of the Recipe tiers. When Ramen waits for the workload to be removed from the
-   source, dr-hub removes it (see [Relocate (Restart)](relocate-restart.md#cleanup-on-the-source)).
-4. **TargetStarting:** Waits until Ramen reports the application relocated and available on the target.
+3. **RamenHandoff:** The volumes are switched to the target site: the workload is removed from the source (see
+   [Relocate (Restart)](relocate-restart.md#cleanup-on-the-source)), the final sync runs, the volumes are demoted on
+   the source and promoted on the target, and the Kubernetes objects are restored in the order of the Recipe tiers.
+4. **TargetStarting:** Waits until the application is relocated and available on the target.
 5. **Workflow:** Waits up to 15 minutes for all `health.probes` to pass on the target and records the RTO.
 6. **PostTargetReady:** Runs the `externalHooks.postTargetReady` hooks on the target site, for example, a DNS or load
    balancer update.

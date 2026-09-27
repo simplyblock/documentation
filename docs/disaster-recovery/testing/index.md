@@ -6,9 +6,8 @@ weight: 10300
 
 A disaster recovery setup that has never been tested is an assumption. simplyblock DR rehearses a failover without
 touching production: it clones the replicated volumes on the target site, restores the application into renamed and
-isolated namespaces, validates that it comes up, reports the result, and tears everything down again. Production,
-replication, and the Ramen objects stay unchanged, and the test proves this by comparing digests recorded before and
-after.
+isolated namespaces, validates that it comes up, reports the result, and tears everything down again. Production and
+replication stay unchanged, and the test proves this by comparing their state before and after.
 
 ## Why Test
 
@@ -25,8 +24,8 @@ A test answers questions that configuration alone cannot:
 A test failover exercises the restore of the application from the latest replicated consistency point and its
 startup on the target site. It never exercises the following, and every test report states so:
 
-- **Promotion:** Ramen's promotion of the replicated volumes on the target.
-- **Fencing:** NetworkFence of the source site.
+- **Promotion:** The promotion of the replicated volumes on the target.
+- **Fencing:** The fencing of the source site.
 - **External cutover:** The `preSource` and `postTargetReady` external hooks, for example, DNS or load balancer
   changes.
 - **Network identity:** Routes, Ingresses, LoadBalancer addresses, and production network attachments.

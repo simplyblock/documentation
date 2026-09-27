@@ -26,11 +26,9 @@ point with it.
 The hub requires at least three nodes. Three nodes are needed for:
 
 - **Control plane quorum:** The Kubernetes API server and etcd of the hub must survive the loss of one node.
-- **Availability of dr-hub:** dr-hub runs as a leader-elected Deployment. If its node fails, the pod is rescheduled to
-  another node, and a replacement leader takes over. The replica count can be raised with the `hub.replicas` Helm
+- **Availability of dr-hub:** If the node of dr-hub fails, the pod is rescheduled to another node. The replica count can be raised with the `hub.replicas` Helm
   value.
-- **Webhook availability:** dr-hub validates every DR object through admission webhooks with the failure policy
-  `Fail`. While dr-hub is unavailable, no DR object (protection plan, DR path, protected application, recovery
+- **Webhook availability:** dr-hub validates every DR object. While dr-hub is unavailable, no DR object (protection plan, DR path, protected application, recovery
   action, or test) can be created or changed.
 
 While the hub is unavailable, protected applications keep running and replicating on the sites, but no DR action can
@@ -51,25 +49,24 @@ The hub can be deployed on any infrastructure that meets the requirements on thi
 
 ### Sizing
 
-The DR design does not define fixed hub sizes. The following numbers are **initial recommendations**. The resource
+No fixed hub sizes are defined. The following numbers are **initial recommendations**. The resource
 requests are taken from the Helm chart and the bundled manifests. The per-node numbers are guidance and have to be
 validated against the number of protected applications and sites.
 
-| Component                                                          | Namespace                     | CPU request | Memory request | Memory limit     | Source                                             |
-|--------------------------------------------------------------------|-------------------------------|-------------|----------------|------------------|----------------------------------------------------|
-| OCM cluster-manager (registration-operator)                        | `open-cluster-management`     | 2m          | 16Mi           | none             | Bundled manifest                                   |
-| OCM hub controllers (registration, work, placement, addon-manager) | `open-cluster-management-hub` | OCM default | OCM default    | none             | ClusterManager with `resourceRequirement: Default` |
-| Governance policy addon controller                                 | `open-cluster-management`     | 10m         | 64Mi           | 128Mi (CPU 500m) | Bundled manifest                                   |
-| Governance policy propagator                                       | `open-cluster-management`     | not set     | not set        | none             | Bundled manifest                                   |
-| ocm-controller                                                     | `open-cluster-management`     | 100m        | 256Mi          | 4Gi              | Bundled manifest                                   |
-| Ramen hub operator                                                 | `ramen-system`                | 100m        | 200Mi          | 300Mi (CPU 100m) | Bundled manifest                                   |
-| dr-hub                                                             | `dr-simplyblock`              | 50m         | 128Mi          | 512Mi            | Helm value `hub.resources`                         |
-| DR console (UI)                                                    | -                             | -           | -              | -                | Not part of the hub chart                          |
-| Prometheus                                                         | -                             | -           | -              | -                | Not bundled, an existing Prometheus scrapes dr-hub |
+| Component                                                          | Namespace                     | CPU request | Memory request | Memory limit     |
+|--------------------------------------------------------------------|-------------------------------|-------------|----------------|------------------|
+| OCM cluster-manager (registration-operator)                        | `open-cluster-management`     | 2m          | 16Mi           | none             |
+| OCM hub controllers (registration, work, placement, addon-manager) | `open-cluster-management-hub` | OCM default | OCM default    | none             |
+| Governance policy addon controller                                 | `open-cluster-management`     | 10m         | 64Mi           | 128Mi (CPU 500m) |
+| Governance policy propagator                                       | `open-cluster-management`     | not set     | not set        | none             |
+| ocm-controller                                                     | `open-cluster-management`     | 100m        | 256Mi          | 4Gi              |
+| Ramen hub operator                                                 | `ramen-system`                | 100m        | 200Mi          | 300Mi (CPU 100m) |
+| dr-hub                                                             | `dr-simplyblock`              | 50m         | 128Mi          | 512Mi            |
+| DR console (UI)                                                    | -                             | -           | -              | -                |
+| Prometheus                                                         | -                             | -           | -              | -                |
 
 The requests of these components are small. The dominant consumers on a hub are the Kubernetes control plane itself
-(API server and etcd), which serves all ManifestWorks, ManagedClusterViews, and DR objects, and a Prometheus instance
-if one runs on the hub.
+(API server and etcd) and a Prometheus instance if one runs on the hub.
 
 | Per-node sizing       | vCPU | RAM    | Local disk      |
 |-----------------------|------|--------|-----------------|
@@ -142,7 +139,7 @@ The following components are installed on every site by the DR hub after the sit
 preinstalled in conflicting versions:
 
 - **Snapshot support:** External snapshotter with the snapshot CRDs and group snapshots.
-- **Replication add-ons:** The csi-addons controller and CRDs for VolumeReplication, VolumeGroupReplication, and NetworkFence.
+- **Replication add-ons:** The csi-addons controller and CRDs.
 - **Recipe CRD and Ramen DR cluster operator.**
 - **Velero:** Including the AWS and KubeVirt plugins.
 
@@ -154,10 +151,10 @@ Single components can be left out if they already exist on a site. See
 Simplyblock DR stores application metadata, backups, reports, and hub state in S3. Any S3-compatible object store
 can be used.
 
-| Bucket                       | Content                                                                                           | Accessed by                                   |
-|------------------------------|---------------------------------------------------------------------------------------------------|-----------------------------------------------|
-| One or more buckets per site | Ramen metadata of protected volumes, Velero captures of Kubernetes objects, `snapshot-s3` backups | Hub and all sites                             |
-| Archive bucket               | Action and test reports (JSON and PDF), signed hub state bundles                                  | Hub, and the restore tooling after a hub loss |
+| Bucket                       | Content                                                                                     | Accessed by                                   |
+|------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------|
+| One or more buckets per site | Metadata of protected volumes, Velero captures of Kubernetes objects, `snapshot-s3` backups | Hub and all sites                             |
+| Archive bucket               | Action and test reports (JSON and PDF), signed hub state bundles                            | Hub, and the restore tooling after a hub loss |
 
 Every bucket needs:
 
@@ -195,7 +192,7 @@ storage cluster in the `backup` section of the `StorageCluster`:
 
 ## Networking
 
-The hub and the sites communicate only through OCM, and every connection is opened from the site to the hub. The hub
+Every connection between the hub and the sites is opened from the site to the hub. The hub
 never opens a connection to a site and does not store a kubeconfig of any site.
 
 | Source                                      | Destination                               | Port                         | Protocol | Purpose                             |
@@ -203,7 +200,7 @@ never opens a connection to a site and does not store a kubeconfig of any site.
 | Hub API server                              | dr-hub webhook Service                    | 9443                         | HTTPS    | Admission webhooks for DR objects   |
 | Prometheus                                  | dr-hub metrics                            | 8443                         | HTTPS    | DR metrics                          |
 | Kubelet (hub)                               | dr-hub                                    | 8081                         | HTTP     | Liveness and readiness probes       |
-| OCM klusterlet and addon agents (each site) | Hub API server                            | 6443 or 443                  | HTTPS    | Registration, ManifestWorks, status |
+| OCM klusterlet and addon agents (each site) | Hub API server                            | 6443 or 443                  | HTTPS    | Registration and status             |
 | Sites and hub                               | S3 endpoints                              | 443 (or the endpoint's port) | HTTPS    | Metadata, backups, reports, bundles |
 | Storage nodes (each storage cluster)        | Storage nodes of the peer storage cluster | 4420-4499                    | NVMe/TCP | Storage-level replication           |
 
@@ -218,8 +215,8 @@ prerequisites of the replication relationship itself are described in
 
 ### Latency
 
-Synchronous (metro) replication adds the round-trip time between the sites to every write. The DR design sets no
-hard limit. As guidance, metro distances with a low single-digit millisecond round-trip time between the sites are
+Synchronous (metro) replication adds the round-trip time between the sites to every write. There is no hard
+limit. As guidance, metro distances with a low single-digit millisecond round-trip time between the sites are
 recommended. Asynchronous replication has no latency requirement, but the bandwidth must be sufficient to transfer the
 changes of one scheduling interval within that interval.
 

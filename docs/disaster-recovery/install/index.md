@@ -30,25 +30,24 @@ applications, as described in [Configuration](../configuration/index.md).
 
 ## Components per Cluster
 
-The hub cluster runs the control components. Site clusters only run agents and the data-path components. The hub
-never holds a kubeconfig of a site cluster: all communication runs through OCM, with the site clusters connecting to
-the hub API server.
+The hub cluster runs the control components. Site clusters only run agents and the data-path components. The site
+clusters connect to the hub API server. The hub never connects to a site cluster.
 
-| Component                                                                                | Hub | Site         | Version                  |
-|------------------------------------------------------------------------------------------|-----|--------------|--------------------------|
-| `dr-hub` (controllers, admission webhooks, report archiver, state bundler)               | Yes | No           | Chart version            |
-| OCM cluster manager                                                                      | Yes | No           | 1.3.1                    |
-| OCM governance-policy addon                                                              | Yes | Addon agents | v0.18.0                  |
-| OCM `ocm-controller` (ManagedClusterView, work-manager addon)                            | Yes | Addon agent  | Bundled                  |
-| Ramen hub operator                                                                       | Yes | No           | Pinned by digest         |
-| OCM klusterlet (registration and work agents)                                            | No  | Yes          | 1.3.1                    |
-| `dr-agent` (OCM addon, namespace `simplyblock-dr-agent`)                                 | No  | Yes          | Chart version            |
-| Ramen DR cluster operator                                                                | No  | Yes          | Pinned by digest         |
-| external-snapshotter (with volume group snapshots)                                       | No  | Yes          | v8.6.0                   |
-| csi-addons CRDs and controller (VolumeReplication, VolumeGroupReplication, NetworkFence) | No  | Yes          | v0.14.0                  |
-| Ramen Recipe CRD                                                                         | No  | Yes          | Pinned                   |
-| Velero with velero-plugin-for-aws and kubevirt-velero-plugin                             | No  | Yes          | v1.16.1, v1.12.0, v0.8.0 |
-| Simplyblock storage, Simplyblock Operator, and CSI driver                                | No  | Yes          | Installed separately     |
+| Component                                                    | Hub | Site         | Version                  |
+|--------------------------------------------------------------|-----|--------------|--------------------------|
+| `dr-hub`                                                     | Yes | No           | Chart version            |
+| OCM cluster manager                                          | Yes | No           | 1.3.1                    |
+| OCM governance-policy addon                                  | Yes | Addon agents | v0.18.0                  |
+| OCM `ocm-controller`                                         | Yes | Addon agent  | Bundled                  |
+| Ramen hub operator                                           | Yes | No           | Pinned by digest         |
+| OCM klusterlet (registration and work agents)                | No  | Yes          | 1.3.1                    |
+| `dr-agent` (OCM addon, namespace `simplyblock-dr-agent`)     | No  | Yes          | Chart version            |
+| Ramen DR cluster operator                                    | No  | Yes          | Pinned by digest         |
+| external-snapshotter (with volume group snapshots)           | No  | Yes          | v8.6.0                   |
+| csi-addons CRDs and controller                               | No  | Yes          | v0.14.0                  |
+| Ramen Recipe CRD                                             | No  | Yes          | Pinned                   |
+| Velero with velero-plugin-for-aws and kubevirt-velero-plugin | No  | Yes          | v1.16.1, v1.12.0, v0.8.0 |
+| Simplyblock storage, Simplyblock Operator, and CSI driver    | No  | Yes          | Installed separately     |
 
 The exact versions of a release can be printed from the hub image:
 
@@ -56,8 +55,8 @@ The exact versions of a release can be printed from the hub image:
 kubectl -n dr-simplyblock exec deploy/dr-hub -- dr-bootstrap render versions
 ```
 
-The site stack is delivered by the hub as OCM ManifestWorks. The individual components can be left out on a site
-that already runs them, as described in [Opting Out of Site Stack Components](sites.md#opting-out-of-site-stack-components).
+The hub installs the site stack on every joining site. The individual components can be left out on a site that
+already runs them, as described in [Opting Out of Site Stack Components](sites.md#opting-out-of-site-stack-components).
 
 ## Air-Gapped Installation
 

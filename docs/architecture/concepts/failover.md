@@ -34,8 +34,7 @@ A recovery action passes through a fixed sequence of phases, and it resumes afte
 1. **PreFlight:** Checks that the path allows the action, that the application is at the path's source, that no
    other action runs for it, and that its readiness permits the action.
 2. **PreSource:** Runs the external preSource hooks on the source site.
-3. **RamenHandoff:** Hands the move to Ramen, which demotes and promotes the volumes and restores the Kubernetes
-   objects in the tier order.
+3. **RamenHandoff:** Demotes and promotes the volumes and restores the Kubernetes objects in the tier order.
 4. **TargetStarting:** Waits until the application is placed and available on the target site.
 5. **Workflow:** Waits until all health probes pass. The recovery time (RTO) is measured up to this point.
 6. **PostTargetReady:** Runs the external postTargetReady hooks, for example, to switch DNS.
@@ -54,13 +53,12 @@ a path does not declare can never be overridden.
 
 ## Fencing for Metro DR
 
-With synchronous (metro) replication, both sites access the same storage identity. Before the target is promoted in
-an unplanned failover, the source site must be fenced, so that it can no longer write to the volumes. Simplyblock DR
-uses the csi-addons NetworkFence for this.
+With synchronous (metro) replication, the source site must be fenced before the target is promoted in an unplanned
+failover, so that it can no longer write to the volumes.
 
 !!! info "Coming soon"
-    The metro fencing pre-flight is behind a feature gate until the simplyblock CSI driver supports csi-addons
-    NetworkFence. Until then, the source site has to be isolated from the storage by other means, for example, by
+    The metro fencing pre-flight is behind a feature gate until the simplyblock CSI driver supports network
+    fencing. Until then, the source site has to be isolated from the storage by other means, for example, by
     shutting it down, before an unplanned failover with synchronous replication.
 
 ## Failback

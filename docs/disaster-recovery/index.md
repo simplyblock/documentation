@@ -18,18 +18,16 @@ A simplyblock DR deployment consists of one hub cluster and two or more site clu
 configuration and drives every action. The sites run the applications and the simplyblock storage.
 
 - **Hub cluster:** Runs dr-hub, the Open Cluster Management (OCM) hub, and the Ramen hub operator. The hub never
-  holds a kubeconfig of a site. It reaches the sites only through OCM.
+  holds a kubeconfig of a site.
 - **Site clusters:** Run the OCM klusterlet, dr-agent, the Ramen DR cluster operator, Velero, csi-addons, and
-  simplyblock with its CSI driver. dr-hub delivers the site software stack (snapshot controller, csi-addons, Recipe
-  CRD, Velero, Ramen DR cluster operator) to every joined site.
-- **Open Cluster Management (OCM):** Registers the sites with the hub and carries all traffic between them. The hub
-  sends work to a site as ManifestWorks and reads status back through ManagedClusterViews.
+  simplyblock with its CSI driver. dr-hub installs the site software stack (snapshot controller, csi-addons, Recipe
+  CRD, Velero, Ramen DR cluster operator) on every joined site.
+- **Open Cluster Management (OCM):** Registers the sites with the hub and carries all traffic between them.
 - **Ramen:** Orchestrates volume replication, protection of Kubernetes objects, and the promotion of volumes on the
   target site during a failover or relocation.
 - **Velero:** Captures and restores an application's Kubernetes objects and runs the snapshot-s3 backups.
-- **Hub controller (dr-hub):** The simplyblock DR controller on the hub. It derives the Ramen and csi-addons objects from the
-  simplyblock DR resources, computes readiness, runs recovery actions and tests, and writes reports and signed state
-  bundles to S3.
+- **Hub controller (dr-hub):** The simplyblock DR controller on the hub. It computes readiness, runs recovery actions
+  and tests, and writes reports and signed state bundles to S3.
 - **Site agent (dr-agent):** The simplyblock DR agent on each site, installed as an OCM addon. It reports status to the hub and
   runs the site-side steps: hooks, health probes, test bubbles, cleanup, and backups.
 
@@ -73,7 +71,7 @@ The following capabilities are available today:
 
 - **Protection:** Protection plans with sync, async, and snapshot-s3 methods, directed DR paths, and protected
   applications (discovered and managed).
-- **Boot order:** Tiers with readiness gates, turned into Ramen Recipes by dr-hub.
+- **Boot order:** Tiers with readiness gates.
 - **Recovery actions:** Failover, Relocate, and failback, for single applications and for ordered recovery plans,
   with pre-flight readiness checks, external hooks, health probes, and reports.
 - **Test failover:** Isolated test bubbles and test schedules for discovered applications.

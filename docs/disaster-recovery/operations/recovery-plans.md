@@ -96,7 +96,7 @@ For an unplanned failover, set `kind: Failover` and, if the plan is `NotReady`, 
 - **Tracking:** `status.children` of the plan action lists each child with its application, priority, action name, phase, and final message. Each child
   has its own journal and report.
 - **Failure:** Without `continueOnFailure`, every child not yet started is marked `Failed` with a message starting
-  with `not started:`. Running children are never stopped, because Ramen cannot abort a move.
+  with `not started:`. Running children are never stopped, because a move cannot be aborted once it has started.
 - **Result:** The plan action completes only if every child completed. Otherwise, it fails and names the applications
   that did not complete.
 

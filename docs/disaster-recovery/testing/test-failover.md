@@ -6,8 +6,8 @@ weight: 10310
 
 A `TestBubble` recovers one protected application, or every application of a recovery plan, along a DR path that
 declares `Test`. It recovers onto the path's target site into renamed, isolated namespaces, then validates the
-application, writes a report, and removes everything it created. A test never writes production objects, the
-DRPlacementControls, or replication.
+application, writes a report, and removes everything it created. A test never changes production objects or
+replication.
 
 ## Prerequisites
 
@@ -104,17 +104,17 @@ kubectl -n ramen-ops get tbub -w
 
 ## Phases
 
-| Phase          | What happens                                                                                                                                     |
-|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Pending`      | Pre-flight checks, invariants recorded, and the source inventory read (Ramen state, protected PVCs, the Kubernetes object capture, and the VMs). |
-| `Cloning`      | Bubble namespaces are created and one clone PVC is created for every protected PVC, from the latest replicated consistency point.                |
-| `Provisioning` | Network isolation is set up in the bubble.                                                                                                       |
-| `Restoring`    | The application's Recipe restore workflow runs against Ramen's capture, tier by tier.                                                            |
-| `Validating`   | The validation checks run.                                                                                                                       |
-| `Holding`      | Only with `holdFor`. Ends early on `abort`.                                                                                                      |
-| `TearingDown`  | Everything labeled with the test ID is deleted on the target, then invariants are compared.                                                      |
-| `Completed`    | The bubble is verifiably gone, whatever the outcome.                                                                                             |
-| `Failed`       | Teardown could not verify that everything was removed.                                                                                           |
+| Phase          | What happens                                                                                                                      |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `Pending`      | Pre-flight checks run, and the state of production and replication is recorded.                                                   |
+| `Cloning`      | Bubble namespaces are created and one clone PVC is created for every protected PVC, from the latest replicated consistency point. |
+| `Provisioning` | Network isolation is set up in the bubble.                                                                                        |
+| `Restoring`    | The application's captured Kubernetes objects are restored into the bubble, tier by tier.                                         |
+| `Validating`   | The validation checks run.                                                                                                        |
+| `Holding`      | Only with `holdFor`. Ends early on `abort`.                                                                                       |
+| `TearingDown`  | Everything the test created on the target is deleted, then production and replication are checked for changes.                    |
+| `Completed`    | The bubble is verifiably gone, whatever the outcome.                                                                              |
+| `Failed`       | Teardown could not verify that everything was removed.                                                                            |
 
 A test resumes where it stopped after a restart of dr-hub. The outcome of the test is in `status.report.outcome`, not
 in the phase.
@@ -132,8 +132,8 @@ The bubble keeps the test copy away from production:
 - **Services:** LoadBalancer and NodePort Services are turned into ClusterIP Services and lose their external IPs.
 - **Excluded objects:** Routes, Ingresses, Gateways, HTTPRoutes, NetworkPolicies, and NADs from production are not
   restored.
-- **Read-only capture:** Objects are restored from Ramen's Velero capture through a BackupStorageLocation with
-  `accessMode: ReadOnly`, so a test can never overwrite production's capture.
+- **Read-only capture:** A test only reads the captured Kubernetes objects of production and can never overwrite
+  them.
 - **Health probes:** Probe targets such as `<svc>.<ns>` are mapped to `<svc>.<ns>-drtest-<id>`. Targets the bubble
   cannot answer for (external names, IP addresses) are skipped as not exercised.
 
@@ -164,12 +164,12 @@ Once anything has reached the target, any failure, an abort, or reaching `maxLif
 
 `status.report` holds the result:
 
-| Outcome           | Meaning                                                                                            |
-|-------------------|----------------------------------------------------------------------------------------------------|
-| `Passed`          | The application came up in the bubble and all checks passed.                                       |
-| `Failed`          | A step failed. The report names the first failure and the step.                                    |
-| `FailedInvariant` | Production, replication, or a Ramen object changed during the test. Overrides every other outcome. |
-| `Unsupported`     | The application cannot be tested safely in this release (see below).                               |
+| Outcome           | Meaning                                                                           |
+|-------------------|-----------------------------------------------------------------------------------|
+| `Passed`          | The application came up in the bubble and all checks passed.                      |
+| `Failed`          | A step failed. The report names the first failure and the step.                   |
+| `FailedInvariant` | Production or replication changed during the test. Overrides every other outcome. |
+| `Unsupported`     | The application cannot be tested safely in this release (see below).              |
 
 The report also records the test point (the consistency point restored), the achieved RPO at test time, the
 estimated RTO (from all clones ready until the last restore workflow completed), the consistency (`group` or
@@ -196,8 +196,8 @@ to production for:
 
 ## Teardown
 
-Teardown deletes every object labeled `dr.simplyblock.io/test-id=<id>` on the target site, and bubble namespaces only
-if they carry the label, then waits until nothing remains. It then compares the invariants. Finished tests are
+Teardown deletes every object the test created on the target site, including the bubble namespaces, then waits until
+nothing remains. It then checks that production and replication did not change. Finished tests are
 retained and pruned together with reports, as described in [Monitoring](../operations/monitoring.md#reports).
 
 !!! info "Coming soon"

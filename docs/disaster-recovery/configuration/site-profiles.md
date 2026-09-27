@@ -17,8 +17,7 @@ path:
 
 - **NetworkAttachmentDefinitions:** Multus NADs referenced by pods and virtual machines must exist with the same name,
   in the same namespace, on both sites.
-- **StorageClasses and VolumeSnapshotClasses:** The protected classes must have the same names on both sites. Ramen
-  pairs them as peer classes.
+- **StorageClasses and VolumeSnapshotClasses:** The protected classes must have the same names on both sites.
 - **Zones:** Node affinities and topology spread constraints that name a `topology.kubernetes.io/zone` must find the
   same zone names on the target.
 - **Other class names:** Ingress classes, load balancer classes, priority classes, and runtime classes referenced by
@@ -47,7 +46,7 @@ the ProtectedApplication and `status.profileConsistency` of the DR path report `
       namespace over global.
     - **Strategies:** `map` (translate to a named value on the target), `keep` (use the same value), `derive` (compute
       the target value, for example, the same offset in a target pool), `regenerate` (create a new value, for
-      example, a MAC address), `ramen` (leave it to Ramen), `ignore`, and `create` (create the missing object on the
+      example, a MAC address), `ramen` (keep the default restore behavior), `ignore`, and `create` (create the missing object on the
       target).
     - **Categories:** NADs, zones, guest addresses, addresses (VIPs, egress IPs, CIDRs), domains, classes, registries,
       host devices, MAC addresses, NodePorts, IP families, and literal values in configuration.

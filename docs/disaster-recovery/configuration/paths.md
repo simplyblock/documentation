@@ -9,8 +9,8 @@ actions permitted along it. Directions are declared, never inferred: an applicat
 be tested along a path that exists and allows the action. DR paths are cluster-scoped and written by the `dr-admin`
 role.
 
-A DRPolicy is derived for every pair of sites that is connected by at least one path, so paths also decide which
-site pairs replicate at all (see [Protection Plans](protection-plans.md#what-dr-hub-derives)).
+Only pairs of sites that are connected by at least one path replicate, so paths also decide which site pairs replicate
+at all.
 
 ## Specification
 
@@ -49,7 +49,7 @@ over from `site-a` to `site-b`, the path `site-b-to-site-a` must allow `Relocate
 
 - **After a relocation:** The reverse path can be used as soon as the relocation is complete.
 - **After a failover:** The reverse path reports the application as not ready until the old source site is back and
-  replication from the new source has resumed (Ramen `PeerReady`).
+  replication from the new source has resumed.
 
 See [Relocation](../../architecture/concepts/relocation.md) for the concept.
 
@@ -65,8 +65,7 @@ site-a-to-site-b   site-a   site-b   aws-fra   ["Failover","Relocate","Test"]   
 site-b-to-site-a   site-b   site-a   aws-fra   ["Relocate"]                    True
 ```
 
-The path status lists the derived DRPolicies of its site pair, the protected applications on the path, and the most
-recent action of each kind. The `Valid` condition reports whether the plan and both sites exist.
+The path status lists the protected applications on the path and the most recent action of each kind. The `Valid` condition reports whether the plan and both sites exist.
 `status.profileConsistency` reports `NotAvailable` until site profiles are available.
 
 A path that applications still use can only be deleted after the annotation
@@ -174,8 +173,8 @@ spec:
     - Failover
 ```
 
-The site pairs `fra-a`/`fra-b` and `fra-a`/`muc-c` each get one DRPolicy per method. The pair `fra-b`/`muc-c` has no
-path and therefore no DRPolicy.
+The site pairs `fra-a`/`fra-b` and `fra-a`/`muc-c` replicate. The pair `fra-b`/`muc-c` has no path and therefore does
+not replicate.
 
 !!! note
     Each protected application has exactly one target site. An application protected from `fra-a` to `fra-b` uses the

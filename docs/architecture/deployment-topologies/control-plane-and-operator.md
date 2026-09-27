@@ -47,8 +47,8 @@ several storage clusters.
 
     In the hub model, a hub (management) cluster runs the simplyblock control plane and the central operator
     components. The managed Kubernetes clusters run only lightweight simplyblock agents, the CSI driver, and the
-    storage nodes. The hub holds the desired configuration of every managed cluster and ships it to the cluster
-    through Open Cluster Management (OCM), and each managed cluster reports back what it applied.
+    storage nodes. The hub holds the desired configuration of every managed cluster, and each managed cluster
+    reports back what it applied.
 
     ![Centralized control plane and operator on a hub cluster](../../assets/images/architecture/topology-cp-hub.svg)
 

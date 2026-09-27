@@ -72,24 +72,24 @@ Clusters that join with a bootstrap token are approved automatically. No `cluste
 | `stackOmit`             | `[]`                              | Site stack components the hub should not deliver to this cluster.                                           |
 
 !!! warning
-    The cluster name is permanent. It is the name of the OCM ManagedCluster, of the Ramen DRCluster, and of the site
-    in every protection plan. After a hub loss, sites must rejoin under their old names.
+    The cluster name is permanent. It is the name of the managed cluster on the hub and of the site in every
+    protection plan. After a hub loss, sites must rejoin under their old names.
 
 ## What the Hub Installs on a Site
 
 When a cluster joins, `dr-hub` enables the following OCM addons on it:
 
-- **Policy addons:** `governance-policy-framework` and `config-policy-controller`, used by Ramen to distribute the S3 credentials.
-- **Work manager:** `work-manager`, required for ManagedClusterViews.
+- **Policy addons:** `governance-policy-framework` and `config-policy-controller`.
+- **Work manager:** `work-manager`.
 - **DR agent:** `dr-agent` in the `simplyblock-dr-agent` namespace. It reports the site status to the hub every 15
   seconds and runs hooks, probes, tests, and cleanups on the site.
 
-It then delivers the site stack, one OCM ManifestWork `dr-stack-<component>` per component:
+It then installs the site stack, which consists of the following components:
 
 | Component               | Content                                                                                                                                        |
 |-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
 | `snapshotter`           | external-snapshotter v8.6.0 with volume group snapshots enabled.                                                                               |
-| `csi-addons-crds`       | csi-addons v0.14.0 CRDs, including VolumeReplication, VolumeGroupReplication, and NetworkFence.                                                |
+| `csi-addons-crds`       | csi-addons v0.14.0 CRDs.                                                                                                                       |
 | `csi-addons-controller` | csi-addons v0.14.0 controller.                                                                                                                 |
 | `recipe-crd`            | The Ramen Recipe CRD.                                                                                                                          |
 | `velero`                | Velero v1.16.1 with velero-plugin-for-aws v1.12.0, kubevirt-velero-plugin v0.8.0, and Kopia. No default backup storage location is configured. |
@@ -103,20 +103,17 @@ The component list of a release is printed with `dr-bootstrap render spoke`:
 kubectl --context hub -n dr-simplyblock exec deploy/dr-hub -- dr-bootstrap render spoke
 ```
 
-The stack ManifestWorks use the orphan delete option. Removing a site from DR does not delete the components from
-the site cluster.
+Removing a site from DR does not delete the components from the site cluster.
 
 !!! note
-    The ManifestWork that installs the Ramen DR cluster operator reports its OLM Subscription as not applied. This is
-    expected, because the site does not run OLM.
+    The site stack reports the OLM Subscription of the Ramen DR cluster operator as not applied. This is expected, because the site does not run OLM.
 
 ## Opting Out of Site Stack Components
 
 On a site that already runs some of the components, for example, Velero from OpenShift API for Data Protection
 (OADP), the hub can be told not to deliver them:
 
-- **Single components:** The spoke chart value `stackOmit` lists the components to skip. It is stored as the
-  annotation `agent.open-cluster-management.io/dr-stack-omit` on the ManagedCluster.
+- **Single components:** The spoke chart value `stackOmit` lists the components to skip.
 - **Entire stack:** The label `dr.simplyblock.io/stack=false` on the ManagedCluster stops the hub from delivering any
   stack component to the site.
 
@@ -139,9 +136,7 @@ Omitted components must be provided in compatible versions by other means.
 ## Labeling the StorageClasses
 
 A protection plan picks the protected StorageClasses on every site with a label selector. Only the selection label is
-set by the administrator. `dr-hub` adds the Ramen labels (`ramendr.openshift.io/storageid`,
-`ramendr.openshift.io/replicationid`, and `ramendr.openshift.io/groupreplicationid`) and the plan label
-`plan.dr.simplyblock.io/<plan>` itself.
+set by the administrator.
 
 ```bash title="Labeling a simplyblock StorageClass and VolumeSnapshotClass for protection"
 kubectl --context site-a label storageclass simplyblock-csi-sc simplyblock.io/replicated=true
@@ -150,7 +145,7 @@ kubectl --context site-a label volumesnapshotclass simplyblock-snap simplyblock.
 
 StorageClasses and VolumeSnapshotClasses with the same names must exist on every site of a plan, because an
 application recovers exactly as captured (see [Site Profiles and Mappings](../configuration/site-profiles.md)). A
-VolumeSnapshotClass is only labeled by `dr-hub` if its driver matches the provisioner of a selected StorageClass.
+VolumeSnapshotClass is only protected if its driver matches the provisioner of a selected StorageClass.
 
 ## Zones
 

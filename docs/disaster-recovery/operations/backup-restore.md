@@ -16,7 +16,7 @@ This is different from the storage-level backup of simplyblock volumes, which is
 ## snapshot-s3 Backups
 
 A `snapshot-s3` method in a protection plan applies to every application of the plan, next to its sync or async
-replication method. It creates no DR policy. The method is configured in the plan (see
+replication method. The method is configured in the plan (see
 [Replication Types](../configuration/replication-types.md)):
 
 ```yaml title="Protection plan with a snapshot-s3 method"
@@ -39,17 +39,13 @@ spec:
 - **Schedule:** A cron expression. At every time, dr-hub asks dr-agent on the cluster each application currently runs
   on to take a backup.
 - **Retention:** The number of complete backup sets kept per application. Older sets are deleted.
-- **Store:** The backups go to the site's S3 store, or to the Ramen S3 profile named in `snapshotS3.s3ProfileName`,
+- **Store:** The backups go to the site's S3 store, or to the S3 profile named in `snapshotS3.s3ProfileName`,
   under the key prefix `simplyblock-dr/backups`.
 
 ### Backup Sets
 
-A backup set is named `dr-<appkey>-<yyyymmddhhmmss>-<method>` and consists of two Velero backups:
-
-- **`<set>`:** The application's Kubernetes objects, without PVCs, PVs, pods, replica sets, events, endpoints, and
-  replication objects.
-- **`<set>-volumes`:** One volume record per PVC, with the class, size, access modes, labels, and what the storage
-  backend needs to recreate the data.
+A backup set is named `dr-<appkey>-<yyyymmddhhmmss>-<method>`. It holds the application's Kubernetes objects and
+one volume record per PVC, with the class, size, access modes, labels, and the reference to the volume data.
 
 ### Backup Status
 
@@ -87,9 +83,8 @@ When the hub and all sites are lost, only the S3 stores remain. Recovery follows
       -public-key bundle-signing.pub
     ```
 
-    With `-fresh-sites`, no DRPlacementControls and no application Placements are restored, and every
-    ProtectedApplication is annotated `dr.simplyblock.io/awaiting-restore=true`. While annotated, dr-hub does not
-    protect the application, so Ramen does not deploy it empty on the rebuilt site.
+    With `-fresh-sites`, every ProtectedApplication is annotated `dr.simplyblock.io/awaiting-restore=true`. While
+    annotated, the application is not protected, so it is not deployed empty on the rebuilt site.
 
 3. **Rejoin the sites:** Join the rebuilt site clusters under their old names. See [Join Sites](../install/sites.md).
 4. **Restore each application:** A user with the `dr-admin` role creates one RestoreAction per application.
@@ -109,13 +104,13 @@ spec:
 
 ### RestoreAction Phases
 
-| Phase          | What happens                                                                                                                                                                                                                                                                                                                                                                  |
-|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Pending`      | Checks that the application is awaiting restore and that its plan has a snapshot-s3 method.                                                                                                                                                                                                                                                                                   |
-| `Restoring`    | dr-agent on the source site reads the backup sets from the store, picks the named or newest complete set, recreates the namespaces and one PVC per volume record with the recorded data, restores the objects in the order of the generated Recipe, and waits for the pods to be ready. dr-hub then deletes the old Ramen protection data of the application from the stores. |
-| `Reprotecting` | dr-hub removes the annotation, creates the DRPlacementControl again, and waits until Ramen reports the application deployed and protected.                                                                                                                                                                                                                                    |
-| `Completed`    | The application runs on its source site and is protected again.                                                                                                                                                                                                                                                                                                               |
-| `Failed`       | A step failed. See `status.steps` and `status.message`.                                                                                                                                                                                                                                                                                                                       |
+| Phase          | What happens                                                                                                                                                                                                                                                                                                 |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Pending`      | Checks that the application is awaiting restore and that its plan has a snapshot-s3 method.                                                                                                                                                                                                                  |
+| `Restoring`    | The named or newest complete backup set is restored on the source site: the namespaces and one PVC per volume record are recreated with the recorded data, the objects are restored in tier order, and the pods become ready. The old protection data of the application is then removed from the S3 stores. |
+| `Reprotecting` | The annotation is removed, and the application is protected again. The phase ends when the application is reported deployed and protected.                                                                                                                                                                   |
+| `Completed`    | The application runs on its source site and is protected again.                                                                                                                                                                                                                                              |
+| `Failed`       | A step failed. See `status.steps` and `status.message`.                                                                                                                                                                                                                                                      |
 
 ```bash title="Listing restore actions"
 kubectl -n ramen-ops get rsa

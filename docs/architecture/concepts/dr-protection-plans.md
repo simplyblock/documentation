@@ -8,8 +8,7 @@ A protection plan is the central configuration object of simplyblock Disaster Re
 sites take part in disaster recovery, which simplyblock storage is protected, how data is replicated between the
 sites, and where metadata and backups are kept in S3. A protection plan is a cluster-scoped `ProtectionPlan` resource
 on the DR hub. The directions in which applications may move between the sites of a plan are declared separately as
-DR paths. From both, the DR hub derives all lower-level Ramen and csi-addons objects, so these are never written by
-hand.
+DR paths.
 
 ## Sites
 
@@ -24,7 +23,7 @@ installation.
 The storage profile selects the simplyblock storage that the plan protects. It consists of a label selector for
 storage classes and, optionally, a separate selector for volume snapshot classes (by default, the storage class
 selector is used for both). Only a single label, for example, `simplyblock.io/replicated: "true"`, has to be set on
-the classes. The DR hub adds all further labels that Ramen needs.
+the classes.
 
 The storage profile also decides whether the volumes of an application are replicated as one consistency group.
 Consistency groups are enabled by default, so all volumes of an application are captured at the same point in time.
@@ -36,12 +35,11 @@ one method of its plan.
 
 | Method type   | Also known as | Behavior                                                                                              |
 |---------------|---------------|-------------------------------------------------------------------------------------------------------|
-| `sync`        | Metro DR      | Volumes are written synchronously to both sites. Both sites share one storage identity.               |
+| `sync`        | Metro DR      | Volumes are written synchronously to both sites.                                                      |
 | `async`       | Regional DR   | Volumes are replicated at a fixed scheduling interval, for example, every 5 minutes.                  |
 | `snapshot-s3` | Backup        | Application objects and volume records are backed up to S3 on a cron schedule with a retention count. |
 
-A plan cannot mix `sync` and `async` methods, since a storage class carries exactly one storage identity. A
-`snapshot-s3` method can be declared alongside either of them. The replication types and their parameters are
+A plan cannot mix `sync` and `async` methods. A `snapshot-s3` method can be declared alongside either of them. The replication types and their parameters are
 described in [Replication Types](../../disaster-recovery/configuration/replication-types.md).
 
 ### Storage-Level and Application-Level Protection
@@ -63,8 +61,8 @@ See [Asynchronous Replication](../../kubernetes/operations/data-protection/async
 
 ## S3 Profiles
 
-Ramen stores the Kubernetes metadata of protected volumes, and Velero stores the captured Kubernetes objects, in an S3
-bucket per site. A plan either names an existing Ramen S3 profile or declares one S3 store per site with bucket,
+The Kubernetes metadata of protected volumes and the captured Kubernetes objects are stored in an S3 bucket per
+site. A plan either names an existing Ramen S3 profile or declares one S3 store per site with bucket,
 endpoint, region, credentials Secret, and optional CA certificates. Every S3-compatible object store can be used.
 The per-site stores must cover exactly the sites of the plan.
 
@@ -79,21 +77,10 @@ A path that allows tests carries the test settings, such as an isolated network 
 Failback is always a relocation along the reverse path. See
 [DR Paths](../../disaster-recovery/configuration/paths.md).
 
-## What Is Derived
+## Plan Readiness
 
-From a plan and its paths, the DR hub derives and maintains:
-
-- **DR clusters:** One Ramen DRCluster per site.
-- **DR policies:** One Ramen DRPolicy per pair of sites connected by a path and per replication method (not for
-  `snapshot-s3`).
-- **Class labels:** Storage identity and replication labels on the selected storage classes and volume snapshot
-  classes on every site.
-- **Replication classes:** For `async` methods, the VolumeReplicationClass and VolumeGroupReplicationClass on each
-  site. For `sync` methods, both sites receive the same storage identity instead.
-- **S3 profiles:** The Ramen S3 profiles for the declared per-site stores.
-
-A plan reports `Ready` once all derived objects are in place, the site agents report their inventory, and Ramen has
-paired the storage classes of both sides.
+A plan reports `Ready` once its configuration is in place on all sites, the site agents report their inventory, and
+the storage classes of both sides are paired.
 
 ## Further Reading
 

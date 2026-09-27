@@ -4,8 +4,7 @@ description: "Configure the S3 archive for DR reports, the signing key, and the 
 weight: 10120
 ---
 
-The hub cluster holds the complete DR configuration: protection plans, paths, applications, and the Ramen objects
-derived from them. To survive the loss of the hub itself, `dr-hub` writes this state as a signed DR state bundle to an
+The hub cluster holds the complete DR configuration: protection plans, paths, and applications. To survive the loss of the hub itself, `dr-hub` writes this state as a signed DR state bundle to an
 S3 archive. The same archive stores the report of every finished recovery action and test.
 
 The archive is configured in `DRConfig.spec.archive`. Without an archive, no bundles and no reports are written, and
@@ -26,10 +25,8 @@ A DR state bundle contains:
 
 - **DR configuration:** The `DRConfig` and all DR objects (protection plans, DR paths, protected applications,
   recovery plans, and test schedules).
-- **OCM intent:** The managed clusters and cluster sets the hub expects.
-- **Ramen state:** The Ramen hub configuration, DRCluster, DRPolicy, and DRPlacementControl objects, and the
-  Placements with their decisions.
-- **Generated Recipes:** The Ramen Recipes that `dr-hub` generated for discovered applications.
+- **Sites:** The managed clusters the hub expects.
+- **Generated Recipes:** The Recipes generated for protected applications.
 
 A bundle never contains Secrets and no finished runs. The S3 credentials, the archive credential, and the signing key
 must be kept in a separate, safe location and restored manually after a hub loss (see

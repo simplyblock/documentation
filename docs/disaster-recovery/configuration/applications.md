@@ -1,13 +1,12 @@
 ---
 title: "Protected Applications"
-description: "Protect discovered and GitOps-managed applications with a ProtectedApplication: namespaces, PVC selection, source, target, method, probes, and adoption."
+description: "Protect discovered and GitOps-managed applications with a ProtectedApplication: namespaces, PVC selection, source, target, method, and probes."
 weight: 10240
 ---
 
 A ProtectedApplication binds one application to a protection plan. It names the site the application runs on, the one
 site it recovers to, and the replication method. It also defines how the application is selected, how its recovery is
-confirmed, and in which order it starts on the target. From it, `dr-hub` creates the Ramen DRPlacementControl (DRPC)
-that performs the replication and recovery. Protected applications are written by the `dr-operator` role.
+confirmed, and in which order it starts on the target. Protected applications are written by the `dr-operator` role.
 
 Applications can be containers, KubeVirt virtual machines, or both. The concepts are explained in
 [Protected Applications](../../architecture/concepts/dr-applications.md).
@@ -16,27 +15,19 @@ Applications can be containers, KubeVirt virtual machines, or both. The concepts
 
 Applications come in two kinds, set by `spec.kind`:
 
-|                                | `discovered`                                                           | `managed`                                                                   |
-|--------------------------------|------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| Delivery                       | Objects already on the source cluster, deployed by any means           | Delivered by GitOps (OCM subscriptions or Argo CD) through an OCM Placement |
-| Recovery of objects            | Ramen captures the objects with Velero and restores them on the target | The GitOps tool deploys the objects on the target once the Placement moves  |
-| ProtectedApplication namespace | `ramen-ops`                                                            | The application's own namespace, next to its Placement                      |
-| Placement                      | Created by `dr-hub`                                                    | Provided by the user, scheduling disabled                                   |
-| Boot order                     | Tiers, as a generated Ramen Recipe, or a hand-written Recipe           | GitOps sync order (tiers are not executed)                                  |
-| Test failover                  | Supported                                                              | Not supported                                                               |
+|                                | `discovered`                                                 | `managed`                                                                   |
+|--------------------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------|
+| Delivery                       | Objects already on the source cluster, deployed by any means | Delivered by GitOps (OCM subscriptions or Argo CD) through an OCM Placement |
+| Recovery of objects            | Captured on the source and restored on the target            | The GitOps tool deploys the objects on the target once the Placement moves  |
+| ProtectedApplication namespace | `ramen-ops`                                                  | The application's own namespace, next to its Placement                      |
+| Placement                      | Not required                                                 | Provided by the user, scheduling disabled                                   |
+| Boot order                     | Tiers or a hand-written Recipe                               | GitOps sync order (tiers are not executed)                                  |
+| Test failover                  | Supported                                                    | Not supported                                                               |
 
 ### Discovered Applications
 
-A discovered application must be declared in the Ramen operations namespace `ramen-ops`. Declared anywhere else, it
-reports `NotInRamenOpsNamespace`. `dr-hub` then creates:
-
-- **Placement:** `<application>-placement` in `ramen-ops`, with scheduling disabled and exactly one cluster.
-- **DRPlacementControl:** `<application>` in `ramen-ops`, with the source as the preferred cluster, the protected
-  namespaces, the PVC selector, and a reference to the Recipe.
-- **Recipe:** A Ramen Recipe generated from the tiers, delivered to both sites (see
-  [Workflows and Recipes](workflows-and-recipes.md)).
-
-The Placement and DRPC are owned by the ProtectedApplication. Deleting the ProtectedApplication stops the protection.
+A discovered application must be declared in the operations namespace `ramen-ops`. Declared anywhere else, it
+reports `NotInRamenOpsNamespace`. Deleting the ProtectedApplication stops the protection.
 
 ### Managed Applications
 
@@ -44,8 +35,7 @@ A managed application is declared in the application's own namespace, next to th
 
 - **Placement requirements:** The Placement must already have scheduling disabled (annotation
   `cluster.open-cluster-management.io/experimental-scheduling-disable: "true"`) and select exactly one cluster
-  (`numberOfClusters: 1`). Otherwise, the application reports `PlacementNotRamenScheduled`. `dr-hub` never writes the
-  Placement. Ramen is its only writer.
+  (`numberOfClusters: 1`). Otherwise, the application reports `PlacementNotRamenScheduled`.
 - **Source site:** `spec.source` can be omitted. It is taken from the Placement's current decision.
 - **PVCs:** An empty `pvcSelector` protects all PVCs in the namespace.
 - **Delivery:** The GitOps tooling (for example, Argo CD or ACM) is provided by the user and must deploy to the
@@ -69,14 +59,12 @@ A managed application is declared in the application's own namespace, next to th
 | `spec.discovered.recipeRef`             | No         | Hand-written Ramen Recipe (`name`, optional `namespace`). Exclusive with `tiers`.                              |
 | `spec.managed.placementRef.name`        | Managed    | OCM Placement in the same namespace.                                                                           |
 | `spec.managed.pvcSelector`              | No         | Label selector for the replicated PVCs. Empty means all PVCs in the namespace.                                 |
-| `spec.drpcRef.name`                     | No         | Existing DRPlacementControl in the same namespace to adopt instead of creating one.                            |
 | `spec.health.probes[]`                  | No         | Up to 32 probes that confirm the application serves after a recovery.                                          |
 | `spec.tiers[]`                          | No         | Up to 16 tiers defining the boot order. See [Workflows and Recipes](workflows-and-recipes.md).                 |
 | `spec.externalHooks`                    | No         | `preSource` and `postTargetReady` hooks. See [Workflows and Recipes](workflows-and-recipes.md#external-hooks). |
 | `spec.dependsOn[]`                      | No         | Applications in the same namespace that must be healthy first, in recovery plans and tests.                    |
 
-The target is immutable because a Ramen DRPC cannot change its DRPolicy. Changing the target or the method requires a
-new ProtectedApplication, which starts with a full initial sync.
+Changing the target or the method requires a new ProtectedApplication, which starts with a full initial sync.
 
 ## Selecting the Data
 
@@ -91,13 +79,13 @@ kubectl --context site-a -n orders label pvc --all app=orders
 ```
 
 !!! note
-    The PVC selector cannot be changed once the DRPC exists. A different selection requires a new
+    The PVC selector cannot be changed once the application is protected. A different selection requires a new
     ProtectedApplication.
 
 ## Health Probes
 
 Health probes confirm that the application serves after a recovery. They run on the site where the application
-currently runs, executed by `dr-agent`. A recovery action waits up to 15 minutes for all probes to pass. The recovery
+currently runs. A recovery action waits up to 15 minutes for all probes to pass. The recovery
 time (RTO) of an action is measured from its creation until all probes pass.
 
 | Type         | Field                          | Checks                                                        |
@@ -112,19 +100,11 @@ Each probe has a `timeout` (default `5s`) and an optional `name`.
 !!! info "Coming soon"
     The probe type `objectExists` is accepted by the API but not yet implemented.
 
-## Adopting an Existing DRPC
-
-A DRPC that already exists, for example, from an earlier Ramen setup, can be adopted with `spec.drpcRef`. The DRPC must
-use a DRPolicy derived for the application's site pair. Otherwise, the application reports `DRPCOnOtherPair`.
-
-DRPCs on derived policies that no ProtectedApplication references are adopted automatically. `dr-hub` creates a
-ProtectedApplication for them, annotated `dr.simplyblock.io/adopted`.
-
 ## Drift
 
-The DRPolicy, the Placement, and the PVC selector of a Ramen DRPC are immutable. If the ProtectedApplication no longer
-matches its DRPC in one of these fields, for example, after a manual DRPC change, it reports `DRPCDrift`. The
-application must then be protected under a new ProtectedApplication.
+The replication method, the placement, and the PVC selection of a protected application are fixed once it is protected.
+If they no longer match the ProtectedApplication, it reports `DRPCDrift`. The application must then be protected under
+a new ProtectedApplication.
 
 ## Status
 
@@ -139,13 +119,14 @@ ramen-ops   orders   aws-fra   site-a   site-b   discovered   site-a    True
 
 The status reports:
 
-- **Bindings:** The DRPC, the Placement, the DRPolicy, and the cluster the application currently runs on.
+- **Current site:** The cluster the application currently runs on.
 - **Readiness per path:** For every DR path the application can take, the allowed actions and a readiness verdict
   (`Ready`, `Degraded`, `NotReady`, or `Unknown`) with the individual checks. See [Monitoring](../operations/monitoring.md).
-- **Recipe:** The Recipe in effect, whether it was generated, and its hash.
+- **Recipe:** The Recipe in effect and whether it was generated.
 - **Suggested tiers:** A boot order suggested from the objects found, never applied automatically.
 - **Backups:** Per `snapshot-s3` method, the running and the last successful backup.
-- **Conditions:** `Bound` (the DRPC exists and matches) and `Protected` (Ramen reports the application as protected).
+- **Conditions:** `Bound` (the protection exists and matches the specification) and `Protected` (the application is
+  protected).
 
 ```bash title="Showing the readiness of an application per path"
 kubectl -n ramen-ops get protectedapplication orders \
@@ -253,25 +234,6 @@ spec:
   managed:
     placementRef:
       name: portal-placement
-```
-
-### Adopting an Existing DRPC
-
-```yaml title="Managed application adopting an existing DRPC (papp-legacy.yaml)"
-apiVersion: dr.simplyblock.io/v1alpha1
-kind: ProtectedApplication
-metadata:
-  name: portal
-  namespace: portal
-spec:
-  planRef: fra
-  target: fra-b
-  kind: managed
-  managed:
-    placementRef:
-      name: portal-placement
-  drpcRef:
-    name: legacy
 ```
 
 ### Application Dependencies

@@ -249,14 +249,14 @@ The `externallyManagedSecret`, `csiConfig`, `csiSecret`, and `multiCluster` valu
 `simplyblock-csi-secret-v2` Secret with cluster credentials for the CSI driver. The operator maintains the credentials
 of the clusters it creates, so these values are only needed for clusters it does not create.
 
-| Value                            | Default             | Description                                                                                                                                                          |
-|----------------------------------|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `externallyManagedSecret.create` | `true`              | Renders the Secret. The template tests the `externallyManagedSecret` block itself, so the Secret is rendered whenever the block is present, regardless of this flag. |
-| `csiConfig.simplybk.uuid`        |                     | UUID of the simplyblock cluster. The Secret carries credentials only when this and `csiSecret.simplybk.secret` are set.                                              |
-| `csiConfig.simplybk.ip`          |                     | Management API endpoint. Empty uses the in-cluster `simplyblock-webappapi` service.                                                                                  |
-| `csiSecret.simplybk.secret`      |                     | Cluster secret.                                                                                                                                                      |
-| `multiCluster.enable`            | `false`             | Writes one entry per item in `multiCluster.clusters` instead of the single cluster above.                                                                            |
-| `multiCluster.clusters`          | (see `values.yaml`) | List of `cluster_id`, `secret`, and `workers`. `cluster_id` and `secret` are required per entry.                                                                     |
+| Value                            | Default             | Description                                                                                                                  |
+|----------------------------------|---------------------|------------------------------------------------------------------------------------------------------------------------------|
+| `externallyManagedSecret.create` | `true`              | Renders the Secret. The Secret is rendered whenever the `externallyManagedSecret` block is present, regardless of this flag. |
+| `csiConfig.simplybk.uuid`        |                     | UUID of the simplyblock cluster. The Secret carries credentials only when this and `csiSecret.simplybk.secret` are set.      |
+| `csiConfig.simplybk.ip`          |                     | Management API endpoint. Empty uses the in-cluster `simplyblock-webappapi` service.                                          |
+| `csiSecret.simplybk.secret`      |                     | Cluster secret.                                                                                                              |
+| `multiCluster.enable`            | `false`             | Writes one entry per item in `multiCluster.clusters` instead of the single cluster above.                                    |
+| `multiCluster.clusters`          | (see `values.yaml`) | List of `cluster_id`, `secret`, and `workers`. `cluster_id` and `secret` are required per entry.                             |
 
 ## Snapshots, RBAC, and Annotations
 

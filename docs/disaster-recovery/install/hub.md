@@ -17,9 +17,8 @@ Before installing, the hub must meet the [Disaster Recovery Requirements](../../
 
 ## Preparing the S3 Credentials
 
-Ramen stores the Kubernetes objects and PV metadata of protected applications in one S3 bucket per site. The hub
-chart stores the credential for those buckets as Kubernetes Secrets in the Ramen namespace (`ramen-system`), and Ramen
-distributes them to the sites.
+The Kubernetes objects and PV metadata of protected applications are stored in one S3 bucket per site. The hub chart
+stores the credential for those buckets as Kubernetes Secrets in the Ramen namespace (`ramen-system`).
 
 The credential is provided as an AWS credentials file:
 
@@ -101,7 +100,7 @@ helm install dr-simplyblock-hub simplyblock/dr-simplyblock-hub \
 | `image.tag`                           | Chart `appVersion`                    | Image tag.                                                                                                                       |
 | `image.pullPolicy`                    | `IfNotPresent`                        | Image pull policy.                                                                                                               |
 | `imagePullSecrets`                    | `[]`                                  | Pull secrets for the hub images.                                                                                                 |
-| `hub.replicas`                        | `1`                                   | Replicas of the `dr-hub` Deployment. Replicas use leader election.                                                               |
+| `hub.replicas`                        | `1`                                   | Replicas of the `dr-hub` Deployment.                                                                                             |
 | `hub.logLevel`                        | `info`                                | Log level of `dr-hub`.                                                                                                           |
 | `hub.resources`                       | 50m CPU, 128 Mi request, 512 Mi limit | Resources of `dr-hub`.                                                                                                           |
 | `hub.nodeSelector`, `hub.tolerations` | Empty                                 | Scheduling of `dr-hub`.                                                                                                          |
@@ -122,8 +121,8 @@ helm install dr-simplyblock-hub simplyblock/dr-simplyblock-hub \
 | `agent.installStrategy.placements`    | `[]`                                  | Placements that select the sites for the `Placements` strategy.                                                                  |
 | `drConfig.create`                     | `true`                                | Creates the `DRConfig` singleton on install.                                                                                     |
 | `drConfig.ramenNamespace`             | `ramen-system`                        | Ramen namespace on the hub.                                                                                                      |
-| `drConfig.veleroNamespace`            | `velero`                              | Velero namespace on the sites, written to the Ramen configuration.                                                               |
-| `drConfig.opsNamespace`               | `ramen-ops`                           | Ramen operations namespace, where discovered applications are declared.                                                          |
+| `drConfig.veleroNamespace`            | `velero`                              | Velero namespace on the sites.                                                                                                   |
+| `drConfig.opsNamespace`               | `ramen-ops`                           | Ramen operations namespace.                                                                                                      |
 | `drConfig.spec`                       | See the chart                         | Initial `DRConfig` spec (executor, agent, archive, retention, feature gates).                                                    |
 
 The `DRConfig` created by the chart is kept when the release is uninstalled. After the installation, it is changed
@@ -138,12 +137,10 @@ kubectl edit drconfig default
 With `bootstrap.enabled=true`, the chart runs the `dr-bootstrap` Job in the `dr-simplyblock` namespace as a Helm
 pre-install and pre-upgrade hook. The Job is idempotent and installs:
 
-- **OCM cluster manager:** Including the join service account `agent-registration-bootstrap` in the
-  `open-cluster-management` namespace, with auto-approval for clusters that join with a bootstrap token.
-- **OCM addons:** The governance-policy addon (Ramen distributes the S3 Secrets to the sites through OCM policies)
-  and `ocm-controller` (ManagedClusterView and the work-manager addon).
-- **Ramen hub operator:** With its configuration written by `dr-hub`.
-- **Operations namespace:** The `ramen-ops` namespace and a ManagedClusterSetBinding for the `default` cluster set.
+- **OCM cluster manager:** With auto-approval for clusters that join with a bootstrap token.
+- **OCM addons:** The governance-policy addon and `ocm-controller`.
+- **Ramen hub operator:** Pinned by image digest.
+- **Operations namespace:** The `ramen-ops` namespace.
 
 The Job is removed once it succeeds. If it fails, its logs show the step that did not complete:
 
@@ -165,8 +162,7 @@ The serving certificate is generated by the chart and kept across upgrades. To h
 cert-manager must be installed on the hub, and `webhooks.certManager=true` is set.
 
 !!! warning
-    The webhooks use `failurePolicy: Fail`. While `dr-hub` is unavailable, DR objects cannot be created, changed, or
-    deleted. Running two replicas (`hub.replicas=2`) keeps the webhooks available during node maintenance.
+    While `dr-hub` is unavailable, DR objects cannot be created, changed, or deleted. Running two replicas (`hub.replicas=2`) keeps the webhooks available during node maintenance.
 
 ## Verifying the Installation
 
@@ -201,7 +197,7 @@ disaster recovery:
 
 | ClusterRole   | Grants                                                                                                                                          |
 |---------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `dr-viewer`   | Read access to all DR objects and to the Ramen DRCluster, DRPolicy, and DRPlacementControl objects.                                             |
+| `dr-viewer`   | Read access to all DR objects.                                                                                                                  |
 | `dr-operator` | `dr-viewer`, plus writing protected applications, recovery actions, recovery plans, test bubbles, and test schedules.                           |
 | `dr-admin`    | `dr-operator`, plus writing protection plans, DR paths, the DR configuration, and restore actions, and the `override` verb on recovery actions. |
 
