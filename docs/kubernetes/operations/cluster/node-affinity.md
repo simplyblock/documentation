@@ -85,18 +85,20 @@ realigns its internal data structures to the new placement. That realignment res
 the node-affinity guarantees, and the operator requests it after volumes have moved. It applies to every move, whether
 the volume was migrated manually, relocated by auto-rebalancing, or evacuated from a node being removed.
 
-Realignment runs only when `spec.enableDataRealignment` is `true` on the `StorageCluster`. Its pacing is tuned under
+Realignment is on unless `spec.disableDataRealignment` is set on the `StorageCluster`. Its pacing is tuned under
 `spec.volumeMigrationSettings.dataRealignment`.
 
 | Field                                                   | Default | Description                                                         |
 |---------------------------------------------------------|---------|---------------------------------------------------------------------|
-| `spec.enableDataRealignment`                            | Off     | Turns the post-migration realignment on.                            |
+| `spec.disableDataRealignment`                           | `false` | Turns the post-migration realignment off.                           |
 | `spec.volumeMigrationSettings.dataRealignment.interval` | `10m`   | The minimum spacing between two realignment requests.               |
 | `spec.volumeMigrationSettings.dataRealignment.minMoves` | `1`     | How many volume moves accumulate before a realignment is requested. |
 
-```yaml title="Example of enabling data realignment"
+`disableDataRealignment` is a field of the cluster spec rather than of the block it governs, because
+`volumeMigrationSettings.dataRealignment.disableDataRealignment` says the same word twice.
+
+```yaml title="Example of tuning data realignment"
 spec:
-  enableDataRealignment: true
   volumeMigrationSettings:
     dataRealignment:
       interval: 10m

@@ -192,7 +192,6 @@ whether they happen.
 
 ```yaml title="Example of volume migration settings on a StorageCluster"
 spec:
-  enableDataRealignment: true
   volumeMigrationSettings:
     rebalancerImage: quay.io/simplyblock-io/simplyblock-rebalancer:latest
     dataRealignment:
@@ -264,8 +263,8 @@ For how removal coordinates with a Kubernetes node cordon and drain, see
 
 After volumes have moved, whether by manual migration, a pin change, auto-rebalancing, or a drain, the operator can
 realign the cluster's internal data structures to the new placement, so that fault-tolerance (FTT) and node-affinity
-guarantees are preserved. Realignment is switched on by `StorageCluster.spec.enableDataRealignment` and is off unless
-the field is set. It is tuned under `volumeMigrationSettings.dataRealignment` (see
+guarantees are preserved. Realignment is on unless `StorageCluster.spec.disableDataRealignment` is set. It is tuned
+under `volumeMigrationSettings.dataRealignment` (see
 [Volume Migration Settings](#volume-migration-settings)).
 
 A realignment is requested once at least `minMoves` volumes have moved since the last successful realignment, at least
@@ -280,19 +279,6 @@ Realignment has to be enabled for the annotation to take effect.
 kubectl annotate storagecluster production -n simplyblock \
   simplyblock.io/trigger-realignment="$(date +%s)" --overwrite
 ```
-
-## Legacy VolumeMigration
-
-The `VolumeMigration` kind (`storage.simplyblock.io/v1alpha1`, short name `vmig`) is the predecessor of
-`PersistentVolumeOps`. Its controller only runs when the Helm value `volumeMigration.legacy` is `true`, which is meant
-for an upgrade, for as long as migrations already raised against the old kind take to finish. With the default of
-`false`, every migration is raised as a `PersistentVolumeOps`.
-
-| VolumeMigration field or phase | PersistentVolumeOps equivalent |
-|--------------------------------|--------------------------------|
-| `spec.pvName`                  | `spec.persistentVolumeName`    |
-| `spec.targetNodeUUID`          | `spec.migrate.targetNodeRef`   |
-| phase `Completed`              | phase `Succeeded`              |
 
 ## Events
 

@@ -16,31 +16,12 @@ For the complete field reference, see [Simplyblock Operator Reference](reference
 
 ## Served Versions
 
-Every kind of the API group falls into one of three groups. No CRD is marked as deprecated.
+Every kind of the API group is served at `storage.simplyblock.io/v1alpha2`, which is also its storage version.
 
-| Group                  | Served versions                                   | Storage version | Kinds                                                                                                                                                                                                                               |
-|------------------------|---------------------------------------------------|-----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Converted              | `v1alpha1` and `v1alpha2`, converted by a webhook | `v1alpha2`      | `ControlPlane`, `StorageCluster`, `StorageClusterOps`, `StorageNode`, `StorageNodeOps`, `StoragePool`, `StorageBackup`                                                                                                              |
-| New                    | `v1alpha2` only                                   | `v1alpha2`      | `ClusterDeploymentConfig`, `ControlPlaneOps`, `OperatorOps`, `PersistentVolumeOps`, `SimplyblockDriver`, `StorageBackupOps`, `StorageBackupPolicy`, `StorageDevice`, `StorageDeviceOps`, `StoragePoolOps`, `VolumeGroupSnapshotOps` |
-| Legacy and replication | `v1alpha1` only                                   | `v1alpha1`      | `ReplicationPair`, `ReplicationPolicy`, `ReplicationSlot`, `ReplicationOps`, `VolumeMigration`, `BackupPolicy`, `BackupRestore`, `BackupImport`, `StorageNodeSet`, `Task`                                                           |
-
-A fresh installation stores `v1alpha2` from the start and does not deploy the conversion webhook. A cluster upgraded
-from an earlier release keeps `v1alpha1` as the stored form of the converted kinds until the objects are rewritten by
-the upgrade.
-
-The `v1alpha1`-only kinds have the following status:
-
-- **Replication:** `ReplicationPair`, `ReplicationPolicy`, `ReplicationSlot`, and `ReplicationOps` are active and
-  keep their `v1alpha1` shape, including lowercase enum values. See
-  [Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
-- **VolumeMigration:** Superseded by `PersistentVolumeOps`. Its controller only runs with the Helm value
-  `volumeMigration.legacy: true`. See
-  [Legacy VolumeMigration](../../kubernetes/operations/volumes/volume-migration.md#legacy-volumemigration).
-- **BackupPolicy, BackupRestore, and BackupImport:** Superseded by `StorageBackupPolicy` and `StorageBackupOps`.
-  `BackupImport` is retired. See [Backup and Recovery](../../kubernetes/operations/data-protection/backup-recovery.md).
-- **StorageNodeSet:** Retired. The CRD is still shipped, but no controller reconciles it. Its settings moved to
-  `StorageCluster.spec.storageNodes`, and storage nodes are generated from a `ClusterDeploymentConfig`.
-- **Task:** Not part of the current model. Backend tasks are reported in `StorageCluster.status.tasks`.
+The four replication kinds are the exception. `ReplicationPair`, `ReplicationPolicy`, `ReplicationSlot`, and
+`ReplicationOps` have no `v1alpha2` yet and are served at `storage.simplyblock.io/v1alpha1`, keeping their
+lowercase enum values such as `mode: failover`. See
+[Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
 
 ## Resource Kinds
 

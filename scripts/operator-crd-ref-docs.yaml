@@ -1,6 +1,16 @@
 processor:
+  # The reference documents the v1alpha2 API, plus the replication kinds, which
+  # are still v1alpha1-only and have no v1alpha2 to supersede them.
+  #
+  # Every other v1alpha1 type is dropped. Where a kind exists in both versions,
+  # v1alpha2 is the storage version and the conversion webhook translates the
+  # older shape into it, so documenting both would describe one kind twice. The
+  # pattern matches on type name prefixes rather than on the group version,
+  # because the whole of v1alpha1 is one Go package: excluding the group version
+  # would take the replication kinds with it.
   ignoreTypes:
     - ".*List$"
+    - "api/v1alpha1\\.(AttachedLvol|Backup|Baseline|CapacityThreshold|ControlPlane|DataRealignment|DrainOps|HashicorpVault|JournalManager|MetricsBackend|MigrationConnection|Node|PVCTemplate|PersistentVolumeClaimRef|RebalancingMetrics|Storage|Stripe|Task|ValidationJob|Volume)"
   ignoreFields:
     - "TypeMeta$"
     - "ObjectMeta$"

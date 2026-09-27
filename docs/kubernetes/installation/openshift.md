@@ -87,10 +87,12 @@ spec:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
 ```
 
-With `environment: OpenShift`, the expansion sets `openShiftCluster`, `enableCpuTopology`, and
-`enableKubeletConfiguration` on `StorageCluster.spec.storageNodes`. The MachineConfig objects the storage nodes
-generate are labeled into the MachineConfigPool named in `spec.storageNodes.openShiftMachineConfigPool`, which
-defaults to `worker`.
+With `environment: OpenShift`, the expansion sets the `openshift` block, `enableCpuTopology`, and
+`enableKubeletConfiguration` on `StorageCluster.spec.storageNodes`. Adding a storage node creates a
+MachineConfigPool of its own, `storage-<cluster>`, and moves the node into it. A node belongs to exactly one custom
+pool, so whatever machine configuration its previous pool carried is lost unless that pool's role is named in
+`spec.storageNodes.openshift.machineConfigPool` for the new one to select as well. It defaults to `worker`, the role
+every pool already selects, which makes it a no-op for a fleet whose workers are ordinary workers.
 
 ## Installation of Simplyblock
 

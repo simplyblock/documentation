@@ -169,7 +169,7 @@ kubectl -n simplyblock edit cdc discovered-initial-discovery
 `spec.environment` names the Kubernetes distribution: `Vanilla`, `OpenShift`, `Rancher`, `K3s`, or `Talos`. It sets
 the storage node flags on `StorageCluster.spec.storageNodes`:
 
-- **`OpenShift`:** Enables `openShiftCluster`, `enableCpuTopology`, and `enableKubeletConfiguration`.
+- **`OpenShift`:** Sets the `openshift` block, `enableCpuTopology`, and `enableKubeletConfiguration`.
 - **`Talos`:** Disables `enableKubeletConfiguration`, because Talos has no writable kubelet configuration.
 - **`Vanilla`, `Rancher`, `K3s`:** Enable `enableKubeletConfiguration`.
 
@@ -244,6 +244,22 @@ spec:
 ```
 
 For details, see [Failure Domains](../operations/cluster/failure-domains.md).
+
+### Copying, Splitting, and Hand-Authoring
+
+A `ClusterDeploymentConfig` is an ordinary Kubernetes resource, and the discovered draft is a starting point rather
+than the only thing that may be approved. A reviewer can copy it under another name, split one draft into several
+documents that are approved separately, or write one from scratch and never run discovery at all.
+
+Splitting is the usual reason. A draft covering three racks can become three documents, each holding one rack's
+node set, so each rack is reviewed and brought up on its own schedule. The first document creates the cluster and
+the other two name it in `spec.clusterRef`.
+
+A copy is a plain `kubectl get -o yaml`, edited and applied under a new name. Clear `metadata.resourceVersion`,
+`metadata.uid`, and `status` from it first, as with any copied resource.
+
+A document discovery wrote cannot be wrong about its devices, because the list came from the inspection. A
+hand-written one can, and the validation above is the only check a device gets before the deployment runs.
 
 ### When Does the Cluster Become Active?
 
@@ -353,6 +369,24 @@ kubectl -n simplyblock get storagepool tenant-a
 `spec.limits` (capacity, maximum volume size, IOPS, and throughput in MB/s) can be changed later. `spec.volumeDefaults`
 is immutable once set. `spec.allowedNodes` restricts the pool to specific Kubernetes nodes, see
 [Host Authentication and Encryption](../operations/security/authentication-encryption.md).
+
+### Deleting a Pool
+
+A pool carries the finalizer `storage.simplyblock.io/storagepool-finalizer` and refuses to finish deleting while
+anything Kubernetes knows about still refers to it.
+
+| Deleting a pool with                      | Result                                                                 |
+|-------------------------------------------|------------------------------------------------------------------------|
+| An authored `StorageClass` assigned to it | Held. `StorageClassStillAssigned`, requeued, nothing deleted           |
+| Only the operator's own default class     | The class is deleted, then the backend pool, then the finalizer clears |
+| A `PersistentVolume` in it                | Held. `VolumesStillBound`, requeued, nothing deleted                   |
+| Neither                                   | The backend pool is deleted and the finalizer clears                   |
+
+An authored class holds the deletion because the operator neither wrote it nor knows why it exists, and deleting
+somebody's provisioning contract to let a pool go is not a trade it makes. Deleting the class releases the pool.
+The operator's own default class does not hold, because removing it is cleanup rather than a decision.
+
+A `StorageCluster` owns its pools, so deleting one cascades, and is held behind any pool that is itself held.
 
 ### Author a StorageClass for the Pool
 
@@ -481,5 +515,18 @@ kubectl delete pvc simplyblock-test-pvc
 - **More nodes for an existing cluster:** A `ClusterDeploymentConfig` with `spec.clusterRef` and no `spec.cluster`
   block adds nodes to an existing cluster. A discovery run with `discover.clusterRef` writes such a growth draft. See
   [Expanding a Storage Cluster](../operations/scaling/expanding-storage-cluster.md).
+
+    The two fields decide between them what the expansion does, and a mismatch is refused rather than reconciled:
+
+    | `spec.cluster.name` resolves to | `spec.clusterRef` | Expansion does                             |
+    |---------------------------------|-------------------|--------------------------------------------|
+    | No existing `StorageCluster`    | absent            | Creates the cluster and all its nodes      |
+    | An existing `StorageCluster`    | absent            | Refuses: `ClusterExists`, phase `Failed`   |
+    | An existing `StorageCluster`    | set to it         | Adds only the nodes that do not exist yet  |
+    | No existing `StorageCluster`    | set               | Refuses: `ClusterNotFound`, phase `Failed` |
+
+    A config never removes anything. A node set left out of a later document does not drain a node, and a device
+    removed from a group does not shrink one. Removal belongs to `StorageNodeOps` with `action: Remove`, where it
+    is deliberate, audited, and drains first.
 - **More storage clusters:** A namespace holds at most one `StorageCluster`, so every additional storage cluster
   needs a namespace of its own. It is recommended to point each storage cluster to a different set of workers.
