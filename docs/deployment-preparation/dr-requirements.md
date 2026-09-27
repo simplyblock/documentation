@@ -253,10 +253,15 @@ No label is set on the cluster or its nodes. The assignment is made in two steps
    `spec.sites[].cluster`. The DR hub reads the plan and treats everything that runs on that cluster as part of the
    site.
 
-A cluster can take part in several protection plans.
+Within one protection plan, the relationship is one to one: a site is exactly one cluster, and a cluster is exactly
+one site. The same cluster can take part in several protection plans, for example, as the source site of an async
+plan with one partner and of a second plan with another partner.
 
-The optional `zone` and `region` of a site are descriptive attributes of the whole site. `zone` is only needed when one
-cluster is split into several sites. Each combination of cluster and zone may appear only once in a plan.
+The optional `zone` and `region` of a site are descriptive attributes of the whole site.
+
+!!! info "Coming soon"
+    Splitting one cluster into several sites by zone, so that a cluster spanning several zones can fail over between
+    its own zones, is planned. The `zone` field of a site is reserved for it.
 
 Independent of DR, the standard node labels `topology.kubernetes.io/zone` and `topology.kubernetes.io/region` are
 still useful within a cluster, for example, for the topology-aware scheduling of workloads or for the failure domains

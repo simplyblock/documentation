@@ -15,8 +15,8 @@ DR paths.
 A site is a Kubernetes cluster that is registered with the DR hub through Open Cluster Management (OCM). A plan lists
 between two and sixteen sites. Every site has a name that is used throughout the DR configuration and names the
 managed cluster it runs on. The whole cluster is assigned to the site at once, so no node has to be labeled for DR.
-Optionally, a site records a zone and a region, and the namespace of its Velero installation. A zone is only needed
-when one cluster is split into several sites.
+Optionally, a site records a zone and a region, and the namespace of its Velero installation. Within one plan, a
+site is exactly one cluster and a cluster is exactly one site. The same cluster can be a site in several plans.
 
 ## Storage Profile
 
