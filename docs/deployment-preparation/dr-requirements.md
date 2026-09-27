@@ -107,14 +107,13 @@ MetalLB is supported for virtual machine workloads next to OpenShift Virtualizat
 The hub installs pinned versions of its dependencies. Installing never downloads anything, and all images can be
 mirrored into a private registry with the `bootstrap.imageRegistry` Helm value.
 
-| Component                    | Version                                                                    |
-|------------------------------|----------------------------------------------------------------------------|
-| Open Cluster Management      | 1.3.1                                                                      |
-| Governance policy addon      | 0.18.0                                                                     |
-| Ramen                        | Pinned image digest                                                        |
-| External snapshotter (sites) | 8.6.0                                                                      |
-| csi-addons (sites)           | 0.14.0                                                                     |
-| Velero (sites)               | 1.16.1, with velero-plugin-for-aws 1.12.0 and kubevirt-velero-plugin 0.8.0 |
+| Component               | Version                                                                    |
+|-------------------------|----------------------------------------------------------------------------|
+| Open Cluster Management | 1.3.1                                                                      |
+| Governance policy addon | 0.18.0                                                                     |
+| Ramen                   | Pinned image digest                                                        |
+| csi-addons (sites)      | 0.14.0                                                                     |
+| Velero (sites)          | 1.16.1, with velero-plugin-for-aws 1.12.0 and kubevirt-velero-plugin 0.8.0 |
 
 On a hub that already runs Red Hat Advanced Cluster Management (ACM) and OpenShift Data Foundation (ODF) DR, the
 bundled OCM and Ramen installation is disabled (`bootstrap.enabled: false`). Protection plans then reference an
@@ -126,6 +125,9 @@ Every site cluster must provide:
 
 - **Simplyblock with CSI replication support:** The simplyblock CSI driver with support for csi-addons
   VolumeReplication (and VolumeGroupReplication when consistency groups are used).
+- **Snapshot support:** The external snapshot controller with the VolumeSnapshot and VolumeGroupSnapshot CRDs. They
+  are part of every simplyblock installation: the Simplyblock Operator Helm chart installs them by default
+  (`snapshotcontroller.create`), independent of DR.
 - **Unique cluster name:** Every site joins the hub under a cluster name that is unique on the hub. The same name is
   used in the protection plans and must be reused when a site rejoins after a hub recovery.
 - **Hub reachability:** Outbound HTTPS access to the hub API server (see [Networking](#networking)).
@@ -138,12 +140,12 @@ Every site cluster must provide:
 The following components are installed on every site by the DR hub after the site joins, so they must not be
 preinstalled in conflicting versions:
 
-- **Snapshot support:** External snapshotter with the snapshot CRDs and group snapshots.
 - **Replication add-ons:** The csi-addons controller and CRDs.
 - **Recipe CRD and Ramen DR cluster operator.**
 - **Velero:** Including the AWS and KubeVirt plugins.
 
-Single components can be left out if they already exist on a site. See
+Single components can be left out if they already exist on a site. The site stack also contains a snapshot
+controller, which is not needed on a simplyblock site and is left out when the site joins. See
 [Join Sites](../disaster-recovery/install/sites.md).
 
 ## S3 Requirements for Disaster Recovery
