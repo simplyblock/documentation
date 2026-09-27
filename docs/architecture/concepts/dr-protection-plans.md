@@ -66,6 +66,10 @@ site. A plan either names an existing Ramen S3 profile or declares one S3 store 
 endpoint, region, credentials Secret, and optional CA certificates. Every S3-compatible object store can be used.
 The per-site stores must cover exactly the sites of the plan.
 
+These DR metadata buckets are one of three kinds of S3 buckets in a DR setup. The archive bucket of the hub is
+configured when the hub is installed, and the simplyblock backup buckets, which hold the volume data of `snapshot-s3`
+backups, when the storage clusters are deployed. See [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+
 ## DR Paths
 
 A DR path declares one direction, from a source site to a target site, together with the actions that are allowed

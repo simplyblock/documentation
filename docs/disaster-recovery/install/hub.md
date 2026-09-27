@@ -17,8 +17,14 @@ Before installing, the hub must meet the [Disaster Recovery Requirements](../../
 
 ## Preparing the S3 Credentials
 
-The Kubernetes objects and PV metadata of protected applications are stored in one S3 bucket per site. The hub chart
-stores the credential for those buckets as Kubernetes Secrets in the Ramen namespace (`ramen-system`).
+The Kubernetes objects and PV metadata of protected applications are stored in one DR metadata bucket per site. The
+hub chart stores the credential for those buckets as Kubernetes Secrets in the Ramen namespace (`ramen-system`).
+
+!!! note "Which buckets are configured here"
+    The `s3Credentials` value covers the DR metadata buckets of the sites only. The archive bucket has its own
+    credential, configured in [Archive and State Bundle](archive.md). The simplyblock backup buckets are not
+    configured in DR at all: they are part of each storage cluster and are set when it is deployed. See
+    [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
 
 The credential is provided as an AWS credentials file:
 

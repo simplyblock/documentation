@@ -39,13 +39,22 @@ spec:
 - **Schedule:** A cron expression. At every time, dr-hub asks dr-agent on the cluster each application currently runs
   on to take a backup.
 - **Retention:** The number of complete backup sets kept per application. Older sets are deleted.
-- **Store:** The backups go to the site's S3 store, or to the S3 profile named in `snapshotS3.s3ProfileName`,
-  under the key prefix `simplyblock-dr/backups`.
+- **Store:** The Kubernetes objects and volume records go to the DR metadata bucket of the site, or to the S3
+  profile named in `snapshotS3.s3ProfileName`, under the key prefix `simplyblock-dr/backups`. The volume data goes
+  to the simplyblock backup bucket of the storage cluster.
+
+!!! note "Prerequisite: simplyblock backups on the storage cluster"
+    The volume data of a `snapshot-s3` backup is stored with the simplyblock backup feature of the storage cluster.
+    Its bucket is configured when the storage cluster is deployed (`StorageCluster.spec.backup`, see
+    [Backup and Recovery](../../kubernetes/operations/data-protection/backup-recovery.md)), not in DR. A storage
+    cluster deployed without backups cannot be protected with a `snapshot-s3` method. See
+    [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
 
 ### Backup Sets
 
 A backup set is named `dr-<appkey>-<yyyymmddhhmmss>-<method>`. It holds the application's Kubernetes objects and
-one volume record per PVC, with the class, size, access modes, labels, and the reference to the volume data.
+one volume record per PVC, with the class, size, access modes, labels, and the reference to the simplyblock backup
+that holds the volume data.
 
 ### Backup Status
 
@@ -70,10 +79,13 @@ kubectl -n ramen-ops get papp orders -o jsonpath='{.status.backups}' | jq
 
 ## Restoring After a Total Loss
 
-When the hub and all sites are lost, only the S3 stores remain. Recovery follows these steps:
+When the hub and all sites are lost, only the S3 buckets remain: the archive bucket with the DR state, the DR
+metadata buckets with the application objects, and the simplyblock backup buckets with the volume data. Recovery
+follows these steps:
 
-1. **Rebuild the clusters:** Build a new hub cluster and new site clusters with simplyblock storage. Install the hub
-   as described in [Install the Hub](../install/hub.md).
+1. **Rebuild the clusters:** Build a new hub cluster and new site clusters with simplyblock storage. Deploy each
+   storage cluster with access to the simplyblock backup bucket of the lost one, so that the volume data can be read.
+   Install the hub as described in [Install the Hub](../install/hub.md).
 2. **Restore the DR configuration:** Restore the state bundle with the `-fresh-sites` flag. See
    [Hub Recovery](hub-recovery.md) for the full procedure.
 

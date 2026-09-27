@@ -72,8 +72,10 @@ first.
 
 ## S3 Profiles
 
-The PV and PVC metadata and the Kubernetes object captures of protected applications are kept in an S3 store on each
-site. A plan declares the stores in one of two ways:
+The PV and PVC metadata and the Kubernetes object captures of protected applications are kept in a DR metadata bucket
+on each site. These S3 profiles configure only those buckets. The archive bucket of the hub is configured with the hub
+installation, and the simplyblock backup buckets with the storage clusters (see
+[S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets)). A plan declares the stores in one of two ways:
 
 - **`s3Profiles`:** One store per site, with bucket, endpoint, region, and a credential Secret in the Ramen
   namespace (created by the hub chart, see [Installing the Hub](../install/hub.md)). Plans that name the same store

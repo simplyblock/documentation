@@ -146,41 +146,53 @@ preinstalled in conflicting versions:
 Single components can be left out if they already exist on a site. See
 [Join Sites](../disaster-recovery/install/sites.md).
 
-## S3 Requirements for Disaster Recovery
+## S3 Buckets
 
-Simplyblock DR stores application metadata, backups, reports, and hub state in S3. Any S3-compatible object store
-can be used.
+A disaster recovery setup uses three kinds of S3 buckets. They hold different data, serve different recovery cases,
+and are configured at different times and in different places. Only the first two are configured in simplyblock DR.
+The third belongs to the simplyblock storage cluster and is configured when that cluster is deployed.
 
-| Bucket                       | Content                                                                                     | Accessed by                                   |
-|------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------------------|
-| One or more buckets per site | Metadata of protected volumes, Velero captures of Kubernetes objects, `snapshot-s3` backups | Hub and all sites                             |
-| Archive bucket               | Action and test reports (JSON and PDF), signed hub state bundles                            | Hub, and the restore tooling after a hub loss |
+| Bucket                      | Content                                                                                                     | Used for                                                                                    | Configured in                                                                    | Configured when                          |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|------------------------------------------|
+| DR metadata bucket per site | Kubernetes objects of protected applications, volume metadata, and the object part of `snapshot-s3` backups | Restoring the application objects on the target site during a failover, relocation, or test | The protection plan (`spec.s3Profiles`), with the credentials from the hub chart | When a protection plan is created        |
+| Archive bucket              | Signed DR state bundles of the hub, and the reports of all recovery actions and tests                       | Rebuilding a lost hub, recovery after a cyberattack, and audits                             | The hub chart (`drConfig.spec.archive`)                                          | When the hub is installed                |
+| Simplyblock backup bucket   | Copy-on-write snapshot backups of the volume data, taken by the storage cluster                             | Storage-level backup and restore, and the volume data of `snapshot-s3` backups              | The storage cluster (`StorageCluster.spec.backup`)                               | When the simplyblock cluster is deployed |
 
-Every bucket needs:
+The three buckets can be served by the same object store, but they should not be the same bucket. The archive bucket
+in particular belongs in a location that survives the loss of the hub and of every site.
 
-- **Endpoint and region:** An S3-compatible endpoint (host and port) and a region.
-- **Credentials:** AWS-style access keys (access key ID and secret access key), stored as Kubernetes Secrets.
-- **Optional CA:** A CA certificate for endpoints with a private certificate authority.
-- **Reachability:** The per-site buckets must be reachable from the hub and from all sites, and the archive bucket
-  from the hub and from the location of a hub rebuild.
+### DR Metadata Buckets
 
-For ransomware resilience and a recoverable hub, the buckets should additionally use:
+Every site of a protection plan has a DR metadata bucket. During a failover or relocation, the Kubernetes objects of
+the application are restored from it on the target site, and tests read from it as well. The object part of
+`snapshot-s3` backups (the Kubernetes objects and the volume records of the application) is stored here too.
 
-- **Versioning and object lock:** Enable versioning and object lock in compliance mode. The hub state bundles are
-  protected with compliance-mode object lock for their retention period, and reports can be protected in the same
-  way. The basic DR functions work without object lock, but recovering the hub after a ransomware attack needs it.
-- **Server-side encryption:** Enable server-side encryption (SSE) on all buckets.
-- **Separate credentials:** Use write-only credentials for the hub and for the sites, and keep a separate read-only
-  restore credential offline, together with the public key that verifies the state bundles.
-- **Separate location:** Place the archive bucket where it survives the loss of the hub and of every site.
+- **Configuration:** Declared per site in the protection plan (`spec.s3Profiles` with bucket, endpoint, region, and
+  credential Secret), or referenced as an existing profile (`spec.s3Profile`). The credential Secrets are created by
+  the hub chart from `s3Credentials` and `s3SecretNames`. See [Install the Hub](../disaster-recovery/install/hub.md)
+  and [Protection Plans](../disaster-recovery/configuration/protection-plans.md#s3-profiles).
+- **Reachability:** From the hub and from every site of the plan.
 
-The archive and bundle signing are configured in [Archive](../disaster-recovery/install/archive.md).
+### Archive Bucket
 
-## S3 Requirements for Simplyblock Backups
+The hub has one archive bucket. It holds the signed state bundles from which a lost hub is rebuilt, and the JSON and
+PDF report of every finished recovery action and test. It is the bucket that must survive a cyberattack on the hub
+and the sites, and therefore the one that needs object lock.
 
-Independent of DR, simplyblock backs up volumes at the storage level to S3 (see
-[Backup and Recovery](../kubernetes/operations/data-protection/backup-recovery.md)). These backups are configured per
-storage cluster in the `backup` section of the `StorageCluster`:
+- **Configuration:** In the hub chart under `drConfig.spec.archive`, with its own credential Secret and the bundle
+  signing key. See [Archive and State Bundle](../disaster-recovery/install/archive.md).
+- **Reachability:** From the hub, and from the location where a lost hub is rebuilt.
+
+### Simplyblock Backup Buckets
+
+Simplyblock storage clusters back up volumes as incremental copy-on-write snapshots to S3, independent of DR (see
+[Backup and Recovery](../kubernetes/operations/data-protection/backup-recovery.md)). The bucket is part of the
+storage cluster configuration and is set when the storage cluster is deployed. Simplyblock DR does not configure it.
+
+A `snapshot-s3` method in a protection plan relies on it. The DR metadata bucket receives the Kubernetes objects and
+the volume records of the application, while the volume data itself is stored as simplyblock backups in the backup
+bucket of the storage cluster. A `snapshot-s3` method can therefore only be used on sites whose storage cluster was
+deployed with backups configured. The `sync` and `async` methods do not use this bucket.
 
 | Parameter         | Requirement                                                                                                                                                                                                  |
 |-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -188,21 +200,46 @@ storage cluster in the `backup` section of the `StorageCluster`:
 | Bucket and prefix | `backup.bucket` and optional `backup.prefix`. Several storage clusters can share a bucket with different prefixes. Backups of every cluster under the same bucket and prefix become visible to each of them. |
 | Region            | `backup.region`, for endpoints that do not imply one.                                                                                                                                                        |
 | Credentials       | `backup.credentialsSecretRef`: a Secret with `access_key_id` and `secret_access_key` in the namespace of the `StorageCluster`.                                                                               |
-| Reachability      | The storage nodes of the cluster must reach the endpoint. For a cross-cluster restore, the storage nodes of the target cluster must also reach the bucket of the source cluster.                             |
+| Reachability      | The storage nodes of the cluster must reach the endpoint. For a restore onto a rebuilt cluster, its storage nodes must reach the bucket of the lost cluster.                                                 |
+
+### Common Requirements
+
+All three kinds of buckets need:
+
+- **Endpoint and region:** An S3-compatible endpoint and a region. Any S3-compatible object store can be used.
+- **Credentials:** AWS-style access keys (access key ID and secret access key), stored as Kubernetes Secrets.
+- **Optional CA:** A CA certificate for endpoints with a private certificate authority.
+
+For ransomware resilience and a recoverable hub, the buckets should additionally use:
+
+- **Versioning and object lock:** Enable versioning and object lock in compliance mode, at least on the archive
+  bucket. The hub state bundles are protected with compliance-mode object lock for their retention period, and
+  reports can be protected in the same way. The basic DR functions work without object lock, but recovering the hub
+  after a ransomware attack needs it.
+- **Server-side encryption:** Enable server-side encryption (SSE) on all buckets.
+- **Separate credentials:** Use write-only credentials for the hub and for the sites, and keep a separate read-only
+  restore credential offline, together with the public key that verifies the state bundles.
+- **Separate location:** Place the archive bucket, and ideally the backup buckets, where they survive the loss of the
+  hub and of every site.
 
 ## Networking
 
 Every connection between the hub and the sites is opened from the site to the hub. The hub
 never opens a connection to a site and does not store a kubeconfig of any site.
 
-| Source                                      | Destination                               | Port                         | Protocol | Purpose                             |
-|---------------------------------------------|-------------------------------------------|------------------------------|----------|-------------------------------------|
-| Hub API server                              | dr-hub webhook Service                    | 9443                         | HTTPS    | Admission webhooks for DR objects   |
-| Prometheus                                  | dr-hub metrics                            | 8443                         | HTTPS    | DR metrics                          |
-| Kubelet (hub)                               | dr-hub                                    | 8081                         | HTTP     | Liveness and readiness probes       |
-| OCM klusterlet and addon agents (each site) | Hub API server                            | 6443 or 443                  | HTTPS    | Registration and status             |
-| Sites and hub                               | S3 endpoints                              | 443 (or the endpoint's port) | HTTPS    | Metadata, backups, reports, bundles |
-| Storage nodes (each storage cluster)        | Storage nodes of the peer storage cluster | 4420-4499                    | NVMe/TCP | Storage-level replication           |
+| Direction                                                   | Source                                      | Destination                               | Port                         | Protocol | Purpose                                                            |
+|-------------------------------------------------------------|---------------------------------------------|-------------------------------------------|------------------------------|----------|--------------------------------------------------------------------|
+| Within the hub cluster, between nodes                       | Hub API server                              | dr-hub webhook Service                    | 9443                         | HTTPS    | Admission webhooks for DR objects                                  |
+| Within the hub cluster, between nodes                       | Prometheus                                  | dr-hub metrics                            | 8443                         | HTTPS    | DR metrics                                                         |
+| Within the hub cluster, between nodes                       | Kubelet (hub)                               | dr-hub                                    | 8081                         | HTTP     | Liveness and readiness probes                                      |
+| Between clusters: egress from each site, ingress to the hub | OCM klusterlet and addon agents (each site) | Hub API server                            | 6443 or 443                  | HTTPS    | Registration, status, and DR tasks                                 |
+| Egress from the hub and every site                          | Hub and sites                               | DR metadata buckets                       | 443 (or the endpoint's port) | HTTPS    | Application objects, volume metadata, `snapshot-s3` object backups |
+| Egress from the hub                                         | Hub                                         | Archive bucket                            | 443 (or the endpoint's port) | HTTPS    | State bundles and reports                                          |
+| Egress from the storage nodes of each site                  | Storage nodes                               | Simplyblock backup bucket                 | 443 (or the endpoint's port) | HTTPS    | Volume data of simplyblock backups and `snapshot-s3` backups       |
+| Between clusters: site to site, both directions             | Storage nodes (each storage cluster)        | Storage nodes of the peer storage cluster | 4420-4499                    | NVMe/TCP | Storage-level replication                                          |
+
+No ingress into a site cluster is needed from the hub. A site only accepts inbound connections from the storage
+nodes of its peer storage cluster, for replication.
 
 Within the hub, the standard Kubernetes cluster networking applies. The port of the hub API server depends on the
 distribution: 6443 for most distributions, 443 for many managed and hosted API endpoints.
@@ -323,11 +360,12 @@ of two whole domains, and therefore of one site, is tolerated. The activation ru
 - Every site has a unique cluster name.
 - Network attachment definitions, storage class names, and zone names used by applications are identical on
   source and target sites.
-- Per-site S3 buckets and an archive bucket exist, reachable from the hub and all sites, with credentials.
+- A DR metadata bucket per site and an archive bucket exist, reachable from the hub and all sites, with credentials.
 - Versioning, object lock (compliance mode), and server-side encryption are enabled on the buckets.
 - Write-only credentials are issued to the hub and sites, and a read-only restore credential and the bundle
   public key are stored offline.
-- The S3 backup target of each storage cluster is reachable from its storage nodes (for simplyblock backups).
+- For `snapshot-s3` backups, every storage cluster was deployed with a simplyblock backup bucket that its storage
+  nodes can reach.
 - Every site reaches the hub API server over HTTPS (6443 or 443). No inbound connection to the sites is needed.
 - The storage clusters that replicate have network connectivity on the simplyblock storage ports.
 - For metro DR, the round-trip time between the sites is in the low single-digit milliseconds, and the storage
