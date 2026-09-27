@@ -226,91 +226,51 @@ After a failover or relocation, clients have to reach the application at its new
 switch of DNS records, global server load balancing (GSLB), and virtual IP addresses is performed by external
 postTargetReady hooks. See [Site Profiles](../disaster-recovery/configuration/site-profiles.md).
 
-## Assigning Nodes to Sites
+## Assigning Clusters to Sites
 
-Sites and zones are identified by the standard Kubernetes topology labels on the nodes:
+A site is assigned as a whole cluster. In a protection plan, every site names the Kubernetes cluster it runs on
+(`spec.sites[].cluster`, the name under which the cluster joined the hub), and all nodes and storage of that cluster
+belong to the site. With a separate cluster per site, which is the setup for asynchronous replication and for
+backups, no node has to be labeled or tagged for DR.
 
-- **`topology.kubernetes.io/zone`:** The zone of a node, for example, a datacenter room or availability zone.
-- **`topology.kubernetes.io/region`:** The region of a node, for example, a city or cloud region.
-
-Cloud providers set these labels automatically. On premises, they are set by the administrator.
-
-```bash title="Labeling a node with its zone and region"
-kubectl label node worker-1.example.com \
-    topology.kubernetes.io/zone=fra-a \
-    topology.kubernetes.io/region=eu-central
+```yaml title="Two sites, each a whole cluster"
+spec:
+  sites:
+    - name: fra
+      cluster: site-a
+      region: eu-central
+    - name: muc
+      cluster: site-b
+      region: eu-south
 ```
 
-In a protection plan, every site optionally records the `zone` and `region` of its nodes. A combination of cluster
-and zone may appear only once in a plan.
+No label is set on the cluster or its nodes. The assignment is made in two steps, both by the DR administrator:
+
+1. **Cluster name at join:** When the site cluster joins the hub, the spoke chart value `clusterName` sets the name
+   under which it is registered on the hub (see [Join Sites](../disaster-recovery/install/sites.md)). The name is
+   unique on the hub and must be reused when the site rejoins after a hub recovery.
+2. **Site in the protection plan:** The protection plan maps each site name to one of those cluster names in
+   `spec.sites[].cluster`. The DR hub reads the plan and treats everything that runs on that cluster as part of the
+   site.
+
+A cluster can take part in several protection plans.
+
+The optional `zone` and `region` of a site are descriptive attributes of the whole site. `zone` is only needed when one
+cluster is split into several sites. Each combination of cluster and zone may appear only once in a plan.
+
+Independent of DR, the standard node labels `topology.kubernetes.io/zone` and `topology.kubernetes.io/region` are
+still useful within a cluster, for example, for the topology-aware scheduling of workloads or for the failure domains
+of a storage cluster (see [Failure Domains](../architecture/concepts/failure-domains.md)). They are not a DR
+requirement.
 
 ### Stretched Storage Cluster
 
-For a storage cluster stretched across two sites (metro DR), simplyblock must know which storage nodes belong to
-which site, so that it places data chunks, journal copies, and failover paths across the sites. This is done with
-failure domains. The deployment document of the storage cluster sets `spec.cluster.enableFailureDomains: true`, and
-every node group names its `failureDomain`. A discovery run seeds the domain of each worker from its
-`topology.kubernetes.io/zone` label, so labeling the storage workers per site before discovery yields a matching
-draft.
+Synchronous (metro) replication uses a stretched simplyblock storage cluster, a dedicated cluster type that spans two
+sites and presents the same volumes on both of them.
 
-```yaml title="Example of storage workers split across two sites with two failure domains each"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: ClusterDeploymentConfig
-metadata:
-  name: simplyblock-deployment
-  namespace: simplyblock
-spec:
-  approved: false
-  cluster:
-    name: simplyblock-cluster
-    stripe:
-      dataChunks: 2
-      parityChunks: 2
-    enableFailureDomains: true
-  nodeSets:
-    - name: site-a-1
-      groups:
-        - name: default
-          failureDomain: site-a-1
-          workers: [site-a-worker-1.example.com, site-a-worker-2.example.com]
-          devices:
-            nvme: ["0000:01:00.0", "0000:02:00.0"]
-          journalManager:
-            count: 4
-    - name: site-a-2
-      groups:
-        - name: default
-          failureDomain: site-a-2
-          workers: [site-a-worker-3.example.com, site-a-worker-4.example.com]
-          devices:
-            nvme: ["0000:01:00.0", "0000:02:00.0"]
-          journalManager:
-            count: 4
-    - name: site-b-1
-      groups:
-        - name: default
-          failureDomain: site-b-1
-          workers: [site-b-worker-1.example.com, site-b-worker-2.example.com]
-          devices:
-            nvme: ["0000:01:00.0", "0000:02:00.0"]
-          journalManager:
-            count: 4
-    - name: site-b-2
-      groups:
-        - name: default
-          failureDomain: site-b-2
-          workers: [site-b-worker-3.example.com, site-b-worker-4.example.com]
-          devices:
-            nvme: ["0000:01:00.0", "0000:02:00.0"]
-          journalManager:
-            count: 4
-```
-
-To survive the loss of a whole site, the failure domains of one site must fit within the parity budget of the erasure
-coding scheme. For example, with four failure domains (two per site) and two parity chunks (`1+2` or `2+2`), the loss
-of two whole domains, and therefore of one site, is tolerated. The activation rules and the tolerance table are in
-[Failure Domains](../architecture/concepts/failure-domains.md), and the configuration steps in
-[Managing Failure Domains](../kubernetes/operations/cluster/failure-domains.md).
+!!! info "Coming soon"
+    The stretched storage cluster type is not available yet. Its deployment, including how its storage nodes are
+    assigned to the two sites, will be described here once it is released.
 
 ## Checklist
 
@@ -330,7 +290,6 @@ of two whole domains, and therefore of one site, is tolerated. The activation ru
 - The S3 backup target of each storage cluster is reachable from its storage nodes (for simplyblock backups).
 - Every site reaches the hub API server over HTTPS (6443 or 443). No inbound connection to the sites is needed.
 - The storage clusters that replicate have network connectivity on the simplyblock storage ports.
-- For metro DR, the round-trip time between the sites is in the low single-digit milliseconds, and the storage
-  workers are assigned to failure domains per site.
-- Nodes carry `topology.kubernetes.io/zone` and `topology.kubernetes.io/region` labels.
+- For metro DR, the round-trip time between the sites is in the low single-digit milliseconds.
+- Every site of a protection plan names the cluster it runs on.
 - A mirror registry is configured if the hub and sites have no internet access.

@@ -87,10 +87,9 @@ requirements for the hub and the sites are listed in [Disaster Recovery Requirem
 
 ### Metro: Stretched Storage Cluster with Synchronous Replication
 
-One simplyblock storage cluster is stretched across two sites in metro distance. Its storage nodes are split between
-the sites, and each site is represented by its own failure domains, so that every stripe has chunks at both sites.
-Each site runs its own Kubernetes cluster for the applications, and both consume the same storage cluster. A
-protection plan with a `sync` method gives both sites the same storage identity.
+One simplyblock storage cluster of the stretched type spans two sites in metro distance and presents the same
+volumes at both sites. Each site runs its own Kubernetes cluster for the applications, and both consume the stretched
+storage cluster. A protection plan with a `sync` method protects the applications across the two sites.
 
 ![Metro DR with a storage cluster stretched across two sites](../assets/images/architecture/deploy-dr-metro.svg)
 
@@ -99,19 +98,20 @@ The architecture has the following properties.
 - **When to use:** Two datacenters or availability zones with low latency between them, where no data may be lost
   on the loss of a site (RPO of zero).
 - **Components:** Hub cluster, two site Kubernetes clusters with the DR site stack, and one stretched storage
-  cluster with storage nodes at both sites. The control plane of the stretched storage cluster must be placed so
-  that it keeps its quorum when one site is lost.
-- **Failure behavior:** On the loss of one site, the storage cluster continues serving I/O from the other site, as
-  long as the failure domains of the lost site fit within the parity budget of the erasure coding scheme. For
-  example, two failure domains per site with two parity chunks tolerate the loss of two whole domains. The
-  applications are then moved to the surviving site with an unplanned failover, without data loss.
+  cluster with storage nodes at both sites.
+- **Failure behavior:** On the loss of one site, the stretched storage cluster continues serving the volumes from
+  the other site. The applications are then moved to the surviving site with an unplanned failover, without data
+  loss.
 - **Replication types:** `sync`, optionally combined with `snapshot-s3`.
+
+!!! info "Coming soon"
+    The stretched storage cluster type is not available yet. Its deployment and its failure behavior will be
+    described in detail once it is released.
 
 !!! warning
     Every write crosses the link between the sites, so the latency between the sites adds to the write latency of
-    every volume. The failure-domain rules, including the minimum number of domains for activation, are described in
-    [Failure Domains](../architecture/concepts/failure-domains.md). Unplanned failover with metro fencing is still
-    behind a feature gate, see [Failover](../architecture/concepts/failover.md#fencing-for-metro-dr).
+    every volume. Unplanned failover with metro fencing is still behind a feature gate, see
+    [Failover](../architecture/concepts/failover.md#fencing-for-metro-dr).
 
 ### Async: Separate Site Clusters with Asynchronous Replication
 
