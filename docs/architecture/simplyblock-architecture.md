@@ -63,9 +63,8 @@ nodes:
   deployments usually integrate their existing observability stack instead.
 
 The control plane is not in the I/O path. Volumes keep serving I/O while it is unavailable, while management
-operations and automated recovery wait until it returns. Communication with the storage nodes uses secured HTTPS
-endpoints: the storage node API for node control (availability, restart, shutdown) and a JSON-RPC interface for
-storage configuration.
+operations and automated recovery wait until it returns. All communication between the control plane and the
+storage nodes is secured with TLS.
 
 The control plane and the operator can run locally in every Kubernetes cluster or, in the future, centrally on a hub
 cluster (see [Control Plane and Operator](deployment-topologies/control-plane-and-operator.md)). Details of the
