@@ -510,23 +510,18 @@ kubectl delete pod simplyblock-test-pod
 kubectl delete pvc simplyblock-test-pvc
 ```
 
-## Growing and Adding Clusters
+## Next Steps
 
-- **More nodes for an existing cluster:** A `ClusterDeploymentConfig` with `spec.clusterRef` and no `spec.cluster`
-  block adds nodes to an existing cluster. A discovery run with `discover.clusterRef` writes such a growth draft. See
-  [Expanding a Storage Cluster](../operations/scaling/expanding-storage-cluster.md).
+The cluster serves volumes now. Two things it does not yet have are more capacity and a second cluster, and both
+are their own deployment document.
 
-    The two fields decide between them what the expansion does, and a mismatch is refused rather than reconciled:
+**More nodes for this cluster.** A `ClusterDeploymentConfig` that names the cluster in `spec.clusterRef`, and
+carries no `spec.cluster` block, adds nodes to it. A discovery run with `spec.discover.clusterRef` writes such a
+growth draft from whatever workers are still unclaimed. See
+[Expanding a Storage Cluster](../operations/scaling/expanding-storage-cluster.md).
 
-    | `spec.cluster.name` resolves to | `spec.clusterRef` | Expansion does                             |
-    |---------------------------------|-------------------|--------------------------------------------|
-    | No existing `StorageCluster`    | absent            | Creates the cluster and all its nodes      |
-    | An existing `StorageCluster`    | absent            | Refuses: `ClusterExists`, phase `Failed`   |
-    | An existing `StorageCluster`    | set to it         | Adds only the nodes that do not exist yet  |
-    | No existing `StorageCluster`    | set               | Refuses: `ClusterNotFound`, phase `Failed` |
+**A second storage cluster.** A namespace holds at most one `StorageCluster`, so another cluster needs a namespace
+of its own, and it is recommended to point each one at a different set of workers.
 
-    A config never removes anything. A node set left out of a later document does not drain a node, and a device
-    removed from a group does not shrink one. Removal belongs to `StorageNodeOps` with `action: Remove`, where it
-    is deliberate, audited, and drains first.
-- **More storage clusters:** A namespace holds at most one `StorageCluster`, so every additional storage cluster
-  needs a namespace of its own. It is recommended to point each storage cluster to a different set of workers.
+From here, [Operations](../operations/index.md) covers running the cluster, and [Usage](../usage/index.md) covers
+provisioning volumes from it.

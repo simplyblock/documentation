@@ -102,6 +102,20 @@ A growth document carries no `spec.cluster` block. The cluster-wide settings, su
 scheme, and the storage-node workload, are those of the existing `StorageCluster`. Every group of the document uses the
 same device class as the cluster.
 
+`spec.cluster` and `spec.clusterRef` decide between them what the expansion does, and a mismatch is refused rather
+than reconciled:
+
+| `spec.cluster.name` resolves to | `spec.clusterRef` | Expansion does                             |
+|---------------------------------|-------------------|--------------------------------------------|
+| No existing `StorageCluster`    | absent            | Creates the cluster and all its nodes      |
+| An existing `StorageCluster`    | absent            | Refuses: `ClusterExists`, phase `Failed`   |
+| An existing `StorageCluster`    | set to it         | Adds only the nodes that do not exist yet  |
+| No existing `StorageCluster`    | set               | Refuses: `ClusterNotFound`, phase `Failed` |
+
+A document never removes anything. A node set left out of a later document does not drain a node, and a device
+removed from a group does not shrink one. Removal belongs to `StorageNodeOps` with `action: Remove`, where it is
+deliberate, audited, and drains first.
+
 On a cluster with `enableFailureDomains: true`, every group also sets `failureDomain`, otherwise the new nodes are held
 with a `FailureDomainMissing` event. See [Managing Failure Domains](../cluster/failure-domains.md) for the assignment
 and the balance rules.
