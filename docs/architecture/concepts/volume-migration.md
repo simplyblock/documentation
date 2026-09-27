@@ -22,9 +22,11 @@ move particular, I/O-heavy volumes to particular nodes).
 
 ## How Volume Migration Works
 
-When a volume migration is initiated, simplyblock transfers the volume's complete data lineage (including its entire
-snapshot chain and the active volume data) from the source node to a target node. The migration runs in the background
-while the volume continues to serve I/O through its existing NVMe-oF paths.
+When a volume migration is initiated, simplyblock transfers the volume's complete lineage (its entire snapshot chain
+and the active volume) from the source node to a target node. Only the front storage is transferred: the logical
+volume and snapshot structures that map the volume onto the back storage. The data itself stays where it is in the
+distributed back storage and is not copied. The migration runs in the background while the volume continues to serve
+I/O through its existing NVMe-oF paths.
 
 The migration process follows these phases:
 
@@ -34,7 +36,7 @@ All snapshots in the volume's ancestry chain are transferred to the target node,
 For each snapshot:
 
 - A corresponding snapshot is created on the target node.
-- Data is transferred asynchronously using block-level copy operations.
+- The snapshot's metadata, which references the snapshot's data in the back storage, is transferred asynchronously.
 - The snapshot's parent-child relationships are preserved on the target.
 
 If the volume has secondary nodes configured (for fault tolerance), snapshots are also registered on the target's
@@ -45,7 +47,7 @@ secondary node.
 After all snapshots are transferred, the active volume data is migrated:
 
 - A new volume is created on the target node with the same identity (NQN) as the source.
-- The final data delta (changes since the last snapshot) is transferred.
+- The final delta of the volume's metadata (changes since the last snapshot) is transferred.
 - If secondary nodes are configured, the volume is registered on the target's secondary with NVMe subsystem and
   namespace configuration.
 
@@ -60,6 +62,14 @@ Once all data has been successfully transferred:
 If migration fails at any point, the target-side artifacts are cleaned up and the source volume remains intact.
 
 ## Migration Constraints
+
+!!! note "A volume migration is an instant or very fast operation"
+    No back storage is copied during a volume migration. The data of the volume and its snapshots remains in place,
+    distributed across the devices of the cluster, and only the front storage moves to the target node. A migration
+    therefore completes instantly or within a very short time, independent of the size of the volume, and it does
+    not load the cluster with data transfers. If node affinity is turned on, the back storage is realigned to the
+    new node asynchronously afterward, as part of the background rebalancing (see
+    [Data Locality](../storage-performance-and-qos.md#data-locality)).
 
 - **One migration per source node:** Only one volume migration can run on a given source node at a time. This is
   required to maintain snapshot consistency during the transfer.

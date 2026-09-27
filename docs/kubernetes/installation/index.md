@@ -12,7 +12,7 @@ storage pools.
 For Kubernetes environments, a simplyblock deployment can be either hyper-converged or disaggregated. In the
 hyper-converged model, simplyblock storage services run on selected Kubernetes worker nodes, sharing resources with
 other workloads in the same Kubernetes cluster. In a disaggregated deployment, storage services run on dedicated
-worker nodes either within the same or a different cluster.
+worker nodes, by default within the same Kubernetes cluster, or optionally in a separate storage cluster.
 
 ## Installation Flow
 

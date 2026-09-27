@@ -1,6 +1,6 @@
 ---
 title: "HCI (Hyper-Converged)"
-description: "Hyper-converged simplyblock deployments run storage nodes on the same Kubernetes workers as the applications, with best-effort data locality."
+description: "Hyper-converged simplyblock deployments run storage nodes on the same Kubernetes workers as the applications, with optional, best-effort data locality."
 weight: 20252
 ---
 
@@ -18,11 +18,19 @@ Every worker that contributes storage runs a simplyblock storage node pod next t
 node plugin. Volumes are distributed across all storage nodes of the cluster and accessed over NVMe/TCP or
 NVMe/RoCE, both between workers and from a worker to its own storage node.
 
-Simplyblock values data locality in hyper-converged deployments and implements dynamic data locality, in which the
-front storage of a volume follows its workload to the node it runs on (see
-[Volume Migration](../concepts/volume-migration.md)). However, data locality is always best-effort. It never limits
-the scalability of individual volumes, storage pools, or clusters, and it never compromises a balanced resource
-utilization.
+Even in a hyper-converged deployment, data locality is turned off by default. Simplyblock distributes volumes and
+their data for a fully balanced load across the whole cluster instead. Where lower latency and less network traffic
+matter more, data locality can be enabled. It has two independent aspects:
+
+- **Pod locality:** The NVMe-oF volume (front storage) is placed on the same worker as the pod that uses it, which
+  eliminates one network hop. When the pod is relocated, the volume follows it instantly with an
+  [instant volume migration](../concepts/volume-migration.md), without copying data.
+- **Back storage locality:** With node affinity turned on, the primary chunk or data copy of a volume is co-located
+  with its front storage on a best-effort basis. This reduces the network load and improves latency, but impacts the
+  balance of the cluster. It is turned off by default.
+
+Data locality is always best-effort. It never limits the scalability of individual volumes, storage pools, or
+clusters. See [Data Locality](../storage-performance-and-qos.md#data-locality) for details.
 
 ## Benefits
 
@@ -35,8 +43,8 @@ utilization.
   to large datacenter clusters.
 - **Decoupling from the hardware lifecycle:** Individual components or nodes can be replaced, also with hardware from
   different vendors, without service interruption or degradation. Gradual replacement of hardware is supported.
-- **Data locality:** Best-effort data locality reduces the load on the shared network and improves the latency and
-  throughput of I/O.
+- **Optional data locality:** Pod locality and node affinity can be enabled to reduce the load on the shared network
+  and to improve the latency and throughput of I/O, at the cost of a less even cluster balance.
 
 ## Considerations
 
@@ -54,7 +62,7 @@ A hyper-converged deployment is the preferred choice when:
 
 - The cluster runs on uniform servers with local NVMe devices, and storage and compute grow together.
 - The number of servers should be minimal, for example, in edge locations or small clusters.
-- Latency-sensitive workloads benefit from data locality.
+- Latency-sensitive workloads benefit from data locality, which only a hyper-converged deployment can provide.
 - One operations model for all nodes is preferred over a separate storage tier.
 
 If storage and compute have to scale or be maintained independently, a
