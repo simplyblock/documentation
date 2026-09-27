@@ -19,6 +19,9 @@ Before a site joins, the following must be in place on the site cluster:
 - **Simplyblock storage:** A simplyblock storage cluster with the Simplyblock Operator and the simplyblock CSI driver
   (see [Install Simplyblock CSI](../../kubernetes/installation/install-csi.md)). The CSI driver must support
   csi-addons VolumeReplication, and VolumeGroupReplication when consistency groups are enabled in the protection plan.
+- **Snapshot support:** The snapshot controller and the VolumeSnapshot and VolumeGroupSnapshot CRDs. They are
+  installed together with simplyblock by the Simplyblock Operator Helm chart (`snapshotcontroller.create`, enabled by
+  default).
 - **Protected StorageClasses:** The StorageClasses and VolumeSnapshotClasses to be protected carry a selectable label,
   for example, `simplyblock.io/replicated: "true"`. The protection plan selects the classes by this label (see
   [Labeling the StorageClasses](#labeling-the-storageclasses)).
@@ -26,8 +29,8 @@ Before a site joins, the following must be in place on the site cluster:
 - **Optional components:** KubeVirt for virtual machines, and Multus with an isolated
   NetworkAttachmentDefinition for test failovers of VMs with secondary networks.
 
-The snapshot CRDs and controller, csi-addons, the Ramen Recipe CRD, and Velero do not have to be installed in
-advance. They are part of the site stack.
+csi-addons, the Ramen Recipe CRD, and Velero do not have to be installed in advance. They are part of the site
+stack.
 
 ## Creating a Join Token
 
@@ -55,7 +58,8 @@ helm --kube-context site-a install dr-simplyblock-spoke simplyblock/dr-simplyblo
   --set clusterName=site-a \
   --set hub.apiserver=https://hub.example.com:6443 \
   --set hub.token="$TOKEN" \
-  --set hub.caData="$HUB_CA"
+  --set hub.caData="$HUB_CA" \
+  --set 'stackOmit={snapshotter}'
 ```
 
 Clusters that join with a bootstrap token are approved automatically. No `clusteradm accept` step is needed.
@@ -86,16 +90,16 @@ When a cluster joins, `dr-hub` enables the following OCM addons on it:
 
 It then installs the site stack, which consists of the following components:
 
-| Component               | Content                                                                                                                                        |
-|-------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| `snapshotter`           | external-snapshotter v8.6.0 with volume group snapshots enabled.                                                                               |
-| `csi-addons-crds`       | csi-addons v0.14.0 CRDs.                                                                                                                       |
-| `csi-addons-controller` | csi-addons v0.14.0 controller.                                                                                                                 |
-| `recipe-crd`            | The Ramen Recipe CRD.                                                                                                                          |
-| `velero`                | Velero v1.16.1 with velero-plugin-for-aws v1.12.0, kubevirt-velero-plugin v0.8.0, and Kopia. No default backup storage location is configured. |
-| `olm-stubs`             | Stub CRDs for the OLM kinds that the Ramen DR cluster operator expects.                                                                        |
-| `ramen-dr-cluster`      | The Ramen DR cluster operator.                                                                                                                 |
-| `agent-velero-rbac`     | Permissions for `dr-agent` in the Velero namespace.                                                                                            |
+| Component               | Content                                                                                                                                                                                                           |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `snapshotter`           | external-snapshotter v8.6.0 with volume group snapshots enabled. Not needed on a simplyblock site, which already runs the snapshot controller of the Simplyblock Operator chart. Always omitted with `stackOmit`. |
+| `csi-addons-crds`       | csi-addons v0.14.0 CRDs.                                                                                                                                                                                          |
+| `csi-addons-controller` | csi-addons v0.14.0 controller.                                                                                                                                                                                    |
+| `recipe-crd`            | The Ramen Recipe CRD.                                                                                                                                                                                             |
+| `velero`                | Velero v1.16.1 with velero-plugin-for-aws v1.12.0, kubevirt-velero-plugin v0.8.0, and Kopia. No default backup storage location is configured.                                                                    |
+| `olm-stubs`             | Stub CRDs for the OLM kinds that the Ramen DR cluster operator expects.                                                                                                                                           |
+| `ramen-dr-cluster`      | The Ramen DR cluster operator.                                                                                                                                                                                    |
+| `agent-velero-rbac`     | Permissions for `dr-agent` in the Velero namespace.                                                                                                                                                               |
 
 The component list of a release is printed with `dr-bootstrap render spoke`:
 
@@ -124,7 +128,7 @@ helm --kube-context site-b install dr-simplyblock-spoke simplyblock/dr-simplyblo
   --set hub.apiserver=https://hub.example.com:6443 \
   --set hub.token="$TOKEN" \
   --set hub.caData="$HUB_CA" \
-  --set 'stackOmit={velero}'
+  --set 'stackOmit={snapshotter,velero}'
 ```
 
 ```bash title="Turning off the site stack for a managed cluster"
