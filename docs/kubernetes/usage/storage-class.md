@@ -26,11 +26,26 @@ block storage directly backed by simplyblock.
 
 ## StorageClass Created by a Storage Pool
 
-A StorageClass named `simplyblock-<namespace>-<clusterName>-<poolName>` is created automatically by the operator once
-a `StoragePool` resource becomes active, as described in
-[Create a Storage Pool](../installation/k8s-storage-plane.md#create-a-storage-pool). `cluster_id` and `pool_name` are
-always set from the storage pool and cannot be overridden. The rest of the parameters are copied from
-`StoragePool.spec.volumeDefaults`. Defaults for each field are listed at
+A StorageClass is assigned to a storage pool by three labels on the class, rather than being named after the pool:
+
+```yaml title="The three labels that assign a class to a pool"
+metadata:
+  labels:
+    storage.simplyblock.io/namespace: simplyblock
+    storage.simplyblock.io/cluster: production
+    storage.simplyblock.io/pool: production-pool
+```
+
+A pool may have zero or more classes this way, so one pool can back a class formatted `ext4` and a class formatted
+`xfs`, or a permissive QoS ceiling for a batch tenant and a tight one for a latency-sensitive one. The pool
+publishes the classes assigned to it in `status.storageClassNames`.
+
+One class is written by the operator itself: the one for the default pool a `StorageCluster` is created with, named
+`simplyblock-<namespace>-<clusterName>`. See
+[Simplyblock Operator: The Default Pool and Its Class](../../reference/operator/index.md#the-default-pool-and-its-class).
+
+`cluster_id` and `pool_name` are always set from the storage pool and cannot be overridden. The rest of the
+parameters come from `StoragePool.spec.volumeDefaults`. Defaults for each field are listed at
 [Simplyblock Operator: VolumeDefaults](../../reference/operator/reference.md#volumedefaults).
 
 The CRD fields carry camel case names and are written to the StorageClass under the parameter names of the CSI driver:

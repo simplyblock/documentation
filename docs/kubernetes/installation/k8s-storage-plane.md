@@ -162,7 +162,8 @@ When the status becomes `active`, the operator automatically creates a `simplybl
 There is no necessity to manage this secret manually. The operator keeps it up to date and removes the cluster entry
 when the cluster is deleted.
 
-For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator/index.md#storagenodeset).
+For a full list of configuration options see
+[Simplyblock Operator: Fleet Configuration on the StorageCluster](../../reference/operator/index.md#fleet-configuration-on-the-storagecluster).
 
 !!! warning
     Simplyblock exclusively owns the resources it has been allocated. It must be ensured they are sized correctly
@@ -200,14 +201,14 @@ The status of the storage pool can be checked with:
 kubectl get storagepools -n simplyblock
 ```
 
-Once the pool is active, the operator automatically creates a StorageClass named
-`simplyblock-<namespace>-<clusterName>-<poolName>`. In this example, the StorageClass is called
-`simplyblock-simplyblock-cluster-production-pool`.
+A pool created this way has no StorageClass yet. A class is assigned to it by carrying the pool's three
+assignment labels, and a pool may have as many as the volumes drawing on it need. The one class the operator
+writes by itself belongs to the default pool a `StorageCluster` is created with.
 
 `cluster_id` and `pool_name` are set from the storage pool and cannot be overridden. The remaining StorageClass
-parameters are copied from `spec.volumeDefaults`. See
+parameters come from `spec.volumeDefaults`. See
 [Storage Class: StorageClass Created by a Storage Pool](../usage/storage-class.md#storageclass-created-by-a-storage-pool)
-for the full parameter mapping.
+for the assignment labels and the full parameter mapping.
 
 A StorageClass's parameters cannot be changed after creation, so `spec.volumeDefaults` is immutable
 once the storage pool is created. A new storage pool is required to provision volumes with different defaults.
