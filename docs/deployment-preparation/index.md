@@ -10,7 +10,7 @@ storage cluster.
 ## Deployment Model
 
 Simplyblock is deployed on Kubernetes and OpenShift and is managed through the Simplyblock Operator and its custom
-resources. Both **disaggregated** deployments, with dedicated workers or clusters for storage nodes, and
+resources. Both **disaggregated** deployments, with dedicated workers for storage nodes (by default in the same cluster), and
 **hyper-converged** deployments, co-located with compute workloads, are supported, as well as a hybrid of both. A
 wide range of Kubernetes distributions and operating systems is supported. If the same cluster is used to serve and
 consume the storage, there is no essential difference between the models from a deployment perspective: the choice
