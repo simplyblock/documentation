@@ -17,10 +17,12 @@ dedicated worker nodes either within the same or a different cluster.
 
 A typical Kubernetes deployment follows these steps:
 
-1. **[Install the Operator](k8s-control-plane.md):** Deploy the simplyblock operator via the Helm chart. The operator
-   watches for simplyblock CRDs and reconciles the desired state.
-2. **[Deploy Storage Nodes and CSI](k8s-storage-plane.md):** Apply CRDs to create the storage cluster, add storage
-   nodes, create storage pools, and deploy the CSI driver.
+1. **[Install the Operator](k8s-control-plane.md):** Deploy the simplyblock operator via the Helm chart with
+   `deployment.profile=standalone`. The chart installs the operator, its CRDs, and the CSI driver, and the operator
+   brings up the control plane.
+2. **[Create a Storage Cluster](k8s-storage-plane.md):** The operator inspects the cluster's workers and writes a
+   `ClusterDeploymentConfig` describing what it found. Review that draft, approve it, and the operator expands it
+   into a storage cluster and its storage nodes. Then create a storage pool and provision the first volume.
 
 For a detailed breakdown of every pod and service created by the Helm chart, see
 [Management Cluster Architecture](management-cluster-architecture.md).
@@ -32,14 +34,16 @@ can be installed separately: [Install Simplyblock CSI](install-csi.md).
 
 The operator manages the following resources:
 
-| CRD              | Description                                                      |
-|------------------|------------------------------------------------------------------|
-| `StorageCluster` | Creates and manages a simplyblock storage cluster                |
-| `StorageNodeSet` | Fleet-level declarative configuration for a set of storage nodes |
-| `StorageNode`    | Represents a single backend storage node instance (auto-created) |
-| `StorageNodeOps` | One-shot operational action targeting a single storage node      |
-| `StoragePool`    | Creates and manages storage pools                                |
-| `Task`           | Monitors cluster tasks                                           |
+| CRD                       | Description                                                                        |
+|---------------------------|------------------------------------------------------------------------------------|
+| `ClusterDeploymentConfig` | A discovered deployment an administrator approves, expanded into the objects below |
+| `OperatorOps`             | The discovery run that produces such a document                                    |
+| `ControlPlane`            | The control plane this deployment uses, installed here or owned elsewhere          |
+| `SimplyblockDriver`       | The CSI driver deployment                                                          |
+| `StorageCluster`          | Creates and manages a simplyblock storage cluster                                  |
+| `StorageNode`             | Represents a single backend storage node instance (auto-created)                   |
+| `StorageNodeOps`          | One-shot operational action targeting a single storage node                        |
+| `StoragePool`             | Creates and manages storage pools                                                  |
 
 For detailed CRD documentation, see [Simplyblock Operator](../../reference/operator/index.md).
 

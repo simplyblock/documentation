@@ -18,6 +18,19 @@ Resources and manages the full lifecycle of clusters, storage nodes, pools, and 
 When deploying onto an OpenShift cluster, ensure that the environment-specific instructions provided in the
 [OpenShift Installation](openshift.md) guide are followed.
 
+## Choosing a Deployment Profile
+
+`deployment.profile` decides where the control plane is. It is one of two values:
+
+| Profile      | What it does                                                                                                            |
+|--------------|-------------------------------------------------------------------------------------------------------------------------|
+| `standalone` | This cluster hosts its own control plane. The operator installs FoundationDB, the object store, and the management API. |
+| `managed`    | A control plane elsewhere manages this cluster's storage. Nothing is installed here for it.                             |
+
+`standalone` is the default and is what a self-contained Kubernetes deployment uses. The `managed` profile
+additionally needs `controlplane.managed.endpoint`, which is where that control plane answers; see
+[Management Cluster Architecture](management-cluster-architecture.md).
+
 ## Installing the Operator
 
 ```bash title="Install the simplyblock operator"
@@ -26,8 +39,25 @@ helm repo update
 
 helm upgrade --install simplyblock -n simplyblock simplyblock/simplyblock-operator \
     --create-namespace \
-    --set controlplane.enabled=true \
-    --set operator.enabled=true
+    --set deployment.profile=standalone
+```
+
+The chart installs the operator and its CRDs, the CSI driver, and, for the `standalone` profile, a `ControlPlane`
+resource. The operator installs FoundationDB, the object store, and the management API from that resource, in that
+order. The database has to reach quorum before the management API starts, so the first install takes a few minutes.
+
+## Waiting for the Control Plane
+
+```bash title="Wait for the control plane to become available"
+kubectl wait controlplane simplyblock -n simplyblock \
+    --for=jsonpath='{.status.phase}'=Available --timeout=600s
+```
+
+`status.phase` is `Available` once the control plane answers. `Degraded` means it answers while something behind it
+is short, and `status.components` names which.
+
+```bash title="Watch the control plane settle"
+kubectl get controlplane simplyblock -n simplyblock -w
 ```
 
 !!! important "TLS Encryption"
@@ -46,7 +76,8 @@ kubectl get pods -n simplyblock
 
 ## Next Steps
 
-Once the cluster is created, proceed to [Deploy Storage Nodes](k8s-storage-plane.md) to add storage
-capacity and enable volume provisioning.
+Once the control plane is `Available`, proceed to [Create a Storage Cluster](k8s-storage-plane.md). On a fresh
+install the operator has already inspected the cluster's workers and written a deployment config describing what it
+found, which is what that page reviews and approves.
 
 For a complete reference of all CRD fields, see [Simplyblock Operator](../../reference/operator/index.md).

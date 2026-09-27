@@ -49,15 +49,21 @@ tls:
 Apply the values during the operator installation (see [Install Simplyblock Operator](k8s-control-plane.md)):
 
 ```bash title="Install the operator with mTLS"
-helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
+helm upgrade --install simplyblock -n simplyblock simplyblock/simplyblock-operator \
     --create-namespace \
-    --set controlplane.enabled=true \
-    --set operator.enabled=true \
+    --set deployment.profile=standalone \
     --set tls.enabled=true \
     --set tls.mutual_enabled=true \
     --set tls.provider=cert-manager \
     --set tls.cert-manager.cluster-issuer=my-cluster-issuer
 ```
+
+!!! note
+    `tls.enabled` and `tls.mutual_enabled` are both on by default. The chart issues a client certificate for the
+    operator, the two CSI plugins, Prometheus, and FoundationDB's peers, so there is nothing left to provision
+    before mTLS can be required. The flags above are shown for completeness; what a deployment usually sets is
+    `tls.cert-manager.cluster-issuer`, and a cluster with neither cert-manager nor OpenShift sets
+    `tls.enabled=false`.
 
 Replace `my-cluster-issuer` with the name of the `ClusterIssuer` the operator should use to obtain its certificates.
 

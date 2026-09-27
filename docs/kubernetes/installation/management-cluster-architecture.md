@@ -16,10 +16,9 @@ volume for its time-series data.
 ```bash title="Install the control plane cluster"
 helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
-helm upgrade --install simplyblock -n simplyblock simplyblock/spdk-csi \
+helm upgrade --install simplyblock -n simplyblock simplyblock/simplyblock-operator \
     --create-namespace \
-    --set controlplane.enabled=true \
-    --set operator.enabled=true
+    --set deployment.profile=standalone
 ```
 
 ## Architecture Diagram
