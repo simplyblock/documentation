@@ -78,7 +78,7 @@ Components common to all three variants:
 - **Site clusters:** OCM klusterlet, dr-agent, Ramen DR cluster operator, Velero, csi-addons, the snapshot
   controller, the simplyblock CSI driver, and the applications. dr-hub delivers the DR software stack to every site
   after it joins.
-- **S3:** One bucket per site for Ramen metadata and Velero backups, and an archive bucket for reports and hub state
+- **S3:** One bucket per site for volume metadata and Velero backups, and an archive bucket for reports and hub state
   bundles.
 
 If the hub fails, protected applications keep running and replicating, but no DR action can be started until the hub

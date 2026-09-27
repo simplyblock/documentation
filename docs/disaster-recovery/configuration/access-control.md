@@ -1,20 +1,20 @@
 ---
 title: "Access Control"
-description: "The dr-viewer, dr-operator, and dr-admin roles, the override verb for readiness overrides, creator stamping, and the admission webhook behavior."
+description: "The dr-viewer, dr-operator, and dr-admin roles, the override verb for readiness overrides, creator stamping, and the admission checks."
 weight: 10270
 ---
 
 Access to disaster recovery is controlled with Kubernetes RBAC on the hub cluster. The hub chart creates three
-ClusterRoles that separate reading, operating, and administering disaster recovery. The admission webhooks of
-`dr-hub` add checks that RBAC alone cannot express, such as who may override a readiness verdict.
+ClusterRoles that separate reading, operating, and administering disaster recovery. Admission checks add rules that
+RBAC alone cannot express, such as who may override a readiness verdict.
 
 ## Roles
 
-| ClusterRole   | Read                                                          | Write                                                                        | Special                      |
-|---------------|---------------------------------------------------------------|------------------------------------------------------------------------------|------------------------------|
-| `dr-viewer`   | All DR objects, Ramen DRCluster, DRPolicy, DRPlacementControl | None                                                                         | None                         |
-| `dr-operator` | As `dr-viewer`                                                | ProtectedApplication, RecoveryAction, RecoveryPlan, TestBubble, TestSchedule | None                         |
-| `dr-admin`    | As `dr-viewer`                                                | As `dr-operator`, plus ProtectionPlan, DRPath, DRConfig, and RestoreAction   | `override` on RecoveryAction |
+| ClusterRole   | Read           | Write                                                                        | Special                      |
+|---------------|----------------|------------------------------------------------------------------------------|------------------------------|
+| `dr-viewer`   | All DR objects | None                                                                         | None                         |
+| `dr-operator` | As `dr-viewer` | ProtectedApplication, RecoveryAction, RecoveryPlan, TestBubble, TestSchedule | None                         |
+| `dr-admin`    | As `dr-viewer` | As `dr-operator`, plus ProtectionPlan, DRPath, DRConfig, and RestoreAction   | `override` on RecoveryAction |
 
 The division follows the responsibilities in a typical organization:
 
@@ -50,8 +50,7 @@ spec:
     reason: "Site A is down after a power outage, accepting the data loss since the last sync."
 ```
 
-The webhook checks with a SubjectAccessReview whether the requester holds the `override` verb on `recoveryactions`.
-Only `dr-admin` grants it. The reason must be 10 to 1024 characters long and is recorded in the action report.
+The requester must hold the `override` verb on `recoveryactions`. Of the built-in roles, only `dr-admin` grants it. The reason must be 10 to 1024 characters long and is recorded in the action report.
 
 Some checks cannot be overridden by anyone: an action along a path that does not declare it
 (`PathActionNotDeclared`), and a test of an application that is not ready. See
@@ -75,16 +74,16 @@ rules:
 
 ## Creator Stamping
 
-The mutating webhook stamps the identity of the requester into the annotation `dr.simplyblock.io/created-by` of every
+The identity of the requester is stamped into the annotation `dr.simplyblock.io/created-by` of every
 new RecoveryAction and TestBubble, replacing any value the request carried. The annotation cannot be changed or
 removed afterward. Reports name this identity as the operator of the action or test.
 
-Actions and tests that `dr-hub` creates itself, for example, the child actions of a recovery plan or the runs of a
+Actions and tests that are created automatically, for example, the child actions of a recovery plan or the runs of a
 test schedule, are stamped with the identity of the `dr-hub` service account.
 
-## Admission Webhook Behavior
+## Admission Checks
 
-The validating webhooks enforce rules that involve other objects or the requester:
+The admission checks enforce rules that involve other objects or the requester:
 
 - **References:** An action or test must take a path that exists and belongs to the application's plan.
 - **Immutability:** Finished recovery actions and test bubbles cannot be changed.
@@ -93,6 +92,6 @@ The validating webhooks enforce rules that involve other objects or the requeste
 - **Overrides:** A readiness override requires the `override` verb.
 
 !!! warning
-    All webhooks use `failurePolicy: Fail`. While `dr-hub` is unavailable, DR objects cannot be created or changed,
+    While `dr-hub` is unavailable, DR objects cannot be created or changed,
     including recovery actions. In an emergency where the hub is degraded, restoring `dr-hub` comes first. Running
     `dr-hub` with two replicas reduces the risk.

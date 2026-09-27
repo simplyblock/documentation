@@ -27,18 +27,18 @@ minute. The verdict is one of the following:
 
 ### Readiness Checks
 
-| Check                 | Blocks (NotReady) when                                                                                                                                                                                                                                                                     | Warns (Degraded) when                                                                                    |
-|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| `path-declared`       | The plan, source, or target is missing, no DR path from source to target exists, or an adopted DRPlacementControl belongs to another site pair.                                                                                                                                            | Never                                                                                                    |
-| `protection-bound`    | Any other binding problem, for example, the DR policy is not derived yet, the Placement is not Ramen-schedulable, the DRPlacementControl drifted, or no DRPlacementControl exists yet.                                                                                                     | Never                                                                                                    |
-| `at-path-source`      | The application does not run at the path's `from` site. This makes the return path NotReady while the application is at its source.                                                                                                                                                        | The current site is unknown.                                                                             |
-| `ramen-healthy`       | No DRPlacementControl, the application runs on a site no declared path starts from (placement off path), the DRPlacementControl is not `Available`, `PeerReady`, and `Protected`, or, for async, no group sync yet or the last group sync is older than 1.5 times the scheduling interval. | Never                                                                                                    |
-| `storage-replicating` | Never                                                                                                                                                                                                                                                                                      | Always in this release (replication state unavailable).                                                  |
-| `recipe-valid`        | A hand-written Recipe does not exist on the cluster the application runs on, or the generated Recipe failed to apply there.                                                                                                                                                                | The Recipe was not read or applied yet.                                                                  |
-| `executor-ready`      | A job hook's image is not in `DRConfig.spec.agent.hookImageAllowList`, the target's dr-agent is down (for `postTargetReady` hooks), or an AAP hook has no executor.                                                                                                                        | The source's dr-agent is down (for `preSource` hooks).                                                   |
-| `test-prereqs`        | On a path declaring Test, the target's dr-agent is down.                                                                                                                                                                                                                                   | No isolated NAD is configured on the path.                                                               |
-| `test-recent`         | Never                                                                                                                                                                                                                                                                                      | No test along the path has passed, or the last pass is older than `test.recentWithin` (default 30 days). |
-| `site-mapping`        | Never                                                                                                                                                                                                                                                                                      | Never. Informational only, reports `NotAvailable`.                                                       |
+| Check                 | Blocks (NotReady) when                                                                                                                                                                                                                    | Warns (Degraded) when                                                                                    |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| `path-declared`       | The plan, source, or target is missing, or no DR path from source to target exists.                                                                                                                                                       | Never                                                                                                    |
+| `protection-bound`    | The protection of the application is not set up yet or has drifted from its configuration.                                                                                                                                                | Never                                                                                                    |
+| `at-path-source`      | The application does not run at the path's `from` site. This makes the return path NotReady while the application is at its source.                                                                                                       | The current site is unknown.                                                                             |
+| `ramen-healthy`       | The application is not protected yet, runs on a site no declared path starts from, is not available, its peer site is not ready, or, for async, no group sync yet or the last group sync is older than 1.5 times the scheduling interval. | Never                                                                                                    |
+| `storage-replicating` | Never                                                                                                                                                                                                                                     | Always in this release (replication state unavailable).                                                  |
+| `recipe-valid`        | A hand-written Recipe does not exist on the cluster the application runs on, or the generated Recipe failed to apply there.                                                                                                               | The Recipe was not read or applied yet.                                                                  |
+| `executor-ready`      | A job hook's image is not in `DRConfig.spec.agent.hookImageAllowList`, the target's dr-agent is down (for `postTargetReady` hooks), or an AAP hook has no executor.                                                                       | The source's dr-agent is down (for `preSource` hooks).                                                   |
+| `test-prereqs`        | On a path declaring Test, the target's dr-agent is down.                                                                                                                                                                                  | No isolated NAD is configured on the path.                                                               |
+| `test-recent`         | Never                                                                                                                                                                                                                                     | No test along the path has passed, or the last pass is older than `test.recentWithin` (default 30 days). |
+| `site-mapping`        | Never                                                                                                                                                                                                                                     | Never. Informational only, reports `NotAvailable`.                                                       |
 
 Checks that do not apply to a path, for example, `test-prereqs` on a path without Test, are reported as not
 applicable and never lower the verdict.
@@ -47,22 +47,21 @@ applicable and never lower the verdict.
 
 ### ProtectedApplication
 
-| Field                                                | Content                                                                                                                                                                                                     |
-|------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `status.paths[]`                                     | One entry per declared path: `name`, `from`, `to`, `actions`, and `readiness` (with `verdict`, `checks[]`, and `lastTransitionTime`). Each check has `name`, `status`, `blocking`, `reason`, and `message`. |
-| `status.currentCluster`                              | The cluster the application runs on, as reported by Ramen.                                                                                                                                                  |
-| `status.drpc`, `status.placement`, `status.drPolicy` | The Ramen and OCM objects the application is bound to.                                                                                                                                                      |
-| `status.recipe`                                      | The Recipe in use: `name`, `namespace`, `generated`, and `hash`.                                                                                                                                            |
-| `status.backups[]`                                   | Per snapshot-s3 method: `method`, `running`, `lastSucceeded`, `lastScheduleTime`, and `lastFailure`.                                                                                                        |
-| `status.lastAction`                                  | The most recent recovery action of the application.                                                                                                                                                         |
-| `status.conditions`                                  | `Bound` and `Protected`.                                                                                                                                                                                    |
+| Field                   | Content                                                                                                                                                                                                     |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `status.paths[]`        | One entry per declared path: `name`, `from`, `to`, `actions`, and `readiness` (with `verdict`, `checks[]`, and `lastTransitionTime`). Each check has `name`, `status`, `blocking`, `reason`, and `message`. |
+| `status.currentCluster` | The cluster the application runs on.                                                                                                                                                                        |
+| `status.recipe`         | The Recipe in use: `name`, `namespace`, `generated`, and `hash`.                                                                                                                                            |
+| `status.backups[]`      | Per snapshot-s3 method: `method`, `running`, `lastSucceeded`, `lastScheduleTime`, and `lastFailure`.                                                                                                        |
+| `status.lastAction`     | The most recent recovery action of the application.                                                                                                                                                         |
+| `status.conditions`     | `Bound` and `Protected`.                                                                                                                                                                                    |
 
 ### ProtectionPlan
 
-The conditions `Derived`, `InventoryReady`, `S3ProfileResolved`, and `Ready` show whether the plan's Ramen objects and
-storage classes are in place. `status.sites[]` lists each site with its DR cluster, whether the storage classes were
-applied, and whether its dr-agent is available. `status.pairs[]` lists each site pair with its paths, DR policies,
-and whether Ramen resolved peer storage classes.
+The conditions `Derived`, `InventoryReady`, `S3ProfileResolved`, and `Ready` show whether the plan is set up on its
+sites. `status.sites[]` lists each site with whether the storage classes were applied and whether its dr-agent is
+available. `status.pairs[]` lists each site pair with its paths and whether the storage classes of both sites were
+matched.
 
 ### DRPath
 
@@ -72,7 +71,8 @@ and whether Ramen resolved peer storage classes.
 ### DRConfig
 
 `status.agents[]` shows each site's dr-agent: `cluster`, `available`, `version`, `veleroNamespace`, and `lastSeen`.
-`status.stack[]` shows the delivered site stack components, and `status.lastBundle` the most recent state bundle.
+`status.stack[]` shows the site stack components installed on the sites, and `status.lastBundle` the most recent
+state bundle.
 
 ## Command-Line Views
 
@@ -129,12 +129,12 @@ kubectl -n ramen-ops get events --field-selector involvedObject.kind=ProtectedAp
 dr-hub serves Prometheus metrics over HTTPS on port `8443` of the dr-hub pod (named port `metrics`). The certificate
 is self-signed.
 
-| Metric                       | Type      | Labels                                              | Meaning                                                                                       |
-|------------------------------|-----------|-----------------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `dr_readiness_verdict`       | Gauge     | `namespace`, `application`, `path`, `verdict`       | 1 for the current verdict of the application on the path, 0 for the other verdicts.           |
-| `dr_action_duration_seconds` | Histogram | `namespace`, `application`, `path`, `kind`, `phase` | Duration of finished recovery actions, by outcome phase.                                      |
-| `dr_action_rto_seconds`      | Gauge     | `namespace`, `application`, `path`, `kind`          | RTO of the last completed action: creation until health probes passed.                        |
-| `dr_achieved_rpo_seconds`    | Gauge     | `namespace`, `application`, `path`                  | Achieved RPO of the last failover: hand-off time minus the last replicated consistency point. |
+| Metric                       | Type      | Labels                                              | Meaning                                                                                                    |
+|------------------------------|-----------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `dr_readiness_verdict`       | Gauge     | `namespace`, `application`, `path`, `verdict`       | 1 for the current verdict of the application on the path, 0 for the other verdicts.                        |
+| `dr_action_duration_seconds` | Histogram | `namespace`, `application`, `path`, `kind`, `phase` | Duration of finished recovery actions, by outcome phase.                                                   |
+| `dr_action_rto_seconds`      | Gauge     | `namespace`, `application`, `path`, `kind`          | RTO of the last completed action: creation until health probes passed.                                     |
+| `dr_achieved_rpo_seconds`    | Gauge     | `namespace`, `application`, `path`                  | Achieved RPO of the last failover: start of the volume switch minus the last replicated consistency point. |
 
 The Helm chart ships neither a metrics Service nor a ServiceMonitor. With the Prometheus Operator, a PodMonitor such
 as the following example can be created:

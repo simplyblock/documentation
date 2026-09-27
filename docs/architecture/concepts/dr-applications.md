@@ -22,14 +22,12 @@ Simplyblock DR distinguishes two kinds of applications by how they are deployed.
 
 - **Discovered applications:** Deployed directly into namespaces on the source site, for example, with `kubectl` or
   a Helm chart. The application lists its protected namespaces and selects its persistent volume claims (PVCs) with
-  a label selector. Velero captures the Kubernetes objects of these namespaces, and Ramen replicates the selected
-  volumes. Discovered applications are declared in the `ramen-ops` namespace on the hub.
+  a label selector. The Kubernetes objects of these namespaces are captured, and the selected volumes are
+  replicated. Discovered applications are declared in the `ramen-ops` namespace on the hub.
 - **Managed applications:** Delivered to the sites through GitOps, for example, through an Argo CD ApplicationSet or an OCM
   Subscription that uses an OCM Placement. The application references the existing
   Placement, and the GitOps tooling redeploys the objects on the target site. Only the volumes are replicated.
   Managed applications are declared in the namespace of their Placement.
-
-Existing Ramen DRPlacementControls can be adopted into a protected application instead of being recreated.
 
 ## Tiers and Boot Order
 
@@ -47,7 +45,7 @@ conditions that must be met before the next tier starts.
 | `exec`              | A command in a container succeeds, for example, a database readiness check.                   |
 | `condition`         | An expression on a resource status is true, for example, a custom resource reporting `Ready`. |
 
-The DR hub turns the tiers into a Ramen Recipe and delivers it to the sites. Without tiers, a default order of
+Without tiers, a default order of
 configuration objects first and workloads second is used. As an alternative, a hand-written Ramen Recipe can be
 referenced, which is used unchanged. Managed applications take their order from the GitOps tooling.
 

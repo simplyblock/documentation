@@ -16,22 +16,21 @@ dr-hub writes a new bundle whenever the DR state changes, at most every `DRConfi
 `<generation>.sig`. With `bundle.retainDays` set (default 30), both are written under a compliance-mode object lock.
 The latest bundle is shown in `DRConfig.status.lastBundle`.
 
-A bundle contains the following, in restore order:
+A bundle contains the following:
 
 - **Configuration:** The DRConfig.
-- **OCM intent:** Managed cluster sets, managed clusters, cluster set bindings, and the dr-agent addons.
-- **Ramen hub configuration:** The Ramen hub ConfigMap with its S3 profiles.
+- **Site registrations:** The joined sites and their dr-agent addons.
+- **S3 profiles:** The S3 store configuration of the sites.
 - **Simplyblock DR resources:** ProtectionPlans, DRPaths, ProtectedApplications, RecoveryPlans, and TestSchedules.
-- **Ramen resources:** DRClusters, DRPolicies, the Placements and PlacementDecisions of the DRPlacementControls, and
-  the DRPlacementControls.
-- **Generated Recipes:** For audit only. dr-hub redelivers them after a restore.
+- **Protection state:** The protection state of every application, so that a restored hub takes over the running
+  protection instead of starting it anew.
 
 A bundle contains no Secrets and no finished runs (these are archived as reports). The following Secrets must be kept
 in safekeeping outside the clusters:
 
 - **Archive credential:** The S3 credential dr-hub uses to write the archive.
 - **Signing key:** The ed25519 private key that signs the bundles.
-- **Ramen S3 secrets:** The credentials of the site S3 stores.
+- **Site S3 secrets:** The credentials of the site S3 stores.
 - **Offline restore material:** The public key `bundle-signing.pub` and a read-only S3 credential for the archive.
 
 The signing key pair is created with `dr-restore keygen -out ./keys` during installation. See
@@ -42,7 +41,7 @@ The signing key pair is created with `dr-restore keygen -out ./keys` during inst
 1. **Install a new hub:** Install the hub chart on a new cluster as described in [Install the Hub](../install/hub.md),
    with the same archive configuration.
 2. **Restore the Secrets:** Recreate the archive credential and the signing key Secrets in the `dr-simplyblock`
-   namespace, and the Ramen S3 secrets in the Ramen namespace, from safekeeping.
+   namespace, and the site S3 secrets in the Ramen namespace, from safekeeping.
 3. **Verify the bundle:** List the available generations and verify the one to restore:
 
     ```bash title="Listing and verifying bundles"
@@ -64,8 +63,8 @@ The signing key pair is created with `dr-restore keygen -out ./keys` during inst
 
 5. **Re-join the sites:** Join every site cluster again under its old name, with a new bootstrap token from the new
    hub. See [Join Sites](../install/sites.md).
-6. **Check readiness:** Ramen adopts the restored DRPlacementControls from the state on the sites instead of
-   deploying the applications anew. dr-hub recomputes readiness. Check `kubectl get papp -A` and the readiness of
+6. **Check readiness:** The applications are taken over from their state on the sites instead of being deployed
+   anew. dr-hub recomputes readiness. Check `kubectl get papp -A` and the readiness of
    each path.
 
 A restore can be rerun after a partial failure: objects that already exist are left alone.
@@ -85,9 +84,9 @@ A restore can be rerun after a partial failure: objects that already exist are l
 
 ## Recovery Mode
 
-`dr-restore` first applies the DRConfig with `recoveryMode: true`. In recovery mode, dr-hub neither derives nor binds
-objects, and it writes no bundles, so the restored objects cannot trigger changes before Ramen's objects are back. At the end of
-the restore, recovery mode is lifted.
+`dr-restore` first applies the DRConfig with `recoveryMode: true`. In recovery mode, dr-hub does not change the
+protection of any application, and it writes no bundles, so the restored objects cannot trigger changes before the
+restore is complete. At the end of the restore, recovery mode is lifted.
 
 With `-hold`, recovery mode stays on, for example, to inspect the restored state before dr-hub resumes. To resume,
 set it to `false`:

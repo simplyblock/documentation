@@ -126,5 +126,4 @@ Pinned volumes, which carry `storage.simplyblock.io/selected-storage-node`, are 
 
 ## Field Reference
 
-The [Simplyblock Operator Reference](reference.md) lists every field of every kind. It is generated from the Go API
-types of the operator by `scripts/operator-reference-gen.sh` and must not be edited by hand.
+The [Simplyblock Operator Reference](reference.md) lists every field of every kind.

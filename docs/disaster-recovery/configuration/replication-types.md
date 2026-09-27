@@ -14,27 +14,24 @@ uses exactly one of them.
 
 ## Comparison
 
-| Property         | `sync` (Metro-DR)                                                     | `async` (Regional-DR)                                                              | `snapshot-s3` (backup and restore)                                    |
-|------------------|-----------------------------------------------------------------------|------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
-| Use case         | Two datacenters at metro distance                                     | Geographically separated sites                                                     | Loss of the hub and all sites, ransomware                             |
-| Mechanism        | csi-addons VolumeReplication and VolumeGroupReplication, NetworkFence | csi-addons VolumeReplication and VolumeGroupReplication with a scheduling interval | Velero backups of objects and volume records to S3 on a cron schedule |
-| Storage identity | Same storage ID on both sites                                         | Different storage ID per site                                                      | Not applicable                                                        |
-| Recovery point   | Zero data loss while in sync                                          | Bounded by the scheduling interval                                                 | Bounded by the backup schedule                                        |
-| Failover         | Requires fencing of the source (feature gate)                         | Available without fencing                                                          | Restore onto the rebuilt source site only                             |
-| Failback         | Relocate along the reverse path                                       | Relocate along the reverse path                                                    | None                                                                  |
-| Ramen DRPolicy   | Yes, without interval                                                 | Yes, with interval                                                                 | No                                                                    |
+| Property         | `sync` (Metro-DR)                             | `async` (Regional-DR)              | `snapshot-s3` (backup and restore)        |
+|------------------|-----------------------------------------------|------------------------------------|-------------------------------------------|
+| Use case         | Two datacenters at metro distance             | Geographically separated sites     | Loss of the hub and all sites, ransomware |
+| Storage identity | Same storage ID on both sites                 | Different storage ID per site      | Not applicable                            |
+| Recovery point   | Zero data loss while in sync                  | Bounded by the scheduling interval | Bounded by the backup schedule            |
+| Failover         | Requires fencing of the source (feature gate) | Available without fencing          | Restore onto the rebuilt source site only |
+| Failback         | Relocate along the reverse path               | Relocate along the reverse path    | None                                      |
 
 ## Synchronous Replication
 
-Synchronous replication (type `sync`) is Ramen's Metro-DR. Every write is acknowledged only after it has reached both
+Synchronous replication (type `sync`) is Metro-DR. Every write is acknowledged only after it has reached both
 sites, so a failover while the replication is in sync loses no data.
 
-- **Topology:** Two site clusters that share the same storage identity. The storage is stretched across both sites,
-  and `dr-hub` labels the selected StorageClasses on both sites with the same storage ID (`sb-sync-<hash>`).
+- **Topology:** Two site clusters that share the same storage identity. The storage is stretched across both sites.
 - **Distance:** Synchronous replication adds the round trip between the sites to every write. It is intended for
   sites at metro distance with low latency between them.
-- **Fencing:** Before a failover, the source site must be fenced from the storage with a csi-addons NetworkFence, so
-  that it cannot write to the volumes after the target has taken over.
+- **Fencing:** Before a failover, the source site must be fenced from the storage, so that it cannot write to the
+  volumes after the target has taken over.
 - **Recovery point:** Only whether the replication is in sync is tracked. There is no RPO number for a sync method.
 
 ```yaml title="Synchronous method in a protection plan"
@@ -44,18 +41,16 @@ methods:
 ```
 
 !!! info "Coming soon"
-    The NetworkFence pre-flight check for failovers under synchronous replication is behind the `metroFencing`
-    feature gate in `DRConfig.spec.featureGates` until the csi-addons fencing support of the simplyblock CSI driver is
+    The fencing pre-flight check for failovers under synchronous replication is behind the `metroFencing`
+    feature gate in `DRConfig.spec.featureGates` until the fencing support of the simplyblock CSI driver is
     available. Unplanned failovers of synchronously replicated applications have not been validated yet.
 
 ## Asynchronous Replication
 
-Asynchronous replication (type `async`) is Ramen's Regional-DR. The storage replicates volume snapshots to the other
+Asynchronous replication (type `async`) is Regional-DR. The storage replicates volume snapshots to the other
 site at a fixed interval, set by `schedulingInterval` (for example, `5m`, `1h`, or `1d`).
 
-- **Topology:** Two independent site clusters, each with its own simplyblock storage cluster. `dr-hub` gives the
-  StorageClasses of every site a different storage ID (`sb-<hash>`) and creates a VolumeReplicationClass and a
-  VolumeGroupReplicationClass per method on each site.
+- **Topology:** Two independent site clusters, each with its own simplyblock storage cluster.
 - **Distance:** No latency limit applies, because writes are acknowledged locally.
 - **Recovery point:** A failover loses at most the writes since the last completed replication, which is normally at
   most one interval. The achieved RPO of a failover is recorded in its report.
@@ -85,8 +80,8 @@ only the object storage remains.
 
 - **Schedule:** `snapshotS3.schedule` is a five-field cron expression. `snapshotS3.retention` is the number of
   complete backup sets that are kept.
-- **Content:** Each backup set consists of two Velero backups, one with the Kubernetes objects and one with the volume
-  records. The backups are stored below `simplyblock-dr/backups` in the site's S3 store, or in the store named by
+- **Content:** Each backup set contains the Kubernetes objects and the volume records of the application. The backups
+  are stored below `simplyblock-dr/backups` in the site's S3 store, or in the store named by
   `snapshotS3.s3ProfileName`.
 - **Restore:** After all clusters are rebuilt and the hub state is restored, an administrator creates a RestoreAction
   per application. The application is restored onto its source site, as a whole, and protected again. There is no
@@ -104,16 +99,14 @@ methods:
 
 !!! info "Coming soon"
     The integration of `snapshot-s3` with the simplyblock volume backup backend is not yet available. The method
-    schedules and restores the Velero object backups, but the volume data is not yet shipped by simplyblock storage.
+    schedules and restores the object backups, but the volume data is not yet shipped by simplyblock storage.
 
 ## Combining Methods
 
 The following rules apply when a plan declares several methods:
 
-- **No sync and async mix:** A plan cannot contain both `sync` and `async` methods. A StorageClass carries exactly one
-  storage ID, which is shared by both sites for sync and differs per site for async.
-- **One mode per cluster pair:** Two plans cannot use sync and async for the same pair of clusters. Ramen does not
-  support both modes between the same two clusters.
+- **No sync and async mix:** A plan cannot contain both `sync` and `async` methods.
+- **One mode per cluster pair:** Two plans cannot use sync and async for the same pair of clusters.
 - **Backups alongside:** A `snapshot-s3` method can be added to a plan with either sync or async methods. It
   applies to every application of the plan.
 - **Changing the mode:** Switching an application from async to sync is a storage migration outside of disaster

@@ -5,9 +5,9 @@ weight: 10440
 ---
 
 A relocation moves an application from one site to another by stopping it on the source and restarting it on the
-target. It is a `RecoveryAction` of kind `Relocate` along a DR path. Ramen performs a final sync, demotes the
-volumes on the source, promotes them on the target, and redeploys the application's Kubernetes objects there in the
-order of its Recipe tiers. The same action serves for a [planned failover](planned-failover.md), for a failback after
+target. It is a `RecoveryAction` of kind `Relocate` along a DR path. A final sync runs, the volumes are demoted on
+the source and promoted on the target, and the application's Kubernetes objects are redeployed there in the order of
+its Recipe tiers. The same action serves for a [planned failover](planned-failover.md), for a failback after
 an unplanned failover, and for a permanent move.
 
 ## How a Relocation Works
@@ -27,7 +27,7 @@ A failback is a `Relocate` along the reverse DR path, from the DR site back to t
 
 - **Reverse path:** A DR path from the current site to the original site that lists `Relocate`, for example,
   `site-b-to-site-a` with `actions: [Relocate]`.
-- **PeerReady:** After an [unplanned failover](unplanned-failover.md), the original site must be back and replication
+- **Original site back:** After an [unplanned failover](unplanned-failover.md), the original site must be back and replication
   toward it must have resumed. Until then, the reverse path reports `NotReady`.
 
 ```yaml title="Failback along the reverse path"
@@ -50,7 +50,7 @@ in the reverse direction, and readiness is evaluated on the paths starting at th
 `spec.source` and `spec.target` do not change. `status.currentCluster` shows where it runs.
 
 To protect the application toward a different site, or with a different replication method, a new
-ProtectedApplication is required, because the DR policy of a DRPlacementControl is immutable.
+ProtectedApplication is required, because the protection of an existing application cannot be changed in place.
 
 ## What Applications Experience
 
@@ -64,18 +64,16 @@ ProtectedApplication is required, because the DR policy of a DRPlacementControl 
 
 ## Cleanup on the Source
 
-Ramen moves a discovered application only after its workload on the old site is gone, and waits for this in the
-DRPlacementControl progression `WaitOnUserToCleanUp`. For DRPlacementControls that dr-hub created, dr-hub handles
-this state: dr-agent on every cluster other than the target deletes, in the application's protected namespaces, all
-unowned objects of the following kinds:
+A discovered application is moved only after its workload on the old site is gone. dr-agent on every cluster other
+than the target deletes, in the application's protected namespaces, all unowned objects of the following kinds:
 
 - **Workloads:** VirtualMachines, Deployments, StatefulSets, DaemonSets, ReplicaSets, CronJobs, Jobs, and Pods.
 - **Configuration and networking:** Services, ConfigMaps, Secrets, ServiceAccounts, Ingresses, and Routes.
 - **Volumes:** The PVCs selected by the application's `pvcSelector`.
 
-It keeps the namespaces, the default service accounts and root CA ConfigMaps, and the replication objects that Ramen
-needs to demote the volumes. Objects of other kinds stay on the old site and must be removed manually.
+It keeps the namespaces, the default service accounts and root CA ConfigMaps, and the replication objects needed to
+demote the volumes. Objects of other kinds stay on the old site and must be removed manually.
 
 For a relocation, this happens before the application starts on the target. After an unplanned failover, it happens
 when the old primary becomes reachable again. To opt out, annotate the ProtectedApplication with
-`dr.simplyblock.io/manual-cleanup: "true"` and remove the workload manually when Ramen waits for it.
+`dr.simplyblock.io/manual-cleanup: "true"` and remove the workload from the old site manually.

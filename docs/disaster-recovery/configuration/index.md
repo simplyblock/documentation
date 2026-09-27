@@ -6,11 +6,7 @@ weight: 10200
 
 Simplyblock Disaster Recovery is configured entirely through Kubernetes custom resources on the hub cluster, in the
 API group `dr.simplyblock.io/v1alpha1`. The resources describe which sites exist, how data moves between them, in
-which directions applications may move, and how each application is started on the target site. From these
-declarations, `dr-hub` derives the Ramen and csi-addons objects that perform the actual replication and recovery.
-
-The derived Ramen objects (DRCluster, DRPolicy, DRPlacementControl, and the replication classes) are owned by
-`dr-hub` and must not be edited directly.
+which directions applications may move, and how each application is started on the target site.
 
 ## Configuration Model
 
@@ -28,8 +24,8 @@ The configuration is layered. Each layer references the one above it:
    site, and a method. It also declares health probes and dependencies. See
    [Protected Applications](applications.md).
 5. **Tiers, hooks, and Recipes:** Within a protected application, tiers define the boot order on the target site, and
-   external hooks run steps outside the cluster, such as DNS changes. For discovered applications, `dr-hub` generates a
-   Ramen Recipe from the tiers. See [Workflows and Recipes](workflows-and-recipes.md).
+   external hooks run steps outside the cluster, such as DNS changes. A hand-written Recipe can replace the tiers when
+   more control is needed. See [Workflows and Recipes](workflows-and-recipes.md).
 
 !!! info "Coming soon"
     Site profiles and a site mapper will describe how names that differ between sites (networks, StorageClasses,
@@ -41,12 +37,12 @@ this configuration and are described in [Operations](../operations/index.md) and
 
 ## Resource Overview
 
-| Kind                   | Scope                     | Short name | Written by    | Derives                                                                                  |
-|------------------------|---------------------------|------------|---------------|------------------------------------------------------------------------------------------|
-| `DRConfig`             | Cluster (named `default`) | None       | `dr-admin`    | Ramen hub configuration, S3 profiles                                                     |
-| `ProtectionPlan`       | Cluster                   | `pplan`    | `dr-admin`    | DRCluster per site, DRPolicy per site pair and method, class labels, replication classes |
-| `DRPath`               | Cluster                   | None       | `dr-admin`    | Nothing (permission set for actions)                                                     |
-| `ProtectedApplication` | Namespaced                | `papp`     | `dr-operator` | Placement and DRPlacementControl, generated Recipe                                       |
+| Kind                   | Scope                     | Short name | Written by    |
+|------------------------|---------------------------|------------|---------------|
+| `DRConfig`             | Cluster (named `default`) | None       | `dr-admin`    |
+| `ProtectionPlan`       | Cluster                   | `pplan`    | `dr-admin`    |
+| `DRPath`               | Cluster                   | None       | `dr-admin`    |
+| `ProtectedApplication` | Namespaced                | `papp`     | `dr-operator` |
 
 The relationships between the resources are:
 
@@ -56,9 +52,8 @@ ProtectionPlan "fra" ── sites: fra-a, fra-b ── methods: async-5m
  ├── DRPath "fra-a-to-fra-b"  (Failover, Relocate, Test)
  ├── DRPath "fra-b-to-fra-a"  (Relocate)
  └── ProtectedApplication "orders"  (source fra-a, target fra-b, method async-5m)
-      ├── tiers ──> generated Ramen Recipe "orders-dr"
-      ├── health.probes, externalHooks
-      └──> Placement + DRPlacementControl ──> DRPolicy "fra-fra-a-fra-b-async-5m"
+      ├── tiers
+      └── health.probes, externalHooks
 ```
 
 The concepts behind the resources are explained in [Protection Plans and Paths](../../architecture/concepts/dr-protection-plans.md)
