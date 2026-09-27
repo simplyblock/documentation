@@ -1,122 +1,138 @@
 ---
 title: "Rolling Restart"
-description: "Restart every storage node of a simplyblock cluster in sequence with the RollingRestart action, optionally refreshing the storage-node pod on each worker."
+description: "Restart every storage node of a simplyblock cluster in sequence with a RollingRestart operation, optionally replacing the storage-node pod on each worker."
 weight: 10120
 ---
 
-A rolling restart restarts every backend storage node of a cluster, one node at a time, waiting for the cluster to
+A rolling restart restarts every backend storage node of a cluster, one node at a time, and waits for the cluster to
 finish rebalancing before it moves on. It is useful after a change to the storage-node configuration, and after a new
 storage-node container image has been rolled out.
 
-The operation is requested with a `StorageClusterOps`, like the other
-[Storage Cluster Actions](cluster-actions.md). Its action is `RollingRestart`.
+The operation is a `StorageClusterOps` with the action `RollingRestart`, like the other
+[Storage Cluster Actions](cluster-actions.md).
 
-```bash title="Starting a rolling restart of all storage nodes"
-kubectl apply -n simplyblock -f - <<EOF
+```yaml title="Example of a rolling restart (rolling-restart.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageClusterOps
 metadata:
-  name: rolling-restart
+  name: roll-simplyblock-cluster
   namespace: simplyblock
 spec:
   clusterRef: simplyblock-cluster
   action: RollingRestart
-EOF
+```
+
+```bash title="Starting a rolling restart of all storage nodes"
+kubectl apply -f rolling-restart.yaml
 ```
 
 ## Refreshing the Storage Node Pod
 
 By default, a rolling restart shuts each backend node down and restarts it, which leaves the storage-node pod on the
-worker untouched. A pod that is already running keeps the image it started with, so a newly pulled image only takes
-effect once that pod is replaced.
+worker untouched. A pod that is already running keeps the image it started with.
 
-Setting `spec.rollingRestart.refreshSNodeAPI` to `true` adds that replacement to every node's turn. The storage-node
-pod is deleted after the backend node has been shut down and before it is restarted, so the DaemonSet recreates it,
-and the node comes back on the current image.
+Setting `spec.rollingRestart.refreshSNodeAPI` to `true` adds a pod replacement to every node's turn. The storage-node
+pod is deleted after the backend node has been shut down and before it is restarted, the DaemonSet recreates it, and
+the node comes back on the current image.
 
-```bash title="Rolling restart that also refreshes the storage node pods"
-kubectl apply -n simplyblock -f - <<EOF
+```yaml title="Example of a rolling restart that refreshes the storage-node pods"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageClusterOps
 metadata:
-  name: rolling-restart-refresh
+  name: roll-simplyblock-cluster-refresh
   namespace: simplyblock
 spec:
   clusterRef: simplyblock-cluster
   action: RollingRestart
   rollingRestart:
     refreshSNodeAPI: true
-EOF
 ```
 
-!!! note
-    Without `refreshSNodeAPI`, a rolling restart is a backend restart only. An image change on
-    `StorageCluster.spec.storageNodes` does not reach the running pods, so the nodes come back on the image they
-    were already running.
+This is the form used after a storage-node image change, as described in [Upgrading a Cluster](cluster-upgrade.md).
 
 ## Steps
 
-Each node passes through the steps below, tracked in `status.step.state`. They apply to the node currently being
-restarted, which is the entry of `status.rollingRestart.nodes` at `status.rollingRestart.nodeIndex`.
+When the operation starts, it lists the storage nodes of the cluster and writes their UUIDs, in the order they will be
+restarted, to `status.rollingRestart.nodes`. The list is not changed afterward: a node that joins the cluster during the
+walk is not restarted, and a node that leaves it is skipped when the walk reaches it. `status.rollingRestart.nodeIndex`
+is the position of the node currently being restarted.
 
-| Step               | Description                                                                                          |
-|--------------------|------------------------------------------------------------------------------------------------------|
-| `CheckingPeers`    | The remaining nodes are checked, so that a node is only taken down while the cluster can carry it.   |
-| `ShuttingDownNode` | The backend shutdown was requested. The step holds until the node reports `offline` or `in_restart`. |
-| `RefreshingPod`    | The storage-node pod is deleted. Only entered when `refreshSNodeAPI` is `true`.                      |
-| `AwaitingPod`      | The replacement pod is awaited until it is Ready.                                                    |
-| `RestartingNode`   | The backend restart was requested with `force`. The step holds until the node reports `online`.      |
-| `Rebalancing`      | The cluster is polled until it reports that rebalancing has finished.                                |
+Each node passes through the steps below, tracked in `status.step.state`.
 
-Once rebalancing is done, `nodeIndex` is incremented and the next node starts at `CheckingPeers`. The operation
-succeeds when the index reaches the end of the list.
+| Step               | Description                                                                                                |
+|--------------------|------------------------------------------------------------------------------------------------------------|
+| `CheckingPeers`    | The walk holds until every other storage node of the cluster is `online`. Nothing is changed in this step. |
+| `ShuttingDownNode` | The backend shutdown is requested, and the step holds until the node is `offline` or `in_restart`.         |
+| `RefreshingPod`    | The storage-node pod on the node's worker is deleted. Only entered when `refreshSNodeAPI` is `true`.       |
+| `AwaitingPod`      | The replacement pod is awaited until it is Ready. Only entered when `refreshSNodeAPI` is `true`.           |
+| `RestartingNode`   | The backend restart is requested, and the step holds until the node is `online`.                           |
+| `Rebalancing`      | The step holds until the cluster reports that rebalancing has finished.                                    |
 
-A node that is already in `in_shutdown`, `offline`, or `in_restart` is not asked to shut down again, and a node that
-is already `in_restart` or `online` is not asked to restart. Both checks make a resumed run skip work that has already
-happened. A node missing from the backend node list during `RefreshingPod` skips the pod refresh and advances
-straight to `RestartingNode`.
+Once rebalancing is done, the index advances, and the next node starts at `CheckingPeers`. The operation succeeds when
+the index reaches the end of the list. A cluster without storage nodes completes immediately.
+
+Every call is skipped when the node is already where the call would put it, so a resumed operation does not shut down
+or restart a node twice. A restart of the operator does not start the walk over, since the node list, the index, and
+the step are persisted in the status of the operation.
+
+## Holding for Peers
+
+Taking a node down while another one is already offline can exceed the fault tolerance of the cluster, so every
+shutdown is gated on all peers being `online`. While a peer is not, the walk holds in `CheckingPeers`, and a
+`PeerNodeNotOnline` warning names the peers it waits for.
+
+```bash title="Checking why a rolling restart holds"
+kubectl get events -n simplyblock \
+    --field-selector reason=PeerNodeNotOnline
+```
+
+`CheckingPeers` has a deadline of two hours. A walk that holds for longer fails with `StepDeadlineExceeded`, which
+separates a cluster that is degraded for good from one that recovers on its own.
 
 ## Monitoring the Progress
 
-`status.rollingRestart` is the walk's position over the cluster's nodes, and `status.step` is where the machine has
-got to within the node currently being restarted. Neither is complete without the other.
-
 ```bash title="Watching the progress of a rolling restart"
-kubectl get storageclusterops rolling-restart -n simplyblock \
-    -o jsonpath='{.status.rollingRestart}' | jq .
+kubectl get storageclusterops roll-simplyblock-cluster -n simplyblock -o wide -w
 ```
 
-```plain title="Example output of a running rolling restart"
+```bash title="Reading the position of the walk"
+kubectl get storageclusterops roll-simplyblock-cluster -n simplyblock \
+    -o jsonpath='{.status}' | jq '{phase, step, rollingRestart}'
+```
+
+```plain title="Example of the rolling restart status"
 {
-  "nodes": [
-    "114899a6-d708-499e-8051-bc9ca9713cf8",
-    "82198a36-fcbb-43e3-949c-0260bf40f0ac",
-    "707dd443-5d0e-470f-bdde-92f1238c4b01"
-  ],
-  "nodeIndex": 1
+  "phase": "Running",
+  "rollingRestart": {
+    "nodeIndex": 1,
+    "nodes": [
+      "114899a6-d708-499e-8051-bc9ca9713cf8",
+      "82198a36-fcbb-43e3-949c-0260bf40f0ac",
+      "707dd443-5d0e-470f-bdde-92f1238c4b01"
+    ]
+  },
+  "step": {
+    "deadline": "2026-09-25T14:52:10Z",
+    "state": "Rebalancing"
+  }
 }
 ```
 
-```bash title="Following the node and the step together"
-kubectl get storageclusterops rolling-restart -n simplyblock \
-    -o jsonpath='{.status.rollingRestart.nodeIndex}{"/"}{.status.rollingRestart.nodes[*]}{"\t"}{.status.step.state}{"\n"}' -w
+A `NodeRestarted` event is emitted each time the walk advances to the next node.
+
+## Aborting a Rolling Restart
+
+A rolling restart can be aborted in `CheckingPeers` and in `Rebalancing`, where no node is down on behalf of the
+operation. From `ShuttingDownNode` to `RestartingNode`, the node is offline and the operation is the only thing that
+brings it back, so an abort there is not honored, and the webhook refuses deleting the operation.
+
+```bash title="Aborting a rolling restart"
+kubectl patch storageclusterops roll-simplyblock-cluster -n simplyblock \
+    --type=merge -p '{"spec": {"abort": true}}'
 ```
 
-`status.rollingRestart.nodes` is written once when the walk starts and is not modified afterward, so a node added
-mid-walk is not restarted and one removed mid-walk is skipped when the walk reaches it.
-
-## Duration and Interruptions
-
-A rolling restart takes as long as the sum of its nodes, since the nodes are handled strictly one after another and
-each one waits for a full cluster rebalance. On a large cluster the operation therefore runs for a long time, and it
-stays in the phase `Running` for its whole duration.
-
-A restart of the operator does not start the rollout over. The node list, the index, and the step live in the
-operation's status, so the next reconcile resumes at the node and the step that were last persisted.
-
-The spec is immutable, so a rollout cannot be re-aimed once it is running. Stopping one is
-[aborting it](cluster-actions.md#aborting-an-action), which unwinds at the next step and leaves the operation in the
-phase `Aborted`. A rollout that should cover a changed set of nodes is a new `StorageClusterOps`.
+The abort takes effect at the next step boundary where it is allowed. A walk that holds in `CheckingPeers` on a
+degraded cluster is the usual reason to abort one.
 
 !!! warning
     A rolling restart takes one storage node down at a time, so the cluster runs degraded for the duration of each

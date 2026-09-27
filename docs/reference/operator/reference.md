@@ -1010,9 +1010,7 @@ spec:
             percentPerDevice: integer
 status:
   phase: ClusterDeploymentConfigPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   clusterRef: string
   nodeRefs:
     - string
@@ -1176,9 +1174,7 @@ _Example:_
 
 ```yaml
 phase: ClusterDeploymentConfigPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 clusterRef: string
 nodeRefs:
   - string
@@ -1190,7 +1186,7 @@ expansionStartedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[ClusterDeploymentConfigPhase](#clusterdeploymentconfigphase)_ | Phase is the operator's own view of the document. |  | Enum: [Draft Expanding Expanded Failed] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the expansion machine within Expanding. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the expansion machine within Expanding. |  | Optional: \{\} <br /> |
 | `clusterRef` _string_ | ClusterRef names the StorageCluster the expansion produced or added to. It<br />is a record rather than a dependency: nothing resolves it after expansion,<br />which is what makes the document safe to delete. |  | Optional: \{\} <br /> |
 | `nodeRefs` _string array_ | NodeRefs names the StorageNode objects the expansion created, for the same<br />reason. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the document moves, and never a log. On a Draft it is what validation<br />found, which is what a reviewer reads before approving. |  | Optional: \{\} <br /> |
@@ -1404,9 +1400,7 @@ spec:
       caBundleSecretRef: LocalObjectReference
 status:
   phase: ControlPlanePhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   endpoint: string
   version: string
   lastChecked: Time
@@ -1494,9 +1488,7 @@ spec:
     backupName: string
 status:
   phase: ControlPlaneOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   message: string
   backupRef: string
   observedGeneration: integer
@@ -1620,9 +1612,7 @@ _Example:_
 
 ```yaml
 phase: ControlPlaneOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 message: string
 backupRef: string
 observedGeneration: integer
@@ -1633,7 +1623,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[ControlPlaneOpsPhase](#controlplaneopsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. The rule repeats the<br />ControlPlaneOpsStep enum because a marker cannot reach a field of the<br />shared snapshot type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. The rule repeats the<br />ControlPlaneOpsStep enum because a marker cannot reach a field of the<br />shared snapshot type. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the operation moves, and never a log. |  | Optional: \{\} <br /> |
 | `backupRef` _string_ | BackupRef names the FoundationDBBackup a Backup run created or triggered.<br />The operation does not own it, because deleting the record of a backup<br />must not delete the backup's configuration. |  | Optional: \{\} <br /> |
 | `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from, so a stale status can be told from a current one. |  | Optional: \{\} <br /> |
@@ -1784,9 +1774,7 @@ _Example:_
 
 ```yaml
 phase: ControlPlanePhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 endpoint: string
 version: string
 lastChecked: Time
@@ -1803,7 +1791,7 @@ observedGeneration: integer
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[ControlPlanePhase](#controlplanephase)_ | Phase is the operator's own view of the control plane. |  | Enum: [Installing Available Degraded Unavailable] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the installation machine within Installing. The<br />rule repeats the ControlPlaneStep enum because a marker cannot reach a<br />field of the shared snapshot type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the installation machine within Installing. The<br />rule repeats the ControlPlaneStep enum because a marker cannot reach a<br />field of the shared snapshot type. |  | Optional: \{\} <br /> |
 | `endpoint` _string_ | Endpoint is the resolved management API base URL, derived in the local<br />case and echoed in the managed one. It is what every controller in the<br />operator reads to reach the control plane, so that one object answers<br />where it is. |  | Optional: \{\} <br /> |
 | `version` _string_ | Version is the version the management API reports. |  | Optional: \{\} <br /> |
 | `lastChecked` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastChecked is when the readiness probe last ran. |  | Optional: \{\} <br /> |
@@ -2958,9 +2946,7 @@ spec:
     clusterRef: string
 status:
   phase: OperatorOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   configRef: string
   workers:
     - string
@@ -3089,9 +3075,7 @@ _Example:_
 
 ```yaml
 phase: OperatorOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 configRef: string
 workers:
   - string
@@ -3105,7 +3089,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[OperatorOpsPhase](#operatoropsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine. |  | Optional: \{\} <br /> |
 | `configRef` _string_ | ConfigRef names the ClusterDeploymentConfig a Discover run wrote. |  | Optional: \{\} <br /> |
 | `workers` _string array_ | Workers are the workers this run is inspecting, decided once in<br />Inspecting so that a node joining the cluster mid-run does not change<br />what the run is about. |  | Optional: \{\} <br /> |
 | `environment` _[KubernetesEnvironment](#kubernetesenvironment)_ | Environment is the Kubernetes distribution Inspecting concluded, which<br />Writing copies into the draft. It is recorded here as well so that a run<br />that failed later still says what it found. |  | Enum: [Vanilla OpenShift Rancher K3s Talos] <br />Optional: \{\} <br /> |
@@ -3155,9 +3139,7 @@ spec:
     uid: UID
 status:
   phase: PersistentVolumeOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   migration:
     migrationUUID: string
     clusterUUID: string
@@ -3299,9 +3281,7 @@ _Example:_
 
 ```yaml
 phase: PersistentVolumeOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 migration:
   migrationUUID: string
   clusterUUID: string
@@ -3337,7 +3317,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[PersistentVolumeOpsPhase](#persistentvolumeopsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine, as the shared<br />statemachine.KubeSnapshot. It is persisted before the side effect that<br />step performs. The rule is what an Enum marker would do if a marker could<br />reach a field of a shared type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine, as the shared<br />statemachine.KubeSnapshot. It is persisted before the side effect that<br />step performs. The rule is what an Enum marker would do if a marker could<br />reach a field of a shared type. |  | Optional: \{\} <br /> |
 | `migration` _[MigrationStatus](#migrationstatus)_ | Migration is everything about the migration rather than about the<br />operation. |  | Optional: \{\} <br /> |
 | `deferredSince` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | DeferredSince is when the operation was first held — behind another<br />operation's lock, or behind a control plane that is not accepting<br />migrations yet. It is what the auto-rebalancer reads to decide whether a<br />migration has waited long enough to give up on, and it is in status<br />rather than in memory because the operator may restart and an observer<br />needs to see that the operation is waiting and since when. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the operation moves, and never a log. |  | Optional: \{\} <br /> |
@@ -4038,9 +4018,7 @@ spec:
       string: string
 status:
   phase: StorageBackupOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   clusterID: string
   backupID: string
   restoredLvolID: string
@@ -4154,9 +4132,7 @@ _Example:_
 
 ```yaml
 phase: StorageBackupOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 clusterID: string
 backupID: string
 restoredLvolID: string
@@ -4172,7 +4148,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageBackupOpsPhase](#storagebackupopsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. The closed set is a<br />CEL rule rather than an Enum marker because a marker cannot reach a field<br />whose type is declared in another module. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. The closed set is a<br />CEL rule rather than an Enum marker because a marker cannot reach a field<br />whose type is declared in another module. |  | Optional: \{\} <br /> |
 | `clusterID` _string_ | ClusterID is the backend cluster the operation ran against. |  | Optional: \{\} <br /> |
 | `backupID` _string_ | BackupID is the copy the restore read from, recorded so the operation says<br />what it restored after the object list has moved on. |  | Optional: \{\} <br /> |
 | `restoredLvolID` _string_ | RestoredLvolID is the logical volume the control plane created. It is<br />written before the claim, so a restarted Binding step knows what it is<br />binding. |  | Optional: \{\} <br /> |
@@ -4534,9 +4510,7 @@ spec:
     throughputWeight: float
 status:
   phase: StorageClusterPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   uuid: string
   clusterName: string
   nqn: string
@@ -4637,9 +4611,7 @@ spec:
     refreshSNodeAPI: boolean
 status:
   phase: StorageClusterOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   message: string
   rollingRestart:
     nodes:
@@ -4753,9 +4725,7 @@ _Example:_
 
 ```yaml
 phase: StorageClusterOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 message: string
 rollingRestart:
   nodes:
@@ -4769,7 +4739,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageClusterOpsPhase](#storageclusteropsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the operation moves, and never a log. |  | Optional: \{\} <br /> |
 | `rollingRestart` _[RollingRestartStatus](#rollingrestartstatus)_ | RollingRestart is the walk's position, set only for action<br />RollingRestart. |  | Optional: \{\} <br /> |
 | `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from, so a stale status can be told from a current one. |  | Optional: \{\} <br /> |
@@ -4946,9 +4916,7 @@ _Example:_
 
 ```yaml
 phase: StorageClusterPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 uuid: string
 clusterName: string
 nqn: string
@@ -4991,7 +4959,7 @@ observedGeneration: integer
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageClusterPhase](#storageclusterphase)_ | Phase is the operator's own view of this cluster. |  | Enum: [Pending Creating Provisioning Activating Online Degraded Unavailable Suspended] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the creation machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the creation machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
 | `uuid` _string_ | UUID is the backend cluster UUID. Empty means the cluster has not been<br />created or adopted, and non-empty means steady state. |  | Optional: \{\} <br /> |
 | `clusterName` _string_ | ClusterName is the resolved backend name. |  | Optional: \{\} <br /> |
 | `nqn` _string_ | NQN is the cluster subsystem qualified name. |  | Optional: \{\} <br /> |
@@ -5090,9 +5058,7 @@ spec:
   abort: boolean
 status:
   phase: StorageDeviceOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   deviceStatusBefore: string
   message: string
   observedGeneration: integer
@@ -5196,9 +5162,7 @@ _Example:_
 
 ```yaml
 phase: StorageDeviceOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 deviceStatusBefore: string
 message: string
 observedGeneration: integer
@@ -5209,7 +5173,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageDeviceOpsPhase](#storagedeviceopsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. |  | Optional: \{\} <br /> |
 | `deviceStatusBefore` _string_ | DeviceStatusBefore is what the control plane reported the device's status<br />to be when the operation took its lock, so a wait can tell the device<br />coming back from its never having gone. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the operation moves, and never a log. |  | Optional: \{\} <br /> |
 | `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from, so a stale status can be told from a current one. |  | Optional: \{\} <br /> |
@@ -5385,9 +5349,7 @@ spec:
     expand: boolean
 status:
   phase: StorageNodePhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   uuid: string
   status: string
   health: boolean
@@ -5589,9 +5551,7 @@ spec:
     systemVolumeFilterRegex: string
 status:
   phase: StorageNodeOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   message: string
   drain:
     volumesTotal: integer
@@ -5710,9 +5670,7 @@ _Example:_
 
 ```yaml
 phase: StorageNodeOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 message: string
 drain:
   volumesTotal: integer
@@ -5725,7 +5683,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageNodeOpsPhase](#storagenodeopsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as the<br />operation moves, and never a log. |  | Optional: \{\} <br /> |
 | `drain` _[DrainStatus](#drainstatus)_ | Drain is the drain's progress over the node's volumes, set only for action<br />Remove. |  | Optional: \{\} <br /> |
 | `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from, so a stale status can be told from a current one. |  | Optional: \{\} <br /> |
@@ -5961,9 +5919,7 @@ _Example:_
 
 ```yaml
 phase: StorageNodePhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 uuid: string
 status: string
 health: boolean
@@ -5999,7 +5955,7 @@ observedGeneration: integer
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageNodePhase](#storagenodephase)_ | Phase is the operator's own view of this node, and the field its<br />provisioning branches on. |  | Enum: [Pending Provisioning Online Removing Offline Degraded Failed] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the provisioning machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the provisioning machine, as the shared<br />statemachine.KubeSnapshot. The rule is what an Enum marker would do if a<br />marker could reach a field of a shared type. |  | Optional: \{\} <br /> |
 | `uuid` _string_ | UUID is the backend node UUID. Empty means the node has neither been<br />provisioned nor adopted, and non-empty means steady state. |  | Optional: \{\} <br /> |
 | `status` _string_ | Status is the lifecycle the control plane reports: online, suspended,<br />offline, in_creation, in_restart, in_shutdown, unreachable, or timeout. The<br />values are the control plane's, which is why they are neither PascalCase nor<br />constrained by an Enum here. |  | Optional: \{\} <br /> |
 | `health` _boolean_ | Health is the health flag the control plane reports. |  | Optional: \{\} <br /> |
@@ -6191,9 +6147,7 @@ spec:
   abort: boolean
 status:
   phase: StoragePoolOpsPhase
-  step:
-    state: string
-    deadline: Time
+  step: KubeSnapshot
   message: string
   observedGeneration: integer
   startedAt: Time
@@ -6291,9 +6245,7 @@ _Example:_
 
 ```yaml
 phase: StoragePoolOpsPhase
-step:
-  state: string
-  deadline: Time
+step: KubeSnapshot
 message: string
 observedGeneration: integer
 startedAt: Time
@@ -6303,7 +6255,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StoragePoolOpsPhase](#storagepoolopsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
-| `step` _[KubeSnapshot](#kubesnapshot)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. The rule repeats the<br />StoragePoolOpsStep enum because a marker cannot reach a field of the<br />shared snapshot type. |  | Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine. It is<br />persisted before the side effect that step performs. The rule repeats the<br />StoragePoolOpsStep enum because a marker cannot reach a field of the<br />shared snapshot type. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the operation moves, and never a log. |  | Optional: \{\} <br /> |
 | `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from, so a stale status can be told from a current one. |  | Optional: \{\} <br /> |
 | `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the operation acquired its target's lock. |  | Optional: \{\} <br /> |

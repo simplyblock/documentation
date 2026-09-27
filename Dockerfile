@@ -5,7 +5,8 @@ RUN pip install mkdocs-git-revision-date-localized-plugin "mkdocs-material[imagi
     mkdocs-render-swagger-plugin mkdocs-macros-plugin fastapi uvicorn flask fdb \
     docker kubernetes prettytable boto3 jsonschema psutil prometheus_api_client \
     jc flask_swagger_ui prometheus_client pydantic_settings starlette hvac tenacity \
-    prometheus_fastapi_instrumentator py-cpuinfo ec2-metadata flask-openapi3 graypy
+    prometheus_fastapi_instrumentator py-cpuinfo ec2-metadata flask-openapi3 graypy \
+    sse-starlette "sentry-sdk[flask]" paramiko
 RUN apk add --no-cache nodejs npm bash
 RUN npm install --global webpack webpack-cli mini-css-extract-plugin cssnano css-loader \
     postcss-loader sass-loader sass tachyons-sass postcss-preset-env

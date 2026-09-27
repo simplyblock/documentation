@@ -1,376 +1,203 @@
 ---
-title: "Install Simplyblock CSI (only)"
-description: "Install Simplyblock CSI: Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver."
+title: "Connecting to an External Control Plane"
+description: "Use the managed profile of the Simplyblock Operator to consume simplyblock storage from a control plane outside the Kubernetes cluster."
 weight: 30200
 ---
 
-Simplyblock provides a seamless integration with Kubernetes through its Kubernetes CSI driver.
+The simplyblock CSI driver is deployed and managed by the Simplyblock Operator through the `SimplyblockDriver`
+resource. The separate CSI Helm chart used by earlier releases is replaced by the operator chart. For a Kubernetes
+cluster that does not host its own control plane, the operator chart is installed with the **managed** profile. The
+chart then installs the operator and the CSI driver, and the `ControlPlane` resource points at a management API that
+runs elsewhere.
 
 !!! note
-    For Kubernetes-native deployments where both the storage cluster and CSI driver are managed on Kubernetes, use the
-    [simplyblock operator](k8s-control-plane.md) instead. The operator installs and manages the CSI driver
-    automatically via CRDs.
-
-This section explains how to install the CSI driver **standalone** to connect to an **external** simplyblock storage
-cluster. The external cluster must be installed onto
-[Plain Linux Hosts](../../non-kubernetes/installation/install-sp.md) or into an
-[Existing Kubernetes Cluster](k8s-control-plane.md) and must not be co-located on the same Kubernetes worker nodes
-as the CSI driver installation.
-
-Before installing the Kubernetes CSI Driver, the external cluster must be present and a storage pool must have been
-created.
+    For Kubernetes-native deployments where the control plane runs in the same cluster, use the default `standalone`
+    profile described in [Install Simplyblock Operator](k8s-control-plane.md).
 
 ## CSI Driver System Requirements
 
 The CSI driver consists of two parts:
 
-- A controller part, which communicates to the control plane via the control plane API
-- A node part, which is deployed to and must be present on all nodes with pods attaching simplyblock storage (Daemonset)
+- **Controller plugin:** Communicates with the control plane through the Management API. Runs as a StatefulSet.
+- **Node plugin:** Attaches and mounts volumes. Runs as a DaemonSet on every node with pods that use simplyblock
+  storage.
 
-The worker node of the node part must satisfy the following requirements:
+The workers that run the node plugin must satisfy the following requirements:
 
 - [Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
 - [Linux Kernel Versions](../../reference/supported-linux-kernels.md)
 
-## Installation Options
+## Preparing the Credentials
 
-To install the Simplyblock CSI Driver, a Helm chart is provided. While it can be installed manually, the Helm chart is
-strongly recommended. If a manual installation is preferred, see the
-[CSI Driver Repository](https://github.com/simplyblock-io/simplyblock-csi/blob/master/docs/install-simplyblock-csi-driver.md){:target="_blank" rel="noopener"}.
+The managed profile needs the base URL of the remote Management API. The endpoint must not be a loopback or link-local
+address. Two optional Secrets in the operator's namespace complete the connection:
 
-## Retrieving Credentials
+- **Credentials Secret:** Holds the bearer token for the Management API under the key `token` or `secret`. Without
+  it, no token is sent.
+- **CA bundle Secret:** Holds the CA certificate the endpoint is verified against under the key `ca.crt` or `tls.crt`.
+  Without it, the system trust store is used.
 
-Credentials are available via `{{ cliname }} cluster get-secret` from any of the control plane nodes. For further
-information on the command, see [the CLI reference](../../reference/cli/index.md).
+```bash title="Create the Secrets for the managed control plane"
+kubectl create namespace simplyblock
 
-First, the unique cluster id must be retrieved. Note down the cluster UUID of the cluster to access.
+kubectl -n simplyblock create secret generic cp-token \
+    --from-literal=token='<MANAGEMENT-API-TOKEN>'
 
-```bash title="Retrieving the Cluster UUID"
-sudo {{ cliname }} cluster list
+kubectl -n simplyblock create secret generic cp-ca \
+    --from-file=ca.crt=./control-plane-ca.crt
 ```
 
-An example of the output is below.
+A named Secret that does not exist or cannot be used is reported as an error.
 
-```plain title="Example output of a cluster listing"
-[demo@demo ~]# {{ cliname }} cluster list
-+--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
-| UUID                                 | NQN                                                             | ha_type | tls   | mgmt nodes | storage nodes | Mod | Status |
-+--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
-| 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a | nqn.2023-02.io.simplyblock:4502977c-ae2d-4046-a8c5-ccc7fa78eb9a | ha      | False | 1          | 4             | 1x1 | active |
-+--------------------------------------+-----------------------------------------------------------------+---------+-------+------------+---------------+-----+--------+
-```
+## Installing With the Managed Profile
 
-In addition, the cluster secret must be retrieved. Note down the cluster secret.
-
-```bash title="Retrieve the Cluster Secret"
-{{ cliname }} cluster get-secret <CLUSTER_UUID>
-```
-
-Retrieving the cluster secret will look somewhat like that.
-
-```plain title="Example output of retrieving a cluster secret"
-[demo@demo ~]# {{ cliname }} cluster get-secret 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
-oal4PVNbZ80uhLMah2Bs
-```
-
-## Creating a Storage Pool
-
-Additionally, a storage pool is required. If a pool already exists, it can be reused. Otherwise, creating a storage
-pool can be created as follows:
-
-```bash title="Create a Storage Pool"
-{{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_UUID>
-```
-
-To enable NVMe-oF security for all volumes in the pool, provide a JSON configuration file with the `--sec-options` flag.
-This configures which security keys (DH-HMAC-CHAP, TLS/PSK) are auto-generated for each allowed host. The cluster
-must have been created with `--host-sec` for authentication to work.
-
-```bash title="Create a Storage Pool with NVMe-oF Security"
-{{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_UUID> --sec-options=sec-options.json
-```
-
-```json title="Example: sec-options.json"
-{
-  "dhchap_key": true,
-  "dhchap_ctrlr_key": true,
-  "psk": true
-}
-```
-
-For more information, see [NVMe-oF Security](../../architecture/concepts/nvmf-security.md).
-
-The last line of a successful storage pool creation returns the new pool id.
-
-```plain title="Example output of creating a storage pool"
-[demo@demo ~]# {{ cliname }} storage-pool add test 4502977c-ae2d-4046-a8c5-ccc7fa78eb9a
-2025-03-05 06:36:06,093: INFO: Adding pool
-2025-03-05 06:36:06,098: INFO: {"cluster_id": "4502977c-ae2d-4046-a8c5-ccc7fa78eb9a", "event": "OBJ_CREATED", "object_name": "Pool", "message": "Pool created test", "caused_by": "cli"}
-2025-03-05 06:36:06,100: INFO: Done
-ad35b7bb-7703-4d38-884f-d8e56ffdafc6 # <- Pool Id
-```
-
-The last item necessary before deploying the CSI driver is the control plane address. It is recommended to front the
-simplyblock API with an AWS load balancer, HAproxy, or similar service. Hence, the control plane address is the
-"public" endpoint of this load balancer.
-
-## Deploying the Helm Chart
-
-Anyhow, deploying the Simplyblock CSI Driver using the provided Helm Chart comes down to providing the four necessary
-values, adding the Helm chart repository, and installing the driver.
-
-```bash title="Install Simplyblock's CSI Driver"
-CLUSTER_UUID="<UUID>"
-CLUSTER_SECRET="<SECRET>"
-CNTR_ADDR="<CONTROL-PLANE-ADDR>"
-POOL_NAME="<POOL-NAME>"
-helm repo add simplyblock https://install.simplyblock.io/helm/csi
+```bash title="Install the operator and CSI driver with the managed profile"
+helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
-helm upgrade --install -n simplyblock \
-    --create-namespace simplyblock simplyblock/spdk-csi \
-    --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
-    --set csiConfig.simplybk.ip=${CNTR_ADDR} \
-    --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
-    --set logicalVolume.pool_name=${POOL_NAME}
+
+helm install simplyblock-operator simplyblock/simplyblock-operator \
+    --namespace simplyblock \
+    --set deployment.profile=managed \
+    --set controlplane.managed.endpoint=https://cp.example.com \
+    --set controlplane.managed.credentialsSecretRef=cp-token \
+    --set controlplane.managed.caBundleSecretRef=cp-ca
 ```
 
-```plain title="Example output of the CSI driver deployment"
-[demo@demo ~]# export CLUSTER_UUID="4502977c-ae2d-4046-a8c5-ccc7fa78eb9a"
-[demo@demo ~]# export CLUSTER_SECRET="oal4PVNbZ80uhLMah2Bs"
-[demo@demo ~]# export CNTR_ADDR="http://192.168.10.1/"
-[demo@demo ~]# export POOL_NAME="test"
-[demo@demo ~]# helm repo add simplyblock https://install.simplyblock.io/helm
-"simplyblock" has been added to your repositories
-[demo@demo ~]# helm repo update
-Hang tight while we grab the latest from your chart repositories...
-...Successfully got an update from the "simplyblock" chart repository
-Update Complete. ⎈Happy Helming!⎈
-[demo@demo ~]# helm install -n simplyblock --create-namespace simplyblock simplyblock/spdk-csi \
-  --set csiConfig.simplybk.uuid=${CLUSTER_UUID} \
-  --set csiConfig.simplybk.ip=${CNTR_ADDR} \
-  --set csiSecret.simplybk.secret=${CLUSTER_SECRET} \
-  --set logicalVolume.pool_name=${POOL_NAME}
-NAME: simplyblock
-LAST DEPLOYED: Wed Mar  5 15:06:02 2025
-NAMESPACE: simplyblock
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-The Simplyblock SPDK Driver is getting deployed to your cluster.
+The chart renders the `ControlPlane` resource with a `managed` source:
 
-To check CSI SPDK Driver pods status, please run:
-
-  kubectl --namespace=simplyblock get pods --selector="release=simplyblock" --watch
-[demo@demo ~]# kubectl --namespace=simplyblock get pods --selector="release=simplyblock" --watch
-NAME                   READY   STATUS    RESTARTS   AGE
-spdkcsi-controller-0   6/6     Running   0          30s
-spdkcsi-node-tzclt     2/2     Running   0          30s
-```
-
-There are a lot of additional parameters for the Helm Chart deployment. Most parameters, however, aren't required in
-real-world CSI driver deployments and should only be used on request of simplyblock.
-
-The full list of parameters is available here: [Kubernetes Helm Chart Parameters](../../reference/kubernetes/index.md).
-
-Note that the `storagenode.create` parameter must be set to `false` (the default) to deploy only the CSI driver.
-
-## Multi Cluster Support
-
-The Simplyblock CSI driver now offers **multi-cluster support** and **zone-aware configurations**, allowing to connect with multiple simplyblock clusters based on ClusterID
-or based on their topology zone.
-Previously, the CSI driver could only connect to a single cluster.
-
-To enable interaction with multiple clusters, there are two key changes:
-
-1. Parameter **`cluster_id` in a storage class:** A new parameter, `cluster_id`, has been added to the storage class.
-    This parameter specifies which simplyblock cluster a given request should be directed to.
-2. Secret **`simplyblock-csi-secret-v2`:** A new Kubernetes secret, `simplyblock-csi-secret-v2`, has been added to
-    store credentials for all configured simplyblock clusters.
-
-### Adding a Cluster
-
-When the Simplyblock CSI driver is initially installed, only a single cluster can be referenced.
-
-```bash title="Install the Simplyblock CSI driver via Helm"
-helm install simplyblock-csi ./ \
-    --set csiConfig.simplybk.uuid=${CLUSTER_ID} \
-    --set csiConfig.simplybk.ip=${CLUSTER_IP} \
-    --set csiSecret.simplybk.secret=${CLUSTER_SECRET}
-```
-
-The `CLUSTER_ID` (UUID), gateway endpoint (`CLUSTER_IP`), and secret (`CLUSTER_SECRET`) of the initial cluster must be
-provided. This command automatically creates the `simplyblock-csi-secret-v2` secret.
-
-The structure of the `simplyblock-csi-secret-v2` secret is as following:
-
-```yaml title="simplyblock-csi-secret-v2 Structure"
-apiVersion: v1
-data:
-  secret.json: <base64 encoded secret>
-kind: Secret
+```yaml title="ControlPlane with a managed source"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ControlPlane
 metadata:
-  name: simplyblock-csi-secret-v2
-type: Opaque
+  name: simplyblock
+  namespace: simplyblock
+spec:
+  source:
+    managed:
+      endpoint: "https://cp.example.com"
+      credentialsSecretRef:
+        name: cp-token
+      caBundleSecretRef:
+        name: cp-ca
 ```
 
-The decoded secret must be valid JSON content and contain an array of JSON items, one per cluster. Each items consists
-of three properties, `cluster_id`, `cluster_endpoint`, and `cluster_secret`.
+The operator installs nothing for the control plane. It resolves and probes the endpoint and reports the result:
 
-```json title="Example secret.json Payload"
-{
-   "clusters": [
-     {
-       "cluster_id": "4ec308a1-61cf-4ec6-bff9-aa837f7bc0ea",
-       "cluster_endpoint": "http://127.0.0.1",
-       "cluster_secret": "super_secret"
-     }
-   ]
-}
+```bash title="Check the control plane connection and the CSI driver"
+kubectl -n simplyblock get controlplane simplyblock
+kubectl -n simplyblock get simplyblockdriver simplyblock
 ```
 
-To add a new cluster, the current secret must be retrieved from Kubernetes, edited (adding the new cluster information),
-and uploaded to the Kubernetes cluster.
+The `ControlPlane` reaches the phase `Available` once the endpoint answers. An unreachable endpoint is reported with
+the event `EndpointUnreachable`. `ControlPlaneOps` actions are rejected for a managed control plane, because the
+operator owns none of its workloads. The source (`local` or `managed`) cannot be changed after installation.
 
+The TLS settings of the CSI driver come from the `tls.*` Helm values, see [Securing the Control Plane](security.md). The
+`prometheus.enabled` value can be set to `false` if the remote control plane collects the metrics itself.
 
-```bash title="Update and Reapply Cluster Secret"
-# Save cluster secret to a file
-kubectl get secret simplyblock-csi-secret-v2 \
-    -o jsonpath='{.data.secret\.json}' |\
-    base64 --decode > secret.json
+## Configuring the CSI Driver
 
-# Edit the clusters and add the new cluster's cluster_id,
-# cluster_endpoint, cluster_secret vi secret.json
+The Helm values under `driver.*` are copied into the `SimplyblockDriver` resource. The most important fields are:
 
-cat secret.json | base64 | tr -d '\n' > secret-encoded.json
+| Field                                             | Default              | Description                                                                                                                                                                   |
+|---------------------------------------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `driverName`                                      | `csi.simplyblock.io` | The CSI driver name. Immutable.                                                                                                                                               |
+| `image`                                           | Operator release     | The plugin image. Empty uses the image shipped with the operator release.                                                                                                     |
+| `controllerReplicas`                              | `1`                  | Number of controller plugin instances.                                                                                                                                        |
+| `nodeSelector`, `tolerations`                     |                      | Placement of the node plugin. Empty runs it on every schedulable worker.                                                                                                      |
+| `controllerNodeSelector`, `controllerTolerations` |                      | Placement of the controller plugin.                                                                                                                                           |
+| `enableVolumeSnapshots`                           | `true`               | Installs the VolumeSnapshotClass, and the snapshot CRDs and controller where the cluster serves none.                                                                         |
+| `enableServiceAccountAuth`                        | `false`              | Authenticates the plugins with their service account tokens instead of the static cluster secret. The control plane must trust them (`controlplane.trustCSIServiceAccounts`). |
+| `sidecarImages`                                   | Operator release     | Overrides for the six CSI sidecar images.                                                                                                                                     |
 
-# Replace data.secret.json with the content of secret-encoded.json
-kubectl -n simplyblock edit secret simplyblock-csi-secret-v2
-```
+## Storage Clusters Behind the Managed Control Plane
 
-### Using Multi Cluster
+Storage clusters are described by `StorageCluster` resources in the Kubernetes cluster, regardless of where the
+control plane runs. A storage cluster whose storage nodes run in this Kubernetes cluster is created from an approved
+`ClusterDeploymentConfig`, exactly as described in [Create a Storage Cluster](k8s-storage-plane.md).
 
-#### Option 1: Cluster ID–Based Method (One StorageClass per Cluster)
+For every `StorageCluster`, the operator writes the cluster ID, the endpoint, and the cluster secret into the Secret
+`simplyblock-csi-secret-v2`, which the CSI driver reads. The Secret is maintained by the operator and does not need to
+be edited manually.
 
-In this approach, each simplyblock cluster has its own dedicated StorageClass that specifies which cluster to use for provisioning.
-This is ideal for setups where workloads are manually directed to specific clusters.
+## Multi-Cluster Storage Classes
 
-```yaml title="Example of Cluster ID-Based Selection"
+The CSI driver can serve several simplyblock clusters at once. Which cluster a volume is provisioned on is selected by
+the StorageClass parameters.
+
+### Cluster ID-Based Selection
+
+Each StorageClass names one cluster with `cluster_id` (the cluster's `status.uuid`). This is ideal for setups where
+workloads are directed to specific clusters.
+
+```yaml title="Example of cluster ID-based selection"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: simplyblock-csi-sc-cluster1
+  name: simplyblock-cluster1
 provisioner: csi.simplyblock.io
 parameters:
-  cluster_id: "cluster-uuid-1"
-  ... other parameters
+  cluster_id: "<cluster-uuid-1>"
+  pool_name: "<pool-name>"
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
-Another StorageClass can be defined for a different cluster:
+### Zone-Aware Selection
 
-```yaml title="Example of selecting another cluster"
+A single StorageClass selects the cluster based on the Kubernetes zone the workload is scheduled in. The parameter
+`zone_cluster_map` maps each zone to a cluster ID, and `allowedTopologies` restricts provisioning to those zones.
+
+```yaml title="Example of zone-aware selection"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: simplyblock-csi-sc-cluster2
-provisioner: csi.simplyblock.io
-parameters:
-  cluster_id: "cluster-uuid-2"
-  ... other parameters
-reclaimPolicy: Delete
-volumeBindingMode: WaitForFirstConsumer
-allowVolumeExpansion: true
-```
-
-Each StorageClass references a unique cluster_id.
-The CSI driver uses that ID to determine which simplyblock cluster to connect to.
-
-#### Option 2: Zone-Aware Method (Automatic Multi-Cluster Selection)
-
-This approach allows a single StorageClass to automatically select the appropriate simplyblock cluster based on the Kubernetes zone where the workload runs.
-It is recommended for multi-zone Kubernetes deployments that span multiple simplyblock clusters.
-
-`storageclass.zoneClusterMap`
-
-Sets the mapping between Kubernetes zones and simplyblock cluster IDs.
-Each zone is associated with one cluster.
-
-`storageclass.allowedTopologyZones`
-
-Sets the list of zones where the StorageClass is permitted to provision volumes.
-This ensures that scheduling aligns with the clusters defined in `zoneClusterMap`.
-
-```yaml title="Example of zoneClusterMap usage"
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: simplyblock-csi-sc
+  name: simplyblock-zonal
 provisioner: csi.simplyblock.io
 parameters:
   zone_cluster_map: |
-    {"us-east-1a":"cluster-uuid-1","us-east-1b":"cluster-uuid-2"}
-  ... other parameters
+    {"us-east-1a":"<cluster-uuid-1>","us-east-1b":"<cluster-uuid-2>"}
+  pool_name: "<pool-name>"
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 allowedTopologies:
-- matchLabelExpressions:
-  - key: topology.kubernetes.io/zone
-    values:
-      - us-east-1a
-      - us-east-1b
+  - matchLabelExpressions:
+      - key: topology.kubernetes.io/zone
+        values:
+          - us-east-1a
+          - us-east-1b
 ```
 
-This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling zone.
+### Region-Aware Selection
 
-#### Option 3: Region-Aware Method (Automatic Multi-Cluster Selection)
+The same approach works with regions. The parameter `region_cluster_map` maps each region to a cluster ID.
 
-This approach allows a single StorageClass to automatically select the appropriate simplyblock cluster based on the Kubernetes region where the workload runs.
-It’s recommended when:
-
-- the cluster spans multiple regions, and
-
-- each region maps to a different simplyblock backend, or
-
-- region-scoped placement is wanted rather than zone-scoped placement
-
-`storageclass.regionClusterMap`
-
-Sets the mapping between Kubernetes regions and simplyblock cluster IDs.
-Each region is associated with one cluster.
-
-`storageclass.allowedTopologyRegions`
-
-Sets the list of regions where the StorageClass is permitted to provision volumes.
-This ensures scheduling aligns with the clusters defined in `regionClusterMap`.
-
-```yaml title="Example of regionClusterMap usage"
+```yaml title="Example of region-aware selection"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: simplyblock-csi-sc
+  name: simplyblock-regional
 provisioner: csi.simplyblock.io
 parameters:
   region_cluster_map: |
-    {"us-east-1":"cluster-uuid-a","us-west-2":"cluster-uuid-b"}
-  ... other parameters
+    {"us-east-1":"<cluster-uuid-a>","us-west-2":"<cluster-uuid-b>"}
+  pool_name: "<pool-name>"
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 allowedTopologies:
-- matchLabelExpressions:
-  - key: topology.kubernetes.io/region
-    values:
-      - us-east-1
-      - us-west-2
+  - matchLabelExpressions:
+      - key: topology.kubernetes.io/region
+        values:
+          - us-east-1
+          - us-west-2
 ```
 
-This method allows Kubernetes to automatically pick the right cluster based on the pod’s scheduling region.
-
 !!! tip
-    The keys inside `region_cluster_map` must match the region labels present on the Kubernetes nodes
-    (typically `topology.kubernetes.io/region`). As many regions as needed can be included, each pointing to
-    the cluster ID defined in `simplyblock-csi-secret-v2`.
+    The keys of `zone_cluster_map` and `region_cluster_map` must match the zone and region labels on the Kubernetes
+    nodes (typically `topology.kubernetes.io/zone` and `topology.kubernetes.io/region`). Every referenced cluster ID
+    must have an entry in `simplyblock-csi-secret-v2`.
+
+For the full list of StorageClass parameters, see [Storage Class](../usage/storage-class.md).

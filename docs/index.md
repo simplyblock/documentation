@@ -38,11 +38,11 @@ the efficiency and reliability of a simplyblock deployment.
     ---
 
     Deploy simplyblock on Kubernetes as a hyper-converged storage platform,
-    or choose disaggregated and plain Linux models when stricter separation
-    is required.
+    or choose a disaggregated model when stricter separation is required.
+    Protect applications across sites with simplyblock Disaster Recovery.
 
-    [:octicons-arrow-right-24: Kubernetes Installation](kubernetes/installation/index.md)<br/>
-    [:octicons-arrow-right-24: Non-Kubernetes Installation](non-kubernetes/installation/index.md)
+    [:octicons-arrow-right-24: Kubernetes Storage Installation](kubernetes/installation/index.md)<br/>
+    [:octicons-arrow-right-24: Disaster Recovery Installation](disaster-recovery/install/index.md)
 
 - :material-cog-refresh:{ .lg .middle } **Operate Simplyblock**
 
@@ -51,8 +51,8 @@ the efficiency and reliability of a simplyblock deployment.
     After the installation of a simplyblock cluster, learn how to
     operate and maintain it.
 
-    [:octicons-arrow-right-24: Kubernetes Operations](kubernetes/operations/index.md)<br/>
-    [:octicons-arrow-right-24: Non-Kubernetes Operations](non-kubernetes/operations/index.md)
+    [:octicons-arrow-right-24: Kubernetes Storage Operations](kubernetes/operations/index.md)<br/>
+    [:octicons-arrow-right-24: Disaster Recovery Operations](disaster-recovery/operations/index.md)
 
 </div>
 

@@ -1,32 +1,29 @@
 ---
 title: "Create a Storage Cluster"
-description: "Deploy simplyblock storage nodes, storage pools, and the CSI driver on Kubernetes using the simplyblock operator CRDs."
+description: "Create a simplyblock storage cluster: discover workers and devices, review and approve the ClusterDeploymentConfig, and provision a first volume."
 weight: 30100
 ---
 
-With the [Simplyblock Operator](k8s-control-plane.md) being installed, it's time to bring up a storage cluster.
+With the [Simplyblock Operator](k8s-control-plane.md) installed and the control plane `Available`, the next step is
+to bring up a storage cluster. A storage cluster is described by a single `ClusterDeploymentConfig` (CDC) document.
+The operator writes a draft of it by probing the workers, an administrator reviews and approves it, and the operator
+then creates the `StorageCluster`, its `StorageNode` resources, a default storage pool, and a StorageClass.
 
-This includes creating the cluster resource, adding storage nodes, creating a storage pool, and provisioning the first
-simplyblock logical volume.
-
-Before going on, here is a high-level overview of the following deployment process:
+The following overview shows the process:
 
 ```plain title="Storage Cluster Lifecycle"
-OperatorOps            ──► the operator inspects every eligible worker
-      │                      (raised automatically on a fresh install)
-      ▼ writes
-ClusterDeploymentConfig ──► Draft: what the fleet has, as a reviewable document
-      │                      │
-      │                      ▼  (review, edit, then spec.approved: true)
-      ▼ expands into       Expanding ──► Expanded
-StorageCluster         ──► active (once enough storage nodes are online)
-StorageNode(s)
-      │
-      ▼  (create a pool)
-StoragePool            ──► a StorageClass is assigned to it
-      │
-      ▼  (create a PVC)
-PersistentVolume       ──► Bound
+OperatorOps (Discover)        ──► probes the workers, writes a draft
+ClusterDeploymentConfig       ──► Draft
+                                    │
+                                    ▼  (review, then spec.approved: true)
+ClusterDeploymentConfig       ──► Expanding ──► Expanded
+  StorageCluster              ──► Creating ──► Online
+  StoragePool <cluster>-default + StorageClass simplyblock-<namespace>-<cluster>
+  StorageNode(s)              ──► Provisioning ──► Online
+  StorageClusterOps <cluster>-activate
+                                    │
+                                    ▼  (create a PVC)
+PersistentVolume              ──► Bound
 ```
 
 !!! info
@@ -41,12 +38,12 @@ PersistentVolume       ──► Bound
 ### OpenShift
 
 If deploying onto an OpenShift cluster, there are additional environment-specific steps in the
-[OpenShift Installation](openshift.md) guide before continuing here.
+[OpenShift](openshift.md) guide before continuing here.
 
 ### Talos
 
-If deploying onto a Talos cluster, there are additional environment-specific steps in the
-[Talos Installation](talos.md) guide before continuing here.
+If deploying onto a Talos cluster, there are additional environment-specific steps in the [Talos](talos.md) guide
+before continuing here.
 
 ### Networking
 
@@ -57,35 +54,74 @@ firewall rules, but ports between the control plane and storage networks typical
 
 {% include 'network-port-table.md' %}
 
-## Review the Discovered Deployment
+## Discover Workers and Devices
 
-A cluster is not authored field by field. The operator inspects the workers and writes a
-`ClusterDeploymentConfig`: one reviewable document holding the environment it targets, the cluster to create, and
-the node sets with their workers, interfaces, and devices.
+A discovery run inspects the workers, starts one probe job per worker, and writes the result as a draft
+`ClusterDeploymentConfig`. The draft is inert: nothing is deployed until it is approved.
 
-On a fresh install the operator raises that discovery run by itself, as an `OperatorOps` named
-`initial-discovery`, so there is a draft to look at rather than an empty namespace. It is declined the moment
-anything already exists — any `OperatorOps`, any `ClusterDeploymentConfig`, any `StorageCluster`, or a cluster with
-no worker worth inspecting — because probing puts a Job on every worker.
+### Automatic Initial Discovery
 
-```bash title="Find the discovered deployment config"
-kubectl get clusterdeploymentconfig -n simplyblock
+On a fresh installation, the operator raises the `OperatorOps` run `initial-discovery` by itself. It does so only if
+no `OperatorOps`, no `ClusterDeploymentConfig`, and no `StorageCluster` exist yet, and at least one usable worker is
+found. The run inspects every schedulable worker and writes the draft `discovered-initial-discovery`.
+
+```bash title="Follow the initial discovery"
+kubectl -n simplyblock get operatorops initial-discovery -w
+kubectl -n simplyblock get clusterdeploymentconfig
 ```
 
-```plain title="Example output"
-NAME                            PHASE   APPROVED   CLUSTER   AGE
-discovered-initial-discovery    Draft   false                2m
+The run moves through the steps `Inspecting`, `Probing`, and `Writing`, and ends in the phase `Succeeded`.
+`status.configRef` names the draft it wrote.
+
+### Manual Discovery
+
+Additional discovery runs are requested with an `OperatorOps` resource and the action `Discover`. The run can be
+narrowed to specific workers (`workers` by name or `nodeSelector` by label, not both) and to specific devices.
+
+```yaml title="discover-rack-b.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: OperatorOps
+metadata:
+  name: discover-rack-b
+  namespace: simplyblock
+spec:
+  action: Discover
+  discover:
+    configName: rack-b-draft
+    nodeSelector:
+      storage.simplyblock.io/storage: "true"
+    deviceFilter:
+      pcieDenyList:
+        - "0000:00:1f.0"
+      driveSizeRange: 1T-4T
+      enablePartitionedDevices: true
 ```
 
-A document produced by a run named `<name>` is called `discovered-<name>`. The phase is `Draft` and
-`spec.approved` is `false`: it is validated but otherwise inert, which is what makes reviewing a wrong document
-safe.
-
-```bash title="Read the draft"
-kubectl get clusterdeploymentconfig discovered-initial-discovery -n simplyblock -o yaml
+```bash title="Run the discovery"
+kubectl apply -f discover-rack-b.yaml
+kubectl -n simplyblock get operatorops discover-rack-b -w
 ```
 
-```yaml title="A discovered deployment config, abridged"
+The most important fields of `spec.discover` are:
+
+- **`configName`:** The name of the draft to write. If empty, the draft is named `discovered-<run name>`, so a second
+  run never overwrites a draft that may already have been reviewed.
+- **`workers` or `nodeSelector`:** The workers to inspect. Empty inspects every schedulable worker.
+- **`enableControlPlaneNodes`:** Also considers nodes that run the Kubernetes API server and etcd. Off by default.
+- **`deviceFilter`:** Narrows the devices that reach the draft. `pcieAllowList`, `pcieDenyList`, and `pcieModel`
+  select NVMe devices. `enableLogicalBlockDevices` together with `blockAllowList` and `blockDenyList` selects Linux
+  block devices instead. `driveSizeRange` (for example, `1T-4T`) and `enablePartitionedDevices` apply to both.
+- **`clusterRef`:** Writes a growth draft for an existing storage cluster instead of a new one.
+
+The filters are inputs to the run only. The draft contains the explicit device list they produced, so re-running a
+filter against changed hardware cannot change what a reviewer already approved.
+
+## Review the Draft
+
+A draft produced by discovery looks similar to the following. It lists every worker and device the run found and a
+proposed cluster template.
+
+```yaml title="A discovered draft"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: ClusterDeploymentConfig
 metadata:
@@ -93,96 +129,121 @@ metadata:
   namespace: simplyblock
 spec:
   approved: false
-  environment: Vanilla
+  environment: K3s
   cluster:
-    name: simplyblock-cluster
-    maxSubsystemCount: 75
+    name: discovered-initial-discovery-cluster
+    enableDriveFormat: true
+    maxSubsystemCount: 30
+    minHugePagesSize: 16G
     vcpuCount: 16
-    fabricType: tcp
+    stripe:
+      dataChunks: 1
+      parityChunks: 1
+  nodeSets:
+    - name: discovered
+      groups:
+        - name: group-1-nvme-4x3T
+          mgmtInterface: eth0
+          workers:
+            - worker-01
+            - worker-02
+            - worker-03
+          devices:
+            nvme:
+              - 0000:5e:00.0
+              - 0000:5f:00.0
+              - 0000:af:00.0
+              - 0000:b0:00.0
+```
+
+`status.message` of the draft lists validation findings, for example, `DeviceNotFound`, `StripeBelowMinimumNodes`,
+or `StripeBelowMinimumWorkers`. The draft is edited in place until the findings are resolved:
+
+```bash title="Review and edit the draft"
+kubectl -n simplyblock get cdc discovered-initial-discovery -o wide
+kubectl -n simplyblock edit cdc discovered-initial-discovery
+```
+
+### Environment
+
+`spec.environment` names the Kubernetes distribution: `Vanilla`, `OpenShift`, `Rancher`, `K3s`, or `Talos`. It sets
+the storage node flags on `StorageCluster.spec.storageNodes`:
+
+- **`OpenShift`:** Sets the `openshift` block, `enableCpuTopology`, and `enableKubeletConfiguration`.
+- **`Talos`:** Disables `enableKubeletConfiguration`, because Talos has no writable kubelet configuration.
+- **`Vanilla`, `Rancher`, `K3s`:** Enable `enableKubeletConfiguration`.
+
+### Cluster Template
+
+`spec.cluster` is the template of the storage cluster to create. It is ignored if `spec.clusterRef` names an existing
+cluster.
+
+- **`name`:** Name of the `StorageCluster` (at most 63 characters). Discovery proposes `<draft name>-cluster`.
+- **`maxSubsystemCount`:** Required, from 10 to 75.
+- **`vcpuCount`:** Required, at least 4. The number of vCPUs per storage node.
+- **`minHugePagesSize`:** Minimum huge page memory per storage node, for example, `16G`.
+- **`stripe`:** The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md) as `dataChunks` and
+  `parityChunks`. Allowed combinations are 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, and 4+2.
+- **`fabricType`:** The NVMe-oF transport, for example, `tcp`.
+- **`enableDriveFormat`:** Formats every listed device before a storage node takes it. This is destructive and must
+  be reviewed before approving.
+- **`enableJournalDevice`:** Dedicates the smallest NVMe device of each worker to the journal manager.
+- **`socketsToUse`, `nodesPerSocket` (1 to 8), `nodeProvisioningBudget`:** How many storage nodes run on each worker
+  and how many are provisioned in parallel. Empty `socketsToUse` means socket 0 only.
+- **`enableChecksumValidation`, `enableAtomicity4K`:** Data integrity options. `enableAtomicity4K` requires checksum
+  validation.
+- **`enableFailureDomains`:** Places data across failure domains, see below.
+- **`kms`:** An external KMS for volume encryption keys, see
+  [Securing the Control Plane](security.md#external-key-management-kms).
+
+Most of these settings are immutable on the created `StorageCluster`, so the review is the last opportunity to
+change them.
+
+### Node Groups and Devices
+
+`spec.nodeSets` (1 to 64 sets) groups the workers. Each set contains `groups`, and each group lists:
+
+- **`workers`:** The Kubernetes node names (1 to 200).
+- **`mgmtInterface`, `dataInterfaces`:** The management and data network interfaces.
+- **`devices`:** Either `nvme` (PCI addresses) or `block` (Linux block devices, for example, `/dev/sdb`). All groups of
+  a document must use the same device class.
+- **`failureDomain`:** The failure domain label of all workers in the group.
+- **`spdkSystemMemory`, `journalManager`:** Optional per-group storage node settings.
+
+Workers or devices that should not become part of the cluster, for example, a boot disk, are removed from the draft
+before approving.
+
+### Failure Domains
+
+With `spec.cluster.enableFailureDomains: true`, every group must carry a `failureDomain` label, for example, a rack
+name. The label is copied to each generated `StorageNode` and cannot be changed afterward.
+
+```yaml title="Failure domains per group"
+spec:
+  cluster:
+    name: production
+    maxSubsystemCount: 50
+    vcpuCount: 8
     stripe:
       dataChunks: 2
       parityChunks: 1
-  nodeSets:
-    - name: default
-      groups:
-        - name: default
-          workers:
-            - worker-1.example.com
-            - worker-2.example.com
-            - worker-3.example.com
-          mgmtInterface: eth0
-          dataInterfaces:
-            - eth1
-          devices:
-            nvme:
-              - "0000:01:00.0"
-              - "0000:02:00.0"
-```
-
-The draft is everything the fleet has, because a guess at which disks somebody meant is a guess they then have to
-find and undo. Narrowing it is the review.
-
-## Edit the Draft
-
-While `spec.approved` is `false`, the document is an ordinary editable resource. This is where workers that should
-not hold storage are removed, disks are narrowed, failure domains are assigned, and the cluster's own settings are
-set.
-
-```bash title="Edit the draft"
-kubectl edit clusterdeploymentconfig discovered-initial-discovery -n simplyblock
-```
-
-The operator validates a `Draft` on every reconcile and expands it on none. What validation found is written to
-`status.message`, so the problems appear while the document is still editable rather than after it has been
-approved:
-
-```bash title="Read what validation found"
-kubectl get clusterdeploymentconfig discovered-initial-discovery -n simplyblock \
-    -o jsonpath='{.status.message}'
-```
-
-`DeviceNotFound` names a device the document claims and the worker does not have. `StripeBelowMinimumNodes` means
-the erasure coding scheme needs more storage nodes than the document produces — `ndcs+npcs` to place a stripe
-across, plus one spare per tolerated failure, so 3 for 1+1, 4 for 2+1, 6 for 4+1, 5 for 1+2, 6 for 2+2, and 8 for
-4+2. `StripeBelowMinimumWorkers` is the same count falling short of *machines* rather than nodes, which several
-nodes per worker cannot fix: every node of a worker fails with the worker.
-
-A document discovery wrote cannot be wrong about its devices, because the list came from the inspection. A
-hand-written one can, and this is the only check a device gets before the deployment runs.
-
-`spec.cluster` is the cluster template: sizing, stripe, fabric, ports, and the cluster-wide toggles. Sizing is
-uniform across a cluster and is stated once here rather than per node.
-
-`spec.nodeSets[]` is the organizational grouping, usually a rack: the workers that are added or grown together.
-Each set holds `groups[]`, and a group carries the workers plus what they share — `mgmtInterface`,
-`dataInterfaces`, `devices`, `failureDomain`, `spdkSystemMemory`, `reservedSystemCPU`, and `journalManager`. Mixed
-hardware is described by putting the workers that differ in their own group.
-
-```yaml title="Two racks, one failure domain each"
-spec:
-  cluster:
-    name: simplyblock-cluster
     enableFailureDomains: true
   nodeSets:
-    - name: rack-a
+    - name: racks
       groups:
-        - name: rack-a-nodes
+        - name: rack-a
           failureDomain: rack-a
-          workers:
-            - worker-a-1.example.com
-            - worker-a-2.example.com
-    - name: rack-b
-      groups:
-        - name: rack-b-nodes
+          workers: [worker-1, worker-2]
+          devices:
+            nvme: ["0000:01:00.0", "0000:02:00.0"]
+        - name: rack-b
           failureDomain: rack-b
-          workers:
-            - worker-b-1.example.com
-            - worker-b-2.example.com
+          workers: [worker-3, worker-4]
+          devices:
+            nvme: ["0000:01:00.0", "0000:02:00.0"]
 ```
 
-!!! note
-    Every group has to name the same device class: either all `nvme` or all `block`, never a mix. A group's
-    `devices` block names one or the other, not both.
+For details, see [Failure Domains](../operations/cluster/failure-domains.md).
 
 ### Copying, Splitting, and Hand-Authoring
 
@@ -192,189 +253,40 @@ documents that are approved separately, or write one from scratch and never run 
 
 Splitting is the usual reason. A draft covering three racks can become three documents, each holding one rack's
 node set, so each rack is reviewed and brought up on its own schedule. The first document creates the cluster and
-the other two name it in `spec.clusterRef`, as [Growing a Cluster](#growing-a-cluster) describes.
-
-Each document describes exactly one cluster. The expansion never produces or extends more than the one
-`spec.cluster` or `spec.clusterRef` names, so two clusters in one namespace are two documents.
+the other two name it in `spec.clusterRef`.
 
 A copy is a plain `kubectl get -o yaml`, edited and applied under a new name. Clear `metadata.resourceVersion`,
 `metadata.uid`, and `status` from it first, as with any copied resource.
 
-!!! tip "External KMS"
-    If volumes in this cluster should offload their encryption keys to an external KMS, set
-    `spec.cluster.kms.vault.endpoint` on the draft now. The setting can also be added to the `StorageCluster`
-    later, but configuring it upfront means encrypted volumes use the external KMS from day one. See
-    [Securing the Control Plane: External KMS](security.md#external-key-management-kms).
+A document discovery wrote cannot be wrong about its devices, because the list came from the inspection. A
+hand-written one can, and the validation above is the only check a device gets before the deployment runs.
 
-!!! note
-    There are additional configuration properties for a storage cluster, such as NVMe-oF transport security, backup
-    configuration, and capacity thresholds. They are described at
-    [Cluster Deployment Options](../../deployment-preparation/cluster-deployment-options.md) and belong under
-    `spec.cluster`.
+### When Does the Cluster Become Active?
+
+The erasure coding scheme determines the minimum number of storage nodes. The approval is refused if the document
+provides fewer nodes, or if they sit on too few workers. An unstated scheme counts as 1+1.
+
+| Scheme                | 1+0 | 1+1 | 2+1 | 4+1 | 1+2 | 2+2 | 4+2 |
+|-----------------------|-----|-----|-----|-----|-----|-----|-----|
+| Minimum storage nodes | 1   | 3   | 4   | 6   | 5   | 6   | 8   |
+
+The operator activates the cluster as soon as all storage nodes of the document are `Online`.
 
 ## Approve the Deployment
 
-Approval is a field, and it is the gate the expansion waits on.
+Once the draft is correct, it is approved by setting `spec.approved: true`. The admission webhook validates the
+approving edit against the live cluster, for example, that the devices exist. After approval, the document is
+immutable and the approval cannot be withdrawn.
 
-```bash title="Approve the deployment"
-kubectl patch clusterdeploymentconfig discovered-initial-discovery -n simplyblock \
-    --type=merge -p '{"spec": {"approved": true}}'
+```bash title="Approve the draft"
+kubectl -n simplyblock patch cdc discovered-initial-discovery \
+    --type=merge -p '{"spec":{"approved":true}}'
+
+kubectl -n simplyblock get cdc discovered-initial-discovery -w
 ```
 
-!!! warning "Approval is one-way"
-    An approved document is immutable, and approval cannot be withdrawn. Everything that should be changed has to
-    be changed before this point. A deployment that was approved wrongly is corrected by deleting the objects it
-    produced, not by editing the document.
-
-The operator expands the document as soon as it is approved, through these steps, tracked in `status.step.state`:
-
-| Step              | Description                                                    |
-|-------------------|----------------------------------------------------------------|
-| `Validating`      | The document is checked against what the cluster actually has. |
-| `CreatingCluster` | The `StorageCluster` is created from `spec.cluster`.           |
-| `AwaitingCluster` | The operator waits for the cluster to register.                |
-| `CreatingNodes`   | One `StorageNode` is created per worker and NUMA socket.       |
-| `Activating`      | The cluster is activated once enough storage nodes are online. |
-
-```bash title="Watch the expansion"
-kubectl get clusterdeploymentconfig discovered-initial-discovery -n simplyblock -w
-```
-
-The phase moves `Draft` → `Expanding` → `Expanded`. `status.clusterRef` names the `StorageCluster` that was
-created and `status.nodeRefs` the `StorageNode` objects.
-
-```bash title="Check what the expansion produced"
-kubectl get storagecluster,storagenodes -n simplyblock
-```
-
-The document is ephemeral. Everything the expansion produces is self-describing, so the config can be edited or
-deleted once it has been expanded: it is a deployment instruction, not a source of truth.
-
-## Running Discovery Again
-
-Discovery raises itself only on an install that has nothing. Every later run is created by hand:
-
-```yaml title="discover.yaml"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: OperatorOps
-metadata:
-  name: rediscover
-  namespace: simplyblock
-spec:
-  action: Discover
-```
-
-**A run reports only what is unclaimed, which is what makes re-running it useful.** A worker that already carries a
-`StorageNode`, and a device that node already names in its `spec.config`, are not candidates. So a run against a
-deployed fleet finds exactly the machines and disks nobody has taken yet, and re-running discovery after every
-expansion is how a fleet is grown without anybody writing a worker list by hand.
-
-A second run always writes a second document and never edits the first, because the first may already have been
-reviewed and corrected, and overwriting a reviewer's corrections with a fresh guess is the worst thing it could do.
-Its output is a `Draft` like any other.
-
-`spec.discover` narrows the run:
-
-| Field                     | Effect                                                                             |
-|---------------------------|------------------------------------------------------------------------------------|
-| `configName`              | The name of the document to write. Absent generates `discovered-<opsName>`.        |
-| `clusterRef`              | Names an existing `StorageCluster` the draft grows rather than creating a new one. |
-| `workers`                 | Inspects the named machines only.                                                  |
-| `nodeSelector`            | Restricts which workers are inspected at all.                                      |
-| `tolerations`             | What the probe pods tolerate, and what the draft then states on the cluster.       |
-| `deviceFilter`            | Narrows which devices reach the draft.                                             |
-| `enableControlPlaneNodes` | Lets the run consider machines that run the API server. Off by default.            |
-
-A probe pod is pinned to its worker with `spec.nodeName`, which bypasses the scheduler but not the taints, so a run
-against a dedicated storage plane that tolerates nothing inspects nothing. The same tolerations reach the draft's
-`spec.cluster.tolerations`, because the taints a run was allowed to probe through are the taints the cluster it
-proposes has to live with.
-
-`spec.discover.deviceFilter` selects one class of backend storage and narrows it. `pcieAllowList`, `pcieDenyList`,
-and `pcieModel` narrow the NVMe class; `enableLogicalBlockDevices` scans logical block devices instead, narrowed by
-`blockAllowList` and `blockDenyList`. `driveSizeRange` and `enablePartitionedDevices` apply to whichever class is
-being scanned. A cluster is built out of one class, so no draft holds both, and a filter naming the class the run
-is not scanning is refused rather than ignored.
-
-On a fleet that is uniform about which slot holds the boot device, one deny list keeps that device out of every
-group of every draft — the difference between correcting one document and correcting each of twenty groups.
-
-The run progresses through `Inspecting`, `Probing`, and `Writing`, and `status.configRef` names the document it
-wrote.
-
-## Growing a Cluster
-
-Adding capacity is a second document, not an edit of the first. `spec.clusterRef` on the document is what says so:
-
-```yaml title="A growth document"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: ClusterDeploymentConfig
-metadata:
-  name: rack-c
-  namespace: simplyblock
-spec:
-  approved: false
-  clusterRef: simplyblock-cluster
-  nodeSets:
-    - name: rack-c
-      groups:
-        - name: rack-c-nodes
-          failureDomain: rack-c
-          workers:
-            - worker-c-1.example.com
-            - worker-c-2.example.com
-```
-
-A document that names `spec.clusterRef` carries no `spec.cluster`: the cluster already exists and its settings are
-not restated. Naming it is also what marks every node the document creates as an expansion, so the control plane
-rebalances onto them rather than treating them as part of an initial layout. There is no separate flag to set.
-
-The two fields decide between them what the expansion does:
-
-| `spec.cluster.name` resolves to | `spec.clusterRef` | Expansion does                             |
-|---------------------------------|-------------------|--------------------------------------------|
-| No existing `StorageCluster`    | absent            | Creates the cluster and all its nodes      |
-| An existing `StorageCluster`    | absent            | Refuses: `ClusterExists`, phase `Failed`   |
-| An existing `StorageCluster`    | set to it         | Adds only the nodes that do not exist yet  |
-| No existing `StorageCluster`    | set               | Refuses: `ClusterNotFound`, phase `Failed` |
-
-Setting `spec.discover.clusterRef` on the discovery run produces such a document directly: the run reports the
-unclaimed workers and writes them as a growth document against that cluster, ready to review.
-
-!!! warning "A config never removes anything"
-    A node set left out of a later document does not drain a node, and a device removed from a group does not
-    shrink one. Removal is destructive and belongs to `StorageNodeOps` with `action: Remove`, where it is
-    deliberate, audited, and drains first. A document that could remove nodes by omission would make a typo a
-    data-loss event.
-
-The full expansion procedure, including its preconditions and what the cluster does while it integrates the new
-nodes, is at [Expanding a Storage Cluster](../operations/scaling/expanding-storage-cluster.md).
-
-## When does the Cluster become Active?
-
-By default, simplyblock clusters use the [Erasure Coding](../../deployment-preparation/erasure-coding-scheme.md) schema
-of `1+1` which requires at least three storage nodes to join the cluster.
-
-The operator automatically activates the cluster when at least three storage nodes are online. For other erasure
-coding schemes, the required number differs (see the erasure coding documentation for details).
-
-```bash title="Check the cluster status"
-kubectl get storagecluster -n simplyblock
-```
-
-```plain title="Example output of cluster status"
-NAME                   STATUS   UUID                                   CONFIGURED   AGE
-simplyblock-cluster    active   bfa260ce-06a7-4bcb-a843-813d0be633af   true         10m
-```
-
-When the status becomes `active`, the operator automatically creates a `simplyblock-csi-secret-v2` secret in the
-`simplyblock` namespace, containing the cluster credentials for the CSI driver.
-
-There is no necessity to manage this secret manually. The operator keeps it up to date and removes the cluster entry
-when the cluster is deleted.
-
-For a full list of configuration options see
-[Simplyblock Operator: Fleet Configuration on the StorageCluster](../../reference/operator/index.md#fleet-configuration-on-the-storagecluster).
+The document moves from `Draft` to `Expanding` and finally to `Expanded` (or `Failed`). While expanding, it passes the
+steps `Validating`, `CreatingCluster`, `AwaitingCluster`, `CreatingNodes`, and `Activating`.
 
 !!! warning
     Simplyblock exclusively owns the resources it has been allocated. It must be ensured they are sized correctly
@@ -385,64 +297,78 @@ For a full list of configuration options see
 
     More information can be found in [Minimum Hardware Requirements](../../deployment-preparation/hardware-requirements.md#minimum-system-requirements).
 
+### What Gets Created
+
+The expansion creates the following resources:
+
+- **`StorageCluster`:** Named after `spec.cluster.name`, in the namespace of the document. A namespace holds at most
+  one storage cluster.
+- **`StoragePool` `<cluster>-default`:** The default pool. It is created once and never recreated.
+- **StorageClass `simplyblock-<namespace>-<cluster>`:** The class of the default pool, with the provisioner
+  `csi.simplyblock.io`, `WaitForFirstConsumer` binding, the reclaim policy `Delete`, and volume expansion enabled. It
+  is not marked as the Kubernetes default class.
+- **`StorageNode` resources:** One per worker, socket, and node per socket. Each is provisioned by the storage node
+  DaemonSet, and its devices appear as `StorageDevice` resources.
+- **`StorageClusterOps` `<cluster>-activate`:** Raised once all storage nodes are `Online`.
+
+With a cluster named `production` in the namespace `simplyblock`, the default pool is `production-default` and the
+StorageClass is `simplyblock-simplyblock-production`.
+
+The `ClusterDeploymentConfig` is no longer needed after it reaches `Expanded` and can be deleted.
+
+## Verify the Cluster
+
+```bash title="Check the storage cluster and its resources"
+kubectl -n simplyblock get storagecluster,storagenode,storagedevice,storagepool
+```
+
+The same resources can be listed with their short names, `kubectl -n simplyblock get stc,sn,sd,sp`.
+
+```plain title="Example output of kubectl -n simplyblock get stc"
+NAME         PHASE    STEP   STATUS   EC    UUID                                   AGE
+production   Online          active   2x1   bfa260ce-06a7-4bcb-a843-813d0be633af   12m
+```
+
+The `StorageCluster` phase is `Online` once the cluster is active. `Degraded` and `Unavailable` indicate problems,
+and `status.message` explains them. The storage nodes report `Online` in their phase column.
+
+The operator also writes the cluster credentials for the CSI driver into the Secret `simplyblock-csi-secret-v2` in the
+operator's namespace. The Secret is maintained by the operator and does not need to be managed manually.
+
 ## Create a Storage Pool
 
-A storage pool is a grouping of logical volumes and capacity limits within the cluster. An initial `StoragePool` resource must
-be created to define a storage pool before being able to provision volumes.
+Volumes can be provisioned from the default pool right away. Additional pools divide the cluster into tenancy units
+with their own capacity and QoS limits. A `StoragePool` references its cluster with `clusterRef`.
 
 ```yaml title="storage-pool.yaml"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: StoragePool
 metadata:
-  name: production-pool
+  name: tenant-a
   namespace: simplyblock
 spec:
   clusterRef: production
   limits:
-    capacity: "10T"
+    capacity: 10T
+    maxVolumeSize: 2T
+    iops: 200000
+    throughput:
+      readWrite: 4096
+  volumeDefaults:
+    iops: 20000
+    throughput:
+      readWrite: 512
+    filesystem: xfs
 ```
 
 ```bash title="Create the pool"
 kubectl apply -f storage-pool.yaml
+kubectl -n simplyblock get storagepool tenant-a
 ```
 
-The status of the storage pool can be checked with:
-
-```bash title="Check the pool status"
-kubectl get storagepools -n simplyblock
-```
-
-A pool created this way has no StorageClass yet. A class is assigned to it by carrying the pool's three
-assignment labels, and a pool may have as many as the volumes drawing on it need. The one class the operator
-writes by itself belongs to the default pool a `StorageCluster` is created with.
-
-`cluster_id` and `pool_name` are set from the storage pool and cannot be overridden. The remaining StorageClass
-parameters come from `spec.volumeDefaults`. See
-[Storage Class: Assigning a StorageClass to a Storage Pool](../usage/storage-class.md#assigning-a-storageclass-to-a-storage-pool)
-for the assignment labels and the full parameter mapping.
-
-A StorageClass's parameters cannot be changed after creation, so `spec.volumeDefaults` is immutable
-once the storage pool is created. A new storage pool is required to provision volumes with different defaults.
-
-`spec.limits` is mutable. Raising a pool's capacity, or changing its QoS ceilings, is an ordinary operation the
-control plane supports and it touches no `StorageClass`. The operator sends the whole block whenever the pool's
-`metadata.generation` moves past `status.observedGeneration`, so an edit reaches the backend on the next reconcile.
-
-```bash title="Raise the capacity limit of an existing pool"
-kubectl patch storagepool production-pool -n simplyblock \
-    --type=merge -p '{"spec": {"limits": {"capacity": "20T"}}}'
-```
-
-What the control plane reports the ceilings actually are is published separately, in `status.limits`, which is not
-necessarily what `spec.limits` asked for.
-
-```bash title="Read the ceilings the control plane applied"
-kubectl get storagepool production-pool -n simplyblock -o jsonpath='{.status.limits}'
-```
-
-`allowedNodes` is reconciled as well, see
-[Host Authentication and Encryption](../operations/security/authentication-encryption.md#managing-allowed-nodes).
-`spec.clusterRef` is immutable, like `spec.volumeDefaults`.
+`spec.limits` (capacity, maximum volume size, IOPS, and throughput in MB/s) can be changed later. `spec.volumeDefaults`
+is immutable once set. `spec.allowedNodes` restricts the pool to specific Kubernetes nodes, see
+[Host Authentication and Encryption](../operations/security/authentication-encryption.md).
 
 ### Deleting a Pool
 
@@ -460,21 +386,43 @@ An authored class holds the deletion because the operator neither wrote it nor k
 somebody's provisioning contract to let a pool go is not a trade it makes. Deleting the class releases the pool.
 The operator's own default class does not hold, because removing it is cleanup rather than a decision.
 
-A `StorageCluster` owns its pools, so deleting one cascades — and is held behind any pool that is itself held, with
-an event naming the pool and what is still in it.
+A `StorageCluster` owns its pools, so deleting one cascades, and is held behind any pool that is itself held.
 
-Full details and customization options are available at
-[Simplyblock Operator: Storage Pool](../../reference/operator/reference.md#storagepool).
+### Author a StorageClass for the Pool
 
-```bash title="Check the StorageClass"
-kubectl get storageclass simplyblock-simplyblock-production-my-pool
+The operator creates a StorageClass only for the default pool. For every other pool, the StorageClass is written by
+the administrator and linked to the pool with three labels: `storage.simplyblock.io/namespace`,
+`storage.simplyblock.io/cluster`, and `storage.simplyblock.io/pool`. The parameters `cluster_id` (the cluster's
+`status.uuid`) and `pool_name` direct the CSI driver to the pool.
+
+```yaml title="storage-class-tenant-a.yaml"
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: tenant-a-fast
+  labels:
+    storage.simplyblock.io/namespace: simplyblock
+    storage.simplyblock.io/cluster: production
+    storage.simplyblock.io/pool: tenant-a
+provisioner: csi.simplyblock.io
+parameters:
+  cluster_id: "<StorageCluster status.uuid>"
+  pool_name: tenant-a
+  max_iops: "20000"
+  csi.storage.k8s.io/fstype: xfs
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
 ```
+
+The pool lists its assigned classes in `status.storageClassNames`. For the full parameter mapping, see
+[Storage Class](../usage/storage-class.md).
 
 ## Provision the First Volume
 
-Now, everything is in place to create the first volume. The operator has automatically deployed the Simplyblock CSI
-Driver into the Kubernetes cluster. Hence, creating a volume is as simple as creating PersistentVolumeClaim with the
-correct StorageClass set.
+Now, everything is in place to create the first volume. The operator has deployed the simplyblock CSI driver into the
+Kubernetes cluster. Hence, creating a volume is as simple as creating a PersistentVolumeClaim with the correct
+StorageClass set.
 
 ### Create the PVC
 
@@ -489,7 +437,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: simplyblock-simplyblock-production-my-pool
+  storageClassName: simplyblock-simplyblock-production
 ```
 
 ```bash title="Create the PVC"
@@ -498,13 +446,13 @@ kubectl get pvc simplyblock-test-pvc
 ```
 
 ```plain title="Example output of PVC status"
-NAME                    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
-simplyblock-test-pvc    Pending                                       simplyblock-simplyblock-production-my-pool   5s
+NAME                    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS                         AGE
+simplyblock-test-pvc    Pending                                       simplyblock-simplyblock-production   5s
 ```
 
-Since provisioning is asynchronous, the PVC status will initially be `Pending`. The StorageClass uses
-`WaitForFirstConsumer` by default, which means the volume is not provisioned until a pod actually needs it. The
-scheduler picks the right node first, then the volume is created close to where it will be used.
+Since provisioning is asynchronous, the PVC status is initially `Pending`. The StorageClass uses
+`WaitForFirstConsumer`, which means the volume is not provisioned until a pod actually needs it. The scheduler picks
+the right node first, then the volume is created close to where it will be used.
 
 ### Mount the Volume into a Test Pod
 
@@ -541,8 +489,8 @@ kubectl get pvc simplyblock-test-pvc
 ```
 
 ```plain title="Example output of PVC status"
-NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                             AGE
-simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-simplyblock-production-my-pool   30s
+NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                         AGE
+simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-simplyblock-production   30s
 ```
 
 It is now possible to access the data written to the volume when the pod started up.
@@ -562,29 +510,23 @@ kubectl delete pod simplyblock-test-pod
 kubectl delete pvc simplyblock-test-pvc
 ```
 
-## Multi-Cluster Storage Node Support
+## Growing and Adding Clusters
 
-A single Kubernetes cluster can host storage nodes belonging to several simplyblock clusters. Each one is its own
-deployment config, approved separately.
+- **More nodes for an existing cluster:** A `ClusterDeploymentConfig` with `spec.clusterRef` and no `spec.cluster`
+  block adds nodes to an existing cluster. A discovery run with `discover.clusterRef` writes such a growth draft. See
+  [Expanding a Storage Cluster](../operations/scaling/expanding-storage-cluster.md).
 
-Run discovery again without `spec.discover.clusterRef`, so the draft describes a new cluster rather than growing
-the existing one, and narrow it to the workers that should belong to it:
+    The two fields decide between them what the expansion does, and a mismatch is refused rather than reconciled:
 
-```yaml title="Discover a second storage cluster"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: OperatorOps
-metadata:
-  name: discover-cluster-b
-  namespace: simplyblock
-spec:
-  action: Discover
-  discover:
-    configName: cluster-b
-    workers:
-      - worker-b-1.example.com
-      - worker-b-2.example.com
-```
+    | `spec.cluster.name` resolves to | `spec.clusterRef` | Expansion does                             |
+    |---------------------------------|-------------------|--------------------------------------------|
+    | No existing `StorageCluster`    | absent            | Creates the cluster and all its nodes      |
+    | An existing `StorageCluster`    | absent            | Refuses: `ClusterExists`, phase `Failed`   |
+    | An existing `StorageCluster`    | set to it         | Adds only the nodes that do not exist yet  |
+    | No existing `StorageCluster`    | set               | Refuses: `ClusterNotFound`, phase `Failed` |
 
-Set `spec.cluster.name` on the resulting draft to the name the second `StorageCluster` should have, then approve it
-as above. Multiple storage clusters can share Kubernetes worker nodes, but it is recommended to point each storage
-cluster to a different set of workers.
+    A config never removes anything. A node set left out of a later document does not drain a node, and a device
+    removed from a group does not shrink one. Removal belongs to `StorageNodeOps` with `action: Remove`, where it
+    is deliberate, audited, and drains first.
+- **More storage clusters:** A namespace holds at most one `StorageCluster`, so every additional storage cluster
+  needs a namespace of its own. It is recommended to point each storage cluster to a different set of workers.

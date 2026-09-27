@@ -18,7 +18,7 @@ A Rancher-based deployment is made up of three layers, and the simplyblock requi
 
 !!! info
     Not all worker nodes of a downstream cluster have to host storage components.
-    Simplyblock uses node labels to identify nodes that participate in the storage cluster.
+    The `ClusterDeploymentConfig` lists the workers that participate in the storage cluster.
     Storage workloads can be isolated on dedicated worker nodes or node pools.
 
 ## Prerequisites
@@ -64,19 +64,47 @@ kubectl apply -f simplyblock-namespace.yaml
 The namespace is created before the operator is installed. Otherwise, the Helm chart creates an unlabeled namespace of
 its own, and the exemptions never take effect.
 
-## CPU Topology and Core Isolation
+## CPU Topology and Kubelet Configuration
 
-The kubelet CPU topology and the core isolation of the storage nodes are configured by simplyblock through the Helm
-values of the operator. The cluster definition of RKE2 or K3s stays untouched:
+The kubelet CPU topology of the storage nodes is configured by simplyblock itself. The cluster definition of RKE2 or
+K3s stays untouched. The settings are part of the storage cluster, not of the Helm chart:
 
-| Helm value                             | Purpose                                                        |
-|----------------------------------------|----------------------------------------------------------------|
-| `storagenode.enableCpuTopology`        | Enables the CPU topology configuration on storage nodes        |
-| `storagenode.isolateCores`             | Enables the automatic core isolation                           |
-| `storagenode.skipKubeletConfiguration` | Skips the kubelet CPU topology configuration if already set up |
-| `storagenode.reservedSystemCpu`        | Reserves CPU cores for the host and system workloads           |
+- **`spec.environment` of the `ClusterDeploymentConfig`:** `Rancher` for RKE2 clusters and `K3s` for K3s clusters.
+  Both let the storage nodes apply the kubelet configuration they need (`enableKubeletConfiguration: true`).
+- **`StorageCluster.spec.storageNodes`:** Holds the resulting storage node settings. `enableCpuTopology` and
+  `reservedSystemCPU` are not derived from the environment and are set on the `StorageCluster` directly.
 
-The full list of values is documented in the [Kubernetes Reference](../../reference/kubernetes/index.md).
+| Field on `spec.storageNodes` | Purpose                                                                                                         |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `enableCpuTopology`          | Enables topology-aware CPU assignment on storage nodes                                                          |
+| `enableKubeletConfiguration` | Lets the storage nodes apply the kubelet CPU topology configuration. Set to `false` if it is already configured |
+| `reservedSystemCPU`          | Reserves CPU cores for the host and system workloads                                                            |
+
+```yaml title="ClusterDeploymentConfig for an RKE2 cluster (excerpt)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
+metadata:
+  name: simplyblock-deployment
+  namespace: simplyblock
+spec:
+  approved: false
+  environment: Rancher
+  cluster:
+    name: simplyblock-cluster
+    maxSubsystemCount: 50
+    vcpuCount: 8
+  nodeSets:
+    - name: storage
+      groups:
+        - name: default
+          workers: [worker-1, worker-2, worker-3]
+          devices:
+            nvme: ["0000:01:00.0", "0000:02:00.0"]
+```
+
+The Helm values `storagenode.enableCpuTopology`, `storagenode.isolateCores`, `storagenode.skipKubeletConfiguration`,
+and `storagenode.reservedSystemCpu` of earlier releases no longer exist. For the full list of `storageNodes` fields,
+see [Simplyblock Operator](../../reference/operator/index.md).
 
 ## SUSE Linux Micro Nodes
 
@@ -90,5 +118,4 @@ with `transactional-update` and takes effect after a reboot.
 ## Installation of Simplyblock
 
 To install the simplyblock components on a Rancher-managed cluster, follow the instructions to
-[install the Simplyblock Operator](k8s-control-plane.md) and follow the instructions to [deploy the storage nodes and
-CSI driver](k8s-storage-plane.md).
+[install the Simplyblock Operator](k8s-control-plane.md) and to [create a storage cluster](k8s-storage-plane.md).

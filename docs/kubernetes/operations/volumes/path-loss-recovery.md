@@ -9,9 +9,7 @@ cluster outage. The paths are re-established by the CSI node plugin, which needs
 need attention is the workload: a process holding a file descriptor across a long path loss can be left with I/O errors
 that only a restart clears.
 
-Plain Linux clients reconnect their volumes by hand, as described in
-[Reconnecting Logical Volume](../../../non-kubernetes/operations/volumes/reconnect-nvme-device.md). On Kubernetes none of that
-applies. The node plugin repairs the fabric itself, and the only decision left is whether affected pods should be
+Clients outside Kubernetes reconnect their volumes by hand. On Kubernetes none of that applies. The node plugin repairs the fabric itself, and the only decision left is whether affected pods should be
 restarted automatically.
 
 ## Automatic Path Repair
@@ -44,6 +42,11 @@ provisioner: csi.simplyblock.io
 The same key is honored on a Pod, on a PersistentVolumeClaim, and on a StorageClass, as either a label or an
 annotation. The first of them that carries the value `true` opts the pod in, which allows a single workload to opt in
 without changing the StorageClass every volume shares.
+
+!!! note
+    Unlike most simplyblock keys, which moved to the `storage.simplyblock.io/` prefix, the two keys of the node
+    plugin's guardian (`simplyblock.io/auto-restart-on-pathloss` and `simplyblock.io/guardian-disable`) are read under
+    the `simplyblock.io/` prefix only.
 
 ```bash title="Opting a single workload in through its claim"
 kubectl label pvc my-pvc -n simplyblock \

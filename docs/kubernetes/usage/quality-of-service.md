@@ -1,46 +1,54 @@
 ---
 title: "Defining Quality of Service"
-description: "Defining Quality of Service: Simplyblock's Kubernetes CSI driver supports Quality of Service (QoS) to define minimum guaranteed performance characteristics of a."
+description: "Set per-volume IOPS and throughput ceilings for simplyblock volumes through pool volume defaults, StorageClass parameters, or PVC annotations."
 weight: 40600
 ---
 
-Simplyblock's CSI driver supports QoS (Quality of Service) limits on logical volumes.
+Simplyblock's CSI driver supports QoS (Quality of Service) limits on logical volumes: a combined IOPS ceiling and
+throughput ceilings for reads and writes together, reads alone, and writes alone. The limits of a volume are fixed when
+the volume is created. They come from the StorageClass the claim uses, and each of them can be overridden per claim by
+an annotation.
 
-To configure the QoS limits, simplyblock offers the following two options.
+Per-volume limits are distinct from the limits of a whole `StoragePool` (`spec.limits`), which cap the pool as a
+budget. See [Multi-Tenancy](../operations/security/multi-tenancy.md) for pool limits.
 
 ## Option 1: StorageClass
 
-Using StorageClass instances, QoS limits can be defined for all volumes sharing the same StorageClass. This enables
-the definition of paid performance classes for the user.
+Using StorageClass instances, QoS limits can be defined for all volumes sharing the same StorageClass. This enables the
+definition of performance classes for the users of a pool.
 
-With applying a StorageClass, the QoS limits are locked in at volume creation time.
+For a pool, the limits are normally stated in `StoragePool.spec.volumeDefaults` (`iops` and `throughput.readWrite`,
+`throughput.read`, `throughput.write`), and the StorageClass of the pool carries them under the parameter keys below
+(see [Storage Class](storage-class.md)).
 
-```yaml title="StorageClass with QoS"
+```yaml title="Example of a StorageClass with QoS limits"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: qos-volumes
+  name: tenant-a-qos
+  labels:
+    storage.simplyblock.io/namespace: simplyblock
+    storage.simplyblock.io/cluster: production
+    storage.simplyblock.io/pool: tenant-a
 provisioner: csi.simplyblock.io
 parameters:
-  max_iops: 1000
-  max_mbytes_per_sec: 125
-  max_read_mbytes_per_sec: 125
-  max_write_mbytes_per_sec: 125
+  cluster_id: <CLUSTER_UUID>
+  pool_name: tenant-a
+  max_iops: "1000"
+  max_mbytes_per_sec: "125"
+  max_read_mbytes_per_sec: "125"
+  max_write_mbytes_per_sec: "125"
 reclaimPolicy: Delete
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 ```
 
 ## Option 2: PVC Annotations
 
-If more control is required, simplyblock supports defining QoS limits on a per-PVC basis using Kubernetes PVC
-annotations.
+If more control is required, simplyblock supports defining QoS limits on a per-PVC basis using annotations. When a
+ceiling is set both on the StorageClass and on the PVC, the annotation wins. Like the StorageClass values, the limits
+are fixed at volume creation time.
 
-When using PVC annotations, no definition inside a StorageClass is required. If both are defined, PVC annotations take
-precedence.
-
-Like with StorageClass definitions, the QoS limits are locked in at volume creation time.
-
-```yaml title="PVC with QoS annotations"
+```yaml title="Example of a PVC with QoS annotations"
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
@@ -56,44 +64,35 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: simplyblock-csi-sc
+  storageClassName: simplyblock-simplyblock-production
 ```
 
 ## QoS Parameters
 
-All parameters are optional. Default is `0` (no limit).
+All parameters are optional. An unset ceiling, or `0`, means no limit. There is no read-only or write-only IOPS
+ceiling, because the control plane enforces one combined IOPS limit.
 
-| StorageClass Parameter     | Annotation                                        | Description                      |
-|----------------------------|---------------------------------------------------|----------------------------------|
-| `max_iops`                 | `storage.simplyblock.io/max-iops`                 | Max read+write IOPS              |
-| `max_mbytes_per_sec`       | `storage.simplyblock.io/max-mbytes-per-sec`       | Max read+write throughput (MB/s) |
-| `max_read_mbytes_per_sec`  | `storage.simplyblock.io/max-read-mbytes-per-sec`  | Max read throughput (MB/s)       |
-| `max_write_mbytes_per_sec` | `storage.simplyblock.io/max-write-mbytes-per-sec` | Max write throughput (MB/s)      |
-
-There is no read-only or write-only IOPS ceiling. The control plane enforces one combined IOPS limit and nothing
-else.
+| Pool `volumeDefaults` field | StorageClass Parameter     | PVC Annotation                                    | Description                      |
+|-----------------------------|----------------------------|---------------------------------------------------|----------------------------------|
+| `iops`                      | `max_iops`                 | `storage.simplyblock.io/max-iops`                 | Max read+write IOPS              |
+| `throughput.readWrite`      | `max_mbytes_per_sec`       | `storage.simplyblock.io/max-mbytes-per-sec`       | Max read+write throughput (MB/s) |
+| `throughput.read`           | `max_read_mbytes_per_sec`  | `storage.simplyblock.io/max-read-mbytes-per-sec`  | Max read throughput (MB/s)       |
+| `throughput.write`          | `max_write_mbytes_per_sec` | `storage.simplyblock.io/max-write-mbytes-per-sec` | Max write throughput (MB/s)      |
 
 !!! note
     Annotation values override StorageClass values per parameter. Use annotations only for the values to be
     overridden.
 
-!!! warning "Deprecated parameters and annotations"
-    The names above have been through two earlier generations, and both are still read. A StorageClass's
-    `parameters` are immutable in the Kubernetes API, so a class generated by an older release can never be
-    rewritten into the current vocabulary and the older keys stay readable indefinitely rather than for a
-    deprecation window. New deployments have to use the current names. An object carrying more than one spelling
-    of the same ceiling is answered by the newest one it carries.
+## Legacy Keys
 
-    | Deprecated StorageClass Parameter | Current Parameter          |
-    |-----------------------------------|----------------------------|
-    | `qos_rw_iops`                     | `max_iops`                 |
-    | `qos_rw_mbytes`                   | `max_mbytes_per_sec`       |
-    | `qos_r_mbytes`                    | `max_read_mbytes_per_sec`  |
-    | `qos_w_mbytes`                    | `max_write_mbytes_per_sec` |
+StorageClasses and claims written for earlier versions keep working. The older keys are still read, and when an
+object carries more than one spelling of the same ceiling, the newest one wins.
 
-    | Deprecated Annotation        | Older Deprecated Annotation | Current Annotation                                |
-    |------------------------------|-----------------------------|---------------------------------------------------|
-    | `simplyblock.io/qos-rw-iops` | `simplybk/qos-rw-iops`      | `storage.simplyblock.io/max-iops`                 |
-    | `simplyblock.io/qos-rw-mbps` | `simplybk/qos-rw-mbytes`    | `storage.simplyblock.io/max-mbytes-per-sec`       |
-    | `simplyblock.io/qos-r-mbps`  | `simplybk/qos-r-mbytes`     | `storage.simplyblock.io/max-read-mbytes-per-sec`  |
-    | `simplyblock.io/qos-w-mbps`  | `simplybk/qos-w-mbytes`     | `storage.simplyblock.io/max-write-mbytes-per-sec` |
+| Current key                                                                    | Legacy StorageClass parameter | Legacy annotations                                     |
+|--------------------------------------------------------------------------------|-------------------------------|--------------------------------------------------------|
+| `max_iops` / `storage.simplyblock.io/max-iops`                                 | `qos_rw_iops`                 | `simplyblock.io/qos-rw-iops`, `simplybk/qos-rw-iops`   |
+| `max_mbytes_per_sec` / `storage.simplyblock.io/max-mbytes-per-sec`             | `qos_rw_mbytes`               | `simplyblock.io/qos-rw-mbps`, `simplybk/qos-rw-mbytes` |
+| `max_read_mbytes_per_sec` / `storage.simplyblock.io/max-read-mbytes-per-sec`   | `qos_r_mbytes`                | `simplyblock.io/qos-r-mbps`, `simplybk/qos-r-mbytes`   |
+| `max_write_mbytes_per_sec` / `storage.simplyblock.io/max-write-mbytes-per-sec` | `qos_w_mbytes`                | `simplyblock.io/qos-w-mbps`, `simplybk/qos-w-mbytes`   |
+
+New StorageClasses and claims should use the current keys.

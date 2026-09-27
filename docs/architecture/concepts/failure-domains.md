@@ -181,6 +181,5 @@ Failure domains also change how the cluster recovers from large outages:
   parallel** instead of strictly one-by-one, substantially shortening the recovery of large domains.
 
 For operating instructions (cluster creation, node addition, node removal, and the expansion rules), see
-[Managing Failure Domains](../../non-kubernetes/operations/cluster/failure-domains.md). For Kubernetes-based
-deployments, failure domains are assigned through the Simplyblock Operator. See the
-[Operator Reference](../../reference/operator/index.md).
+[Managing Failure Domains](../../kubernetes/operations/cluster/failure-domains.md). Failure domains are assigned
+through the Simplyblock Operator. See the [Operator Reference](../../reference/operator/index.md).

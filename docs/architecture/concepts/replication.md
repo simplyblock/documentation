@@ -107,3 +107,12 @@ On Kubernetes, every layer of a replication relationship is a custom resource, a
 requested by creating a one-shot operation resource. For those resources, their fields, and the annotation that
 enrolls a volume, see
 [Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+
+## Disaster Recovery
+
+Replication moves volume data between storage clusters. Simplyblock Disaster Recovery builds on top of it and
+protects whole applications: it replicates their Kubernetes objects together with their volumes, restarts them on
+the target site in a defined order, checks their health, and fails them back. Protection is declared once per group
+of sites in a protection plan, and every move between sites is requested as a failover or a relocation along a
+declared DR path. See [DR Protection Plans](dr-protection-plans.md), [Failover](failover.md), and
+[Disaster Recovery](../../disaster-recovery/index.md).

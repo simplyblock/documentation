@@ -1,50 +1,87 @@
 ---
 title: "Alerting"
-description: "Simplyblock uses Grafana to configure and manage alerting rules By default, Grafana is configured to send alerts to Slack channels."
+description: "Pre-defined Grafana alert rules of the simplyblock control plane on Kubernetes, their notification channels configured through Helm, and the alerts endpoint."
 weight: 10630
 ---
 
-Simplyblock uses Grafana to configure and manage alerting rules.
-
-By default, Grafana is configured to send alerts to Slack channels. However, Grafana also allows alerting via email
-notifications, but this requires the use of an authorized SMTP server to send a message.
-
-An SMTP server is currently not part of the management stack and must be deployed separately. Alerts can be triggered
-based on on-time or interval-based thresholds of statistical data collected (I/O statistics, capacity information) or
-based on events from the cluster event log.
+Simplyblock uses Grafana to evaluate and deliver alerts. On Kubernetes, Grafana is part of the optional observability
+stack of a local control plane, installed when the Helm value `controlplane.observability.enabled` is `true`. The alert
+rules are provisioned by the chart, and the notification channels are configured through Helm values. Independently of
+Grafana, the control plane exposes the currently active conditions through a REST endpoint.
 
 ## Pre-Defined Alerts
 
-The following pre-defined alerts are available:
+The following alert rules are provisioned into Grafana and evaluated every minute:
 
-| Alert                                  | Trigger                                                                                                                                                                                                   |
-|----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| device-unavailable                     | Storage device became unavailable.                                                                                                                                                                        |
-| device-read-only                       | Storage device changed to status: read-only.                                                                                                                                                              |
-| cluster-status-degraded                | Storage node changed to status: degraded.                                                                                                                                                                 |
-| cluster-status-suspended               | Storage node changed to status: suspended.                                                                                                                                                                |
-| storage-node-unreachable               | Storage node became unreachable.                                                                                                                                                                          |
-| storage-node-offline                   | Storage node became unavailable.                                                                                                                                                                          |
-| storage-node-healthcheck-failure       | Storage node with negative healthcheck.                                                                                                                                                                   |
-| logical-volume-offline                 | Logical volume became unavailable.                                                                                                                                                                        |
-| critical-capacity-reached              | Critical absolute capacity utilization in a cluster was reached. The threshold value can be configured at [cluster creation](../../../reference/cli/cluster.md) time using `--cap-crit`.                  |
-| critical-provisioning-capacity-reached | Critical absolute provisioned capacity utilization in a cluster was reached. The threshold value can be configured at [cluster creation](../../../reference/cli/cluster.md) time using `--prov-cap-crit`. |
-| root-fs-low-disk-space                 | Root filesystem free disk space is below 20%.                                                                                                                                                             |
+| Alert rule                                 | Trigger                                                                   |
+|--------------------------------------------|---------------------------------------------------------------------------|
+| `Device_status_online_to_unavailable`      | A storage device became unavailable.                                      |
+| `Device_status_online_to_read_only`        | A storage device changed to status read-only.                             |
+| `Cluster_status_online_to_degraded`        | The cluster changed to status degraded.                                   |
+| `Cluster_status_online_to_suspended`       | The cluster changed to status suspended.                                  |
+| `StorageNode_status_online_to_unreachable` | A storage node became unreachable.                                        |
+| `StorageNode_status_online_to_down`        | A storage node became unavailable.                                        |
+| `StorageNode_health_check_false`           | A storage node reports a negative health check.                           |
+| `Cluster_provisioned_capacity_reached`     | The critical provisioned capacity utilization of the cluster was reached. |
+| `Cluster_absolute_capacity_reached`        | The critical absolute capacity utilization of the cluster was reached.    |
+| `Lvol_status_online_to_offline`            | A logical volume became unavailable.                                      |
+| `Root Filesystem Low Space Alert`          | Free space of a root filesystem fell below 20%.                           |
 
-It is possible to configure the Slack webhook for alerting during cluster creation or to modify it at a later point in
-time.
+The capacity thresholds are set on the `StorageCluster`, in `spec.warningThreshold` and `spec.criticalThreshold`, each
+with a `capacity` and a `provisionedCapacity` value:
+
+```yaml title="Example of the capacity thresholds of a StorageCluster"
+spec:
+  warningThreshold:
+    capacity: 75
+    provisionedCapacity: 150
+  criticalThreshold:
+    capacity: 90
+    provisionedCapacity: 200
+```
+
+## Notification Channels
+
+Every enabled channel receives every simplyblock alert. The channels are configured under
+`controlplane.observability.grafana.notifications` in the Helm values. With none of them enabled, no contact point is
+provisioned and the default notification policy of Grafana stays in place.
+
+| Channel   | Values                                                                                                                             |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------|
+| Slack     | `slack.enabled`, `slack.url` (incoming webhook URL)                                                                                |
+| Teams     | `teams.enabled`, `teams.url` (incoming webhook or workflow URL)                                                                    |
+| PagerDuty | `pagerduty.enabled`, `pagerduty.integrationKey`, `pagerduty.severity`, and the optional `class`, `component`, and `group`          |
+| Opsgenie  | `opsgenie.enabled`, `opsgenie.apiKey`, `opsgenie.apiUrl`, `opsgenie.autoClose`, `opsgenie.overridePriority`, `opsgenie.sendTagsAs` |
+| Webhook   | `webhook.enabled`, `webhook.url`, `webhook.httpMethod`, basic or authorization-header credentials, `webhook.maxAlerts`             |
+
+```yaml title="Example of Helm values enabling Slack notifications"
+controlplane:
+  observability:
+    enabled: true
+    grafana:
+      notifications:
+        slack:
+          enabled: true
+          url: https://hooks.slack.com/services/<WEBHOOK_PATH>
+```
+
+!!! warning
+    The channel credentials are rendered into the `simplyblock-grafana-alerting` ConfigMap, so read access to the
+    release namespace is read access to them.
+
+E-mail notifications require an SMTP server, which is not part of the control plane and has to be provided
+separately.
 
 ## Querying Alerts Directly
 
-The pre-defined alerts above are evaluated by Grafana and pushed to a contact point. The control plane also
-exposes the currently active conditions as a REST resource, which answers what is wrong right now without going
-through Grafana:
+The control plane also exposes the currently active conditions as a REST resource, which answers what is wrong right
+now without going through Grafana:
 
 ```plain title="Alerts endpoint"
 GET /api/v2/clusters/<CLUSTER_UUID>/alerts/
 ```
 
 It suppresses the states an operator caused on purpose, such as a node that was shut down or a device that was
-removed, and it drops each alert as soon as the condition ends. See
-[Alerts Endpoint](../../../reference/api/alerts.md) for the full list of alert kinds, the query parameters, and
-how to forward the alerts to a Slack webhook.
+removed, and it drops each alert as soon as the condition ends. The cluster UUID is held in
+`StorageCluster.status.uuid`. See [Alerts Endpoint](../../../reference/api/alerts.md) for the full list of alert kinds,
+the query parameters, and how to forward the alerts to a Slack webhook.

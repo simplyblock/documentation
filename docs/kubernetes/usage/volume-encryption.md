@@ -9,28 +9,52 @@ distributed storage cluster. Internally, simplyblock uses the industry-proven
 [crypto bdev](https://spdk.io/doc/bdev.html){:target="_blank" rel="noopener"} provided by SPDK, with an AES_XTS
 variable-length block cipher.
 
-Encryption is enabled per StorageClass and applies to every volume provisioned from it.
+Encryption is enabled per StorageClass, through the `encryption` parameter, and applies to every volume provisioned
+from it. For a storage pool, it is normally stated once in `StoragePool.spec.volumeDefaults.enableEncryption`, which the
+pool's StorageClass carries as `encryption`.
 
 !!! warning
     Encryption must be specified at the time of volume creation. Existing logical volumes cannot be retroactively
     encrypted.
 
+## Enabling Encryption for a Storage Pool
+
+A pool whose volumes are all encrypted declares it in its volume defaults. The block is immutable once set, so the
+setting belongs in the manifest that creates the pool.
+
+```yaml title="Example of a StoragePool with encrypted volumes"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StoragePool
+metadata:
+  name: encrypted
+  namespace: simplyblock
+spec:
+  clusterRef: production
+  volumeDefaults:
+    enableEncryption: true
+```
+
 ## Enabling Encryption on a StorageClass
 
-To enable encryption, set the `encryption` parameter on the StorageClass to `"True"`. Every PersistentVolumeClaim
-that references the StorageClass is then provisioned as an encrypted volume.
+The StorageClass assigned to the pool sets the `encryption` parameter to `"true"`. Every PersistentVolumeClaim that
+references the StorageClass is then provisioned as an encrypted volume.
 
-```yaml title="Encrypted StorageClass"
+```yaml title="Example of an encrypted StorageClass"
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: my-encrypted-volumes
+  labels:
+    storage.simplyblock.io/namespace: simplyblock
+    storage.simplyblock.io/cluster: production
+    storage.simplyblock.io/pool: encrypted
 provisioner: csi.simplyblock.io
 parameters:
-  encryption: "True"
-  # ... other parameters
+  cluster_id: <CLUSTER_UUID>
+  pool_name: encrypted
+  encryption: "true"
 reclaimPolicy: Delete
-volumeBindingMode: Immediate
+volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 ```
 
@@ -65,8 +89,24 @@ annotations are required to encrypt a volume.
 
 For environments that require stricter handling of key material (separation of duty between storage and key
 custodians, regular rotation, or audit trails), the cluster can be configured to keep encryption keys in an external
-HashiCorp Vault or OpenBao instance. The setup is configured once per `StorageCluster` and applies to every encrypted
-volume in that cluster.
+HashiCorp Vault or OpenBao instance. The key store is set once per `StorageCluster`, in `spec.kms`, and applies to
+every encrypted volume in that cluster.
 
-See [Securing the Control Plane: External KMS](../installation/security.md#external-key-management-kms) for the full setup, or
+```yaml title="Example of an external key store on a StorageCluster"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageCluster
+metadata:
+  name: production
+  namespace: simplyblock
+spec:
+  # ... other fields ...
+  kms:
+    vault:
+      endpoint: https://vault.example.com:8200
+```
+
+The whole `kms` block is immutable, because switching the key store of a cluster that holds encrypted volumes is not
+supported. The endpoint is refused when it resolves to a loopback or a link-local address.
+
+See [Securing the Control Plane](../installation/security.md) for the full setup, or
 [External Key Management](../../architecture/concepts/external-key-management.md) for the architectural background.

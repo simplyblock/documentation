@@ -31,7 +31,7 @@ network bandwidth, and free space on the boot disk.
     there are no restrictions on instance types as long as these system requirements are met. However, it is highly
     recommended to stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
 
-    For [hyper-converged](../architecture/concepts/hyper-converged.md) deployments, it is important that node sizing
+    For [hyper-converged](../architecture/deployment-topologies/hci.md) deployments, it is important that node sizing
     applies to the dedicated resources consumed by simplyblock. Hyper-converged instances must provide enough of
     resources to satisfy both, simplyblock and other compute demand, including the Kubernetes worker itself and the
     operating system.
@@ -213,7 +213,7 @@ step. Low-level formatting can also be executed manually.
 In production, simplyblock works with one of two options:
 
 - A **redundant network** for storage traffic (e.g., via LACP, Stacked Switches, MLAG, active/active or active/passive NICs, STP, or MSTP).
-- Two separate VLANs per node for storage traffic, connected via two separate NIC ports and switch paths, as well as configured as ***NVMe Multipathing*** (see [Storage Network Multipathing](../non-kubernetes/installation/storage-network-multipathing.md)).
+- Two separate VLANs per node for storage traffic, connected via two separate NIC ports and switch paths, as well as configured as ***NVMe Multipathing***.
   In such a setup simplyblock still recommend to provide a **redundant network for management traffic**, but it is not obligatory.
 
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux

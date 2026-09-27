@@ -1,6 +1,6 @@
 ---
 title: "Cloning"
-description: "Cloning: Kubernetes PersistentVolumes, backed by simplyblock, can be instantly cloned."
+description: "Clone a simplyblock-backed PersistentVolumeClaim instantly through a copy-on-write clone, named as the dataSource of a new claim."
 weight: 40200
 ---
 
@@ -19,7 +19,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: my-persistent-volume-clone
 spec:
-  storageClassName: simplyblock-csi-sc
+  storageClassName: simplyblock-simplyblock-production
   dataSource:
     name: original-persistent-volume-name # <- Name of the original volume
     kind: PersistentVolumeClaim

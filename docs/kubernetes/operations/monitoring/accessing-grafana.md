@@ -1,47 +1,46 @@
 ---
 title: "Accessing Grafana"
-description: "Accessing Grafana: Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation Grafana retrieves metric data from Prometheus, including."
+description: "Enable the Grafana dashboards of a simplyblock control plane on Kubernetes, reach them through a port-forward, and retrieve the admin password."
 weight: 10640
 ---
 
-Simplyblock's control plane includes a Prometheus, Grafana, and Graylog installation.
+The observability stack of a local simplyblock control plane includes Prometheus, Grafana, and Graylog. Grafana
+retrieves metric data from Prometheus, including capacity, I/O statistics, and the cluster event log, and it delivers
+the [alerts](alerts.md) of the cluster.
 
-Grafana retrieves metric data from Prometheus, including capacity, I/O statistics, and the cluster event log.
-Additionally, Grafana is used for alerting via Slack or email.
+The stack is optional. It is installed with a local control plane (the `standalone` deployment profile) when the Helm
+value `controlplane.observability.enabled` is `true`, which is not the default.
 
-The standard retention period for metrics is 7 days. However, this can be changed when creating a cluster.
-
-## How to access Grafana
-
-Grafana can be accessed through all management node API. It is recommended to set up a load balancer with session
-stickyness in front of the Grafana installation(s).
-
-```plain title="Grafana URLs"
-http://<MGMT_NODE_IP>/grafana
+```bash title="Enabling the observability stack"
+helm upgrade simplyblock-operator simplyblock/simplyblock-operator \
+  -n simplyblock --reuse-values \
+  --set controlplane.observability.enabled=true
 ```
 
-To retrieve the endpoint address from the cluster itself, use the following command:
+## How to Access Grafana
 
-```bash title="Retrieving the Grafana endpoint"
-{{ cliname }} cluster get <CLUSTER_ID> | grep grafana_endpoint
+Grafana is served by the `simplyblock-grafana` Service on port 3000 in the namespace of the control plane. For a quick
+look, the Service is forwarded to the local machine:
+
+```bash title="Forwarding the Grafana Service"
+kubectl -n simplyblock port-forward svc/simplyblock-grafana 3000:3000
 ```
+
+Grafana is then reachable at `http://localhost:3000`. For permanent access, the Service is exposed through the ingress
+controller or load balancer of the Kubernetes cluster. A load balancer in front of several Grafana replicas should use
+session stickiness.
 
 ### Credentials
 
-The Grafana installation uses the cluster secret as its password for the user _admin_.
+The admin password of Grafana is held in the `simplyblock-grafana-secrets` Secret and is set through the Helm value
+`controlplane.observability.secret`. It is retrieved with `kubectl`:
 
-In Kubernetes deployments, logging in with (CLUSTER_ID/CLUSTER_SECRET) is possible as an unprivileged user, or the Grafana password can be retrieved using `kubectl` as follows for the admin user:
-
-```bash title="Retrieve the Grafana password"
+```bash title="Retrieving the Grafana password"
 kubectl get secret -n simplyblock simplyblock-grafana-secrets \
     -o jsonpath="{.data.MONITORING_SECRET}" | base64 --decode
 ```
 
-The resulting password can be used to log in to Grafana.
-
 ```plain title="Example output for Grafana password"
-[root@demo ~]# kubectl get secret -n simplyblock simplyblock-grafana-secrets \
-    -o jsonpath="{.data.MONITORING_SECRET}" | base64 --decode
 sWbpOgbe3bKnCfcnfaDi
 ```
 
@@ -49,24 +48,28 @@ sWbpOgbe3bKnCfcnfaDi
 Username: `admin`<br/>
 Password: `<PASSWORD>`
 
+!!! warning
+    The chart ships a default value for `controlplane.observability.secret`. It should be replaced with a unique
+    password on every installation.
+
 ## Grafana Dashboards
 
-All dashboards are stored in per-cluster folders. Each cluster contains the following dashboard entries:
+The following dashboards are provisioned:
 
 - Cluster
 - Storage node
 - Device
 - Logical Volume
 - Storage Pool
-- Storage Plane node(s) system monitoring
-- Control Plane node(s) system monitoring
+- FoundationDB
 
 Dashboard widgets are designed to be self-explanatory.
 
-By default, each dashboard contains data for all objects (e.g., all devices) in a cluster. It is, however, possible to
-filter them by particular objects (e.g., devices, storage nodes, or logical volumes) and to change the timescale and
-window.
+By default, each dashboard contains data for all objects (for example, all devices) in a cluster. It is, however,
+possible to filter them by particular objects (for example, devices, storage nodes, or logical volumes) and to change
+the timescale and window.
 
 Dashboards include physical and logical capacity utilization dynamics, IOPS, I/O throughput, and latency dynamics (all
-separate for read, write, and unmap). While all data from the event log is currently stored in Prometheus, they weren't
-used at the time of writing.
+separate for read, write, and unmap).
+
+For capacity readings without Grafana, see [Capacity Metrics API](index.md#capacity-metrics-api).
