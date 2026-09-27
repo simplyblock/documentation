@@ -24,7 +24,7 @@ simplyblock control plane to provision a logical volume matching the requested s
 the complexity of volume creation and ensures that workloads running in Kubernetes receive high-performance, resilient
 block storage directly backed by simplyblock.
 
-## StorageClass Created by a Storage Pool
+## Assigning a StorageClass to a Storage Pool
 
 A StorageClass is assigned to a storage pool by three labels on the class, rather than being named after the pool:
 

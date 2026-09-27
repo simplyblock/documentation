@@ -80,7 +80,7 @@ traffic interruption.
 
 ## Pinned Volume Migration During Node Removal
 
-By default, a PVC annotated with `simplyblock.io/selected-storage-node` blocks node drain. When draining a node (via a
+By default, a PVC annotated with `storage.simplyblock.io/selected-storage-node` blocks node drain. When draining a node (via a
 `StorageNodeOps` with `action: Remove`), the operator will not migrate a pinned volume and will instead emit a
 `PinnedVolumeBlocking` event until the annotation is removed.
 
@@ -94,7 +94,7 @@ Set the annotation value to the target `StorageNode` UUID before triggering drai
 
 ```bash title="Pin a PVC to a specific target node for migration"
 kubectl annotate pvc <pvc-name> -n <namespace> \
-  simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
+  storage.simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
 Find the available storage node UUIDs with:

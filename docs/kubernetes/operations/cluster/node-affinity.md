@@ -50,7 +50,7 @@ On Kubernetes that decision is driven by PVC annotations:
 
 - `simplyblock.io/pod-affinity` places a new volume on the storage node that is co-located with the pod consuming it,
   which is the combination a hyper-converged deployment usually wants.
-- `simplyblock.io/selected-storage-node` pins a volume to a named storage node.
+- `storage.simplyblock.io/selected-storage-node` pins a volume to a named storage node.
 
 Both are described in [Automatic Volume Placement](../../usage/volume-placement.md). They work whether or not node
 affinity is enabled for the cluster, and the difference is what the backend then does with the data. Without node

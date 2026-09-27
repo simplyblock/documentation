@@ -13,24 +13,32 @@ placement is used.
 
 ## Resolution Order
 
-| Order | Mechanism                                           | Annotation                             | Set by               | Applies when                                                                      |
-|-------|-----------------------------------------------------|----------------------------------------|----------------------|-----------------------------------------------------------------------------------|
-| 1     | [Pinning](#pinning-a-volume-to-a-storage-node)      | `simplyblock.io/selected-storage-node` | User                 | The annotation names a storage node.                                              |
-| 2     | [Load-aware placement](#load-aware-placement)       | `simplyblock.io/placement-hint`        | Operator (automatic) | Load-aware placement is enabled for the cluster and an eligible node exists.      |
-| 3     | [Pod co-location](#co-locating-a-volume-with-a-pod) | `simplyblock.io/pod-affinity`          | User                 | The annotation is set to `"true"` and the StorageClass is `WaitForFirstConsumer`. |
-| —     | Default placement                                   | *(none of the above)*                  | —                    | No annotation applies.                                                            |
+| Order | Mechanism                                           | Annotation                                     | Set by               | Applies when                                                                      |
+|-------|-----------------------------------------------------|------------------------------------------------|----------------------|-----------------------------------------------------------------------------------|
+| 1     | [Pinning](#pinning-a-volume-to-a-storage-node)      | `storage.simplyblock.io/selected-storage-node` | User                 | The annotation names a storage node.                                              |
+| 2     | [Load-aware placement](#load-aware-placement)       | `storage.simplyblock.io/placement-hint`        | Operator (automatic) | Load-aware placement is enabled for the cluster and an eligible node exists.      |
+| 3     | [Pod co-location](#co-locating-a-volume-with-a-pod) | `simplyblock.io/pod-affinity`                  | User                 | The annotation is set to `"true"` and the StorageClass is `WaitForFirstConsumer`. |
+| —     | Default placement                                   | *(none of the above)*                          | —                    | No annotation applies.                                                            |
+
+!!! note "Two annotation prefixes"
+    Most of the product's annotation keys have moved from the bare `simplyblock.io/` prefix to the API group's own
+    `storage.simplyblock.io/`. Every spelling is read, and the one above is the one the operator writes, so an
+    object carrying both is answered by the prefixed one.
+
+    `simplyblock.io/pod-affinity` is the exception and has no prefixed spelling yet. It is read under the bare
+    prefix only.
 
 A [clone or a snapshot restore](#clones-and-snapshot-restores) is placed outside this order.
 
 ## Pinning a Volume to a Storage Node
 
-On a new PVC, `simplyblock.io/selected-storage-node` sets the primary node directly. On an already-bound PVC,
+On a new PVC, `storage.simplyblock.io/selected-storage-node` sets the primary node directly. On an already-bound PVC,
 a [migration](../operations/volumes/volume-migration.md#migrating-by-pinning-a-pvc) to the new node is triggered by
 this annotation instead.
 
 ```bash title="Pinning a new PVC to a specific storage node"
 kubectl annotate pvc my-pvc -n simplyblock \
-  simplyblock.io/selected-storage-node=4e53efdd-86c9-424f-940c-e437eb6a2e95
+  storage.simplyblock.io/selected-storage-node=4e53efdd-86c9-424f-940c-e437eb6a2e95
 ```
 
 The value must be a known storage node UUID. Any other value is rejected by a validating webhook. The UUID
@@ -50,21 +58,24 @@ simplyblock-node-v92jx7   vm02.simplyblock3.localdomain   0        0         114
 ## Load-Aware Placement
 
 When load-aware placement selects a node for a new volume, that node is recorded on the PVC in the
-`simplyblock.io/placement-hint` annotation. The hint is written by the operator rather than set by a user,
+`storage.simplyblock.io/placement-hint` annotation. The hint is written by the operator rather than set by a user,
 and it does not pin the volume. A node is eligible when it is online, passes its health check, and is below
 its configured logical volume limit.
 
 Load-aware placement is controlled by the same `StorageCluster` field that also feeds
 [auto-rebalancing's latency benchmark](../operations/volumes/volume-migration.md#auto-rebalancing):
 
-| Field                                         | Type | Default | Description                                                                                                                       |
-|-----------------------------------------------|------|---------|-----------------------------------------------------------------------------------------------------------------------------------|
-| `volumeAutoPlacement.latencyBenchmarkEnabled` | bool | `false` | Enables load-aware placement for new volumes, independent of `volumeAutoPlacement.migrationEnabled` (continuous rebalancer only). |
+| Field                                        | Type | Default | Description                                                                                        |
+|----------------------------------------------|------|---------|----------------------------------------------------------------------------------------------------|
+| `volumeAutoPlacement.enableLatencyBenchmark` | bool | `false` | Enables load-aware placement for new volumes, independent of the continuous rebalancer.            |
+| `volumeAutoPlacement.disableMigration`       | bool | `false` | Turns the continuous rebalancer off while leaving load-aware placement on.                         |
+| `enableVolumeAutoPlacement`                  | bool | `false` | Turns the whole feature on. It is a field of the cluster spec rather than of the block it governs. |
 
 ```yaml title="Enabling load-aware placement for new volumes"
 spec:
+  enableVolumeAutoPlacement: true
   volumeAutoPlacement:
-    latencyBenchmarkEnabled: true
+    enableLatencyBenchmark: true
 ```
 
 ## Co-locating a Volume with a Pod

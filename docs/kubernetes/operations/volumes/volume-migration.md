@@ -149,14 +149,14 @@ kubectl patch persistentvolumeops migrate-pvc-968cff4f \
 ### Migrating by Pinning a PVC
 
 There are also automated processes that create a `PersistentVolumeOps` resource, for example, setting the
-`simplyblock.io/selected-storage-node` annotation on an already-bound PVC. This will effectively migrate the pinned
+`storage.simplyblock.io/selected-storage-node` annotation on an already-bound PVC. This will effectively migrate the pinned
 volume to a new storage node. The operator creates the operation on the user's behalf, as part of moving the volume
 to that node. This is the same annotation that [pins a volume](#pinned-volumes) against auto-rebalancing and
 node removal.
 
 ```bash title="Pin a bound PVC to a new node to trigger a migration"
 kubectl annotate pvc <pvc-name> -n <namespace> \
-  simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
+  storage.simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
 The annotation value must be a known storage node UUID. Any other value is rejected by a validating webhook.
@@ -267,7 +267,7 @@ For how removal coordinates with Kubernetes node cordon/drain and `maxFaultToler
 
 ### Pinned Volumes
 
-A volume is *pinned* when its PVC carries the `simplyblock.io/selected-storage-node` annotation. A pinned
+A volume is *pinned* when its PVC carries the `storage.simplyblock.io/selected-storage-node` annotation. A pinned
 volume is never moved by auto-rebalancing. By default, a pinned volume **blocks** a node removal. Pinned volumes need
 to be explicitly directed to a target node before removal.
 
@@ -276,7 +276,7 @@ it should move *to*:
 
 ```bash title="Direct a pinned volume to a specific target node before removal"
 kubectl annotate pvc <pvc-name> -n <namespace> \
-  simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
+  storage.simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
 | Annotation value                                                  | Removal behavior                                               |

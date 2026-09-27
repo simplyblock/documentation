@@ -57,7 +57,7 @@ unmanaged, for example, because it was created outside Kubernetes.
 
 The drain does not start while any volume blocks it:
 
-- **Pinned volume:** A PVC carrying the `simplyblock.io/selected-storage-node` annotation. A `PinnedVolumeBlocking`
+- **Pinned volume:** A PVC carrying the `storage.simplyblock.io/selected-storage-node` annotation. A `PinnedVolumeBlocking`
   event names how many are affected, and the annotation has to be removed for the drain to proceed. See
   [Pinned Volumes](../volumes/volume-migration.md#pinned-volumes).
 - **Unmanaged volume:** A volume without a `PersistentVolume`. An `UnmanagedVolumeBlocking` event is emitted, and the

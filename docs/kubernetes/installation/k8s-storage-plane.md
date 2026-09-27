@@ -418,7 +418,7 @@ writes by itself belongs to the default pool a `StorageCluster` is created with.
 
 `cluster_id` and `pool_name` are set from the storage pool and cannot be overridden. The remaining StorageClass
 parameters come from `spec.volumeDefaults`. See
-[Storage Class: StorageClass Created by a Storage Pool](../usage/storage-class.md#storageclass-created-by-a-storage-pool)
+[Storage Class: Assigning a StorageClass to a Storage Pool](../usage/storage-class.md#assigning-a-storageclass-to-a-storage-pool)
 for the assignment labels and the full parameter mapping.
 
 A StorageClass's parameters cannot be changed after creation, so `spec.volumeDefaults` is immutable
