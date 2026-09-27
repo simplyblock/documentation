@@ -68,7 +68,12 @@ uses the csi-addons NetworkFence for this.
 Failback returns an application to its original site. It is always a relocation along the reverse DR path, so it
 includes a final synchronization and loses no data. After an unplanned failover, the original site must first be
 recovered and replication back to it must have resumed (the reverse path reports the peer as ready) before the
-failback can run.
+failback can run. Only the changes that accumulated while the target site served the application are replicated
+back.
+
+If the original site is lost entirely, there is no failback in this sense. A rebuilt or a new cluster is added as a
+site, and the application is protected toward it anew, which starts with a full initial synchronization of its
+volumes. The application can then be relocated to that site.
 
 ## Further Reading
 
@@ -77,4 +82,4 @@ failback can run.
 - [Unplanned Failover](../../disaster-recovery/operations/unplanned-failover.md)
 - [Relocate and Restart](../../disaster-recovery/operations/relocate-restart.md)
 - [Recovery Plans](../../disaster-recovery/operations/recovery-plans.md)
-- [Storage-Level Replication](replication.md)
+- [Asynchronous Replication (storage level)](../../kubernetes/operations/data-protection/asynchronous-replication.md)
