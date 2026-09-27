@@ -17,16 +17,22 @@ Before installing, the hub must meet the [Disaster Recovery Requirements](../../
 
 ## Preparing the S3 Credentials
 
-The Kubernetes objects and PV metadata of protected applications are stored in one DR metadata bucket per site. The
-hub chart stores the credential for those buckets as Kubernetes Secrets in the Ramen namespace (`ramen-system`).
+The hub needs S3 credentials per bucket, not per site. Simplyblock DR configures two kinds of buckets, and each has
+its own credential:
 
-!!! note "Which buckets are configured here"
-    The `s3Credentials` value covers the DR metadata buckets of the sites only. The archive bucket has its own
-    credential, configured in [Archive and State Bundle](archive.md). The simplyblock backup buckets are not
-    configured in DR at all: they are part of each storage cluster and are set when it is deployed. See
-    [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+| Credential         | Bucket                                                                                   | Provided with                                                                               | Used by                                                                                                 |
+|--------------------|------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| DR metadata bucket | Kubernetes objects of protected applications (Velero captures) and their volume metadata | The chart value `s3Credentials`, stored as a Secret in the Ramen namespace (`ramen-system`) | The protection plans (`spec.s3Profiles[].secretRef`). The hub distributes the credential to every site. |
+| Archive bucket     | Signed state bundles and reports                                                         | A Secret in the `dr-simplyblock` namespace, see [Archive and State Bundle](archive.md)      | The hub only (`drConfig.spec.archive.credentialsSecretRef`)                                             |
 
-The credential is provided as an AWS credentials file:
+The simplyblock backup buckets of the storage clusters are not configured in DR. They are set when each storage
+cluster is deployed. See [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+
+The sites do not need credentials of their own. All sites use the DR metadata credential that the hub distributes
+to them, so a single DR metadata bucket with a single credential can serve every site of every plan. That bucket must
+not be located at one of the protected sites, since it is needed when that site is lost.
+
+The DR metadata credential is provided as an AWS credentials file:
 
 ```plain title="S3 credentials file (s3-credentials.conf)"
 [default]
@@ -34,10 +40,16 @@ aws_access_key_id = AKIAIOSFODNN7EXAMPLE
 aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 ```
 
-The chart creates one Secret per entry in `s3SecretNames`, each holding the same credential. The secret names are
-referenced later by `spec.s3Profiles[].secretRef` of a [protection plan](../configuration/protection-plans.md). A
-common convention is one secret name per site, so that the per-site stores can be switched to separate credentials
-later without touching the plans.
+The chart stores it as the Secret `ramen-s3-secret`, which the protection plans reference in
+`spec.s3Profiles[].secretRef`. The chart value `s3SecretNames` only renames that Secret or stores the same credential
+under several names. For DR metadata buckets that need different credentials, the additional Secrets are created in
+the Ramen namespace directly, with the keys `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`:
+
+```bash title="Creating a Secret for a second DR metadata bucket with its own credential"
+kubectl --context hub -n ramen-system create secret generic dr-metadata-eu-south \
+  --from-literal=AWS_ACCESS_KEY_ID=<access key id> \
+  --from-literal=AWS_SECRET_ACCESS_KEY=<secret access key>
+```
 
 ## Installing the Chart
 
@@ -51,8 +63,7 @@ helm repo update
 ```bash title="Installing the DR hub"
 helm install dr-simplyblock-hub simplyblock/dr-simplyblock-hub \
   --namespace dr-simplyblock --create-namespace \
-  --set-file s3Credentials=s3-credentials.conf \
-  --set s3SecretNames='{ramen-s3-secret-site-a,ramen-s3-secret-site-b}'
+  --set-file s3Credentials=s3-credentials.conf
 ```
 
 The installation takes several minutes, because the chart first runs the bootstrap Job (see
@@ -62,10 +73,6 @@ Settings beyond the defaults are best kept in a values file. The following examp
 (see [Archive and State Bundle](archive.md)) and the image allow list for hook Jobs:
 
 ```yaml title="Example values file for the hub chart (hub-values.yaml)"
-s3SecretNames:
-  - ramen-s3-secret-site-a
-  - ramen-s3-secret-site-b
-
 bootstrap:
   imageRegistry: ""
 

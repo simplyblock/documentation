@@ -84,14 +84,14 @@ installation, and the simplyblock backup buckets with the storage clusters (see
   a hub where the S3 profiles are configured by other means, for example, an ACM or ODF hub with
   `bootstrap.enabled=false`.
 
-| Field            | Description                                                                                   |
-|------------------|-----------------------------------------------------------------------------------------------|
-| `site`           | Site of the plan the store belongs to.                                                        |
-| `bucket`         | Bucket name.                                                                                  |
-| `endpoint`       | S3 endpoint URL. Any S3-compatible object store is supported.                                 |
-| `region`         | Bucket region.                                                                                |
-| `secretRef`      | Name of a Secret in the Ramen namespace with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. |
-| `caCertificates` | Base64-encoded CA certificates for an endpoint with a private CA.                             |
+| Field            | Description                                                                                                                                 |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `site`           | Site of the plan the store belongs to.                                                                                                      |
+| `bucket`         | Bucket name.                                                                                                                                |
+| `endpoint`       | S3 endpoint URL. Any S3-compatible object store is supported.                                                                               |
+| `region`         | Bucket region.                                                                                                                              |
+| `secretRef`      | Name of a Secret in the Ramen namespace with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, usually `ramen-s3-secret` from the hub chart. |
+| `caCertificates` | Base64-encoded CA certificates for an endpoint with a private CA.                                                                           |
 
 ## Status
 
@@ -106,7 +106,7 @@ Per site pair, it lists the paths and whether replication between the pair is re
 |---------------------|-----------------------------------------------------------------------------|
 | `Derived`           | The replication configuration of the plan is complete and without problems. |
 | `InventoryReady`    | Every site agent has reported its StorageClasses and VolumeSnapshotClasses. |
-| `S3ProfileResolved` | The S3 profile or the per-site stores are configured.                       |
+| `S3ProfileResolved` | The S3 profile or the stores of all sites are configured.                   |
 | `Ready`             | All of the above, and replication is ready for every connected site pair.   |
 
 A plan that is not `Ready` names the missing part in the condition message, for example, a site without a matching
@@ -149,15 +149,15 @@ spec:
       schedulingInterval: 5m
   s3Profiles:
     - site: site-a
-      bucket: dr-site-a
+      bucket: dr-metadata
       endpoint: https://s3.eu-central-1.amazonaws.com
       region: eu-central-1
-      secretRef: ramen-s3-secret-site-a
+      secretRef: ramen-s3-secret
     - site: site-b
-      bucket: dr-site-b
+      bucket: dr-metadata
       endpoint: https://s3.eu-central-1.amazonaws.com
       region: eu-central-1
-      secretRef: ramen-s3-secret-site-b
+      secretRef: ramen-s3-secret
   veleroNamespace: velero
 ```
 

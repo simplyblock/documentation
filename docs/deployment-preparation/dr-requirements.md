@@ -152,26 +152,30 @@ A disaster recovery setup uses three kinds of S3 buckets. They hold different da
 and are configured at different times and in different places. Only the first two are configured in simplyblock DR.
 The third belongs to the simplyblock storage cluster and is configured when that cluster is deployed.
 
-| Bucket                      | Content                                                                                                     | Used for                                                                                    | Configured in                                                                    | Configured when                          |
-|-----------------------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|------------------------------------------|
-| DR metadata bucket per site | Kubernetes objects of protected applications, volume metadata, and the object part of `snapshot-s3` backups | Restoring the application objects on the target site during a failover, relocation, or test | The protection plan (`spec.s3Profiles`), with the credentials from the hub chart | When a protection plan is created        |
-| Archive bucket              | Signed DR state bundles of the hub, and the reports of all recovery actions and tests                       | Rebuilding a lost hub, recovery after a cyberattack, and audits                             | The hub chart (`drConfig.spec.archive`)                                          | When the hub is installed                |
-| Simplyblock backup bucket   | Copy-on-write snapshot backups of the volume data, taken by the storage cluster                             | Storage-level backup and restore, and the volume data of `snapshot-s3` backups              | The storage cluster (`StorageCluster.spec.backup`)                               | When the simplyblock cluster is deployed |
+| Bucket                    | Content                                                                                                     | Used for                                                                                    | Configured in                                                                    | Configured when                          |
+|---------------------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|------------------------------------------|
+| DR metadata bucket        | Kubernetes objects of protected applications, volume metadata, and the object part of `snapshot-s3` backups | Restoring the application objects on the target site during a failover, relocation, or test | The protection plan (`spec.s3Profiles`), with the credentials from the hub chart | When a protection plan is created        |
+| Archive bucket            | Signed DR state bundles of the hub, and the reports of all recovery actions and tests                       | Rebuilding a lost hub, recovery after a cyberattack, and audits                             | The hub chart (`drConfig.spec.archive`)                                          | When the hub is installed                |
+| Simplyblock backup bucket | Copy-on-write snapshot backups of the volume data, taken by the storage cluster                             | Storage-level backup and restore, and the volume data of `snapshot-s3` backups              | The storage cluster (`StorageCluster.spec.backup`)                               | When the simplyblock cluster is deployed |
 
 The three buckets can be served by the same object store, but they should not be the same bucket. The archive bucket
 in particular belongs in a location that survives the loss of the hub and of every site.
 
 ### DR Metadata Buckets
 
-Every site of a protection plan has a DR metadata bucket. During a failover or relocation, the Kubernetes objects of
+Every site of a protection plan names a DR metadata bucket. One bucket with one credential can serve all sites of all
+plans, and this is the simplest setup. Separate buckets per site or per plan are possible as well. During a failover or relocation, the Kubernetes objects of
 the application are restored from it on the target site, and tests read from it as well. The object part of
 `snapshot-s3` backups (the Kubernetes objects and the volume records of the application) is stored here too.
 
 - **Configuration:** Declared per site in the protection plan (`spec.s3Profiles` with bucket, endpoint, region, and
-  credential Secret), or referenced as an existing profile (`spec.s3Profile`). The credential Secrets are created by
-  the hub chart from `s3Credentials` and `s3SecretNames`. See [Install the Hub](../disaster-recovery/install/hub.md)
+  credential Secret), or referenced as an existing profile (`spec.s3Profile`). The credential Secret is created by the
+  hub chart from `s3Credentials` and distributed to the sites by the hub, so the sites need no credentials of their
+  own. See [Install the Hub](../disaster-recovery/install/hub.md)
   and [Protection Plans](../disaster-recovery/configuration/protection-plans.md#s3-profiles).
 - **Reachability:** From the hub and from every site of the plan.
+- **Location:** Outside the protected sites, or at least not only at one of them, since the bucket is needed after
+  the loss of a site.
 
 ### Archive Bucket
 
@@ -360,7 +364,8 @@ of two whole domains, and therefore of one site, is tolerated. The activation ru
 - Every site has a unique cluster name.
 - Network attachment definitions, storage class names, and zone names used by applications are identical on
   source and target sites.
-- A DR metadata bucket per site and an archive bucket exist, reachable from the hub and all sites, with credentials.
+- A DR metadata bucket and an archive bucket exist, each with its own credential, reachable from the hub and all
+  sites.
 - Versioning, object lock (compliance mode), and server-side encryption are enabled on the buckets.
 - Write-only credentials are issued to the hub and sites, and a read-only restore credential and the bundle
   public key are stored offline.

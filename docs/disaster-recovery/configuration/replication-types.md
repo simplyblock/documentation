@@ -125,7 +125,7 @@ The following rules apply when a plan declares several methods:
 | csi-addons NetworkFence                                  | Yes              | No      | No            |
 | Shared storage identity across both sites                | Yes              | No      | No            |
 | Network path for storage replication between sites       | Yes, low latency | Yes     | No            |
-| DR metadata bucket per site                              | Yes              | Yes     | Yes           |
+| DR metadata bucket                                       | Yes              | Yes     | Yes           |
 | Simplyblock backups configured on the storage cluster    | No               | No      | Yes           |
 
 The hardware, network, and S3 requirements are described in

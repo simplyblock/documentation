@@ -30,7 +30,7 @@ in safekeeping outside the clusters:
 
 - **Archive credential:** The S3 credential dr-hub uses to write the archive.
 - **Signing key:** The ed25519 private key that signs the bundles.
-- **Site S3 secrets:** The credentials of the site S3 stores.
+- **DR metadata credential:** The credential of the DR metadata buckets.
 - **Offline restore material:** The public key `bundle-signing.pub` and a read-only S3 credential for the archive.
 
 The signing key pair is created with `dr-restore keygen -out ./keys` during installation. See
@@ -41,7 +41,7 @@ The signing key pair is created with `dr-restore keygen -out ./keys` during inst
 1. **Install a new hub:** Install the hub chart on a new cluster as described in [Install the Hub](../install/hub.md),
    with the same archive configuration.
 2. **Restore the Secrets:** Recreate the archive credential and the signing key Secrets in the `dr-simplyblock`
-   namespace, and the site S3 secrets in the Ramen namespace, from safekeeping.
+   namespace, and the DR metadata credential in the Ramen namespace, from safekeeping.
 3. **Verify the bundle:** List the available generations and verify the one to restore:
 
     ```bash title="Listing and verifying bundles"

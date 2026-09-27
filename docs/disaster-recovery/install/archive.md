@@ -153,7 +153,7 @@ credential. The following material must be kept offline, outside the hub and out
 - **Public key:** `bundle-signing.pub`, used by `dr-restore` to verify a bundle.
 - **Read credential:** An S3 credential that can read the archive bucket. Ideally, the hub's own credential is
   write-only and cannot read or delete bundles.
-- **Secrets:** The archive credential, the signing key, and the Ramen S3 credentials, which are not part of the
+- **Secrets:** The archive credential, the signing key, and the DR metadata credential, which are not part of the
   bundle.
 
 The private signing key `bundle-signing.key` is only needed again when the hub is rebuilt. It should be stored with

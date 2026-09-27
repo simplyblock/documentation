@@ -61,10 +61,10 @@ See [Asynchronous Replication](../../kubernetes/operations/data-protection/async
 
 ## S3 Profiles
 
-The Kubernetes metadata of protected volumes and the captured Kubernetes objects are stored in an S3 bucket per
-site. A plan either names an existing Ramen S3 profile or declares one S3 store per site with bucket,
-endpoint, region, credentials Secret, and optional CA certificates. Every S3-compatible object store can be used.
-The per-site stores must cover exactly the sites of the plan.
+The Kubernetes metadata of protected volumes and the captured Kubernetes objects are stored in a DR metadata bucket.
+A plan either names an existing S3 profile or declares for every site which bucket it uses, with endpoint, region,
+credential Secret, and optional CA certificates. All sites can use the same bucket and the same credential. Every
+S3-compatible object store can be used.
 
 These DR metadata buckets are one of three kinds of S3 buckets in a DR setup. The archive bucket of the hub is
 configured when the hub is installed, and the simplyblock backup buckets, which hold the volume data of `snapshot-s3`
