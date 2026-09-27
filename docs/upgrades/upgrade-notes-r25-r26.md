@@ -1,7 +1,7 @@
 ---
 title: K8s Upgrade With Maintenance Window Upgrade (R25 to R26)
 description: "Maintenance-window procedure to upgrade a Kubernetes cluster from the R25 Helm charts to the R26 Simplyblock Operator, from node shutdown to workload restart."
-weight: 10850
+weight: 20000
 ---
 
 This is the maintenance-window procedure only (Steps 1–11). It assumes **Phase 1** (R25.x cluster deployed)
