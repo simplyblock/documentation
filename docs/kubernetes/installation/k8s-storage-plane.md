@@ -59,7 +59,7 @@ The first step is to create a `StorageCluster` resource. This registers the clus
 control plane. This step does not yet acquire storage devices.
 
 ```yaml title="storage-cluster.yaml"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageCluster
 metadata:
   name: simplyblock-cluster
@@ -100,7 +100,7 @@ been registered, it has no storage nodes yet. Those are added in the next step.
 
 !!! tip "External KMS"
     If volumes in this cluster should offload their encryption keys to an external KMS, set
-    `spec.hashicorpVaultSettings.baseURL` on the `StorageCluster` now. The setting can also be added later, but
+    `spec.kms.vault.endpoint` on the `StorageCluster` now. The setting can also be added later, but
     configuring it upfront means encrypted volumes use the external KMS from day one. See
     [Securing the Control Plane: External KMS](security.md#external-key-management-kms).
 
@@ -162,7 +162,7 @@ When the status becomes `active`, the operator automatically creates a `simplybl
 There is no necessity to manage this secret manually. The operator keeps it up to date and removes the cluster entry
 when the cluster is deleted.
 
-For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator/reference.md#storagenodeset).
+For a full list of configuration options see [Simplyblock Operator: StorageNodeSet](../../reference/operator/index.md#storagenodeset).
 
 !!! warning
     Simplyblock exclusively owns the resources it has been allocated. It must be ensured they are sized correctly
@@ -179,14 +179,15 @@ A storage pool is a grouping of logical volumes and capacity limits within the c
 be created to define a storage pool before being able to provision volumes.
 
 ```yaml title="storage-pool.yaml"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StoragePool
 metadata:
   name: production-pool
   namespace: simplyblock
 spec:
-  clusterName: production
-  capacityLimit: "10T"
+  clusterRef: production
+  limits:
+    capacity: "10T"
 ```
 
 ```bash title="Create the pool"
@@ -204,16 +205,16 @@ Once the pool is active, the operator automatically creates a StorageClass named
 `simplyblock-simplyblock-cluster-production-pool`.
 
 `cluster_id` and `pool_name` are set from the storage pool and cannot be overridden. The remaining StorageClass
-parameters are copied from `spec.storageClassParameters`. See
+parameters are copied from `spec.volumeDefaults`. See
 [Storage Class: StorageClass Created by a Storage Pool](../usage/storage-class.md#storageclass-created-by-a-storage-pool)
 for the full parameter mapping.
 
-A StorageClass's parameters cannot be changed after creation, so `spec.storageClassParameters` is immutable
+A StorageClass's parameters cannot be changed after creation, so `spec.volumeDefaults` is immutable
 once the storage pool is created. A new storage pool is required to provision volumes with different defaults.
 
 !!! warning "Pool limits are read once"
-    `capacityLimit`, `logicalVolumeMaxSize`, and `qos` are sent to the control plane when the pool is created and are
-    not reconciled afterward. Patching one of them on an existing `StoragePool` is accepted by the API server and has
+    The whole of `spec.limits` is sent to the control plane when the pool is created and is not reconciled
+    afterward. Patching one of its fields on an existing `StoragePool` is accepted by the API server and has
     no effect on the pool, so a different capacity limit or a different set of QoS limits requires a new storage pool.
     `allowedNodes` is the exception and is reconciled, see
     [Host Authentication and Encryption](../operations/security/authentication-encryption.md#managing-allowed-nodes).

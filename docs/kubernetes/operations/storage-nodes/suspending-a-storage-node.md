@@ -9,14 +9,14 @@ serves are unaffected. The operation succeeds once the node reports the status `
 
 ```bash title="Suspending a single storage node"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: suspend-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: suspend
+  nodeRef: simplyblock-node-mejue8
+  action: Suspend
 EOF
 ```
 

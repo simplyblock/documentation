@@ -45,8 +45,8 @@ spec:
 
 ## Manual Volume Migration
 
-A manual migration is triggered by creating a [`VolumeMigration`](../../../reference/operator/reference.md#volumemigration)
-resource (short name `vmig`) that names the `PersistentVolume` to move and the UUID of the destination storage node.
+A manual migration is triggered by creating a `VolumeMigration` resource (short name `vmig`) that names the
+`PersistentVolume` to move and the UUID of the destination storage node.
 
 ```bash title="Migrate a single volume to a target node"
 kubectl apply -n simplyblock -f - <<EOF
@@ -201,40 +201,40 @@ spec:
 ## Volume Migration During Node Draining and Removal
 
 When a storage node is removed, the operator evacuates its volumes onto the remaining nodes before the node
-leaves the cluster. Removal is triggered by a `StorageNodeOps` resource with `action: remove`, and the full workflow
+leaves the cluster. Removal is triggered by a `StorageNodeOps` resource with `action: Remove`, and the full workflow
 is described in [Removing a Storage Node](../storage-nodes/removing-a-storage-node.md).
 
 ```bash title="Remove a storage node (drains its volumes first)"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: drain-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: remove
+  nodeRef: simplyblock-node-mejue8
+  action: Remove
 EOF
 ```
 
-While `status.phase` is `Running`, the removal advances through the drain sub-phases tracked in
-`StorageNodeOps.status.subPhase`:
+While `status.phase` is `Running`, the removal advances through the drain steps tracked in
+`StorageNodeOps.status.step.state`:
 
-| Sub-phase    | Description                                                                                           |
-|--------------|-------------------------------------------------------------------------------------------------------|
-| `Validating` | Preconditions are checked and the node's volumes are classified.                                      |
-| `Suspending` | The node is suspended so no new volumes are placed on it.                                             |
-| `Migrating`  | Volumes are migrated off the node. `status.volumesMigrated` / `status.volumesPending` track progress. |
-| `Verifying`  | Migrations are confirmed and system volumes are cleaned up.                                           |
-| `Removing`   | The now-empty node is removed from the cluster.                                                       |
+| Step               | Description                                                                                                     |
+|--------------------|-----------------------------------------------------------------------------------------------------------------|
+| `Validating`       | Preconditions are checked and the node's volumes are classified.                                                |
+| `Suspending`       | The node is suspended so no new volumes are placed on it.                                                       |
+| `MigratingVolumes` | Volumes are migrated off the node. `status.drain.volumesMigrated` / `status.drain.volumesTotal` track progress. |
+| `Verifying`        | Migrations are confirmed and system volumes are cleaned up.                                                     |
+| `Removing`         | The now-empty node is removed from the cluster.                                                                 |
 
 System volumes are excluded from migration and deleted inline during `Verifying`. The set of system volumes
-is matched by `spec.drain.systemVolumeFilterRegex` (default `^sb-fio-baseline-.*` which matches the auto-rebalancer
+is matched by `spec.remove.systemVolumeFilterRegex` (default `^sb-fio-baseline-.*` which matches the auto-rebalancer
 volumes used to measure the system latency).
 
 ```bash title="Watch a node removal drain its volumes"
 kubectl get storagenodeops drain-worker-1 -n simplyblock \
-  -o jsonpath='{.status.subPhase} migrated={.status.volumesMigrated} pending={.status.volumesPending}{"\n"}' -w
+  -o jsonpath='{.status.step.state} migrated={.status.drain.volumesMigrated}/{.status.drain.volumesTotal}{"\n"}' -w
 ```
 
 For how removal coordinates with Kubernetes node cordon/drain and `maxFaultTolerance`, see

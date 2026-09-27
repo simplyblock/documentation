@@ -22,7 +22,7 @@ onto other nodes.
 Node affinity is a cluster-level property, set through `spec.enableNodeAffinity` on the `StorageCluster`.
 
 ```yaml title="Example of a StorageCluster with node affinity enabled (storage-cluster.yaml)"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageCluster
 metadata:
   name: simplyblock-cluster

@@ -10,14 +10,14 @@ was are served through their failover paths until it returns. The operation succ
 
 ```bash title="Shutting down a single storage node"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: shutdown-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: shutdown
+  nodeRef: simplyblock-node-mejue8
+  action: Shutdown
 EOF
 ```
 
@@ -39,14 +39,14 @@ regardless. Forcing a shutdown while data is being moved risks the redundancy of
 that has to go down whatever the state of the cluster is.
 
 ```yaml title="Example of a forced shutdown"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: shutdown-worker-1-forced
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: shutdown
+  nodeRef: simplyblock-node-mejue8
+  action: Shutdown
   force: true
 ```
 

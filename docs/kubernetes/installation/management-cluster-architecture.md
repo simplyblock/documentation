@@ -59,7 +59,7 @@ The control plane ships with no storage configured. Storage clusters are added v
 
 ```bash title="Create a storage cluster"
 kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageCluster
 metadata:
   name: simplyblock-cluster

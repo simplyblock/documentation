@@ -10,14 +10,14 @@ node reports the status `online`.
 
 ```bash title="Restarting a single storage node"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: restart-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: restart
+  nodeRef: simplyblock-node-mejue8
+  action: Restart
 EOF
 ```
 
@@ -25,14 +25,14 @@ Two optional fields apply to a restart. With `force` the backend request carries
 `reattachVolume` the volumes of the node are reattached as part of the restart.
 
 ```yaml title="Example of a forced restart that reattaches the volumes"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: restart-worker-1-forced
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: restart
+  nodeRef: simplyblock-node-mejue8
+  action: Restart
   force: true
   reattachVolume: true
 ```

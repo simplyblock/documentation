@@ -18,7 +18,7 @@ workers are assigned to groups through the operator resources.
 Failure-domain mode is a cluster-level property, set through `spec.enableFailureDomains` on the `StorageCluster`.
 
 ```yaml title="Example of a StorageCluster with failure domains enabled (storage-cluster.yaml)"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageCluster
 metadata:
   name: simplyblock-cluster

@@ -4,12 +4,12 @@ description: "Drain and remove a simplyblock storage node with the remove action
 weight: 10240
 ---
 
-The `remove` action of a `StorageNodeOps` resource takes a storage node out of the cluster. It is a drain, not a
+The `Remove` action of a `StorageNodeOps` resource takes a storage node out of the cluster. It is a drain, not a
 delete: the node's volumes are migrated onto the remaining nodes first, and only an empty node is removed. The
-operation runs through five sub-phases and reports how far the evacuation has progressed.
+operation runs through five steps and reports how far the evacuation has progressed.
 
 !!! danger
-    A storage node that is removed without being drained makes the logical volumes it owns inaccessible. The `remove`
+    A storage node that is removed without being drained makes the logical volumes it owns inaccessible. The `Remove`
     action is the only supported way to take a node out of a cluster. To move a node to a different host instead, use
     [Migrating a Storage Node](migrating-a-storage-node.md), which keeps the node and its volumes.
 
@@ -17,14 +17,14 @@ operation runs through five sub-phases and reports how far the evacuation has pr
 
 ```bash title="Removing a storage node"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: drain-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: remove
+  nodeRef: simplyblock-node-mejue8
+  action: Remove
 EOF
 ```
 
@@ -37,17 +37,17 @@ The name of the target `StorageNode` is read from the cluster, as described in
 
 A removal always runs unforced, so `spec.force` has no effect on it.
 
-## Sub-Phases
+## Steps
 
-The removal progresses through the sub-phases below, tracked in `status.subPhase` while `status.phase` is `Running`.
+The removal progresses through the steps below, tracked in `status.step.state` while `status.phase` is `Running`.
 
-| Sub-phase    | Description                                                                      |
-|--------------|----------------------------------------------------------------------------------|
-| `Validating` | The node's volumes are classified and the preconditions for a drain are checked. |
-| `Suspending` | The node is suspended so that no new volume is placed on it.                     |
-| `Migrating`  | The volumes are migrated off the node, one `VolumeMigration` per volume.         |
-| `Verifying`  | The node is confirmed empty, and the system volumes left on it are deleted.      |
-| `Removing`   | The empty node is deleted from the cluster.                                      |
+| Step               | Description                                                                      |
+|--------------------|----------------------------------------------------------------------------------|
+| `Validating`       | The node's volumes are classified and the preconditions for a drain are checked. |
+| `Suspending`       | The node is suspended so that no new volume is placed on it.                     |
+| `MigratingVolumes` | The volumes are migrated off the node, one migration per volume.                 |
+| `Verifying`        | The node is confirmed empty, and the system volumes left on it are deleted.      |
+| `Removing`         | The empty node is deleted from the cluster.                                      |
 
 ### Validating
 
@@ -81,7 +81,7 @@ Progress is counted in the operation status.
 
 ```bash title="Watching the evacuation progress"
 kubectl get storagenodeops drain-worker-1 -n simplyblock \
-    -o jsonpath='{.status.subPhase}{" migrated="}{.status.volumesMigrated}{" pending="}{.status.volumesPending}{"\n"}' -w
+    -o jsonpath='{.status.step.state}{" migrated="}{.status.drain.volumesMigrated}{"/"}{.status.drain.volumesTotal}{"\n"}' -w
 ```
 
 A migration that fails or is aborted is deleted and created again, which picks a new target, and a `MigrationRetry`

@@ -9,14 +9,14 @@ succeeds once the node reports the status `online`.
 
 ```bash title="Resuming a suspended storage node"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: resume-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: resume
+  nodeRef: simplyblock-node-mejue8
+  action: Resume
 EOF
 ```
 

@@ -110,20 +110,20 @@ three is configurable through the operator, which exposes the endpoint URL alone
 
 ### Point the StorageCluster to the KMS
 
-Set `spec.hashicorpVaultSettings.baseURL` on the `StorageCluster` resource:
+Set `spec.kms.vault.endpoint` on the `StorageCluster` resource:
 
 ```yaml title="StorageCluster with external KMS"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageCluster
 metadata:
   name: simplyblock-cluster
   namespace: simplyblock
 spec:
-  clusterName: production
   fabricType: tcp
   ...
-  hashicorpVaultSettings:
-    baseURL: "https://vault.vault:8200/"
+  kms:
+    vault:
+      endpoint: "https://vault.vault:8200/"
 ```
 
 This setting is automatically picked up by the operator during the next reconcilation cycle. From that point on, volume

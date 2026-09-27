@@ -14,7 +14,7 @@ on its own page.
 
 ## Finding the Target Node
 
-The `spec.storageNodeRef` field names a `StorageNode` resource, not a Kubernetes worker. The name is generated when
+The `spec.nodeRef` field names a `StorageNode` resource, not a Kubernetes worker. The name is generated when
 the node is enrolled and does not encode the worker or the NUMA socket, so it has to be read from the cluster.
 
 ```bash title="Listing the storage nodes with their workers"
@@ -35,47 +35,47 @@ instance. The `SOCKET` and `NODEIDX` columns tell them apart.
 
 ```bash title="Requesting an operation against a storage node"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: restart-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: restart
+  nodeRef: simplyblock-node-mejue8
+  action: Restart
 EOF
 ```
 
 | Action     | Effect                                                           | Expected node status | Page                                                            |
 |------------|------------------------------------------------------------------|----------------------|-----------------------------------------------------------------|
-| `shutdown` | Stops the storage node.                                          | `offline`            | [Shutting Down a Storage Node](shutting-down-a-storage-node.md) |
-| `restart`  | Stops and starts the storage node.                               | `online`             | [Restarting a Storage Node](restarting-a-storage-node.md)       |
-| `suspend`  | Keeps the node running but stops new volumes being placed on it. | `suspended`          | [Suspending a Storage Node](suspending-a-storage-node.md)       |
-| `resume`   | Returns a suspended node to normal service.                      | `online`             | [Resuming a Storage Node](resuming-a-storage-node.md)           |
-| `migrate`  | Moves the node onto a different Kubernetes worker.               | `online`             | [Migrating a Storage Node](migrating-a-storage-node.md)         |
-| `remove`   | Drains the volumes off the node and removes it.                  | removed              | [Removing a Storage Node](removing-a-storage-node.md)           |
+| `Shutdown` | Stops the storage node.                                          | `offline`            | [Shutting Down a Storage Node](shutting-down-a-storage-node.md) |
+| `Restart`  | Stops and starts the storage node.                               | `online`             | [Restarting a Storage Node](restarting-a-storage-node.md)       |
+| `Suspend`  | Keeps the node running but stops new volumes being placed on it. | `suspended`          | [Suspending a Storage Node](suspending-a-storage-node.md)       |
+| `Resume`   | Returns a suspended node to normal service.                      | `online`             | [Resuming a Storage Node](resuming-a-storage-node.md)           |
+| `Migrate`  | Moves the node onto a different Kubernetes worker.               | `online`             | [Migrating a Storage Node](migrating-a-storage-node.md)         |
+| `Remove`   | Drains the volumes off the node and removes it.                  | removed              | [Removing a Storage Node](removing-a-storage-node.md)           |
 
-`spec.storageNodeRef` and `spec.action` are immutable. A repeat of the same operation requires a new resource.
+`spec.nodeRef` and `spec.action` are immutable. A repeat of the same operation requires a new resource.
 
 ### Optional Fields
 
 | Field            | Type | Applies to                                 | Description                                           |
 |------------------|------|--------------------------------------------|-------------------------------------------------------|
-| `force`          | bool | `shutdown`, `restart`, `suspend`, `resume` | Sends the request with the backend's force flag set.  |
-| `reattachVolume` | bool | `restart`                                  | Reattaches the node's volumes as part of the restart. |
+| `force`          | bool | `Shutdown`, `Restart`, `Suspend`, `Resume` | Sends the request with the backend's force flag set.  |
+| `reattachVolume` | bool | `Restart`                                  | Reattaches the node's volumes as part of the restart. |
 
 Both fields are ignored by the actions they do not apply to. A node removal always runs unforced, so `force` has no
-effect on `action: remove`.
+effect on `action: Remove`.
 
 ```yaml title="Example of a forced restart that reattaches the volumes"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: restart-worker-1-forced
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: restart
+  nodeRef: simplyblock-node-mejue8
+  action: Restart
   force: true
   reattachVolume: true
 ```

@@ -19,31 +19,33 @@ Simplyblock Operator. No host NQN has to be registered, and no key has to be pro
 
 ## Enable Host Authentication and Encryption
 
-Security is configured per storage pool and is disabled by default. It is enabled by setting `dhchap` on the
-`StoragePool` and listing the worker nodes that are allowed to connect to the pool in `allowedNodes`.
+Security is configured per storage pool and is disabled by default. It is enabled by setting
+`spec.volumeDefaults.enableDHCHAP` on the `StoragePool` and listing the worker nodes that are allowed to connect to
+the pool in `allowedNodes`.
 
 ```yaml title="Example of a StoragePool with DHCHAP enabled for two worker nodes"
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StoragePool
 metadata:
   name: pool-a
   namespace: simplyblock
 spec:
-  clusterName: cluster-a
-  dhchap: true
+  clusterRef: cluster-a
   allowedNodes:
     - worker-1
     - worker-2
+  volumeDefaults:
+    enableDHCHAP: true
 ```
 
-The DH-HMAC-CHAP keys of the pool are generated as soon as `dhchap` is set. Authentication is only enforced once
-`allowedNodes` is non-empty.
+The DH-HMAC-CHAP keys of the pool are generated as soon as `enableDHCHAP` is set. Authentication is only enforced
+once `allowedNodes` is non-empty.
 
 Both fields belong in the manifest that creates the pool. The `StorageClass` generated for the pool is only
-restricted to the allowed nodes when `dhchap` is `true` and `allowedNodes` is non-empty at the moment the class is
-created, and `parameters` and `allowedTopologies` cannot be patched afterward. A pool created with `dhchap: true` and
-an empty `allowedNodes` therefore keeps an unrestricted `StorageClass` for the rest of its life, even once nodes are
-added to the list. Recreating the pool is the only way to correct this.
+restricted to the allowed nodes when `enableDHCHAP` is `true` and `allowedNodes` is non-empty at the moment the class
+is created, and `parameters` and `allowedTopologies` cannot be patched afterward. A pool created with
+`enableDHCHAP: true` and an empty `allowedNodes` therefore keeps an unrestricted `StorageClass` for the rest of its
+life, even once nodes are added to the list. Recreating the pool is the only way to correct this.
 
 ## Reconciliation by the Operator
 
@@ -51,7 +53,7 @@ Once the storage pool is created, host registration and node scheduling are reco
 
 - **Allowed hosts:** each node in `allowedNodes` is registered as an allowed host of the pool, under a deterministic
   NQN derived from that node's Kubernetes UID (`nqn.2014-08.io.simplyblock:uuid:<node-uid>`).
-- **Node labels:** each allowed node is labeled `simplyblock.io/pool.<namespace>.<cluster>.<pool>=allowed`, and the
+- **Node labels:** each allowed node is labeled `storage.simplyblock.io/storage-pool.<pool-uuid>=allowed`, and the
   label is removed again from every node that leaves the list.
 - **First scheduling decision:** the generated `StorageClass` is restricted to that label through `allowedTopologies`,
   so the first `Pod` to consume a `PersistentVolumeClaim` of this pool can only be scheduled onto an allowed node.
@@ -63,8 +65,8 @@ Once the storage pool is created, host registration and node scheduling are reco
 
 ## Managing Allowed Nodes
 
-`dhchap` is immutable, because the `parameters` and `allowedTopologies` of the generated `StorageClass` cannot be
-patched in the Kubernetes API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes and updates
+`spec.volumeDefaults` is immutable, because the `parameters` and `allowedTopologies` of the generated `StorageClass`
+cannot be patched in the Kubernetes API once it exists. `allowedNodes` stays mutable. Changing it relabels the nodes and updates
 the pool's allowed hosts, and it never rewrites the `StorageClass`.
 
 A node removed from `allowedNodes` loses its label, and its NQN is removed from the allowed hosts of the pool and of
@@ -85,7 +87,8 @@ The nodes carrying the pool's label are listed through a label selector. The res
 
 ```bash title="Listing the nodes labeled as allowed for a storage pool"
 kubectl get nodes \
-    -l simplyblock.io/pool.simplyblock.cluster-a.pool-a=allowed
+    -l storage.simplyblock.io/storage-pool.$(kubectl get storagepool pool-a -n simplyblock \
+        -o jsonpath='{.status.uuid}')=allowed
 ```
 
 Whether the generated `StorageClass` restricts scheduling at all is visible in its `allowedTopologies`. An empty result
@@ -113,7 +116,7 @@ The node is either missing from `allowedNodes` or the pool has not converged yet
 [Verifying the Configuration](#verifying-the-configuration).
 
 See the [Operator Reference](../../../reference/operator/reference.md) for the full `StoragePool` field list, and
-[Storage Class](../../usage/storage-class.md) for the `dhchap_node_label` parameter this generates.
+[Storage Class](../../usage/storage-class.md) for the `dhchap_node_selector` parameter this generates.
 
 For a detailed explanation of the security mechanisms and configuration, see
 [NVMe-oF Security](../../../architecture/concepts/nvmf-security.md). The equivalent flow for a plain Linux

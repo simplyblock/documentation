@@ -27,28 +27,29 @@ which is a data movement across the cluster.
 
 ## Relocating the Node
 
-The `migrate` action moves a storage node onto a different Kubernetes worker. The node keeps its UUID and its volumes,
+The `Migrate` action moves a storage node onto a different Kubernetes worker. The node keeps its UUID and its volumes,
 and the cluster rebalances afterward.
 
 This is the procedure for a host that is being replaced, decommissioned, or taken out of the storage plane while its
 storage node lives on.
 
 1. Bring the replacement worker into the cluster and confirm it is `Ready`. The devices it offers have to match what
-   the node expects, either at the same PCIe addresses as on the old host or declared through `spec.newSsdPcie`.
-2. Create a `StorageNodeOps` resource with `action: migrate` and the new worker as `targetWorkerNode`.
+   the node expects, either at the same PCIe addresses as on the old host or declared through `spec.migrate.newSsdPcie`.
+2. Create a `StorageNodeOps` resource with `action: Migrate` and the new worker as `targetWorkerNode`.
 3. Follow the operation to `Succeeded`.
 
 ```bash title="Relocating a storage node onto a replacement worker"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: replace-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: migrate
-  targetWorkerNode: worker-9.example.com
+  nodeRef: simplyblock-node-mejue8
+  action: Migrate
+  migrate:
+    targetWorkerNode: worker-9.example.com
 EOF
 ```
 
@@ -69,21 +70,21 @@ is why it is the recommended sequence.
    [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md).
 2. **Finalize the expansion** with the `expand` action, if the node was added without the expansion flag, see
    [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md#finalizing-an-expansion-of-nodes-added-without-the-flag).
-3. **Drain and remove the old node** with a `StorageNodeOps` resource carrying `action: remove`. Its volumes are
+3. **Drain and remove the old node** with a `StorageNodeOps` resource carrying `action: Remove`. Its volumes are
    migrated onto the remaining nodes, including the one just added, before the node leaves the cluster. See
    [Removing a Storage Node](removing-a-storage-node.md).
 4. **Verify** that the old node is gone and every volume is accounted for.
 
 ```bash title="Removing the retired node once the replacement is online"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: retire-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: remove
+  nodeRef: simplyblock-node-mejue8
+  action: Remove
 EOF
 ```
 

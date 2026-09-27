@@ -13,6 +13,7 @@ Run scripts/operator-reference-gen.sh from the documentation repository.
 
 ## Packages
 - [metrics.simplyblock.io/v1alpha2](#metricssimplyblockiov1alpha2)
+- [storage.simplyblock.io/v1alpha1](#storagesimplyblockiov1alpha1)
 - [storage.simplyblock.io/v1alpha2](#storagesimplyblockiov1alpha2)
 
 
@@ -129,6 +130,479 @@ zz_generated.openapi.go, which is also what makes `kubectl explain` work.
 
 
 
+
+
+
+## storage.simplyblock.io/v1alpha1
+
+Package v1alpha1 contains API Schema definitions for the simplyblock v1alpha1 API group.
+
+### Resource Types
+- [ReplicationOps](#replicationops)
+- [ReplicationPair](#replicationpair)
+- [ReplicationPolicy](#replicationpolicy)
+- [ReplicationSlot](#replicationslot)
+
+
+
+#### ReplicationOps
+
+
+
+ReplicationOps is a one-shot user-driven CR for imperative replication operations:
+failover (planned or unplanned) and failback. The operator drives the backend calls
+to completion and records per-volume outcomes in status.results. Only one ReplicationOps
+may be active per ReplicationPolicy at a time, enforced via ReplicationPolicy.status.activeOpsRef.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationOps
+metadata:
+  name: string
+spec:
+  action: string
+  scope: string
+  ref: string
+  sourceClusterID: string
+  deleteSource: boolean
+status:
+  phase: string
+  subphase: string
+  message: string
+  startedAt: Time
+  completedAt: Time
+  results:
+    - slotRef: string
+      status: string
+      detail: string
+      targetLvolID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `ReplicationOps` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationOpsSpec](#replicationopsspec)_ |  |  |  |
+| `status` _[ReplicationOpsStatus](#replicationopsstatus)_ |  |  |  |
+
+
+
+
+#### ReplicationOpsResult
+
+
+
+ReplicationOpsResult holds the outcome for a single volume in a ReplicationOps.
+
+
+
+_Appears in:_
+- [ReplicationOpsStatus](#replicationopsstatus)
+
+_Example:_
+
+```yaml
+slotRef: string
+status: string
+detail: string
+targetLvolID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `slotRef` _string_ | SlotRef is the name of the ReplicationSlot CR. |  |  |
+| `status` _string_ | Status is the outcome for this volume. |  | Enum: [succeeded skipped failed] <br /> |
+| `detail` _string_ | Detail is an optional human-readable note (error message or skip reason). |  | Optional: \{\} <br /> |
+| `targetLvolID` _string_ | TargetLvolID is the UUID of the volume on the target cluster (failover only). |  | Optional: \{\} <br /> |
+
+
+
+
+#### ReplicationOpsSpec
+
+
+
+ReplicationOpsSpec defines the desired state of a ReplicationOps.
+
+
+
+_Appears in:_
+- [ReplicationOps](#replicationops)
+
+_Example:_
+
+```yaml
+action: string
+scope: string
+ref: string
+sourceClusterID: string
+deleteSource: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `action` _string_ | Action is the operation to perform. Immutable.<br />failover:  unplanned — promote target clone, source may be down.<br />failback:  restore source as primary after a prior failover.<br />migration: planned cutover — calls replication_commit per volume; both clusters stay up.<br />           State progression: replicating → cutover_pending → cutover_done. |  | Enum: [failover failback migration] <br />Required: \{\} <br /> |
+| `scope` _string_ | Scope controls which volumes are affected. Immutable.<br />target: all volumes across every policy that uses the named ReplicationPair.<br />policy: all volumes managed by the named ReplicationPolicy CR.<br />volume: a single ReplicationSlot (planned or unplanned per-volume operation). |  | Enum: [target policy volume] <br />Required: \{\} <br /> |
+| `ref` _string_ | Ref is the name of the resource identified by Scope:<br />a ReplicationPair name for scope=target,<br />a ReplicationPolicy name for scope=policy,<br />or a ReplicationSlot name for scope=volume. Immutable. |  | Required: \{\} <br /> |
+| `sourceClusterID` _string_ | SourceClusterID is used for failback only. Omit to recover to the original source. |  | Optional: \{\} <br /> |
+| `deleteSource` _boolean_ | DeleteSource instructs the backend to delete the old volume after a<br />successful cutover. For migration it deletes the original source volume;<br />for failback it deletes the failed-over volume on the target cluster. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationOpsStatus
+
+
+
+ReplicationOpsStatus holds the observed state of a ReplicationOps.
+
+
+
+_Appears in:_
+- [ReplicationOps](#replicationops)
+
+_Example:_
+
+```yaml
+phase: string
+subphase: string
+message: string
+startedAt: Time
+completedAt: Time
+results:
+  - slotRef: string
+    status: string
+    detail: string
+    targetLvolID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phase` _string_ | Phase is the current lifecycle phase of this operation. |  | Enum: [Pending Running Succeeded Failed] <br />Optional: \{\} <br /> |
+| `subphase` _string_ | Subphase describes what the operation is currently doing within the phase<br />(e.g. "TriggeringFailover", "UpdatingSlotStatuses", "ReleasingLock"). |  | Optional: \{\} <br /> |
+| `message` _string_ | Message is a human-readable description of the current phase. |  | Optional: \{\} <br /> |
+| `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the operation began. |  | Optional: \{\} <br /> |
+| `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the operation finished (successfully or not). |  | Optional: \{\} <br /> |
+| `results` _[ReplicationOpsResult](#replicationopsresult) array_ | Results holds a per-volume summary of the operation outcome. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationPair
+
+
+
+ReplicationPair defines the source and target clusters for a replication relationship.
+It is reusable configuration — multiple ReplicationPolicies may reference the same pair
+to replicate volumes between the same two clusters with different schedules or retention.
+The operator ensures the corresponding backend ReplicationTarget exists and stores its ID
+in status.backendTargetID for use by ReplicationPolicy resources.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationPair
+metadata:
+  name: string
+spec:
+  sourceCluster: string
+  targetCluster: string
+status:
+  ready: boolean
+  backendTargetID: string
+  message: string
+  conditions:
+    - Condition
+  activeOpsRef: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `ReplicationPair` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationPairSpec](#replicationpairspec)_ |  |  |  |
+| `status` _[ReplicationPairStatus](#replicationpairstatus)_ |  |  |  |
+
+
+#### ReplicationPairSpec
+
+
+
+ReplicationPairSpec defines the source and target clusters for a replication relationship.
+
+
+
+_Appears in:_
+- [ReplicationPair](#replicationpair)
+
+_Example:_
+
+```yaml
+sourceCluster: string
+targetCluster: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `sourceCluster` _string_ | SourceCluster is the name of the local StorageCluster (the replication source). |  | Required: \{\} <br /> |
+| `targetCluster` _string_ | TargetCluster is the name or UUID of the remote cluster (the replication target).<br />Immutable after creation. |  | Required: \{\} <br /> |
+
+
+#### ReplicationPairStatus
+
+
+
+ReplicationPairStatus holds the observed state of a ReplicationPair.
+
+
+
+_Appears in:_
+- [ReplicationPair](#replicationpair)
+
+_Example:_
+
+```yaml
+ready: boolean
+backendTargetID: string
+message: string
+conditions:
+  - Condition
+activeOpsRef: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ready` _boolean_ | Ready is true when the backend ReplicationTarget has been created and is available. |  | Optional: \{\} <br /> |
+| `backendTargetID` _string_ | BackendTargetID is the UUID of the backend ReplicationTarget resource. |  | Optional: \{\} <br /> |
+| `message` _string_ | Message provides a human-readable description of the current state. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions holds standard Kubernetes condition types. |  | Optional: \{\} <br /> |
+| `activeOpsRef` _string_ | ActiveOpsRef is the name of the ReplicationOps currently holding the<br />target-scope lock on this pair. Only one scope=target ReplicationOps may<br />be active per pair at a time. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationPolicy
+
+
+
+ReplicationPolicy defines the replication schedule and retention for volumes replicated
+between the clusters defined by a ReplicationPair.
+A StorageClass or PVC references a policy via the storage.simplyblock.io/replication-policy
+annotation. The operator automatically creates one ReplicationSlot per bound PVC.
+Deletion is blocked while any ReplicationSlots reference this policy.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationPolicy
+metadata:
+  name: string
+spec:
+  pairRef: string
+  mode: string
+  interval: string
+  snapshotRetention: integer
+status:
+  ready: boolean
+  backendPolicyID: string
+  slotCount: integer
+  activeOpsRef: string
+  conditions:
+    - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `ReplicationPolicy` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationPolicySpec](#replicationpolicyspec)_ |  |  |  |
+| `status` _[ReplicationPolicyStatus](#replicationpolicystatus)_ |  |  |  |
+
+
+#### ReplicationPolicySpec
+
+
+
+ReplicationPolicySpec defines the desired replication schedule and retention.
+
+
+
+_Appears in:_
+- [ReplicationPolicy](#replicationpolicy)
+
+_Example:_
+
+```yaml
+pairRef: string
+mode: string
+interval: string
+snapshotRetention: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `pairRef` _string_ | PairRef is the name of the ReplicationPair that defines the source and target clusters.<br />Multiple ReplicationPolicies may reference the same pair with different schedules. |  | Required: \{\} <br /> |
+| `mode` _string_ | Mode controls replication semantics.<br />failover: target is a DR standby; volumes are read-only on the target.<br />migration: planned online cutover to the target cluster. | failover | Enum: [failover migration] <br />Optional: \{\} <br /> |
+| `interval` _string_ | Interval is how often a replication snapshot is taken (e.g. "5m", "1h"). | 5m | Optional: \{\} <br /> |
+| `snapshotRetention` _integer_ | SnapshotRetention is the minimum number of snapshots to retain on the target. | 3 | Minimum: 2 <br />Optional: \{\} <br /> |
+
+
+#### ReplicationPolicyStatus
+
+
+
+ReplicationPolicyStatus holds the observed state of a ReplicationPolicy.
+
+
+
+_Appears in:_
+- [ReplicationPolicy](#replicationpolicy)
+
+_Example:_
+
+```yaml
+ready: boolean
+backendPolicyID: string
+slotCount: integer
+activeOpsRef: string
+conditions:
+  - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `ready` _boolean_ | Ready is true when the backend ReplicationPolicy has been created. |  | Optional: \{\} <br /> |
+| `backendPolicyID` _string_ | BackendPolicyID is the UUID of the backend ReplicationPolicy resource. |  | Optional: \{\} <br /> |
+| `slotCount` _integer_ | SlotCount is the number of ReplicationSlot CRs currently managed by this policy. |  | Optional: \{\} <br /> |
+| `activeOpsRef` _string_ | ActiveOpsRef is the name of the currently running ReplicationOps CR.<br />Empty when no operation is in progress. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions holds standard Kubernetes condition types. |  | Optional: \{\} <br /> |
+
+
+#### ReplicationSlot
+
+
+
+ReplicationSlot tracks the live replication state for a single PVC.
+One ReplicationSlot is created per PVC by the PVCAnnotationWatcher controller when
+a PVC references a ReplicationPolicy via annotation. It is owned by its PVC, so
+deleting the PVC cascades deletion and triggers a backend detach via the slot finalizer.
+The ReplicationSlot reconciler drives all backend calls: attach, monitor, cutover,
+failover, and detach.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationSlot
+metadata:
+  name: string
+spec:
+  policyRef: string
+  pvcRef: string
+  volumeID: string
+status:
+  state: string
+  direction: string
+  sourceLvolID: string
+  targetLvolID: string
+  targetNQN: string
+  lastReplicatedAt: Time
+  message: string
+  conditions:
+    - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha1` | | |
+| `kind` _string_ | `ReplicationSlot` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[ReplicationSlotSpec](#replicationslotspec)_ |  |  |  |
+| `status` _[ReplicationSlotStatus](#replicationslotstatus)_ |  |  |  |
+
+
+
+
+#### ReplicationSlotSpec
+
+
+
+ReplicationSlotSpec defines the identity of a per-volume replication slot.
+
+
+
+_Appears in:_
+- [ReplicationSlot](#replicationslot)
+
+_Example:_
+
+```yaml
+policyRef: string
+pvcRef: string
+volumeID: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `policyRef` _string_ | PolicyRef is the name of the ReplicationPolicy governing this slot. Immutable. |  | Required: \{\} <br /> |
+| `pvcRef` _string_ | PVCRef is the name of the PVC being replicated. Immutable. |  | Required: \{\} <br /> |
+| `volumeID` _string_ | VolumeID is the backend lvol UUID of the source volume. Immutable.<br />Format: "<clusterUUID>:<poolUUID>:<volumeUUID>" |  | Required: \{\} <br /> |
+
+
+
+
+#### ReplicationSlotStatus
+
+
+
+ReplicationSlotStatus holds the observed state of a ReplicationSlot.
+
+
+
+_Appears in:_
+- [ReplicationSlot](#replicationslot)
+
+_Example:_
+
+```yaml
+state: string
+direction: string
+sourceLvolID: string
+targetLvolID: string
+targetNQN: string
+lastReplicatedAt: Time
+message: string
+conditions:
+  - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `state` _string_ | State is the current replication state for this slot. |  | Enum: [attaching replicating cutover_pending cutover_done failed_over detaching error] <br />Optional: \{\} <br /> |
+| `direction` _string_ | Direction is which side of the replication relationship this cluster holds. |  | Enum: [source target] <br />Optional: \{\} <br /> |
+| `sourceLvolID` _string_ | SourceLvolID is the UUID of the source volume on the source cluster. |  | Optional: \{\} <br /> |
+| `targetLvolID` _string_ | TargetLvolID is the UUID of the replicated volume on the target cluster. |  | Optional: \{\} <br /> |
+| `targetNQN` _string_ | TargetNQN is the NVMe NQN on the target cluster (populated after failover). |  | Optional: \{\} <br /> |
+| `lastReplicatedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastReplicatedAt is the timestamp of the last successful replication snapshot. |  | Optional: \{\} <br /> |
+| `message` _string_ | Message provides a human-readable description of the current state. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions holds standard Kubernetes condition types. |  | Optional: \{\} <br /> |
 
 
 

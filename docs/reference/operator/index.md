@@ -16,16 +16,19 @@ The operator manages the following Custom Resource Definitions (CRDs):
 | CRD                                             | Short Name | Description                                                        |
 |-------------------------------------------------|------------|--------------------------------------------------------------------|
 | [`StorageCluster`](reference.md#storagecluster) | -          | Creates and manages a simplyblock storage cluster                  |
-| [`StorageNodeSet`](reference.md#storagenodeset) | -          | Fleet-level declarative management of storage nodes across workers |
+| `StorageNodeSet`                                | -          | Fleet-level declarative management of storage nodes across workers |
 | [`StorageNode`](reference.md#storagenode)       | -          | Represents a single backend storage node instance (auto-created)   |
 | [`StorageNodeOps`](reference.md#storagenodeops) | -          | One-shot operational action targeting a single storage node        |
 | [`StoragePool`](reference.md#storagepool)       | -          | Creates and manages storage pools                                  |
-| [`Task`](reference.md#task)                     | -          | Monitors cluster tasks and their status                            |
+| `Task`                                          | -          | Monitors cluster tasks and their status                            |
 | [`StorageBackup`](reference.md#storagebackup)   | -          | Creates a one-time backup of a PVC to S3                           |
-| [`BackupRestore`](reference.md#backuprestore)   | -          | Restores a backup into a new PVC                                   |
-| [`BackupPolicy`](reference.md#backuppolicy)     | -          | Defines an automated backup schedule for PVCs                      |
+| `BackupRestore`                                 | -          | Restores a backup into a new PVC                                   |
+| `BackupPolicy`                                  | -          | Defines an automated backup schedule for PVCs                      |
 
-All CRDs use the API group `storage.simplyblock.io/v1alpha1`.
+`StorageCluster`, `StorageNode`, `StorageNodeOps`, `StoragePool`, and `StorageBackup` are served at
+`storage.simplyblock.io/v1alpha2`, which is their storage version. `StorageNodeSet`, `Task`, `BackupRestore`, and
+`BackupPolicy` are served at `storage.simplyblock.io/v1alpha1` only, and the generated reference does not cover
+them.
 
 For the complete generated field reference, see [Simplyblock Operator Reference](reference.md).
 
@@ -78,7 +81,8 @@ spec:
     - worker-3.example.com
 ```
 
-The complete set of `StorageNodeSet` fields is available in [StorageNodeSet reference](reference.md#storagenodeset).
+`StorageNodeSet` is a `storage.simplyblock.io/v1alpha1` kind and is not part of the generated reference. Its fields
+are the ones described above.
 
 ## StorageNode
 
@@ -361,7 +365,8 @@ spec:
   taskID: "abc123"   # optional: filter to a specific task
 ```
 
-The complete set of `Task` fields is available in [Task reference](reference.md#task).
+`Task` is a `storage.simplyblock.io/v1alpha1` kind and is not part of the generated reference. Its fields are the
+ones described above.
 
 ## StorageBackup
 
@@ -412,7 +417,8 @@ spec:
 !!! warning
     `BackupRestore` can only restore a PVC to the same namespace as the restore object.
 
-The complete set of `BackupRestore` fields is available in [BackupRestore reference](reference.md#backuprestore).
+`BackupRestore` is a `storage.simplyblock.io/v1alpha1` kind and is not part of the generated reference. Its fields
+are the ones described above.
 
 ## BackupPolicy
 
@@ -443,4 +449,5 @@ kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=my-polic
 The schedule format is a space-separated list of `interval,count` pairs. For example, `15m,4 60m,11 24h,7` means:
 take a backup every 15 minutes (keep the 4 most recent), every 60 minutes (keep 11), and every 24 hours (keep 7).
 
-The complete set of `BackupPolicy` fields is available in [BackupPolicy reference](reference.md#backuppolicy).
+`BackupPolicy` is a `storage.simplyblock.io/v1alpha1` kind and is not part of the generated reference. Its fields
+are the ones described above.

@@ -4,7 +4,7 @@ description: "Relocate a simplyblock storage node onto a different Kubernetes wo
 weight: 10230
 ---
 
-The `migrate` action of a `StorageNodeOps` resource moves a storage node onto a different Kubernetes worker without
+The `Migrate` action of a `StorageNodeOps` resource moves a storage node onto a different Kubernetes worker without
 taking it out of the cluster. The node keeps its backend UUID, its devices, and its logical volume assignments, and no
 volume is moved between nodes. What changes is the host the node runs on.
 
@@ -30,65 +30,66 @@ for its storage-node pod, but the node itself has to exist and be usable.
   operation immediately.
 - The target is not the worker the storage node currently runs on.
 - The target has the devices the node expects, either because they carry the same PCIe addresses as on the source
-  host, or because the additional addresses are declared in `spec.newSsdPcie`.
+  host, or because the additional addresses are declared in `spec.migrate.newSsdPcie`.
 
 ## Requesting a Migration
 
 ```bash title="Migrating a storage node to a different worker"
 kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
+apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
   name: migrate-worker-1
   namespace: simplyblock
 spec:
-  storageNodeRef: simplyblock-node-mejue8
-  action: migrate
-  targetWorkerNode: worker-5.example.com
+  nodeRef: simplyblock-node-mejue8
+  action: Migrate
+  migrate:
+    targetWorkerNode: worker-5.example.com
 EOF
 ```
 
-| Field              | Type     | Description                                                                                             |
-|--------------------|----------|---------------------------------------------------------------------------------------------------------|
-| `targetWorkerNode` | string   | Kubernetes worker hostname to relocate the node onto. Required for `migrate`, and immutable.            |
-| `newSsdPcie`       | []string | Additional NVMe PCIe addresses to bind on the target host. Merged into the target's node configuration. |
-| `reattachVolume`   | bool     | Reattaches the node's volumes as part of the restart.                                                   |
-| `force`            | bool     | Overrides the forced restart. A migration restart is forced unless this is set to `false`.              |
+| Field                      | Type     | Description                                                                                             |
+|----------------------------|----------|---------------------------------------------------------------------------------------------------------|
+| `migrate.targetWorkerNode` | string   | Kubernetes worker hostname to relocate the node onto. Required for `Migrate`, and immutable.            |
+| `migrate.newSsdPcie`       | []string | Additional NVMe PCIe addresses to bind on the target host. Merged into the target's node configuration. |
+| `reattachVolume`           | bool     | Reattaches the node's volumes as part of the restart.                                                   |
+| `force`                    | bool     | Overrides the forced restart. A migration restart is forced unless this is set to `false`.              |
 
-## Sub-Phases
+## Steps
 
-A migration is a four-step state machine, tracked in `status.subPhase`.
+A migration is a four-step state machine, tracked in `status.step.state`.
 
-| Sub-phase    | Description                                                                                                                                   |
-|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| `Preparing`  | The source node's configuration is cloned onto the target, the target is labeled into the storage plane, and its storage-node pod is awaited. |
-| `Migrating`  | A restart is issued against the target's storage-node API. The phase holds until the node is observed leaving `online`.                       |
-| `Restarting` | The node is awaited until it reports `online` again, now running on the target worker.                                                        |
-| `Promoting`  | The node is promoted, which starts a cluster rebalance, and the Kubernetes topology is re-pointed from the source worker to the target.       |
+| Step           | Description                                                                                                                                   |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `Preparing`    | The source node's configuration is cloned onto the target, the target is labeled into the storage plane, and its storage-node pod is awaited. |
+| `Relocating`   | A restart is issued against the target's storage-node API. The step holds until the node is observed leaving `online`.                        |
+| `AwaitingNode` | The node is awaited until it reports `online` again, now running on the target worker.                                                        |
+| `Promoting`    | The node is promoted, which starts a cluster rebalance, and the Kubernetes topology is re-pointed from the source worker to the target.       |
 
 ### Preparing
 
 The per-node configuration of the source worker is copied to the target first, so that the storage-node pod boots
-there with the same effective settings. Any address in `spec.newSsdPcie` is merged into the PCIe allow list of that
-configuration. The target is then labeled into the storage plane, which is what makes the DaemonSet schedule a
-storage-node pod onto it.
+there with the same effective settings. Any address in `spec.migrate.newSsdPcie` is merged into the PCIe allow list
+of that configuration. The target is then labeled into the storage plane, which is what makes the DaemonSet schedule
+a storage-node pod onto it.
 
-The phase does not advance until that pod is `Ready` **and** its per-pod DNS name is published in the storage-node API
-endpoints. Both conditions matter, because the restart in the next phase addresses the node by that DNS name. A
+The step does not advance until that pod is `Ready` **and** its per-pod DNS name is published in the storage-node API
+endpoints. Both conditions matter, because the restart in the next step addresses the node by that DNS name. A
 restart issued too early fails to resolve it, and the control plane then resets the node to offline.
 
 A migration that sits in `Preparing` is therefore usually waiting for the target's pod, and `status.message` names
 what is missing.
 
-### Migrating and Restarting
+### Relocating and AwaitingNode
 
 The restart is issued against the control plane with the target host's storage-node API as the node address, which is
 the same primitive that brings a node back after a worker reboot. The restart is forced, unless `spec.force` is
 explicitly `false`, and it carries `reattachVolume` when that field is set.
 
-The operator polls quickly during this phase, because the window in which the node reports `in_restart` is short and
+The operator polls quickly during this step, because the window in which the node reports `in_restart` is short and
 has to be observed to confirm that the restart actually began. Once the node has left `online`, the operation advances
-to `Restarting` and waits there for it to come back `online`.
+to `AwaitingNode` and waits there for it to come back `online`.
 
 ### Promoting
 
