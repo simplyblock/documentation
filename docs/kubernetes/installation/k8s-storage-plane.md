@@ -102,16 +102,40 @@ kubectl apply -f discover-rack-b.yaml
 kubectl -n simplyblock get operatorops discover-rack-b -w
 ```
 
-The most important fields of `spec.discover` are:
+`spec.discover` narrows the run:
 
-- **`configName`:** The name of the draft to write. If empty, the draft is named `discovered-<run name>`, so a second
-  run never overwrites a draft that may already have been reviewed.
-- **`workers` or `nodeSelector`:** The workers to inspect. Empty inspects every schedulable worker.
-- **`enableControlPlaneNodes`:** Also considers nodes that run the Kubernetes API server and etcd. Off by default.
-- **`deviceFilter`:** Narrows the devices that reach the draft. `pcieAllowList`, `pcieDenyList`, and `pcieModel`
-  select NVMe devices. `enableLogicalBlockDevices` together with `blockAllowList` and `blockDenyList` selects Linux
-  block devices instead. `driveSizeRange` (for example, `1T-4T`) and `enablePartitionedDevices` apply to both.
-- **`clusterRef`:** Writes a growth draft for an existing storage cluster instead of a new one.
+| Field                     | Value                | Purpose                                                                                                                                          |
+|---------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| `configName`              | —                    | The draft to write. Empty names it `discovered-<run name>`, so a second run never overwrites a draft that may already have been reviewed.        |
+| `workers`                 | Up to 128 node names | The workers to inspect. Empty inspects every schedulable worker.                                                                                 |
+| `nodeSelector`            | Labels               | The workers to inspect, by label instead of by name.                                                                                             |
+| `tolerations`             | Up to 32             | What the probe pods tolerate. They reach the draft as well, because the taints a run probed through are the taints the cluster has to live with. |
+| `enableControlPlaneNodes` | Off                  | Also considers nodes running the API server and etcd.                                                                                            |
+| `deviceFilter`            | —                    | Narrows the devices that reach the draft, see below.                                                                                             |
+| `clusterRef`              | —                    | Writes a growth draft for an existing cluster instead of a new one.                                                                              |
+
+`workers` and `nodeSelector` are mutually exclusive; a run that carries both is refused.
+
+A probe pod is pinned to its worker with `spec.nodeName`, which bypasses the scheduler but not the taints. A run
+against a dedicated storage plane that tolerates nothing therefore inspects nothing.
+
+#### Device Filters
+
+A run scans one class of device. The PCI filters select NVMe, which is the default, and the block filters require
+`enableLogicalBlockDevices`. A filter for the class the run is not scanning is refused rather than ignored, so a
+narrowed run is never silently un-narrowed.
+
+| Field                             | Class | Purpose                                                     |
+|-----------------------------------|-------|-------------------------------------------------------------|
+| `pcieAllowList`, `pcieDenyList`   | NVMe  | Select or exclude devices by PCI address.                   |
+| `pcieModel`                       | NVMe  | Select by model string.                                     |
+| `enableLogicalBlockDevices`       | Block | Scans Linux block devices instead of NVMe.                  |
+| `blockAllowList`, `blockDenyList` | Block | Select or exclude devices by path, for example, `/dev/sdb`. |
+| `driveSizeRange`                  | Both  | For example, `1T-4T`.                                       |
+| `enablePartitionedDevices`        | Both  | Includes devices that already carry a partition table.      |
+
+On a fleet that is uniform about which slot holds the boot device, one deny list keeps that device out of every
+group of every draft, which is the difference between correcting one document and correcting each of twenty groups.
 
 The filters are inputs to the run only. The draft contains the explicit device list they produced, so re-running a
 filter against changed hardware cannot change what a reviewer already approved.
@@ -166,49 +190,69 @@ kubectl -n simplyblock edit cdc discovered-initial-discovery
 
 ### Environment
 
-`spec.environment` names the Kubernetes distribution: `Vanilla`, `OpenShift`, `Rancher`, `K3s`, or `Talos`. It sets
-the storage node flags on `StorageCluster.spec.storageNodes`:
+`spec.environment` names the Kubernetes distribution. Discovery detects it rather than asking for it, and the value
+is spent once: it sets the storage node flags on the `StorageCluster` the document produces, after which nothing
+reads it again.
 
-- **`OpenShift`:** Sets the `openshift` block, `enableCpuTopology`, and `enableKubeletConfiguration`.
-- **`Talos`:** Disables `enableKubeletConfiguration`, because Talos has no writable kubelet configuration.
-- **`Vanilla`, `Rancher`, `K3s`:** Enable `enableKubeletConfiguration`.
+| Value                       | What it sets on `spec.storageNodes`                                            |
+|-----------------------------|--------------------------------------------------------------------------------|
+| `OpenShift`                 | The `openshift` block, `enableCpuTopology`, and `enableKubeletConfiguration`   |
+| `Talos`                     | Disables `enableKubeletConfiguration`, as Talos has no writable kubelet config |
+| `Vanilla`, `Rancher`, `K3s` | `enableKubeletConfiguration`                                                   |
 
 ### Cluster Template
 
-`spec.cluster` is the template of the storage cluster to create. It is ignored if `spec.clusterRef` names an existing
-cluster.
+`spec.cluster` is the template of the storage cluster to create. It is ignored when `spec.clusterRef` names an
+existing cluster, because a growth document adds nodes to a cluster whose settings are already decided.
 
-- **`name`:** Name of the `StorageCluster` (at most 63 characters). Discovery proposes `<draft name>-cluster`.
-- **`maxSubsystemCount`:** Required, from 10 to 75.
-- **`vcpuCount`:** Required, at least 4. The number of vCPUs per storage node.
-- **`minHugePagesSize`:** Minimum huge page memory per storage node, for example, `16G`.
-- **`stripe`:** The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md) as `dataChunks` and
-  `parityChunks`. Allowed combinations are 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, and 4+2.
-- **`fabricType`:** The NVMe-oF transport, for example, `tcp`.
-- **`enableDriveFormat`:** Formats every listed device before a storage node takes it. This is destructive and must
-  be reviewed before approving.
-- **`enableJournalDevice`:** Dedicates the smallest NVMe device of each worker to the journal manager.
-- **`socketsToUse`, `nodesPerSocket` (1 to 8), `nodeProvisioningBudget`:** How many storage nodes run on each worker
-  and how many are provisioned in parallel. Empty `socketsToUse` means socket 0 only.
-- **`enableChecksumValidation`, `enableAtomicity4K`:** Data integrity options. `enableAtomicity4K` requires checksum
-  validation.
-- **`enableFailureDomains`:** Places data across failure domains, see below.
-- **`kms`:** An external KMS for volume encryption keys, see
-  [Securing the Control Plane](security.md#external-key-management-kms).
+!!! warning "This is the last chance to change these"
+    Most of the fields below are immutable on the created `StorageCluster`. `enableDriveFormat` is also
+    destructive: it formats every device the document lists before a storage node takes it. Both are reasons the
+    approval is a deliberate step rather than a formality.
 
-Most of these settings are immutable on the created `StorageCluster`, so the review is the last opportunity to
-change them.
+| Field                                                         | Value                               | Purpose                                                                                                                              |
+|---------------------------------------------------------------|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `name`                                                        | Required, at most 63 characters     | Name of the `StorageCluster`. Discovery proposes `<draft name>-cluster`.                                                             |
+| `maxSubsystemCount`                                           | Required, 10 to 75                  | NVMe subsystems the cluster serves.                                                                                                  |
+| `vcpuCount`                                                   | Required, at least 4                | vCPUs per storage node.                                                                                                              |
+| `minHugePagesSize`                                            | For example, `16G`                  | Minimum huge page memory per storage node.                                                                                           |
+| `stripe`                                                      | `dataChunks` and `parityChunks`     | The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md). Allowed: 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, 4+2.      |
+| `fabricType`                                                  | For example, `tcp`                  | The NVMe-oF transport.                                                                                                               |
+| `enableDriveFormat`                                           | Off                                 | Formats every listed device. **Destructive.**                                                                                        |
+| `enableJournalDevice`                                         | Off                                 | Dedicates each worker's smallest NVMe device to the journal manager.                                                                 |
+| `socketsToUse`, `nodesPerSocket`                              | Up to 16 sockets, 1 to 8 nodes each | How many storage nodes run per worker. Empty `socketsToUse` means socket 0 only.                                                     |
+| `nodeProvisioningBudget`                                      | At least 1                          | How many workers are provisioned in parallel, see [Parallel Storage Node Addition](../operations/scaling/parallel-node-addition.md). |
+| `enableChecksumValidation`, `enableAtomicity4K`               | Off                                 | Data integrity. `enableAtomicity4K` requires checksum validation.                                                                    |
+| `enableFailureDomains`                                        | Off                                 | Spreads data across failure domains, see [below](#failure-domains).                                                                  |
+| `enableNodeAffinity`                                          | Off                                 | Keeps a volume's data on the node that owns it, see [Configuring Node Affinity](../operations/cluster/node-affinity.md).             |
+| `kms`                                                         | —                                   | External KMS for volume encryption keys, see [Securing the Control Plane](security.md#external-key-management-kms).                  |
+| `backup`                                                      | —                                   | The S3 store backups go to, see [Backup and Recovery](../operations/data-protection/backup-recovery.md).                             |
+| `ports`                                                       | —                                   | Overrides the NVMe-oF, RPC, and node-agent ports.                                                                                    |
+| `tolerations`, `containerResources`, `initContainerResources` | —                                   | Placement and sizing of the storage node workload.                                                                                   |
 
 ### Node Groups and Devices
 
-`spec.nodeSets` (1 to 64 sets) groups the workers. Each set contains `groups`, and each group lists:
+`spec.nodeSets` is how the workers are grouped. A set is an organizational unit, usually a rack; a group within it
+is the set of workers that share one configuration. Workers whose hardware differs go in their own group rather
+than being tuned individually.
 
-- **`workers`:** The Kubernetes node names (1 to 200).
-- **`mgmtInterface`, `dataInterfaces`:** The management and data network interfaces.
-- **`devices`:** Either `nvme` (PCI addresses) or `block` (Linux block devices, for example, `/dev/sdb`). All groups of
-  a document must use the same device class.
-- **`failureDomain`:** The failure domain label of all workers in the group.
-- **`spdkSystemMemory`, `journalManager`:** Optional per-group storage node settings.
+| Level               | Bound    |
+|---------------------|----------|
+| `nodeSets`          | 1 to 64  |
+| `groups` per set    | 1 to 64  |
+| `workers` per group | 1 to 200 |
+
+Each group carries:
+
+| Field                             | Purpose                                                                                                                            |
+|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `workers`                         | The Kubernetes node names.                                                                                                         |
+| `mgmtInterface`, `dataInterfaces` | The management and data network interfaces, up to 32 data interfaces.                                                              |
+| `devices`                         | Either `nvme` (PCI addresses) or `block` (for example, `/dev/sdb`), up to 128 each. Every group of a document uses the same class. |
+| `failureDomain`                   | The failure domain of all workers in the group, see [below](#failure-domains).                                                     |
+| `spdkSystemMemory`                | Huge page memory for the storage nodes of this group, for example, `8G`.                                                           |
+| `reservedSystemCPU`               | CPUs reserved for the host, for example, `0,1` or `0-3`.                                                                           |
+| `journalManager`                  | Journal copy count and per-device share.                                                                                           |
 
 Workers or devices that should not become part of the cluster, for example, a boot disk, are removed from the draft
 before approving.
@@ -263,12 +307,23 @@ hand-written one can, and the validation above is the only check a device gets b
 
 ### When Does the Cluster Become Active?
 
-The erasure coding scheme determines the minimum number of storage nodes. The approval is refused if the document
-provides fewer nodes, or if they sit on too few workers. An unstated scheme counts as 1+1.
+The erasure coding scheme determines the minimum number of storage nodes: enough to place a stripe across, which is
+the data chunks plus the parity chunks, plus one spare per tolerated failure to rebuild onto.
 
-| Scheme                | 1+0 | 1+1 | 2+1 | 4+1 | 1+2 | 2+2 | 4+2 |
-|-----------------------|-----|-----|-----|-----|-----|-----|-----|
-| Minimum storage nodes | 1   | 3   | 4   | 6   | 5   | 6   | 8   |
+| Scheme | Minimum storage nodes |
+|--------|-----------------------|
+| 1+0    | 1                     |
+| 1+1    | 3                     |
+| 2+1    | 4                     |
+| 1+2    | 5                     |
+| 4+1    | 6                     |
+| 2+2    | 6                     |
+| 4+2    | 8                     |
+
+The approval is refused if the document provides fewer nodes, with `StripeBelowMinimumNodes`, or if they sit on too
+few workers, with `StripeBelowMinimumWorkers`. The second is counted separately because a fleet that reaches the
+number by running several nodes per socket on two workers has not bought the independent spare the count asks for:
+every node of a worker fails with the worker. An unstated scheme counts as 1+1.
 
 The operator activates the cluster as soon as all storage nodes of the document are `Online`.
 
