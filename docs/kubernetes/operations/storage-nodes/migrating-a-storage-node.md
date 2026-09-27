@@ -97,9 +97,6 @@ The relocated node is promoted, which starts a cluster rebalance in the backgrou
 brought in line with the new reality:
 
 - `StorageNode.spec.workerNode` is re-pointed at the target, and the node's worker label is refreshed with it.
-- The `StorageNodeSet` worker list drops the source worker and gains the target, and the per-node configuration entry
-  moves with it.
-- The stale status entry for the node on the source worker is pruned from the `StorageNodeSet`.
 - The storage-plane labels are removed from the source worker, unless another storage node still runs there, which is
   the case on a worker that hosts more than one NUMA socket.
 

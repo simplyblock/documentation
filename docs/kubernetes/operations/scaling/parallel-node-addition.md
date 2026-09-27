@@ -4,8 +4,8 @@ description: "How the Simplyblock operator adds storage nodes in parallel while 
 weight: 10320
 ---
 
-When a `StorageNodeSet` resource is created with multiple worker nodes, the operator can add storage nodes on workers
-concurrently rather than sequentially. This significantly reduces cluster provisioning time for large deployments.
+When a deployment enrolls multiple worker nodes, the operator can add storage nodes on workers concurrently rather
+than sequentially. This significantly reduces cluster provisioning time for large deployments.
 
 This concurrency, however, is only available to non-FoundationDB workers. FDB workers are always added one at a time.
 This requires that, in case of a worker node restart, the FoundationDB cluster has enough coordinators to remain
@@ -16,7 +16,7 @@ available.
 The operator classifies each worker node into one of two groups before starting the added process:
 
 - **Non-FDB workers:** workers that do not host any FoundationDB process pods. These are added in parallel up
-  to the configured `maxParallelNodeAdds` limit.
+  to the configured `nodeProvisioningBudget`.
 - **FDB workers:** workers running pods labeled `foundationdb.org/fdb-cluster-name`. These are always added
   one at a time, in sequence.
 
@@ -26,7 +26,8 @@ threshold, which would cause cluster unavailability.
 
 ## Configuration
 
-Parallelism for non-FDB workers is controlled by `StorageNodeSet.spec.maxParallelNodeAdds`.
+Parallelism for non-FDB workers is controlled by `StorageCluster.spec.storageNodes.nodeProvisioningBudget`. It is
+a property of the fleet, so one value governs every worker of the cluster.
 
 | Value         | Behavior                                                         |
 |---------------|------------------------------------------------------------------|
@@ -34,28 +35,35 @@ Parallelism for non-FDB workers is controlled by `StorageNodeSet.spec.maxParalle
 | `> 1`         | Up to `n` non-FDB workers added concurrently per reconcile pass  |
 
 ```yaml title="Enable parallel node addition"
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNodeSet
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageCluster
 metadata:
-  name: simplyblock-node
+  name: simplyblock-cluster
   namespace: simplyblock
 spec:
-  clusterName: simplyblock-cluster
-  maxParallelNodeAdds: 5   # add up to 5 non-FDB workers at a time
-  workerNodes:
-    - worker-1
-    - worker-2
-    - worker-3
-    - worker-4
-    - worker-5
-    - worker-6
-    - worker-7
-    - worker-8
+  fabricType: tcp
+  maxSubsystemCount: 75
+  vcpuCount: 16
+  storageNodes:
+    nodeProvisioningBudget: 5   # add up to 5 non-FDB workers at a time
+```
+
+The same value can be set on a deployment config before it is approved, under `spec.cluster`, so that the cluster is
+created with it:
+
+```yaml title="Setting the budget on a deployment config"
+spec:
+  cluster:
+    name: simplyblock-cluster
+    nodeProvisioningBudget: 5
 ```
 
 !!! note
-    `maxParallelNodeAdds` applies only to non-FDB workers. Workers hosting FoundationDB processes are always
+    `nodeProvisioningBudget` applies only to non-FDB workers. Workers hosting FoundationDB processes are always
     added sequentially, regardless of this value.
+
+    It also does not widen a cluster expansion: the control plane integrates one new node at a time, as described in
+    [Expanding a Storage Cluster](expanding-storage-cluster.md).
 
 ## Pinning FDB to Dedicated Nodes
 

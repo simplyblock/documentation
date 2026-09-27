@@ -71,11 +71,12 @@ The node is suspended, which stops new volumes from being placed on it while its
 is already suspended is not asked again. The phase holds until the backend confirms the suspension, emitting
 `DrainSuspendPending` while it waits.
 
-### Migrating
+### MigratingVolumes
 
-One `VolumeMigration` resource is created per migratable volume, labeled with the UUID of the node being drained and
-owned by the `StorageNodeOps`. Targets are assigned round-robin across the online nodes of the cluster, excluding the
-node being drained, so the evacuated volumes spread rather than landing on one node.
+One `PersistentVolumeOps` is created per migratable volume, naming this drain in its `spec.creatorRef` so the
+fan-out can be traced back to the operation that asked for it. Targets are assigned round-robin across the online
+nodes of the cluster, excluding the node being drained, so the evacuated volumes spread rather than landing on one
+node.
 
 Progress is counted in the operation status.
 

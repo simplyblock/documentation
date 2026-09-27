@@ -46,15 +46,22 @@ kubectl get controlplane simplyblock -n simplyblock
 ```
 
 ```plain title="Example output of the control plane status"
-NAME          PHASE   MESSAGE   AGE
-simplyblock   Ready             14d
+NAME          PHASE       MESSAGE   AGE
+simplyblock   Available             14d
 ```
 
-A phase of `Initializing` means the health check is still failing, and the `MESSAGE` column carries the reason. The
-storage plane is not touched until the phase is `Ready`.
+| Phase         | Meaning                                                                                      |
+|---------------|----------------------------------------------------------------------------------------------|
+| `Installing`  | The control plane has not worked yet.                                                        |
+| `Available`   | The readiness probe passes and the workload pods are settled.                                |
+| `Degraded`    | It answers every request while a management API or FoundationDB pod is restarting behind it. |
+| `Unavailable` | It worked and stopped, which is a different situation from one that never started.           |
 
-```bash title="Waiting for the control plane to become ready"
-kubectl wait --for=jsonpath='{.status.phase}'=Ready \
+`status.components` names which component is short when the phase is `Degraded`, and `status.message` carries the
+reason. The storage plane is not touched until the phase is `Available`.
+
+```bash title="Waiting for the control plane to become available"
+kubectl wait --for=jsonpath='{.status.phase}'=Available \
     controlplane/simplyblock -n simplyblock --timeout=10m
 ```
 
@@ -63,29 +70,36 @@ kubectl wait --for=jsonpath='{.status.phase}'=Ready \
 Which image a storage node runs is decided by three fields. All of them accept only the trusted simplyblock
 registries, and pinning by digest is recommended.
 
-| Field                 | Applies to                                            | Default                   |
-|-----------------------|-------------------------------------------------------|---------------------------|
-| `spec.clusterImage`   | The storage-node pod of the `StorageNodeSet`.         | `ControlPlane.spec.image` |
-| `spec.spdkImage`      | The SPDK image, sent with the node-add request.       | The control plane default |
-| `spec.spdkProxyImage` | The SPDK proxy image, sent with the node-add request. | The control plane default |
+| Field                                    | Applies to                                            | Default                   |
+|------------------------------------------|-------------------------------------------------------|---------------------------|
+| `StorageCluster.spec.storageNodes.image` | The storage-node pod of every node in the cluster.    | `ControlPlane.spec.image` |
+| `StorageNode.spec.config.spdkImage`      | The SPDK image, sent with the node-add request.       | The control plane default |
+| `StorageNode.spec.config.spdkProxyImage` | The SPDK proxy image, sent with the node-add request. | The control plane default |
 
-A `StorageNodeSet` that leaves `spec.clusterImage` empty inherits the image from the `ControlPlane` resource, which the
-chart keeps up to date. On such a set the chart upgrade already changed the image, and the DaemonSet rolls its pods as
-a consequence.
+The storage-node pod image is cluster-uniform by construction: the pods come from one DaemonSet, and a DaemonSet's
+pod template cannot differ per node. What can differ is what a `StorageNode` carries in `spec.config` — the two SPDK
+images, the SPDK system memory, and the sizing block — which is per node precisely so that an image rollout can walk
+the fleet one machine at a time.
 
-A `StorageNodeSet` that pins `spec.clusterImage` does not follow the chart. Its image is raised explicitly.
+A cluster that leaves `spec.storageNodes.image` empty inherits the image from the `ControlPlane` resource, which the
+chart keeps up to date. On such a cluster the chart upgrade already changed the image, and the DaemonSet rolls its
+pods as a consequence.
 
-```bash title="Pinning a new storage-node image on a StorageNodeSet"
-kubectl patch storagenodeset simplyblock-node -n simplyblock --type=merge \
-    -p '{"spec": {"clusterImage": "quay.io/simplyblock-io/simplyblock:26.3.0"}}'
+A cluster that pins `spec.storageNodes.image` does not follow the chart. Its image is raised explicitly.
+
+```bash title="Pinning a new storage-node image on the cluster"
+kubectl patch storagecluster simplyblock-cluster -n simplyblock --type=merge \
+    -p '{"spec": {"storageNodes": {"image": "quay.io/simplyblock-io/simplyblock:26.4.0"}}}'
 ```
 
-`spec.spdkImage` and `spec.spdkProxyImage` are read when a storage node is added, so a change to them governs nodes
-added from that point on.
+`spdkImage` and `spdkProxyImage` are read when a storage node is added, so a change to them governs nodes added from
+that point on.
 
-```bash title="Reading the images a StorageNodeSet is configured with"
-kubectl get storagenodeset simplyblock-node -n simplyblock \
-    -o jsonpath='{.spec.clusterImage}{"\n"}{.spec.spdkImage}{"\n"}{.spec.spdkProxyImage}{"\n"}'
+```bash title="Reading the images a cluster and a node are configured with"
+kubectl get storagecluster simplyblock-cluster -n simplyblock \
+    -o jsonpath='{.spec.storageNodes.image}{"\n"}'
+kubectl get storagenode simplyblock-node-mejue8 -n simplyblock \
+    -o jsonpath='{.spec.config.spdkImage}{"\n"}{.spec.config.spdkProxyImage}{"\n"}'
 ```
 
 ### Rolling the Change Across the Nodes
@@ -97,37 +111,41 @@ Both happen in a [Rolling Restart](rolling-restart.md) with the pod refresh enab
 its pod is replaced, the node is restarted, and the cluster rebalances before the next node follows.
 
 ```bash title="Rolling the new image across the storage nodes"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock --type=merge \
-    -p '{"spec": {"action": "node-recycle", "nodeRecycle": {"refreshSNodeAPI": true}}}'
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageClusterOps
+metadata:
+  name: upgrade-rollout
+  namespace: simplyblock
+spec:
+  clusterRef: simplyblock-cluster
+  action: RollingRestart
+  rollingRestart:
+    refreshSNodeAPI: true
+EOF
 ```
 
 ```bash title="Following the rollout"
-kubectl get storagecluster simplyblock-cluster -n simplyblock \
-    -o jsonpath='{.status.nodeRecycleStatus}' | jq .
+kubectl get storageclusterops upgrade-rollout -n simplyblock \
+    -o jsonpath='{.status.phase}{"\t"}{.status.step.state}{"\t"}{.status.rollingRestart.nodeIndex}{"\n"}' -w
 ```
 
-The rollout is complete when `status.actionStatus.state` is `success`. The action field is then cleared, so that the
-cluster returns to normal status reconciliation, as described in
-[Storage Cluster Actions](cluster-actions.md#re-running-and-clearing-an-action).
-
-```bash title="Clearing the action after the rollout"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": ""}}'
-```
+The rollout is complete when `status.phase` is `Succeeded`. The operation stays afterward as the record of what was
+rolled and when, and nothing has to be cleared.
 
 ### Upgrading a Subset of Nodes First
 
-A new image can be tried on a few nodes before the whole fleet follows. The per-node configuration of a
-`StorageNodeSet` overrides the fleet image for the workers named in it.
+A new SPDK image can be tried on a few nodes before the whole fleet follows, because `spec.config` is per node.
 
-```yaml title="Example of a phased rollout to two workers"
-spec:
-  nodeConfigs:
-    worker-1.example.com:
-      spdkImage: quay.io/simplyblock-io/spdk:26.3.0
-    worker-2.example.com:
-      spdkImage: quay.io/simplyblock-io/spdk:26.3.0
+```bash title="Example of a phased rollout to two nodes"
+kubectl patch storagenode simplyblock-node-mejue8 -n simplyblock --type=merge \
+    -p '{"spec": {"config": {"spdkImage": "quay.io/simplyblock-io/spdk:26.4.0"}}}'
+kubectl patch storagenode simplyblock-node-k2p4x1 -n simplyblock --type=merge \
+    -p '{"spec": {"config": {"spdkImage": "quay.io/simplyblock-io/spdk:26.4.0"}}}'
 ```
+
+The storage-node pod image cannot be staged this way: it comes from one DaemonSet and is the same on every node of
+the cluster.
 
 The overrides are propagated to the `StorageNode` resources of those workers on the next reconcile. Once the sample
 has proven itself, the fleet field is raised and the overrides are removed again.

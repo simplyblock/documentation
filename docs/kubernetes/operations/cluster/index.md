@@ -4,10 +4,10 @@ description: "Operate a simplyblock storage cluster on Kubernetes: request clust
 weight: 10100
 ---
 
-A storage cluster is operated through its `StorageCluster` resource. A cluster-wide action is requested by setting
-`spec.action`, and the Simplyblock Operator calls the control plane and reports the outcome in the status of the
-resource. The topology settings of a cluster, its failure domains and its node affinity, are properties of the same
-resource and are read when data placement is decided.
+A storage cluster is operated through its `StorageCluster` resource. A cluster-wide action is requested by creating
+a `StorageClusterOps`, and the Simplyblock Operator calls the control plane, drives the operation to completion, and
+records the outcome on that operation. The topology settings of a cluster, its failure domains and its node
+affinity, are properties of the `StorageCluster` itself and are read when data placement is decided.
 
 | Topic                                                         | Purpose                                                                           |
 |---------------------------------------------------------------|-----------------------------------------------------------------------------------|

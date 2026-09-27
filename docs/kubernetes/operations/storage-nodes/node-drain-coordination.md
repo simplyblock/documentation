@@ -12,52 +12,57 @@ This is a temporary absence, after which the storage node returns to the same wo
 cluster for good is a different operation, described in
 [Removing a Storage Node](removing-a-storage-node.md).
 
-Concurrency is controlled by `StorageCluster.spec.maxFaultTolerance`. It defines the at-most number of Kubernetes
-workers that can be drained at the same time. This prevents the cluster from entering a degraded state during bulk
-maintenance operations and restarting cycles.
+Concurrency is controlled by `StorageCluster.spec.maxConcurrentWorkerRestarts`. It defines the at-most number of
+Kubernetes workers that can be drained at the same time. This prevents the cluster from entering a degraded state
+during bulk maintenance operations and restarting cycles.
 
 ## How It Works
 
-When the operator detects that a worker node has become cordoned, it executes the following sequence:
+The operator watches Kubernetes `Node` objects. When a worker becomes cordoned, it raises a `StorageNodeOps` with
+`action: HostMaintenance` against the storage node on that worker. Nobody has to create one, and one created by hand
+is accepted and behaves identically.
 
-1. Creates a `PodDisruptionBudget` to prevent premature pod eviction.
-2. Calls the simplyblock shutdown API for the backend storage node and wait until `offline`.
-3. Relaxes the `PodDisruptionBudget` to allow pod eviction. Kubernetes can now drain the worker.
-4. Waits for the worker to return to a ready, uncordoned state.
-5. Calls the simplyblock restart API and wait until the storage nodes are `online` and cluster `rebalancing` is `false`.
-6. Marks drain coordination `complete` and remove the `PodDisruptionBudget`.
+Modeling the window as an operation is what gives it the discipline the other node actions have: it takes the node's
+lock, so nothing else touches a node whose host is rebooting; its position is a persisted step rather than a phase
+string; and it stays afterward as the audit record of the maintenance window.
+
+The `PodDisruptionBudget` runs backward from the usual one. A per-node budget allowing no disruption is created
+**before** the shutdown, so `kubectl drain` blocks on it while the backend node is taken down gracefully. Relaxing
+it is what lets the drain proceed.
 
 !!! warning
-    If another worker is already in the drain window and `maxFaultTolerance` would be exceeded, the operator holds
-    the new worker in the `detected` phase until an in-progress drain completes to ensure that the cluster remains
-    available and connection loss is mitigated.
+    If another worker is already in a maintenance window and `maxConcurrentWorkerRestarts` would be exceeded, the
+    operator holds the new window at the `Holding` step until an in-progress one completes, to ensure that the
+    cluster remains available and connection loss is mitigated.
 
-## Drain Phases
+## Steps
 
-Each worker being drained progresses through the following phases, tracked in
-`StorageNodeSet.status.drainCoordination`:
+Each window progresses through the steps below, tracked in `status.step.state`:
 
-| Phase             | Description                                                                   |
-|-------------------|-------------------------------------------------------------------------------|
-| `detected`        | Worker is cordoned. Waiting for a drain slot within `maxFaultTolerance`.      |
-| `shutdown_called` | Backend shutdown API has been called. Waiting for `offline`.                  |
-| `draining`        | Shutdown confirmed. `PodDisruptionBudget` relaxed. Kubernetes may evict pods. |
-| `restart_called`  | Worker is back. Backend restart API has been called. Waiting for `online`.    |
-| `complete`        | Node is back online and cluster rebalancing has finished.                     |
-| `failed`          | An unrecoverable error occurred. Manual intervention may be required.         |
+| Step           | Description                                                                             |
+|----------------|-----------------------------------------------------------------------------------------|
+| `Holding`      | Waiting for a slot within `maxConcurrentWorkerRestarts`. Nothing has been done yet.     |
+| `ShuttingDown` | The backend node is shut down gracefully, while the budget blocks the Kubernetes drain. |
+| `Releasing`    | The budget is relaxed. Kubernetes may now evict the pods and drain the worker.          |
+| `AwaitingHost` | Waiting for the worker to return ready and uncordoned.                                  |
+| `Restarting`   | The backend node is restarted and awaited until it is `online`.                         |
+| `Cleanup`      | What the window put in place is removed, so the worker is left as it was found.         |
 
-## Monitoring Drain State
+A window still at `Holding` holds no slot: it is queued behind the same gate as every other.
 
-The progress of the drain coordination can be monitored using the `StorageNodeSet` custom resource.
+## Monitoring a Maintenance Window
 
-```bash title="Inspecting drain coordination status"
-kubectl get storagenodeset simplyblock-node -n simplyblock \
-  -o jsonpath='{.status.drainCoordination}' | jq .
+```bash title="Listing the maintenance windows"
+kubectl get storagenodeops -n simplyblock \
+    -o jsonpath='{range .items[?(@.spec.action=="HostMaintenance")]}{.metadata.name}{"\t"}{.spec.nodeRef}{"\t"}{.status.phase}{"\t"}{.status.step.state}{"\n"}{end}'
 ```
 
 ```bash title="Streaming live changes"
-kubectl get storagenodeset simplyblock-node -n simplyblock -w
+kubectl get storagenodeops -n simplyblock -w
 ```
+
+The operation reaches the phase `Succeeded` once the node is back online and the cluster has finished rebalancing,
+and `Failed` with a reason in `status.message` if it could not get there.
 
 ## Configuring Concurrent Worker Restarts
 

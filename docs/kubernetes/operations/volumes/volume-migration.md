@@ -24,91 +24,112 @@ Volume migration is used in three ways:
 All three paths share the same backend migration mechanism and the same post-migration
 [data realignment](#data-realignment).
 
-## Enabling Volume Migration
+## Volume Migration Settings
 
-Volume migration is controlled per cluster by `StorageCluster.spec.volumeMigrationSettings`.
+Volume migration cannot be turned off: a drain, a rebalance, and a device replacement are all performed by moving
+volumes. What is configurable is the post-migration realignment and the image the path-validation Job runs.
 
 ```yaml title="Volume migration settings"
 spec:
+  disableDataRealignment: false         # default: false, realignment is on
   volumeMigrationSettings:
-    enabled: true                       # default: true
     dataRealignment:
-      enabled: true                     # default: true
       interval: 10m                     # default: 10m
+      minMoves: 1
 ```
 
-| Field                      | Default | Description                                                                              |
-|----------------------------|---------|------------------------------------------------------------------------------------------|
-| `enabled`                  | `true`  | When `false`, the operator does not act on `VolumeMigration` resources for this cluster. |
-| `dataRealignment.enabled`  | `true`  | Enables automatic post-migration [data realignment](#data-realignment).                  |
-| `dataRealignment.interval` | `10m`   | How often the operator checks whether a realignment is pending.                          |
+| Field                                                   | Default | Description                                                               |
+|---------------------------------------------------------|---------|---------------------------------------------------------------------------|
+| `spec.disableDataRealignment`                           | `false` | Turns off automatic post-migration [data realignment](#data-realignment). |
+| `spec.volumeMigrationSettings.dataRealignment.interval` | `10m`   | How often the operator checks whether a realignment is pending.           |
+| `spec.volumeMigrationSettings.dataRealignment.minMoves` | —       | The number of moves below which a realignment is not worth running.       |
+| `spec.volumeMigrationSettings.rebalancerImage`          | —       | The image the migration path-validation Job runs.                         |
+
+`disableDataRealignment` is a field of the cluster spec rather than of the block it governs, because
+`volumeMigrationSettings.dataRealignment.disableDataRealignment` says the same word twice.
 
 ## Manual Volume Migration
 
-A manual migration is triggered by creating a `VolumeMigration` resource (short name `vmig`) that names the
-`PersistentVolume` to move and the UUID of the destination storage node.
+A manual migration is triggered by creating a `PersistentVolumeOps` resource (short name `pvops`) that names the
+`PersistentVolume` to move and the `StorageNode` to move it to.
+
+`PersistentVolumeOps` is cluster-scoped, because its target is: a `PersistentVolume` is a cluster-scoped object, and
+it is the one operations kind in the group whose target is a core Kubernetes type rather than one this group
+defines.
 
 ```bash title="Migrate a single volume to a target node"
-kubectl apply -n simplyblock -f - <<EOF
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: VolumeMigration
+kubectl apply -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: PersistentVolumeOps
 metadata:
   name: migrate-pvc-968cff4f
-  namespace: simplyblock
 spec:
-  pvName: pvc-968cff4f-a199-4964-88f0-7cfccb5251d9
-  targetNodeUUID: 4e53efdd-86c9-424f-940c-e437eb6a2e95
+  persistentVolumeName: pvc-968cff4f-a199-4964-88f0-7cfccb5251d9
+  action: Migrate
+  migrate:
+    targetNodeRef:
+      namespace: simplyblock
+      name: simplyblock-node-o6x20i
 EOF
 ```
 
-Both `spec.pvName` and `spec.targetNodeUUID` are immutable. To migrate the same volume again, or to a
-different target, create a new `VolumeMigration` resource.
+`spec.persistentVolumeName`, `spec.action`, and `spec.migrate.targetNodeRef` are immutable. To migrate the same
+volume again, or to a different target, create a new `PersistentVolumeOps` resource.
 
 The referenced PV must be provisioned by the Simplyblock CSI driver. The operator resolves the PV to its
 logical volume UUID, submits the migration to the storage API, validates the new NVMe-oF paths, and then
 tracks progress to completion.
 
-### Finding Target Node UUIDs
+### Finding the Target Node
 
-The `targetNodeUUID` is the backend storage node UUID, not the Kubernetes worker name.
-
-```bash title="Listing the storage node UUIDs"
-kubectl get storagenodeset simplyblock-node -n simplyblock \
-  -o jsonpath='{.status.nodes[*].uuid}' | tr ' ' '\n'
-```
-
-Alternatively, the storage node CRs can be listed to find the storage node UUID:
+`targetNodeRef` names a `StorageNode` object rather than a backend UUID, so a migration can be written by hand
+without looking one up.
 
 ```bash title="Listing the storage node CRs"
 kubectl get storagenodes -n simplyblock
 ```
 
+The backend UUID of each node is in its status, and the operation records both ends of the move in
+`status.migration` once it has resolved them.
+
+```bash title="Listing the storage nodes with their backend UUIDs"
+kubectl get storagenodes -n simplyblock \
+    -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.uuid}{"\n"}{end}'
+```
+
 ### Monitoring a Migration
 
-The resource exposes the current phase and snapshot progress directly in its printer columns.
+The resource exposes the current phase and step directly in its printer columns.
 
 ```bash title="Watch migration progress"
-kubectl get volumemigration -n simplyblock -w
+kubectl get persistentvolumeops -w
 ```
 
 ```bash title="Inspect full migration status"
-kubectl get volumemigration migrate-pvc-968cff4f \
-  -n simplyblock -o jsonpath='{.status}' | jq .
+kubectl get persistentvolumeops migrate-pvc-968cff4f -o jsonpath='{.status}' | jq .
 ```
 
-Each migration progresses through the following phases, tracked in `VolumeMigration.status.phase`:
+Each migration progresses through the phases below, tracked in `status.phase`:
 
-| Phase        | Description                                                                               |
+| Phase       | Description                                                          |
+|-------------|----------------------------------------------------------------------|
+| `Pending`   | The operation has been accepted and is waiting to start.             |
+| `Running`   | In progress. `status.step.state` says where.                         |
+| `Succeeded` | The volume now resides on the target node.                           |
+| `Failed`    | The migration could not complete. `status.message` holds the reason. |
+| `Aborted`   | The migration was canceled via `spec.abort`, and did not go wrong.   |
+
+While it is `Running`, the step says what it is doing:
+
+| Step         | Description                                                                               |
 |--------------|-------------------------------------------------------------------------------------------|
-| `Pending`    | The migration has been accepted. The operator is resolving the PV and submitting it.      |
 | `Validating` | The new target-side NVMe-oF paths are being established and verified by a validation Job. |
-| `Running`    | The backend is copying data and snapshots.                                                |
-| `Completed`  | The volume now resides on the target node.                                                |
-| `Failed`     | The migration could not complete. `status.errorMessage` holds the reason.                 |
-| `Aborted`    | The migration was canceled via `spec.abort`.                                              |
+| `Migrating`  | The backend is copying data and snapshots.                                                |
+| `Verifying`  | The move is confirmed before the operation completes.                                     |
 
-The status also records the resolved `sourceNodeUUID`, `volumeUUID`, `poolUUID`, `clusterUUID`, the backend
-`migrationUUID`, and `startedAt` / `completedAt` timestamps.
+`status.migration` records the resolved `sourceNodeUUID`, `targetNodeUUID`, `volumeUUID`, `poolUUID`,
+`clusterUUID`, the backend `migrationUUID`, the NVMe-oF `connections`, and the `validationJobs` that checked them.
+`status.startedAt` and `status.completedAt` bracket the run.
 
 ### Aborting a Migration
 
@@ -116,20 +137,21 @@ An in-progress migration can be canceled by setting `spec.abort` to `true`. The 
 `Aborted` once the backend confirms the cancellation.
 
 !!! important
-    A volume migration can only be aborted while in the `Pending` or `Validating` phases. A running migration must be
-    able to complete to ensure data consistency. Hence, it cannot be aborted once running.
+    Whether an abort is expressible from the current step is declared by the action's state machine. A migration
+    that is already copying data has to be able to complete to ensure data consistency, so an abort arriving then is
+    reported as an illegal transition and the operation runs on.
 
 ```bash title="Abort an in-progress migration"
-kubectl patch volumemigration migrate-pvc-968cff4f -n simplyblock \
+kubectl patch persistentvolumeops migrate-pvc-968cff4f \
   --type merge -p '{"spec":{"abort":true}}'
 ```
 
 ### Migrating by Pinning a PVC
 
-There are also automated processes that create a `VolumeMigration` resource, for example, setting the
+There are also automated processes that create a `PersistentVolumeOps` resource, for example, setting the
 `simplyblock.io/selected-storage-node` annotation on an already-bound PVC. This will effectively migrate the pinned
-volume to a new storage node UUID. The operator create a `VolumeMigration` on the user's behalf, as part of moving the
-volume to that node. This is the same annotation that [pins a volume](#pinned-volumes) against auto-rebalancing and
+volume to a new storage node. The operator creates the operation on the user's behalf, as part of moving the volume
+to that node. This is the same annotation that [pins a volume](#pinned-volumes) against auto-rebalancing and
 node removal.
 
 ```bash title="Pin a bound PVC to a new node to trigger a migration"
@@ -140,13 +162,16 @@ kubectl annotate pvc <pvc-name> -n <namespace> \
 The annotation value must be a known storage node UUID. Any other value is rejected by a validating webhook.
 If the value is not a valid node, the operator records it and emits an `InvalidPinTarget` event.
 
+An operation created this way names the object that created it in `spec.creatorRef`, so a fan-out of migrations can
+be traced back to the drain or rebalance that asked for them.
+
 ## Auto-Rebalancing
 
 {{ experimental }}
 
 When enabled, the operator continuously evaluates the per-node load and automatically migrates volumes off
 overloaded ("hot") nodes onto less-loaded ("cold") nodes. Under the hood it creates the same
-`VolumeMigration` resources as a manual migration, so all migrations remain observable through `vmig`.
+`PersistentVolumeOps` resources as a manual migration, so all migrations remain observable through `pvops`.
 
 Auto-rebalancing is configured by `StorageCluster.spec.volumeAutoPlacement` and is disabled by default.
 
@@ -276,7 +301,7 @@ kubectl get events -n simplyblock \
 After volumes move, whether by manual migration, auto-rebalancing, or drain/removal, the operator automatically
 periodically re-aligns the cluster's internal data structures to the new placement so that fault-tolerance
 (FTT) and node-affinity guarantees are preserved. This is enabled by default and configured under
-`volumeMigrationSettings.dataRealignment` (see [Enabling Volume Migration](#enabling-volume-migration)).
+`volumeMigrationSettings.dataRealignment` (see [Volume Migration Settings](#volume-migration-settings)).
 
 The operator triggers a realignment on its own schedule whenever at least one volume has moved since the last
 successful realignment. However, a realignment can also be trigger immediately by annotating the
@@ -292,21 +317,21 @@ kubectl annotate storagecluster simplyblock-cluster -n simplyblock \
 The operator emits Kubernetes events on the affected resources throughout a migration. Useful reasons to
 filter on:
 
-| Reason                      | Meaning                                                                |
-|-----------------------------|------------------------------------------------------------------------|
-| `MigrationRequested`        | A `VolumeMigration` was accepted and submitted.                        |
-| `MigrationStarted`          | The backend migration is running.                                      |
-| `MigrationCompleted`        | The volume finished migrating to the target node.                      |
-| `MigrationFailed`           | The migration failed. See the event message and `status.errorMessage`. |
-| `MigrationAborted`          | The migration was canceled via `spec.abort`.                           |
-| `MigrationStuck`            | A migration has not progressed within the expected time.               |
-| `VolumeRebalancingStarted`  | Auto-rebalancing began moving a volume.                                |
-| `VolumeRebalancingComplete` | An auto-rebalancing migration finished.                                |
-| `VolumeRebalancingDeferred` | A rebalancing move was skipped this cycle (e.g., cool-down).           |
-| `PinnedVolumeBlocking`      | A pinned volume is blocking a node removal.                            |
-| `UnmanagedVolumeBlocking`   | A volume without a PV is blocking a node removal.                      |
-| `InvalidPinTarget`          | A pin annotation value is not a known storage node UUID.               |
-| `DataRealignmentTriggered`  | A post-migration data realignment was started.                         |
+| Reason                      | Meaning                                                           |
+|-----------------------------|-------------------------------------------------------------------|
+| `MigrationRequested`        | A `PersistentVolumeOps` was accepted and submitted.               |
+| `MigrationStarted`          | The backend migration is running.                                 |
+| `MigrationCompleted`        | The volume finished migrating to the target node.                 |
+| `MigrationFailed`           | The migration failed. See the event message and `status.message`. |
+| `MigrationAborted`          | The migration was canceled via `spec.abort`.                      |
+| `MigrationStuck`            | A migration has not progressed within the expected time.          |
+| `VolumeRebalancingStarted`  | Auto-rebalancing began moving a volume.                           |
+| `VolumeRebalancingComplete` | An auto-rebalancing migration finished.                           |
+| `VolumeRebalancingDeferred` | A rebalancing move was skipped this cycle (e.g., cool-down).      |
+| `PinnedVolumeBlocking`      | A pinned volume is blocking a node removal.                       |
+| `UnmanagedVolumeBlocking`   | A volume without a PV is blocking a node removal.                 |
+| `InvalidPinTarget`          | A pin annotation value is not a known storage node UUID.          |
+| `DataRealignmentTriggered`  | A post-migration data realignment was started.                    |
 
 ```bash title="Stream migration-related events"
 kubectl get events -n simplyblock --watch \

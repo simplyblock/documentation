@@ -39,68 +39,87 @@ spec:
 
 ## Assigning Workers to a Domain
 
-A domain is a non-negative integer, the group index, and every worker of a failure-domain cluster needs one. Two
-fields carry the assignment, both on the `StorageNodeSet`.
+A domain is a label value naming whatever fails together — `rack-a`, `zone-1`, `psu-left` — and every worker of a
+failure-domain cluster needs one. Two places carry the assignment.
 
-| Field                                    | Scope    | Description                                                             |
-|------------------------------------------|----------|-------------------------------------------------------------------------|
-| `spec.nodeFailureDomains`                | Fleet    | Maps a worker name to its group index.                                  |
-| `spec.nodeConfigs[worker].failureDomain` | Per node | Group index for one worker. Takes precedence over `nodeFailureDomains`. |
+| Field                                                            | Scope    | Description                                 |
+|------------------------------------------------------------------|----------|---------------------------------------------|
+| `ClusterDeploymentConfig.spec.nodeSets[].groups[].failureDomain` | Group    | The domain of every worker in the group.    |
+| `StorageNode.spec.config.failureDomain`                          | Per node | The domain of one node. Immutable once set. |
 
-`spec.nodeFailureDomains` is the readable form for a whole fleet, since the whole topology is visible in one block.
+The deployment config is the readable form, because a group is already the set of workers that belong together and
+giving it a domain says so once for all of them.
 
-```yaml title="Example of a StorageNodeSet spread across three failure domains (storage-nodeset.yaml)"
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageNodeSet
+```yaml title="Example of a deployment spread across three failure domains"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
 metadata:
-  name: simplyblock-node
+  name: production
   namespace: simplyblock
 spec:
-  clusterName: simplyblock-cluster
-  journalManager:
-    count: 4
-  workerNodes:
-    - worker-1.example.com
-    - worker-2.example.com
-    - worker-3.example.com
-    - worker-4.example.com
-    - worker-5.example.com
-    - worker-6.example.com
-  nodeFailureDomains:
-    worker-1.example.com: 1
-    worker-2.example.com: 1
-    worker-3.example.com: 2
-    worker-4.example.com: 2
-    worker-5.example.com: 3
-    worker-6.example.com: 3
+  approved: false
+  cluster:
+    name: simplyblock-cluster
+    maxSubsystemCount: 75
+    vcpuCount: 16
+    enableFailureDomains: true
+    stripe:
+      dataChunks: 2
+      parityChunks: 1
+  nodeSets:
+    - name: production
+      groups:
+        - name: rack-a-nodes
+          failureDomain: rack-a
+          journalManager:
+            count: 4
+          workers:
+            - worker-1.example.com
+            - worker-2.example.com
+        - name: rack-b-nodes
+          failureDomain: rack-b
+          journalManager:
+            count: 4
+          workers:
+            - worker-3.example.com
+            - worker-4.example.com
+        - name: rack-c-nodes
+          failureDomain: rack-c
+          journalManager:
+            count: 4
+          workers:
+            - worker-5.example.com
+            - worker-6.example.com
 ```
 
-Workers that share a group index are treated as failing together, so the index has to follow the physical layout.
-Two workers in the same rack belong in the same group, and two workers in different racks belong in different ones.
+Workers that share a domain are treated as failing together, so the value has to follow the physical layout. Two
+workers in the same rack belong in the same domain, and two workers in different racks belong in different ones.
 
-`nodeConfigs` is the place for an assignment that travels with other per-node settings.
+A worker whose configuration differs from the rest of its rack goes into its own group with the same
+`failureDomain`, which is how a domain holds workers that are not otherwise alike.
 
-```yaml title="Example of a failure domain set through the per-node configuration"
-spec:
-  nodeConfigs:
-    worker-1.example.com:
-      failureDomain: 1
-      spdkSystemMemory: "8G"
+```yaml title="Example of two groups in one failure domain"
+groups:
+  - name: rack-a-standard
+    failureDomain: rack-a
+    workers:
+      - worker-1.example.com
+  - name: rack-a-large-memory
+    failureDomain: rack-a
+    spdkSystemMemory: "8G"
+    workers:
+      - worker-2.example.com
 ```
 
-Every key of `nodeConfigs` has to name a worker that is also listed in `spec.workerNodes`, which the CRD enforces.
-
-!!! warning
-    Group indexes should be numbered from `1`. The schema accepts `0`, but the value is dropped from the request the
-    operator sends to the control plane, which leaves the node looking unassigned. A group index of `0` therefore
-    silently behaves like no assignment at all.
+The value takes the shape of a Kubernetes label value, which is what it is seeded from where a cluster carries
+topology labels at all.
 
 ### Multi-Socket Workers
 
-Both fields are keyed by the worker name, not by the storage node. A worker that hosts several storage nodes, because
-it has more than one NUMA socket or runs more than one node per socket, contributes all of them to the same group.
-That is the intended behavior, since a host cannot fail in two places at once, and the balance rules require a host
-to stay within one domain.
+The assignment is per worker, not per storage node. A worker that hosts several storage nodes, because it has more
+than one NUMA socket or runs more than one node per socket, contributes all of them to the same domain. That is the
+intended behavior, since a host cannot fail in two places at once, and the balance rules require a host to stay
+within one domain.
 
 ## Journal Copies
 
@@ -108,12 +127,17 @@ A failure-domain cluster needs at least four copies of the high-availability jou
 The default is three, which would put two copies in one domain on a two-domain cluster, so losing that domain would
 break the journal quorum.
 
-The copy count is raised through the journal manager configuration, as in the `StorageNodeSet` above.
+The copy count is raised through the journal manager configuration of each group, as above, and reaches the node as
+`StorageNode.spec.config.journalManager`.
 
 ```yaml title="Example of raising the journal copies for a failure-domain cluster"
-spec:
-  journalManager:
-    count: 4
+groups:
+  - name: rack-a-nodes
+    failureDomain: rack-a
+    journalManager:
+      count: 4
+    workers:
+      - worker-1.example.com
 ```
 
 ## Verifying the Assignment
@@ -132,11 +156,9 @@ simplyblock-node-o6x20i   worker-3.example.com   0        0         2    707dd44
 simplyblock-node-v92jx7   worker-5.example.com   0        0         3    114899a6-d708-499e-8051-bc9ca9713cf8   online   true     43h
 ```
 
-The same value is mirrored per node in the status of the owning `StorageNodeSet`.
-
-```bash title="Reading the failure domain of every node in a set"
-kubectl get storagenodeset simplyblock-node -n simplyblock \
-    -o jsonpath='{range .status.nodes[*]}{.hostname}{"\t"}{.failureDomain}{"\n"}{end}'
+```bash title="Reading the failure domain of every storage node"
+kubectl get storagenodes -n simplyblock \
+    -o jsonpath='{range .items[*]}{.status.hostname}{"\t"}{.status.failureDomain}{"\n"}{end}'
 ```
 
 A node whose status reports no failure domain has not been assigned one on the backend. On a failure-domain cluster
@@ -144,7 +166,7 @@ that means the node was never added, since the operator refuses to add it.
 
 ## A Missing Assignment Blocks the Node
 
-On a cluster with `enableFailureDomains: true`, a storage node without a group index is not provisioned. The operator
+On a cluster with `enableFailureDomains: true`, a storage node without a failure domain is not provisioned. The operator
 holds the node-add, emits a `FailureDomainMissing` warning on the `StorageNode`, and retries every 60 seconds. The
 event names the worker and the field to set, and provisioning continues on its own once the assignment is added.
 
@@ -153,10 +175,13 @@ kubectl get events -n simplyblock \
     --field-selector reason=FailureDomainMissing
 ```
 
-```bash title="Assigning a failure domain to a worker of an existing StorageNodeSet"
-kubectl patch storagenodeset simplyblock-node -n simplyblock --type=merge \
-    -p '{"spec": {"nodeFailureDomains": {"worker-1.example.com": 1}}}'
+```bash title="Assigning a failure domain to a node that has none"
+kubectl patch storagenode simplyblock-node-mejue8 -n simplyblock --type=merge \
+    -p '{"spec": {"config": {"failureDomain": "rack-a"}}}'
 ```
+
+The field is immutable once set: it describes where the node physically is, and chunk placement was computed from
+it. A node whose domain was wrong is drained, removed, and added again.
 
 ## Adding and Removing Nodes
 
@@ -186,4 +211,4 @@ For the mechanics of adding the workers themselves, see
 
 !!! note
     Domain membership does not change on a live node. A worker that has to move to a different domain is drained and
-    removed, then added again with the new group index.
+    removed, then added again with the new domain.

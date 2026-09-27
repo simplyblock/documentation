@@ -1,6 +1,6 @@
 ---
 title: "Shutting Down a Storage Cluster"
-description: "Suspend an entire simplyblock storage cluster on Kubernetes with the shutdown action, and learn what it means for the volumes the cluster serves."
+description: "Suspend an entire simplyblock storage cluster on Kubernetes with the Shutdown action, and learn what it means for the volumes the cluster serves."
 weight: 10114
 ---
 
@@ -8,8 +8,16 @@ A shutdown suspends the entire storage cluster. The backend shutdown API is call
 then polls until the cluster reports `suspended`.
 
 ```bash title="Shutting down the storage cluster"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "shutdown"}}'
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageClusterOps
+metadata:
+  name: shutdown-cluster
+  namespace: simplyblock
+spec:
+  clusterRef: simplyblock-cluster
+  action: Shutdown
+EOF
 ```
 
 How the request is executed, tracked, and cleared is described in

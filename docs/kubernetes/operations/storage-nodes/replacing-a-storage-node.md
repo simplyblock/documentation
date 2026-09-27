@@ -65,10 +65,11 @@ capacity is added as a new storage node.
 The order matters. Adding the replacement first keeps the cluster's capacity and redundancy intact throughout, which
 is why it is the recommended sequence.
 
-1. **Add the replacement node.** Create a `StorageNodeSet` for the new worker with `spec.expand: true`, or add the
-   worker to an existing set, as described in
+1. **Add the replacement node.** Approve a `ClusterDeploymentConfig` that names the cluster in `spec.clusterRef` and
+   lists the new worker, as described in
    [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md).
-2. **Finalize the expansion** with the `expand` action, if the node was added without the expansion flag, see
+2. **Finalize the expansion** with a `StorageClusterOps` carrying `action: Expand`, if the node was added without
+   the expansion flag, see
    [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md#finalizing-an-expansion-of-nodes-added-without-the-flag).
 3. **Drain and remove the old node** with a `StorageNodeOps` resource carrying `action: Remove`. Its volumes are
    migrated onto the remaining nodes, including the one just added, before the node leaves the cluster. See

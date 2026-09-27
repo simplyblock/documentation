@@ -1,98 +1,161 @@
 ---
 title: "Storage Cluster Actions"
-description: "Trigger cluster-wide lifecycle operations on a simplyblock storage cluster through the action field of the StorageCluster resource and track their outcome."
+description: "Trigger cluster-wide lifecycle operations on a simplyblock storage cluster with a StorageClusterOps resource and track their outcome."
 weight: 10110
 ---
 
-Cluster-wide lifecycle operations are requested declaratively on Kubernetes. Setting `spec.action` on a
-`StorageCluster` resource makes the Simplyblock Operator call the corresponding backend API, poll until the cluster
-reaches the expected state, and record the outcome in `status.actionStatus`. The CLI is not involved.
+Cluster-wide lifecycle operations are requested declaratively on Kubernetes. Creating a `StorageClusterOps` resource
+makes the Simplyblock Operator call the corresponding backend API, drive the operation to completion, and record the
+outcome on the operation itself. The CLI is not involved.
 
-This page describes the mechanism that every action shares: how one is requested, executed, re-run, and monitored.
+A `StorageClusterOps` is analogous to a Kubernetes `Job`: it runs to a terminal phase and stays afterward as the
+audit record of what was done, to which cluster, with which parameters, and how it ended.
 
-Only one action can be requested at a time, since `spec.action` holds a single value.
+This page describes the mechanism that every action shares: how one is requested, executed, re-run, aborted, and
+monitored.
 
 ## Requesting an Action
 
-An action is requested by patching the field. The example below shuts the cluster down.
+An action is requested by creating the resource. The example below shuts the cluster down.
 
 ```bash title="Requesting a cluster action"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "shutdown"}}'
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageClusterOps
+metadata:
+  name: shutdown-cluster
+  namespace: simplyblock
+spec:
+  clusterRef: simplyblock-cluster
+  action: Shutdown
+EOF
 ```
 
-| Action         | Effect                                                                 | Expected cluster status | Page                                                                   |
-|----------------|------------------------------------------------------------------------|-------------------------|------------------------------------------------------------------------|
-| `activate`     | Activates a cluster whose nodes have joined but which is not yet live. | `active`                | [Activating a Storage Cluster](activating-a-cluster.md)                |
-| `shutdown`     | Shuts the whole cluster down.                                          | `suspended`             | [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)          |
-| `start`        | Starts a previously shut down cluster.                                 | `active`                | [Starting a Storage Cluster](starting-a-cluster.md)                    |
-| `restart`      | Runs a shutdown followed by a start.                                   | `active`                | [Restarting a Storage Cluster](restarting-a-cluster.md)                |
-| `node-recycle` | Restarts every storage node of the cluster, one after another.         | `active`                | [Rolling Restart](rolling-restart.md)                                  |
-| `expand`       | Finalizes a cluster expansion after new storage nodes came online.     | `active`                | [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md) |
+| Action           | Effect                                                                 | Expected cluster status | Page                                                                   |
+|------------------|------------------------------------------------------------------------|-------------------------|------------------------------------------------------------------------|
+| `Activate`       | Activates a cluster whose nodes have joined but which is not yet live. | `active`                | [Activating a Storage Cluster](activating-a-cluster.md)                |
+| `Shutdown`       | Shuts the whole cluster down.                                          | `suspended`             | [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)          |
+| `Start`          | Starts a previously shut down cluster.                                 | `active`                | [Starting a Storage Cluster](starting-a-cluster.md)                    |
+| `Restart`        | Runs a shutdown followed by a start.                                   | `active`                | [Restarting a Storage Cluster](restarting-a-cluster.md)                |
+| `RollingRestart` | Restarts every storage node of the cluster, one after another.         | `active`                | [Rolling Restart](rolling-restart.md)                                  |
+| `Expand`         | Finalizes a cluster expansion after new storage nodes came online.     | `active`                | [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md) |
+| `CancelTask`     | Cancels one running backend task of the cluster.                       | unchanged               | [Canceling a Task](#canceling-a-task)                                  |
 
-Any other value is rejected by the CRD schema. What each action does is described on its own page, listed in the last
-column. This page covers what all of them share.
+Any other value is rejected by the CRD schema. `spec.clusterRef` and `spec.action` are immutable: a repeat of the
+same operation is a new resource.
+
+## One Operation at a Time
+
+Only one operation acts on a cluster at a time. A second is admitted rather than rejected, and waits until the
+first has reached a terminal phase. The operation currently allowed to act is named on the cluster:
+
+```bash title="Reading which operation holds the cluster"
+kubectl get storagecluster simplyblock-cluster -n simplyblock \
+    -o jsonpath='{.status.activeOpsRef}{"\n"}'
+```
+
+The field is empty when no operation is running.
 
 ## How an Action Is Executed
 
-Every action follows the same pattern. The operator records the action in `status.actionStatus` with the state
-`running`, sends the backend request once, and then polls the cluster until the expected status is reached. The first
-poll follows five seconds after the request, and further polls follow every ten seconds.
+Every action is a declared state machine, and the step it has reached is persisted in `status.step.state`. Which
+steps belong to which action is the action's own, and the pages linked above describe them.
 
-The `status.actionStatus.triggered` flag marks that the request has already been sent, so a requeue or an operator
-restart never sends it twice. A failed request moves the state to `failed` and writes the reason into
-`status.actionStatus.message`. A failed action is not retried automatically.
+| Action                                                  | Steps                                                                                                |
+|---------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `Activate`, `Expand`, `Shutdown`, `Start`, `CancelTask` | `Requesting`, `Awaiting`                                                                             |
+| `Restart`                                               | `ShuttingDown`, `Starting`                                                                           |
+| `RollingRestart`                                        | `CheckingPeers`, `ShuttingDownNode`, `RefreshingPod`, `AwaitingPod`, `RestartingNode`, `Rebalancing` |
 
-| Field                | Description                                                              |
-|----------------------|--------------------------------------------------------------------------|
-| `action`             | The action this status belongs to.                                       |
-| `state`              | `running` while the action is in progress, then `success` or `failed`.   |
-| `message`            | The result, the failure reason, or the current sub-phase of a `restart`. |
-| `triggered`          | Whether the backend request has already been sent.                       |
-| `observedGeneration` | The `metadata.generation` of the spec this action was started for.       |
-| `updatedAt`          | The time of the last status transition.                                  |
+The persisted step is also what makes the operation safe to resume. Every step's completion condition is a
+predicate over current state rather than an observation of a transition, and every call is skipped when its target
+is already at or past what the call would produce, so a requeue or an operator restart never repeats a side effect.
 
-## Re-Running and Clearing an Action
+`status.step.deadline` is when the current step expires, where it has one. A step whose deadline passed while the
+operator was down is restored as already expired, which is what makes a stalled operation detectable.
 
-An action counts as complete when its state is `success` **and** its `observedGeneration` matches the current
-`metadata.generation` of the resource. Patching `spec.action` with the value it already holds does not change the
-generation, so nothing happens. Re-running the same action therefore takes two patches: the field is cleared first
-and set again afterward.
+## Phases
 
-```bash title="Re-running the same action"
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": ""}}'
-kubectl patch storagecluster simplyblock-cluster -n simplyblock \
-    --type=merge -p '{"spec": {"action": "restart"}}'
+| Phase       | Meaning                                                                     |
+|-------------|-----------------------------------------------------------------------------|
+| `Pending`   | Admitted, not yet started. A second operation on a busy cluster waits here. |
+| `Running`   | In progress. `status.step.state` says where.                                |
+| `Succeeded` | Finished, terminal.                                                         |
+| `Failed`    | Something went wrong, terminal. `status.message` says what.                 |
+| `Aborted`   | Canceled deliberately, terminal, and distinct from `Failed`.                |
+
+A failed operation is not retried automatically.
+
+## Re-Running an Action
+
+Re-running is creating a second resource. The first stays as the record of the earlier run, so the history of what
+was done to a cluster is a series of objects rather than a field that was overwritten.
+
+```bash title="Re-running an action"
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageClusterOps
+metadata:
+  name: restart-cluster-2
+  namespace: simplyblock
+spec:
+  clusterRef: simplyblock-cluster
+  action: Restart
+EOF
 ```
 
-!!! important
-    While `spec.action` holds a value, the reconciler serves the action instead of its periodic status sync. Once the
-    action has succeeded, nothing further happens to the resource, and the remaining `status` fields are no longer
-    refreshed from the backend. Clearing `spec.action` after a completed action returns the cluster to normal status
-    reconciliation.
+## Aborting an Action
+
+`spec.abort` asks a running operation to stop at its next step and unwind. Whether an abort is expressible from the
+current step is declared by the action's own state machine: one arriving later is reported as an illegal transition
+while the operation runs on, rather than leaving the work half done.
+
+```bash title="Aborting a running operation"
+kubectl patch storageclusterops restart-cluster -n simplyblock \
+    --type=merge -p '{"spec": {"abort": true}}'
+```
+
+An operation that unwound reaches the phase `Aborted`, which is terminal and deliberately distinct from `Failed`:
+a canceled operation did not go wrong.
+
+## Canceling a Task
+
+`CancelTask` cancels one running backend task, named by its identifier. The running tasks of a cluster are reported
+in `status.tasks`.
+
+```bash title="Reading the running tasks of a cluster"
+kubectl get storagecluster simplyblock-cluster -n simplyblock -o jsonpath='{.status.tasks}'
+```
+
+```bash title="Canceling a task"
+kubectl apply -n simplyblock -f - <<EOF
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageClusterOps
+metadata:
+  name: cancel-migration
+  namespace: simplyblock
+spec:
+  clusterRef: simplyblock-cluster
+  action: CancelTask
+  cancelTask:
+    taskID: 4f2c8a11-6b3d-4e19-9a55-0c7e1d8f2b34
+EOF
+```
 
 ## Monitoring an Action
 
-The action state is exposed in the resource status.
-
-```bash title="Reading the current action status"
-kubectl get storagecluster simplyblock-cluster -n simplyblock \
-    -o jsonpath='{.status.actionStatus}' | jq .
+```bash title="Listing the operations of a cluster"
+kubectl get storageclusterops -n simplyblock
 ```
 
-```plain title="Example output of a running action"
-{
-  "action": "restart",
-  "state": "running",
-  "message": "start",
-  "observedGeneration": 7,
-  "triggered": true,
-  "updatedAt": "2026-08-22T09:14:03Z"
-}
+```bash title="Following a running operation"
+kubectl get storageclusterops restart-cluster -n simplyblock \
+    -o jsonpath='{.status.phase}{"\t"}{.status.step.state}{"\t"}{.status.message}{"\n"}' -w
 ```
 
-The backend lifecycle status of the cluster is tracked separately from the action.
+`status.startedAt` and `status.completedAt` bracket the run.
+
+The backend lifecycle status of the cluster is tracked separately from any operation.
 
 ```bash title="Reading the backend cluster status"
 kubectl get storagecluster simplyblock-cluster -n simplyblock \

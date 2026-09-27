@@ -50,166 +50,170 @@ EOF
 
 #### StorageCluster Backup Configuration
 
-Include a `backup` section in the `StorageCluster` spec referencing the credentials secret:
+Include a `backup` section in the `StorageCluster` spec referencing the credentials secret. The block is the
+location backups go to and nothing else: how a copy is taken and what it contains are the control plane's.
 
 ```yaml title="StorageCluster backup configuration"
 spec:
   # ... other fields ...
   backup:
+    endpoint: http://minio.minio.svc.cluster.local:9000
+    bucket: simplyblock-backups
+    prefix: cluster-a
+    region: us-east-1
     credentialsSecretRef:
       name: backup-credentials
-    localEndpoint: http://minio.minio.svc.cluster.local:9000
-    snapshotBackups: true
-    withCompression: false
 ```
 
-| Field                       | Default | Description                                                                      |
-|-----------------------------|---------|----------------------------------------------------------------------------------|
-| `credentialsSecretRef.name` | —       | Secret with `access_key_id` and `secret_access_key`. **Required**.               |
-| `localEndpoint`             | AWS S3  | Endpoint URL for S3-compatible storage (e.g., MinIO). Leave unset for Amazon S3. |
-| `snapshotBackups`           | `true`  | Allow snapshots to be used as backup sources.                                    |
-| `withCompression`           | `false` | Compress backup data before upload.                                              |
-| `secondaryTarget`           | `0`     | Secondary backup target selector (advanced).                                     |
+| Field                       | Default | Description                                                                  |
+|-----------------------------|---------|------------------------------------------------------------------------------|
+| `endpoint`                  | —       | S3 endpoint URL. **Required**.                                               |
+| `bucket`                    | —       | Bucket backups are written to and read from. **Required**.                   |
+| `credentialsSecretRef.name` | —       | Secret with the access key and the secret key. **Required**.                 |
+| `prefix`                    | —       | Narrows the store to one key prefix, so several clusters can share a bucket. |
+| `region`                    | —       | The bucket's region, for endpoints that do not imply one.                    |
 
-See the [Operator Reference](../../../reference/operator/reference.md#storagecluster) for all available `backup` spec fields.
+The whole block is mutable. A cluster can be created without a store and given one later, and what changes when it
+changes is which backups have objects, since the object set is derived from the location rather than accumulated.
 
-### StorageBackup CRD
+See the [Operator Reference](../../../reference/operator/reference.md#backupstorespec) for all available fields.
 
-The `StorageBackup` resource creates a one-time backup of a PVC to the configured S3-compatible storage endpoint.
+### StorageBackup
 
-```yaml title="Create a backup for a PVC"
-kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: StorageBackup
-metadata:
-  name: my-pvc-backup
-  namespace: simplyblock
-spec:
-  clusterName: simplyblock-cluster
-  pvcRef:
-    name: my-pvc
-EOF
-```
-
-Monitor the backup status:
+A `StorageBackup` is one backup held in the store. It is **discovered, not created**: the operator subscribes to the
+store's inventory and writes one object per backup it finds, so a user neither creates nor deletes these objects.
+Its spec is only the backup's identity — the cluster and the backend backup id.
 
 ```bash title="List backups"
 kubectl -n simplyblock get storagebackup
 ```
 
 ```plain
-NAME            PHASE   PVC      BACKUPID                               SNAPSHOT              AGE
-my-pvc-backup   Done    my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   backup-my-pvc-backup  3m
+NAME            PHASE       SIZE        POOL             COMPLETED   AGE
+my-pvc-backup   Available   1073741824  production-pool  3m          3m
 ```
 
-!!! note
-    The first backup may take longer to complete as there is no prior incremental state.
+Because the object set follows the location, a backup another cluster wrote into the same bucket appears here too.
+There is no import step: the store is the inventory.
 
-#### Spec Fields
+| Phase       | Description                                                   |
+|-------------|---------------------------------------------------------------|
+| `Pending`   | The backup is known and nothing has been copied yet.          |
+| `Creating`  | The copy is being written.                                    |
+| `Available` | The copy is complete and can be restored.                     |
+| `Failed`    | The copy did not complete. `status.message` holds the reason. |
 
-| Field          | Type   | Description                                                      |
-|----------------|--------|------------------------------------------------------------------|
-| `clusterName`  | string | Name of the target StorageCluster. **Required**.                 |
-| `pvcRef.name`  | string | Name of the PVC to back up. **Required**.                        |
-| `snapshotName` | string | Overrides the name of the internally created snapshot. Optional. |
-
-The backup also records the source volume's filesystem type in its status (`fsType`), so a later restore mounts
-the restored volume with the same filesystem regardless of the target StorageClass defaults.
+`Available` is the terminal success rather than `Succeeded`, because a backup is not an operation: what matters
+afterward is that the copy can be restored, not that the copying finished.
 
 #### Status Fields
 
-| Column     | Description                               |
-|------------|-------------------------------------------|
-| `PHASE`    | Current phase: `InProgress` or `Done`.    |
-| `PVC`      | Name of the source PVC.                   |
-| `BACKUPID` | Backend backup identifier.                |
-| `SNAPSHOT` | Name of the snapshot used for the backup. |
+The status is in two groups. `status.backup` describes the copy, and `status.source` what the volume was when the
+copy was taken.
 
-### BackupRestore CRD
+| Group           | Fields                                                                                                                                                               |
+|-----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `status.backup` | `backupID`, `s3ID`, `size`, `previousBackupID`, `startedAt`, `completedAt`                                                                                           |
+| `status.source` | `claimName`, `claimNamespace`, `persistentVolumeName`, `poolName`, `poolUUID`, `lvolID`, `lvolName`, `fsType`, `snapshotID`, `snapshotName`, `nodeID`, `clusterUUID` |
 
-The `BackupRestore` resource restores a `StorageBackup` into a new PVC. The restored PVC is created in the
-same namespace as the `BackupRestore` object.
+`status.source.fsType` is the source volume's filesystem type, so a later restore mounts the restored volume with
+the same filesystem regardless of the target StorageClass defaults. `status.backup.previousBackupID` is what makes
+the incremental chain visible.
 
-```yaml title="Restore a backup to a new PVC"
+```bash title="Inspect a backup"
+kubectl -n simplyblock get storagebackup my-pvc-backup -o jsonpath='{.status}' | jq .
+```
+
+!!! note
+    The first backup of a volume may take longer to complete as there is no prior incremental state.
+
+### StorageBackupOps
+
+A `StorageBackupOps` performs one operation against a `StorageBackup`, which today means a restore. It runs to a
+terminal phase and stays afterward as the audit record of what was restored, into which pool, and how it ended.
+
+```yaml title="Restore a backup into a new PVC"
 kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: BackupRestore
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageBackupOps
 metadata:
   name: my-restore
   namespace: simplyblock
 spec:
-  clusterName: simplyblock-cluster
-  backupRef:
-    name: my-pvc-backup
-  pvcTemplate:
-    metadata:
-      name: restored-pvc
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
+  clusterRef: simplyblock-cluster
+  backupRef: my-pvc-backup
+  action: Restore
+  restore:
+    claimName: restored-pvc
+    targetPool: production-pool
 EOF
 ```
 
-Monitor the restore status:
-
-```bash title="List restores"
-kubectl -n simplyblock get backuprestore
-```
-
-```plain
-NAME         PHASE   BACKUP          PVC            AGE
-my-restore   Done    my-pvc-backup   restored-pvc   79s
-```
-
-The phase transitions from `InProgress` → `PVCBinding` → `Done`. Once `Done`, the new PVC is ready to attach
-to a pod. The restored PersistentVolume is created with the filesystem type recorded in the source backup, and an
-encrypted source volume is restored encrypted.
-
 #### Spec Fields
 
-| Field                       | Type   | Description                                                                 |
-|-----------------------------|--------|-----------------------------------------------------------------------------|
-| `clusterName`               | string | Name of the target StorageCluster. **Required**.                            |
-| `backupRef.name`            | string | Name of the `StorageBackup` to restore from. **Required**.                  |
-| `targetPool`                | string | Pool to restore into. Defaults to the source backup PVC's pool.             |
-| `targetNode`                | string | Storage node to restore to. Defaults to automatic placement in the cluster. |
-| `pvcTemplate.metadata.name` | string | Name of the new PVC to create. **Required**.                                |
-| `pvcTemplate.spec`          | object | PVC spec (accessModes, resources, etc.).                                    |
+| Field                      | Type   | Description                                                  |
+|----------------------------|--------|--------------------------------------------------------------|
+| `clusterRef`               | string | Name of the target StorageCluster. **Required**.             |
+| `backupRef`                | string | Name of the `StorageBackup` to restore. **Required**.        |
+| `action`                   | string | `Restore`. **Required**.                                     |
+| `restore.claimName`        | string | Name of the `PersistentVolumeClaim` to create. **Required**. |
+| `restore.targetPool`       | string | Pool to restore into. **Required**.                          |
+| `restore.claimLabels`      | map    | Labels copied onto the new claim.                            |
+| `restore.claimAnnotations` | map    | Annotations copied onto the new claim.                       |
 
-!!! warning
-    A backup can only be restored to the same namespace as the `BackupRestore` object.
+#### Steps
 
-### BackupPolicy CRD
+| Step             | Description                                             |
+|------------------|---------------------------------------------------------|
+| `Validating`     | The references are resolved and the restore is checked. |
+| `Restoring`      | The backend copies the data back.                       |
+| `AwaitingVolume` | The restored logical volume is awaited.                 |
+| `Binding`        | The `PersistentVolumeClaim` is created and bound.       |
 
-A `BackupPolicy` defines an automated backup schedule with retention settings. Attach it to a PVC using the
-`simplyblock.io/backup-policy` annotation to automatically create `StorageBackup` objects on schedule.
+```bash title="Follow a restore"
+kubectl get storagebackupops my-restore -n simplyblock \
+    -o jsonpath='{.status.phase}{"\t"}{.status.step.state}{"\n"}' -w
+```
+
+The claim a restore produces is not owned by the operation and outlives it: deleting the `StorageBackupOps` does
+not delete the restored volume, and a failed restore leaves no claim behind because the claim is created only at
+`Binding`. `status.persistentVolumeName` names the volume that was created.
+
+Two restores of one backup do not run together. The backup carries `status.activeOpsRef`, and a second operation
+queues behind the first.
+
+### StorageBackupPolicy
+
+A `StorageBackupPolicy` schedules and retains the backups of the claims it selects. It is the only thing that
+decides a backup is taken; the copies themselves belong to the control plane and are pruned by its retention.
 
 ```yaml title="Create a backup policy"
 kubectl apply -f - <<'EOF'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: BackupPolicy
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageBackupPolicy
 metadata:
   name: my-policy
   namespace: simplyblock
 spec:
-  clusterName: simplyblock-cluster
+  clusterRef: simplyblock-cluster
+  claimSelector:
+    matchLabels:
+      backup: hourly
+  schedule: "15m,4 60m,11 24h,7"
   maxVersions: 10
   maxAge: "7d"
-  schedule: "15m,4 60m,11 24h,7"
 EOF
 ```
 
 #### Spec Fields
 
-| Field         | Type   | Description                                                       |
-|---------------|--------|-------------------------------------------------------------------|
-| `clusterName` | string | Name of the target StorageCluster. **Required**.                  |
-| `maxVersions` | int    | Maximum number of completed backup versions to retain.            |
-| `maxAge`      | string | Maximum backup age (e.g., `7d`, `12h`, `30m`).                    |
-| `schedule`    | string | Tiered backup schedule as space-separated `interval,count` pairs. |
+| Field           | Type           | Description                                                       |
+|-----------------|----------------|-------------------------------------------------------------------|
+| `clusterRef`    | string         | Name of the target StorageCluster. **Required**.                  |
+| `claimSelector` | label selector | Which claims the policy covers.                                   |
+| `schedule`      | string         | Tiered backup schedule as space-separated `interval,count` pairs. |
+| `maxVersions`   | int            | Maximum number of completed backup versions to retain.            |
+| `maxAge`        | string         | Maximum backup age (e.g., `7d`, `12h`, `30m`).                    |
 
 The schedule format is a space-separated list of `interval,count` pairs with strictly increasing intervals. For
 example, `15m,4 60m,11 24h,7` means: take a backup every 15 minutes (keep the 4 most recent), every 60 minutes
@@ -218,77 +222,48 @@ example, `15m,4 60m,11 24h,7` means: take a backup every 15 minutes (keep the 4 
 Retention does not delete data: when `maxVersions` or `maxAge` is exceeded, the oldest backup is merged into the
 next one, so the number of restore points shrinks while the backup chain stays complete.
 
-#### Attaching a Policy to a PVC
+!!! important
+    `spec.schedule` is immutable. The control plane offers no endpoint that applies a changed schedule, so a
+    mutable field would leave the declaration and the backups actually being taken permanently disagreeing.
+    Changing a schedule means replacing the policy.
 
-Apply the `simplyblock.io/backup-policy` annotation to start automatic backups for a PVC:
+#### Selecting the Claims
 
-```bash title="Attach a backup policy"
-kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=my-policy
+A policy covers claims by label rather than being attached to them one at a time. Labeling a claim brings it into
+the policy, and removing the label takes it out.
+
+```bash title="Bring a claim into a policy"
+kubectl label pvc my-pvc -n simplyblock backup=hourly
 ```
 
-The policy will begin creating `StorageBackup` objects automatically. View them with:
-
-```bash title="List auto-created backups"
-kubectl get storagebackup -n simplyblock
+```bash title="Take a claim out of a policy"
+kubectl label pvc my-pvc -n simplyblock backup-
 ```
 
-#### Updating and Detaching Policies
+The claims a policy currently covers are published in its status, and existing backups are not deleted when a claim
+leaves.
 
-To switch a PVC to a different policy (detaches from the old policy and attaches to the new one):
-
-```bash title="Switch to a different policy"
-kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy=new-policy --overwrite
+```bash title="Read the claims a policy covers"
+kubectl get storagebackuppolicy my-policy -n simplyblock \
+    -o jsonpath='{.status.attachedClaims}' | jq .
 ```
 
-To detach a policy from a PVC (existing backups are not deleted):
+| Phase     | Description                                             |
+|-----------|---------------------------------------------------------|
+| `Pending` | The policy is being registered with the control plane.  |
+| `Active`  | The policy is registered and taking backups.            |
+| `Failed`  | Registration failed. `status.message` holds the reason. |
 
-```bash title="Detach a backup policy"
-kubectl annotate pvc my-pvc -n simplyblock simplyblock.io/backup-policy-
-```
+`status.lastBackupAt` is when the policy last produced a backup.
 
-### BackupImport CRD (Cross-Cluster Restore)
+### Restoring a Backup Another Cluster Wrote
 
-A `BackupImport` makes a backup taken on one simplyblock cluster restorable on another. Both clusters must be
-represented as `StorageCluster` resources managed by the same operator, and the target cluster's storage nodes
-must be able to reach the source cluster's S3 bucket.
+There is no import step. Point both clusters at the same bucket, with a different `prefix` for each, and every
+backup in the bucket is discovered by whichever cluster walks it. A `StorageBackup` that another cluster wrote is
+an ordinary object here and is restored with a `StorageBackupOps` like any other.
 
-Find the backup to import on the source cluster (`BACKUPID` column of `kubectl get storagebackup`), then create
-the import against the target cluster:
-
-```yaml title="Import a backup from another cluster"
-kubectl apply -f - <<'MANIFEST'
-apiVersion: storage.simplyblock.io/v1alpha1
-kind: BackupImport
-metadata:
-  name: my-import
-  namespace: simplyblock
-spec:
-  sourceClusterName: cluster-a
-  sourceBackupID: 7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef
-  targetClusterName: cluster-b
-MANIFEST
-```
-
-The phase transitions from `Pending` → `Exporting` → `Importing` → `Done`. On completion, the controller has
-imported the backup metadata into the target cluster and created a `StorageBackup` resource marked as imported;
-its name is published in `status.storageBackupRef`.
-
-```bash title="Check the import"
-kubectl -n simplyblock get backupimport my-import -o jsonpath='{.status.storageBackupRef}'
-```
-
-Reference that `StorageBackup` in a regular [`BackupRestore`](#backuprestore-crd) to restore it. The restore
-controller detects the foreign source and reads from the source cluster's bucket using the source
-`StorageCluster`'s own backup credentials — unlike the CLI flow, no cluster-wide backup-source switch is needed,
-and local backups continue uninterrupted.
-
-#### Spec Fields
-
-| Field               | Type   | Description                                                            |
-|---------------------|--------|------------------------------------------------------------------------|
-| `sourceClusterName` | string | StorageCluster name of the cluster that owns the backup. **Required**. |
-| `sourceBackupID`    | string | Backup UUID on the source cluster. **Required**.                       |
-| `targetClusterName` | string | StorageCluster name of the cluster to import into. **Required**.       |
+The target cluster's storage nodes have to be able to reach the bucket, and `status.source.clusterUUID` on the
+backup names the cluster that wrote it.
 
 ## Control-Plane Backups
 
