@@ -372,7 +372,7 @@ spec:
 
 ### Pinned Volume Behavior During `Remove`
 
-PVCs annotated with `simplyblock.io/selected-storage-node` affect the `Remove` drain flow:
+PVCs annotated with `storage.simplyblock.io/selected-storage-node` affect the `Remove` drain flow:
 
 - If the annotation value is a **valid storage node UUID** (different from the node being drained), the volume is
   migrated to that specific node and the drain proceeds normally.
@@ -383,7 +383,7 @@ To migrate a pinned volume to a specific node, set the annotation to the target 
 
 ```bash title="Set migration target for a pinned volume"
 kubectl annotate pvc <pvc-name> -n <namespace> \
-  simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
+  storage.simplyblock.io/selected-storage-node=<target-storage-node-uuid> --overwrite
 ```
 
 See [Pinned Volume Migration During Node Removal](../../kubernetes/operations/storage-nodes/node-drain-coordination.md#pinned-volume-migration-during-node-removal) for full details.
@@ -447,7 +447,7 @@ what the driver needs to reach the backend, and the operator validates that the 
 pool without a cluster-wide `kubectl get storageclass`.
 
 The parameter names are described in
-[Storage Class](../../kubernetes/usage/storage-class.md#storageclass-created-by-a-storage-pool).
+[Storage Class](../../kubernetes/usage/storage-class.md#assigning-a-storageclass-to-a-storage-pool).
 
 ### The Default Pool and Its Class
 
