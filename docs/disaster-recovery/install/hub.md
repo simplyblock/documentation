@@ -229,7 +229,9 @@ subjects:
     name: dr-administrators
 ```
 
-The roles are described in detail in [Access Control](../configuration/access-control.md).
+These ClusterRoleBindings grant the roles for all namespaces. To limit a team to the applications of one namespace,
+`dr-operator` or `dr-viewer` is bound with a RoleBinding in that namespace instead. The roles and the scoping per
+namespace are described in [Access Control](../configuration/access-control.md#scoping-access).
 
 ## Next Steps
 
