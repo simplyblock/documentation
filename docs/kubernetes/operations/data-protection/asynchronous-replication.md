@@ -9,7 +9,8 @@ interval. For each interval, a snapshot is taken on the source cluster and repli
 the snapshots form an incremental chain. On Kubernetes, replication is declared through custom resources, and every
 backend call is issued by the Simplyblock Operator.
 
-For the architecture background, see [Replication Concepts](../../../architecture/concepts/replication.md).
+For how this storage-level replication relates to application-level disaster recovery, see
+[DR Protection Plans](../../../architecture/concepts/dr-protection-plans.md#storage-level-and-application-level-protection).
 
 !!! note "API version"
     The replication kinds (`ReplicationPair`, `ReplicationPolicy`, `ReplicationSlot`, and `ReplicationOps`) remain on

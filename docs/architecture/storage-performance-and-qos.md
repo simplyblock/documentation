@@ -42,34 +42,42 @@ IOPS in both disaggregated and hyper-converged environments.
 ### Data Locality
 
 Simplyblock uses NVMe/TCP or NVMe/RDMA (RoCEv2) to connect initiators (storage consumers) to the storage cluster. While those protocols
-are networked and allow any type of distributed topology between clients and cluster nodes, simplyblock can ensure a
-maximum of data locality to minimize impacts of network latency and bandwidth utilization.
+are networked and allow any type of distributed topology between clients and cluster nodes, simplyblock can co-locate data with the
+workloads that use it to reduce network latency and bandwidth utilization.
 
-In simplyblock, front storage (the remote "docking points" of the clients into the cluster) and back storage (the actual NVMe storage layer)
-are distributed. All cluster back storage devices can be accessed from any front storage entry point using cluster internal NVMe-oF.
+In simplyblock, front storage (the NVMe-oF volumes, the "docking points" of the clients into the cluster) and back storage (the actual
+NVMe storage layer) are distributed separately. All back storage devices of the cluster can be accessed from any front storage entry point
+using cluster-internal NVMe-oF.
 
-However, to achieve a maximum of data locality without compromising the advantages of a fully distributed system, such as scalability,
-several advanced mechanisms can be used within simplyblock:
+!!! info "Data locality is turned off by default"
+    By default, simplyblock does not apply data locality, not even in a hyper-converged deployment. Instead, it distributes volumes and
+    their data to achieve a fully balanced load across all nodes, devices, and network links of the cluster. Data locality is a
+    trade-off that is enabled on purpose where lower latency and less network traffic matter more than an even cluster balance.
 
-1. In a hyper-converged deployment, simplyblock tries to co-locate front storage volume entry points with the actual workload. In
-   Kubernetes, it attempts to create the volume itself on the same node as the workload initially.
-2. Simplyblock has an instant volume migration feature. This allows to re-locate the front storage volume instantly in case the workload
-   is migrated to re-align them. In this step, no data is moved yet.
-3. Simplyblock provides a back storage node affinity feature. While the back storage is distributed by its nature, the affinity
-   is a best-effort to also co-locate back storage on the same node as front storage.
-4. With node affinity enabled, if the front storage is moved, the back storage will not move instantly. However, once the cluster
-   is rebalanced in the background, the data is moved to satisfy node affinity.
+Data locality has two aspects, which are independent of each other:
+
+1. **Pod locality (front storage):** The NVMe-oF volume is placed on the storage node on the same worker as the pod that consumes
+   it. The I/O between the pod and its volume then stays on the worker, which eliminates one network hop. When a pod is relocated to
+   another worker, its NVMe-oF volume follows the workload instantly with an
+   [instant volume migration](concepts/volume-migration.md). Only the front storage moves, no data is copied. On Kubernetes, pod
+   locality is requested per volume (see [Co-Locating a Volume With a Pod](../kubernetes/usage/volume-placement.md#co-locating-a-volume-with-a-pod)).
+2. **Back storage locality (node affinity):** If node affinity is turned on, the primary chunk or data copy of a volume is co-located
+   with its front storage NVMe-oF volume on a best-effort basis. This reduces the network load and improves the latency further, but it
+   concentrates data on the nodes that host the volumes and therefore impacts the balance of the cluster. Node affinity is a
+   cluster-wide setting and is turned off by default (see [Configuring Node Affinity](../kubernetes/operations/cluster/node-affinity.md)).
+   When the front storage of a volume moves, its back storage does not move instantly. Once the cluster is rebalanced in the
+   background, the data is moved to satisfy node affinity again.
 
 The rebalancing algorithm which moves data around is optimized for minimal overhead:
 
 * First, it tries to maximize transfer size, in fact turning smaller random writes into large sequential writes, which are much more efficient.
 * Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS). Therefore, its impact on
-  I/O performance is quite limited. This means that volumes ultimately converge toward full data locality whenever possible.
+  I/O performance is quite limited. With node affinity turned on, volumes therefore converge toward full data locality whenever possible.
 * At the same time, this does not result in any hard limits.
     * For example, in a cluster with 2 PB of storage, it is still possible to create a single volume consuming all of these 2 PB.
     * Also, it can be balanced against scalability and consistency. Meaning, if I/O-intensive workloads are not well-balanced across worker nodes,
       data locality could lead to actually worse performance. Therefore, data locality is not an absolute requirement, but remains a best effort,
-      and by the operator is automatically balanced against an optimal I/O-performance balance across nodes.
+      and is balanced against an optimal distribution of I/O across nodes.
 
 ### Pseudo-Randomized, Distributed Data Placement With Fast Re-Balancing
 
