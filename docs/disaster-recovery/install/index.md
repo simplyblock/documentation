@@ -6,8 +6,9 @@ weight: 10100
 
 Simplyblock Disaster Recovery (component name `dr-simplyblock`) is installed with two Helm charts. The
 `dr-simplyblock-hub` chart turns a Kubernetes cluster into the DR hub, and the `dr-simplyblock-spoke` chart joins each
-site cluster to that hub. Everything else, including Open Cluster Management (OCM), the Ramen operators, Velero, and
-the csi-addons controllers, is installed by `dr-simplyblock` itself.
+site cluster to that hub. Everything else, including Open Cluster Management (OCM), the Ramen operators, and Velero,
+is installed by `dr-simplyblock` itself. The snapshot controller and csi-addons come with the simplyblock storage
+installation.
 
 ## Installation Flow
 
@@ -33,21 +34,21 @@ applications, as described in [Configuration](../configuration/index.md).
 The hub cluster runs the control components. Site clusters only run agents and the data-path components. The site
 clusters connect to the hub API server. The hub never connects to a site cluster.
 
-| Component                                                    | Hub | Site         | Version                  |
-|--------------------------------------------------------------|-----|--------------|--------------------------|
-| `dr-hub`                                                     | Yes | No           | Chart version            |
-| OCM cluster manager                                          | Yes | No           | 1.3.1                    |
-| OCM governance-policy addon                                  | Yes | Addon agents | v0.18.0                  |
-| OCM `ocm-controller`                                         | Yes | Addon agent  | Bundled                  |
-| Ramen hub operator                                           | Yes | No           | Pinned by digest         |
-| OCM klusterlet (registration and work agents)                | No  | Yes          | 1.3.1                    |
-| `dr-agent` (OCM addon, namespace `simplyblock-dr-agent`)     | No  | Yes          | Chart version            |
-| Ramen DR cluster operator                                    | No  | Yes          | Pinned by digest         |
-| external-snapshotter (with volume group snapshots)           | No  | Yes          | v8.6.0                   |
-| csi-addons CRDs and controller                               | No  | Yes          | v0.14.0                  |
-| Ramen Recipe CRD                                             | No  | Yes          | Pinned                   |
-| Velero with velero-plugin-for-aws and kubevirt-velero-plugin | No  | Yes          | v1.16.1, v1.12.0, v0.8.0 |
-| Simplyblock storage, Simplyblock Operator, and CSI driver    | No  | Yes          | Installed separately     |
+| Component                                                    | Hub | Site         | Version                    |
+|--------------------------------------------------------------|-----|--------------|----------------------------|
+| `dr-hub`                                                     | Yes | No           | Chart version              |
+| OCM cluster manager                                          | Yes | No           | 1.3.1                      |
+| OCM governance-policy addon                                  | Yes | Addon agents | v0.18.0                    |
+| OCM `ocm-controller`                                         | Yes | Addon agent  | Bundled                    |
+| Ramen hub operator                                           | Yes | No           | Pinned by digest           |
+| OCM klusterlet (registration and work agents)                | No  | Yes          | 1.3.1                      |
+| `dr-agent` (OCM addon, namespace `simplyblock-dr-agent`)     | No  | Yes          | Chart version              |
+| Ramen DR cluster operator                                    | No  | Yes          | Pinned by digest           |
+| Ramen Recipe CRD                                             | No  | Yes          | Pinned                     |
+| Velero with velero-plugin-for-aws and kubevirt-velero-plugin | No  | Yes          | v1.16.1, v1.12.0, v0.8.0   |
+| Simplyblock storage, Simplyblock Operator, and CSI driver    | No  | Yes          | Installed separately       |
+| Snapshot controller and snapshot CRDs (with group snapshots) | No  | Yes          | Installed with simplyblock |
+| csi-addons CRDs and controller                               | No  | Yes          | Installed with simplyblock |
 
 The exact versions of a release can be printed from the hub image:
 
