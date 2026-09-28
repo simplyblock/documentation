@@ -24,10 +24,108 @@ The division follows the responsibilities in a typical organization:
 - **Administrators:** DR administrators define the topology (plans and paths), change the DR configuration, restore
   applications from backups, and decide on overrides.
 
-The chart binds none of the roles. They are bound to users or groups with ClusterRoleBindings, as shown in
-[Installing the Hub](../install/hub.md#granting-access). `dr-operator` and `dr-admin` are aggregated ClusterRoles, so
+The chart binds none of the roles. They are bound to users or groups with ClusterRoleBindings for access to all
+namespaces, as shown in [Installing the Hub](../install/hub.md#granting-access), or with RoleBindings for access to
+single namespaces (see [Scoping Access](#scoping-access)). `dr-operator` and `dr-admin` are aggregated ClusterRoles, so
 their rules can be extended with additional ClusterRoles that carry the labels
 `dr.simplyblock.io/aggregate-to-operator: "true"` or `dr.simplyblock.io/aggregate-to-admin: "true"`.
+
+## Scoping Access
+
+The DR roles are ClusterRoles, but they do not have to be granted cluster-wide. How far a binding reaches depends on
+the kind of binding and on where the DR resources live.
+
+### Where DR Resources Live
+
+| Resource                                                                  | Scope      | Namespace                                                                            |
+|---------------------------------------------------------------------------|------------|--------------------------------------------------------------------------------------|
+| ProtectionPlan, DRPath, DRConfig                                          | Cluster    | None                                                                                 |
+| ProtectedApplication of a managed (GitOps) application                    | Namespaced | The application's own namespace, next to its Placement                               |
+| ProtectedApplication of a discovered application                          | Namespaced | The Ramen ops namespace (`ramen-ops` by default, `DRConfig.spec.ramen.opsNamespace`) |
+| RecoveryAction, RecoveryPlan, TestBubble, TestSchedule, and RestoreAction | Namespaced | The namespace of the applications they act on                                        |
+
+A RecoveryAction, TestBubble, or RestoreAction references its application by name, and only within its own namespace.
+A RecoveryPlan groups applications of one namespace. The namespace is therefore the boundary of every DR action.
+
+### Cluster-Wide and Per-Namespace Bindings
+
+- **ClusterRoleBinding:** Grants the role for all namespaces and for the cluster-scoped resources. This is required
+  for `dr-admin`, since protection plans, DR paths, and the DR configuration are cluster-scoped.
+- **RoleBinding:** Grants the role in one namespace only. A RoleBinding can reference a ClusterRole, so `dr-viewer`
+  and `dr-operator` can be bound per namespace. The holder then sees and acts on the DR resources of that namespace
+  and nothing else. Cluster-scoped resources are not covered by a RoleBinding.
+
+### Access per Team for Managed Applications
+
+Managed applications live in their own namespaces, so access can be separated per application or per team. A
+RoleBinding of `dr-operator` in the namespace of an application lets a team protect, test, fail over, and relocate
+that application, and no other:
+
+```yaml title="Operator access for one team, limited to one application namespace"
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dr-operator-portal-team
+  namespace: portal
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dr-operator
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: portal-team
+```
+
+A second team gets a RoleBinding in the namespace of its own application, and neither team can act on the other's.
+Recovery actions and tests are created in the same namespace as the application.
+
+A team that works with a per-namespace binding cannot read the cluster-scoped protection plans and DR paths, which
+it needs to choose a path. A small additional ClusterRole grants read access to them without exposing the DR
+resources of other namespaces:
+
+```yaml title="Read access to plans and paths for all teams"
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dr-topology-viewer
+rules:
+  - apiGroups:
+      - dr.simplyblock.io
+    resources:
+      - protectionplans
+      - drpaths
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dr-topology-viewers
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dr-topology-viewer
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: portal-team
+  - apiGroup: rbac.authorization.k8s.io
+    kind: Group
+    name: billing-team
+```
+
+### Discovered Applications
+
+All discovered applications are declared in the Ramen ops namespace, together with their recovery actions and
+tests. Access to them can therefore only be granted as a whole: a `dr-operator` binding in that namespace allows
+actions on every discovered application of the hub. Kubernetes RBAC cannot limit the creation of a recovery action
+to one application, because the application is named in the action's specification, not in the object name.
+
+Access per application is currently only possible for managed applications. Discovered applications are operated
+by one group of operators that is trusted with all of them.
 
 ## Readiness Overrides
 
