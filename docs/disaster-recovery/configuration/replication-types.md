@@ -80,9 +80,13 @@ only the object storage remains.
 
 - **Schedule:** `snapshotS3.schedule` is a five-field cron expression. `snapshotS3.retention` is the number of
   complete backup sets that are kept.
-- **Content:** Each backup set contains the Kubernetes objects and the volume records of the application. The backups
-  are stored below `simplyblock-dr/backups` in the site's S3 store, or in the store named by
-  `snapshotS3.s3ProfileName`.
+- **Content:** Each backup set contains the Kubernetes objects and the volume records of the application. They are
+  stored below `simplyblock-dr/backups` in the DR metadata bucket of the site, or in the store named by
+  `snapshotS3.s3ProfileName`. The volume data itself is stored as simplyblock copy-on-write backups in the backup
+  bucket of the storage cluster.
+- **Prerequisite:** The storage cluster of every site must have been deployed with simplyblock backups configured
+  (`StorageCluster.spec.backup`). This bucket is not configured in DR. Without it, a `snapshot-s3` method cannot be
+  used. See [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
 - **Restore:** After all clusters are rebuilt and the hub state is restored, an administrator creates a RestoreAction
   per application. The application is restored onto its source site, as a whole, and protected again. There is no
   failback, and no restore to a different site. See [Backup and Restore](../operations/backup-restore.md).
@@ -121,7 +125,8 @@ The following rules apply when a plan declares several methods:
 | csi-addons NetworkFence                                  | Yes              | No      | No            |
 | Shared storage identity across both sites                | Yes              | No      | No            |
 | Network path for storage replication between sites       | Yes, low latency | Yes     | No            |
-| S3 store per site                                        | Yes              | Yes     | Yes           |
+| DR metadata bucket                                       | Yes              | Yes     | Yes           |
+| Simplyblock backups configured on the storage cluster    | No               | No      | Yes           |
 
 The hardware, network, and S3 requirements are described in
 [Disaster Recovery Requirements](../../deployment-preparation/dr-requirements.md).

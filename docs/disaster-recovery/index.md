@@ -50,6 +50,11 @@ A protection plan declares one or more replication methods. Each protected appli
 A plan cannot mix `sync` and `async`. A `snapshot-s3` method runs alongside either. Details are in
 [Replication Types](configuration/replication-types.md).
 
+DR uses three kinds of S3 buckets: a DR metadata bucket for the Kubernetes objects of protected
+applications, an archive bucket for the hub state and the reports, and the simplyblock backup buckets of the storage
+clusters for the volume data of `snapshot-s3` backups. The first two are configured in DR. The backup buckets are
+configured when the storage clusters are deployed. See [S3 Buckets](../deployment-preparation/dr-requirements.md#s3-buckets).
+
 ## Lifecycle
 
 Protecting an application follows four stages:

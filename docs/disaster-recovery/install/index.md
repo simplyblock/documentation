@@ -82,7 +82,7 @@ OpenShift Data Foundation (ODF), the bootstrap is turned off with `bootstrap.ena
 - **No bootstrap:** The chart installs neither OCM nor Ramen, and `dr-hub` does not deliver the site stack.
 - **Ramen configuration:** `dr-hub` does not manage the Ramen hub configuration (`DRConfig.spec.ramen.managed` is
   `false`). Protection plans must reference an existing Ramen S3 profile with `spec.s3Profile` instead of declaring
-  per-site stores with `spec.s3Profiles`.
+  the stores of the sites with `spec.s3Profiles`.
 - **Addon rollout:** The `dr-agent` addon is rolled out by `agent.installStrategy`, either manually (a
   `ManagedClusterAddOn` named `dr-agent` in each cluster namespace) or through OCM Placements.
 

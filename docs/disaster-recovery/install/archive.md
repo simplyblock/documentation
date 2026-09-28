@@ -10,6 +10,10 @@ S3 archive. The same archive stores the report of every finished recovery action
 The archive is configured in `DRConfig.spec.archive`. Without an archive, no bundles and no reports are written, and
 finished runs are never pruned from the hub.
 
+The archive bucket is separate from the DR metadata buckets of the sites, which hold the Kubernetes objects of the
+protected applications, and from the simplyblock backup buckets of the storage clusters, which hold volume data. See
+[S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+
 ## What the Archive Contains
 
 All keys are written below the configured prefix (default `dr/`):
@@ -149,7 +153,7 @@ credential. The following material must be kept offline, outside the hub and out
 - **Public key:** `bundle-signing.pub`, used by `dr-restore` to verify a bundle.
 - **Read credential:** An S3 credential that can read the archive bucket. Ideally, the hub's own credential is
   write-only and cannot read or delete bundles.
-- **Secrets:** The archive credential, the signing key, and the Ramen S3 credentials, which are not part of the
+- **Secrets:** The archive credential, the signing key, and the DR metadata credential, which are not part of the
   bundle.
 
 The private signing key `bundle-signing.key` is only needed again when the hub is rebuilt. It should be stored with

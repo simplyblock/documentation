@@ -19,6 +19,12 @@ claim with a `StorageBackupOps` operation.
 
 All four live in the namespace of the `StorageCluster` and use the API version `storage.simplyblock.io/v1alpha2`.
 
+!!! info "Backups and disaster recovery"
+    The backup bucket is part of the storage cluster and is configured when the cluster is deployed. Simplyblock
+    Disaster Recovery does not configure it, but its `snapshot-s3` backups store their volume data here. A cluster
+    that should be protected with `snapshot-s3` must therefore be deployed with backups configured. See
+    [S3 Buckets](../../../deployment-preparation/dr-requirements.md#s3-buckets).
+
 ## Prerequisites
 
 ### S3-Compatible Object Storage
