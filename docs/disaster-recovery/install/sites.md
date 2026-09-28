@@ -153,9 +153,10 @@ VolumeSnapshotClass is only protected if its driver matches the provisioner of a
 
 ## Zones
 
-A site usually corresponds to a whole cluster. If one cluster spans several topology zones, a site can also stand for
-one zone of it, set with `spec.sites[].zone` in the protection plan. The zone must match the nodes'
-`topology.kubernetes.io/zone` labels. Each combination of cluster and zone may appear only once per plan.
+A site is a whole cluster: the protection plan names the cluster (`spec.sites[].cluster`), and every node of it
+belongs to the site. No node has to be labeled for DR. Within one plan, a cluster is exactly one site, while the same
+cluster can be a site in several plans. Splitting one cluster into several sites by zone (`spec.sites[].zone`) is
+planned but not available yet.
 
 ## Verifying the Join
 
