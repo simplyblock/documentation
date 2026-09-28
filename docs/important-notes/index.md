@@ -2,6 +2,7 @@
 title: "Important Notes"
 description: "Important Notes: Simplyblock is a high-performance distributed block storage optimized for Kubernetes that is compatible with any Linux."
 weight: 10050
+headless: true
 ---
 
 Simplyblock is a high-performance distributed block storage optimized for Kubernetes that is compatible
