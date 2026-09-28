@@ -2,6 +2,7 @@
 title: "Upgrades"
 description: "Upgrade simplyblock."
 weight: 20000
+headless: true
 ---
 
 Simplyblock regularly provides new releases with new features, performance enhancements, bugfixes, and more.
