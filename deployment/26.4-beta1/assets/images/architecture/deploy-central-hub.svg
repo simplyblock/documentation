@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="712" viewBox="0 0 960 712" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">Central hub: DR and fleet storage management</title>
+<defs>
+<marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="711" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">Central hub: DR and fleet storage management</text>
+<rect x="24" y="72" width="912" height="184" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="38" y="94" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Hub cluster</text>
+<rect x="40" y="108" width="432" height="132" rx="10" fill="#fffaf0" stroke="#e0b46b" stroke-width="1.5"/>
+<text x="54" y="130" font-size="13" font-weight="600" fill="#7a4800" text-anchor="start">Disaster recovery</text>
+<rect x="56" y="140" width="133" height="36" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="122.5" y="162.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">dr-simplyblock</text>
+<rect x="201" y="140" width="141" height="36" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="271.5" y="162.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">DR console (UI)</text>
+<rect x="56" y="188" width="79" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="95.5" y="210.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">OCM hub</text>
+<rect x="147" y="188" width="164" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="229" y="210.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen hub operator</text>
+<rect x="488" y="108" width="432" height="132" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="502" y="130" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Simplyblock (fleet mode)</text>
+<rect x="701.2" y="113" width="102" height="22" rx="11" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+<text x="752.1" y="128.5" font-size="13" font-weight="600" fill="#0969da" text-anchor="middle">coming soon</text>
+<rect x="504" y="140" width="180" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="594" y="162.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
+<rect x="696" y="140" width="125" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="758.5" y="162.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Control plane</text>
+<rect x="504" y="188" width="188" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="598" y="210.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Central authorization</text>
+<rect x="24" y="304" width="284" height="272" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="38" y="326" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Managed cluster 1 (site A)</text>
+<rect x="40" y="340" width="102" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="91" y="362.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<rect x="154" y="340" width="86" height="36" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="197" y="362.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">dr-agent</text>
+<rect x="40" y="388" width="219" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="149.5" y="410.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen DR cluster operator</text>
+<rect x="40" y="436" width="148" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="114" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<rect x="196" y="436" width="92" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="242" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="40" y="484" width="252" height="76" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="54" y="506" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage nodes</text>
+<rect x="52" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="86" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 1</text>
+<rect x="132" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="166" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 2</text>
+<rect x="212" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="246" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 3</text>
+<path d="M166,256 L166,304" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="150.3" y="270" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="166" y="284.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<rect x="338" y="304" width="284" height="272" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="352" y="326" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Managed cluster 2 (site B)</text>
+<rect x="354" y="340" width="102" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="405" y="362.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<rect x="468" y="340" width="86" height="36" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="511" y="362.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">dr-agent</text>
+<rect x="354" y="388" width="219" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="463.5" y="410.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen DR cluster operator</text>
+<rect x="354" y="436" width="148" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="428" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<rect x="510" y="436" width="92" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="556" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="354" y="484" width="252" height="76" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="368" y="506" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage nodes</text>
+<rect x="366" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="400" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 1</text>
+<rect x="446" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="480" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 2</text>
+<rect x="526" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="560" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 3</text>
+<path d="M480,256 L480,304" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="464.3" y="270" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="480" y="284.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<rect x="652" y="304" width="284" height="272" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="666" y="326" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Managed cluster 3 (edge)</text>
+<rect x="668" y="340" width="102" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="719" y="362.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<rect x="782" y="340" width="86" height="36" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="825" y="362.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">dr-agent</text>
+<rect x="668" y="388" width="219" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="777.5" y="410.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen DR cluster operator</text>
+<rect x="668" y="436" width="148" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="742" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<rect x="824" y="436" width="92" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="870" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="668" y="484" width="252" height="76" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="682" y="506" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage nodes</text>
+<rect x="680" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="714" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 1</text>
+<rect x="760" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="794" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 2</text>
+<rect x="840" y="512" width="68" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="874" y="534.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 3</text>
+<path d="M794,256 L794,304" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="778.3" y="270" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="794" y="284.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<path d="M166,576 Q308,646 450,576" fill="none" stroke="#3949ab" stroke-width="2" stroke-dasharray="7 5" marker-start="url(#arr-sb)" marker-end="url(#arr-sb)"/>
+<rect x="260.1" y="601" width="95.8" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="308" y="615.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">sync (metro)</text>
+<path d="M510,576 Q652,646 794,576" fill="none" stroke="#3949ab" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr-sb)"/>
+<rect x="629.1" y="601" width="45.8" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="652" y="615.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">async</text>
+<line x1="24" y1="672" x2="936" y2="672" stroke="#d0d7de" stroke-width="1"/>
+<rect x="24" y="683" width="20" height="14" rx="3" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.25"/>
+<text x="52" y="694.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">Kubernetes cluster</text>
+<rect x="198.70000000000002" y="683" width="20" height="14" rx="3" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="226.7" y="694.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">simplyblock</text>
+<rect x="323.35" y="683" width="20" height="14" rx="3" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="351.35" y="694.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">DR</text>
+<rect x="383.65000000000003" y="683" width="20" height="14" rx="3" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="411.65" y="694.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">third-party</text>
+<path d="M508.30000000000007,690 L534.3000000000001,690" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)" fill="none"/>
+<text x="542.3" y="694.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">control</text>
+<path d="M610.3500000000001,690 L636.3500000000001,690" stroke="#3949ab" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr-sb)" fill="none"/>
+<text x="644.35" y="694.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">replication</text>
+</svg>
