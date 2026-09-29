@@ -211,7 +211,7 @@ HTML_TAG_NAMES = {
     "figure", "form", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "i", "iframe",
     "img", "input", "label", "li", "ol", "p", "pre", "script", "small", "span",
     "strong", "style", "sub", "summary", "sup", "table", "td", "th", "tr", "u",
-    "ul",
+    "ul", "video", "source",
 }
 
 # A line of "===" or "---" under text is a setext heading, not a rule and not a

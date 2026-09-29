@@ -61,5 +61,4 @@ If an upgrade step fails:
 ## Related References
 
 - [Release Notes](../release-notes/index.md)
-- [Known Issues](../important-notes/known-issues.md)
 - [Troubleshooting](troubleshooting/index.md)
