@@ -111,10 +111,11 @@ kubectl get events -n simplyblock \
     --field-selector reason=FailureDomainMissing
 ```
 
-`spec.config.failureDomain` can be set on a node that has none, and it is frozen from then on.
+`spec.config.failureDomain` can be set on a node that has none, and it is frozen from then on. Use a domain that other
+nodes of the cluster already carry. A new domain has to be added through the `ClusterDeploymentConfig`.
 
 ```bash title="Assigning a failure domain to a blocked storage node"
-kubectl patch storagenode simplyblock-cluster-worker-1-0 -n simplyblock --type=merge \
+kubectl patch storagenode <storage-node-name> -n simplyblock --type=merge \
     -p '{"spec": {"config": {"failureDomain": "rack-a"}}}'
 ```
 
@@ -132,8 +133,9 @@ See [Activating a Storage Cluster](activating-a-cluster.md) for the activation i
 
 ## Verifying the Assignment
 
-The effective domain of a node is reported back from the control plane in `StorageNode.status.failureDomain`. It is
-also a print column at a lower priority, so it shows with `-o wide`.
+The effective domain of a node is reported back from the control plane in `StorageNode.status.failureDomain`, as a
+number. `StorageCluster.status.failureDomains` lists which number belongs to which label. The value is also a print
+column at a lower priority, so it shows with `-o wide`.
 
 ```bash title="Listing the storage nodes with their failure domains"
 kubectl get storagenodes -n simplyblock -o wide
