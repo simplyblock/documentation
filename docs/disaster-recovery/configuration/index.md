@@ -5,7 +5,8 @@ weight: 10200
 ---
 
 Simplyblock Disaster Recovery is configured entirely through Kubernetes custom resources on the hub cluster, in the
-API group `dr.simplyblock.io/v1alpha1`. The resources describe which sites exist, how data moves between them, in
+API groups `dr.simplyblock.io/v1alpha1` and `sitemap.simplyblock.io/v1alpha1`, by `kubectl` or through the
+[Control Center](../control-center.md). The resources describe which sites exist, how data moves between them, in
 which directions applications may move, and how each application is started on the target site.
 
 ## Configuration Model
@@ -27,10 +28,10 @@ The configuration is layered. Each layer references the one above it:
    external hooks run steps outside the cluster, such as DNS changes. A hand-written Recipe can replace the tiers when
    more control is needed. See [Workflows and Recipes](workflows-and-recipes.md).
 
-!!! info "Coming soon"
-    Site profiles and a site mapper will describe how names that differ between sites (networks, StorageClasses,
-    zones, and addresses) are translated during a recovery. Until then, both sites of a path must use identical
-    names. See [Site Profiles and Mappings](site-profiles.md).
+6. **Site profiles and mappings:** In the API group `sitemap.simplyblock.io/v1alpha1`, a SiteProfile per managed
+   cluster describes the site and binds logical roles to its networks, and a DHCPServer names a DHCP server dr-hub
+   renders reservations into. The site mapper translates the network attachments and guest addresses of virtual
+   machines between the sites of a path. See [Site Profiles and Mappings](site-profiles.md).
 
 Operational resources, such as RecoveryAction, RecoveryPlan, TestBubble, TestSchedule, and RestoreAction, build on
 this configuration and are described in [Operations](../operations/index.md) and [Testing](../testing/index.md).
@@ -43,6 +44,8 @@ this configuration and are described in [Operations](../operations/index.md) and
 | `ProtectionPlan`       | Cluster                   | `pplan`    | `dr-admin`    |
 | `DRPath`               | Cluster                   | None       | `dr-admin`    |
 | `ProtectedApplication` | Namespaced                | `papp`     | `dr-operator` |
+| `SiteProfile`          | Cluster (one per cluster) | None       | `dr-admin`    |
+| `DHCPServer`           | Cluster                   | None       | `dr-admin`    |
 
 The relationships between the resources are:
 
