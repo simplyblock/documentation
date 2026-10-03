@@ -21,10 +21,16 @@ A test failover requires the following:
   overridden.
 - **No concurrent run:** No unfinished recovery action and no earlier unfinished test holds the application.
 - **Isolated network for Multus VMs:** KubeVirt VMs attached to Multus networks need an isolated
-  NetworkAttachmentDefinition, named on the path as `test.isolatedNad: <namespace>/<name>`. It must have no uplink to
-  production networks.
-- **Replicated snapshots:** The storage on the target site publishes its replicated consistency points as
-  VolumeSnapshotContents (label `dr.simplyblock.io/replicated-snapshot=true`).
+  NetworkAttachmentDefinition on the target, named on the path as `test.isolatedNad: <namespace>/<name>`. It must
+  have no uplink to production networks. A DHCP server on it that serves the production reservations gives the VMs
+  their production addresses (see [Site Profiles](../configuration/site-profiles.md#tests)).
+- **Clones on the storage side:** On simplyblock storage, the clones come from the Simplyblock Operator's
+  `TestFailover` resource (`storage.simplyblock.io/v1alpha2`) on the hub: one per protected PVC, created by dr-hub.
+  The operator resolves the newest replicated snapshot of the volume through the control plane, clones it on the
+  target storage cluster, and places a bound PersistentVolume and PersistentVolumeClaim in the bubble namespace,
+  with the source's volume mode and filesystem. Where the hub does not serve that resource, the storage publishes
+  its replicated consistency points as VolumeSnapshotContents (label `dr.simplyblock.io/replicated-snapshot=true`),
+  and dr-agent clones them.
 
 A path with a test block looks as follows.
 
@@ -128,7 +134,8 @@ The bubble keeps the test copy away from production:
 - **NetworkPolicy:** Every bubble namespace gets the `drtest-isolation` NetworkPolicy. It denies all traffic except
   traffic within the bubble, DNS, and ingress from dr-agent for health probes.
 - **Network attachments:** For each NAD a VM names, a NAD of the same name is created in the bubble namespace with
-  the configuration of the path's `test.isolatedNad`.
+  the configuration of the path's `test.isolatedNad`. A reference to a NAD in another namespace is rewritten to that
+  copy during the restore.
 - **Services:** LoadBalancer and NodePort Services are turned into ClusterIP Services and lose their external IPs.
 - **Excluded objects:** Routes, Ingresses, Gateways, HTTPRoutes, NetworkPolicies, and NADs from production are not
   restored.
@@ -141,10 +148,13 @@ The bubble keeps the test copy away from production:
 
 | Check                   | Meaning                                                                                |
 |-------------------------|----------------------------------------------------------------------------------------|
+| `clones-bound`          | Every clone PVC is bound within the path's clone quota.                                |
 | `pods-ready`            | All pods in the bubble are ready.                                                      |
 | `vms-running`           | All VirtualMachines in the bubble are running.                                         |
 | `guest-agent-connected` | The guest agent of each VM is connected. Warns only, because many guests run no agent. |
 | `probes-healthy`        | The application's `health.probes`, mapped into the bubble, pass.                       |
+| `teardown-clean`        | Nothing labeled with the test's ID remains on the target after the teardown.           |
+| `invariants-held`       | Production and replication are unchanged between the start and the end of the test.    |
 
 The results are listed in `status.checks`.
 
@@ -178,11 +188,9 @@ the report is stored as JSON and PDF in S3, and the key is recorded in `status.r
 
 ## Unsupported Cases
 
-Nothing is rewritten in this release, so the test reports `Unsupported` rather than risk a false pass or a connection
-to production for:
+The test reports `Unsupported` rather than risk a false pass or a connection to production for:
 
 - **Managed applications:** GitOps-delivered applications.
-- **NAD in another namespace:** A VM that uses a NetworkAttachmentDefinition from another namespace.
 - **Multus without isolation:** A VM on Multus networks while the path names no `test.isolatedNad`.
 - **Host-bound devices:** VMs with SR-IOV interfaces, host devices, or GPUs.
 
@@ -200,7 +208,13 @@ Teardown deletes every object the test created on the target site, including the
 nothing remains. It then checks that production and replication did not change. Finished tests are
 retained and pruned together with reports, as described in [Monitoring](../operations/monitoring.md#reports).
 
+## Sync Applications
+
+A test of a sync application runs the bubble on the stretch cluster, in the target zone. The clones come from the
+storage's newest replicated snapshots of that zone, the objects from a Velero backup of the application's namespaces
+that dr-agent takes at the start of the test, and the bubble's workloads are pinned to the target zone.
+
 !!! info "Coming soon"
     - **Hosted-cluster test mode:** Tests inside a hosted cluster with mirrored test networks, MAC address
-      regeneration, guest IP regeneration, and Route host rewriting (with the site mapper).
+      regeneration, guest IP regeneration, and Route host rewriting.
     - **Managed applications:** Test restores of GitOps-delivered applications.

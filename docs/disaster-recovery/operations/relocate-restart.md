@@ -58,7 +58,9 @@ ProtectedApplication is required, because the protection of an existing applicat
   target. This is the RTO recorded in the report.
 - **Restart:** Pods and KubeVirt VMs are restarted on the target. In-memory state and open client connections are
   lost. VMs boot from their replicated disks.
-- **Network identity:** Objects are restored exactly as captured. Clients reach the application on the target
+- **Network identity:** Objects are restored as captured, except what the site mapper translates: the Multus
+  network attachments of VMs are rewritten to the target site's, and their guest addresses keep their host ID in the
+  target subnet (see [Site Profiles](../configuration/site-profiles.md)). Clients reach the application on the target
   through whatever the `postTargetReady` hooks change, for example, DNS or a load balancer.
 - **No data loss:** The final sync ensures that every write acknowledged before the stop is on the target.
 

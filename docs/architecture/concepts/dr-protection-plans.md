@@ -15,8 +15,9 @@ DR paths.
 A site is a Kubernetes cluster that is registered with the DR hub through Open Cluster Management (OCM). A plan lists
 between two and sixteen sites. Every site has a name that is used throughout the DR configuration and names the
 managed cluster it runs on. The whole cluster is assigned to the site at once, so no node has to be labeled for DR.
-Optionally, a site records a zone and a region, and the namespace of its Velero installation. Within one plan, a
-site is exactly one cluster and a cluster is exactly one site. The same cluster can be a site in several plans.
+Optionally, a site records a zone and a region, and the namespace of its Velero installation. Within an asynchronous
+plan, a site is exactly one cluster and a cluster is exactly one site. The same cluster can be a site in several
+plans. Within a synchronous plan, the sites are the zones of one stretch cluster, and the zone is mandatory.
 
 ## Storage Profile
 
@@ -25,21 +26,25 @@ storage classes and, optionally, a separate selector for volume snapshot classes
 selector is used for both). Only a single label, for example, `simplyblock.io/replicated: "true"`, has to be set on
 the classes.
 
-The storage profile also decides whether the volumes of an application are replicated as one consistency group.
-Consistency groups are enabled by default, so all volumes of an application are captured at the same point in time.
+The storage profile also decides whether the volumes of an application are replicated as one consistency group, so
+that all volumes of an application are captured at the same point in time. Consistency groups are disabled by
+default, and their membership is a label the application's owner sets on the PVCs before they are provisioned.
 
 ## Replication Methods
 
 A plan declares between one and eight replication methods, each with a name. A protected application uses exactly
 one method of its plan.
 
-| Method type   | Also known as | Behavior                                                                                              |
-|---------------|---------------|-------------------------------------------------------------------------------------------------------|
-| `sync`        | Metro DR      | Volumes are written synchronously to both sites.                                                      |
-| `async`       | Regional DR   | Volumes are replicated at a fixed scheduling interval, for example, every 5 minutes.                  |
-| `snapshot-s3` | Backup        | Application objects and volume records are backed up to S3 on a cron schedule with a retention count. |
+| Method type       | Also known as | Behavior                                                                                                  |
+|-------------------|---------------|-----------------------------------------------------------------------------------------------------------|
+| `sync`            | Metro DR      | A stretch cluster writes every block to both zones of one cluster.                                        |
+| `async`           | Regional DR   | Volumes are replicated between two clusters at a fixed scheduling interval, for example, every 5 minutes. |
+| `s3-backup`       | Vault         | Every primary volume is backed up to S3 at an interval, and the peer promotes from the newest backup.     |
+| `sync-s3-backup`  |               | Synchronous replication with backups to S3.                                                               |
+| `async-s3-backup` |               | Asynchronous replication with backups to S3.                                                              |
 
-A plan cannot mix `sync` and `async` methods. A `snapshot-s3` method can be declared alongside either of them. The replication types and their parameters are
+A plan cannot mix synchronous and asynchronous types. A combined type is one method with one replication class, so
+every protection an application has is visible in one place. The replication types and their parameters are
 described in [Replication Types](../../disaster-recovery/configuration/replication-types.md).
 
 ### Storage-Level and Application-Level Protection
@@ -66,9 +71,9 @@ A plan either names an existing S3 profile or declares for every site which buck
 credential Secret, and optional CA certificates. All sites can use the same bucket and the same credential. Every
 S3-compatible object store can be used.
 
-These DR metadata buckets are one of three kinds of S3 buckets in a DR setup. The archive bucket of the hub is
-configured when the hub is installed, and the simplyblock backup buckets, which hold the volume data of `snapshot-s3`
-backups, when the storage clusters are deployed. See [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+These DR metadata buckets also receive the volume backups of the backup method types. The archive bucket of the hub
+is the second kind of bucket and is configured when the hub is installed. See
+[S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
 
 ## DR Paths
 
