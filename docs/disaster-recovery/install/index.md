@@ -59,6 +59,9 @@ kubectl -n dr-simplyblock exec deploy/dr-hub -- dr-bootstrap render versions
 The hub installs the site stack on every joining site. The individual components can be left out on a site that
 already runs them, as described in [Opting Out of Site Stack Components](sites.md#opting-out-of-site-stack-components).
 
+The web console is optional on the hub: the Simplyblock Operator chart deploys it next to a simplyblock control
+plane, the hub chart deploys its DR-only mode (`console.enabled`). See [Control Center](../control-center.md).
+
 ## Air-Gapped Installation
 
 All manifests of the bootstrapped components are embedded in the `dr-simplyblock` image. Installing never downloads
