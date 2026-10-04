@@ -149,16 +149,21 @@ kubectl --context site-a label storageclass simplyblock-csi-sc simplyblock.io/re
 kubectl --context site-a label volumesnapshotclass simplyblock-snap simplyblock.io/replicated=true
 ```
 
-StorageClasses and VolumeSnapshotClasses with the same names must exist on every site of a plan, because an
-application recovers exactly as captured (see [Site Profiles and Mappings](../configuration/site-profiles.md)). A
-VolumeSnapshotClass is only protected if its driver matches the provisioner of a selected StorageClass.
+StorageClasses and VolumeSnapshotClasses with the same names must exist on every site of a plan, because the site
+mapper does not translate class names yet (see [Site Profiles and Mappings](../configuration/site-profiles.md)). A
+VolumeSnapshotClass is only protected if its driver matches the provisioner of a selected StorageClass. On simplyblock
+storage, the class names the storage cluster of the site in its `cluster_id` parameter, which is how DR finds the
+backend to pair.
 
 ## Zones
 
-A site is a whole cluster: the protection plan names the cluster (`spec.sites[].cluster`), and every node of it
-belongs to the site. No node has to be labeled for DR. Within one plan, a cluster is exactly one site, while the same
-cluster can be a site in several plans. Splitting one cluster into several sites by zone (`spec.sites[].zone`) is
-planned but not available yet.
+For asynchronous plans, a site is a whole cluster: the protection plan names the cluster (`spec.sites[].cluster`),
+and every node of it belongs to the site. No node has to be labeled for DR. Within one plan, a cluster is exactly one
+site, while the same cluster can be a site in several plans.
+
+For synchronous plans, a site is a zone of one stretch cluster: every site of the plan names the same cluster and its
+own `spec.sites[].zone`, matched against the node label `topology.kubernetes.io/zone`. See
+[Replication Types](../configuration/replication-types.md#synchronous-replication).
 
 ## Verifying the Join
 

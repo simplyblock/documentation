@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4299,6 +4301,8 @@
       
         
       
+        
+      
     
     
       
@@ -4458,6 +4462,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4520,6 +4546,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6052,7 +6100,8 @@
   <h1>Configuration</h1>
 
 <p>Simplyblock Disaster Recovery is configured entirely through Kubernetes custom resources on the hub cluster, in the
-API group <code>dr.simplyblock.io/v1alpha1</code>. The resources describe which sites exist, how data moves between them, in
+API groups <code>dr.simplyblock.io/v1alpha1</code> and <code>sitemap.simplyblock.io/v1alpha1</code>, by <code>kubectl</code> or through the
+<a href="../control-center/">Control Center</a>. The resources describe which sites exist, how data moves between them, in
 which directions applications may move, and how each application is started on the target site.</p>
 <h2 id="configuration-model">Configuration Model</h2>
 <p>The configuration is layered. Each layer references the one above it:</p>
@@ -6068,16 +6117,18 @@ which directions applications may move, and how each application is started on t
 <li><strong>ProtectedApplication:</strong> A namespaced resource binds one application to a plan, with a source site, one target
    site, and a method. It also declares health probes and dependencies. See
    <a href="applications/">Protected Applications</a>.</li>
-<li><strong>Tiers, hooks, and Recipes:</strong> Within a protected application, tiers define the boot order on the target site, and
+<li>
+<p><strong>Tiers, hooks, and Recipes:</strong> Within a protected application, tiers define the boot order on the target site, and
    external hooks run steps outside the cluster, such as DNS changes. A hand-written Recipe can replace the tiers when
-   more control is needed. See <a href="workflows-and-recipes/">Workflows and Recipes</a>.</li>
+   more control is needed. See <a href="workflows-and-recipes/">Workflows and Recipes</a>.</p>
+</li>
+<li>
+<p><strong>Site profiles and mappings:</strong> In the API group <code>sitemap.simplyblock.io/v1alpha1</code>, a SiteProfile per managed
+   cluster describes the site and binds logical roles to its networks, and a DHCPServer names a DHCP server dr-hub
+   renders reservations into. The site mapper translates the network attachments and guest addresses of virtual
+   machines between the sites of a path. See <a href="site-profiles/">Site Profiles and Mappings</a>.</p>
+</li>
 </ol>
-<div class="admonition info">
-<p class="admonition-title">Coming soon</p>
-<p>Site profiles and a site mapper will describe how names that differ between sites (networks, StorageClasses,
-zones, and addresses) are translated during a recovery. Until then, both sites of a path must use identical
-names. See <a href="site-profiles/">Site Profiles and Mappings</a>.</p>
-</div>
 <p>Operational resources, such as RecoveryAction, RecoveryPlan, TestBubble, TestSchedule, and RestoreAction, build on
 this configuration and are described in <a href="../operations/">Operations</a> and <a href="../testing/">Testing</a>.</p>
 <h2 id="resource-overview">Resource Overview</h2>
@@ -6114,6 +6165,18 @@ this configuration and are described in <a href="../operations/">Operations</a> 
 <td>Namespaced</td>
 <td><code>papp</code></td>
 <td><code>dr-operator</code></td>
+</tr>
+<tr>
+<td><code>SiteProfile</code></td>
+<td>Cluster (one per cluster)</td>
+<td>None</td>
+<td><code>dr-admin</code></td>
+</tr>
+<tr>
+<td><code>DHCPServer</code></td>
+<td>Cluster</td>
+<td>None</td>
+<td><code>dr-admin</code></td>
 </tr>
 </tbody>
 </table>
@@ -6158,7 +6221,7 @@ and <a href="../../architecture/concepts/dr-applications/">Protected Application
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 4, 2026 19:48:45 UTC">2026-10-04</span>
   </span>
 
     

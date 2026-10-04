@@ -12,15 +12,17 @@ step, and a finished action produces a report. This page gives an overview of th
 
 ## Relocate and Failover
 
-A recovery action has one of two kinds. The target is always the `to` site of the action's DR path, and the path must
-list the kind in `spec.actions`.
+A recovery action has one of three kinds. For a move, the target is the `to` site of the action's DR path, and the
+path must list the kind in `spec.actions`. A `Restart` names no path, because it stays on the application's site.
 
-| Kind       | Use                                                                                           | Final sync | Data loss              | Rollback                                                   |
-|------------|-----------------------------------------------------------------------------------------------|------------|------------------------|------------------------------------------------------------|
-| `Relocate` | [Planned failover](planned-failover.md), [failback, and permanent moves](relocate-restart.md) | Yes        | None                   | Yes, on timeout while the application starts on the target |
-| `Failover` | [Unplanned failover](unplanned-failover.md) when the source site is lost or unusable          | No         | Up to the achieved RPO | No                                                         |
+| Kind       | Use                                                                                                | Final sync | Data loss              | Rollback                                                   |
+|------------|----------------------------------------------------------------------------------------------------|------------|------------------------|------------------------------------------------------------|
+| `Relocate` | [Planned failover](planned-failover.md), [failback, and permanent moves](relocate-restart.md)      | Yes        | None                   | Yes, on timeout while the application starts on the target |
+| `Failover` | [Unplanned failover](unplanned-failover.md) when the source site is lost or unusable               | No         | Up to the achieved RPO | No                                                         |
+| `Restart`  | [Restart in place](restart.md) after the application's storage cluster recovered from a suspension | None       | None                   | No                                                         |
 
-A failback is a `Relocate` along the reverse path. Both kinds restart the application on the target site. Moving
+A failback is a `Relocate` along the reverse path. Every kind restarts the application. For a sync application, the
+sites are the zones of one stretch cluster, and dr-agent moves the application between them without Ramen. Moving
 running workloads without a restart is described in [Relocate (Online)](relocate-online.md).
 
 ## RecoveryAction Lifecycle
@@ -33,7 +35,7 @@ restart of dr-hub.
 | `Pending`         | The action was accepted.                                                                                                                                                                                            |
 | `PreFlight`       | Checks that the path declares the kind, the application is on the path and bound, no other action holds it, it runs at the path's `from` site, and its readiness allows the action. A failure here changes nothing. |
 | `PreSource`       | Runs the `externalHooks.preSource` hooks on the source site.                                                                                                                                                        |
-| `RamenHandoff`    | The volumes are switched to the target site, after a final sync for a `Relocate`.                                                                                                                                   |
+| `RamenHandoff`    | The volumes are switched to the target site, after a final sync for a `Relocate`. For a `Restart`, the workloads are stopped, the volumes reconnected, and the tiers started in boot order on the same site.        |
 | `TargetStarting`  | Waits until the application is available on the target.                                                                                                                                                             |
 | `Workflow`        | Waits for the application's health probes on the target (up to 15 minutes) and records the RTO.                                                                                                                     |
 | `PostTargetReady` | Runs the `externalHooks.postTargetReady` hooks on the target site, for example, DNS or load balancer cutover.                                                                                                       |
@@ -65,7 +67,8 @@ or a plan action that includes it, fails pre-flight. Tests are also refused whil
 ## Reports
 
 Each finished action writes `status.report`: the operator who created it, the override reason, the RTO, the
-achieved RPO for a failover, hook results, probe results, warnings, and the pre-flight readiness. With an archive
+achieved RPO for a failover, hook results, probe results, warnings, the pre-flight readiness, and, for VMs on mapped
+guest networks, the expected and observed guest address of every interface (`guests[]`). With an archive
 configured, dr-hub stores the report as JSON and PDF in S3 and records the key in `status.reportKey`. See
 [Monitoring](monitoring.md#reports).
 
@@ -76,6 +79,7 @@ configured, dr-hub stores the report as JSON and PDF in S3 and records the key i
 - [Unplanned Failover](unplanned-failover.md)
 - [Relocate (Restart)](relocate-restart.md)
 - [Relocate (Online)](relocate-online.md)
+- [Restart After a Storage Recovery](restart.md)
 - [Recovery Plans](recovery-plans.md)
 - [Backup and Restore](backup-restore.md)
 - [Hub Recovery](hub-recovery.md)

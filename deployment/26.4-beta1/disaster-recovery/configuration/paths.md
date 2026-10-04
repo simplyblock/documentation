@@ -16,17 +16,17 @@ at all.
 
 ## Specification
 
-| Field                               | Required | Description                                                                                                                            |
-|-------------------------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------|
-| `spec.from`                         | Yes      | Source site name in the plan. Immutable.                                                                                               |
-| `spec.to`                           | Yes      | Target site name in the plan. Must differ from `from`. Immutable.                                                                      |
-| `spec.planRef`                      | Yes      | Name of the ProtectionPlan both sites belong to. Immutable.                                                                            |
-| `spec.actions[]`                    | Yes      | At least one of `Failover`, `Relocate`, and `Test`.                                                                                    |
-| `spec.announcementHandover`         | No       | Allows keeping VIPs along the path. Stored, but without effect until site mapping is available.                                        |
-| `spec.test.mode`                    | No       | Test environment. Only `bubble` (default) is supported.                                                                                |
-| `spec.test.isolatedNad`             | No       | `<namespace>/<name>` of a NetworkAttachmentDefinition on the target without uplink, used for VMs with secondary networks during tests. |
-| `spec.test.quotas.maxCloneCapacity` | No       | Maximum total size of the clone PVCs one test may create, for example, `2Ti`.                                                          |
-| `spec.test.recentWithin`            | No       | Maximum age of the last passed test before readiness warns (default `720h`).                                                           |
+| Field                               | Required | Description                                                                                                                                                        |
+|-------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `spec.from`                         | Yes      | Source site name in the plan. Immutable.                                                                                                                           |
+| `spec.to`                           | Yes      | Target site name in the plan. Must differ from `from`. Immutable.                                                                                                  |
+| `spec.planRef`                      | Yes      | Name of the ProtectionPlan both sites belong to. Immutable.                                                                                                        |
+| `spec.actions[]`                    | Yes      | At least one of `Failover`, `Relocate`, and `Test`.                                                                                                                |
+| `spec.announcementHandover`         | No       | Allows keeping VIPs along the path. Stored, but without effect yet: VIPs are handed over through hooks.                                                            |
+| `spec.test.mode`                    | No       | Test environment. Only `bubble` (default) is supported.                                                                                                            |
+| `spec.test.isolatedNad`             | No       | `<namespace>/<name>` of a NetworkAttachmentDefinition on the target without uplink. In a test, every Multus network of a VM is replaced by a same-name copy of it. |
+| `spec.test.quotas.maxCloneCapacity` | No       | Maximum total size of the clone PVCs one test may create, for example, `2Ti`.                                                                                      |
+| `spec.test.recentWithin`            | No       | Maximum age of the last passed test before readiness warns (default `720h`).                                                                                       |
 
 A path that lists `Test` must have a `test` block. Changing `from`, `to`, or `planRef` requires a new DRPath.
 
@@ -67,8 +67,9 @@ site-a-to-site-b   site-a   site-b   aws-fra   ["Failover","Relocate","Test"]   
 site-b-to-site-a   site-b   site-a   aws-fra   ["Relocate"]                    True
 ```
 
-The path status lists the protected applications on the path and the most recent action of each kind. The `Valid` condition reports whether the plan and both sites exist.
-`status.profileConsistency` reports `NotAvailable` until site profiles are available.
+The path status lists the protected applications on the path and the most recent action of each kind. The `Valid`
+condition reports whether the plan and both sites exist. `status.profileConsistency` and `status.profileComparison[]`
+report whether the site profiles of the two sites agree (see [Site Profiles](site-profiles.md)).
 
 A path that applications still use can only be deleted after the annotation
 `dr.simplyblock.io/confirm-delete: "true"` has been set on it.
@@ -111,7 +112,9 @@ spec:
 ### Tests of Virtual Machines With Secondary Networks
 
 A VM with a Multus secondary network can only be tested if the target has an isolated NetworkAttachmentDefinition
-without uplink. During the test, a NAD with the original name is created in the test namespace and points to it:
+without uplink. During the test, a NAD with the original name is created in the test namespace and points to it. A
+DHCP server on the isolated network that serves the production reservations gives the VMs in the bubble their
+production addresses:
 
 ```yaml title="DR path with an isolated test network and clone quota (path-fra-a-to-fra-b.yaml)"
 apiVersion: dr.simplyblock.io/v1alpha1
