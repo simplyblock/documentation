@@ -3744,6 +3744,8 @@
       
         
       
+        
+      
     
     
       
@@ -4292,6 +4294,8 @@
       
         
       
+        
+      
     
     
       
@@ -4451,6 +4455,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../disaster-recovery/operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../disaster-recovery/operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4513,6 +4539,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../disaster-recovery/control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -5872,6 +5920,15 @@
   <a href="#drivertlsprovider" class="md-nav__link">
     <span class="md-ellipsis">
       DriverTLSProvider
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failuredomainindex" class="md-nav__link">
+    <span class="md-ellipsis">
+      FailureDomainIndex
     </span>
   </a>
   
@@ -8363,6 +8420,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#failuredomainindex" class="md-nav__link">
+    <span class="md-ellipsis">
+      FailureDomainIndex
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#foundationdbspec" class="md-nav__link">
     <span class="md-ellipsis">
       FoundationDBSpec
@@ -10551,7 +10617,6 @@ accumulated.</p>
 <p><em>Example:</em></p>
 <div class="highlight"><pre><span></span><code><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">'^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'</span>
 <span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="nt">credentialsSecretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalObjectReference</span>
 </code></pre></div>
@@ -10576,12 +10641,6 @@ accumulated.</p>
 <td>Bucket is the bucket backups are written to and read from.</td>
 <td></td>
 <td>Required: {} <br></td>
-</tr>
-<tr>
-<td><code>prefix</code> <em>string</em></td>
-<td>Prefix narrows the store to one key prefix, so that several clusters can<br>share a bucket without each walking the others' backups.</td>
-<td></td>
-<td>Optional: {} <br></td>
 </tr>
 <tr>
 <td><code>region</code> <em>string</em></td>
@@ -10761,7 +10820,6 @@ it afterward.</p>
 <span class="w">    </span><span class="nt">backup</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">'^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'</span>
 <span class="w">      </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">      </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">credentialsSecretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalObjectReference</span>
 <span class="w">    </span><span class="nt">kms</span><span class="p">:</span>
@@ -10933,7 +10991,6 @@ document carries no field for it.</p>
 <span class="w">  </span><span class="nt">backup</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">'^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'</span>
 <span class="w">    </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">    </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">credentialsSecretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalObjectReference</span>
 <span class="w">  </span><span class="nt">kms</span><span class="p">:</span>
@@ -11238,7 +11295,6 @@ reviewer sees them before the cluster exists rather than after.</p>
 <span class="nt">backup</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">'^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'</span>
 <span class="w">  </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">  </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">credentialsSecretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalObjectReference</span>
 <span class="nt">kms</span><span class="p">:</span>
@@ -11409,6 +11465,8 @@ meaningfully before it reports Available.</p>
 <span class="w">        </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">        </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">        </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
+<span class="w">        </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">string</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">      </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
 <span class="w">      </span><span class="nt">tolerations</span><span class="p">:</span>
@@ -11861,6 +11919,8 @@ a ControlPlaneOps upgrade performs.</p>
 <span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">    </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
+<span class="w">    </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">string</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
 <span class="w">  </span><span class="nt">tolerations</span><span class="p">:</span>
@@ -11914,6 +11974,8 @@ namespace.</p>
 <span class="w">      </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">      </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
+<span class="w">      </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">string</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">    </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
 <span class="w">    </span><span class="nt">tolerations</span><span class="p">:</span>
@@ -12296,16 +12358,17 @@ for it.</p>
 an input to discovery and never appears in the document discovery writes: a
 ClusterDeploymentConfig carries the explicit list the filter produced, not the
 rule that produced it.</p>
-<p>The filters come in two sets, one per device class, and a run scans one class.
-The two rules below reject the set belonging to the class this run is not
-scanning, because a filter that will never be applied is one an administrator
-reads as having narrowed a draft that was never narrowed.</p>
+<p>Every member narrows the devices of the class a run scans. Neither choosing
+that class nor waiving an availability condition is a member: both are
+statements about the run, spec.discover.enableLogicalBlockDevices and
+spec.discover.enablePartitionedDevices, because the first decides which kind
+of cluster the draft describes and the second widens what is reported. The
+filters come in two sets, one per class, and the rules on DiscoverSpec reject
+the set belonging to the class the run is not scanning.</p>
 <p><em>Appears in:</em>
 - <a href="#discoverspec">DiscoverSpec</a></p>
 <p><em>Example:</em></p>
-<div class="highlight"><pre><span></span><code><span class="nt">enableLogicalBlockDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="nt">enablePartitionedDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="nt">pcieAllowList</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="nt">pcieAllowList</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="nt">pcieDenyList</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
@@ -12326,18 +12389,6 @@ reads as having narrowed a draft that was never narrowed.</p>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td><code>enableLogicalBlockDevices</code> <em>boolean</em></td>
-<td>EnableLogicalBlockDevices scans a worker's available logical block devices<br>instead of its available NVMe devices. It selects the class rather than<br>adding one, because the draft a run writes describes one cluster and a<br>cluster is built out of one class. Unset scans NVMe, so that upgrading to<br>26.4 does not change what a discovery run reports.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>enablePartitionedDevices</code> <em>boolean</em></td>
-<td>EnablePartitionedDevices reports devices carrying a partition table<br>alongside the available ones, for the administrator who knows the table is<br>stale and intends to hand the device over anyway. It is the only one of the<br>three availability conditions that can be waived: a mounted or otherwise<br>busy device is never reported, because simplyblock taking it would corrupt<br>whatever is using it.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
 <tr>
 <td><code>pcieAllowList</code> <em>string array</em></td>
 <td>PcieAllowList restricts candidates to these PCI addresses. This and the two<br>PCI filters below narrow the NVMe class alone, because a logical block<br>device has no PCI address to match, so setting any of them on a run that<br>scans the block class is rejected by the rule on this type.</td>
@@ -12478,6 +12529,10 @@ in Workers, or by label in NodeSelector. They are exclusive rather than
 intersected because the intersection of a name list and a label selector is a
 question nobody asks deliberately, and reading one as narrowing the other
 would make a run inspect fewer machines than either field says.</p>
+<p>The device filters come in two sets, one per device class, and a run scans
+one class. The two class rules reject the set belonging to the class this run
+is not scanning, because a filter that will never be applied is one an
+administrator reads as having narrowed a draft that was never narrowed.</p>
 <p><em>Appears in:</em>
 - <a href="#operatoropsspec">OperatorOpsSpec</a></p>
 <p><em>Example:</em></p>
@@ -12489,9 +12544,10 @@ would make a run inspect fewer machines than either field says.</p>
 <span class="nt">tolerations</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Toleration</span>
 <span class="nt">enableControlPlaneNodes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">enableLogicalBlockDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">enablePartitionedDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">forceJournalDevice</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="nt">deviceFilter</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">enableLogicalBlockDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="w">  </span><span class="nt">enablePartitionedDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">pcieAllowList</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">pcieDenyList</span><span class="p">:</span>
@@ -12541,6 +12597,24 @@ would make a run inspect fewer machines than either field says.</p>
 <tr>
 <td><code>enableControlPlaneNodes</code> <em>boolean</em></td>
 <td>EnableControlPlaneNodes lets the run consider machines that run the API<br>server and etcd.<br>It is off by default because a storage node is a data path, and putting one<br>on an etcd host is a placement almost nobody intends. The approval gate is a<br>poor place to catch it: a fifty-worker draft is not a document anybody reads<br>closely enough to spot three control-plane nodes in it. A combined three-node<br>or single-node deployment is the case that wants it, and those are set up<br>deliberately.<br>There is no field beside it for infrastructure nodes, because those are used<br>without asking: an OpenShift infra node is the tier a cluster's own<br>infrastructure runs on, and simplyblock storage is infrastructure. A fleet<br>with disks in its infra nodes meant those disks to be the storage, so a draft<br>proposes them ahead of the workers rather than leaving them out.</td>
+<td></td>
+<td>Optional: {} <br></td>
+</tr>
+<tr>
+<td><code>enableLogicalBlockDevices</code> <em>boolean</em></td>
+<td>EnableLogicalBlockDevices scans a worker's available logical block devices<br>instead of its available NVMe devices. It selects the class rather than<br>adding one, because the draft a run writes describes one cluster and a<br>cluster is built out of one class. Unset scans NVMe, so that upgrading to<br>26.4 does not change what a discovery run reports.<br>It is a statement about the run rather than a member of DeviceFilter,<br>because it does not narrow the devices reported: it decides which class of<br>them is looked at, which filters in DeviceFilter apply, and what<br>ForceJournalDevice resolves, since the two classes lay out a journal<br>differently.</td>
+<td></td>
+<td>Optional: {} <br></td>
+</tr>
+<tr>
+<td><code>enablePartitionedDevices</code> <em>boolean</em></td>
+<td>EnablePartitionedDevices reports devices carrying a partition table<br>alongside the available ones, for the administrator who knows the table is<br>stale and intends to hand the device over anyway. It is the only one of the<br>three availability conditions that can be waived: a mounted or otherwise<br>busy device is never reported, because simplyblock taking it would corrupt<br>whatever is using it.<br>It is a statement about the run rather than a member of DeviceFilter for<br>the reason EnableLogicalBlockDevices is: it waives an availability<br>condition for whichever class is scanned, and so widens what is reported,<br>where every member of the filter narrows it.</td>
+<td></td>
+<td>Optional: {} <br></td>
+</tr>
+<tr>
+<td><code>forceJournalDevice</code> <em>boolean</em></td>
+<td>ForceJournalDevice makes the run dedicate a journal device even where the<br>fleet's disks do not say which one.<br>A run proposes a dedicated journal device when every worker hands over one<br>disk smaller than its others, because a fleet built that way was built that<br>way on purpose. Where several disks share the smallest size, nothing says<br>which to take, and taking one spends a whole disk the fleet did not set<br>aside: on a worker with ten 10 TB disks that is 10 TB, silently. So the run<br>does not guess.<br>What it does instead depends on the class. An NVMe cluster with no<br>dedicated journal device carves a journal partition out of every device, so<br>the run leaves the field unset, says so, and every disk stays storage. A<br>logical block-device cluster has no such layout — the control plane refuses<br>the partitioned journal for the class — so the run fails rather than<br>writing a document that creates the cluster, formats its drives, and then<br>fails every node_add. Setting this is what asks for one of the equal disks<br>to be taken anyway, and the draft says the disk was taken rather than<br>offered.<br>It does not force the cases that are impossible rather than ambiguous. A<br>worker handing over a single disk is refused with it or without it, because<br>dedicating that disk leaves the worker nothing to store on, and so is a<br>worker whose disks report no size. The tie it does resolve is broken by<br>address, ascending, so two runs over one unchanged fleet propose the same<br>document.</td>
 <td></td>
 <td>Optional: {} <br></td>
 </tr>
@@ -12670,6 +12744,39 @@ without a translation table between them.</p>
 </tr>
 </tbody>
 </table>
+<h4 id="failuredomainindex">FailureDomainIndex</h4>
+<p>FailureDomainIndex is one failure-domain label and the control plane's index
+for it.</p>
+<p><em>Appears in:</em>
+- <a href="#storageclusterstatus">StorageClusterStatus</a></p>
+<p><em>Example:</em></p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+<th>Default</th>
+<th>Validation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code> <em>string</em></td>
+<td>Name is the failure-domain label, as StorageNode.spec.config.failureDomain<br>spells it ("rack-b").</td>
+<td></td>
+<td>MaxLength: 63 <br>MinLength: 1 <br>Required: {} <br></td>
+</tr>
+<tr>
+<td><code>index</code> <em>integer</em></td>
+<td>Index is the integer sent to the control plane for every node in the<br>domain.</td>
+<td></td>
+<td>Minimum: 0 <br>Required: {} <br></td>
+</tr>
+</tbody>
+</table>
 <h4 id="foundationdbspec">FoundationDBSpec</h4>
 <p>FoundationDBSpec is the sizing of the FoundationDB the operator installs.</p>
 <p><em>Appears in:</em>
@@ -12678,6 +12785,8 @@ without a translation table between them.</p>
 <div class="highlight"><pre><span></span><code><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
+<span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">string</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 </code></pre></div>
 <table>
 <thead>
@@ -12704,6 +12813,12 @@ without a translation table between them.</p>
 <tr>
 <td><code>resources</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#resourcerequirements-v1-core">ResourceRequirements&nbsp;⧉</a></em></td>
 <td>Resources sets requests and limits for the coordinator pods.</td>
+<td></td>
+<td>Optional: {} <br></td>
+</tr>
+<tr>
+<td><code>nodeSelector</code> <em>object (keys:string, values:string)</em></td>
+<td>NodeSelector pins the database's own processes, and nothing else the<br>control plane runs. Unset leaves them wherever the control plane as a<br>whole is placed.<br>It is stated apart from that placement because the database is the part<br>whose host matters to something else: adding a storage node reboots its<br>worker, and a worker running a FoundationDB process is added on its own<br>however many nodes the cluster's provisioning budget allows at once.<br>Confining the database to a few workers is what leaves the rest of the<br>fleet free to be added together.<br>It has to select at least as many workers as<br>spec.source.local.foundationDB.replicas, because the worker is the<br>database's fault domain. The anti-affinity between processes of one class<br>is a preference rather than a requirement, so a narrower selector places<br>the coordinators anyway, several to a worker, where one worker's loss<br>takes more of them than the redundancy mode was configured to survive.</td>
 <td></td>
 <td>Optional: {} <br></td>
 </tr>
@@ -12941,6 +13056,8 @@ so the ownership spine starts at a real edge rather than at a Helm release.</p>
 <span class="w">  </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">  </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
+<span class="w">  </span><span class="nt">nodeSelector</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">string</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="nt">resources</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ResourceRequirements</span>
 <span class="nt">tolerations</span><span class="p">:</span>
@@ -13639,9 +13756,10 @@ runs to a terminal phase and stays afterward as the audit record.</p>
 <span class="w">    </span><span class="nt">tolerations</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Toleration</span>
 <span class="w">    </span><span class="nt">enableControlPlaneNodes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="w">    </span><span class="nt">enableLogicalBlockDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="w">    </span><span class="nt">enablePartitionedDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="w">    </span><span class="nt">forceJournalDevice</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">deviceFilter</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">enableLogicalBlockDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="w">      </span><span class="nt">enablePartitionedDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">      </span><span class="nt">pcieAllowList</span><span class="p">:</span>
 <span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">pcieDenyList</span><span class="p">:</span>
@@ -13787,9 +13905,10 @@ resource in this API group, and the absent field is the signal.</p>
 <span class="w">  </span><span class="nt">tolerations</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Toleration</span>
 <span class="w">  </span><span class="nt">enableControlPlaneNodes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="w">  </span><span class="nt">enableLogicalBlockDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="w">  </span><span class="nt">enablePartitionedDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="w">  </span><span class="nt">forceJournalDevice</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">deviceFilter</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">enableLogicalBlockDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="w">    </span><span class="nt">enablePartitionedDevices</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">pcieAllowList</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">pcieDenyList</span><span class="p">:</span>
@@ -16003,7 +16122,6 @@ run as.</p>
 <span class="w">  </span><span class="nt">backup</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">'^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'</span>
 <span class="w">    </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">    </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">credentialsSecretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalObjectReference</span>
 <span class="w">  </span><span class="nt">disableDataRealignment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
@@ -16056,6 +16174,9 @@ run as.</p>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">worker</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">node</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">      </span><span class="nt">takenAt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Time</span>
+<span class="w">  </span><span class="nt">failureDomains</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">      </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="w">  </span><span class="nt">activeOpsRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">rebalancingMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">avgDeviationPct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float</span>
@@ -16538,7 +16659,6 @@ spelling.</p>
 <span class="nt">backup</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">'^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'</span>
 <span class="w">  </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">  </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">  </span><span class="nt">credentialsSecretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalObjectReference</span>
 <span class="nt">disableDataRealignment</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
@@ -16751,6 +16871,9 @@ spelling.</p>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">worker</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">node</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="w">    </span><span class="nt">takenAt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Time</span>
+<span class="nt">failureDomains</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
 <span class="nt">activeOpsRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
 <span class="nt">rebalancingMetrics</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">avgDeviationPct</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float</span>
@@ -16873,6 +16996,12 @@ spelling.</p>
 <td>ProvisioningSlots are the workers whose node add is outstanding. The list<br>is the metadata of the Provisioning phase, and it is also the mutex that<br>caps concurrent adds at spec.storageNodes.nodeProvisioningBudget.<br>It is one list on one object because that is what makes taking a slot<br>atomic. A node takes one with an optimistic-locked patch of this field, so<br>exactly one node wins a given resourceVersion and every other is told to<br>count again. A slot recorded per node could not do that: six objects carry<br>six resourceVersions, and two nodes reading a cold cache would both see the<br>same one free and both take it.<br>A worker rather than an object is what holds a slot, because one POST adds<br>every socket of a worker and a two-socket host must consume one slot.</td>
 <td></td>
 <td>MaxItems: 64 <br>Optional: {} <br></td>
+</tr>
+<tr>
+<td><code>failureDomains</code> <em><a href="#failuredomainindex">FailureDomainIndex</a> array</em></td>
+<td>FailureDomains maps each failure-domain label the cluster's nodes declare<br>(StorageNode.spec.config.failureDomain) to the integer the control plane<br>identifies that domain by. A deployment adds an entry for every label it<br>introduces, both when it creates the cluster and when it grows one, and<br>never changes or removes an entry: the control plane has already placed<br>data by that index. A label that is a number keeps that number as its<br>index when the number is free. A cluster holds at most 256 failure<br>domains, and a deployment that would exceed that is refused before it is<br>approved.</td>
+<td></td>
+<td>MaxItems: 256 <br>Optional: {} <br></td>
 </tr>
 <tr>
 <td><code>activeOpsRef</code> <em>string</em></td>
@@ -17043,7 +17172,7 @@ having it, and which devices a node uses is decided in the node's own spec.</p>
 either: a removal is a step of Replace and of Migrate, and taking a device out
 of the data path without replacing it is Fail.</p>
 <p><em>Validation:</em>
-- Enum: [Restart]</p>
+- Enum: [Restart Fail]</p>
 <p><em>Appears in:</em>
 - <a href="#storagedeviceopsspec">StorageDeviceOpsSpec</a></p>
 <table>
@@ -17059,12 +17188,12 @@ of the data path without replacing it is Fail.</p>
 <td>StorageDeviceOpsActionRestart is the action the kind exists for:<br>recycling one device rather than its node.<br></td>
 </tr>
 <tr>
-<td><code>SelfTest</code></td>
-<td>These four actions are declared but not accepted: the control plane has no<br>verb for them yet, so an object naming one is refused at admission rather<br>than created and failed.<br></td>
+<td><code>Fail</code></td>
+<td>StorageDeviceOpsActionFail declares a device untrustworthy and takes it<br>out of the data path for good, so the cluster rebuilds the redundancy it<br>held elsewhere and stops reading from it.<br>It is two calls rather than one: the control plane refuses to fail a<br>device that is still serving, so the device is removed and then failed.<br>The removal alone is reversible and the failure is not, which is why the<br>graph splits them and declares the abort edge on the first.<br></td>
 </tr>
 <tr>
-<td><code>Fail</code></td>
-<td></td>
+<td><code>SelfTest</code></td>
+<td>These three actions are declared but not accepted: the control plane has<br>no verb for them yet, so an object naming one is refused at admission<br>rather than created and failed.<br></td>
 </tr>
 <tr>
 <td><code>Replace</code></td>
@@ -17142,11 +17271,11 @@ of the data path without replacing it is Fail.</p>
 <td><code>action</code> <em><a href="#storagedeviceopsaction">StorageDeviceOpsAction</a></em></td>
 <td>Action is the operation to perform.</td>
 <td></td>
-<td>Enum: [Restart] <br>Required: {} <br></td>
+<td>Enum: [Restart Fail] <br>Required: {} <br></td>
 </tr>
 <tr>
 <td><code>abort</code> <em>boolean</em></td>
-<td>Abort asks a running operation to stop at its next step and unwind.<br>Restart can be aborted before its call is issued and not after: a restart<br>the control plane has accepted is one nothing can recall, so the graph<br>declares where the edge exists rather than this field promising one.</td>
+<td>Abort asks a running operation to stop at its next step and unwind.<br>Each action can be aborted before it has issued anything and not after: a<br>restart the control plane has accepted is one nothing can recall, and a<br>device a failure has already removed is one this operator has no call to<br>put back. The graph declares where the edge exists rather than this field<br>promising one.</td>
 <td></td>
 <td>Optional: {} <br></td>
 </tr>
@@ -18689,7 +18818,6 @@ parameter map, and a finalizer rather than by the API.</p>
 <span class="w">    </span><span class="nt">enableCompression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">enableClientCompression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">enableClientDeduplication</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="w">    </span><span class="nt">enableEncryption</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">enableReplication</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">enableDHCHAP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">priorityClass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
@@ -19037,7 +19165,6 @@ cheaper to keep than to rediscover, not because it is work in progress.</p>
 <span class="w">  </span><span class="nt">enableCompression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">enableClientCompression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">enableClientDeduplication</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="w">  </span><span class="nt">enableEncryption</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">enableReplication</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">enableDHCHAP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">priorityClass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
@@ -19063,7 +19190,7 @@ cheaper to keep than to rediscover, not because it is work in progress.</p>
 </tr>
 <tr>
 <td><code>allowedNodes</code> <em>string array</em></td>
-<td>AllowedNodes restricts which hosts may carry this pool's volumes, by<br>Kubernetes Node name. Empty means every node in the cluster. Narrowing it<br>stops new volumes landing on the removed nodes and leaves the existing<br>ones where they are.<br>The list is left exactly as authored: a name that no longer resolves is<br>dropped from Status.AllowedNodes rather than pruned from here, so a node<br>removed for maintenance and added back under the same name returns to the<br>pools that named it without anybody re-authoring them.</td>
+<td>AllowedNodes restricts which hosts may carry this pool's volumes, by<br>Kubernetes Node name. Empty means every node in the cluster. Narrowing it<br>stops new volumes landing on the removed nodes and leaves the existing<br>ones where they are. Requires volumeDefaults.enableDHCHAP to be true.<br>The list is left exactly as authored: a name that no longer resolves is<br>dropped from Status.AllowedNodes rather than pruned from here, so a node<br>removed for maintenance and added back under the same name returns to the<br>pools that named it without anybody re-authoring them.</td>
 <td></td>
 <td>Optional: {} <br></td>
 </tr>
@@ -19531,7 +19658,6 @@ operator cannot update and a spec that no longer describes it.</p>
 <span class="nt">enableCompression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="nt">enableClientCompression</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="nt">enableClientDeduplication</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="nt">enableEncryption</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="nt">enableReplication</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="nt">enableDHCHAP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="nt">priorityClass</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
@@ -19582,12 +19708,6 @@ operator cannot update and a spec that no longer describes it.</p>
 <tr>
 <td><code>enableClientDeduplication</code> <em>boolean</em></td>
 <td>EnableClientDeduplication deduplicates each volume on the node that<br>consumes it (VDO), independent of EnableClientCompression. It carries a<br>significant fixed RAM cost per volume for VDO's index, so it is meant for<br>the pools where duplicate data is actually expected (VM images, container<br>layers, backup targets) rather than enabled by default.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>enableEncryption</code> <em>boolean</em></td>
-<td>EnableEncryption encrypts logical volumes, using the key store the cluster<br>names in its own spec.</td>
 <td></td>
 <td>Optional: {} <br></td>
 </tr>
@@ -20015,7 +20135,7 @@ rebalance, and a device replacement are all performed by moving volumes.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 4, 2026 19:48:45 UTC">2026-10-04</span>
   </span>
 
     

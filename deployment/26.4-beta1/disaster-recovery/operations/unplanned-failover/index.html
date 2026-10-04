@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4299,6 +4301,8 @@
       
         
       
+        
+      
     
     
       
@@ -4564,6 +4568,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../recovery-plans/" class="md-nav__link">
         
   
@@ -4626,6 +4652,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6238,14 +6286,19 @@ action on a <code>NotReady</code> application fails pre-flight.</p>
   returned to the source.</li>
 </ul>
 <p>The achieved RPO is reported in <code>status.report.achievedRPOSeconds</code> and the metric <code>dr_achieved_rpo_seconds</code>. For async
-methods, it can lag the real replication state by up to one interval.</p>
+methods, it can lag the real replication state by up to one interval. On simplyblock storage, the promotion of a
+volume whose source is unreachable can take several minutes per volume, because the control plane waits for the
+source before it clones the newest replicated snapshot on the target.</p>
 <h2 id="metro-dr-and-fencing">Metro DR and Fencing</h2>
 <p>With a sync method, both sites write to volumes with the same storage identity. Before failing over, the source must
 be fenced, so that it can no longer write.</p>
+<p>For a sync application on a stretch cluster, dr-agent taints the NotReady nodes of the lost zone out of service, so
+that their pods and volume attachments are released, demotes the volumes with a bounded wait, and promotes them in
+the target zone with force. No separate fencing step is needed.</p>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
-<p>The fencing pre-flight for Metro DR is behind the <code>metroFencing</code> feature gate in <code>DRConfig.spec.featureGates</code>
-and waits on CSI driver support. Unplanned failover under a sync method is not validated yet.</p>
+<p>The fencing pre-flight is behind the <code>metroFencing</code> feature gate in <code>DRConfig.spec.featureGates</code> and waits on
+CSI driver support for network fencing.</p>
 </div>
 <h2 id="after-the-failover">After the Failover</h2>
 <p>Once the action completes, the application runs on the DR site. The old primary is still down, so the reverse path
@@ -6280,7 +6333,7 @@ ProtectedApplication before the site returns:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 4, 2026 19:48:45 UTC">2026-10-04</span>
   </span>
 
     

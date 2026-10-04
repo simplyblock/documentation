@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4465,6 +4467,8 @@
       
         
       
+        
+      
     
     
       
@@ -4624,6 +4628,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4686,6 +4712,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6365,6 +6413,11 @@ confirmed, and in which order it starts on the target. Protected applications ar
 <td>Supported</td>
 <td>Not supported</td>
 </tr>
+<tr>
+<td>Sync plans (stretch cluster)</td>
+<td>Supported</td>
+<td>Refused</td>
+</tr>
 </tbody>
 </table>
 <h3 id="discovered-applications">Discovered Applications</h3>
@@ -6469,6 +6522,9 @@ webhook warns when tiers are set on a managed application.</p>
 </tbody>
 </table>
 <p>Changing the target or the method requires a new ProtectedApplication, which starts with a full initial sync.</p>
+<p>An application on a sync plan is protected without Ramen: dr-hub delivers a zone binding to the stretch cluster, and
+dr-agent keeps the volumes primary in the current zone and the workloads pinned to it (see
+<a href="../replication-types/#synchronous-replication">Replication Types</a>).</p>
 <h2 id="selecting-the-data">Selecting the Data</h2>
 <p>The objects and volumes of a discovered application are selected by namespace and label:</p>
 <ul>
@@ -6540,7 +6596,8 @@ ramen-ops   orders   aws-fra   site-a   site-b   discovered   site-a    True
   (<code>Ready</code>, <code>Degraded</code>, <code>NotReady</code>, or <code>Unknown</code>) with the individual checks. See <a href="../../operations/monitoring/">Monitoring</a>.</li>
 <li><strong>Recipe:</strong> The Recipe in effect and whether it was generated.</li>
 <li><strong>Suggested tiers:</strong> A boot order suggested from the objects found, never applied automatically.</li>
-<li><strong>Backups:</strong> Per <code>snapshot-s3</code> method, the running and the last successful backup.</li>
+<li><strong>Site mapping:</strong> <code>status.siteMapping</code> and <code>status.mapping</code> with the findings and guest reservations of the
+  application's VMs. See <a href="../site-profiles/">Site Profiles</a>.</li>
 <li><strong>Conditions:</strong> <code>Bound</code> (the protection exists and matches the specification) and <code>Protected</code> (the application is
   protected).</li>
 </ul>
@@ -6569,8 +6626,7 @@ ramen-ops   orders   aws-fra   site-a   site-b   discovered   site-a    True
 <span class="w">  </span><span class="nt">tiers</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">config</span>
 <span class="w">      </span><span class="nt">selector</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">dr.simplyblock.io/tier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">config</span>
+<span class="w">        </span><span class="nt">resourceTypes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">configmaps</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">secrets</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">serviceaccounts</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">services</span><span class="p p-Indicator">]</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">middleware</span>
 <span class="w">      </span><span class="nt">selector</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
@@ -6596,10 +6652,14 @@ ramen-ops   orders   aws-fra   site-a   site-b   discovered   site-a    True
 <span class="w">        </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://web.orders.svc:8080/healthz</span>
 </code></pre></div>
 <h3 id="virtual-machines">Virtual Machines</h3>
-<div class="highlight"><span class="filename">Discovered KubeVirt application with VM probes (papp-erp.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
+<p>A database VM and a web VM, started in that order. The database tier is ready once its VM runs and its port answers
+from the application's tools pod (an <code>exec</code> gate), the web tier once its VM runs. The VMs' secondary network
+attachments and guest addresses are mapped between the sites by the site mapper (see
+<a href="../site-profiles/">Site Profiles</a>).</p>
+<div class="highlight"><span class="filename">Discovered KubeVirt application with a boot order and probes (papp-wordpress.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ProtectedApplication</span>
 <span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">erp</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wordpress</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ramen-ops</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">planRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fra</span>
@@ -6608,20 +6668,43 @@ ramen-ops   orders   aws-fra   site-a   site-b   discovered   site-a    True
 <span class="w">  </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">discovered</span>
 <span class="w">  </span><span class="nt">discovered</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">protectedNamespaces</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">erp</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wordpress</span>
 <span class="w">    </span><span class="nt">pvcSelector</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">erp</span>
+<span class="w">        </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wordpress</span>
+<span class="w">  </span><span class="nt">tiers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">config</span>
+<span class="w">      </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">resourceTypes</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">configmaps</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">secrets</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">serviceaccounts</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">services</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tools</span>
+<span class="w">      </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wordpress-tools</span>
+<span class="w">      </span><span class="nt">ready</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deploymentsReady</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">db</span>
+<span class="w">      </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">dr.simplyblock.io/tier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">db</span>
+<span class="w">      </span><span class="nt">ready</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vmRunning</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">exec</span>
+<span class="w">          </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wordpress-tools</span>
+<span class="w">          </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"nc"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"-z"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"-w"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"3"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"wp-db"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"3306"</span><span class="p p-Indicator">]</span>
+<span class="w">          </span><span class="nt">timeoutSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">900</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">      </span><span class="nt">selector</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">matchLabels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">dr.simplyblock.io/tier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">      </span><span class="nt">ready</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vmRunning</span>
 <span class="w">  </span><span class="nt">health</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">probes</span><span class="p">:</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">erp-vms</span>
-<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vmRunning</span>
-<span class="w">        </span><span class="nt">selector</span><span class="p">:</span>
-<span class="w">          </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">            </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">erp</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">erp-web</span>
-<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">tcp</span>
-<span class="w">        </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">erp-web.erp.svc:443</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http</span>
+<span class="w">        </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://wp-web.wordpress.svc.cluster.local:80/</span>
+<span class="w">        </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15s</span>
 </code></pre></div>
 <p>Without tiers, the default boot order restores configuration objects first and all workloads afterward (see
 <a href="../workflows-and-recipes/#default-order">Workflows and Recipes</a>).</p>
@@ -6679,7 +6762,7 @@ order:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 4, 2026 19:48:45 UTC">2026-10-04</span>
   </span>
 
     

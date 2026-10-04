@@ -23,9 +23,9 @@ All four live in the namespace of the `StorageCluster` and use the API version `
 
 !!! info "Backups and disaster recovery"
     The backup bucket is part of the storage cluster and is configured when the cluster is deployed. Simplyblock
-    Disaster Recovery does not configure it, but its `snapshot-s3` backups store their volume data here. A cluster
-    that should be protected with `snapshot-s3` must therefore be deployed with backups configured. See
-    [S3 Buckets](../../../deployment-preparation/dr-requirements.md#s3-buckets).
+    Disaster Recovery does not use it: the backup method types of a protection plan back volumes up with the same
+    mechanism into the DR metadata store of the site. See
+    [Backup and Restore](../../../disaster-recovery/operations/backup-restore.md).
 
 ## Prerequisites
 

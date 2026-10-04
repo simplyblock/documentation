@@ -2,718 +2,726 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/high-availability-fault-tolerance/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/simplyblock-architecture/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/storage-performance-and-qos/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/what-is-simplyblock/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/automatic-rebalancing/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/dr-applications/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/dr-protection-plans/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/erasure-coding/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/external-key-management/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/failover/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/failure-domains/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/linux-block-devices/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/logical-volumes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/nvme-namespaces-and-subsystems/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/nvmf-security/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/persistent-volumes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/relocation/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/simplyblock-cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/snapshots-clones/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/storage-pooling/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/concepts/volume-migration/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/deployment-topologies/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/deployment-topologies/control-plane-and-operator/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/deployment-topologies/disaggregated/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/architecture/deployment-topologies/hci/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/cloud-instance-recommendations/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/cluster-deployment-options/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/deployment-architectures/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/dr-requirements/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/erasure-coding-scheme/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/hardware-requirements/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/numa-considerations/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/software-requirements/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/air-gap/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/deployment-preparation/data-migration/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/control-center/</loc>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/access-control/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/applications/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/paths/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/protection-plans/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/replication-types/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/site-profiles/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/configuration/workflows-and-recipes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/install/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/install/archive/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/install/hub/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/install/sites/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/backup-restore/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/hub-recovery/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/monitoring/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/planned-failover/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/recovery-plans/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/relocate-online/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/relocate-restart/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/restart/</loc>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/operations/unplanned-failover/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/testing/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/testing/test-failover/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/disaster-recovery/testing/test-schedules/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/important-notes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/important-notes/acronyms/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/important-notes/contributing/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/important-notes/documentation-conventions/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/important-notes/terminology/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/install-csi/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/k8s-control-plane/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/k8s-storage-plane/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/management-cluster-architecture/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/openshift/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/rancher/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/security/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/installation/talos/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/activating-a-cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/cluster-actions/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/cluster-upgrade/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/failure-domains/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/node-affinity/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/restarting-a-cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/rolling-restart/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/shutting-down-a-cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/cluster/starting-a-cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/data-protection/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/data-protection/asynchronous-replication/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/data-protection/backup-recovery/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/data-protection/foundationdb-backup/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/monitoring/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/monitoring/accessing-grafana/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/monitoring/accessing-graylog/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/monitoring/alerts/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/monitoring/cluster-health/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/monitoring/lvol-conditions/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/scaling/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/scaling/expanding-storage-cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/scaling/parallel-node-addition/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/security/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/security/authentication-encryption/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/security/multi-tenancy/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/migrating-a-storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/node-drain-coordination/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/removing-a-storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/replacing-a-storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/restarting-a-storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/resuming-a-storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/shutting-down-a-storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/storage-node-actions/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/storage-nodes/suspending-a-storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/volumes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/volumes/path-loss-recovery/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/volumes/trimming/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/operations/volumes/volume-migration/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/cloning/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/expanding/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/provisioning/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/quality-of-service/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/removing/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/snapshotting/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/storage-class/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/volume-encryption/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/kubernetes/usage/volume-placement/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/limits/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/nvme-low-level-format/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/supported-linux-distributions/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/supported-linux-kernels/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/upgrade-matrix/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/api/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/api/alerts/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/api/reference/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/backup/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/cluster/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/consistency-group/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/control-plane/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/db-backup/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/qos/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/snapshot/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/storage-node/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/storage-pool/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/cli/volume/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/kubernetes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/operator/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/operator/reference/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/troubleshooting/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/troubleshooting/control-plane/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/troubleshooting/simplyblock-csi/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/reference/troubleshooting/storage-plane/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-10-2/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-10-3/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-10-4/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-10-5/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-3-pre/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-6-ga/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-7-1/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-7-2/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-7-3/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-7-4/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-7-5/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/25-7-6/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/26-2/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/26-3/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/release-notes/26-4/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/tutorials/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/tutorials/openbao-kms/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/tutorials/ransomware-recovery/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/tutorials/simplyblock-intro/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/upgrades/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
     <url>
          <loc>https://docs.simplyblock.io/26.4-beta1/upgrades/upgrade-notes-r25-r26/</loc>
-         <lastmod>2026-09-29</lastmod>
+         <lastmod>2026-10-04</lastmod>
     </url>
 </urlset>

@@ -1524,6 +1524,9 @@
           "204": {
             "description": "Successful Response"
           },
+          "409": {
+            "description": "The node is not online"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1571,6 +1574,9 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "409": {
+            "description": "The node is not suspended"
           },
           "422": {
             "description": "Validation Error",
@@ -1968,6 +1974,67 @@
         }
       }
     },
+    "/api/v2/clusters/{cluster_id}/storage-nodes/{storage_node_id}/devices/{device_id}/add": {
+      "post": {
+        "summary": "Clusters:Storage Nodes:Devices:Add",
+        "operationId": "clusters_storage_nodes_devices_add_api_v2_clusters__cluster_id__storage_nodes__storage_node_id__devices__device_id__add_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cluster Id"
+            }
+          },
+          {
+            "name": "storage_node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Storage Node Id"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "The device is not new"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v2/clusters/{cluster_id}/storage-nodes/{storage_node_id}/devices/{device_id}/remove": {
       "post": {
         "summary": "Clusters:Storage Nodes:Devices:Remove",
@@ -2022,6 +2089,141 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/clusters/{cluster_id}/storage-nodes/{storage_node_id}/devices/{device_id}/fail": {
+      "post": {
+        "summary": "Clusters:Storage Nodes:Devices:Fail",
+        "operationId": "clusters_storage_nodes_devices_fail_api_v2_clusters__cluster_id__storage_nodes__storage_node_id__devices__device_id__fail_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cluster Id"
+            }
+          },
+          {
+            "name": "storage_node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Storage Node Id"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/clusters/{cluster_id}/storage-nodes/{storage_node_id}/devices/{device_id}/replace": {
+      "post": {
+        "summary": "Clusters:Storage Nodes:Devices:Replace",
+        "description": "Add a failed and migrated device back as a new, empty device.\n\nThe replacement carries the failed device's information but none of its\ndata, and arrives in `new` state \u2014 `POST ../devices/{id}/add` puts it into\nservice.",
+        "operationId": "clusters_storage_nodes_devices_replace_api_v2_clusters__cluster_id__storage_nodes__storage_node_id__devices__device_id__replace_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cluster Id"
+            }
+          },
+          {
+            "name": "storage_node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Storage Node Id"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          },
+          {
+            "name": "response-format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "empty",
+                "full",
+                "identifier"
+              ],
+              "type": "string",
+              "default": "identifier",
+              "title": "Response-Format"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "The device cannot be replaced"
           },
           "422": {
             "description": "Validation Error",
@@ -5156,6 +5358,18 @@
               "format": "uuid",
               "title": "Cluster Id"
             }
+          },
+          {
+            "name": "watch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Stream state changes as Server-Sent Events instead of returning a plain response: a `snapshot` event with the current state first, then `created`/`updated`/`deleted` events carrying the full resource representation. A `deleted` event carries the resource's final state when it is still retrievable (e.g. a volume whose status became `deleted`), or an empty object once it is gone entirely. Streams do not support resume; reconnecting clients receive a fresh snapshot. Changes written by pre-upgrade components may take up to 30 seconds to appear.",
+              "default": false,
+              "title": "Watch"
+            },
+            "description": "Stream state changes as Server-Sent Events instead of returning a plain response: a `snapshot` event with the current state first, then `created`/`updated`/`deleted` events carrying the full resource representation. A `deleted` event carries the resource's final state when it is still retrievable (e.g. a volume whose status became `deleted`), or an empty object once it is gone entirely. Streams do not support resume; reconnecting clients receive a fresh snapshot. Changes written by pre-upgrade components may take up to 30 seconds to appear."
           }
         ],
         "responses": {
@@ -5169,6 +5383,11 @@
                     "$ref": "#/components/schemas/BackupDTO"
                   },
                   "title": "Response Clusters Backups List Api V2 Clusters  Cluster Id  Backups  Get"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -5578,6 +5797,18 @@
               "format": "uuid",
               "title": "Cluster Id"
             }
+          },
+          {
+            "name": "watch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Stream state changes as Server-Sent Events instead of returning a plain response: a `snapshot` event with the current state first, then `created`/`updated`/`deleted` events carrying the full resource representation. A `deleted` event carries the resource's final state when it is still retrievable (e.g. a volume whose status became `deleted`), or an empty object once it is gone entirely. Streams do not support resume; reconnecting clients receive a fresh snapshot. Changes written by pre-upgrade components may take up to 30 seconds to appear.",
+              "default": false,
+              "title": "Watch"
+            },
+            "description": "Stream state changes as Server-Sent Events instead of returning a plain response: a `snapshot` event with the current state first, then `created`/`updated`/`deleted` events carrying the full resource representation. A `deleted` event carries the resource's final state when it is still retrievable (e.g. a volume whose status became `deleted`), or an empty object once it is gone entirely. Streams do not support resume; reconnecting clients receive a fresh snapshot. Changes written by pre-upgrade components may take up to 30 seconds to appear."
           }
         ],
         "responses": {
@@ -5591,6 +5822,11 @@
                     "$ref": "#/components/schemas/BackupPolicyDTO"
                   },
                   "title": "Response Clusters Backup Policies List Api V2 Clusters  Cluster Id  Backups Backup Policies  Get"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -7774,7 +8010,7 @@
           "use_path_style": {
             "type": "boolean",
             "title": "Use Path Style",
-            "default": false
+            "default": true
           },
           "credentials": {
             "anyOf": [
@@ -7851,7 +8087,7 @@
           "use_path_style": {
             "type": "boolean",
             "title": "Use Path Style",
-            "default": false
+            "default": true
           },
           "credentials": {
             "anyOf": [
@@ -8069,7 +8305,7 @@
           "use_path_style": {
             "type": "boolean",
             "title": "Use Path Style",
-            "default": false
+            "default": true
           }
         },
         "additionalProperties": false,
@@ -8124,7 +8360,7 @@
           "use_path_style": {
             "type": "boolean",
             "title": "Use Path Style",
-            "default": false
+            "default": true
           }
         },
         "additionalProperties": false,
@@ -8395,7 +8631,8 @@
               "degraded",
               "unready",
               "in_activation",
-              "in_expansion"
+              "in_expansion",
+              "in_shrink"
             ],
             "title": "Status"
           },
@@ -8553,7 +8790,8 @@
           "storage_id": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "minimum": 0.0
               },
               {
                 "type": "null"
@@ -9056,8 +9294,15 @@
             "title": "Size"
           },
           "cluster_device_order": {
-            "type": "integer",
-            "minimum": 0.0,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Cluster Device Order"
           },
           "io_error": {
@@ -11212,7 +11457,7 @@
           "use_path_style": {
             "type": "boolean",
             "title": "Use Path Style",
-            "default": false
+            "default": true
           },
           "credentials": {
             "anyOf": [

@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4297,6 +4299,8 @@
       
         
       
+        
+      
     
     
       
@@ -4456,6 +4460,28 @@
   
   
     <li class="md-nav__item">
+      <a href="operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4518,6 +4544,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6088,8 +6136,11 @@ configuration and drives every action. The sites run the applications and the si
 <li><strong>Velero:</strong> Captures and restores an application's Kubernetes objects and runs the snapshot-s3 backups.</li>
 <li><strong>Hub controller (dr-hub):</strong> The simplyblock DR controller on the hub. It computes readiness, runs recovery actions
   and tests, and writes reports and signed state bundles to S3.</li>
-<li><strong>Site agent (dr-agent):</strong> The simplyblock DR agent on each site, installed as an OCM addon. It reports status to the hub and
-  runs the site-side steps: hooks, health probes, test bubbles, cleanup, and backups.</li>
+<li><strong>Site agent (dr-agent):</strong> The simplyblock DR agent on each site, installed as an OCM addon. It reports status and
+  the site's inventory to the hub and runs the site-side steps: hooks, health probes, test bubbles, cleanup, zone
+  moves, and restarts.</li>
+<li><strong>Control Center:</strong> The simplyblock web console, with a Disaster recovery section that configures and operates
+  all of the above in the browser. See <a href="control-center/">Control Center</a>.</li>
 </ul>
 <p>The concepts behind these objects are described in
 <a href="../architecture/concepts/dr-protection-plans/">Protection Plans</a>,
@@ -6111,29 +6162,40 @@ supported topologies are shown in <a href="../deployment-preparation/deployment-
 <tr>
 <td><code>sync</code></td>
 <td>Metro DR</td>
-<td>Volumes are written synchronously to both sites. Both sites share one storage identity.</td>
-<td>None while in sync</td>
+<td>A stretch cluster writes every block to both zones of one cluster. The sites are its zones.</td>
+<td>None</td>
 </tr>
 <tr>
 <td><code>async</code></td>
 <td>Regional DR</td>
-<td>Volumes are replicated at a fixed <code>schedulingInterval</code>, for example, every 5 minutes.</td>
+<td>Volumes are replicated between two clusters at a fixed <code>schedulingInterval</code>, for example, every 5 minutes.</td>
 <td>Up to about one interval</td>
 </tr>
 <tr>
-<td><code>snapshot-s3</code></td>
-<td>Backup</td>
-<td>Application objects and volume records are backed up to S3 on a cron schedule.</td>
+<td><code>s3-backup</code></td>
+<td>Vault</td>
+<td>Every primary volume is backed up to S3 at an interval. The peer promotes from the newest backup.</td>
 <td>Up to one backup interval</td>
+</tr>
+<tr>
+<td><code>sync-s3-backup</code></td>
+<td></td>
+<td><code>sync</code> with backups to S3.</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>async-s3-backup</code></td>
+<td></td>
+<td><code>async</code> with backups to S3.</td>
+<td>Up to about one interval</td>
 </tr>
 </tbody>
 </table>
-<p>A plan cannot mix <code>sync</code> and <code>async</code>. A <code>snapshot-s3</code> method runs alongside either. Details are in
+<p>A plan cannot mix synchronous and asynchronous types, and every application uses exactly one method. Details are in
 <a href="configuration/replication-types/">Replication Types</a>.</p>
-<p>DR uses three kinds of S3 buckets: a DR metadata bucket for the Kubernetes objects of protected
-applications, an archive bucket for the hub state and the reports, and the simplyblock backup buckets of the storage
-clusters for the volume data of <code>snapshot-s3</code> backups. The first two are configured in DR. The backup buckets are
-configured when the storage clusters are deployed. See <a href="../deployment-preparation/dr-requirements/#s3-buckets">S3 Buckets</a>.</p>
+<p>DR uses two kinds of S3 buckets: the DR metadata buckets of the sites for the Kubernetes objects of protected
+applications and the volume backups of the backup method types, and an archive bucket for the hub state and the
+reports. See <a href="../deployment-preparation/dr-requirements/#s3-buckets">S3 Buckets</a>.</p>
 <h2 id="lifecycle">Lifecycle</h2>
 <p>Protecting an application follows four stages:</p>
 <ol>
@@ -6150,24 +6212,32 @@ configured when the storage clusters are deployed. See <a href="../deployment-pr
 <h2 id="available-today-and-coming-soon">Available Today and Coming Soon</h2>
 <p>The following capabilities are available today:</p>
 <ul>
-<li><strong>Protection:</strong> Protection plans with sync, async, and snapshot-s3 methods, directed DR paths, and protected
-  applications (discovered and managed).</li>
-<li><strong>Boot order:</strong> Tiers with readiness gates.</li>
+<li><strong>Protection:</strong> Protection plans with the five method types, directed DR paths, and protected applications
+  (discovered and managed). Asynchronous replication runs on the simplyblock CSI driver's csi-addons replication,
+  with the backend pairing derived by dr-hub.</li>
+<li><strong>Boot order:</strong> Tiers with readiness gates, including <code>exec</code> gates.</li>
 <li><strong>Recovery actions:</strong> Failover, Relocate, and failback, for single applications and for ordered recovery plans,
-  with pre-flight readiness checks, external hooks, health probes, and reports.</li>
-<li><strong>Test failover:</strong> Isolated test bubbles and test schedules for discovered applications.</li>
-<li><strong>Backup and restore:</strong> snapshot-s3 backups and restore onto rebuilt sites.</li>
+  with pre-flight readiness checks, external hooks, health probes, and reports. Restart in place after a storage
+  recovery.</li>
+<li><strong>Site mapper:</strong> Site profiles, DHCP servers, and the mapping of the network attachments and guest addresses of
+  virtual machines between sites.</li>
+<li><strong>Test failover:</strong> Isolated test bubbles, with the storage operator's clones, and test schedules for discovered
+  applications.</li>
+<li><strong>Backup and restore:</strong> Backups by the storage with the backup method types, and restore onto rebuilt sites.</li>
 <li><strong>Hub recovery:</strong> Signed DR state bundles and the <code>dr-restore</code> command-line tool.</li>
+<li><strong>Control Center:</strong> The Disaster recovery section of the simplyblock web console.</li>
 </ul>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
 <ul>
-<li><strong>Site mapper:</strong> Rewriting of network attachments, storage classes, zones, addresses, and routes between sites.
-  Until then, an application recovers exactly as captured, so both sites need identical names for these objects.</li>
+<li><strong>Site mapper, further categories:</strong> Storage classes, zones, load balancer addresses, domains, routes, and
+  literal values. Until then, these must carry identical names on both sites.</li>
 <li><strong>Hub restore action:</strong> A <code>RestoreHub</code> recovery action on a running hub (the <code>dr-restore</code> tool covers this today).</li>
 <li><strong>Hosted-cluster tests:</strong> Test failovers inside a hosted cluster with mirrored networks.</li>
 <li><strong>Online relocation:</strong> Moving running workloads between sites without a restart. See
   <a href="operations/relocate-online/">Relocate (Online)</a>.</li>
+<li><strong>Storage deployment from the hub console:</strong> Discovering and deploying a managed site's storage cluster from
+  the Control Center. See <a href="control-center/">Control Center</a>.</li>
 </ul>
 </div>
 <h2 id="section-contents">Section Contents</h2>
@@ -6176,6 +6246,7 @@ configured when the storage clusters are deployed. See <a href="../deployment-pr
 <li><a href="configuration/">Configuration</a></li>
 <li><a href="testing/">Test</a></li>
 <li><a href="operations/">Operations</a></li>
+<li><a href="control-center/">Control Center</a></li>
 </ul>
 
 
@@ -6197,7 +6268,7 @@ configured when the storage clusters are deployed. See <a href="../deployment-pr
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 4, 2026 19:48:45 UTC">2026-10-04</span>
   </span>
 
     

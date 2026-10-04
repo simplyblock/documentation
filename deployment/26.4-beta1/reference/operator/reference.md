@@ -785,7 +785,6 @@ _Example:_
 ```yaml
 endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
 bucket: string
-prefix: string
 region: string
 credentialsSecretRef: LocalObjectReference
 ```
@@ -794,7 +793,6 @@ credentialsSecretRef: LocalObjectReference
 | --- | --- | --- | --- |
 | `endpoint` _string_ | Endpoint is the S3 endpoint, for example, https://s3.example.com. |  | Pattern: `^https?://[a-zA-Z0-9.-]+(:[0-9]\{1,5\})?(/.*)?$` <br />Required: \{\} <br /> |
 | `bucket` _string_ | Bucket is the bucket backups are written to and read from. |  | Required: \{\} <br /> |
-| `prefix` _string_ | Prefix narrows the store to one key prefix, so that several clusters can<br />share a bucket without each walking the others' backups. |  | Optional: \{\} <br /> |
 | `region` _string_ | Region is the bucket's region, for endpoints that do not imply one. |  | Optional: \{\} <br /> |
 | `credentialsSecretRef` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#localobjectreference-v1-core)_ | CredentialsSecretRef names the Secret holding the access key and the<br />secret key. It is a reference rather than the values, because a spec is<br />readable by anybody who can read the object. |  | Required: \{\} <br /> |
 
@@ -949,7 +947,6 @@ spec:
     backup:
       endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
       bucket: string
-      prefix: string
       region: string
       credentialsSecretRef: LocalObjectReference
     kms:
@@ -1086,7 +1083,6 @@ cluster:
   backup:
     endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
     bucket: string
-    prefix: string
     region: string
     credentialsSecretRef: LocalObjectReference
   kms:
@@ -1295,7 +1291,6 @@ enableNodeAffinity: boolean
 backup:
   endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   bucket: string
-  prefix: string
   region: string
   credentialsSecretRef: LocalObjectReference
 kms:
@@ -1359,6 +1354,8 @@ spec:
         replicas: integer
         storageClassName: string
         resources: ResourceRequirements
+        nodeSelector:
+          string: string
       replicas: integer
       resources: ResourceRequirements
       tolerations:
@@ -1653,6 +1650,8 @@ local:
     replicas: integer
     storageClassName: string
     resources: ResourceRequirements
+    nodeSelector:
+      string: string
   replicas: integer
   resources: ResourceRequirements
   tolerations:
@@ -1698,6 +1697,8 @@ source:
       replicas: integer
       storageClassName: string
       resources: ResourceRequirements
+      nodeSelector:
+        string: string
     replicas: integer
     resources: ResourceRequirements
     tolerations:
@@ -1976,10 +1977,13 @@ an input to discovery and never appears in the document discovery writes: a
 ClusterDeploymentConfig carries the explicit list the filter produced, not the
 rule that produced it.
 
-The filters come in two sets, one per device class, and a run scans one class.
-The two rules below reject the set belonging to the class this run is not
-scanning, because a filter that will never be applied is one an administrator
-reads as having narrowed a draft that was never narrowed.
+Every member narrows the devices of the class a run scans. Neither choosing
+that class nor waiving an availability condition is a member: both are
+statements about the run, spec.discover.enableLogicalBlockDevices and
+spec.discover.enablePartitionedDevices, because the first decides which kind
+of cluster the draft describes and the second widens what is reported. The
+filters come in two sets, one per class, and the rules on DiscoverSpec reject
+the set belonging to the class the run is not scanning.
 
 
 
@@ -1989,8 +1993,6 @@ _Appears in:_
 _Example:_
 
 ```yaml
-enableLogicalBlockDevices: boolean
-enablePartitionedDevices: boolean
 pcieAllowList:
   - string
 pcieDenyList:
@@ -2005,8 +2007,6 @@ driveSizeRange: string
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `enableLogicalBlockDevices` _boolean_ | EnableLogicalBlockDevices scans a worker's available logical block devices<br />instead of its available NVMe devices. It selects the class rather than<br />adding one, because the draft a run writes describes one cluster and a<br />cluster is built out of one class. Unset scans NVMe, so that upgrading to<br />26.4 does not change what a discovery run reports. |  | Optional: \{\} <br /> |
-| `enablePartitionedDevices` _boolean_ | EnablePartitionedDevices reports devices carrying a partition table<br />alongside the available ones, for the administrator who knows the table is<br />stale and intends to hand the device over anyway. It is the only one of the<br />three availability conditions that can be waived: a mounted or otherwise<br />busy device is never reported, because simplyblock taking it would corrupt<br />whatever is using it. |  | Optional: \{\} <br /> |
 | `pcieAllowList` _string array_ | PcieAllowList restricts candidates to these PCI addresses. This and the two<br />PCI filters below narrow the NVMe class alone, because a logical block<br />device has no PCI address to match, so setting any of them on a run that<br />scans the block class is rejected by the rule on this type. |  | Optional: \{\} <br /> |
 | `pcieDenyList` _string array_ | PcieDenyList excludes these PCI addresses. On a fleet that is uniform<br />about which slot holds the boot device, this is what keeps that device out<br />of every group of every draft. |  | Optional: \{\} <br /> |
 | `pcieModel` _string_ | PcieModel restricts candidates to devices whose PCI model string matches. |  | Optional: \{\} <br /> |
@@ -2098,6 +2098,11 @@ intersected because the intersection of a name list and a label selector is a
 question nobody asks deliberately, and reading one as narrowing the other
 would make a run inspect fewer machines than either field says.
 
+The device filters come in two sets, one per device class, and a run scans
+one class. The two class rules reject the set belonging to the class this run
+is not scanning, because a filter that will never be applied is one an
+administrator reads as having narrowed a draft that was never narrowed.
+
 
 
 _Appears in:_
@@ -2114,9 +2119,10 @@ nodeSelector:
 tolerations:
   - Toleration
 enableControlPlaneNodes: boolean
+enableLogicalBlockDevices: boolean
+enablePartitionedDevices: boolean
+forceJournalDevice: boolean
 deviceFilter:
-  enableLogicalBlockDevices: boolean
-  enablePartitionedDevices: boolean
   pcieAllowList:
     - string
   pcieDenyList:
@@ -2137,6 +2143,9 @@ clusterRef: string
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector restricts which workers are inspected. Empty inspects every<br />schedulable worker, and it is exclusive with Workers. |  | Optional: \{\} <br /> |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#toleration-v1-core) array_ | Tolerations are what the probe pods tolerate, and what the draft states<br />for the storage nodes it proposes.<br />A probe is pinned to its worker with spec.nodeName rather than scheduled<br />onto it, which bypasses the scheduler and not the taints: a NoSchedule<br />taint still keeps the pod off, and a NoExecute taint evicts one that<br />landed. A fleet that dedicates machines to storage taints them, so a run<br />against one that tolerates nothing inspects nothing.<br />They reach the draft as well, because the taints a run was allowed to<br />probe through are the taints the cluster it proposes has to live with.<br />Stating them in one place is what keeps a reviewer from approving a<br />document whose DaemonSet schedules nowhere. |  | MaxItems: 32 <br />Optional: \{\} <br /> |
 | `enableControlPlaneNodes` _boolean_ | EnableControlPlaneNodes lets the run consider machines that run the API<br />server and etcd.<br />It is off by default because a storage node is a data path, and putting one<br />on an etcd host is a placement almost nobody intends. The approval gate is a<br />poor place to catch it: a fifty-worker draft is not a document anybody reads<br />closely enough to spot three control-plane nodes in it. A combined three-node<br />or single-node deployment is the case that wants it, and those are set up<br />deliberately.<br />There is no field beside it for infrastructure nodes, because those are used<br />without asking: an OpenShift infra node is the tier a cluster's own<br />infrastructure runs on, and simplyblock storage is infrastructure. A fleet<br />with disks in its infra nodes meant those disks to be the storage, so a draft<br />proposes them ahead of the workers rather than leaving them out. |  | Optional: \{\} <br /> |
+| `enableLogicalBlockDevices` _boolean_ | EnableLogicalBlockDevices scans a worker's available logical block devices<br />instead of its available NVMe devices. It selects the class rather than<br />adding one, because the draft a run writes describes one cluster and a<br />cluster is built out of one class. Unset scans NVMe, so that upgrading to<br />26.4 does not change what a discovery run reports.<br />It is a statement about the run rather than a member of DeviceFilter,<br />because it does not narrow the devices reported: it decides which class of<br />them is looked at, which filters in DeviceFilter apply, and what<br />ForceJournalDevice resolves, since the two classes lay out a journal<br />differently. |  | Optional: \{\} <br /> |
+| `enablePartitionedDevices` _boolean_ | EnablePartitionedDevices reports devices carrying a partition table<br />alongside the available ones, for the administrator who knows the table is<br />stale and intends to hand the device over anyway. It is the only one of the<br />three availability conditions that can be waived: a mounted or otherwise<br />busy device is never reported, because simplyblock taking it would corrupt<br />whatever is using it.<br />It is a statement about the run rather than a member of DeviceFilter for<br />the reason EnableLogicalBlockDevices is: it waives an availability<br />condition for whichever class is scanned, and so widens what is reported,<br />where every member of the filter narrows it. |  | Optional: \{\} <br /> |
+| `forceJournalDevice` _boolean_ | ForceJournalDevice makes the run dedicate a journal device even where the<br />fleet's disks do not say which one.<br />A run proposes a dedicated journal device when every worker hands over one<br />disk smaller than its others, because a fleet built that way was built that<br />way on purpose. Where several disks share the smallest size, nothing says<br />which to take, and taking one spends a whole disk the fleet did not set<br />aside: on a worker with ten 10 TB disks that is 10 TB, silently. So the run<br />does not guess.<br />What it does instead depends on the class. An NVMe cluster with no<br />dedicated journal device carves a journal partition out of every device, so<br />the run leaves the field unset, says so, and every disk stays storage. A<br />logical block-device cluster has no such layout — the control plane refuses<br />the partitioned journal for the class — so the run fails rather than<br />writing a document that creates the cluster, formats its drives, and then<br />fails every node_add. Setting this is what asks for one of the equal disks<br />to be taken anyway, and the draft says the disk was taken rather than<br />offered.<br />It does not force the cases that are impossible rather than ambiguous. A<br />worker handing over a single disk is refused with it or without it, because<br />dedicating that disk leaves the worker nothing to store on, and so is a<br />worker whose disks report no size. The tie it does resolve is broken by<br />address, ascending, so two runs over one unchanged fleet propose the same<br />document. |  | Optional: \{\} <br /> |
 | `deviceFilter` _[DeviceFilter](#devicefilter)_ | DeviceFilter narrows which of an inspected worker's devices reach the<br />draft. Empty reports every device the worker advertises, including the one<br />it boots from, which is what the approval gate then has to catch. |  | Optional: \{\} <br /> |
 | `clusterRef` _string_ | ClusterRef names an existing StorageCluster the draft grows rather than<br />creates. It is copied to the draft's own clusterRef, so that re-running<br />discovery after an expansion produces a growth document naming the same<br />cluster.<br />Bounded at what a StorageCluster name may be, since a longer value names<br />nothing that can exist. |  | MaxLength: 63 <br />Optional: \{\} <br /> |
 
@@ -2226,6 +2235,31 @@ _Appears in:_
 | `cert-manager` | DriverTLSProviderCertManager is cert-manager: a ClusterIssuer already<br />installed by this chart mints a Certificate per plugin, and the Secret<br />it writes carries the CA bundle alongside the client keypair.<br /> |
 
 
+#### FailureDomainIndex
+
+
+
+FailureDomainIndex is one failure-domain label and the control plane's index
+for it.
+
+
+
+_Appears in:_
+- [StorageClusterStatus](#storageclusterstatus)
+
+_Example:_
+
+```yaml
+name: string
+index: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the failure-domain label, as StorageNode.spec.config.failureDomain<br />spells it ("rack-b"). |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `index` _integer_ | Index is the integer sent to the control plane for every node in the<br />domain. |  | Minimum: 0 <br />Required: \{\} <br /> |
+
+
 #### FoundationDBSpec
 
 
@@ -2243,6 +2277,8 @@ _Example:_
 replicas: integer
 storageClassName: string
 resources: ResourceRequirements
+nodeSelector:
+  string: string
 ```
 
 | Field | Description | Default | Validation |
@@ -2250,6 +2286,7 @@ resources: ResourceRequirements
 | `replicas` _integer_ | Replicas is the number of coordinators. Three is the smallest count that<br />survives one loss, which is why it is the default. | 3 | Minimum: 1 <br />Optional: \{\} <br /> |
 | `storageClassName` _string_ | StorageClassName is the class the coordinators' volumes are provisioned<br />from. It cannot be a class this operator provides, because the control<br />plane has to exist before any simplyblock volume can. |  | Optional: \{\} <br /> |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#resourcerequirements-v1-core)_ | Resources sets requests and limits for the coordinator pods. |  | Optional: \{\} <br /> |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector pins the database's own processes, and nothing else the<br />control plane runs. Unset leaves them wherever the control plane as a<br />whole is placed.<br />It is stated apart from that placement because the database is the part<br />whose host matters to something else: adding a storage node reboots its<br />worker, and a worker running a FoundationDB process is added on its own<br />however many nodes the cluster's provisioning budget allows at once.<br />Confining the database to a few workers is what leaves the rest of the<br />fleet free to be added together.<br />It has to select at least as many workers as<br />spec.source.local.foundationDB.replicas, because the worker is the<br />database's fault domain. The anti-affinity between processes of one class<br />is a preference rather than a requirement, so a narrower selector places<br />the coordinators anyway, several to a worker, where one worker's loss<br />takes more of them than the redundancy mode was configured to survive. |  | Optional: \{\} <br /> |
 
 
 #### HostOSFamily
@@ -2437,6 +2474,8 @@ foundationDB:
   replicas: integer
   storageClassName: string
   resources: ResourceRequirements
+  nodeSelector:
+    string: string
 replicas: integer
 resources: ResourceRequirements
 tolerations:
@@ -2883,9 +2922,10 @@ spec:
     tolerations:
       - Toleration
     enableControlPlaneNodes: boolean
+    enableLogicalBlockDevices: boolean
+    enablePartitionedDevices: boolean
+    forceJournalDevice: boolean
     deviceFilter:
-      enableLogicalBlockDevices: boolean
-      enablePartitionedDevices: boolean
       pcieAllowList:
         - string
       pcieDenyList:
@@ -2990,9 +3030,10 @@ discover:
   tolerations:
     - Toleration
   enableControlPlaneNodes: boolean
+  enableLogicalBlockDevices: boolean
+  enablePartitionedDevices: boolean
+  forceJournalDevice: boolean
   deviceFilter:
-    enableLogicalBlockDevices: boolean
-    enablePartitionedDevices: boolean
     pcieAllowList:
       - string
     pcieDenyList:
@@ -4431,7 +4472,6 @@ spec:
   backup:
     endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
     bucket: string
-    prefix: string
     region: string
     credentialsSecretRef: LocalObjectReference
   disableDataRealignment: boolean
@@ -4484,6 +4524,9 @@ status:
     - worker: string
       node: string
       takenAt: Time
+  failureDomains:
+    - name: string
+      index: integer
   activeOpsRef: string
   rebalancingMetrics:
     avgDeviationPct: float
@@ -4794,7 +4837,6 @@ storageNodes:
 backup:
   endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   bucket: string
-  prefix: string
   region: string
   credentialsSecretRef: LocalObjectReference
 disableDataRealignment: boolean
@@ -4890,6 +4932,9 @@ provisioningSlots:
   - worker: string
     node: string
     takenAt: Time
+failureDomains:
+  - name: string
+    index: integer
 activeOpsRef: string
 rebalancingMetrics:
   avgDeviationPct: float
@@ -4926,6 +4971,7 @@ observedGeneration: integer
 | `lastDataRealignmentAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastDataRealignmentAt is when a realignment was last requested, and it is<br />what the configured interval spaces requests against. |  | Optional: \{\} <br /> |
 | `tasks` _[ClusterTask](#clustertask) array_ | Tasks are the control plane's running and pending jobs, capped at twenty<br />and in the order the control plane reports them, which is not newest<br />first. Completed and canceled tasks are not here: they leave the list and<br />become events, so the length tracks concurrency rather than history. |  | MaxItems: 20 <br />Optional: \{\} <br /> |
 | `provisioningSlots` _[ProvisioningSlot](#provisioningslot) array_ | ProvisioningSlots are the workers whose node add is outstanding. The list<br />is the metadata of the Provisioning phase, and it is also the mutex that<br />caps concurrent adds at spec.storageNodes.nodeProvisioningBudget.<br />It is one list on one object because that is what makes taking a slot<br />atomic. A node takes one with an optimistic-locked patch of this field, so<br />exactly one node wins a given resourceVersion and every other is told to<br />count again. A slot recorded per node could not do that: six objects carry<br />six resourceVersions, and two nodes reading a cold cache would both see the<br />same one free and both take it.<br />A worker rather than an object is what holds a slot, because one POST adds<br />every socket of a worker and a two-socket host must consume one slot. |  | MaxItems: 64 <br />Optional: \{\} <br /> |
+| `failureDomains` _[FailureDomainIndex](#failuredomainindex) array_ | FailureDomains maps each failure-domain label the cluster's nodes declare<br />(StorageNode.spec.config.failureDomain) to the integer the control plane<br />identifies that domain by. A deployment adds an entry for every label it<br />introduces, both when it creates the cluster and when it grows one, and<br />never changes or removes an entry: the control plane has already placed<br />data by that index. A label that is a number keeps that number as its<br />index when the number is free. A cluster holds at most 256 failure<br />domains, and a deployment that would exceed that is refused before it is<br />approved. |  | MaxItems: 256 <br />Optional: \{\} <br /> |
 | `activeOpsRef` _string_ | ActiveOpsRef names the StorageClusterOps currently allowed to operate on<br />this cluster. Empty when none is running. |  | Optional: \{\} <br /> |
 | `rebalancingMetrics` _[RebalancingMetrics](#rebalancingmetrics)_ | RebalancingMetrics is written by the auto-rebalancer each evaluation<br />cycle. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the cluster moves, and never a log. |  | Optional: \{\} <br /> |
@@ -5038,7 +5084,7 @@ either: a removal is a step of Replace and of Migrate, and taking a device out
 of the data path without replacing it is Fail.
 
 _Validation:_
-- Enum: [Restart]
+- Enum: [Restart Fail]
 
 _Appears in:_
 - [StorageDeviceOpsSpec](#storagedeviceopsspec)
@@ -5046,8 +5092,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `Restart` | StorageDeviceOpsActionRestart is the action the kind exists for:<br />recycling one device rather than its node.<br /> |
-| `SelfTest` | These four actions are declared but not accepted: the control plane has no<br />verb for them yet, so an object naming one is refused at admission rather<br />than created and failed.<br /> |
-| `Fail` |  |
+| `Fail` | StorageDeviceOpsActionFail declares a device untrustworthy and takes it<br />out of the data path for good, so the cluster rebuilds the redundancy it<br />held elsewhere and stops reading from it.<br />It is two calls rather than one: the control plane refuses to fail a<br />device that is still serving, so the device is removed and then failed.<br />The removal alone is reversible and the failure is not, which is why the<br />graph splits them and declares the abort edge on the first.<br /> |
+| `SelfTest` | These three actions are declared but not accepted: the control plane has<br />no verb for them yet, so an object naming one is refused at admission<br />rather than created and failed.<br /> |
 | `Replace` |  |
 | `Migrate` |  |
 
@@ -5095,8 +5141,8 @@ abort: boolean
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `deviceRef` _string_ | DeviceRef names the StorageDevice this operation acts on, in this<br />operation's own namespace. The operation never owns its target, because<br />deleting the record of an operation must not delete the device record it<br />operated on. |  | MaxLength: 253 <br />Required: \{\} <br /> |
-| `action` _[StorageDeviceOpsAction](#storagedeviceopsaction)_ | Action is the operation to perform. |  | Enum: [Restart] <br />Required: \{\} <br /> |
-| `abort` _boolean_ | Abort asks a running operation to stop at its next step and unwind.<br />Restart can be aborted before its call is issued and not after: a restart<br />the control plane has accepted is one nothing can recall, so the graph<br />declares where the edge exists rather than this field promising one. |  | Optional: \{\} <br /> |
+| `action` _[StorageDeviceOpsAction](#storagedeviceopsaction)_ | Action is the operation to perform. |  | Enum: [Restart Fail] <br />Required: \{\} <br /> |
+| `abort` _boolean_ | Abort asks a running operation to stop at its next step and unwind.<br />Each action can be aborted before it has issued anything and not after: a<br />restart the control plane has accepted is one nothing can recall, and a<br />device a failure has already removed is one this operator has no call to<br />put back. The graph declares where the edge exists rather than this field<br />promising one. |  | Optional: \{\} <br /> |
 
 
 #### StorageDeviceOpsStatus
@@ -6036,7 +6082,6 @@ spec:
     enableCompression: boolean
     enableClientCompression: boolean
     enableClientDeduplication: boolean
-    enableEncryption: boolean
     enableReplication: boolean
     enableDHCHAP: boolean
     priorityClass: string
@@ -6270,7 +6315,6 @@ volumeDefaults:
   enableCompression: boolean
   enableClientCompression: boolean
   enableClientDeduplication: boolean
-  enableEncryption: boolean
   enableReplication: boolean
   enableDHCHAP: boolean
   priorityClass: string
@@ -6282,7 +6326,7 @@ volumeDefaults:
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `clusterRef` _string_ | ClusterRef names the StorageCluster this pool is carved out of, in this<br />pool's own namespace. The cluster owns this object by controller<br />reference, so deleting the cluster deletes its pools, held behind each<br />pool's own finalizer while classes are assigned or volumes are bound.<br />Immutable from creation: which cluster a pool is in is its identity.<br />The maximum is what a StorageCluster name may be rather than what a<br />reference may be: a longer value names nothing that can exist, and the<br />reference is immutable, so admitting one creates a pool whose only remedy<br />is deletion. |  | MaxLength: 63 <br />Required: \{\} <br /> |
-| `allowedNodes` _string array_ | AllowedNodes restricts which hosts may carry this pool's volumes, by<br />Kubernetes Node name. Empty means every node in the cluster. Narrowing it<br />stops new volumes landing on the removed nodes and leaves the existing<br />ones where they are.<br />The list is left exactly as authored: a name that no longer resolves is<br />dropped from Status.AllowedNodes rather than pruned from here, so a node<br />removed for maintenance and added back under the same name returns to the<br />pools that named it without anybody re-authoring them. |  | Optional: \{\} <br /> |
+| `allowedNodes` _string array_ | AllowedNodes restricts which hosts may carry this pool's volumes, by<br />Kubernetes Node name. Empty means every node in the cluster. Narrowing it<br />stops new volumes landing on the removed nodes and leaves the existing<br />ones where they are. Requires volumeDefaults.enableDHCHAP to be true.<br />The list is left exactly as authored: a name that no longer resolves is<br />dropped from Status.AllowedNodes rather than pruned from here, so a node<br />removed for maintenance and added back under the same name returns to the<br />pools that named it without anybody re-authoring them. |  | Optional: \{\} <br /> |
 | `limits` _[PoolLimits](#poollimits)_ | Limits are the ceilings the pool as a whole is held to. Mutable: raising a<br />pool's capacity is an ordinary operation the control plane supports, and it<br />does not touch any StorageClass. |  | Optional: \{\} <br /> |
 | `volumeDefaults` _[VolumeDefaults](#volumedefaults)_ | VolumeDefaults are what every volume in the pool is created with.<br />Immutable once set, because StorageClass.parameters is immutable in the<br />Kubernetes API: a pool whose defaults changed would have a class the<br />operator cannot update. Changing them means creating a new pool. |  | Optional: \{\} <br /> |
 
@@ -6568,7 +6612,6 @@ filesystem: string
 enableCompression: boolean
 enableClientCompression: boolean
 enableClientDeduplication: boolean
-enableEncryption: boolean
 enableReplication: boolean
 enableDHCHAP: boolean
 priorityClass: string
@@ -6585,7 +6628,6 @@ tune2fsReservedBlocks: string
 | `enableCompression` _boolean_ | EnableCompression compresses logical volumes. |  | Optional: \{\} <br /> |
 | `enableClientCompression` _boolean_ | EnableClientCompression compresses each volume on the node that consumes<br />it (VDO), before a write ever reaches the wire, rather than on the storage<br />node. Distinct from EnableCompression, and independent of<br />EnableClientDeduplication: either, both, or neither may be set. A volume<br />requesting this is pinned to a node whose kernel can run dm-vdo. |  | Optional: \{\} <br /> |
 | `enableClientDeduplication` _boolean_ | EnableClientDeduplication deduplicates each volume on the node that<br />consumes it (VDO), independent of EnableClientCompression. It carries a<br />significant fixed RAM cost per volume for VDO's index, so it is meant for<br />the pools where duplicate data is actually expected (VM images, container<br />layers, backup targets) rather than enabled by default. |  | Optional: \{\} <br /> |
-| `enableEncryption` _boolean_ | EnableEncryption encrypts logical volumes, using the key store the cluster<br />names in its own spec. |  | Optional: \{\} <br /> |
 | `enableReplication` _boolean_ | EnableReplication replicates logical volumes. |  | Optional: \{\} <br /> |
 | `enableDHCHAP` _boolean_ | EnableDHCHAP authenticates NVMe-oF connections to this pool's volumes.<br />Authentication is only enforced when AllowedNodes is non-empty, because<br />the generated class gets its node selector from that list and a class's<br />parameters cannot be edited afterward. |  | Optional: \{\} <br /> |
 | `priorityClass` _string_ | PriorityClass is the logical-volume priority class the control plane<br />places with. |  | Optional: \{\} <br /> |

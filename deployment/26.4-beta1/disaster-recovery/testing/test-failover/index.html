@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4367,6 +4369,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sync-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync Applications
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4417,6 +4428,8 @@
       
         
           
+        
+      
         
       
         
@@ -4594,6 +4607,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4656,6 +4691,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6233,6 +6290,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sync-applications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync Applications
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -6274,10 +6340,16 @@ replication.</p>
   overridden.</li>
 <li><strong>No concurrent run:</strong> No unfinished recovery action and no earlier unfinished test holds the application.</li>
 <li><strong>Isolated network for Multus VMs:</strong> KubeVirt VMs attached to Multus networks need an isolated
-  NetworkAttachmentDefinition, named on the path as <code>test.isolatedNad: &lt;namespace&gt;/&lt;name&gt;</code>. It must have no uplink to
-  production networks.</li>
-<li><strong>Replicated snapshots:</strong> The storage on the target site publishes its replicated consistency points as
-  VolumeSnapshotContents (label <code>dr.simplyblock.io/replicated-snapshot=true</code>).</li>
+  NetworkAttachmentDefinition on the target, named on the path as <code>test.isolatedNad: &lt;namespace&gt;/&lt;name&gt;</code>. It must
+  have no uplink to production networks. A DHCP server on it that serves the production reservations gives the VMs
+  their production addresses (see <a href="../../configuration/site-profiles/#tests">Site Profiles</a>).</li>
+<li><strong>Clones on the storage side:</strong> On simplyblock storage, the clones come from the Simplyblock Operator's
+  <code>TestFailover</code> resource (<code>storage.simplyblock.io/v1alpha2</code>) on the hub: one per protected PVC, created by dr-hub.
+  The operator resolves the newest replicated snapshot of the volume through the control plane, clones it on the
+  target storage cluster, and places a bound PersistentVolume and PersistentVolumeClaim in the bubble namespace,
+  with the source's volume mode and filesystem. Where the hub does not serve that resource, the storage publishes
+  its replicated consistency points as VolumeSnapshotContents (label <code>dr.simplyblock.io/replicated-snapshot=true</code>),
+  and dr-agent clones them.</li>
 </ul>
 <p>A path with a test block looks as follows.</p>
 <div class="highlight"><span class="filename">DR path with a test block</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
@@ -6424,7 +6496,8 @@ in the phase.</p>
 <li><strong>NetworkPolicy:</strong> Every bubble namespace gets the <code>drtest-isolation</code> NetworkPolicy. It denies all traffic except
   traffic within the bubble, DNS, and ingress from dr-agent for health probes.</li>
 <li><strong>Network attachments:</strong> For each NAD a VM names, a NAD of the same name is created in the bubble namespace with
-  the configuration of the path's <code>test.isolatedNad</code>.</li>
+  the configuration of the path's <code>test.isolatedNad</code>. A reference to a NAD in another namespace is rewritten to that
+  copy during the restore.</li>
 <li><strong>Services:</strong> LoadBalancer and NodePort Services are turned into ClusterIP Services and lose their external IPs.</li>
 <li><strong>Excluded objects:</strong> Routes, Ingresses, Gateways, HTTPRoutes, NetworkPolicies, and NADs from production are not
   restored.</li>
@@ -6443,6 +6516,10 @@ in the phase.</p>
 </thead>
 <tbody>
 <tr>
+<td><code>clones-bound</code></td>
+<td>Every clone PVC is bound within the path's clone quota.</td>
+</tr>
+<tr>
 <td><code>pods-ready</code></td>
 <td>All pods in the bubble are ready.</td>
 </tr>
@@ -6457,6 +6534,14 @@ in the phase.</p>
 <tr>
 <td><code>probes-healthy</code></td>
 <td>The application's <code>health.probes</code>, mapped into the bubble, pass.</td>
+</tr>
+<tr>
+<td><code>teardown-clean</code></td>
+<td>Nothing labeled with the test's ID remains on the target after the teardown.</td>
+</tr>
+<tr>
+<td><code>invariants-held</code></td>
+<td>Production and replication are unchanged between the start and the end of the test.</td>
 </tr>
 </tbody>
 </table>
@@ -6501,11 +6586,9 @@ estimated RTO (from all clones ready until the last restore workflow completed),
 <code>per-volume</code>), the coverage (what was exercised and what was not), and warnings. When an archive is configured,
 the report is stored as JSON and PDF in S3, and the key is recorded in <code>status.reportKey</code>.</p>
 <h2 id="unsupported-cases">Unsupported Cases</h2>
-<p>Nothing is rewritten in this release, so the test reports <code>Unsupported</code> rather than risk a false pass or a connection
-to production for:</p>
+<p>The test reports <code>Unsupported</code> rather than risk a false pass or a connection to production for:</p>
 <ul>
 <li><strong>Managed applications:</strong> GitOps-delivered applications.</li>
-<li><strong>NAD in another namespace:</strong> A VM that uses a NetworkAttachmentDefinition from another namespace.</li>
 <li><strong>Multus without isolation:</strong> A VM on Multus networks while the path names no <code>test.isolatedNad</code>.</li>
 <li><strong>Host-bound devices:</strong> VMs with SR-IOV interfaces, host devices, or GPUs.</li>
 </ul>
@@ -6521,11 +6604,15 @@ to production for:</p>
 <p>Teardown deletes every object the test created on the target site, including the bubble namespaces, then waits until
 nothing remains. It then checks that production and replication did not change. Finished tests are
 retained and pruned together with reports, as described in <a href="../../operations/monitoring/#reports">Monitoring</a>.</p>
+<h2 id="sync-applications">Sync Applications</h2>
+<p>A test of a sync application runs the bubble on the stretch cluster, in the target zone. The clones come from the
+storage's newest replicated snapshots of that zone, the objects from a Velero backup of the application's namespaces
+that dr-agent takes at the start of the test, and the bubble's workloads are pinned to the target zone.</p>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
 <ul>
 <li><strong>Hosted-cluster test mode:</strong> Tests inside a hosted cluster with mirrored test networks, MAC address
-  regeneration, guest IP regeneration, and Route host rewriting (with the site mapper).</li>
+  regeneration, guest IP regeneration, and Route host rewriting.</li>
 <li><strong>Managed applications:</strong> Test restores of GitOps-delivered applications.</li>
 </ul>
 </div>
@@ -6549,7 +6636,7 @@ retained and pruned together with reports, as described in <a href="../../operat
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 4, 2026 19:48:45 UTC">2026-10-04</span>
   </span>
 
     
