@@ -137,6 +137,9 @@ helm install dr-simplyblock-hub simplyblock/dr-simplyblock-hub \
 | `drConfig.veleroNamespace`            | `velero`                              | Velero namespace on the sites.                                                                                                   |
 | `drConfig.opsNamespace`               | `ramen-ops`                           | Ramen operations namespace.                                                                                                      |
 | `drConfig.spec`                       | See the chart                         | Initial `DRConfig` spec (executor, agent, archive, retention, feature gates).                                                    |
+| `console.enabled`                     | `false`                               | Deploys the DR-only Control Center next to `dr-hub`. See [Control Center](../control-center.md).                                 |
+| `console.role`                        | `operator`                            | The DR role the console's ServiceAccount holds in service-account mode: `viewer`, `operator`, or `admin`.                        |
+| `console.ingress.enabled`, `.host`    | `false`, empty                        | The console's Ingress. Authentication belongs in front of it.                                                                    |
 
 The `DRConfig` created by the chart is kept when the release is uninstalled. After the installation, it is changed
 directly:
