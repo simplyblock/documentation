@@ -17,7 +17,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Naming requirements between sites, the planned site mapper for differing networks and classes, and how site networking designs affect failover.">
+        <meta name="description" content="Describe each site with a SiteProfile, bind network roles and DHCP servers, and let the site mapper rewrite VM network attachments and reserve guest addresses on the target.">
       
       
       <link rel="canonical" href="https://docs.simplyblock.io/latest/disaster-recovery/configuration/site-profiles/">
@@ -81,7 +81,7 @@
       
         <meta property="og:title" content="Site Profiles and Mappings - Simplyblock Documentation">
       
-        <meta property="og:description" content="Naming requirements between sites, the planned site mapper for differing networks and classes, and how site networking designs affect failover.">
+        <meta property="og:description" content="Describe each site with a SiteProfile, bind network roles and DHCP servers, and let the site mapper rewrite VM network attachments and reserve guest addresses on the target.">
       
         <meta property="og:image" content="https://docs.simplyblock.io/26.4-beta1/assets/images/social/disaster-recovery/configuration/site-profiles.png">
       
@@ -97,7 +97,7 @@
       
         <meta name="twitter:title" content="Site Profiles and Mappings - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Naming requirements between sites, the planned site mapper for differing networks and classes, and how site networking designs affect failover.">
+        <meta name="twitter:description" content="Describe each site with a SiteProfile, bind network roles and DHCP servers, and let the site mapper rewrite VM network attachments and reserve guest addresses on the target.">
       
         <meta name="twitter:image" content="https://docs.simplyblock.io/26.4-beta1/assets/images/social/disaster-recovery/configuration/site-profiles.png">
       
@@ -139,7 +139,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#identical-names-between-sites" class="md-skip">
+        <a href="#site-profiles" class="md-skip">
           Skip to content
         </a>
       
@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4158,18 +4160,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#identical-names-between-sites" class="md-nav__link">
+  <a href="#site-profiles" class="md-nav__link">
     <span class="md-ellipsis">
-      Identical Names Between Sites
+      Site Profiles
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#planned-site-mapper" class="md-nav__link">
+  <a href="#profile-comparison-per-path" class="md-nav__link">
     <span class="md-ellipsis">
-      Planned Site Mapper
+      Profile Comparison per Path
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#findings-and-guest-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Findings and Guest Addresses
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dhcp-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      DHCP Servers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#renderings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renderings
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-mapped-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Is Not Mapped Yet
     </span>
   </a>
   
@@ -4179,57 +4226,6 @@
   <a href="#site-networking-designs" class="md-nav__link">
     <span class="md-ellipsis">
       Site Networking Designs
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Site Networking Designs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#stretched-layer-2-with-identical-address-ranges" class="md-nav__link">
-    <span class="md-ellipsis">
-      Stretched Layer 2 With Identical Address Ranges
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#separate-routed-subnets-with-dns-or-gslb-cutover" class="md-nav__link">
-    <span class="md-ellipsis">
-      Separate Routed Subnets With DNS or GSLB Cutover
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#different-nad-or-vlan-names-per-site" class="md-nav__link">
-    <span class="md-ellipsis">
-      Different NAD or VLAN Names per Site
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#load-balancer-pools-of-different-size" class="md-nav__link">
-    <span class="md-ellipsis">
-      Load Balancer Pools of Different Size
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Summary
     </span>
   </a>
   
@@ -4414,6 +4410,8 @@
       
         
       
+        
+      
     
     
       
@@ -4573,6 +4571,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4635,6 +4655,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6114,18 +6156,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#identical-names-between-sites" class="md-nav__link">
+  <a href="#site-profiles" class="md-nav__link">
     <span class="md-ellipsis">
-      Identical Names Between Sites
+      Site Profiles
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#planned-site-mapper" class="md-nav__link">
+  <a href="#profile-comparison-per-path" class="md-nav__link">
     <span class="md-ellipsis">
-      Planned Site Mapper
+      Profile Comparison per Path
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#findings-and-guest-addresses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Findings and Guest Addresses
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dhcp-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      DHCP Servers
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#renderings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Renderings
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-not-mapped-yet" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Is Not Mapped Yet
     </span>
   </a>
   
@@ -6135,57 +6222,6 @@
   <a href="#site-networking-designs" class="md-nav__link">
     <span class="md-ellipsis">
       Site Networking Designs
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Site Networking Designs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#stretched-layer-2-with-identical-address-ranges" class="md-nav__link">
-    <span class="md-ellipsis">
-      Stretched Layer 2 With Identical Address Ranges
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#separate-routed-subnets-with-dns-or-gslb-cutover" class="md-nav__link">
-    <span class="md-ellipsis">
-      Separate Routed Subnets With DNS or GSLB Cutover
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#different-nad-or-vlan-names-per-site" class="md-nav__link">
-    <span class="md-ellipsis">
-      Different NAD or VLAN Names per Site
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#load-balancer-pools-of-different-size" class="md-nav__link">
-    <span class="md-ellipsis">
-      Load Balancer Pools of Different Size
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#summary" class="md-nav__link">
-    <span class="md-ellipsis">
-      Summary
     </span>
   </a>
   
@@ -6218,133 +6254,315 @@
   <h1>Site Profiles and Mappings</h1>
 
 <p>An application that recovers on another site finds a different environment: other network attachment names, other
-address ranges, other load balancer pools, or other DNS domains. How these differences are handled decides whether the
-application works after a failover. The current release restores applications exactly as they were captured, which
-requires identical names on all sites. A site mapper that translates between sites is planned.</p>
-<h2 id="identical-names-between-sites">Identical Names Between Sites</h2>
-<p>In the current release, an application recovers exactly as captured. No object is rewritten during a failover, a
-relocation, or a test. The following names must therefore be identical on the source and the target site of every DR
-path:</p>
+VLANs, other address ranges, or other DNS domains. The site mapper describes each site in a <code>SiteProfile</code>, compares
+the two sites of every DR path, and translates what a recovered application references. In the current release, it
+maps the secondary networks of KubeVirt virtual machines (NetworkAttachmentDefinitions) and keeps the guest addresses
+of their interfaces through DHCP reservations. Everything else is restored as captured and must carry the same name
+on both sites.</p>
+<p>The resources of the site mapper live in the API group <code>sitemap.simplyblock.io/v1alpha1</code> on the hub and are written by
+the <code>dr-admin</code> role.</p>
+<h2 id="site-profiles">Site Profiles</h2>
+<p>A <code>SiteProfile</code> is cluster-scoped, one per managed cluster, and named after it. dr-hub creates the profile of every
+cluster a protection plan names, with an empty <code>spec</code>, and never writes the <code>spec</code>. A profile outlives the plans that
+named it.</p>
 <ul>
-<li><strong>NetworkAttachmentDefinitions:</strong> Multus NADs referenced by pods and virtual machines must exist with the same name,
-  in the same namespace, on both sites.</li>
-<li><strong>StorageClasses and VolumeSnapshotClasses:</strong> The protected classes must have the same names on both sites.</li>
-<li><strong>Zones:</strong> Node affinities and topology spread constraints that name a <code>topology.kubernetes.io/zone</code> must find the
-  same zone names on the target.</li>
-<li><strong>Other class names:</strong> Ingress classes, load balancer classes, priority classes, and runtime classes referenced by
-  the application.</li>
-<li><strong>Container registries:</strong> Images must be pullable under the same names on both sites, for example, through a shared
-  registry or identical mirrors.</li>
+<li><strong>Inventory:</strong> <code>status.inventory</code> is discovered by dr-agent and read-only. It holds the cluster ID, the nodes with
+  their zones and readiness, the NetworkAttachmentDefinitions with their parsed CNI configuration (type, master or
+  bridge, VLAN, IPAM type and ranges), the storage, snapshot, ingress, and gateway classes, the MetalLB address pools
+  with their advertisements and the addresses Services hold from them, the ingress and base domains, the registry
+  mirrors, the pod and service CIDRs, and the EgressIPs. <code>status.reportedAt</code> is the time of the last report.</li>
+<li><strong>Bindings:</strong> <code>spec</code> binds logical roles to concrete objects of the site. A profile holds site facts only and has
+  no direction. Roles are the one convention of the model: the same role name means the same thing on every site.</li>
+<li><strong>Renderings:</strong> <code>status.renderings</code> holds the generation of every artifact dr-hub rendered for the site (see
+  <a href="#renderings">Renderings</a>).</li>
 </ul>
-<p>IP addresses, MAC addresses, Service addresses, and Route or Ingress host names are restored unchanged. Whether they
-work on the target depends on the network design of the sites (see <a href="#site-networking-designs">Site Networking Designs</a>).</p>
-<p>The readiness of every application reports the check <code>site-mapping</code> as informational, and <code>status.siteMapping</code> of
-the ProtectedApplication and <code>status.profileConsistency</code> of the DR path report <code>NotAvailable</code>.</p>
-<h2 id="planned-site-mapper">Planned Site Mapper</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spec.logicalNetworks[].role</code>, <code>.nad</code></td>
+<td>The NetworkAttachmentDefinition (<code>&lt;namespace&gt;/&lt;name&gt;</code>) that plays the role on this site.</td>
+</tr>
+<tr>
+<td><code>spec.guestNetworks[].role</code>, <code>.cidr</code></td>
+<td>The guest subnet of the role on this site.</td>
+</tr>
+<tr>
+<td><code>spec.guestNetworks[].gateway</code></td>
+<td>The gateway address of the guest subnet. Never handed out as a reservation.</td>
+</tr>
+<tr>
+<td><code>spec.guestNetworks[].reservedHostIDs[]</code></td>
+<td>Host IDs that are never used for a derived address, for example, the gateway and the DHCP server.</td>
+</tr>
+<tr>
+<td><code>spec.guestNetworks[].dhcpServerRef</code></td>
+<td>The <code>DHCPServer</code> of the role, overriding <code>spec.dhcpServerRef</code>.</td>
+</tr>
+<tr>
+<td><code>spec.addressPools[].role</code>, <code>.pool</code></td>
+<td>The MetalLB address pool that plays the role (compared between sites, not rewritten yet).</td>
+</tr>
+<tr>
+<td><code>spec.domains.apps</code>, <code>.base</code>, <code>.shared[]</code></td>
+<td>The application and base domains of the site and the domains shared by all sites (compared, not rewritten).</td>
+</tr>
+<tr>
+<td><code>spec.registryMirror</code></td>
+<td>The registry mirror recovered workloads pull from (compared, not rewritten).</td>
+</tr>
+<tr>
+<td><code>spec.dhcpServerRef</code></td>
+<td>The site's <code>DHCPServer</code> for every guest network without its own.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><span class="filename">Site profiles of two sites with different VLANs</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sitemap.simplyblock.io/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SiteProfile</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-a</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">logicalNetworks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app</span>
+<span class="w">      </span><span class="nt">nad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app-net/vlan110</span>
+<span class="w">  </span><span class="nt">guestNetworks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app</span>
+<span class="w">      </span><span class="nt">cidr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.110.0/24</span>
+<span class="w">      </span><span class="nt">reservedHostIDs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">dhcpServerRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-a</span>
+<span class="w">  </span><span class="nt">dhcpServerRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-a</span>
+<span class="nn">---</span>
+<span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sitemap.simplyblock.io/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SiteProfile</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-b</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">logicalNetworks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app</span>
+<span class="w">      </span><span class="nt">nad</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app-net/vlan210</span>
+<span class="w">  </span><span class="nt">guestNetworks</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">app</span>
+<span class="w">      </span><span class="nt">cidr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.210.0/24</span>
+<span class="w">      </span><span class="nt">reservedHostIDs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">dhcpServerRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-b</span>
+<span class="w">  </span><span class="nt">dhcpServerRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-b</span>
+</code></pre></div>
+<h2 id="profile-comparison-per-path">Profile Comparison per Path</h2>
+<p>For every DR path, dr-hub compares the profiles of its two sites and writes the result to the path:
+<code>status.profileConsistency</code> is <code>Consistent</code>, <code>Inconsistent</code>, or <code>Unknown</code> (a profile has no inventory yet), and
+<code>status.profileComparison[]</code> holds one row per field with <code>Pass</code>, <code>Fail</code>, <code>Warn</code>, or <code>NotApplicable</code> and a message
+that names what differs.</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>Passes when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>inventory-reported</code></td>
+<td>Both dr-agents reported their inventory within five minutes.</td>
+</tr>
+<tr>
+<td><code>logical-networks</code></td>
+<td>The same roles are bound on both sites, each to a NetworkAttachmentDefinition that exists on its site.</td>
+</tr>
+<tr>
+<td><code>guest-networks</code></td>
+<td>The same roles exist on both sites. Warns when the target prefix is smaller than the source prefix.</td>
+</tr>
+<tr>
+<td><code>address-pools</code></td>
+<td>The same roles are bound on both sites, each to a pool that exists on its site.</td>
+</tr>
+<tr>
+<td><code>domains</code></td>
+<td>The shared domains are equal on both sites.</td>
+</tr>
+<tr>
+<td><code>registry-mirror</code></td>
+<td>A mirror is bound on both sites or on neither. Warns when a bound mirror is not among the site's mirrors.</td>
+</tr>
+<tr>
+<td><code>storage-classes</code></td>
+<td>Every StorageClass the plan selects on the source has a selected class of the same name on the target (warns).</td>
+</tr>
+<tr>
+<td><code>zones</code></td>
+<td>Both zones of a sync path have Ready nodes. Not applicable to paths between clusters.</td>
+</tr>
+<tr>
+<td><code>test-target</code></td>
+<td>A path that declares <code>Test</code> names an isolated NetworkAttachmentDefinition that exists on the target.</td>
+</tr>
+</tbody>
+</table>
+<p>The readiness check <code>profile-consistent</code> reads this verdict. It is advisory: an inconsistent or unknown comparison
+makes a path <code>Degraded</code>, not <code>NotReady</code>, because whether a difference matters depends on what an application
+references. That is decided by its findings.</p>
+<h2 id="findings-and-guest-addresses">Findings and Guest Addresses</h2>
+<p>dr-agent reports every KubeVirt virtual machine of its cluster with, per Multus network, the NetworkAttachmentDefinition
+it resolves to, the pinned MAC address of the interface, and the addresses the running instance reports. From the
+report of the site an application runs on, dr-hub derives the application's findings and evaluates them along every
+declared path that starts there:</p>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The NAD is bound to a role on the source profile, the role is bound on the target profile, and that NAD exists there</td>
+<td><code>Resolved</code> by role (strategy <code>map</code>) to the target's NAD</td>
+</tr>
+<tr>
+<td>A NAD of the same name exists on the target and no role binds it</td>
+<td><code>Resolved</code> (strategy <code>keep</code>)</td>
+</tr>
+<tr>
+<td>Anything else</td>
+<td><code>Open</code>, with the reason and the target NADs of the same VLAN</td>
+</tr>
+</tbody>
+</table>
+<p>For every interface on a role that has a guest network on both sites, dr-hub derives the guest address on the target:
+the host ID of the current address is kept and placed into the target subnet (<code>192.168.110.178</code> becomes
+<code>192.168.210.178</code>). The derivation needs a pinned MAC address and a current address inside the source subnet. It is
+<code>Open</code> when the MAC is not pinned, the address lies outside the subnet or is not known yet, the host ID does not fit
+the target prefix, it is a reserved host ID or the gateway, or it collides with the derived address of another
+virtual machine.</p>
+<p>The results are in the ProtectedApplication:</p>
+<ul>
+<li><strong>Verdict:</strong> <code>status.siteMapping</code> is <code>Resolved</code>, <code>Open</code>, <code>NotApplicable</code> (no VM on a Multus network), or <code>Unknown</code>
+  (the site's dr-agent has not reported yet).</li>
+<li><strong>Findings:</strong> <code>status.mapping.findings[]</code> holds one entry per VM and network, with the result, strategy, role, and
+  target value per path.</li>
+<li><strong>Guests:</strong> <code>status.mapping.guests[]</code> holds one entry per VM interface on a guest network, with its MAC address,
+  current addresses, and the reservation per site.</li>
+<li><strong>Counts:</strong> <code>status.mapping.counts</code> holds the numbers of open and resolved items.</li>
+</ul>
+<p>The readiness check <code>findings-resolved</code> blocks a path while a finding on it is <code>Open</code>: an unresolved NAD leaves the
+restored VM without its network, an unresolved address leaves the guest without its reservation. While an application
+moves, the mapping of its previous site is kept until the new site reports all of its VMs running.</p>
+<div class="highlight"><span class="filename">Showing the site mapping of an application</span><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>ramen-ops<span class="w"> </span>get<span class="w"> </span>papp<span class="w"> </span>wordpress<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.siteMapping}{"\n"}'</span>
+kubectl<span class="w"> </span>-n<span class="w"> </span>ramen-ops<span class="w"> </span>get<span class="w"> </span>papp<span class="w"> </span>wordpress<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.mapping}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
+</code></pre></div>
+<h2 id="dhcp-servers">DHCP Servers</h2>
+<p>A <code>DHCPServer</code> is cluster-scoped and describes one DHCP server of a site. dr-hub renders the reservations of every
+server into a ConfigMap on the server's site and never talks to the server itself: the ConfigMap is the API.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spec.site</code></td>
+<td>The managed cluster the server runs on.</td>
+</tr>
+<tr>
+<td><code>spec.type</code></td>
+<td><code>dnsmasq</code>, the only type.</td>
+</tr>
+<tr>
+<td><code>spec.dnsmasq.namespace</code></td>
+<td>Namespace of the ConfigMap dnsmasq reads its reservations from.</td>
+</tr>
+<tr>
+<td><code>spec.dnsmasq.configMap</code></td>
+<td>Name of that ConfigMap. dr-hub writes the key <code>sitemap.hosts</code> with one <code>&lt;mac&gt;,&lt;ip&gt;,&lt;name&gt;</code> line per reservation (the format of <code>--dhcp-hostsdir</code>).</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><span class="filename">DHCP server of a site</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sitemap.simplyblock.io/v1alpha1</span>
+<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DHCPServer</span>
+<span class="nt">metadata</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-b</span>
+<span class="nt">spec</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">site-b</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnsmasq</span>
+<span class="w">  </span><span class="nt">dnsmasq</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sitemap-dhcp</span>
+<span class="w">    </span><span class="nt">configMap</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnsmasq-reservations</span>
+</code></pre></div>
+<p>A site profile names the server in <code>spec.dhcpServerRef</code> or per guest network. The server holds the current address of
+every VM on its site and the derived address of every VM that may arrive along a declared path. Reservations are
+sticky: an address once reserved for a MAC address is kept. <code>status.reservations</code> is the number of reservations, and
+<code>status.generation</code> the rendered generation. The dnsmasq deployment has to reload its hosts file when the ConfigMap
+changes, for example, through a sidecar that sends <code>SIGHUP</code>, and should publish the VM names in DNS, so that
+applications that reach each other by name keep working on the other site.</p>
+<h2 id="renderings">Renderings</h2>
+<p>For every site, dr-hub renders what a recovery there needs and delivers it with one ManifestWork per site:</p>
+<ul>
+<li><strong>Velero resource modifier:</strong> The ConfigMap <code>sitemap-live</code> in the site's Velero namespace holds one rule per <code>map</code>
+  finding of every application that may arrive on the site. A rule rewrites the VM's
+  <code>spec.template.spec.networks[].multus.networkName</code> from the source value to the target value during the restore.
+  dr-agent runs a mutating admission webhook for Velero <code>Restore</code> objects in its Velero namespace that points every
+  restore without a resource modifier at <code>sitemap-live</code>. The webhook fails open.</li>
+<li><strong>DHCP reservations:</strong> The ConfigMap of every <code>DHCPServer</code> of the site.</li>
+</ul>
+<p>The readiness check <code>artifacts-current</code> (advisory) compares the generation of the artifacts on each site with the
+rendered one and warns when a rendering has not arrived, is stale, or the restore webhook is not registered. The
+RecoveryAction report of every move lists the expected and the observed guest address of every interface
+(<code>status.report.guests[]</code>). A mismatch is reported, not fatal.</p>
+<h2 id="tests">Tests</h2>
+<p>A test failover does not use the production mapping. Every Multus network of a VM is replaced by a same-name copy of
+the path's isolated NetworkAttachmentDefinition (<code>spec.test.isolatedNad</code>) in the bubble namespace, and a reference to a
+NAD in another namespace is rewritten to that copy. A DHCP server on the isolated network that serves the production
+reservations gives the VMs in the bubble their production addresses. See <a href="../../testing/test-failover/">Test Failover</a>.</p>
+<h2 id="what-is-not-mapped-yet">What Is Not Mapped Yet</h2>
+<p>Everything the site mapper does not translate is restored as captured and must exist under the same name on both
+sites of a path: StorageClasses and VolumeSnapshotClasses (the plan's selector picks them by label, and the
+<code>storage-classes</code> comparison warns about a missing name), zone names referenced by node affinities, ingress, load
+balancer, priority, and runtime classes, and container image names. IP addresses in Services, Routes, and Ingresses
+and host names are restored unchanged.</p>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
-<p>A site mapper will describe each site and translate the differences along a DR path. It is not part of the
-current release, and the resources below are not yet available.</p>
 <ul>
-<li><strong>SiteProfile:</strong> One profile per cluster. Its status holds the discovered inventory (NADs, zones, storage and
-  other classes, MetalLB pools, domains, registry mirrors, CIDRs, and egress IPs). Its spec binds site roles to
-  that inventory, for example, logical networks per role, guest networks, and address pools. A profile describes
-  a site and has no direction.</li>
-<li><strong>Findings and resolutions:</strong> The mapper scans protected applications for site-specific values and records each
-  one as a finding. A resolution decides, per DR path, how a finding is handled, with the precedence resource over
-  namespace over global.</li>
-<li><strong>Strategies:</strong> <code>map</code> (translate to a named value on the target), <code>keep</code> (use the same value), <code>derive</code> (compute
-  the target value, for example, the same offset in a target pool), <code>regenerate</code> (create a new value, for
-  example, a MAC address), <code>ramen</code> (keep the default restore behavior), <code>ignore</code>, and <code>create</code> (create the missing object on the
-  target).</li>
-<li><strong>Categories:</strong> NADs, zones, guest addresses, addresses (VIPs, egress IPs, CIDRs), domains, classes, registries,
-  host devices, MAC addresses, NodePorts, IP families, and literal values in configuration.</li>
+<li><strong>Further categories:</strong> Mapping of StorageClasses, zones, load balancer addresses and pools, domains and Route
+  host names, registries, and literal values in ConfigMaps and Secrets, with the strategies <code>derive</code>,
+  <code>regenerate</code>, <code>create</code>, and <code>ignore</code> next to <code>map</code> and <code>keep</code>.</li>
+<li><strong>Managed applications:</strong> The renderings cover what a Velero restore creates. Applications delivered by GitOps
+  are not rewritten.</li>
+<li><strong>Announcement handover:</strong> <code>spec.announcementHandover</code> of a DR path is stored, but has no effect yet. VIPs are
+  withdrawn and announced through the <code>preSource</code> and <code>postTargetReady</code> hooks.</li>
 </ul>
-<p>Failback uses the mapping of the reverse path. Addresses hard-coded in ConfigMaps, Secrets, or environment
-variables will be reported, but not rewritten.</p>
 </div>
 <h2 id="site-networking-designs">Site Networking Designs</h2>
-<p>The network design of the sites decides which identities survive a failover. Four common designs and their effect on
-disaster recovery are described below.</p>
-<h3 id="stretched-layer-2-with-identical-address-ranges">Stretched Layer 2 With Identical Address Ranges</h3>
-<p>Both sites share the same layer 2 segments, or use identical CIDRs and identical load balancer (for example, MetalLB)
-pool names and ranges. Pod networks are local to each cluster, but VM guest addresses and VIPs are valid on both sites.</p>
-<ul>
-<li><strong>Failover behavior:</strong> VMs keep their guest IP addresses, and Services keep their load balancer VIPs. Clients do not
-  need to change their target address.</li>
-<li><strong>Announcement:</strong> Only one site may announce a VIP at a time. During the cutover, the source site withdraws the
-  announcement, and the target site starts announcing it, for example, by changing the node selectors of the MetalLB
-  BGPAdvertisement or L2Advertisement.</li>
-<li><strong>Mapping strategy:</strong> <code>keep</code> for guest addresses and VIPs, with <code>announcementHandover: true</code> on the DR path.</li>
-<li><strong>Current release:</strong> Works without rewriting, because the names and ranges are identical. The announcement handover
-  is not automated: a <code>preSource</code> hook withdraws the VIPs, and a <code>postTargetReady</code> hook announces them on the target
-  (see <a href="../workflows-and-recipes/#external-hooks">External Hooks</a>). <code>announcementHandover</code> is stored, but has no effect
-  yet.</li>
-</ul>
-<h3 id="separate-routed-subnets-with-dns-or-gslb-cutover">Separate Routed Subnets With DNS or GSLB Cutover</h3>
-<p>Each site has its own routed subnets and load balancer pools. Addresses are not valid on the other site, and clients
-reach the application by a DNS name that is switched to the active site, for example, by a GSLB.</p>
-<ul>
-<li><strong>Failover behavior:</strong> VIPs and guest addresses change. Clients follow the DNS change, delayed by the record TTL.</li>
-<li><strong>Host names:</strong> Route and Ingress host names, TLS certificates, and external-dns annotations under a shared domain
-  (for example, <code>shop.example.com</code>) are kept, and the DNS or GSLB record is updated after the application is ready on
-  the target.</li>
-<li><strong>Mapping strategy:</strong> <code>derive</code> or <code>map</code> for VIPs, guest addresses re-derived into the target network (keeping the
-  host part in the target CIDR or using fixed per-site addresses), and <code>keep</code> for host names under the shared domain.
-  Host names under a site-specific cluster domain are regenerated.</li>
-<li><strong>Current release:</strong> Works for containers whose Services receive a new VIP from the target pool. The DNS or GSLB
-  switch is implemented as a <code>postTargetReady</code> hook. VMs with static guest addresses keep their source addresses,
-  which are not valid on the target, and guest IP customization is not yet available.</li>
-</ul>
-<h3 id="different-nad-or-vlan-names-per-site">Different NAD or VLAN Names per Site</h3>
-<p>The sites provide the same logical networks, but under different NetworkAttachmentDefinition names or VLAN IDs, for
-example, <code>vlan-120</code> on one site and <code>prod-app</code> on the other.</p>
-<ul>
-<li><strong>Failover behavior:</strong> A VM or pod that references a NAD name that does not exist on the target does not start.</li>
-<li><strong>Mapping strategy:</strong> <code>map</code> by VLAN ID or by the role of the network, as bound in the SiteProfiles. <code>create</code> creates
-  the missing NAD on the target.</li>
-<li><strong>Current release:</strong> Not supported without renaming. The NADs must exist under the same name on both sites. A
-  common workaround is to create a NAD on each site under a shared logical name that points to the local VLAN.</li>
-</ul>
-<h3 id="load-balancer-pools-of-different-size">Load Balancer Pools of Different Size</h3>
-<p>Both sites use load balancer VIP pools, but with different ranges or sizes, for example, a <code>/26</code> on the primary site
-and a <code>/28</code> on the fallback site.</p>
-<ul>
-<li><strong>Failover behavior:</strong> A Service that requests a specific VIP from the source pool does not get it on the target.</li>
-<li><strong>Mapping strategy:</strong> <code>derive</code> when the pools have the same size (the VIP keeps its offset in the pool), and <code>map</code>
-  with explicit address pairs when they do not.</li>
-<li><strong>Current release:</strong> Services without a fixed VIP receive a new address from the target pool, and a
-  <code>postTargetReady</code> hook updates DNS. Services with a fixed VIP need the same address range on both sites.</li>
-</ul>
-<h2 id="summary">Summary</h2>
+<p>The network design of the sites decides which identities survive a failover.</p>
 <table>
 <thead>
 <tr>
 <th>Design</th>
-<th>Current release</th>
-<th>With site mapper</th>
+<th>Behavior with the site mapper</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Stretched layer 2, identical ranges</td>
-<td>Works, VIP handover through hooks</td>
-<td><code>keep</code> with automated announcement handover</td>
+<td>Nothing to map. VMs keep their addresses, Services keep their VIPs. Only one site may announce a VIP at a time: a <code>preSource</code> hook withdraws it, a <code>postTargetReady</code> hook announces it.</td>
 </tr>
 <tr>
-<td>Routed subnets, DNS or GSLB</td>
-<td>Works for dynamic VIPs, DNS switch through hooks</td>
-<td><code>derive</code> or <code>map</code> for VIPs, re-derived guest addresses</td>
+<td>Different VLANs or NAD names per site</td>
+<td>Bind the NADs to one role on both profiles. VMs are restored with the target's NAD, and their guest addresses keep the host ID in the target subnet through the DHCP reservations.</td>
 </tr>
 <tr>
-<td>Different NAD or VLAN names</td>
-<td>Requires identical NAD names</td>
-<td><code>map</code> by VLAN or role, <code>create</code></td>
+<td>Routed subnets with DNS or GSLB cutover</td>
+<td>Services receive a new VIP from the target pool, and a <code>postTargetReady</code> hook switches DNS. VM guest addresses are derived into the target subnet when the roles have guest networks.</td>
 </tr>
 <tr>
-<td>Different pool sizes</td>
-<td>Works for dynamic VIPs only</td>
-<td><code>derive</code> or <code>map</code></td>
+<td>Load balancer pools of different size</td>
+<td>Services without a fixed VIP receive a new address. Services with a fixed VIP need the same address range on both sites until pools are mapped.</td>
 </tr>
 </tbody>
 </table>
@@ -6368,7 +6586,7 @@ and a <code>/28</code> on the fallback site.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 6, 2026 14:03:53 UTC">2026-10-06</span>
   </span>
 
     

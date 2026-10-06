@@ -25,6 +25,7 @@ Applications come in two kinds, set by `spec.kind`:
 | Placement                      | Not required                                                 | Provided by the user, scheduling disabled                                   |
 | Boot order                     | Tiers or a hand-written Recipe                               | GitOps sync order (tiers are not executed)                                  |
 | Test failover                  | Supported                                                    | Not supported                                                               |
+| Sync plans (stretch cluster)   | Supported                                                    | Refused                                                                     |
 
 ### Discovered Applications
 
@@ -67,6 +68,10 @@ A managed application is declared in the application's own namespace, next to th
 | `spec.dependsOn[]`                      | No         | Applications in the same namespace that must be healthy first, in recovery plans and tests.                    |
 
 Changing the target or the method requires a new ProtectedApplication, which starts with a full initial sync.
+
+An application on a sync plan is protected without Ramen: dr-hub delivers a zone binding to the stretch cluster, and
+dr-agent keeps the volumes primary in the current zone and the workloads pinned to it (see
+[Replication Types](replication-types.md#synchronous-replication)).
 
 ## Selecting the Data
 
@@ -126,7 +131,8 @@ The status reports:
   (`Ready`, `Degraded`, `NotReady`, or `Unknown`) with the individual checks. See [Monitoring](../operations/monitoring.md).
 - **Recipe:** The Recipe in effect and whether it was generated.
 - **Suggested tiers:** A boot order suggested from the objects found, never applied automatically.
-- **Backups:** Per `snapshot-s3` method, the running and the last successful backup.
+- **Site mapping:** `status.siteMapping` and `status.mapping` with the findings and guest reservations of the
+  application's VMs. See [Site Profiles](site-profiles.md).
 - **Conditions:** `Bound` (the protection exists and matches the specification) and `Protected` (the application is
   protected).
 
@@ -160,8 +166,7 @@ spec:
   tiers:
     - name: config
       selector:
-        matchLabels:
-          dr.simplyblock.io/tier: config
+        resourceTypes: [configmaps, secrets, serviceaccounts, services]
     - name: middleware
       selector:
         matchLabels:
@@ -189,11 +194,16 @@ spec:
 
 ### Virtual Machines
 
-```yaml title="Discovered KubeVirt application with VM probes (papp-erp.yaml)"
+A database VM and a web VM, started in that order. The database tier is ready once its VM runs and its port answers
+from the application's tools pod (an `exec` gate), the web tier once its VM runs. The VMs' secondary network
+attachments and guest addresses are mapped between the sites by the site mapper (see
+[Site Profiles](site-profiles.md)).
+
+```yaml title="Discovered KubeVirt application with a boot order and probes (papp-wordpress.yaml)"
 apiVersion: dr.simplyblock.io/v1alpha1
 kind: ProtectedApplication
 metadata:
-  name: erp
+  name: wordpress
   namespace: ramen-ops
 spec:
   planRef: fra
@@ -202,20 +212,43 @@ spec:
   kind: discovered
   discovered:
     protectedNamespaces:
-      - erp
+      - wordpress
     pvcSelector:
       matchLabels:
-        app: erp
+        app: wordpress
+  tiers:
+    - name: config
+      selector:
+        resourceTypes: [configmaps, secrets, serviceaccounts, services]
+    - name: tools
+      selector:
+        matchLabels:
+          app: wordpress-tools
+      ready:
+        - type: deploymentsReady
+    - name: db
+      selector:
+        matchLabels:
+          dr.simplyblock.io/tier: db
+      ready:
+        - type: vmRunning
+        - type: exec
+          selector:
+            app: wordpress-tools
+          command: ["nc", "-z", "-w", "3", "wp-db", "3306"]
+          timeoutSeconds: 900
+    - name: web
+      selector:
+        matchLabels:
+          dr.simplyblock.io/tier: web
+      ready:
+        - type: vmRunning
   health:
     probes:
-      - name: erp-vms
-        type: vmRunning
-        selector:
-          matchLabels:
-            app: erp
-      - name: erp-web
-        type: tcp
-        target: erp-web.erp.svc:443
+      - name: web
+        type: http
+        target: http://wp-web.wordpress.svc.cluster.local:80/
+        timeout: 15s
 ```
 
 Without tiers, the default boot order restores configuration objects first and all workloads afterward (see

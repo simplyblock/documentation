@@ -93,7 +93,8 @@ a `postTargetReady` hook fails, the action ends in `Failed` with the application
 ## Result and Report
 
 `status.report` contains the operator, the RTO in `rtoSeconds`, hook results, probe results, warnings (for example, from
-a Degraded pre-flight), and the pre-flight readiness. With an archive configured, the report is stored as JSON and
+a Degraded pre-flight), the pre-flight readiness, and the expected and observed guest addresses of VMs on mapped
+networks (`guests[]`, see [Site Profiles](../configuration/site-profiles.md)). With an archive configured, the report is stored as JSON and
 PDF, and `status.reportKey` holds its key. See [Monitoring](monitoring.md#reports).
 
 After a successful planned failover, the application runs at the path's `to` site, and the reverse path becomes the

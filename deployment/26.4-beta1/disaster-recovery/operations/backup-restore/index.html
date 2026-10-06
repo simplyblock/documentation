@@ -17,7 +17,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Back up protected applications to S3 with snapshot-s3 methods and restore them onto rebuilt sites after the loss of the hub and every site.">
+        <meta name="description" content="Back up protected applications to S3 with the backup method types and restore them onto rebuilt sites with a RestoreAction after the loss of the hub and every site.">
       
       
       <link rel="canonical" href="https://docs.simplyblock.io/latest/disaster-recovery/operations/backup-restore/">
@@ -81,7 +81,7 @@
       
         <meta property="og:title" content="Backup and Restore - Simplyblock Documentation">
       
-        <meta property="og:description" content="Back up protected applications to S3 with snapshot-s3 methods and restore them onto rebuilt sites after the loss of the hub and every site.">
+        <meta property="og:description" content="Back up protected applications to S3 with the backup method types and restore them onto rebuilt sites with a RestoreAction after the loss of the hub and every site.">
       
         <meta property="og:image" content="https://docs.simplyblock.io/26.4-beta1/assets/images/social/disaster-recovery/operations/backup-restore.png">
       
@@ -97,7 +97,7 @@
       
         <meta name="twitter:title" content="Backup and Restore - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Back up protected applications to S3 with snapshot-s3 methods and restore them onto rebuilt sites after the loss of the hub and every site.">
+        <meta name="twitter:description" content="Back up protected applications to S3 with the backup method types and restore them onto rebuilt sites with a RestoreAction after the loss of the hub and every site.">
       
         <meta name="twitter:image" content="https://docs.simplyblock.io/26.4-beta1/assets/images/social/disaster-recovery/operations/backup-restore.png">
       
@@ -139,7 +139,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#snapshot-s3-backups" class="md-skip">
+        <a href="#backups" class="md-skip">
           Skip to content
         </a>
       
@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4299,6 +4301,8 @@
       
         
       
+        
+      
     
     
       
@@ -4458,6 +4462,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../recovery-plans/" class="md-nav__link">
         
   
@@ -4524,35 +4550,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#snapshot-s3-backups" class="md-nav__link">
+  <a href="#backups" class="md-nav__link">
     <span class="md-ellipsis">
-      snapshot-s3 Backups
+      Backups
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="snapshot-s3 Backups">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#backup-sets" class="md-nav__link">
-    <span class="md-ellipsis">
-      Backup Sets
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backup-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      Backup Status
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4623,6 +4625,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6102,35 +6126,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#snapshot-s3-backups" class="md-nav__link">
+  <a href="#backups" class="md-nav__link">
     <span class="md-ellipsis">
-      snapshot-s3 Backups
+      Backups
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="snapshot-s3 Backups">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#backup-sets" class="md-nav__link">
-    <span class="md-ellipsis">
-      Backup Sets
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#backup-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      Backup Status
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -6195,98 +6195,53 @@
 
 <p>Replication protects against the loss of one site: the peer site holds the data and takes over. It does not protect
 against the loss of the hub and every site at once, or against a ransomware attack that reaches all clusters. For
-these cases, simplyblock DR backs up protected applications to S3 with <code>snapshot-s3</code> methods. After a total loss, the
-DR configuration is restored from the state bundle, and each application is restored from its latest backup onto its
-rebuilt source site.</p>
-<p>This is different from the storage-level backup of simplyblock volumes, which is described in
-<a href="../../../kubernetes/operations/data-protection/backup-recovery/">Backup and Recovery</a>.</p>
-<h2 id="snapshot-s3-backups">snapshot-s3 Backups</h2>
-<p>A <code>snapshot-s3</code> method in a protection plan applies to every application of the plan, next to its sync or async
-replication method. The method is configured in the plan (see
-<a href="../../configuration/replication-types/">Replication Types</a>):</p>
-<div class="highlight"><span class="filename">Protection plan with a snapshot-s3 method</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
+these cases, a protection plan uses one of the backup method types (<code>s3-backup</code>, <code>sync-s3-backup</code>, or
+<code>async-s3-backup</code>): the storage backs every primary volume up to S3. After a total loss, the DR configuration is
+restored from the state bundle, and each application is restored onto its rebuilt source site with a <code>RestoreAction</code>.</p>
+<p>The volume backups are the storage cluster's own backups, described in
+<a href="../../../kubernetes/operations/data-protection/backup-recovery/">Backup and Recovery</a>. DR configures their interval
+and retention through the replication method and reads nothing but the volume handle.</p>
+<h2 id="backups">Backups</h2>
+<p>A backup type is a replication method of the plan (see <a href="../../configuration/replication-types/">Replication Types</a>).
+Every application that uses the method is backed up:</p>
+<div class="highlight"><span class="filename">Protection plan with asynchronous replication and backups</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ProtectionPlan</span>
 <span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metro</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fra</span>
 <span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="c1"># sites, storageProfile, and s3Profile omitted</span>
+<span class="w">  </span><span class="c1"># sites, storageProfile, and s3Profiles omitted</span>
 <span class="w">  </span><span class="nt">methods</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sync</span>
-<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sync</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-5m</span>
-<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">snapshot-s3</span>
-<span class="w">      </span><span class="nt">snapshotS3</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">schedule</span><span class="p">:</span><span class="w"> </span><span class="s">"*/5</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*"</span>
-<span class="w">        </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">async-5m-backup</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">async-s3-backup</span>
+<span class="w">      </span><span class="nt">schedulingInterval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">      </span><span class="nt">s3Backup</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<span class="w">        </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24</span>
 </code></pre></div>
 <ul>
-<li><strong>Schedule:</strong> A cron expression. At every time, dr-hub asks dr-agent on the cluster each application currently runs
-  on to take a backup.</li>
-<li><strong>Retention:</strong> The number of complete backup sets kept per application. Older sets are deleted.</li>
-<li><strong>Store:</strong> The Kubernetes objects and volume records go to the DR metadata bucket of the site, or to the S3
-  profile named in <code>snapshotS3.s3ProfileName</code>, under the key prefix <code>simplyblock-dr/backups</code>. The volume data goes
-  to the simplyblock backup bucket of the storage cluster.</li>
+<li><strong>Interval and retention:</strong> <code>s3Backup.interval</code> is the backup interval in Ramen's notation (<code>15m</code>, <code>1h</code>, <code>1d</code>).
+  <code>s3Backup.retention</code> is the number of backups kept per volume.</li>
+<li><strong>Store:</strong> The DR metadata store of the site the volume is primary on (<code>spec.s3Profiles</code>). A backup can be restored
+  from any store of the plan.</li>
+<li><strong>Key:</strong> Backups are keyed by the volume handle of the PersistentVolume, which stays the same through every
+  failover and relocation.</li>
+<li><strong>Objects:</strong> The Kubernetes objects of the application are the captures Ramen keeps in the DR metadata bucket. No
+  second capture is taken for a backup.</li>
 </ul>
-<div class="admonition note">
-<p class="admonition-title">Prerequisite: simplyblock backups on the storage cluster</p>
-<p>The volume data of a <code>snapshot-s3</code> backup is stored with the simplyblock backup feature of the storage cluster.
-Its bucket is configured when the storage cluster is deployed (<code>StorageCluster.spec.backup</code>, see
-<a href="../../../kubernetes/operations/data-protection/backup-recovery/">Backup and Recovery</a>), not in DR. A storage
-cluster deployed without backups cannot be protected with a <code>snapshot-s3</code> method. See
-<a href="../../../deployment-preparation/dr-requirements/#s3-buckets">S3 Buckets</a>.</p>
-</div>
-<h3 id="backup-sets">Backup Sets</h3>
-<p>A backup set is named <code>dr-&lt;appkey&gt;-&lt;yyyymmddhhmmss&gt;-&lt;method&gt;</code>. It holds the application's Kubernetes objects and
-one volume record per PVC, with the class, size, access modes, labels, and the reference to the simplyblock backup
-that holds the volume data.</p>
-<h3 id="backup-status">Backup Status</h3>
-<p>Each ProtectedApplication reports its backups in <code>status.backups[]</code>, one entry per snapshot-s3 method:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Content</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>method</code></td>
-<td>The method name.</td>
-</tr>
-<tr>
-<td><code>running</code></td>
-<td>The backup in progress, if any.</td>
-</tr>
-<tr>
-<td><code>lastSucceeded</code></td>
-<td>The last complete backup set: name, data point, cluster, and number of volumes.</td>
-</tr>
-<tr>
-<td><code>lastScheduleTime</code></td>
-<td>When the last backup was started.</td>
-</tr>
-<tr>
-<td><code>lastFailure</code></td>
-<td>The message of the last failed backup.</td>
-</tr>
-</tbody>
-</table>
-<div class="highlight"><span class="filename">Showing the backup status</span><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>ramen-ops<span class="w"> </span>get<span class="w"> </span>papp<span class="w"> </span>orders<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.backups}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq
-</code></pre></div>
+<p>The replication class of the method carries the interval, retention, and stores to the CSI driver. For a
+<code>sync-s3-backup</code> application, dr-agent keeps one VolumeReplication per PVC with that class on the zone the
+application runs in, because no Ramen object exists for a sync application.</p>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
-<p>The volume data of a backup comes from the storage backend. Integration of simplyblock volume snapshots exported
-to S3 as this backend is not available yet. Without a backend, dr-agent refuses backups instead of writing sets
-without data.</p>
+<p>The backups of the backup types are written by the simplyblock CSI driver on the <code>integrate_csi_addons</code> branch of
+the Simplyblock Operator. On a released driver, the method is accepted, but no backup is written.</p>
 </div>
 <h2 id="restoring-after-a-total-loss">Restoring After a Total Loss</h2>
-<p>When the hub and all sites are lost, only the S3 buckets remain: the archive bucket with the DR state, the DR
-metadata buckets with the application objects, and the simplyblock backup buckets with the volume data. Recovery
-follows these steps:</p>
+<p>When the hub and all sites are lost, only the S3 buckets remain: the archive bucket with the DR state, and the DR
+metadata buckets with the application captures and the volume backups. Recovery follows these steps:</p>
 <ol>
-<li><strong>Rebuild the clusters:</strong> Build a new hub cluster and new site clusters with simplyblock storage. Deploy each
-   storage cluster with access to the simplyblock backup bucket of the lost one, so that the volume data can be read.
-   Install the hub as described in <a href="../../install/hub/">Install the Hub</a>.</li>
+<li><strong>Rebuild the clusters:</strong> Build a new hub cluster and new site clusters with simplyblock storage. Install the hub
+   as described in <a href="../../install/hub/">Install the Hub</a>.</li>
 <li>
 <p><strong>Restore the DR configuration:</strong> Restore the state bundle with the <code>-fresh-sites</code> flag. See
    <a href="../hub-recovery/">Hub Recovery</a> for the full procedure.</p>
@@ -6294,8 +6249,9 @@ follows these steps:</p>
 <span class="w">  </span>-s3-endpoint<span class="w"> </span>s3.eu-central-1.amazonaws.com<span class="w"> </span>-bucket<span class="w"> </span>dr-archive<span class="w"> </span>-region<span class="w"> </span>eu-central-1<span class="w"> </span>-prefix<span class="w"> </span>dr/<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-public-key<span class="w"> </span>bundle-signing.pub
 </code></pre></div>
-<p>With <code>-fresh-sites</code>, every ProtectedApplication is annotated <code>dr.simplyblock.io/awaiting-restore=true</code>. While
-annotated, the application is not protected, so it is not deployed empty on the rebuilt site.</p>
+<p>With <code>-fresh-sites</code>, DRPCs and Placements are left out, and every ProtectedApplication is annotated
+<code>dr.simplyblock.io/awaiting-restore=true</code>. While annotated, the application is not protected, so it is not
+deployed empty on the rebuilt site.</p>
 </li>
 <li>
 <p><strong>Rejoin the sites:</strong> Join the rebuilt site clusters under their old names. See <a href="../../install/sites/">Join Sites</a>.</p>
@@ -6310,7 +6266,6 @@ annotated, the application is not protected, so it is not deployed empty on the 
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">applicationRef</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">orders</span>
-<span class="w">  </span><span class="c1"># backup: dr-orders-20260924101500-backup-5m   # optional, the newest complete set when empty</span>
 <span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30m</span>
 </code></pre></div>
 <h3 id="restoreaction-phases">RestoreAction Phases</h3>
@@ -6324,15 +6279,19 @@ annotated, the application is not protected, so it is not deployed empty on the 
 <tbody>
 <tr>
 <td><code>Pending</code></td>
-<td>Checks that the application is awaiting restore and that its plan has a snapshot-s3 method.</td>
+<td>Checks that the application is awaiting restore and that its method is a backup type.</td>
 </tr>
 <tr>
 <td><code>Restoring</code></td>
-<td>The named or newest complete backup set is restored on the source site: the namespaces and one PVC per volume record are recreated with the recorded data, the objects are restored in tier order, and the pods become ready. The old protection data of the application is then removed from the S3 stores.</td>
+<td>dr-hub reads the lost protection record from the DR metadata store, which names the capture to recover from. dr-agent on the source site creates the namespaces and restores the application's objects from that capture in the order of the generated Recipe.</td>
 </tr>
 <tr>
 <td><code>Reprotecting</code></td>
-<td>The annotation is removed, and the application is protected again. The phase ends when the application is reported deployed and protected.</td>
+<td>The annotation is removed, and the application is protected again. Ramen restores the PVs and PVCs from its store, and the storage restores every volume whose handle it does not know from its newest backup. The phase ends when the application is protected.</td>
+</tr>
+<tr>
+<td><code>Verifying</code></td>
+<td>dr-agent waits for the application's pods to be ready and reports what each volume was restored from.</td>
 </tr>
 <tr>
 <td><code>Completed</code></td>
@@ -6346,7 +6305,8 @@ annotated, the application is not protected, so it is not deployed empty on the 
 </table>
 <div class="highlight"><span class="filename">Listing restore actions</span><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>ramen-ops<span class="w"> </span>get<span class="w"> </span>rsa
 </code></pre></div>
-<p><code>status.dataLoss</code> is the time between the backup's data point and the start of the restore, an upper bound of the data
+<p><code>status.capture</code> names the capture the objects came from, <code>status.volumes[]</code> the restore point of every volume, and
+<code>status.dataLoss</code> the time between the oldest restore point and the start of the restore, an upper bound of the data
 lost.</p>
 <h2 id="restrictions">Restrictions</h2>
 <ul>
@@ -6355,8 +6315,11 @@ lost.</p>
 <li><strong>Whole applications:</strong> An application is restored as a whole. Partial restores are not supported.</li>
 <li><strong>No failback:</strong> A RestoreAction is not a failover. An application that is still protected is refused. Use a
   <a href="../unplanned-failover/">failover</a> or <a href="../relocate-restart/">relocation</a> instead.</li>
-<li><strong>Hand-written Recipes:</strong> An application with a hand-written Recipe is restored as a single group, because the
-  Recipe was on the lost site.</li>
+<li><strong>Managed applications:</strong> A managed application has no capture. GitOps deploys it again once it is protected.</li>
+<li><strong>Sync applications:</strong> A <code>sync-s3-backup</code> application has no capture either, so it cannot be restored onto a
+  rebuilt stretch cluster yet.</li>
+<li><strong>Shared S3 profile:</strong> A plan that references an existing Ramen S3 profile (<code>spec.s3Profile</code>) cannot use a backup
+  type, because dr-hub does not know its store.</li>
 </ul>
 
 
@@ -6378,7 +6341,7 @@ lost.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 6, 2026 14:03:53 UTC">2026-10-06</span>
   </span>
 
     

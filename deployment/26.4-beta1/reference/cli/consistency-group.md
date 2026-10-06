@@ -63,6 +63,21 @@ sbctl consistency-group members
 | --json, -j| Print output in JSON format. | marker | False | - |
 
 
+## Delete an EMPTY consistency group (refused while it still has a current member). Frees the name so the next fail-over/fail-back hand-off mints a fresh, correctly node-pinned group instead of reusing a stale record.
+
+Delete an EMPTY consistency group (refused while it still has a current member). Frees the name so the next fail-over/fail-back hand-off mints a fresh, correctly node-pinned group instead of reusing a stale record.
+
+```bash
+sbctl consistency-group delete
+    <GROUP_ID>
+```
+
+
+| Argument | Description | Data Type | Required |
+| -------- | ----------- | --------- | -------- |
+| GROUP_ID | Consistency group id (or uuid). | string | True |
+
+
 ## Join an EXISTING volume to a consistency group. The volume must live on the group's pinned node/LVS and in the members' storage pool; a volume that once left the group cannot rejoin (membership is one-way).
 
 Join an EXISTING volume to a consistency group. The volume must live on the group's pinned node/LVS and in the members' storage pool; a volume that once left the group cannot rejoin (membership is one-way).

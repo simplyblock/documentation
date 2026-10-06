@@ -17,7 +17,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Synchronous, asynchronous, and snapshot-s3 protection in simplyblock Disaster Recovery: use cases, prerequisites, recovery points, and constraints.">
+        <meta name="description" content="The five replication method types of simplyblock Disaster Recovery: sync, async, s3-backup, and their combinations, with use cases, recovery points, prerequisites, and constraints.">
       
       
       <link rel="canonical" href="https://docs.simplyblock.io/latest/disaster-recovery/configuration/replication-types/">
@@ -81,7 +81,7 @@
       
         <meta property="og:title" content="Replication Types - Simplyblock Documentation">
       
-        <meta property="og:description" content="Synchronous, asynchronous, and snapshot-s3 protection in simplyblock Disaster Recovery: use cases, prerequisites, recovery points, and constraints.">
+        <meta property="og:description" content="The five replication method types of simplyblock Disaster Recovery: sync, async, s3-backup, and their combinations, with use cases, recovery points, prerequisites, and constraints.">
       
         <meta property="og:image" content="https://docs.simplyblock.io/26.4-beta1/assets/images/social/disaster-recovery/configuration/replication-types.png">
       
@@ -97,7 +97,7 @@
       
         <meta name="twitter:title" content="Replication Types - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Synchronous, asynchronous, and snapshot-s3 protection in simplyblock Disaster Recovery: use cases, prerequisites, recovery points, and constraints.">
+        <meta name="twitter:description" content="The five replication method types of simplyblock Disaster Recovery: sync, async, s3-backup, and their combinations, with use cases, recovery points, prerequisites, and constraints.">
       
         <meta name="twitter:image" content="https://docs.simplyblock.io/26.4-beta1/assets/images/social/disaster-recovery/configuration/replication-types.png">
       
@@ -139,7 +139,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#comparison" class="md-skip">
+        <a href="#method-types" class="md-skip">
           Skip to content
         </a>
       
@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4048,9 +4050,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#comparison" class="md-nav__link">
+  <a href="#method-types" class="md-nav__link">
     <span class="md-ellipsis">
-      Comparison
+      Method Types
     </span>
   </a>
   
@@ -4072,12 +4074,27 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Asynchronous Replication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-a-volume-moves" class="md-nav__link">
+    <span class="md-ellipsis">
+      How a Volume Moves
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#backup-and-restore-to-s3" class="md-nav__link">
+  <a href="#backups-to-s3" class="md-nav__link">
     <span class="md-ellipsis">
-      Backup and Restore to S3
+      Backups to S3
     </span>
   </a>
   
@@ -4087,6 +4104,15 @@
   <a href="#combining-methods" class="md-nav__link">
     <span class="md-ellipsis">
       Combining Methods
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consistency-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consistency Groups
     </span>
   </a>
   
@@ -4390,6 +4416,8 @@
       
         
       
+        
+      
     
     
       
@@ -4549,6 +4577,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4611,6 +4661,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6090,9 +6162,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#comparison" class="md-nav__link">
+  <a href="#method-types" class="md-nav__link">
     <span class="md-ellipsis">
-      Comparison
+      Method Types
     </span>
   </a>
   
@@ -6114,12 +6186,27 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Asynchronous Replication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-a-volume-moves" class="md-nav__link">
+    <span class="md-ellipsis">
+      How a Volume Moves
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#backup-and-restore-to-s3" class="md-nav__link">
+  <a href="#backups-to-s3" class="md-nav__link">
     <span class="md-ellipsis">
-      Backup and Restore to S3
+      Backups to S3
     </span>
   </a>
   
@@ -6129,6 +6216,15 @@
   <a href="#combining-methods" class="md-nav__link">
     <span class="md-ellipsis">
       Combining Methods
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consistency-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      Consistency Groups
     </span>
   </a>
   
@@ -6170,86 +6266,120 @@
   <h1>Replication Types</h1>
 
 <p>A protection plan declares one or more replication methods. Each method has a type that decides how the data of a
-protected application reaches the other site: synchronous replication for metro distances, asynchronous replication
-for regional distances, or periodic backups to S3 for the loss of all sites. The type determines the achievable
-recovery point, the failover behavior, and the storage prerequisites.</p>
+protected application reaches the other site: synchronous replication between the zones of a stretch cluster,
+asynchronous replication between two clusters, backups to S3, or a combination of replication and backups. The type
+determines the achievable recovery point, the failover behavior, and the storage prerequisites.</p>
 <p>Methods are declared in <code>spec.methods[]</code> of a <a href="../protection-plans/">protection plan</a>, and each protected application
-uses exactly one of them.</p>
-<h2 id="comparison">Comparison</h2>
+uses exactly one of them. Every protection an application has is carried by that one method.</p>
+<h2 id="method-types">Method Types</h2>
 <table>
 <thead>
 <tr>
-<th>Property</th>
-<th><code>sync</code> (Metro-DR)</th>
-<th><code>async</code> (Regional-DR)</th>
-<th><code>snapshot-s3</code> (backup and restore)</th>
+<th>Type</th>
+<th>Replication</th>
+<th>Backups to S3</th>
+<th>Data loss on unplanned failover</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Use case</td>
-<td>Two datacenters at metro distance</td>
-<td>Geographically separated sites</td>
-<td>Loss of the hub and all sites, ransomware</td>
-</tr>
-<tr>
-<td>Storage identity</td>
-<td>Same storage ID on both sites</td>
-<td>Different storage ID per site</td>
-<td>Not applicable</td>
-</tr>
-<tr>
-<td>Recovery point</td>
-<td>Zero data loss while in sync</td>
-<td>Bounded by the scheduling interval</td>
-<td>Bounded by the backup schedule</td>
-</tr>
-<tr>
-<td>Failover</td>
-<td>Requires fencing of the source (feature gate)</td>
-<td>Available without fencing</td>
-<td>Restore onto the rebuilt source site only</td>
-</tr>
-<tr>
-<td>Failback</td>
-<td>Relocate along the reverse path</td>
-<td>Relocate along the reverse path</td>
+<td><code>sync</code></td>
+<td>Synchronous, between the zones of a cluster</td>
+<td>No</td>
 <td>None</td>
+</tr>
+<tr>
+<td><code>sync-s3-backup</code></td>
+<td>Synchronous, between the zones of a cluster</td>
+<td>Yes</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>async</code></td>
+<td>Asynchronous, between two clusters</td>
+<td>No</td>
+<td>Up to the scheduling interval</td>
+</tr>
+<tr>
+<td><code>async-s3-backup</code></td>
+<td>Asynchronous, between two clusters</td>
+<td>Yes</td>
+<td>Up to the scheduling interval</td>
+</tr>
+<tr>
+<td><code>s3-backup</code></td>
+<td>Through S3: the peer promotes from the newest backup</td>
+<td>Yes</td>
+<td>Up to the backup interval</td>
 </tr>
 </tbody>
 </table>
-<h2 id="synchronous-replication">Synchronous Replication</h2>
-<p>Synchronous replication (type <code>sync</code>) is Metro-DR. Every write is acknowledged only after it has reached both
-sites, so a failover while the replication is in sync loses no data.</p>
+<p>A combined type is one method with one replication class, not two methods. Each type has its own settings:</p>
 <ul>
-<li><strong>Topology:</strong> Two site clusters that share the same storage identity. The storage is stretched across both sites.</li>
-<li><strong>Distance:</strong> Synchronous replication adds the round trip between the sites to every write. It is intended for
-  sites at metro distance with low latency between them.</li>
-<li><strong>Fencing:</strong> Before a failover, the source site must be fenced from the storage, so that it cannot write to the
-  volumes after the target has taken over.</li>
-<li><strong>Recovery point:</strong> Only whether the replication is in sync is tracked. There is no RPO number for a sync method.</li>
+<li><strong><code>schedulingInterval</code>:</strong> For <code>async</code> and <code>async-s3-backup</code>, the replication interval, for example, <code>5m</code>, <code>1h</code>, or
+  <code>1d</code>.</li>
+<li><strong><code>s3Backup.interval</code>, <code>s3Backup.retention</code>:</strong> For the three backup types, the backup interval in the same notation
+  and the number of backups kept per volume. For <code>s3-backup</code>, the backup interval is also the scheduling interval.</li>
+<li><strong><code>replicationParameters</code>:</strong> Up to 16 parameters passed verbatim to the CSI driver, for every type.</li>
 </ul>
-<div class="highlight"><span class="filename">Synchronous method in a protection plan</span><pre><span></span><code><span class="nt">methods</span><span class="p">:</span>
+<p>The backup types need the plan's own site stores (<code>spec.s3Profiles</code>), because the storage writes the backups into them.</p>
+<h2 id="synchronous-replication">Synchronous Replication</h2>
+<p>Synchronous replication (<code>sync</code>, <code>sync-s3-backup</code>) is a stretch cluster: one Kubernetes cluster that spans two zones,
+with one simplyblock storage cluster underneath that writes every block to both zones. Every write is acknowledged
+only after it has reached both zones, so a failover between the zones loses no data.</p>
+<ul>
+<li><strong>Sites:</strong> The sites of a sync plan are the zones of one cluster. Every site names the same cluster and its own
+  zone (<code>spec.sites[].zone</code>), matched against the node label <code>topology.kubernetes.io/zone</code>. The plan refuses sites
+  on different clusters.</li>
+<li><strong>Protection:</strong> A sync application is protected by dr-simplyblock end to end, without Ramen. dr-hub delivers a
+  zone binding to the cluster, and dr-agent keeps every volume primary in the current zone and every Deployment,
+  StatefulSet, and VirtualMachine pinned to it. The application must be <code>discovered</code>.</li>
+<li><strong>Moves:</strong> A Relocate or Failover stops the workloads, demotes and promotes the volumes to the other zone, and
+  starts the workloads pinned there. On a Failover, the nodes of a lost zone are tainted out of service, so their
+  pods and volume attachments are released. The achieved RPO is zero.</li>
+<li><strong>Distance:</strong> Synchronous replication adds the round trip between the zones to every write. It is intended for
+  zones at metro distance with low latency between them.</li>
+<li><strong>Readiness:</strong> The check <code>zone-protected</code> replaces <code>ramen-healthy</code>, and <code>storage-replicating</code> reads the volumes of
+  the zone binding.</li>
+</ul>
+<div class="highlight"><span class="filename">Synchronous method in a stretch cluster plan</span><pre><span></span><code><span class="nt">sites</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zone-a</span>
+<span class="w">    </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stretch</span>
+<span class="w">    </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-central-1a</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zone-b</span>
+<span class="w">    </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stretch</span>
+<span class="w">    </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-central-1b</span>
+<span class="nt">methods</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sync</span>
 <span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sync</span>
 </code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
-<p>The fencing pre-flight check for failovers under synchronous replication is behind the <code>metroFencing</code>
-feature gate in <code>DRConfig.spec.featureGates</code> until the fencing support of the simplyblock CSI driver is
-available. Unplanned failovers of synchronously replicated applications have not been validated yet.</p>
+<ul>
+<li><strong>Stretched storage cluster type:</strong> The stretched simplyblock storage cluster that a sync plan protects is not
+  released yet. See <a href="../../../deployment-preparation/dr-requirements/#stretched-storage-cluster">Stretched Storage Cluster</a>.</li>
+<li><strong>Managed applications:</strong> GitOps-delivered applications on a sync plan are refused, because their GitOps owner
+  would undo the pinning and scaling.</li>
+<li><strong>Restore of a <code>sync-s3-backup</code> application onto a rebuilt stretch cluster.</strong></li>
+</ul>
 </div>
 <h2 id="asynchronous-replication">Asynchronous Replication</h2>
-<p>Asynchronous replication (type <code>async</code>) is Regional-DR. The storage replicates volume snapshots to the other
-site at a fixed interval, set by <code>schedulingInterval</code> (for example, <code>5m</code>, <code>1h</code>, or <code>1d</code>).</p>
+<p>Asynchronous replication (<code>async</code>, <code>async-s3-backup</code>) is regional DR between two independent site clusters, each with
+its own simplyblock storage cluster, under one simplyblock control plane. The storage replicates volume snapshots to
+the other cluster at the scheduling interval.</p>
 <ul>
-<li><strong>Topology:</strong> Two independent site clusters, each with its own simplyblock storage cluster.</li>
+<li><strong>Topology:</strong> Two clusters that are managed by one simplyblock control plane. A replication target is named by the
+  UUID of its storage cluster, so both storage clusters must belong to the same control plane.</li>
 <li><strong>Distance:</strong> No latency limit applies, because writes are acknowledged locally.</li>
 <li><strong>Recovery point:</strong> A failover loses at most the writes since the last completed replication, which is normally at
   most one interval. The achieved RPO of a failover is recorded in its report.</li>
 <li><strong>Readiness:</strong> If the last group sync of an application is older than 1.5 times the scheduling interval, the
   <code>ramen-healthy</code> readiness check fails, and the application is <code>NotReady</code> for actions until the replication catches
   up or an administrator overrides the verdict.</li>
+<li><strong>Backend pairing:</strong> dr-hub creates everything the simplyblock CSI driver needs on the clusters of a plan: a
+  <code>ReplicationPair</code> and a <code>ReplicationPolicy</code> toward the peer storage cluster (through the Simplyblock Operator), one
+  VolumeReplicationClass per direction of a DR path, and the replication Secret the csi-addons sidecar requires.
+  Nothing has to be authored by hand.</li>
 </ul>
 <div class="highlight"><span class="filename">Asynchronous method with a five-minute interval</span><pre><span></span><code><span class="nt">methods</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">async-5m</span>
@@ -6263,84 +6393,124 @@ applications and <code>async-1h</code> for the rest. Each application then choos
 <p>The reported RPO lags behind the real one by up to one interval, because the last sync time is only updated once
 a replication cycle completes.</p>
 </div>
-<h2 id="backup-and-restore-to-s3">Backup and Restore to S3</h2>
-<p>The type <code>snapshot-s3</code> takes periodic backups of every application of the plan into the S3 store of its site, on a
-cron schedule. It protects against the loss of the hub and all sites at once, for example, by a ransomware attack, when
-only the object storage remains.</p>
+<h3 id="how-a-volume-moves">How a Volume Moves</h3>
+<p>Under an asynchronous method, the volume of a protected PVC is replicated as a chain of snapshots: at every interval,
+a snapshot is taken on the source and transferred into a landing copy on the target. A planned move demotes the
+volume on the source, which fences its paths and ships a final snapshot, and promotes the landing copy on the target
+as a new volume. An unplanned move promotes the newest replicated snapshot on the target. The PersistentVolume keeps
+its original volume handle through every move, and the CSI driver resolves the chain behind the handle to the volume
+that currently serves the data. Each move appends a member to that chain, and a fail-back re-aims the replication at
+the previous member, so only the delta since the move is transferred back.</p>
+<p>The chain is never compacted, so a volume that moved ten times sits ten members out from its handle. The CSI driver
+follows the chain to its end however long it is and stops only on a loop. It acts on the member the operation
+belongs to:</p>
 <ul>
-<li><strong>Schedule:</strong> <code>snapshotS3.schedule</code> is a five-field cron expression. <code>snapshotS3.retention</code> is the number of
-  complete backup sets that are kept.</li>
-<li><strong>Content:</strong> Each backup set contains the Kubernetes objects and the volume records of the application. They are
-  stored below <code>simplyblock-dr/backups</code> in the DR metadata bucket of the site, or in the store named by
-  <code>snapshotS3.s3ProfileName</code>. The volume data itself is stored as simplyblock copy-on-write backups in the backup
-  bucket of the storage cluster.</li>
-<li><strong>Prerequisite:</strong> The storage cluster of every site must have been deployed with simplyblock backups configured
-  (<code>StorageCluster.spec.backup</code>). This bucket is not configured in DR. Without it, a <code>snapshot-s3</code> method cannot be
-  used. See <a href="../../../deployment-preparation/dr-requirements/#s3-buckets">S3 Buckets</a>.</li>
-<li><strong>Restore:</strong> After all clusters are rebuilt and the hub state is restored, an administrator creates a RestoreAction
-  per application. The application is restored onto its source site, as a whole, and protected again. There is no
-  failback, and no restore to a different site. See <a href="../../operations/backup-restore/">Backup and Restore</a>.</li>
-<li><strong>Recovery point:</strong> Bounded by the backup schedule. The RestoreAction reports an upper bound of the data loss.</li>
+<li><strong>Demote and disable:</strong> The newest member on the driver's own site, so that a demote on the old primary's site
+  never fences the live primary on the other site. A member the storage has already removed counts as done.</li>
+<li><strong>Promote, resync, and replication status:</strong> The active end of the chain, wherever it lives.</li>
+<li><strong>Attach:</strong> The volume that currently serves the data, on whichever storage cluster holds it.</li>
 </ul>
-<div class="highlight"><span class="filename">Backup method every five minutes, keeping three sets</span><pre><span></span><code><span class="nt">methods</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-5m</span>
-<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">snapshot-s3</span>
-<span class="w">    </span><span class="nt">snapshotS3</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">schedule</span><span class="p">:</span><span class="w"> </span><span class="s">"*/5</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*"</span>
-<span class="w">      </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<p>Because a moved volume's handle names the storage cluster it was created on, the CSI driver of every site must
+reach every storage cluster of the plan. Each site's driver configuration (the secret
+<code>simplyblock-csi-secret-v2</code> in the operator's namespace) lists both clusters, and the site's own cluster is marked
+<code>local: true</code>.</p>
+<div class="admonition info">
+<p class="admonition-title">Coming soon</p>
+<ul>
+<li><strong>Automatic cross-registration:</strong> The Simplyblock Operator registers every storage cluster of its control
+  plane in the driver configuration itself and marks its own cluster as local.</li>
+</ul>
+</div>
+<h2 id="backups-to-s3">Backups to S3</h2>
+<p>The backup types (<code>s3-backup</code>, <code>sync-s3-backup</code>, <code>async-s3-backup</code>) make the storage back up every primary volume
+into the S3 store of its site at the backup interval and keep <code>retention</code> backups per volume. They protect against
+the loss of the hub and every site at once, for example, by a ransomware attack, when only the object storage remains.</p>
+<ul>
+<li><strong>Who backs up:</strong> The storage cluster, as its own copy-on-write backups, keyed by the volume handle of the
+  PersistentVolume. dr-hub schedules nothing and takes nothing. Ramen keeps the volume handle through every failover
+  and relocation, so the key stays stable.</li>
+<li><strong>Store:</strong> The site's own DR metadata store from <code>spec.s3Profiles</code>. A plan with a shared <code>spec.s3Profile</code> cannot
+  use a backup type.</li>
+<li><strong>Restore:</strong> A volume handle the storage does not know is restored from the newest backup of that handle in any
+  store of the plan. For <code>s3-backup</code>, this is how a failover to the peer gets its data. It is also how a site rebuilt
+  from scratch gets its data back. See <a href="../../operations/backup-restore/">Backup and Restore</a>.</li>
+<li><strong>Recovery point:</strong> Bounded by the backup interval.</li>
+</ul>
+<div class="highlight"><span class="filename">Asynchronous replication with backups every hour, keeping 24</span><pre><span></span><code><span class="nt">methods</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">async-5m-backup</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">async-s3-backup</span>
+<span class="w">    </span><span class="nt">schedulingInterval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">    </span><span class="nt">s3Backup</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<span class="w">      </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24</span>
+</code></pre></div>
+<div class="highlight"><span class="filename">Protection through S3 only</span><pre><span></span><code><span class="nt">methods</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vault-15m</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3-backup</span>
+<span class="w">    </span><span class="nt">s3Backup</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15m</span>
+<span class="w">      </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">96</span>
 </code></pre></div>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
-<p>The integration of <code>snapshot-s3</code> with the simplyblock volume backup backend is not yet available. The method
-schedules and restores the object backups, but the volume data is not yet shipped by simplyblock storage.</p>
+<p>The backups of the backup types are implemented by the simplyblock CSI driver on the <code>integrate_csi_addons</code>
+branch of the Simplyblock Operator. On a released driver, the method is accepted, but no backup is written. Plans
+written for the earlier API (<code>snapshot-s3</code>) are refused by the CRD and must be rewritten.</p>
 </div>
 <h2 id="combining-methods">Combining Methods</h2>
 <p>The following rules apply when a plan declares several methods:</p>
 <ul>
-<li><strong>No sync and async mix:</strong> A plan cannot contain both <code>sync</code> and <code>async</code> methods.</li>
-<li><strong>One mode per cluster pair:</strong> Two plans cannot use sync and async for the same pair of clusters.</li>
-<li><strong>Backups alongside:</strong> A <code>snapshot-s3</code> method can be added to a plan with either sync or async methods. It
-  applies to every application of the plan.</li>
-<li><strong>Changing the mode:</strong> Switching an application from async to sync is a storage migration outside of disaster
-  recovery. The application must be protected again under a new plan.</li>
+<li><strong>No sync and async mix:</strong> A plan cannot contain synchronous and asynchronous types at once. A sync plan holds
+  exactly one method.</li>
+<li><strong>One pair and one method per application:</strong> An application is protected toward one target with one method. The
+  method decides everything the storage does for it.</li>
+<li><strong>Changing the method:</strong> Switching an application between methods or from async to sync is a new protection. The
+  application must be protected again under a new ProtectedApplication, or, between sync and async, a new plan.</li>
 </ul>
+<h2 id="consistency-groups">Consistency Groups</h2>
+<p>With <code>storageProfile.consistencyGroups: Enabled</code>, the volumes of an application on its group StorageClasses are
+replicated together with one consistency point (VolumeGroupReplication). Membership is a prerequisite the
+application's owner meets before the PVCs are provisioned, and DR does not set or repair it:</p>
+<ul>
+<li><strong>Label:</strong> The PVCs, or a StatefulSet's <code>volumeClaimTemplates</code>, carry the label
+  <code>storage.simplyblock.io/consistency-group</code> before they are created.</li>
+<li><strong>One group per application and namespace:</strong> Ramen creates one VolumeGroupReplication per namespace and group.</li>
+<li><strong>Readiness:</strong> The blocking check <code>consistency-group-labels</code> fails when a PVC on a group StorageClass has no label,
+  the PVCs of a namespace span two groups, or a group also holds PVCs of another namespace.</li>
+</ul>
+<p>Consistency groups are disabled by default. A synchronous stretch volume is consistent across all volumes of an
+application by construction and needs no group.</p>
 <h2 id="prerequisites-per-type">Prerequisites per Type</h2>
 <table>
 <thead>
 <tr>
 <th>Prerequisite</th>
-<th><code>sync</code></th>
-<th><code>async</code></th>
-<th><code>snapshot-s3</code></th>
+<th><code>sync</code>, <code>sync-s3-backup</code></th>
+<th><code>async</code>, <code>async-s3-backup</code></th>
+<th><code>s3-backup</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>simplyblock CSI with csi-addons VolumeReplication</td>
+<td>Simplyblock CSI driver with csi-addons VolumeReplication</td>
 <td>Yes</td>
 <td>Yes</td>
-<td>No</td>
+<td>Yes</td>
 </tr>
 <tr>
-<td>VolumeGroupReplication (with consistency groups enabled)</td>
-<td>Yes</td>
-<td>Yes</td>
+<td>One simplyblock control plane managing both storage clusters</td>
 <td>No</td>
+<td>Yes</td>
+<td>Yes</td>
 </tr>
 <tr>
-<td>csi-addons NetworkFence</td>
-<td>Yes</td>
-<td>No</td>
-<td>No</td>
-</tr>
-<tr>
-<td>Shared storage identity across both sites</td>
+<td>Stretched simplyblock storage cluster across both zones</td>
 <td>Yes</td>
 <td>No</td>
 <td>No</td>
 </tr>
 <tr>
-<td>Network path for storage replication between sites</td>
+<td>Network path for storage replication between the sites</td>
 <td>Yes, low latency</td>
 <td>Yes</td>
 <td>No</td>
@@ -6352,9 +6522,9 @@ schedules and restores the object backups, but the volume data is not yet shippe
 <td>Yes</td>
 </tr>
 <tr>
-<td>Simplyblock backups configured on the storage cluster</td>
-<td>No</td>
-<td>No</td>
+<td>Per-site S3 stores in the plan (<code>spec.s3Profiles</code>)</td>
+<td>For <code>sync-s3-backup</code></td>
+<td>For <code>async-s3-backup</code></td>
 <td>Yes</td>
 </tr>
 </tbody>
@@ -6381,7 +6551,7 @@ schedules and restores the object backups, but the volume data is not yet shippe
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 6, 2026 14:03:53 UTC">2026-10-06</span>
   </span>
 
     

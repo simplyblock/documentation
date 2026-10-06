@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4299,6 +4301,8 @@
       
         
       
+        
+      
     
     
       
@@ -4458,6 +4462,28 @@
   
   
     <li class="md-nav__item">
+      <a href="restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="recovery-plans/" class="md-nav__link">
         
   
@@ -4520,6 +4546,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6082,8 +6130,8 @@
 one application, or all applications of a recovery plan, along one declared DR path. Its status is a journal of every
 step, and a finished action produces a report. This page gives an overview of the actions and the rules they share.</p>
 <h2 id="relocate-and-failover">Relocate and Failover</h2>
-<p>A recovery action has one of two kinds. The target is always the <code>to</code> site of the action's DR path, and the path must
-list the kind in <code>spec.actions</code>.</p>
+<p>A recovery action has one of three kinds. For a move, the target is the <code>to</code> site of the action's DR path, and the
+path must list the kind in <code>spec.actions</code>. A <code>Restart</code> names no path, because it stays on the application's site.</p>
 <table>
 <thead>
 <tr>
@@ -6109,9 +6157,17 @@ list the kind in <code>spec.actions</code>.</p>
 <td>Up to the achieved RPO</td>
 <td>No</td>
 </tr>
+<tr>
+<td><code>Restart</code></td>
+<td><a href="restart/">Restart in place</a> after the application's storage cluster recovered from a suspension</td>
+<td>None</td>
+<td>None</td>
+<td>No</td>
+</tr>
 </tbody>
 </table>
-<p>A failback is a <code>Relocate</code> along the reverse path. Both kinds restart the application on the target site. Moving
+<p>A failback is a <code>Relocate</code> along the reverse path. Every kind restarts the application. For a sync application, the
+sites are the zones of one stretch cluster, and dr-agent moves the application between them without Ramen. Moving
 running workloads without a restart is described in <a href="relocate-online/">Relocate (Online)</a>.</p>
 <h2 id="recoveryaction-lifecycle">RecoveryAction Lifecycle</h2>
 <p>A recovery action passes through the following phases in order. It resumes at the phase it stopped in after a
@@ -6138,7 +6194,7 @@ restart of dr-hub.</p>
 </tr>
 <tr>
 <td><code>RamenHandoff</code></td>
-<td>The volumes are switched to the target site, after a final sync for a <code>Relocate</code>.</td>
+<td>The volumes are switched to the target site, after a final sync for a <code>Relocate</code>. For a <code>Restart</code>, the workloads are stopped, the volumes reconnected, and the tiers started in boot order on the same site.</td>
 </tr>
 <tr>
 <td><code>TargetStarting</code></td>
@@ -6187,7 +6243,8 @@ action the path does not declare is never allowed, even with an override.</p>
 or a plan action that includes it, fails pre-flight. Tests are also refused while an action is running.</p>
 <h2 id="reports">Reports</h2>
 <p>Each finished action writes <code>status.report</code>: the operator who created it, the override reason, the RTO, the
-achieved RPO for a failover, hook results, probe results, warnings, and the pre-flight readiness. With an archive
+achieved RPO for a failover, hook results, probe results, warnings, the pre-flight readiness, and, for VMs on mapped
+guest networks, the expected and observed guest address of every interface (<code>guests[]</code>). With an archive
 configured, dr-hub stores the report as JSON and PDF in S3 and records the key in <code>status.reportKey</code>. See
 <a href="monitoring/#reports">Monitoring</a>.</p>
 <h2 id="section-contents">Section Contents</h2>
@@ -6197,6 +6254,7 @@ configured, dr-hub stores the report as JSON and PDF in S3 and records the key i
 <li><a href="unplanned-failover/">Unplanned Failover</a></li>
 <li><a href="relocate-restart/">Relocate (Restart)</a></li>
 <li><a href="relocate-online/">Relocate (Online)</a></li>
+<li><a href="restart/">Restart After a Storage Recovery</a></li>
 <li><a href="recovery-plans/">Recovery Plans</a></li>
 <li><a href="backup-restore/">Backup and Restore</a></li>
 <li><a href="hub-recovery/">Hub Recovery</a></li>
@@ -6221,7 +6279,7 @@ configured, dr-hub stores the report as JSON and PDF in S3 and records the key i
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 6, 2026 14:03:53 UTC">2026-10-06</span>
   </span>
 
     

@@ -591,6 +591,7 @@ sbctl volume migrate-continue
     --max-retries=<MAX_RETRIES>
     --deadline=<DEADLINE>
     --batch
+    --retry-on-failure
 ```
 
 
@@ -603,6 +604,7 @@ sbctl volume migrate-continue
 | --max-retries| Maximum retry attempts before aborting. Default: `10`. | integer | False | 10 |
 | --deadline| Migration deadline in seconds (0 = no deadline). Default: `14400`. | integer | False | 14400 |
 | --batch| ID is a batch migration group ID. | marker | False | - |
+| --retry-on-failure| If this migration ends in failure, automatically start a brand-new migration (full precreate + start) for the same volume/target once preconditions are met again (no rebalancing, source and target both online). | marker | False | - |
 
 
 ## List volume migrations.

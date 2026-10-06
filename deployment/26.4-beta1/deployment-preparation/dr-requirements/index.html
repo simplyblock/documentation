@@ -1695,15 +1695,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#common-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      Common Requirements
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3972,6 +3963,8 @@
       
         
       
+        
+      
     
     
       
@@ -4520,6 +4513,8 @@
       
         
       
+        
+      
     
     
       
@@ -4679,6 +4674,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../disaster-recovery/operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../disaster-recovery/operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4741,6 +4758,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../disaster-recovery/control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6325,15 +6364,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#common-requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      Common Requirements
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -6678,8 +6708,11 @@ existing Ramen S3 profile. See <a href="../../disaster-recovery/install/hub/">In
 <li><strong>Optional KubeVirt:</strong> KubeVirt or OpenShift Virtualization for protecting virtual machines.</li>
 <li><strong>Optional Multus network attachment for tests:</strong> An isolated NetworkAttachmentDefinition without uplink for test
   bubbles of virtual machines with secondary networks.</li>
-<li><strong>Identical names on both sites:</strong> Applications recover exactly as captured. Network attachment definitions,
-  storage class names, and zone names that applications reference must exist with the same names on the target site.</li>
+<li><strong>Identical names on both sites, except VM networks:</strong> The site mapper translates the Multus network attachments
+  and guest addresses of virtual machines between the sites (see
+  <a href="../../disaster-recovery/configuration/site-profiles/">Site Profiles and Mappings</a>). Everything else recovers as
+  captured: storage class names, zone names, and other classes that applications reference must exist with the same
+  names on the target site.</li>
 </ul>
 <p>The following components are installed on every site by the DR hub after the site joins, so they must not be
 preinstalled in conflicting versions:</p>
@@ -6691,9 +6724,9 @@ preinstalled in conflicting versions:</p>
 controller and csi-addons, which are not needed on a simplyblock site and are left out when the site joins. See
 <a href="../../disaster-recovery/install/sites/">Join Sites</a>.</p>
 <h2 id="s3-buckets">S3 Buckets</h2>
-<p>A disaster recovery setup uses three kinds of S3 buckets. They hold different data, serve different recovery cases,
-and are configured at different times and in different places. Only the first two are configured in simplyblock DR.
-The third belongs to the simplyblock storage cluster and is configured when that cluster is deployed.</p>
+<p>A disaster recovery setup uses two kinds of S3 buckets. They hold different data, serve different recovery cases, and
+are configured in different places. The storage-level backups of a simplyblock storage cluster, described in
+<a href="../../kubernetes/operations/data-protection/backup-recovery/">Backup and Recovery</a>, are independent of DR.</p>
 <table>
 <thead>
 <tr>
@@ -6707,34 +6740,28 @@ The third belongs to the simplyblock storage cluster and is configured when that
 <tbody>
 <tr>
 <td>DR metadata bucket</td>
-<td>Kubernetes objects of protected applications, volume metadata, and the object part of <code>snapshot-s3</code> backups</td>
-<td>Restoring the application objects on the target site during a failover, relocation, or test</td>
-<td>The protection plan (<code>spec.s3Profiles</code>), with the credentials from the hub chart</td>
-<td>When a protection plan is created</td>
+<td>Kubernetes objects of protected applications, volume metadata, and the volume backups of the backup method types</td>
+<td>Restoring the application objects on the target site during a failover, relocation, or test, and restoring volumes after a total loss</td>
+<td></td>
+<td></td>
 </tr>
 <tr>
 <td>Archive bucket</td>
 <td>Signed DR state bundles of the hub, and the reports of all recovery actions and tests</td>
-<td>Rebuilding a lost hub, recovery after a cyberattack, and audits</td>
-<td>The hub chart (<code>drConfig.spec.archive</code>)</td>
-<td>When the hub is installed</td>
-</tr>
-<tr>
-<td>Simplyblock backup bucket</td>
-<td>Copy-on-write snapshot backups of the volume data, taken by the storage cluster</td>
-<td>Storage-level backup and restore, and the volume data of <code>snapshot-s3</code> backups</td>
-<td>The storage cluster (<code>StorageCluster.spec.backup</code>)</td>
-<td>When the simplyblock cluster is deployed</td>
+<td>Rebuilding a lost hub, recovery after a cyberattack, and audit</td>
+<td></td>
+<td></td>
 </tr>
 </tbody>
 </table>
-<p>The three buckets can be served by the same object store, but they should not be the same bucket. The archive bucket
-in particular belongs in a location that survives the loss of the hub and of every site.</p>
+<p>The buckets can be served by the same object store, but they should not be the same bucket. The archive bucket in
+particular belongs in a location that survives the loss of the hub and of every site.</p>
 <h3 id="dr-metadata-buckets">DR Metadata Buckets</h3>
 <p>Every site of a protection plan names a DR metadata bucket. One bucket with one credential can serve all sites of all
-plans, and this is the simplest setup. Separate buckets per site or per plan are possible as well. During a failover or relocation, the Kubernetes objects of
-the application are restored from it on the target site, and tests read from it as well. The object part of
-<code>snapshot-s3</code> backups (the Kubernetes objects and the volume records of the application) is stored here too.</p>
+plans, and this is the simplest setup. Separate buckets per site or per plan are possible as well. During a failover or
+relocation, the Kubernetes objects of the application are restored from it on the target site, and tests read from it
+as well. With a backup method type, the storage writes the backups of the site's primary volumes into the site's
+store, so a plan with such a method declares its stores per site (<code>spec.s3Profiles</code>).</p>
 <ul>
 <li><strong>Configuration:</strong> Declared per site in the protection plan (<code>spec.s3Profiles</code> with bucket, endpoint, region, and
   credential Secret), or referenced as an existing profile (<code>spec.s3Profile</code>). The credential Secret is created by the
@@ -6756,61 +6783,9 @@ and the sites, and therefore the one that needs object lock.</p>
 </ul>
 <h3 id="simplyblock-backup-buckets">Simplyblock Backup Buckets</h3>
 <p>Simplyblock storage clusters back up volumes as incremental copy-on-write snapshots to S3, independent of DR (see
-<a href="../../kubernetes/operations/data-protection/backup-recovery/">Backup and Recovery</a>). The bucket is part of the
-storage cluster configuration and is set when the storage cluster is deployed. Simplyblock DR does not configure it.</p>
-<p>A <code>snapshot-s3</code> method in a protection plan relies on it. The DR metadata bucket receives the Kubernetes objects and
-the volume records of the application, while the volume data itself is stored as simplyblock backups in the backup
-bucket of the storage cluster. A <code>snapshot-s3</code> method can therefore only be used on sites whose storage cluster was
-deployed with backups configured. The <code>sync</code> and <code>async</code> methods do not use this bucket.</p>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Requirement</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Endpoint</td>
-<td><code>backup.endpoint</code>: any S3-compatible endpoint URL (Amazon S3, MinIO, or others). Loopback and link-local addresses are refused.</td>
-</tr>
-<tr>
-<td>Bucket and prefix</td>
-<td><code>backup.bucket</code> and optional <code>backup.prefix</code>. Several storage clusters can share a bucket with different prefixes. Backups of every cluster under the same bucket and prefix become visible to each of them.</td>
-</tr>
-<tr>
-<td>Region</td>
-<td><code>backup.region</code>, for endpoints that do not imply one.</td>
-</tr>
-<tr>
-<td>Credentials</td>
-<td><code>backup.credentialsSecretRef</code>: a Secret with <code>access_key_id</code> and <code>secret_access_key</code> in the namespace of the <code>StorageCluster</code>.</td>
-</tr>
-<tr>
-<td>Reachability</td>
-<td>The storage nodes of the cluster must reach the endpoint. For a restore onto a rebuilt cluster, its storage nodes must reach the bucket of the lost cluster.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="common-requirements">Common Requirements</h3>
-<p>All three kinds of buckets need:</p>
-<ul>
-<li><strong>Endpoint and region:</strong> An S3-compatible endpoint and a region. Any S3-compatible object store can be used.</li>
-<li><strong>Credentials:</strong> AWS-style access keys (access key ID and secret access key), stored as Kubernetes Secrets.</li>
-<li><strong>Optional CA:</strong> A CA certificate for endpoints with a private certificate authority.</li>
-</ul>
-<p>For ransomware resilience and a recoverable hub, the buckets should additionally use:</p>
-<ul>
-<li><strong>Versioning and object lock:</strong> Enable versioning and object lock in compliance mode, at least on the archive
-  bucket. The hub state bundles are protected with compliance-mode object lock for their retention period, and
-  reports can be protected in the same way. The basic DR functions work without object lock, but recovering the hub
-  after a ransomware attack needs it.</li>
-<li><strong>Server-side encryption:</strong> Enable server-side encryption (SSE) on all buckets.</li>
-<li><strong>Separate credentials:</strong> Use write-only credentials for the hub and for the sites, and keep a separate read-only
-  restore credential offline, together with the public key that verifies the state bundles.</li>
-<li><strong>Separate location:</strong> Place the archive bucket, and ideally the backup buckets, where they survive the loss of the
-  hub and of every site.</li>
-</ul>
+<a href="../../kubernetes/operations/data-protection/backup-recovery/">Backup and Recovery</a>). The backup method types of a
+protection plan use the same mechanism, but with the site's DR metadata store as the target and the interval and
+retention of the method, so no separate bucket is needed for DR.</p>
 <h2 id="networking">Networking</h2>
 <p>Every connection between the hub and the sites is opened from the site to the hub. The hub
 never opens a connection to a site and does not store a kubeconfig of any site.</p>
@@ -6864,7 +6839,7 @@ never opens a connection to a site and does not store a kubeconfig of any site.<
 <td>DR metadata buckets</td>
 <td>443 (or the endpoint's port)</td>
 <td>HTTPS</td>
-<td>Application objects, volume metadata, <code>snapshot-s3</code> object backups</td>
+<td>Application objects, volume metadata, volume backups of the backup method types</td>
 </tr>
 <tr>
 <td>Egress from the hub</td>
@@ -6877,10 +6852,10 @@ never opens a connection to a site and does not store a kubeconfig of any site.<
 <tr>
 <td>Egress from the storage nodes of each site</td>
 <td>Storage nodes</td>
-<td>Simplyblock backup bucket</td>
+<td>DR metadata buckets</td>
 <td>443 (or the endpoint's port)</td>
 <td>HTTPS</td>
-<td>Volume data of simplyblock backups and <code>snapshot-s3</code> backups</td>
+<td>Volume backups of the backup method types</td>
 </tr>
 <tr>
 <td>Between clusters: site to site, both directions</td>
@@ -6937,11 +6912,9 @@ backups, no node has to be labeled or tagged for DR.</p>
 one site. The same cluster can take part in several protection plans, for example, as the source site of an async
 plan with one partner and of a second plan with another partner.</p>
 <p>The optional <code>zone</code> and <code>region</code> of a site are descriptive attributes of the whole site.</p>
-<div class="admonition info">
-<p class="admonition-title">Coming soon</p>
-<p>Splitting one cluster into several sites by zone, so that a cluster spanning several zones can fail over between
-its own zones, is planned. The <code>zone</code> field of a site is reserved for it.</p>
-</div>
+<p>For a synchronous plan, the sites are the zones of one stretch cluster: every site names the same cluster and its own
+zone, matched against the node label <code>topology.kubernetes.io/zone</code>, and dr-agent moves the applications between the
+zones. See <a href="../../disaster-recovery/configuration/replication-types/#synchronous-replication">Replication Types</a>.</p>
 <p>Independent of DR, the standard node labels <code>topology.kubernetes.io/zone</code> and <code>topology.kubernetes.io/region</code> are
 still useful within a cluster, for example, for the topology-aware scheduling of workloads or for the failure domains
 of a storage cluster (see <a href="../../architecture/concepts/failure-domains/">Failure Domains</a>). They are not a DR
@@ -6963,15 +6936,15 @@ assigned to the two sites, will be described here once it is released.</p>
 <li>Every site runs Kubernetes 1.30 or later and meets the simplyblock software and hardware requirements.</li>
 <li>The simplyblock CSI driver on every site supports csi-addons replication.</li>
 <li>Every site has a unique cluster name.</li>
-<li>Network attachment definitions, storage class names, and zone names used by applications are identical on
-  source and target sites.</li>
+<li>Storage class names and zone names used by applications are identical on source and target sites. Network
+  attachment definitions of virtual machines are either identical or bound to the same role in the site profiles.</li>
 <li>A DR metadata bucket and an archive bucket exist, each with its own credential, reachable from the hub and all
   sites.</li>
 <li>Versioning, object lock (compliance mode), and server-side encryption are enabled on the buckets.</li>
 <li>Write-only credentials are issued to the hub and sites, and a read-only restore credential and the bundle
   public key are stored offline.</li>
-<li>For <code>snapshot-s3</code> backups, every storage cluster was deployed with a simplyblock backup bucket that its storage
-  nodes can reach.</li>
+<li>For a backup method type, the plan declares its stores per site, and the storage nodes of every site reach the
+  site's store.</li>
 <li>Every site reaches the hub API server over HTTPS (6443 or 443). No inbound connection to the sites is needed.</li>
 <li>The storage clusters that replicate have network connectivity on the simplyblock storage ports.</li>
 <li>For metro DR, the round-trip time between the sites is in the low single-digit milliseconds.</li>
@@ -6998,7 +6971,7 @@ assigned to the two sites, will be described here once it is released.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 6, 2026 14:03:53 UTC">2026-10-06</span>
   </span>
 
     

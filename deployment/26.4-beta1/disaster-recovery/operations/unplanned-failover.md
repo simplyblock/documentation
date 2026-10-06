@@ -51,16 +51,22 @@ The phases are the same as for a [planned failover](planned-failover.md#phases),
   returned to the source.
 
 The achieved RPO is reported in `status.report.achievedRPOSeconds` and the metric `dr_achieved_rpo_seconds`. For async
-methods, it can lag the real replication state by up to one interval.
+methods, it can lag the real replication state by up to one interval. On simplyblock storage, the promotion of a
+volume whose source is unreachable can take several minutes per volume, because the control plane waits for the
+source before it clones the newest replicated snapshot on the target.
 
 ## Metro DR and Fencing
 
 With a sync method, both sites write to volumes with the same storage identity. Before failing over, the source must
 be fenced, so that it can no longer write.
 
+For a sync application on a stretch cluster, dr-agent taints the NotReady nodes of the lost zone out of service, so
+that their pods and volume attachments are released, demotes the volumes with a bounded wait, and promotes them in
+the target zone with force. No separate fencing step is needed.
+
 !!! info "Coming soon"
-    The fencing pre-flight for Metro DR is behind the `metroFencing` feature gate in `DRConfig.spec.featureGates`
-    and waits on CSI driver support. Unplanned failover under a sync method is not validated yet.
+    The fencing pre-flight is behind the `metroFencing` feature gate in `DRConfig.spec.featureGates` and waits on
+    CSI driver support for network fencing.
 
 ## After the Failover
 

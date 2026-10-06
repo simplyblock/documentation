@@ -607,6 +607,7 @@ A kind introduced in v1alpha2 has no v1alpha1 spelling.
 - [ClusterDeploymentConfig](#clusterdeploymentconfig)
 - [ControlPlane](#controlplane)
 - [ControlPlaneOps](#controlplaneops)
+- [NFSExport](#nfsexport)
 - [OperatorOps](#operatorops)
 - [PersistentVolumeOps](#persistentvolumeops)
 - [SimplyblockDriver](#simplyblockdriver)
@@ -621,6 +622,8 @@ A kind introduced in v1alpha2 has no v1alpha1 spelling.
 - [StorageNodeOps](#storagenodeops)
 - [StoragePool](#storagepool)
 - [StoragePoolOps](#storagepoolops)
+- [StorageSiteDeployment](#storagesitedeployment)
+- [TestFailover](#testfailover)
 - [VolumeGroupSnapshotOps](#volumegroupsnapshotops)
 
 
@@ -785,7 +788,6 @@ _Example:_
 ```yaml
 endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
 bucket: string
-prefix: string
 region: string
 credentialsSecretRef: LocalObjectReference
 ```
@@ -794,7 +796,6 @@ credentialsSecretRef: LocalObjectReference
 | --- | --- | --- | --- |
 | `endpoint` _string_ | Endpoint is the S3 endpoint, for example, https://s3.example.com. |  | Pattern: `^https?://[a-zA-Z0-9.-]+(:[0-9]\{1,5\})?(/.*)?$` <br />Required: \{\} <br /> |
 | `bucket` _string_ | Bucket is the bucket backups are written to and read from. |  | Required: \{\} <br /> |
-| `prefix` _string_ | Prefix narrows the store to one key prefix, so that several clusters can<br />share a bucket without each walking the others' backups. |  | Optional: \{\} <br /> |
 | `region` _string_ | Region is the bucket's region, for endpoints that do not imply one. |  | Optional: \{\} <br /> |
 | `credentialsSecretRef` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#localobjectreference-v1-core)_ | CredentialsSecretRef names the Secret holding the access key and the<br />secret key. It is a reference rather than the values, because a spec is<br />readable by anybody who can read the object. |  | Required: \{\} <br /> |
 
@@ -949,7 +950,6 @@ spec:
     backup:
       endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
       bucket: string
-      prefix: string
       region: string
       credentialsSecretRef: LocalObjectReference
     kms:
@@ -1086,7 +1086,6 @@ cluster:
   backup:
     endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
     bucket: string
-    prefix: string
     region: string
     credentialsSecretRef: LocalObjectReference
   kms:
@@ -1260,6 +1259,7 @@ reviewer sees them before the cluster exists rather than after.
 
 _Appears in:_
 - [ClusterDeploymentConfigSpec](#clusterdeploymentconfigspec)
+- [StorageSiteDraft](#storagesitedraft)
 
 _Example:_
 
@@ -1295,7 +1295,6 @@ enableNodeAffinity: boolean
 backup:
   endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   bucket: string
-  prefix: string
   region: string
   credentialsSecretRef: LocalObjectReference
 kms:
@@ -1359,6 +1358,8 @@ spec:
         replicas: integer
         storageClassName: string
         resources: ResourceRequirements
+        nodeSelector:
+          string: string
       replicas: integer
       resources: ResourceRequirements
       tolerations:
@@ -1369,10 +1370,15 @@ spec:
         enableTLS: boolean
         enableMutualTLS: boolean
         provider: ControlPlaneTLSProvider
+      adminTokenSecretRef: LocalObjectReference
+      observability:
+        enableMonitoring: boolean
+        secretRef: LocalObjectReference
     managed:
       endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
       credentialsSecretRef: LocalObjectReference
       caBundleSecretRef: LocalObjectReference
+      storageNodeImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 status:
   phase: ControlPlanePhase
   step: KubeSnapshot
@@ -1427,6 +1433,38 @@ essential: boolean
 | `desired` _integer_ | Desired is how many replicas the component should have. For the component<br />carrying its own operator it is that resource's own count, because a<br />FoundationDBCluster reports quorum rather than replicas. |  | Minimum: 0 <br />Optional: \{\} <br /> |
 | `ready` _integer_ | Ready is how many of them are. |  | Minimum: 0 <br />Optional: \{\} <br /> |
 | `essential` _boolean_ | Essential states whether this component at zero ready makes the control<br />plane Unavailable rather than Degraded. It is decided by the operator<br />rather than by a user, and it is reported here so that a phase can be<br />explained. |  | Optional: \{\} <br /> |
+
+
+#### ControlPlaneObservability
+
+
+
+ControlPlaneObservability is whether the control plane provisions the
+monitoring stack, and the credential it does that with.
+
+The control plane provisions it once, when the first storage cluster is
+created: it opens the Graylog input the log collector ships to, creates the
+Grafana user every cluster's dashboards use, and widens the OpenSearch result
+window. It records the decision with the deployment, so enabling monitoring
+after the first cluster exists sets the environment but does not provision
+anything.
+
+
+
+_Appears in:_
+- [LocalControlPlane](#localcontrolplane)
+
+_Example:_
+
+```yaml
+enableMonitoring: boolean
+secretRef: LocalObjectReference
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `enableMonitoring` _boolean_ | EnableMonitoring provisions the monitoring stack when the first storage<br />cluster is created. Unset is off. |  | Optional: \{\} <br /> |
+| `secretRef` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#localobjectreference-v1-core)_ | SecretRef names a Secret in this namespace holding the monitoring stack's<br />admin password under the key MONITORING_SECRET. Required when<br />EnableMonitoring is set, and its name must not be empty. A pod naming a<br />Secret that does not exist does not start. |  | Optional: \{\} <br /> |
 
 
 #### ControlPlaneOps
@@ -1653,6 +1691,8 @@ local:
     replicas: integer
     storageClassName: string
     resources: ResourceRequirements
+    nodeSelector:
+      string: string
   replicas: integer
   resources: ResourceRequirements
   tolerations:
@@ -1663,10 +1703,15 @@ local:
     enableTLS: boolean
     enableMutualTLS: boolean
     provider: ControlPlaneTLSProvider
+  adminTokenSecretRef: LocalObjectReference
+  observability:
+    enableMonitoring: boolean
+    secretRef: LocalObjectReference
 managed:
   endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   credentialsSecretRef: LocalObjectReference
   caBundleSecretRef: LocalObjectReference
+  storageNodeImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 ```
 
 | Field | Description | Default | Validation |
@@ -1698,6 +1743,8 @@ source:
       replicas: integer
       storageClassName: string
       resources: ResourceRequirements
+      nodeSelector:
+        string: string
     replicas: integer
     resources: ResourceRequirements
     tolerations:
@@ -1708,10 +1755,15 @@ source:
       enableTLS: boolean
       enableMutualTLS: boolean
       provider: ControlPlaneTLSProvider
+    adminTokenSecretRef: LocalObjectReference
+    observability:
+      enableMonitoring: boolean
+      secretRef: LocalObjectReference
   managed:
     endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
     credentialsSecretRef: LocalObjectReference
     caBundleSecretRef: LocalObjectReference
+    storageNodeImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 ```
 
 | Field | Description | Default | Validation |
@@ -1976,10 +2028,13 @@ an input to discovery and never appears in the document discovery writes: a
 ClusterDeploymentConfig carries the explicit list the filter produced, not the
 rule that produced it.
 
-The filters come in two sets, one per device class, and a run scans one class.
-The two rules below reject the set belonging to the class this run is not
-scanning, because a filter that will never be applied is one an administrator
-reads as having narrowed a draft that was never narrowed.
+Every member narrows the devices of the class a run scans. Neither choosing
+that class nor waiving an availability condition is a member: both are
+statements about the run, spec.discover.enableLogicalBlockDevices and
+spec.discover.enablePartitionedDevices, because the first decides which kind
+of cluster the draft describes and the second widens what is reported. The
+filters come in two sets, one per class, and the rules on DiscoverSpec reject
+the set belonging to the class the run is not scanning.
 
 
 
@@ -1989,8 +2044,6 @@ _Appears in:_
 _Example:_
 
 ```yaml
-enableLogicalBlockDevices: boolean
-enablePartitionedDevices: boolean
 pcieAllowList:
   - string
 pcieDenyList:
@@ -2005,8 +2058,6 @@ driveSizeRange: string
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `enableLogicalBlockDevices` _boolean_ | EnableLogicalBlockDevices scans a worker's available logical block devices<br />instead of its available NVMe devices. It selects the class rather than<br />adding one, because the draft a run writes describes one cluster and a<br />cluster is built out of one class. Unset scans NVMe, so that upgrading to<br />26.4 does not change what a discovery run reports. |  | Optional: \{\} <br /> |
-| `enablePartitionedDevices` _boolean_ | EnablePartitionedDevices reports devices carrying a partition table<br />alongside the available ones, for the administrator who knows the table is<br />stale and intends to hand the device over anyway. It is the only one of the<br />three availability conditions that can be waived: a mounted or otherwise<br />busy device is never reported, because simplyblock taking it would corrupt<br />whatever is using it. |  | Optional: \{\} <br /> |
 | `pcieAllowList` _string array_ | PcieAllowList restricts candidates to these PCI addresses. This and the two<br />PCI filters below narrow the NVMe class alone, because a logical block<br />device has no PCI address to match, so setting any of them on a run that<br />scans the block class is rejected by the rule on this type. |  | Optional: \{\} <br /> |
 | `pcieDenyList` _string array_ | PcieDenyList excludes these PCI addresses. On a fleet that is uniform<br />about which slot holds the boot device, this is what keeps that device out<br />of every group of every draft. |  | Optional: \{\} <br /> |
 | `pcieModel` _string_ | PcieModel restricts candidates to devices whose PCI model string matches. |  | Optional: \{\} <br /> |
@@ -2098,6 +2149,11 @@ intersected because the intersection of a name list and a label selector is a
 question nobody asks deliberately, and reading one as narrowing the other
 would make a run inspect fewer machines than either field says.
 
+The device filters come in two sets, one per device class, and a run scans
+one class. The two class rules reject the set belonging to the class this run
+is not scanning, because a filter that will never be applied is one an
+administrator reads as having narrowed a draft that was never narrowed.
+
 
 
 _Appears in:_
@@ -2114,9 +2170,10 @@ nodeSelector:
 tolerations:
   - Toleration
 enableControlPlaneNodes: boolean
+enableLogicalBlockDevices: boolean
+enablePartitionedDevices: boolean
+forceJournalDevice: boolean
 deviceFilter:
-  enableLogicalBlockDevices: boolean
-  enablePartitionedDevices: boolean
   pcieAllowList:
     - string
   pcieDenyList:
@@ -2137,6 +2194,9 @@ clusterRef: string
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector restricts which workers are inspected. Empty inspects every<br />schedulable worker, and it is exclusive with Workers. |  | Optional: \{\} <br /> |
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#toleration-v1-core) array_ | Tolerations are what the probe pods tolerate, and what the draft states<br />for the storage nodes it proposes.<br />A probe is pinned to its worker with spec.nodeName rather than scheduled<br />onto it, which bypasses the scheduler and not the taints: a NoSchedule<br />taint still keeps the pod off, and a NoExecute taint evicts one that<br />landed. A fleet that dedicates machines to storage taints them, so a run<br />against one that tolerates nothing inspects nothing.<br />They reach the draft as well, because the taints a run was allowed to<br />probe through are the taints the cluster it proposes has to live with.<br />Stating them in one place is what keeps a reviewer from approving a<br />document whose DaemonSet schedules nowhere. |  | MaxItems: 32 <br />Optional: \{\} <br /> |
 | `enableControlPlaneNodes` _boolean_ | EnableControlPlaneNodes lets the run consider machines that run the API<br />server and etcd.<br />It is off by default because a storage node is a data path, and putting one<br />on an etcd host is a placement almost nobody intends. The approval gate is a<br />poor place to catch it: a fifty-worker draft is not a document anybody reads<br />closely enough to spot three control-plane nodes in it. A combined three-node<br />or single-node deployment is the case that wants it, and those are set up<br />deliberately.<br />There is no field beside it for infrastructure nodes, because those are used<br />without asking: an OpenShift infra node is the tier a cluster's own<br />infrastructure runs on, and simplyblock storage is infrastructure. A fleet<br />with disks in its infra nodes meant those disks to be the storage, so a draft<br />proposes them ahead of the workers rather than leaving them out. |  | Optional: \{\} <br /> |
+| `enableLogicalBlockDevices` _boolean_ | EnableLogicalBlockDevices scans a worker's available logical block devices<br />instead of its available NVMe devices. It selects the class rather than<br />adding one, because the draft a run writes describes one cluster and a<br />cluster is built out of one class. Unset scans NVMe, so that upgrading to<br />26.4 does not change what a discovery run reports.<br />It is a statement about the run rather than a member of DeviceFilter,<br />because it does not narrow the devices reported: it decides which class of<br />them is looked at, which filters in DeviceFilter apply, and what<br />ForceJournalDevice resolves, since the two classes lay out a journal<br />differently. |  | Optional: \{\} <br /> |
+| `enablePartitionedDevices` _boolean_ | EnablePartitionedDevices reports devices carrying a partition table<br />alongside the available ones, for the administrator who knows the table is<br />stale and intends to hand the device over anyway. It is the only one of the<br />three availability conditions that can be waived: a mounted or otherwise<br />busy device is never reported, because simplyblock taking it would corrupt<br />whatever is using it.<br />It is a statement about the run rather than a member of DeviceFilter for<br />the reason EnableLogicalBlockDevices is: it waives an availability<br />condition for whichever class is scanned, and so widens what is reported,<br />where every member of the filter narrows it. |  | Optional: \{\} <br /> |
+| `forceJournalDevice` _boolean_ | ForceJournalDevice makes the run dedicate a journal device even where the<br />fleet's disks do not say which one.<br />A run proposes a dedicated journal device when every worker hands over one<br />disk smaller than its others, because a fleet built that way was built that<br />way on purpose. Where several disks share the smallest size, nothing says<br />which to take, and taking one spends a whole disk the fleet did not set<br />aside: on a worker with ten 10 TB disks that is 10 TB, silently. So the run<br />does not guess.<br />What it does instead depends on the class. An NVMe cluster with no<br />dedicated journal device carves a journal partition out of every device, so<br />the run leaves the field unset, says so, and every disk stays storage. A<br />logical block-device cluster has no such layout — the control plane refuses<br />the partitioned journal for the class — so the run fails rather than<br />writing a document that creates the cluster, formats its drives, and then<br />fails every node_add. Setting this is what asks for one of the equal disks<br />to be taken anyway, and the draft says the disk was taken rather than<br />offered.<br />It does not force the cases that are impossible rather than ambiguous. A<br />worker handing over a single disk is refused with it or without it, because<br />dedicating that disk leaves the worker nothing to store on, and so is a<br />worker whose disks report no size. The tie it does resolve is broken by<br />address, ascending, so two runs over one unchanged fleet propose the same<br />document. |  | Optional: \{\} <br /> |
 | `deviceFilter` _[DeviceFilter](#devicefilter)_ | DeviceFilter narrows which of an inspected worker's devices reach the<br />draft. Empty reports every device the worker advertises, including the one<br />it boots from, which is what the approval gate then has to catch. |  | Optional: \{\} <br /> |
 | `clusterRef` _string_ | ClusterRef names an existing StorageCluster the draft grows rather than<br />creates. It is copied to the draft's own clusterRef, so that re-running<br />discovery after an expansion produces a growth document naming the same<br />cluster.<br />Bounded at what a StorageCluster name may be, since a longer value names<br />nothing that can exist. |  | MaxLength: 63 <br />Optional: \{\} <br /> |
 
@@ -2166,6 +2226,35 @@ volumesMigrated: integer
 | --- | --- | --- | --- |
 | `volumesTotal` _integer_ | VolumesTotal is the number of PV-managed volumes the drain has to move,<br />written once at the end of Validating and not modified afterward. |  | Minimum: 0 <br /> |
 | `volumesMigrated` _integer_ | VolumesMigrated is how many of them have completed. |  | Minimum: 0 <br /> |
+
+
+#### DriverPNFS
+
+
+
+DriverPNFS configures pNFS support, which makes the node plugin an NFS
+metadata server as well as an NVMe-oF initiator: on the host an export binds
+to, it makes a filesystem on the namespace, mounts it, and publishes it
+through the host's nfsd.
+
+Turning it on is not sufficient. The host needs nfs-utils and a running
+nfsd, and a client host needs blkmapd, neither of which a pod can install.
+A host missing either fails visibly in the export's Assembling phase.
+
+
+
+_Appears in:_
+- [SimplyblockDriverSpec](#simplyblockdriverspec)
+
+_Example:_
+
+```yaml
+enablePNFS: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `enablePNFS` _boolean_ | EnablePNFS gives the node plugin the four host directories an export is<br />assembled through. It is gated because a plugin not serving exports has<br />no use for them. | false | Optional: \{\} <br /> |
 
 
 #### DriverTLS
@@ -2226,6 +2315,31 @@ _Appears in:_
 | `cert-manager` | DriverTLSProviderCertManager is cert-manager: a ClusterIssuer already<br />installed by this chart mints a Certificate per plugin, and the Secret<br />it writes carries the CA bundle alongside the client keypair.<br /> |
 
 
+#### FailureDomainIndex
+
+
+
+FailureDomainIndex is one failure-domain label and the control plane's index
+for it.
+
+
+
+_Appears in:_
+- [StorageClusterStatus](#storageclusterstatus)
+
+_Example:_
+
+```yaml
+name: string
+index: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the failure-domain label, as StorageNode.spec.config.failureDomain<br />spells it ("rack-b"). |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `index` _integer_ | Index is the integer sent to the control plane for every node in the<br />domain. |  | Minimum: 0 <br />Required: \{\} <br /> |
+
+
 #### FoundationDBSpec
 
 
@@ -2243,6 +2357,8 @@ _Example:_
 replicas: integer
 storageClassName: string
 resources: ResourceRequirements
+nodeSelector:
+  string: string
 ```
 
 | Field | Description | Default | Validation |
@@ -2250,6 +2366,7 @@ resources: ResourceRequirements
 | `replicas` _integer_ | Replicas is the number of coordinators. Three is the smallest count that<br />survives one loss, which is why it is the default. | 3 | Minimum: 1 <br />Optional: \{\} <br /> |
 | `storageClassName` _string_ | StorageClassName is the class the coordinators' volumes are provisioned<br />from. It cannot be a class this operator provides, because the control<br />plane has to exist before any simplyblock volume can. |  | Optional: \{\} <br /> |
 | `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#resourcerequirements-v1-core)_ | Resources sets requests and limits for the coordinator pods. |  | Optional: \{\} <br /> |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector pins the database's own processes, and nothing else the<br />control plane runs. Unset leaves them wherever the control plane as a<br />whole is placed.<br />It is stated apart from that placement because the database is the part<br />whose host matters to something else: adding a storage node reboots its<br />worker, and a worker running a FoundationDB process is added on its own<br />however many nodes the cluster's provisioning budget allows at once.<br />Confining the database to a few workers is what leaves the rest of the<br />fleet free to be added together.<br />It has to select at least as many workers as<br />spec.source.local.foundationDB.replicas, because the worker is the<br />database's fault domain. The anti-affinity between processes of one class<br />is a preference rather than a requirement, so a narrower selector places<br />the coordinators anyway, several to a worker, where one worker's loss<br />takes more of them than the redundancy mode was configured to survive. |  | Optional: \{\} <br /> |
 
 
 #### HostOSFamily
@@ -2362,7 +2479,7 @@ percentPerDevice: integer
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `count` _integer_ | Count is the number of journal managers to configure. |  | Minimum: 1 <br />Optional: \{\} <br /> |
+| `count` _integer_ | Count is the number of journal managers to configure. The control plane<br />requires at least 3. |  | Minimum: 3 <br />Optional: \{\} <br /> |
 | `percentPerDevice` _integer_ | PercentPerDevice is the share of each device given to the journal. |  | Maximum: 100 <br />Minimum: 1 <br />Optional: \{\} <br /> |
 
 
@@ -2437,6 +2554,8 @@ foundationDB:
   replicas: integer
   storageClassName: string
   resources: ResourceRequirements
+  nodeSelector:
+    string: string
 replicas: integer
 resources: ResourceRequirements
 tolerations:
@@ -2447,6 +2566,10 @@ tls:
   enableTLS: boolean
   enableMutualTLS: boolean
   provider: ControlPlaneTLSProvider
+adminTokenSecretRef: LocalObjectReference
+observability:
+  enableMonitoring: boolean
+  secretRef: LocalObjectReference
 ```
 
 | Field | Description | Default | Validation |
@@ -2459,6 +2582,8 @@ tls:
 | `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#toleration-v1-core) array_ | Tolerations are applied to every pod the operator installs for the control<br />plane. |  | Optional: \{\} <br /> |
 | `nodeSelector` _object (keys:string, values:string)_ | NodeSelector pins every pod the operator installs for the control plane.<br />It is a selector rather than an affinity term because that is what the<br />chart it replaces took, and a deployment migrating off the chart has the<br />value already written down. |  | Optional: \{\} <br /> |
 | `tls` _[ControlPlaneTLS](#controlplanetls)_ | TLS is how this control plane serves and what it asks of its callers.<br />The block is defaulted to its own zero value rather than left absent, so<br />that the field defaults inside it are applied to an object that does not<br />mention TLS at all. | \{  \} | Optional: \{\} <br /> |
+| `adminTokenSecretRef` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#localobjectreference-v1-core)_ | AdminTokenSecretRef names a Secret in this namespace holding a static<br />admin bearer token this control plane accepts, under the `token` key, in<br />addition to this deployment's own Kubernetes identity<br />(SB_K8S_ADMIN_SERVICE_ACCOUNTS). It is what lets a cluster this control<br />plane manages remotely (spec.source.managed there,<br />ManagedControlPlane.CredentialsSecretRef naming the same value)<br />authenticate a CreateCluster call, since a Kubernetes TokenReview can<br />never cross a cluster boundary.<br />The Secret is projected into the management API container's environment<br />with secretKeyRef, so this operator never itself reads the plaintext.<br />Absent grants no credential beyond the operator's own service account. |  | Optional: \{\} <br /> |
+| `observability` _[ControlPlaneObservability](#controlplaneobservability)_ | Observability connects this control plane to the monitoring stack<br />installed beside it: Graylog, Grafana, and OpenSearch. Absent leaves<br />monitoring off. |  | Optional: \{\} <br /> |
 
 
 #### ManagedControlPlane
@@ -2484,6 +2609,7 @@ _Example:_
 endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
 credentialsSecretRef: LocalObjectReference
 caBundleSecretRef: LocalObjectReference
+storageNodeImage: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 ```
 
 | Field | Description | Default | Validation |
@@ -2491,6 +2617,7 @@ caBundleSecretRef: LocalObjectReference
 | `endpoint` _string_ | Endpoint is the management API's base URL. It is validated against the<br />same outbound-URL guard every other outbound endpoint in this group uses,<br />so a loopback or link-local address is rejected. |  | Pattern: `^https?://[a-zA-Z0-9.-]+(:[0-9]\{1,5\})?(/.*)?$` <br />Required: \{\} <br /> |
 | `credentialsSecretRef` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#localobjectreference-v1-core)_ | CredentialsSecretRef names a Secret in this namespace holding the bearer<br />token the operator authenticates with. It is a reference rather than a<br />field because a token in a spec is a token in every `kubectl get -o yaml`.<br />Absent means the endpoint is reached without one, which is the in-cluster<br />case: a control plane the Helm chart installed answers on a ClusterIP<br />Service in this namespace and does not require a token for the readiness<br />read. Naming a Secret that does not exist stays an error, because naming<br />one is a statement that the control plane needs it. |  | Optional: \{\} <br /> |
 | `caBundleSecretRef` _[LocalObjectReference](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#localobjectreference-v1-core)_ | CABundleSecretRef names a Secret holding the CA certificate the endpoint<br />is verified against. Absent means the system trust store. |  | Optional: \{\} <br /> |
+| `storageNodeImage` _string_ | StorageNodeImage is the storage-node image a StorageCluster on this<br />Kubernetes cluster defaults to when its own spec.storageNodes.image is<br />unset. A local control plane's own spec.source.local.image doubles as<br />this default (StorageNodeWorkloadReconciler.image), because a<br />self-hosted deployment's control plane and its storage nodes are one<br />release. A managed one is a different Kubernetes cluster's install and<br />says nothing about what this cluster's storage nodes should run, so<br />there is no equivalent to fall back to without this field -- every<br />StorageCluster on a managed deployment must get an image from here or<br />from its own spec. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br />Optional: \{\} <br /> |
 
 
 #### MetricsBackend
@@ -2671,6 +2798,137 @@ validationJobs:
 | `validationJobs` _[ValidationJob](#validationjob) array_ | ValidationJobs are the Jobs started to check those paths. |  | Optional: \{\} <br /> |
 
 
+#### NFSExport
+
+
+
+NFSExport is one pNFS export: a volume, the host serving it, and the address
+clients mount.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: NFSExport
+metadata:
+  name: string
+spec:
+  volumeRef: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+  exportPath: '^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'
+  encrypted: boolean
+  sizeBytes: integer
+status:
+  phase: NFSExportPhase
+  phaseDeadline: Time
+  mdsNodeName: string
+  mdsNodeIP: string
+  serviceAddress: string
+  allowedClients:
+    - string
+  message: string
+  observedGeneration: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha2` | | |
+| `kind` _string_ | `NFSExport` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[NFSExportSpec](#nfsexportspec)_ |  |  |  |
+| `status` _[NFSExportStatus](#nfsexportstatus)_ |  |  |  |
+
+
+#### NFSExportPhase
+
+_Underlying type:_ _string_
+
+NFSExportPhase is the lifecycle position of an export.
+
+_Validation:_
+- Enum: [Pending Assembling Ready Degraded]
+
+_Appears in:_
+- [NFSExportStatus](#nfsexportstatus)
+
+| Field | Description |
+| --- | --- |
+| `Pending` | Pending is an export with no host bound yet: a wait, not a failure.<br /> |
+| `Assembling` | Assembling is the bound host attaching, formatting, mounting, publishing.<br /> |
+| `Ready` | Ready is an export a client can mount.<br /> |
+| `Degraded` | Degraded is an export the operator will not act further on. Reached by<br />declining to act: a stalled export is recoverable, a double-mounted one<br />is not.<br /> |
+
+
+#### NFSExportSpec
+
+
+
+NFSExportSpec is the desired state. The bound host is deliberately not here:
+it is an observed binding the operator owns, so it lives in status where a
+user edit cannot race it.
+
+
+
+_Appears in:_
+- [NFSExport](#nfsexport)
+
+_Example:_
+
+```yaml
+volumeRef: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+exportPath: '^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'
+encrypted: boolean
+sizeBytes: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `volumeRef` _string_ | VolumeRef is the CSI volume handle of the volume this export serves, in<br />the ordinary \{clusterID\}:\{poolID\}:\{lvolID\} form. It names no Kubernetes<br />object, so it is validated by pattern rather than resolved by a webhook.<br />It is the whole identity of the export. The backing namespace UUID and<br />the NFS fsid are both the volume's own id, so they are read from here<br />rather than stored beside it, where they could disagree with it.<br />Deliberately not a form of its own. A pNFS volume is an lvol with an<br />export in front of it, so its claim keeps the lvol's handle and every<br />other CSI call -- snapshot, clone, expand -- addresses it without having<br />to know an export is there. |  | Pattern: `^[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}:[^:]+:[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}$` <br />Required: \{\} <br /> |
+| `exportPath` _string_ | ExportPath is the server-side mount point. It carries the namespace,<br />because a PVC name is unique only within one. |  | Pattern: `^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$` <br />Required: \{\} <br /> |
+| `encrypted` _boolean_ | Encrypted says the control plane stacks a crypto bdev under this volume,<br />which makes an unwritten block read as pseudo-random plaintext rather<br />than as zeros. Assembly needs it: without it an empty encrypted volume<br />is mistaken for an occupied one, never formatted, and never mounts.<br />No omitempty: the field is immutable once set (below), and the CRD<br />enforces that by requiring it stay present once it is. The CSI<br />controller's unstructured Create always writes it explicitly, so an<br />unencrypted export's record already carries `encrypted: false` in<br />etcd; a typed client's own writes have to carry it too; omitempty<br />drops a false value from the JSON entirely, which reads to the CRD as<br />the field being removed and every subsequent write from this type --<br />starting with the reconciler's own finalizer add -- is then refused,<br />permanently, before the export can even begin assembling. |  | Optional: \{\} <br /> |
+| `sizeBytes` _integer_ | SizeBytes is the capacity the backing volume was last grown to.<br />It is not a request: the control plane has already resized the volume by<br />the time this is written. It is here so that growing one bumps the<br />record's generation, which is what tells the operator to re-assemble and<br />run xfs_growfs on the host -- the one machine that can, and the one no<br />CSI call ever reaches. |  | Optional: \{\} <br /> |
+
+
+#### NFSExportStatus
+
+
+
+NFSExportStatus is what the export currently is.
+
+
+
+_Appears in:_
+- [NFSExport](#nfsexport)
+
+_Example:_
+
+```yaml
+phase: NFSExportPhase
+phaseDeadline: Time
+mdsNodeName: string
+mdsNodeIP: string
+serviceAddress: string
+allowedClients:
+  - string
+message: string
+observedGeneration: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phase` _[NFSExportPhase](#nfsexportphase)_ | Phase is the export's lifecycle position. |  | Enum: [Pending Assembling Ready Degraded] <br />Optional: \{\} <br /> |
+| `phaseDeadline` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | PhaseDeadline is when the current phase must be given up on. Persisted<br />because an operator restarted mid-assembly would otherwise grant a fresh<br />deadline on every pass and never time out. |  | Optional: \{\} <br /> |
+| `mdsNodeName` _string_ | MDSNodeName is the Kubernetes node serving this export, which is the one<br />running the csi-node pod that assembled it. It is not a StorageNode: an<br />MDS reaches the volume over NVMe-oF exactly as a client does, so it need<br />not hold any storage itself.<br />The serialization point for one-MDS-per-export: no second host is a<br />candidate until this field is rewritten. |  | Optional: \{\} <br /> |
+| `mdsNodeIP` _string_ | MDSNodeIP is the bound MDS host's own address. Not what a client mounts:<br />it is what the export's Service's EndpointSlice points at, so a client's<br />mount address (ServiceAddress) does not have to change when this does. |  | Optional: \{\} <br /> |
+| `serviceAddress` _string_ | ServiceAddress is the ClusterIP of the Service fronting this export,<br />which is the address a client mounts. It outlives any one MDSNodeIP: the<br />operator repoints the Service's EndpointSlice at whichever host is bound<br />rather than changing this value, so a client's mount survives the export<br />moving to a different host (design-pnfs-rwx.md §13.3). |  | Optional: \{\} <br /> |
+| `allowedClients` _string array_ | AllowedClients is what goes into the exports(5) entry: the internal<br />address of every node that could run a pod using this volume. |  | Optional: \{\} <br /> |
+| `message` _string_ | Message is a human-readable note on the current phase. |  | Optional: \{\} <br /> |
+| `observedGeneration` _integer_ | ObservedGeneration is the spec generation this status was computed from. |  | Optional: \{\} <br /> |
+
+
 #### NodeGroup
 
 
@@ -2792,6 +3050,7 @@ is uniform across a cluster and is stated once in ClusterTemplate.
 
 _Appears in:_
 - [ClusterDeploymentConfigSpec](#clusterdeploymentconfigspec)
+- [StorageSiteDraft](#storagesitedraft)
 
 _Example:_
 
@@ -2883,9 +3142,10 @@ spec:
     tolerations:
       - Toleration
     enableControlPlaneNodes: boolean
+    enableLogicalBlockDevices: boolean
+    enablePartitionedDevices: boolean
+    forceJournalDevice: boolean
     deviceFilter:
-      enableLogicalBlockDevices: boolean
-      enablePartitionedDevices: boolean
       pcieAllowList:
         - string
       pcieDenyList:
@@ -2990,9 +3250,10 @@ discover:
   tolerations:
     - Toleration
   enableControlPlaneNodes: boolean
+  enableLogicalBlockDevices: boolean
+  enablePartitionedDevices: boolean
+  forceJournalDevice: boolean
   deviceFilter:
-    enableLogicalBlockDevices: boolean
-    enablePartitionedDevices: boolean
     pcieAllowList:
       - string
     pcieDenyList:
@@ -3413,6 +3674,43 @@ nodeMetrics:
 | `nodeMetrics` _[NodeLoadMetrics](#nodeloadmetrics) array_ |  |  |  |
 
 
+#### RemovalStatus
+
+
+
+RemovalStatus is the control plane's progress through a node removal it has
+accepted, as the operation last read it while waiting in AwaitingRemoval.
+
+Any change in it counts as progress. Each change moves the step's deadline out
+by the full budget again, so a removal that keeps moving is waited on for as
+long as it moves, and one that stops is failed once a full budget passes with
+nothing changing.
+
+
+
+_Appears in:_
+- [StorageNodeOpsStatus](#storagenodeopsstatus)
+
+_Example:_
+
+```yaml
+nodeStatus: string
+devices:
+  string: string
+lastProgressTime: Time
+prepareAttempts: integer
+lastPrepareTime: Time
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `nodeStatus` _string_ | NodeStatus is the node's status as the control plane last reported it,<br />in the control plane's own spelling: pending_removal, migrating_devices,<br />migrating_lvols, in_removal, removed, or removed_failed. |  | Optional: \{\} <br /> |
+| `devices` _object (keys:string, values:string)_ | Devices is the control-plane status each of the node's StorageDevices<br />last reported, keyed by the StorageDevice's name. A device moves from<br />online through failed to failed_and_migrated, or to removed, as the<br />removal rebuilds its data onto the peers. |  | Optional: \{\} <br /> |
+| `lastProgressTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastProgressTime is when NodeStatus or any of Devices last changed. |  | Optional: \{\} <br /> |
+| `prepareAttempts` _integer_ | PrepareAttempts is how many times the removal's first step was sent<br />again for a node that stayed pending_removal, because the control plane<br />reported the step failed or nothing moved for longer than a shutdown<br />takes. The operation fails once the attempts run out. |  | Minimum: 0 <br />Optional: \{\} <br /> |
+| `lastPrepareTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastPrepareTime is when the removal's first step was last sent again. |  | Optional: \{\} <br /> |
+
+
 #### RemoveSpec
 
 
@@ -3591,12 +3889,15 @@ _Example:_
 nodes:
   - string
 nodeIndex: integer
+skipped:
+  - string
 ```
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `nodes` _string array_ | Nodes is the ordered list of storage node UUIDs this action covers,<br />written once when the walk starts and not modified afterward, so a node<br />added mid-walk is not restarted and one removed mid-walk is skipped when<br />the walk reaches it. |  | Optional: \{\} <br /> |
 | `nodeIndex` _integer_ | NodeIndex is the position in Nodes of the node being restarted. Advancing<br />the walk increments it, and the walk is complete when it reaches<br />len(Nodes).<br />No omitempty: zero is a valid index, and a field that disappears at zero<br />makes "the first node" and "unset" the same wire value. |  | Minimum: 0 <br /> |
+| `skipped` _string array_ | Skipped are the nodes of Nodes the walk passed over without restarting<br />them, in walk order: a node the control plane stopped listing, or one<br />whose removal started after the walk was planned. A node leaving the<br />cluster belongs to its removal, and the walk sends it nothing. |  | Optional: \{\} <br /> |
 
 
 #### SidecarImages
@@ -3626,6 +3927,7 @@ resizer: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/s
 snapshotter: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 healthMonitor: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 nodeDriverRegistrar: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
+csiAddons: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block|quay\.io/csiaddons)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 ```
 
 | Field | Description | Default | Validation |
@@ -3636,6 +3938,7 @@ nodeDriverRegistrar: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public
 | `snapshotter` _string_ | Snapshotter is csi-snapshotter, on the controller plugin. It is this<br />driver's sidecar and not the cluster's snapshot-controller, whose image<br />is not overridable here because that component belongs to the cluster. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br />Optional: \{\} <br /> |
 | `healthMonitor` _string_ | HealthMonitor is csi-external-health-monitor-controller, on the<br />controller plugin. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br />Optional: \{\} <br /> |
 | `nodeDriverRegistrar` _string_ | NodeDriverRegistrar is node-driver-registrar, on the node plugin. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br />Optional: \{\} <br /> |
+| `csiAddons` _string_ | CSIAddons is the kubernetes-csi-addons sidecar, on the controller<br />plugin. It connects to the plugin's socket, probes the csi-addons<br />Identity service for capabilities, and publishes a CSIAddonsNode so the<br />kubernetes-csi-addons controller-manager (design<br />design-csi-addons-replication.md §4.1) can reach the Replication<br />service this driver serves.<br />Unlike the other sidecars above, this one's upstream home is the<br />csi-addons project's own registry, not simplyblock's: the allowlist<br />carries quay.io/csiaddons alongside the simplyblock registries so a<br />deployment can run the stock kubernetes-csi-addons sidecar image<br />directly, ahead of (or instead of) a quay.io/simplyblock-io mirror. |  | Pattern: `^($\|(quay\.io/simplyblock-io\|docker\.io/simplyblock\|public\.ecr\.aws/simply-block\|quay\.io/csiaddons)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]\{64\})?)$` <br />Optional: \{\} <br /> |
 
 
 #### SimplyblockDriver
@@ -3682,12 +3985,15 @@ spec:
     snapshotter: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
     healthMonitor: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
     nodeDriverRegistrar: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
+    csiAddons: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block|quay\.io/csiaddons)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
   enableServiceAccountAuth: boolean
   enableVolumeSnapshots: boolean
   tls:
     enableTLS: boolean
     enableMutualTLS: boolean
     provider: DriverTLSProvider
+  pnfs:
+    enablePNFS: boolean
 status:
   phase: SimplyblockDriverPhase
   snapshotSupport: SnapshotSupportOrigin
@@ -3787,12 +4093,15 @@ sidecarImages:
   snapshotter: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
   healthMonitor: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
   nodeDriverRegistrar: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
+  csiAddons: '^($|(quay\.io/simplyblock-io|docker\.io/simplyblock|public\.ecr\.aws/simply-block|quay\.io/csiaddons)/[a-z0-9][a-z0-9._-]*:[a-zA-Z0-9][a-zA-Z0-9._-]*(@sha256:[a-f0-9]{64})?)$'
 enableServiceAccountAuth: boolean
 enableVolumeSnapshots: boolean
 tls:
   enableTLS: boolean
   enableMutualTLS: boolean
   provider: DriverTLSProvider
+pnfs:
+  enablePNFS: boolean
 ```
 
 | Field | Description | Default | Validation |
@@ -3807,10 +4116,11 @@ tls:
 | `controllerTolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#toleration-v1-core) array_ |  |  | Optional: \{\} <br /> |
 | `controllerResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#resourcerequirements-v1-core)_ | ControllerResources and NodeResources set requests and limits for the two<br />plugins. Unset enforces no limits. |  | Optional: \{\} <br /> |
 | `nodeResources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#resourcerequirements-v1-core)_ |  |  | Optional: \{\} <br /> |
-| `sidecarImages` _[SidecarImages](#sidecarimages)_ | SidecarImages overrides the six CSI sidecars, one field each. Unset takes<br />the version this operator release ships. |  | Optional: \{\} <br /> |
+| `sidecarImages` _[SidecarImages](#sidecarimages)_ | SidecarImages overrides the seven CSI sidecars, one field each. Unset<br />takes the version this operator release ships. |  | Optional: \{\} <br /> |
 | `enableServiceAccountAuth` _boolean_ | EnableServiceAccountAuth makes both plugins authenticate to the management<br />API with their pod's Kubernetes service-account token instead of the<br />static cluster secret. The control plane has to list those accounts in<br />SB_K8S_ADMIN_SERVICE_ACCOUNTS for it to work, which is why this is a<br />deployment-wide switch rather than a per-plugin one. | false | Optional: \{\} <br /> |
 | `enableVolumeSnapshots` _boolean_ | EnableVolumeSnapshots decides whether snapshot support is part of this<br />deployment: the VolumeSnapshotClass for DriverName, and the CRDs and a<br />controller where the cluster serves neither. False applies none of them. | true | Optional: \{\} <br /> |
 | `tls` _[DriverTLS](#drivertls)_ | TLS configures whether both plugins reach the control plane over TLS.<br />Unset is plaintext, the shape every deployment ran before this field<br />existed. Adopting a deployment that already runs TLS requires this to<br />agree with what its plugins are configured for, because it is not read<br />off the running objects. |  | Optional: \{\} <br /> |
+| `pnfs` _[DriverPNFS](#driverpnfs)_ | PNFS configures pNFS support on the node plugin. |  | Optional: \{\} <br /> |
 
 
 #### SimplyblockDriverStatus
@@ -4431,7 +4741,6 @@ spec:
   backup:
     endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
     bucket: string
-    prefix: string
     region: string
     credentialsSecretRef: LocalObjectReference
   disableDataRealignment: boolean
@@ -4484,6 +4793,9 @@ status:
     - worker: string
       node: string
       takenAt: Time
+  failureDomains:
+    - name: string
+      index: integer
   activeOpsRef: string
   rebalancingMetrics:
     avgDeviationPct: float
@@ -4568,6 +4880,8 @@ status:
     nodes:
       - string
     nodeIndex: integer
+    skipped:
+      - string
   observedGeneration: integer
   startedAt: Time
   completedAt: Time
@@ -4682,6 +4996,8 @@ rollingRestart:
   nodes:
     - string
   nodeIndex: integer
+  skipped:
+    - string
 observedGeneration: integer
 startedAt: Time
 completedAt: Time
@@ -4710,7 +5026,7 @@ reading of the lifecycle status.status carries in the control plane's own
 spelling.
 
 _Validation:_
-- Enum: [Pending Creating Provisioning Activating Online Rebalancing Degraded Unavailable Suspended]
+- Enum: [Pending Creating Provisioning Activating Online Shrinking Rebalancing Degraded Unavailable Suspended]
 
 _Appears in:_
 - [StorageClusterStatus](#storageclusterstatus)
@@ -4722,6 +5038,7 @@ _Appears in:_
 | `Provisioning` | StorageClusterPhaseProvisioning: the cluster exists in the control plane<br />and is being built up — its first nodes are joining, or an expansion is<br />adding more. It is not serving and there is nothing wrong with it, which<br />is the distinction Unavailable cannot carry.<br /> |
 | `Activating` | StorageClusterPhaseActivating: the control plane is activating the<br />cluster.<br />It is a phase of its own rather than part of Provisioning because it is<br />not only the last step of a deployment: an expansion ends in one, and so<br />does recovering from a suspension, long after anything was being built.<br /> |
 | `Online` | StorageClusterPhaseOnline: the control plane reports the cluster active<br />and serving.<br /> |
+| `Shrinking` | StorageClusterPhaseShrinking: serving, and removing at least one of its<br />nodes. It replaces Rebalancing, Online, and Degraded for as long as the<br />control plane reports a removal in progress, because a removal moves the<br />departing node's data onto its peers and degrades the cluster while it<br />does, and the removal is the cause of both. It never replaces a phase<br />that is not serving.<br /> |
 | `Rebalancing` | StorageClusterPhaseRebalancing: serving, and moving data between its<br />nodes or devices. It replaces Online and Degraded for as long as the<br />control plane reports a rebalance running, because a rebalance is what<br />makes most operations on the cluster unavailable and the phase is the one<br />column a watch shows. It never replaces a phase that is not serving.<br />status.status keeps the control plane's own word beside it, which is how<br />a rebalance on a degraded cluster is told from one on an active cluster.<br /> |
 | `Degraded` | StorageClusterPhaseDegraded: serving, with less than the redundancy it<br />was built for.<br /> |
 | `Unavailable` | StorageClusterPhaseUnavailable: not serving, and not because anybody<br />asked.<br />It is what is left once the statuses that mean something has been asked<br />for are read as themselves, which is what keeps it worth reporting: a<br />cluster in this phase is one whose status this operator has no reading<br />for, rather than every cluster that is not currently serving.<br /> |
@@ -4794,7 +5111,6 @@ storageNodes:
 backup:
   endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
   bucket: string
-  prefix: string
   region: string
   credentialsSecretRef: LocalObjectReference
 disableDataRealignment: boolean
@@ -4890,6 +5206,9 @@ provisioningSlots:
   - worker: string
     node: string
     takenAt: Time
+failureDomains:
+  - name: string
+    index: integer
 activeOpsRef: string
 rebalancingMetrics:
   avgDeviationPct: float
@@ -4910,7 +5229,7 @@ observedGeneration: integer
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `phase` _[StorageClusterPhase](#storageclusterphase)_ | Phase is the operator's own view of this cluster. |  | Enum: [Pending Creating Provisioning Activating Online Rebalancing Degraded Unavailable Suspended] <br />Optional: \{\} <br /> |
+| `phase` _[StorageClusterPhase](#storageclusterphase)_ | Phase is the operator's own view of this cluster. |  | Enum: [Pending Creating Provisioning Activating Online Shrinking Rebalancing Degraded Unavailable Suspended] <br />Optional: \{\} <br /> |
 | `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the creation machine. The value is one of the<br />steps that machine declares. |  | Optional: \{\} <br /> |
 | `uuid` _string_ | UUID is the backend cluster UUID. Empty means the cluster has not been<br />created or adopted, and non-empty means steady state. |  | Optional: \{\} <br /> |
 | `clusterName` _string_ | ClusterName is the resolved backend name. |  | Optional: \{\} <br /> |
@@ -4926,6 +5245,7 @@ observedGeneration: integer
 | `lastDataRealignmentAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | LastDataRealignmentAt is when a realignment was last requested, and it is<br />what the configured interval spaces requests against. |  | Optional: \{\} <br /> |
 | `tasks` _[ClusterTask](#clustertask) array_ | Tasks are the control plane's running and pending jobs, capped at twenty<br />and in the order the control plane reports them, which is not newest<br />first. Completed and canceled tasks are not here: they leave the list and<br />become events, so the length tracks concurrency rather than history. |  | MaxItems: 20 <br />Optional: \{\} <br /> |
 | `provisioningSlots` _[ProvisioningSlot](#provisioningslot) array_ | ProvisioningSlots are the workers whose node add is outstanding. The list<br />is the metadata of the Provisioning phase, and it is also the mutex that<br />caps concurrent adds at spec.storageNodes.nodeProvisioningBudget.<br />It is one list on one object because that is what makes taking a slot<br />atomic. A node takes one with an optimistic-locked patch of this field, so<br />exactly one node wins a given resourceVersion and every other is told to<br />count again. A slot recorded per node could not do that: six objects carry<br />six resourceVersions, and two nodes reading a cold cache would both see the<br />same one free and both take it.<br />A worker rather than an object is what holds a slot, because one POST adds<br />every socket of a worker and a two-socket host must consume one slot. |  | MaxItems: 64 <br />Optional: \{\} <br /> |
+| `failureDomains` _[FailureDomainIndex](#failuredomainindex) array_ | FailureDomains maps each failure-domain label the cluster's nodes declare<br />(StorageNode.spec.config.failureDomain) to the integer the control plane<br />identifies that domain by. A deployment adds an entry for every label it<br />introduces, both when it creates the cluster and when it grows one, and<br />never changes or removes an entry: the control plane has already placed<br />data by that index. A label that is a number keeps that number as its<br />index when the number is free. A cluster holds at most 256 failure<br />domains, and a deployment that would exceed that is refused before it is<br />approved. |  | MaxItems: 256 <br />Optional: \{\} <br /> |
 | `activeOpsRef` _string_ | ActiveOpsRef names the StorageClusterOps currently allowed to operate on<br />this cluster. Empty when none is running. |  | Optional: \{\} <br /> |
 | `rebalancingMetrics` _[RebalancingMetrics](#rebalancingmetrics)_ | RebalancingMetrics is written by the auto-rebalancer each evaluation<br />cycle. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the cluster moves, and never a log. |  | Optional: \{\} <br /> |
@@ -5038,7 +5358,7 @@ either: a removal is a step of Replace and of Migrate, and taking a device out
 of the data path without replacing it is Fail.
 
 _Validation:_
-- Enum: [Restart]
+- Enum: [Restart Fail]
 
 _Appears in:_
 - [StorageDeviceOpsSpec](#storagedeviceopsspec)
@@ -5046,8 +5366,8 @@ _Appears in:_
 | Field | Description |
 | --- | --- |
 | `Restart` | StorageDeviceOpsActionRestart is the action the kind exists for:<br />recycling one device rather than its node.<br /> |
-| `SelfTest` | These four actions are declared but not accepted: the control plane has no<br />verb for them yet, so an object naming one is refused at admission rather<br />than created and failed.<br /> |
-| `Fail` |  |
+| `Fail` | StorageDeviceOpsActionFail declares a device untrustworthy and takes it<br />out of the data path for good, so the cluster rebuilds the redundancy it<br />held elsewhere and stops reading from it.<br />It is two calls rather than one: the control plane refuses to fail a<br />device that is still serving, so the device is removed and then failed.<br />The removal alone is reversible and the failure is not, which is why the<br />graph splits them and declares the abort edge on the first.<br /> |
+| `SelfTest` | These three actions are declared but not accepted: the control plane has<br />no verb for them yet, so an object naming one is refused at admission<br />rather than created and failed.<br /> |
 | `Replace` |  |
 | `Migrate` |  |
 
@@ -5095,8 +5415,8 @@ abort: boolean
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `deviceRef` _string_ | DeviceRef names the StorageDevice this operation acts on, in this<br />operation's own namespace. The operation never owns its target, because<br />deleting the record of an operation must not delete the device record it<br />operated on. |  | MaxLength: 253 <br />Required: \{\} <br /> |
-| `action` _[StorageDeviceOpsAction](#storagedeviceopsaction)_ | Action is the operation to perform. |  | Enum: [Restart] <br />Required: \{\} <br /> |
-| `abort` _boolean_ | Abort asks a running operation to stop at its next step and unwind.<br />Restart can be aborted before its call is issued and not after: a restart<br />the control plane has accepted is one nothing can recall, so the graph<br />declares where the edge exists rather than this field promising one. |  | Optional: \{\} <br /> |
+| `action` _[StorageDeviceOpsAction](#storagedeviceopsaction)_ | Action is the operation to perform. |  | Enum: [Restart Fail] <br />Required: \{\} <br /> |
+| `abort` _boolean_ | Abort asks a running operation to stop at its next step and unwind.<br />Each action can be aborted before it has issued anything and not after: a<br />restart the control plane has accepted is one nothing can recall, and a<br />device a failure has already removed is one this operator has no call to<br />put back. The graph declares where the edge exists rather than this field<br />promising one. |  | Optional: \{\} <br /> |
 
 
 #### StorageDeviceOpsStatus
@@ -5145,7 +5465,7 @@ while a failed one is not serving and the cluster is running with less
 redundancy than it thinks until it is replaced.
 
 _Validation:_
-- Enum: [Online Degraded Unknown Removed Failed]
+- Enum: [Online Degraded Unknown Removed Failed Migrated]
 
 _Appears in:_
 - [StorageDeviceStatus](#storagedevicestatus)
@@ -5157,6 +5477,7 @@ _Appears in:_
 | `Unknown` | StorageDevicePhaseUnknown is a device whose node cannot be reached, so its<br />state is not observable rather than bad. A terminal phase is not<br />overwritten by it.<br /> |
 | `Removed` |  |
 | `Failed` |  |
+| `Migrated` | StorageDevicePhaseMigrated is a device taken out of service whose data the<br />control plane has rebuilt onto the node's peers, so the cluster carries no<br />less redundancy for it. It is where the devices of a removed node end up,<br />and like Failed and Removed it is terminal.<br /> |
 
 
 #### StorageDeviceRole
@@ -5238,7 +5559,7 @@ observedGeneration: integer
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `phase` _[StorageDevicePhase](#storagedevicephase)_ | Phase is the operator's own view of the device. |  | Enum: [Online Degraded Unknown Removed Failed] <br />Optional: \{\} <br /> |
+| `phase` _[StorageDevicePhase](#storagedevicephase)_ | Phase is the operator's own view of the device. |  | Enum: [Online Degraded Unknown Removed Failed Migrated] <br />Optional: \{\} <br /> |
 | `deviceStatus` _string_ | DeviceStatus is the control plane's own string, in the control plane's<br />spelling, which is why it carries no Enum here. |  | Optional: \{\} <br /> |
 | `role` _[StorageDeviceRole](#storagedevicerole)_ | Role is what the device carries. |  | Enum: [Storage Journal] <br />Optional: \{\} <br /> |
 | `capacity` _[DeviceCapacity](#devicecapacity)_ | Capacity is how big the device is. What it holds is served as<br />StorageDeviceMetrics instead. |  | Optional: \{\} <br /> |
@@ -5303,6 +5624,7 @@ status:
   phase: StorageNodePhase
   step: KubeSnapshot
   uuid: string
+  nodeAddTaskID: string
   status: string
   health: boolean
   hostname: string
@@ -5503,6 +5825,13 @@ spec:
     systemVolumeFilterRegex: string
 status:
   phase: StorageNodeOpsPhase
+  removal:
+    nodeStatus: string
+    devices:
+      string: string
+    lastProgressTime: Time
+    prepareAttempts: integer
+    lastPrepareTime: Time
   step: KubeSnapshot
   message: string
   drain:
@@ -5622,6 +5951,13 @@ _Example:_
 
 ```yaml
 phase: StorageNodeOpsPhase
+removal:
+  nodeStatus: string
+  devices:
+    string: string
+  lastProgressTime: Time
+  prepareAttempts: integer
+  lastPrepareTime: Time
 step: KubeSnapshot
 message: string
 drain:
@@ -5635,6 +5971,7 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageNodeOpsPhase](#storagenodeopsphase)_ | Phase is the operation's own progress. |  | Enum: [Pending Running Succeeded Failed Aborted] <br />Optional: \{\} <br /> |
+| `removal` _[RemovalStatus](#removalstatus)_ | Removal is the control plane's progress through the removal, written by<br />a Remove while it waits in AwaitingRemoval. |  | Optional: \{\} <br /> |
 | `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running action's state machine. The value is<br />one of the steps the running action declares. |  | Optional: \{\} <br /> |
 | `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as the<br />operation moves, and never a log. |  | Optional: \{\} <br /> |
 | `drain` _[DrainStatus](#drainstatus)_ | Drain is the drain's progress over the node's volumes, set only for action<br />Remove. |  | Optional: \{\} <br /> |
@@ -5654,7 +5991,7 @@ values are the operator's own provisioning path; the rest are its reading of the
 lifecycle status.status carries in the control plane's own spelling.
 
 _Validation:_
-- Enum: [Pending Provisioning Online Removing Offline Degraded Failed]
+- Enum: [Pending Provisioning Online Removing Removed Offline Degraded Failed]
 
 _Appears in:_
 - [StorageNodeStatus](#storagenodestatus)
@@ -5664,7 +6001,8 @@ _Appears in:_
 | `Pending` | StorageNodePhasePending: the object exists and no slot has been claimed<br />for it yet.<br /> |
 | `Provisioning` | StorageNodePhaseProvisioning: the provisioning machine is running.<br /> |
 | `Online` | StorageNodePhaseOnline: the control plane reports the node online and<br />carrying its share.<br /> |
-| `Removing` | StorageNodePhaseRemoving: a StorageNodeOps with action Remove is draining<br />it.<br /> |
+| `Removing` | StorageNodePhaseRemoving: the control plane is removing the node, from the<br />removal being accepted until its devices and volumes have moved off.<br /> |
+| `Removed` | StorageNodePhaseRemoved: the control plane has removed the node. It is the<br />last phase a node reaches, and nothing brings it back into service.<br /> |
 | `Offline` | StorageNodePhaseOffline: out of service and reachable, which is where<br />Shutdown, Suspend, and a host maintenance window leave it.<br /> |
 | `Degraded` | StorageNodePhaseDegraded: serving with less than its devices, which is the<br />node-level half of what StorageDevice reports per device.<br /> |
 | `Failed` | StorageNodePhaseFailed: unreachable, timed out, or provisioning that will<br />not complete.<br /> |
@@ -5873,6 +6211,7 @@ _Example:_
 phase: StorageNodePhase
 step: KubeSnapshot
 uuid: string
+nodeAddTaskID: string
 status: string
 health: boolean
 hostname: string
@@ -5906,9 +6245,10 @@ observedGeneration: integer
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `phase` _[StorageNodePhase](#storagenodephase)_ | Phase is the operator's own view of this node, and the field its<br />provisioning branches on. |  | Enum: [Pending Provisioning Online Removing Offline Degraded Failed] <br />Optional: \{\} <br /> |
+| `phase` _[StorageNodePhase](#storagenodephase)_ | Phase is the operator's own view of this node, and the field its<br />provisioning branches on. |  | Enum: [Pending Provisioning Online Removing Removed Offline Degraded Failed] <br />Optional: \{\} <br /> |
 | `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the provisioning machine. The value is one of the<br />steps that machine declares. |  | Optional: \{\} <br /> |
 | `uuid` _string_ | UUID is the backend node UUID. Empty means the node has neither been<br />provisioned nor adopted, and non-empty means steady state. |  | Optional: \{\} <br /> |
+| `nodeAddTaskID` _string_ | NodeAddTaskID is the control-plane task the last add of this node created. It is how<br />a node that is still being added reads why its own add is failing. |  | Optional: \{\} <br /> |
 | `status` _string_ | Status is the lifecycle the control plane reports: online, suspended,<br />offline, in_creation, in_restart, in_shutdown, unreachable, or timeout. The<br />values are the control plane's, which is why they are neither PascalCase nor<br />constrained by an Enum here. |  | Optional: \{\} <br /> |
 | `health` _boolean_ | Health is the health flag the control plane reports. |  | Optional: \{\} <br /> |
 | `hostname` _string_ | Hostname is the node hostname as the control plane reports it. |  | Optional: \{\} <br /> |
@@ -6036,7 +6376,6 @@ spec:
     enableCompression: boolean
     enableClientCompression: boolean
     enableClientDeduplication: boolean
-    enableEncryption: boolean
     enableReplication: boolean
     enableDHCHAP: boolean
     priorityClass: string
@@ -6270,7 +6609,6 @@ volumeDefaults:
   enableCompression: boolean
   enableClientCompression: boolean
   enableClientDeduplication: boolean
-  enableEncryption: boolean
   enableReplication: boolean
   enableDHCHAP: boolean
   priorityClass: string
@@ -6282,7 +6620,7 @@ volumeDefaults:
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `clusterRef` _string_ | ClusterRef names the StorageCluster this pool is carved out of, in this<br />pool's own namespace. The cluster owns this object by controller<br />reference, so deleting the cluster deletes its pools, held behind each<br />pool's own finalizer while classes are assigned or volumes are bound.<br />Immutable from creation: which cluster a pool is in is its identity.<br />The maximum is what a StorageCluster name may be rather than what a<br />reference may be: a longer value names nothing that can exist, and the<br />reference is immutable, so admitting one creates a pool whose only remedy<br />is deletion. |  | MaxLength: 63 <br />Required: \{\} <br /> |
-| `allowedNodes` _string array_ | AllowedNodes restricts which hosts may carry this pool's volumes, by<br />Kubernetes Node name. Empty means every node in the cluster. Narrowing it<br />stops new volumes landing on the removed nodes and leaves the existing<br />ones where they are.<br />The list is left exactly as authored: a name that no longer resolves is<br />dropped from Status.AllowedNodes rather than pruned from here, so a node<br />removed for maintenance and added back under the same name returns to the<br />pools that named it without anybody re-authoring them. |  | Optional: \{\} <br /> |
+| `allowedNodes` _string array_ | AllowedNodes restricts which hosts may carry this pool's volumes, by<br />Kubernetes Node name. Empty means every node in the cluster. Narrowing it<br />stops new volumes landing on the removed nodes and leaves the existing<br />ones where they are. Requires volumeDefaults.enableDHCHAP to be true.<br />The list is left exactly as authored: a name that no longer resolves is<br />dropped from Status.AllowedNodes rather than pruned from here, so a node<br />removed for maintenance and added back under the same name returns to the<br />pools that named it without anybody re-authoring them. |  | Optional: \{\} <br /> |
 | `limits` _[PoolLimits](#poollimits)_ | Limits are the ceilings the pool as a whole is held to. Mutable: raising a<br />pool's capacity is an ordinary operation the control plane supports, and it<br />does not touch any StorageClass. |  | Optional: \{\} <br /> |
 | `volumeDefaults` _[VolumeDefaults](#volumedefaults)_ | VolumeDefaults are what every volume in the pool is created with.<br />Immutable once set, because StorageClass.parameters is immutable in the<br />Kubernetes API: a pool whose defaults changed would have a class the<br />operator cannot update. Changing them means creating a new pool. |  | Optional: \{\} <br /> |
 
@@ -6335,6 +6673,530 @@ observedGeneration: integer
 | `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from, so a stale status can be told from a current one. |  | Optional: \{\} <br /> |
 
 
+#### StorageSiteCluster
+
+
+
+StorageSiteCluster is the StorageCluster the approved draft produced.
+
+
+
+_Appears in:_
+- [StorageSiteDeploymentStatus](#storagesitedeploymentstatus)
+
+_Example:_
+
+```yaml
+name: string
+uuid: string
+phase: string
+pool: string
+nodes:
+  - name: string
+    phase: string
+    hostname: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the StorageCluster object on the site. |  |  |
+| `uuid` _string_ | UUID is the storage cluster's id in the control plane, which a<br />StorageClass names in cluster_id. |  | Optional: \{\} <br /> |
+| `phase` _string_ | Phase is the StorageCluster's phase on the site. |  | Optional: \{\} <br /> |
+| `pool` _string_ | Pool is the pool the cluster was created with, which a StorageClass names<br />in pool_name. |  | Optional: \{\} <br /> |
+| `nodes` _[StorageSiteNode](#storagesitenode) array_ | Nodes are the cluster's storage nodes. |  | Optional: \{\} <br /> |
+
+
+#### StorageSiteDeployment
+
+
+
+StorageSiteDeployment requests a managed site's storage cluster from the hub:
+a discovery on the site, the sizing of the draft it writes, and the approval
+that expands the draft into a StorageCluster. The hub carries the request
+through OCM and projects the site's draft and cluster into the status.
+Deleting the request leaves the storage cluster alone.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageSiteDeployment
+metadata:
+  name: string
+spec:
+  cluster: string
+  siteNamespace: string
+  draftName: string
+  discover:
+    enableControlPlaneNodes: boolean
+    workers:
+      - string
+    nodeSelector:
+      string: string
+  sizing:
+    name: string
+    vcpuCount: integer
+    minHugePagesSize: string
+    maxSubsystemCount: integer
+    enableDriveFormat: boolean
+    enableJournalDevice: boolean
+    stripe:
+      dataChunks: integer
+      parityChunks: integer
+  approved: boolean
+status:
+  phase: StorageSiteDeploymentPhase
+  message: string
+  observedGeneration: integer
+  workName: string
+  draft:
+    name: string
+    phase: string
+    message: string
+    approved: boolean
+    cluster:
+      name: string
+      maxSubsystemCount: integer
+      vcpuCount: integer
+      minHugePagesSize: string
+      enableDriveFormat: boolean
+      enableJournalDevice: boolean
+      socketsToUse:
+        - string
+      nodesPerSocket: integer
+      initContainerResources: ResourceRequirements
+      tolerations:
+        - Toleration
+      containerResources: ResourceRequirements
+      nodeProvisioningBudget: integer
+      enableChecksumValidation: boolean
+      enableAtomicity4K: boolean
+      stripe:
+        dataChunks: integer
+        parityChunks: integer
+      fabricType: string
+      openshift:
+        machineConfigPool: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+      ports:
+        nvmf: integer
+        rpc: integer
+        nodeAgent: integer
+      enableFailureDomains: boolean
+      enableNodeAffinity: boolean
+      backup:
+        endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+        bucket: string
+        region: string
+        credentialsSecretRef: LocalObjectReference
+      kms:
+        vault:
+          endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+    nodeSets:
+      - name: string
+        groups:
+          - name: string
+            workers:
+              - string
+            mgmtInterface: string
+            dataInterfaces:
+              - string
+            devices:
+              nvme:
+                - '^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F]$'
+              block:
+                - '^/dev/[a-zA-Z0-9._/-]+$'
+            failureDomain: '^[a-zA-Z0-9]([-_.a-zA-Z0-9]*[a-zA-Z0-9])?$'
+            spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
+            reservedSystemCPU: '^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$'
+            journalManager:
+              count: integer
+              percentPerDevice: integer
+    nodeRefs:
+      - string
+  storageCluster:
+    name: string
+    uuid: string
+    phase: string
+    pool: string
+    nodes:
+      - name: string
+        phase: string
+        hostname: string
+  conditions:
+    - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha2` | | |
+| `kind` _string_ | `StorageSiteDeployment` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[StorageSiteDeploymentSpec](#storagesitedeploymentspec)_ |  |  |  |
+| `status` _[StorageSiteDeploymentStatus](#storagesitedeploymentstatus)_ |  |  |  |
+
+
+#### StorageSiteDeploymentPhase
+
+_Underlying type:_ _string_
+
+StorageSiteDeploymentPhase is the request's own progress.
+
+_Validation:_
+- Enum: [Pending Discovering Drafted Deploying Online Failed]
+
+_Appears in:_
+- [StorageSiteDeploymentStatus](#storagesitedeploymentstatus)
+
+| Field | Description |
+| --- | --- |
+| `Pending` | StorageSiteDeploymentPhasePending is the request before the hub delivered<br />anything to the site.<br /> |
+| `Discovering` | StorageSiteDeploymentPhaseDiscovering is the discovery running on the site:<br />the draft is not written yet, or names no node yet.<br /> |
+| `Drafted` | StorageSiteDeploymentPhaseDrafted is a draft with nodes on the site, sized<br />as the request says, awaiting approval.<br /> |
+| `Deploying` | StorageSiteDeploymentPhaseDeploying is an approved draft expanding into a<br />StorageCluster that is not Online yet.<br /> |
+| `Online` | StorageSiteDeploymentPhaseOnline is the StorageCluster Online on the site.<br /> |
+| `Failed` | StorageSiteDeploymentPhaseFailed is the site's own failure: the draft or the<br />StorageCluster failed, or the hub could not deliver the request.<br /> |
+
+
+#### StorageSiteDeploymentSpec
+
+
+
+StorageSiteDeploymentSpec is the request for one site's storage cluster.
+
+
+
+_Appears in:_
+- [StorageSiteDeployment](#storagesitedeployment)
+
+_Example:_
+
+```yaml
+cluster: string
+siteNamespace: string
+draftName: string
+discover:
+  enableControlPlaneNodes: boolean
+  workers:
+    - string
+  nodeSelector:
+    string: string
+sizing:
+  name: string
+  vcpuCount: integer
+  minHugePagesSize: string
+  maxSubsystemCount: integer
+  enableDriveFormat: boolean
+  enableJournalDevice: boolean
+  stripe:
+    dataChunks: integer
+    parityChunks: integer
+approved: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `cluster` _string_ | Cluster is the OCM ManagedCluster the storage is deployed on. The request's<br />ManifestWork and views live in its namespace on the hub. Immutable. |  | MaxLength: 63 <br />MinLength: 1 <br />Required: \{\} <br /> |
+| `siteNamespace` _string_ | SiteNamespace is the simplyblock operator's namespace on the site, where<br />the discovery and the draft live. | simplyblock | MaxLength: 63 <br />Optional: \{\} <br /> |
+| `draftName` _string_ | DraftName is the ClusterDeploymentConfig the discovery writes on the site<br />and the request sizes and approves. Immutable. | site-draft | MaxLength: 63 <br />Optional: \{\} <br /> |
+| `discover` _[StorageSiteDiscovery](#storagesitediscovery)_ | Discover is the discovery the site runs first. Changing it runs another<br />discovery, which rewrites the draft. |  | Optional: \{\} <br /> |
+| `sizing` _[StorageSiteSizing](#storagesitesizing)_ | Sizing is written onto the draft's cluster template once the draft exists,<br />so the reviewer sees the sized draft before approving it. |  | Optional: \{\} <br /> |
+| `approved` _boolean_ | Approved is the review gate, delivered to the draft on the site. One-way,<br />as the draft's own gate is. | false | Optional: \{\} <br /> |
+
+
+#### StorageSiteDeploymentStatus
+
+
+
+StorageSiteDeploymentStatus is what the site reports back, projected.
+
+
+
+_Appears in:_
+- [StorageSiteDeployment](#storagesitedeployment)
+
+_Example:_
+
+```yaml
+phase: StorageSiteDeploymentPhase
+message: string
+observedGeneration: integer
+workName: string
+draft:
+  name: string
+  phase: string
+  message: string
+  approved: boolean
+  cluster:
+    name: string
+    maxSubsystemCount: integer
+    vcpuCount: integer
+    minHugePagesSize: string
+    enableDriveFormat: boolean
+    enableJournalDevice: boolean
+    socketsToUse:
+      - string
+    nodesPerSocket: integer
+    initContainerResources: ResourceRequirements
+    tolerations:
+      - Toleration
+    containerResources: ResourceRequirements
+    nodeProvisioningBudget: integer
+    enableChecksumValidation: boolean
+    enableAtomicity4K: boolean
+    stripe:
+      dataChunks: integer
+      parityChunks: integer
+    fabricType: string
+    openshift:
+      machineConfigPool: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+    ports:
+      nvmf: integer
+      rpc: integer
+      nodeAgent: integer
+    enableFailureDomains: boolean
+    enableNodeAffinity: boolean
+    backup:
+      endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+      bucket: string
+      region: string
+      credentialsSecretRef: LocalObjectReference
+    kms:
+      vault:
+        endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+  nodeSets:
+    - name: string
+      groups:
+        - name: string
+          workers:
+            - string
+          mgmtInterface: string
+          dataInterfaces:
+            - string
+          devices:
+            nvme:
+              - '^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F]$'
+            block:
+              - '^/dev/[a-zA-Z0-9._/-]+$'
+          failureDomain: '^[a-zA-Z0-9]([-_.a-zA-Z0-9]*[a-zA-Z0-9])?$'
+          spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
+          reservedSystemCPU: '^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$'
+          journalManager:
+            count: integer
+            percentPerDevice: integer
+  nodeRefs:
+    - string
+storageCluster:
+  name: string
+  uuid: string
+  phase: string
+  pool: string
+  nodes:
+    - name: string
+      phase: string
+      hostname: string
+conditions:
+  - Condition
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phase` _[StorageSiteDeploymentPhase](#storagesitedeploymentphase)_ | Phase is the request's own progress. |  | Enum: [Pending Discovering Drafted Deploying Online Failed] <br />Optional: \{\} <br /> |
+| `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as<br />the request moves, and never a log. |  | Optional: \{\} <br /> |
+| `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from. |  | Optional: \{\} <br /> |
+| `workName` _string_ | WorkName is the ManifestWork carrying the request to the site. |  | Optional: \{\} <br /> |
+| `draft` _[StorageSiteDraft](#storagesitedraft)_ | Draft is the draft as the site reports it. |  | Optional: \{\} <br /> |
+| `storageCluster` _[StorageSiteCluster](#storagesitecluster)_ | StorageCluster is the cluster the approved draft produced. |  | Optional: \{\} <br /> |
+| `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#condition-v1-meta) array_ | Conditions: Delivered (the work is applied on the site), Discovered (the<br />draft names nodes), Approved (the site's draft is approved), Ready (the<br />StorageCluster is Online). |  | Optional: \{\} <br /> |
+
+
+#### StorageSiteDiscovery
+
+
+
+StorageSiteDiscovery is the discovery the site runs: which nodes are
+inspected. It is the hub-side form of OperatorOps.spec.discover.
+
+
+
+_Appears in:_
+- [StorageSiteDeploymentSpec](#storagesitedeploymentspec)
+
+_Example:_
+
+```yaml
+enableControlPlaneNodes: boolean
+workers:
+  - string
+nodeSelector:
+  string: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `enableControlPlaneNodes` _boolean_ | EnableControlPlaneNodes lets the discovery consider the nodes that run the<br />API server. Every server of a small distribution is one, so a three-node<br />site has no storage without it. |  | Optional: \{\} <br /> |
+| `workers` _string array_ | Workers limits the discovery to these nodes. Empty is every worker. |  | Optional: \{\} <br /> |
+| `nodeSelector` _object (keys:string, values:string)_ | NodeSelector limits the discovery to the nodes carrying these labels. |  | Optional: \{\} <br /> |
+
+
+#### StorageSiteDraft
+
+
+
+StorageSiteDraft is the draft as the site reports it.
+
+
+
+_Appears in:_
+- [StorageSiteDeploymentStatus](#storagesitedeploymentstatus)
+
+_Example:_
+
+```yaml
+name: string
+phase: string
+message: string
+approved: boolean
+cluster:
+  name: string
+  maxSubsystemCount: integer
+  vcpuCount: integer
+  minHugePagesSize: string
+  enableDriveFormat: boolean
+  enableJournalDevice: boolean
+  socketsToUse:
+    - string
+  nodesPerSocket: integer
+  initContainerResources: ResourceRequirements
+  tolerations:
+    - Toleration
+  containerResources: ResourceRequirements
+  nodeProvisioningBudget: integer
+  enableChecksumValidation: boolean
+  enableAtomicity4K: boolean
+  stripe:
+    dataChunks: integer
+    parityChunks: integer
+  fabricType: string
+  openshift:
+    machineConfigPool: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+  ports:
+    nvmf: integer
+    rpc: integer
+    nodeAgent: integer
+  enableFailureDomains: boolean
+  enableNodeAffinity: boolean
+  backup:
+    endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+    bucket: string
+    region: string
+    credentialsSecretRef: LocalObjectReference
+  kms:
+    vault:
+      endpoint: '^https?://[a-zA-Z0-9.-]+(:[0-9]{1,5})?(/.*)?$'
+nodeSets:
+  - name: string
+    groups:
+      - name: string
+        workers:
+          - string
+        mgmtInterface: string
+        dataInterfaces:
+          - string
+        devices:
+          nvme:
+            - '^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-9a-fA-F]$'
+          block:
+            - '^/dev/[a-zA-Z0-9._/-]+$'
+        failureDomain: '^[a-zA-Z0-9]([-_.a-zA-Z0-9]*[a-zA-Z0-9])?$'
+        spdkSystemMemory: '^[0-9]+(G|GI|GB|GiB|M|MI|MB|MiB|g|gi|gb|gib|m|mi|mb|mib)?$'
+        reservedSystemCPU: '^[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$'
+        journalManager:
+          count: integer
+          percentPerDevice: integer
+nodeRefs:
+  - string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the ClusterDeploymentConfig on the site. |  |  |
+| `phase` _string_ | Phase is the draft's own phase on the site (Draft, Expanding, Expanded,<br />Failed). |  | Optional: \{\} <br /> |
+| `message` _string_ | Message is what the site says about the draft: validation findings while<br />it is a draft, the expansion's step afterwards. |  | Optional: \{\} <br /> |
+| `approved` _boolean_ | Approved is whether the draft is approved on the site. |  | Optional: \{\} <br /> |
+| `cluster` _[ClusterTemplate](#clustertemplate)_ | Cluster is the draft's cluster template, with the sizing applied. |  | Optional: \{\} <br /> |
+| `nodeSets` _[NodeSet](#nodeset) array_ | NodeSets are the nodes and devices the discovery found, for review. |  | Optional: \{\} <br /> |
+| `nodeRefs` _string array_ | NodeRefs are the StorageNode objects the expansion created. |  | Optional: \{\} <br /> |
+
+
+#### StorageSiteNode
+
+
+
+StorageSiteNode is one storage node of the deployed cluster, as the site
+reports it.
+
+
+
+_Appears in:_
+- [StorageSiteCluster](#storagesitecluster)
+
+_Example:_
+
+```yaml
+name: string
+phase: string
+hostname: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the StorageNode object on the site. |  |  |
+| `phase` _string_ | Phase is the node's phase on the site. |  | Optional: \{\} <br /> |
+| `hostname` _string_ | Hostname is the Kubernetes node it runs on. |  | Optional: \{\} <br /> |
+
+
+#### StorageSiteSizing
+
+
+
+StorageSiteSizing is the cluster template written onto the draft before it
+is approved: the fields of ClusterDeploymentConfig.spec.cluster a reviewer
+decides. Absent fields keep what the discovery wrote.
+
+
+
+_Appears in:_
+- [StorageSiteDeploymentSpec](#storagesitedeploymentspec)
+
+_Example:_
+
+```yaml
+name: string
+vcpuCount: integer
+minHugePagesSize: string
+maxSubsystemCount: integer
+enableDriveFormat: boolean
+enableJournalDevice: boolean
+stripe:
+  dataChunks: integer
+  parityChunks: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `name` _string_ | Name is the StorageCluster's name on the site. |  | MaxLength: 63 <br />Optional: \{\} <br /> |
+| `vcpuCount` _integer_ | VCPUCount is the number of vCPUs each storage node takes. |  | Minimum: 1 <br />Optional: \{\} <br /> |
+| `minHugePagesSize` _string_ | MinHugePagesSize is the hugepage memory each storage node takes, as a<br />quantity ("8G"). |  | Optional: \{\} <br /> |
+| `maxSubsystemCount` _integer_ | MaxSubsystemCount is the number of NVMe-oF subsystems each node serves. |  | Minimum: 1 <br />Optional: \{\} <br /> |
+| `enableDriveFormat` _boolean_ | EnableDriveFormat lets the deployment format the devices it takes. |  | Optional: \{\} <br /> |
+| `enableJournalDevice` _boolean_ | EnableJournalDevice dedicates one device per node to the journal. |  | Optional: \{\} <br /> |
+| `stripe` _[StripeSpec](#stripespec)_ | Stripe is the erasure-coding layout. |  | Optional: \{\} <br /> |
+
+
 #### StripeSpec
 
 
@@ -6361,6 +7223,7 @@ and by the cluster's activation gate.
 _Appears in:_
 - [ClusterTemplate](#clustertemplate)
 - [StorageClusterSpec](#storageclusterspec)
+- [StorageSiteSizing](#storagesitesizing)
 
 _Example:_
 
@@ -6373,6 +7236,278 @@ parityChunks: integer
 | --- | --- | --- | --- |
 | `dataChunks` _integer_ | DataChunks is the number of data chunks per stripe (ndcs). |  | Minimum: 1 <br />Optional: \{\} <br /> |
 | `parityChunks` _integer_ | ParityChunks is the number of parity chunks per stripe (npcs), and<br />therefore how many chunk losses a stripe survives. |  | Minimum: 0 <br />Optional: \{\} <br /> |
+
+
+#### TestFailover
+
+
+
+TestFailover is a one-way, non-disruptive test-failover drill. It recovers a
+source volume, or a consistency group, from a snapshot into an isolated
+namespace on a chosen cluster as bound PVCs, without touching the source. The
+hub reads the source on its cluster and places the bubble on the recovery
+cluster through OCM. It runs to a terminal phase, or holds Ready until it is
+deleted, and deletion reclaims the clones and any snapshots the drill took.
+
+
+
+
+
+_Example:_
+
+```yaml
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: TestFailover
+metadata:
+  name: string
+spec:
+  scope: TestFailoverScope
+  sourceCluster: string
+  sourceNamespace: string
+  sourceRef: string
+  bubbleCluster: string
+  bubbleNamespace: string
+  ttlSeconds: integer
+status:
+  phase: TestFailoverPhase
+  step: KubeSnapshot
+  message: string
+  triggered: boolean
+  observedGeneration: integer
+  clones:
+    - sourceRef: string
+      sourceHandle: string
+      snapshotID: string
+      cloneID: string
+      pvcName: string
+      sizeBytes: integer
+      sourceVolumeContext:
+        string: string
+      sourceFSType: string
+      sourceVolumeMode: string
+  report:
+    bubbleCluster: string
+    recoveryPoint: string
+    recoveryPointTime: Time
+    recoveryPointAgeSeconds: integer
+    invariantsHeld: boolean
+  startedAt: Time
+  readyAt: Time
+  completedAt: Time
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha2` | | |
+| `kind` _string_ | `TestFailover` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[TestFailoverSpec](#testfailoverspec)_ |  |  |  |
+| `status` _[TestFailoverStatus](#testfailoverstatus)_ |  |  |  |
+
+
+#### TestFailoverClone
+
+
+
+TestFailoverClone is one recovered volume: the source it came from, the
+snapshot and clone the drill built, and the PVC placed on the bubble cluster.
+
+
+
+_Appears in:_
+- [TestFailoverStatus](#testfailoverstatus)
+
+_Example:_
+
+```yaml
+sourceRef: string
+sourceHandle: string
+snapshotID: string
+cloneID: string
+pvcName: string
+sizeBytes: integer
+sourceVolumeContext:
+  string: string
+sourceFSType: string
+sourceVolumeMode: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `sourceRef` _string_ | SourceRef is the source volume, or group member, the recovered volume maps<br />to. |  |  |
+| `sourceHandle` _string_ | SourceHandle is the source volume's backend handle, read from its PV. |  | Optional: \{\} <br /> |
+| `snapshotID` _string_ | SnapshotID is the recovery-point snapshot: the replicated snapshot already on<br />the bubble cluster's backend that the clone is built from. |  | Optional: \{\} <br /> |
+| `cloneID` _string_ | CloneID is the backend id of the writable clone. |  | Optional: \{\} <br /> |
+| `pvcName` _string_ | PVCName is the bound PVC in the bubble namespace on the bubble cluster. |  | Optional: \{\} <br /> |
+| `sizeBytes` _integer_ | SizeBytes is the recovered volume's size. |  | Optional: \{\} <br /> |
+| `sourceVolumeContext` _object (keys:string, values:string)_ | SourceVolumeContext is the source PV's CSI volumeAttributes, minus the<br />identity and provisioner keys, carried onto the bubble PV so the node plugin<br />receives a non-nil VolumeContext when it stages the clone. The clone's own<br />identity (NQN, connections, nsId, and so on) is re-resolved from the clone<br />handle at stage time, so only the class-level parameters are carried; the<br />identity keys are dropped so a failed clone lookup can never point the mount<br />back at the source. |  | Optional: \{\} <br /> |
+| `sourceFSType` _string_ | SourceFSType is the source PV's CSI fsType, carried onto the bubble PV so the<br />node plugin stages the clone with the filesystem it actually carries. The<br />clone is a block copy of the source, so its filesystem is the source's; an<br />empty fsType makes the node plugin default to ext4 and refuse to mount an XFS<br />volume. |  | Optional: \{\} <br /> |
+| `sourceVolumeMode` _string_ | SourceVolumeMode is the source PV's volumeMode (Filesystem or Block),<br />carried onto the bubble PV and PVC. A VM's disk is a Block claim; a bubble<br />claim that omitted the mode defaulted to Filesystem and the kubelet asked<br />the node plugin to mount a raw guest disk (2026-10-03). |  | Optional: \{\} <br /> |
+
+
+#### TestFailoverPhase
+
+_Underlying type:_ _string_
+
+TestFailoverPhase is the drill's own progress.
+
+_Validation:_
+- Enum: [Pending Provisioning Ready Failed TearingDown]
+
+_Appears in:_
+- [TestFailoverStatus](#testfailoverstatus)
+
+| Field | Description |
+| --- | --- |
+| `Pending` |  |
+| `Provisioning` |  |
+| `Ready` |  |
+| `Failed` |  |
+| `TearingDown` |  |
+
+
+#### TestFailoverReport
+
+
+
+TestFailoverReport is the evidence a drill produces.
+
+
+
+_Appears in:_
+- [TestFailoverStatus](#testfailoverstatus)
+
+_Example:_
+
+```yaml
+bubbleCluster: string
+recoveryPoint: string
+recoveryPointTime: Time
+recoveryPointAgeSeconds: integer
+invariantsHeld: boolean
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `bubbleCluster` _string_ | BubbleCluster is the cluster the drill recovered onto. |  | Optional: \{\} <br /> |
+| `recoveryPoint` _string_ | RecoveryPoint is the snapshot or group generation the drill recovered. |  | Optional: \{\} <br /> |
+| `recoveryPointTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | RecoveryPointTime is when that point was taken. |  | Optional: \{\} <br /> |
+| `recoveryPointAgeSeconds` _integer_ | RecoveryPointAgeSeconds is the drill time minus the recovery-point time. |  | Optional: \{\} <br /> |
+| `invariantsHeld` _boolean_ | InvariantsHeld is true only when the source fingerprint taken before the<br />drill matches the one taken at Ready. A Ready drill with this false is a<br />defect. |  | Optional: \{\} <br /> |
+
+
+#### TestFailoverScope
+
+_Underlying type:_ _string_
+
+TestFailoverScope selects what a drill recovers.
+
+_Validation:_
+- Enum: [Volume Group]
+
+_Appears in:_
+- [TestFailoverSpec](#testfailoverspec)
+
+| Field | Description |
+| --- | --- |
+| `Volume` | TestFailoverScopeVolume recovers a single source volume, named by a PVC.<br /> |
+| `Group` | TestFailoverScopeGroup recovers a consistency group from one<br />group-consistent point.<br /> |
+
+
+#### TestFailoverSpec
+
+
+
+TestFailoverSpec is the request for one non-disruptive test-failover drill.
+
+The source is named by where it runs and what it is, so the hub can find it
+without anyone extracting a backend handle by hand. SourceNamespace is
+required for a Volume drill, where the source is a PVC, and unused for a Group
+drill, where SourceRef names a consistency group.
+
+
+
+_Appears in:_
+- [TestFailover](#testfailover)
+
+_Example:_
+
+```yaml
+scope: TestFailoverScope
+sourceCluster: string
+sourceNamespace: string
+sourceRef: string
+bubbleCluster: string
+bubbleNamespace: string
+ttlSeconds: integer
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `scope` _[TestFailoverScope](#testfailoverscope)_ | Scope selects what the drill recovers. Immutable. |  | Enum: [Volume Group] <br />Required: \{\} <br /> |
+| `sourceCluster` _string_ | SourceCluster is the OCM ManagedCluster the source runs on. The hub reads<br />the source there through a ManagedClusterView. Immutable. |  | Required: \{\} <br /> |
+| `sourceNamespace` _string_ | SourceNamespace is the namespace of the source PVC on SourceCluster.<br />Required for scope=Volume. Immutable. |  | Optional: \{\} <br /> |
+| `sourceRef` _string_ | SourceRef names the source on SourceCluster: a PersistentVolumeClaim in<br />SourceNamespace (scope=Volume), or a consistency group (scope=Group).<br />Immutable. |  | Required: \{\} <br /> |
+| `bubbleCluster` _string_ | BubbleCluster is the OCM ManagedCluster to recover onto: a DR target holding<br />the replicated point, or another cluster. It must differ from SourceCluster;<br />test-failover recovers onto a different cluster, never in place. Immutable. |  | Required: \{\} <br /> |
+| `bubbleNamespace` _string_ | BubbleNamespace is the namespace on the bubble cluster where the recovered<br />PVCs are created. Immutable. | bubble | Optional: \{\} <br /> |
+| `ttlSeconds` _integer_ | TTLSeconds is an optional maximum lifetime: the drill is torn down after it<br />even without a delete, so a forgotten drill cannot hold a clone forever. |  | Minimum: 0 <br />Optional: \{\} <br /> |
+
+
+#### TestFailoverStatus
+
+
+
+TestFailoverStatus is the observed state of one drill.
+
+
+
+_Appears in:_
+- [TestFailover](#testfailover)
+
+_Example:_
+
+```yaml
+phase: TestFailoverPhase
+step: KubeSnapshot
+message: string
+triggered: boolean
+observedGeneration: integer
+clones:
+  - sourceRef: string
+    sourceHandle: string
+    snapshotID: string
+    cloneID: string
+    pvcName: string
+    sizeBytes: integer
+    sourceVolumeContext:
+      string: string
+    sourceFSType: string
+    sourceVolumeMode: string
+report:
+  bubbleCluster: string
+  recoveryPoint: string
+  recoveryPointTime: Time
+  recoveryPointAgeSeconds: integer
+  invariantsHeld: boolean
+startedAt: Time
+readyAt: Time
+completedAt: Time
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `phase` _[TestFailoverPhase](#testfailoverphase)_ | Phase is the drill's own progress. |  | Enum: [Pending Provisioning Ready Failed TearingDown] <br />Optional: \{\} <br /> |
+| `step` _[KubeSnapshot](https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go)_ | Step is the position of the running drill's state machine. |  | Optional: \{\} <br /> |
+| `message` _string_ | Message is the reason the phase is what it is: one sentence, replaced as the<br />drill moves, and never a log. |  | Optional: \{\} <br /> |
+| `triggered` _boolean_ | Triggered records that the current step's side effect was issued, so a<br />restart does not repeat it. |  | Optional: \{\} <br /> |
+| `observedGeneration` _integer_ | ObservedGeneration is the generation the rest of this status was computed<br />from, so a stale status can be told from a current one. |  | Optional: \{\} <br /> |
+| `clones` _[TestFailoverClone](#testfailoverclone) array_ | Clones is one entry per recovered volume. |  | Optional: \{\} <br /> |
+| `report` _[TestFailoverReport](#testfailoverreport)_ | Report is the drill's evidence, populated as it reaches Ready. |  | Optional: \{\} <br /> |
+| `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the drill started. |  | Optional: \{\} <br /> |
+| `readyAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | ReadyAt is when every recovered PVC became bound. |  | Optional: \{\} <br /> |
+| `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the drill reached a terminal phase. |  | Optional: \{\} <br /> |
+
+
 
 
 #### ThroughputLimits
@@ -6568,7 +7703,6 @@ filesystem: string
 enableCompression: boolean
 enableClientCompression: boolean
 enableClientDeduplication: boolean
-enableEncryption: boolean
 enableReplication: boolean
 enableDHCHAP: boolean
 priorityClass: string
@@ -6585,7 +7719,6 @@ tune2fsReservedBlocks: string
 | `enableCompression` _boolean_ | EnableCompression compresses logical volumes. |  | Optional: \{\} <br /> |
 | `enableClientCompression` _boolean_ | EnableClientCompression compresses each volume on the node that consumes<br />it (VDO), before a write ever reaches the wire, rather than on the storage<br />node. Distinct from EnableCompression, and independent of<br />EnableClientDeduplication: either, both, or neither may be set. A volume<br />requesting this is pinned to a node whose kernel can run dm-vdo. |  | Optional: \{\} <br /> |
 | `enableClientDeduplication` _boolean_ | EnableClientDeduplication deduplicates each volume on the node that<br />consumes it (VDO), independent of EnableClientCompression. It carries a<br />significant fixed RAM cost per volume for VDO's index, so it is meant for<br />the pools where duplicate data is actually expected (VM images, container<br />layers, backup targets) rather than enabled by default. |  | Optional: \{\} <br /> |
-| `enableEncryption` _boolean_ | EnableEncryption encrypts logical volumes, using the key store the cluster<br />names in its own spec. |  | Optional: \{\} <br /> |
 | `enableReplication` _boolean_ | EnableReplication replicates logical volumes. |  | Optional: \{\} <br /> |
 | `enableDHCHAP` _boolean_ | EnableDHCHAP authenticates NVMe-oF connections to this pool's volumes.<br />Authentication is only enforced when AllowedNodes is non-empty, because<br />the generated class gets its node selector from that list and a class's<br />parameters cannot be edited afterward. |  | Optional: \{\} <br /> |
 | `priorityClass` _string_ | PriorityClass is the logical-volume priority class the control plane<br />places with. |  | Optional: \{\} <br /> |

@@ -12,11 +12,11 @@ RBAC alone cannot express, such as who may override a readiness verdict.
 
 ## Roles
 
-| ClusterRole   | Read           | Write                                                                        | Special                      |
-|---------------|----------------|------------------------------------------------------------------------------|------------------------------|
-| `dr-viewer`   | All DR objects | None                                                                         | None                         |
-| `dr-operator` | As `dr-viewer` | ProtectedApplication, RecoveryAction, RecoveryPlan, TestBubble, TestSchedule | None                         |
-| `dr-admin`    | As `dr-viewer` | As `dr-operator`, plus ProtectionPlan, DRPath, DRConfig, and RestoreAction   | `override` on RecoveryAction |
+| ClusterRole   | Read           | Write                                                                                               | Special                      |
+|---------------|----------------|-----------------------------------------------------------------------------------------------------|------------------------------|
+| `dr-viewer`   | All DR objects | None                                                                                                | None                         |
+| `dr-operator` | As `dr-viewer` | ProtectedApplication, RecoveryAction, RecoveryPlan, TestBubble, TestSchedule                        | None                         |
+| `dr-admin`    | As `dr-viewer` | As `dr-operator`, plus ProtectionPlan, DRPath, DRConfig, RestoreAction, SiteProfile, and DHCPServer | `override` on RecoveryAction |
 
 The division follows the responsibilities in a typical organization:
 

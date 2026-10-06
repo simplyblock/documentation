@@ -3746,6 +3746,8 @@
       
         
       
+        
+      
     
     
       
@@ -4143,9 +4145,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#synchronous-replication-between-two-datacenters" class="md-nav__link">
+  <a href="#synchronous-replication-between-the-zones-of-a-stretch-cluster" class="md-nav__link">
     <span class="md-ellipsis">
-      Synchronous Replication Between Two Datacenters
+      Synchronous Replication Between the Zones of a Stretch Cluster
     </span>
   </a>
   
@@ -4161,9 +4163,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#synchronous-replication-with-backups-to-s3" class="md-nav__link">
+  <a href="#asynchronous-replication-with-backups-to-s3" class="md-nav__link">
     <span class="md-ellipsis">
-      Synchronous Replication With Backups to S3
+      Asynchronous Replication With Backups to S3
     </span>
   </a>
   
@@ -4450,6 +4452,8 @@
       
         
       
+        
+      
     
     
       
@@ -4609,6 +4613,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../operations/restart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restart After a Storage Recovery
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../operations/recovery-plans/" class="md-nav__link">
         
   
@@ -4671,6 +4697,28 @@
           </ul>
         </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../control-center/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Control Center
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -6223,9 +6271,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#synchronous-replication-between-two-datacenters" class="md-nav__link">
+  <a href="#synchronous-replication-between-the-zones-of-a-stretch-cluster" class="md-nav__link">
     <span class="md-ellipsis">
-      Synchronous Replication Between Two Datacenters
+      Synchronous Replication Between the Zones of a Stretch Cluster
     </span>
   </a>
   
@@ -6241,9 +6289,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#synchronous-replication-with-backups-to-s3" class="md-nav__link">
+  <a href="#asynchronous-replication-with-backups-to-s3" class="md-nav__link">
     <span class="md-ellipsis">
-      Synchronous Replication With Backups to S3
+      Asynchronous Replication With Backups to S3
     </span>
   </a>
   
@@ -6326,8 +6374,8 @@ topology needs. Protection plans are written by the <code>dr-admin</code> role.<
 </tr>
 <tr>
 <td><code>spec.sites[].zone</code></td>
-<td>No</td>
-<td>Topology zone the site stands for, if the cluster spans several zones.</td>
+<td>For <code>sync</code></td>
+<td>Topology zone the site stands for (node label <code>topology.kubernetes.io/zone</code>). The sites of a sync plan are the zones of one cluster; optional for async plans.</td>
 </tr>
 <tr>
 <td><code>spec.sites[].region</code></td>
@@ -6352,7 +6400,12 @@ topology needs. Protection plans are written by the <code>dr-admin</code> role.<
 <tr>
 <td><code>spec.storageProfile.consistencyGroups</code></td>
 <td>No</td>
-<td><code>Enabled</code> (default) replicates the volumes of an application together with one consistency point (VolumeGroupReplication). <code>Disabled</code> replicates each volume by itself.</td>
+<td><code>Enabled</code> replicates the volumes of an application together with one consistency point (VolumeGroupReplication). <code>Disabled</code> (default) replicates each volume by itself.</td>
+</tr>
+<tr>
+<td><code>spec.storageProfile.groupStorageClassSelector</code></td>
+<td>No</td>
+<td>With consistency groups enabled, the StorageClasses whose PVCs form groups. Unset means every selected class.</td>
 </tr>
 <tr>
 <td><code>spec.methods[]</code></td>
@@ -6367,27 +6420,22 @@ topology needs. Protection plans are written by the <code>dr-admin</code> role.<
 <tr>
 <td><code>spec.methods[].type</code></td>
 <td>Yes</td>
-<td><code>sync</code>, <code>async</code>, or <code>snapshot-s3</code>. See <a href="../replication-types/">Replication Types</a>.</td>
+<td><code>sync</code>, <code>async</code>, <code>s3-backup</code>, <code>sync-s3-backup</code>, or <code>async-s3-backup</code>. See <a href="../replication-types/">Replication Types</a>.</td>
 </tr>
 <tr>
 <td><code>spec.methods[].schedulingInterval</code></td>
-<td>For <code>async</code></td>
-<td>Replication interval, for example, <code>5m</code>, <code>1h</code>, or <code>1d</code>. Forbidden for other types.</td>
+<td>For async types</td>
+<td>Replication interval of <code>async</code> and <code>async-s3-backup</code>, for example, <code>5m</code>, <code>1h</code>, or <code>1d</code>.</td>
 </tr>
 <tr>
-<td><code>spec.methods[].snapshotS3.schedule</code></td>
-<td>For <code>snapshot-s3</code></td>
-<td>Cron expression of the backup schedule.</td>
+<td><code>spec.methods[].s3Backup.interval</code></td>
+<td>For backup types</td>
+<td>Backup interval of <code>s3-backup</code>, <code>sync-s3-backup</code>, and <code>async-s3-backup</code>, in the same notation.</td>
 </tr>
 <tr>
-<td><code>spec.methods[].snapshotS3.retention</code></td>
-<td>For <code>snapshot-s3</code></td>
-<td>Number of complete backup sets kept (at least 1).</td>
-</tr>
-<tr>
-<td><code>spec.methods[].snapshotS3.s3ProfileName</code></td>
-<td>No</td>
-<td>S3 profile for the backups, overriding the plan's profile.</td>
+<td><code>spec.methods[].s3Backup.retention</code></td>
+<td>For backup types</td>
+<td>Number of backups kept per volume (at least 1).</td>
 </tr>
 <tr>
 <td><code>spec.methods[].replicationParameters</code></td>
@@ -6409,10 +6457,17 @@ topology needs. Protection plans are written by the <code>dr-admin</code> role.<
 <td>No</td>
 <td>Velero namespace on the sites.</td>
 </tr>
+<tr>
+<td><code>spec.autoRestart.enabled</code>, <code>.stableFor</code></td>
+<td>No</td>
+<td>Restarts the plan's applications in place after their storage cluster recovers from a suspension. See <a href="../../operations/restart/">Restart After a Storage Recovery</a>.</td>
+</tr>
 </tbody>
 </table>
-<p>The API server rejects a plan that mixes <code>sync</code> and <code>async</code> methods, lists the same combination of cluster and zone
-twice, or has <code>s3Profiles</code> that do not cover exactly the sites of the plan.</p>
+<p>The API server rejects a plan that mixes synchronous and asynchronous methods, puts the sites of a sync plan on
+different clusters or leaves their zone empty, lists the same combination of cluster and zone twice, or has
+<code>s3Profiles</code> that do not cover exactly the sites of the plan. A plan written for the earlier <code>snapshot-s3</code> method
+type is refused.</p>
 <h2 id="selecting-the-storageclasses">Selecting the StorageClasses</h2>
 <p>The plan selects the protected StorageClasses by label, on every site. Only a selection label is set by the
 administrator, for example, <code>simplyblock.io/replicated: "true"</code>:</p>
@@ -6441,7 +6496,8 @@ installation, and the simplyblock backup buckets with the storage clusters (see
 <ul>
 <li><strong><code>s3Profiles</code>:</strong> One store per site, with bucket, endpoint, region, and a credential Secret in the Ramen
   namespace (created by the hub chart, see <a href="../../install/hub/">Installing the Hub</a>). Plans that name the same store
-  share it. This is the default for hubs installed with the hub chart.</li>
+  share it. This is the default for hubs installed with the hub chart, and the only option for the backup method
+  types, whose backups the storage writes into the site's store.</li>
 <li><strong><code>s3Profile</code>:</strong> The name of an S3 profile that already exists on the hub, shared by all sites. This is required on
   a hub where the S3 profiles are configured by other means, for example, an ACM or ODF hub with
   <code>bootstrap.enabled=false</code>.</li>
@@ -6554,17 +6610,20 @@ kubectl<span class="w"> </span>delete<span class="w"> </span>protectionplan<span
 <span class="w">      </span><span class="nt">secretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ramen-s3-secret</span>
 <span class="w">  </span><span class="nt">veleroNamespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">velero</span>
 </code></pre></div>
-<h3 id="synchronous-replication-between-two-datacenters">Synchronous Replication Between Two Datacenters</h3>
-<div class="highlight"><span class="filename">Metro plan with synchronous replication (plan-metro.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
+<h3 id="synchronous-replication-between-the-zones-of-a-stretch-cluster">Synchronous Replication Between the Zones of a Stretch Cluster</h3>
+<p>The sites of a sync plan are the zones of one cluster with a stretched simplyblock storage cluster underneath:</p>
+<div class="highlight"><span class="filename">Stretch cluster plan with synchronous replication (plan-metro.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ProtectionPlan</span>
 <span class="nt">metadata</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metro</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">sites</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dc1</span>
-<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-dc1</span>
+<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-stretch</span>
+<span class="w">      </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dc1</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dc2</span>
-<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-dc2</span>
+<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-stretch</span>
+<span class="w">      </span><span class="nt">zone</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dc2</span>
 <span class="w">  </span><span class="nt">storageProfile</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">storageClassSelector</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">matchLabels</span><span class="p">:</span>
@@ -6605,35 +6664,49 @@ paths decide which pairs are connected (see <a href="../paths/#three-sites-with-
 <span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ramen-eu</span>
 </code></pre></div>
 <p>Because the plan has more than one method, every application must set <code>spec.method</code>.</p>
-<h3 id="synchronous-replication-with-backups-to-s3">Synchronous Replication With Backups to S3</h3>
-<div class="highlight"><span class="filename">Metro plan with an additional backup method (plan-metro-backup.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
+<h3 id="asynchronous-replication-with-backups-to-s3">Asynchronous Replication With Backups to S3</h3>
+<p>A combined method is one method. The storage replicates every five minutes and backs every primary volume up to the
+site's store every hour, keeping 24 backups:</p>
+<div class="highlight"><span class="filename">Asynchronous plan with backups (plan-fra-backup.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ProtectionPlan</span>
 <span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">metro-backup</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fra-backup</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">sites</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dc1</span>
-<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-dc1</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dc2</span>
-<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-dc2</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fra-a</span>
+<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-fra-a</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fra-b</span>
+<span class="w">      </span><span class="nt">cluster</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ocp-fra-b</span>
 <span class="w">  </span><span class="nt">storageProfile</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">storageClassSelector</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">matchLabels</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">simplyblock.io/metro</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
-<span class="w">    </span><span class="nt">consistencyGroups</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Disabled</span>
+<span class="w">        </span><span class="nt">simplyblock.io/replicated</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 <span class="w">  </span><span class="nt">methods</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sync</span>
-<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sync</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-5m</span>
-<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">snapshot-s3</span>
-<span class="w">      </span><span class="nt">snapshotS3</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">schedule</span><span class="p">:</span><span class="w"> </span><span class="s">"*/5</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*"</span>
-<span class="w">        </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="w">  </span><span class="nt">s3Profile</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ramen-metro</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">async-5m-backup</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">async-s3-backup</span>
+<span class="w">      </span><span class="nt">schedulingInterval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">      </span><span class="nt">s3Backup</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1h</span>
+<span class="w">        </span><span class="nt">retention</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24</span>
+<span class="w">  </span><span class="nt">s3Profiles</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fra-a</span>
+<span class="w">      </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr-metadata-fra-a</span>
+<span class="w">      </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://s3.eu-central-1.amazonaws.com</span>
+<span class="w">      </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-central-1</span>
+<span class="w">      </span><span class="nt">secretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ramen-s3-secret</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fra-b</span>
+<span class="w">      </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr-metadata-fra-b</span>
+<span class="w">      </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://s3.eu-central-1.amazonaws.com</span>
+<span class="w">      </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-central-1</span>
+<span class="w">      </span><span class="nt">secretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ramen-s3-secret</span>
+<span class="w">  </span><span class="nt">autoRestart</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
 <h3 id="passing-parameters-to-the-csi-driver">Passing Parameters to the CSI Driver</h3>
-<p><code>replicationParameters</code> are passed verbatim to the CSI driver. They are the contract with the CSI driver, for example, a reference to the replication secret:</p>
+<p><code>replicationParameters</code> are passed verbatim to the CSI driver. On simplyblock storage, nothing has to be passed:
+dr-hub derives the backend pairing, the replication policy, the per-direction class parameters, and the replication
+Secret itself (see <a href="../replication-types/#asynchronous-replication">Replication Types</a>). The parameters are the
+contract with another CSI driver, for example, a reference to its replication secret:</p>
 <div class="highlight"><span class="filename">Asynchronous plan with replication parameters (plan-fra.yaml)</span><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dr.simplyblock.io/v1alpha1</span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ProtectionPlan</span>
 <span class="nt">metadata</span><span class="p">:</span>
@@ -6682,7 +6755,7 @@ paths decide which pairs are connected (see <a href="../paths/#three-sites-with-
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 29, 2026 16:51:18 UTC">2026-09-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 6, 2026 14:03:53 UTC">2026-10-06</span>
   </span>
 
     
