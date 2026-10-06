@@ -845,6 +845,7 @@ sbctl cluster replication-policy-add
     --mode=<MODE>
     --keep=<KEEP>
     --retention-schedule=<RETENTION_SCHEDULE>
+    --rpo-target-sec=<RPO_TARGET_SEC>
     --consistency-group
 ```
 
@@ -861,6 +862,7 @@ sbctl cluster replication-policy-add
 | --mode| Replication mode. Default: `failover`.<br/><br/>Available Options:<br/>- failover<br/>- migration | string | False | - |
 | --keep| Replicated internal snapshots to retain on each side. Minimum (and default): `2`. | integer | False | - |
 | --retention-schedule| Tiered retention, e.g. `15m:2h,1h:11h,1d:7d` - one snapshot every 15 minutes for the last 2 hours, then hourly for 11 hours, then daily for 7 days. Snapshots older than the total span are pruned. Empty (default) keeps the flat --keep behaviour. | string | False | - |
+| --rpo-target-sec| Declared recovery point objective in seconds. RPO compliance is computed against this target instead of the derived lag budget. Unset means no declared objective. | integer | False | - |
 | --consistency-group| All volumes attached to this policy form ONE consistency group: they must share an LVS (creation pins them to it), cadence snapshots are taken as one frozen group, and fail-over generations resolve group-wide. | marker | False | - |
 
 
