@@ -38,16 +38,35 @@ place, and no device is ever claimed by the simplyblock storage plane PCI layer.
 
 ## Device Eligibility
 
-A block device is eligible for `lblk` onboarding if all of the following hold:
+A storage unit in `lblk` mode is either a whole disk or a partition. A block device is eligible for `lblk`
+onboarding if all of the following hold:
 
-- It is a whole disk (not a partition, and not a special device such as a loop, RAM, CD-ROM, or
-  device-mapper device).
-- It is not mounted, and no partition of it is mounted.
+- It is a whole disk or a partition, not a special device such as a loop, RAM, CD-ROM, or device-mapper device.
+- It is not mounted. For a whole disk, no partition of it is mounted either.
 - It is not held by another subsystem (LVM, MD RAID, or device-mapper).
 - It is not the root disk.
 - It is not read-only and reports a non-zero size.
-- It is unpartitioned. A device with an existing partition table is only accepted if it is explicitly
+- A whole disk is unpartitioned. A disk with an existing partition table is only accepted if it is explicitly
   force-formatted at node addition, which wipes the partition table and all filesystem signatures.
+
+### Partitions
+
+A partition can be used when the rest of its disk belongs to the operating system or other software:
+
+- **One partition per disk:** At most one partition of each physical disk is used by simplyblock.
+- **Same size:** All partitions used by a storage node should have the same size.
+- **Explicit selection:** Partitions are never selected automatically. They are named explicitly at storage node
+  configuration, by a persistent name such as `/dev/disk/by-partuuid/<PARTUUID>` or by serial
+  (`sn configure --lblk --blk-names` or `--blk-serials`). A selection must not contain both a whole disk and one of
+  its own partitions.
+- **Journal:** When the selection contains partitions, the smallest selected partition is split into a journal
+  partition and a data partition at configuration time. The journal is sized as a share of the node's selected
+  capacity, 3 percent by default (`--jm-percent`).
+- **Minimum:** A storage node needs at least two selected units, whole disks or partitions.
+
+The automatic discovery of the Simplyblock Operator (`enableLogicalBlockDevices`) proposes whole disks only. Its
+option `enablePartitionedDevices` admits whole disks that carry a partition table, which are then wiped. It does not
+propose partitions as storage units.
 
 ## Device Identity
 
@@ -62,6 +81,9 @@ serial is given a stable synthetic identifier at configuration time.
 
 Renaming is therefore harmless. Two disks that swap kernel names after a reboot are still matched by
 serial, and the storage stack is rebuilt on the correct disks.
+
+A partition is identified by the serial of its disk, extended with `-part-` and the partition UUID, and is resolved
+by its `/dev/disk/by-partuuid` path.
 
 ## Failure Detection and Handling
 
@@ -84,8 +106,8 @@ well before it fires.
 
 The device mode is cluster-global and deploy-time only: `nvme` and `lblk` devices cannot be mixed
 within one cluster, and the mode cannot be changed after cluster creation. In `lblk` mode,
-journal-on-device deployment (a dedicated device for the journal) is required. Device partitioning is
-not supported, and neither is growing a node's device set at restart time.
+the journal needs a dedicated device, or a journal partition split from the smallest selected partition. Growing a
+node's device set at restart time is not supported.
 
 SMART health telemetry is not available for AIO-backed devices. Device-level performance depends on
 the underlying block device and the kernel block layer, so higher latency than with SPDK-native NVMe

@@ -5,8 +5,9 @@ weight: 30250
 ---
 
 An edge cluster is deployed with the same resources as any storage cluster. This page covers only the steps that
-differ for edge clusters. The requirements are listed in
-[Edge Cluster Requirements](../../deployment-preparation/edge-requirements.md).
+differ for edge clusters. The edge-specific requirements are noted in
+[Hardware Requirements](../../deployment-preparation/hardware-requirements.md) and
+[Software Requirements](../../deployment-preparation/software-requirements.md).
 
 ## Preparing the Hub
 
@@ -69,7 +70,8 @@ spec:
     # forceJournalDevice: true
 ```
 
-With Linux block devices, `forceJournalDevice` lets the run dedicate one of several equal devices to the journal.
+With Linux block devices, `forceJournalDevice` lets the run dedicate one of several equal devices to the journal. The discovery proposes whole disks only. Partitions of a disk shared with the operating system are selected
+explicitly, as described in [Linux Block Devices](../../architecture/concepts/linux-block-devices.md#partitions).
 
 ## Draft for a One-Node Edge Cluster
 

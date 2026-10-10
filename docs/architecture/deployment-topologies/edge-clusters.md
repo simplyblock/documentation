@@ -81,6 +81,7 @@ For a two-node edge cluster, the link between the nodes and the management uplin
 or a network interface. Otherwise, a single failure cuts both paths at the same time, and the hub cannot tell a
 failed node from a broken link.
 
-The requirements are listed in [Edge Cluster Requirements](../../deployment-preparation/edge-requirements.md), the
-deployment in [Deploying Edge Clusters](../../kubernetes/installation/edge-clusters.md), and the operation in
+The edge-specific requirements are noted in [Hardware Requirements](../../deployment-preparation/hardware-requirements.md)
+and [Software Requirements](../../deployment-preparation/software-requirements.md), the deployment is described in
+[Deploying Edge Clusters](../../kubernetes/installation/edge-clusters.md), and the operation in
 [Operating Edge Clusters](../../kubernetes/operations/cluster/edge-clusters.md).
