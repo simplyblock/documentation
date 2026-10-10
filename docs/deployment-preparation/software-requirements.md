@@ -27,6 +27,12 @@ A full overview of the supported operating systems for initiators can be found a
 - [Linux Distributions and Versions](../reference/supported-linux-distributions.md#hosts-initiators-accessing-storage-cluster-over-nvmf)
 - [Linux Kernel Versions](../reference/supported-linux-kernels.md)
 
+Initiators that mount [pNFS volumes](../kubernetes/usage/pnfs.md) additionally require a kernel with the pNFS block
+layout driver (`CONFIG_PNFS_BLOCK`) and the `nvme_get_unique_id` function. This depends on the kernel build, not on its
+version number: Red Hat Enterprise Linux 9.8 (kernel 5.14.0-687) qualifies, while Red Hat Enterprise Linux 9.5
+(kernel 5.14.0-503) does not. A node without them still mounts pNFS volumes, but routes all of their data through the
+metadata server at a fraction of the throughput.
+
 # Kubernetes Requirements
 
 !!! important

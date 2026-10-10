@@ -23,8 +23,12 @@ weight: 20450
 | IOMMU                   | Input-Output Memory Management Unit                             |
 | IP                      | Internet Protocol                                               |
 | K8s                     | Kubernetes                                                      |
+| KVM                     | Kernel-based Virtual Machine                                    |
 | LV                      | Logical Volume                                                  |
+| MDS                     | Metadata Server                                                 |
 | MFT                     | Maximum Tolerable Failure                                       |
+| NFS                     | Network File System                                             |
+| NGUID                   | Namespace Globally Unique Identifier                            |
 | NIC                     | Network Interface Card                                          |
 | NQN                     | NVMe Qualified Name                                             |
 | NVMe                    | Non-Volatile Memory Express                                     |
@@ -32,6 +36,7 @@ weight: 20450
 | NVMe/RoCE               | NVMe over RDMA on Converged Ethernet                            |
 | NVMe/TCP                | NVMe over TCP                                                   |
 | OS                      | Operating System                                                |
+| pNFS                    | Parallel NFS                                                    |
 | PSK                     | Pre-Shared Key                                                  |
 | PV                      | Persistent Volume                                               |
 | PVC                     | Persistent Volume Claim                                         |
