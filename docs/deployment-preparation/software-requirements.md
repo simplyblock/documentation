@@ -53,6 +53,26 @@ Additionally, there are verified and supported operating systems for the Kuberne
 available at the [Supported Linux Distributions](../reference/supported-linux-distributions.md#kubernetes-hyper-converged-control-plane-and-storage-plane)
 reference.
 
+!!! note "Edge clusters"
+    An [edge cluster](../architecture/deployment-topologies/edge-clusters.md) runs the Simplyblock Operator in the
+    managed profile and connects to the control plane on a hub cluster:
+
+    - **Hub:** The control plane runs with the standalone profile. Its Management API is reachable from every edge
+      site, for example, through a LoadBalancer Service, an OpenShift Route, or an Ingress. Loopback and link-local
+      endpoints are rejected. A Secret with a static admin token, referenced by
+      `controlplane.local.adminTokenSecretRef`, lets edge operators authenticate, because the hub cannot verify a
+      service account token of another cluster.
+    - **Credentials at the edge:** The Management API endpoint, the admin token, the CA certificate of the Management
+      API if it is not in the system trust store, and the storage node image of the release.
+    - **Control plane nodes:** Small edge clusters often run storage on Kubernetes control plane nodes. The discovery
+      must then be allowed to use them (`enableControlPlaneNodes`).
+    - **Two-node OpenShift:** A two-node OpenShift cluster needs a tie-breaker for its own etcd, either OpenShift with
+      an arbiter node or OpenShift with fencing through the BMCs of the servers. This is independent of the storage
+      arbitration on the hub.
+    - **Node remediation:** For two-node edge clusters, Node Health Check with Self Node Remediation or Fence Agents
+      Remediation lets Kubernetes restart the workloads of a failed node. Without it, they wait for the default
+      eviction timeout.
+
 # Proxmox Requirements
 
 The Proxmox integration supports any Proxmox installation of version 8.0 and higher.

@@ -26,6 +26,11 @@ network bandwidth, and free space on the boot disk.
 <sup>2</sup> The required number of nodes is only valid for erasure coding scheme 1+1.
 </span>
 
+!!! note "Edge clusters"
+    A storage node of an [edge cluster](../architecture/deployment-topologies/edge-clusters.md) needs at least
+    3 vCPUs and 3 GB of RAM. An edge cluster has one storage node (erasure coding 1+0) or two storage nodes (erasure
+    coding 1+1 with the two-node declaration).
+
 !!! info
     In cloud environments including GCP and AWS, instance types are pre-configured. In general,
     there are no restrictions on instance types as long as these system requirements are met. However, it is highly
@@ -88,6 +93,9 @@ the assigned vCPUs and networking performance of the node. For each 10 GBit/s of
 it is recommended to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
 subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of 75 subsystems per
 node applies. See [Limits](../reference/limits.md).
+
+!!! note "Edge clusters"
+    The memory formula applies to edge clusters as well, with a minimum of 3 GB of RAM per storage node.
 
 | Unit                                     | Memory Requirement |
 |------------------------------------------|--------------------|
@@ -159,6 +167,11 @@ A full list of the supported architectures can be found in the
 NVMe devices must support 4KB native block size or devices that support 512b native block size with
 4KB write atomicity.
 
+!!! note "Edge clusters"
+    Edge clusters often use Linux block devices or partitions of a disk shared with the operating system. The rules
+    for partitions (at most one partition per disk, equal sizes recommended, explicit selection) are described in
+    [Linux Block Devices](../architecture/concepts/linux-block-devices.md#partitions).
+
 The NVMe devices are recommended to be sized between 1.9 TiB and 7.68 TiB. Large NVMe devices are supported,
 but performance per TiB is lower and rebalancing can take longer.
 
@@ -219,6 +232,12 @@ In production, simplyblock works with one of two options:
 For production, software-defined switches such as Linux Bridge or OVS cannot be used. An interface on top of a Linux
 bond over two ports of the NIC(s) or using SRV-IO must be created.
 
+!!! note "Edge clusters with two nodes"
+    A two-node edge cluster needs two independent paths: a link between the two storage nodes for journal and data
+    replication, and the management uplink to the hub. The two paths must not share a switch, a cable, or a network
+    interface. Otherwise, a single failure cuts both, and the hub cannot tell a failed node from a broken link. A
+    direct cable or a dedicated switch between the nodes is recommended.
+
 ### Fabric and Protocol Notes
 
 Simplyblock implements NVMe over Fabrics (NVMe-oF), either NVMe over TCP or NVMe over RoCEv2, and works over any Ethernet
@@ -233,6 +252,19 @@ interconnect. The fabric transport layers can be mixed, like cluster internal-tr
 
 It is recommended to use a separate physical NIC with two ports (bonded) and a highly available network for
 management traffic. For management traffic, a 1 GBit/s network is sufficient and a Linux Bridge may be used.
+
+!!! note "Edge clusters"
+    The management traffic of an edge cluster crosses the WAN to the hub. The following ports must be open between
+    the hub and every edge worker that runs a storage node:
+
+    | Direction   | From          | To               | Port(s)                            | Protocol |
+    |-------------|---------------|------------------|------------------------------------|----------|
+    | Edge to hub | Edge workers  | Management API   | Port of the exposed Management API | TCP      |
+    | Hub to edge | Control plane | Storage node API | 5000                               | TCP      |
+    | Hub to edge | Control plane | Storage node RPC | 8080-9044                          | TCP      |
+
+    For two-node edge clusters, a failover decision of the hub must reach the nodes within the hold time of
+    2.5 seconds, which works with a WAN round-trip time in the low hundreds of milliseconds.
 
 !!! important "Highly Available Control Plane"
     In non-Kubernetes environments, an external load balancer is required when simplyblock is deployed
