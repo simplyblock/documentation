@@ -67,6 +67,8 @@ Protecting an application follows four stages:
    [Install](install/index.md).
 2. **Configure:** Declare protection plans, the directed DR paths between sites, and the protected applications with
    their boot order and hooks. See [Configuration](configuration/index.md).
+   Discovery proposes this configuration from what the sites report, for approval. See
+   [Discovery and Proposals](discovery/index.md).
 3. **Test:** Rehearse a failover in an isolated bubble on the target site, on demand or on a schedule. See
    [Test](testing/index.md).
 4. **Operate:** Monitor readiness, fail over, fail back, and restore from backups or after
@@ -107,6 +109,7 @@ The following capabilities are available today:
 
 - [Install](install/index.md)
 - [Configuration](configuration/index.md)
+- [Discovery and Proposals](discovery/index.md)
 - [Test](testing/index.md)
 - [Operations](operations/index.md)
 - [Control Center](control-center.md)
