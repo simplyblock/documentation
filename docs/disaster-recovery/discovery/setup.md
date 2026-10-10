@@ -9,7 +9,7 @@ their settings from the hub, so no configuration is needed on the sites.
 
 ## Enabling Discovery
 
-```yaml
+```yaml title="Enabling discovery in the DR configuration"
 apiVersion: dr.simplyblock.io/v1alpha1
 kind: DRConfig
 metadata:
@@ -31,10 +31,10 @@ dr-agent reports facts about the application namespaces of its site. System and 
 excluded.
 
 - **Workloads:** Deployments, StatefulSets, DaemonSets, pods without a controller and KubeVirt VMs, with their owner,
-  volume mounts, images, VM networks, packaging labels and ports.
+  volume mounts, images, VM networks, packaging labels, and ports.
 - **Services:** Each Service with its selector and the workloads it selects.
 - **PVCs:** Each PVC with its labels.
-- **Configuration references:** Endpoints found in environment variables, command lines and ConfigMaps, such as URLs,
+- **Configuration references:** Endpoints found in environment variables, command lines, and ConfigMaps, such as URLs,
   `host:port` values and Service names. Credentials are removed from the stored excerpts.
 
 Secrets are never read. A reference to a Secret is taken from the workload's own spec and recorded as
@@ -44,9 +44,9 @@ Secrets are never read. A reference to a Secret is taken from the workload's own
 
 The flow collector `dr-flows` runs as a DaemonSet on every node of a site. It records the TCP connections that pods and
 VMs open, counts them per hour and source, destination and port, and keeps them for seven days by default. dr-agent
-resolves the addresses to workloads, Services and VMs.
+resolves the addresses to workloads, Services, and VMs.
 
-```yaml
+```yaml title="Flow collector settings"
 spec:
   discovery:
     flows:
@@ -61,7 +61,7 @@ Requirements and behavior:
   failing. `legacyKernels: true` lets it start with `CAP_SYS_ADMIN` on older kernels.
 - **Privileges:** The collector runs as root with the capabilities `CAP_BPF`, `CAP_PERFMON` and `CAP_SYS_RESOURCE`,
   and mounts tracefs and debugfs read-only. It needs no host network.
-- **Recorded data:** Addresses, ports and counts only. No payload is captured.
+- **Recorded data:** Addresses, ports, and counts only. No payload is captured.
 - **Limitation:** Traffic of VMs that are bridged directly onto a VLAN through a secondary network does not pass the
   node's TCP stack and is not seen. Configuration references and Service selectors still cover such VMs.
 
@@ -73,7 +73,7 @@ from all sites.
 With a GitOps target, every bundle is proposed as a pull request. Without one, bundles are approved in the Control
 Center (see [Approval Without GitOps](using-discovery.md#approval-without-gitops)).
 
-```yaml
+```yaml title="A GitOps target for bundles"
 spec:
   discovery:
     gitOps:
@@ -97,11 +97,11 @@ spec:
 
 Discovery uses the DR roles of the hub chart (see [Access Control](../configuration/access-control.md)):
 
-| Role          | Discovery permissions                                                                     |
-|---------------|-------------------------------------------------------------------------------------------|
-| `dr-viewer`   | Read graphs, bundles and runs                                                             |
-| `dr-operator` | Start and delete DiscoveryRuns, request a pull request for a bundle, reject a bundle      |
-| `dr-admin`    | Approve and roll back bundles in the Control Center, when no GitOps target is configured  |
+| Role          | Discovery permissions                                                                    |
+|---------------|------------------------------------------------------------------------------------------|
+| `dr-viewer`   | Read graphs, bundles and runs                                                            |
+| `dr-operator` | Start and delete DiscoveryRuns, request a pull request for a bundle, reject a bundle     |
+| `dr-admin`    | Approve and roll back bundles in the Control Center, when no GitOps target is configured |
 
 Approve and roll back are custom verbs on `drproposals`. An admission webhook admits the request only after a
 SubjectAccessReview grants the verb to the requesting user.

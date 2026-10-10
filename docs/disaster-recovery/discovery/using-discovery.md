@@ -1,6 +1,6 @@
 ---
 title: "Using Discovery"
-description: "Run discovery, read a site's dependency graph and application candidates, review a bundle, approve it through a pull request or in the Control Center, and roll it back."
+description: "Run discovery, read the graph and candidates of a site, review a bundle, approve it through a pull request or in the Control Center, and roll it back."
 weight: 10282
 ---
 
@@ -13,7 +13,7 @@ or with `kubectl` on the hub. Graphs are cluster-scoped. Bundles live in the Ram
 With `autoRules` enabled, dr-hub rebuilds a site's graph whenever the site's report changes and writes bundles
 without a request. A DiscoveryRun forces a pass, for a whole site or a few namespaces:
 
-```yaml
+```yaml title="A discovery run for one namespace"
 apiVersion: dr.simplyblock.io/v1alpha1
 kind: DiscoveryRun
 metadata:
@@ -32,18 +32,18 @@ Control Center with **Run discovery**. The mode `AI` is planned and not implemen
 
 ## Reading the Graph
 
-```bash
+```bash title="Listing the discovery graphs"
 kubectl get discoverygraphs
 ```
 
-```plain
+```plain title="Example output of the graph listing"
 NAME     NODES   EDGES   CANDIDATES   BUILT
 site-a   212     540     6            2m
 ```
 
 The DiscoveryGraph of a site lists its application candidates in `status.candidates`: members, namespaces, a score
 and, when an existing ProtectedApplication already covers most of the candidate's PVCs, the adopted application.
-Connections between candidates are listed in `status.interApp`. The full graph (nodes, edges and evidence) is stored
+Connections between candidates are listed in `status.interApp`. The full graph (nodes, edges, and evidence) is stored
 in compressed ConfigMap shards in the namespace of dr-hub.
 
 In the Control Center, the site page shows the candidates and a graph view of one candidate or namespace. Edges can
@@ -52,11 +52,11 @@ network attachments. Selecting a node or an edge shows its evidence.
 
 ## Reviewing a Bundle
 
-```bash
+```bash title="Listing the bundles"
 kubectl -n ramen-ops get drproposals
 ```
 
-```plain
+```plain title="Example output of the bundle listing"
 NAME                  SCOPE         SITE     SOURCE   PHASE      AGE
 shop-7f3c1a           Application   site-a   rules    PROpened   5m
 rp-site-a-to-site-b   RecoveryPlan  site-a   rules    Proposed   5m
@@ -65,10 +65,10 @@ rp-site-a-to-site-b   RecoveryPlan  site-a   rules    Proposed   5m
 A bundle shows:
 
 - **Summary and confidence:** What the bundle proposes and how sure the proposer is (0 to 1000, shown as a percentage).
-- **Objects:** The proposed ProtectedApplication, RecoveryPlan, SiteProfile, DHCPServer or DRPath, each with the
+- **Objects:** The proposed ProtectedApplication, RecoveryPlan, SiteProfile, DHCPServer, or DRPath, each with the
   evidence and confidence of every field.
 - **Diff:** The difference to the live objects. A bundle for an adopted application only contains what changes.
-- **Labels:** The labels to set on PVCs, VMs and workloads, with their effect. A consistency-group label on a PVC that
+- **Labels:** The labels to set on PVCs, VMs, and workloads, with their effect. A consistency-group label on a PVC that
   is already bound is listed as a late join. Such volumes are listed under migrations and join the group only once
   consistency groups can be formed after volume creation. A bundle never migrates a volume.
 - **Questions:** What the proposer could not decide, with the options to choose from. Blocking questions must be

@@ -26,8 +26,8 @@ anything changes.
 
 A bundle is a DRProposal object on the hub. It holds everything needed to protect one application:
 
-- The ProtectedApplication with namespaces, PVC selector, tiers, readiness gates and health probes.
-- The labels to set on the application's PVCs, VMs and workloads, so that the selectors match.
+- The ProtectedApplication with namespaces, PVC selector, tiers, readiness gates, and health probes.
+- The labels to set on the application's PVCs, VMs, and workloads, so that the selectors match.
 - The place of the application in a recovery plan, as a separate RecoveryPlan bundle per DR path.
 - Site-mapping changes, as a separate SiteMapping bundle per site.
 
@@ -53,6 +53,6 @@ yet. A DiscoveryRun in mode `AI` fails with the reason `NotImplemented`.
 ## In This Section
 
 - **[Setup](setup.md):** Enabling discovery, the flow collector, the GitOps target and the roles.
-- **[Using Discovery](using-discovery.md):** Running discovery, reading the graph, reviewing, approving and rolling back
+- **[Using Discovery](using-discovery.md):** Running discovery, reading the graph, reviewing, approving, and rolling back
   bundles.
-- **[Reference](reference.md):** Bundle phases, configuration fields, run fields, annotations and label keys.
+- **[Reference](reference.md):** Bundle phases, configuration fields, run fields, annotations, and label keys.
