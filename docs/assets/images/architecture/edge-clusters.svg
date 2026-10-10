@@ -33,7 +33,7 @@
 <text x="220" y="436" text-anchor="middle" font-size="11" fill="#424a53">NVMe or Linux block devices</text>
 <!-- edge B: two nodes -->
 <rect x="540" y="262" width="400" height="220" rx="10" fill="#f6f8fa" stroke="#424a53" stroke-width="1.5"/>
-<text x="740" y="288" text-anchor="middle" font-size="15" font-weight="700" fill="#424a53">Edge site B: two nodes (preview)</text>
+<text x="740" y="288" text-anchor="middle" font-size="15" font-weight="700" fill="#424a53">Edge site B: two nodes</text>
 <rect x="565" y="304" width="350" height="56" rx="6" fill="#ffffff" stroke="#424a53"/>
 <text x="740" y="326" text-anchor="middle" font-size="12" font-weight="600" fill="#1a237e">Simplyblock Operator (managed profile), CSI driver</text>
 <text x="740" y="345" text-anchor="middle" font-size="11" fill="#424a53">storage-fenced taint on arbitration</text>

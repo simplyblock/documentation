@@ -1,18 +1,15 @@
 ---
-title: "Architecture"
-description: "Components, control and data flow, and the high-availability model of one-node and two-node simplyblock edge clusters managed from a hub."
-weight: 10106
+title: "Edge Clusters"
+description: "Small simplyblock storage clusters with one or two nodes at edge sites, managed by a central control plane on a hub cluster."
+weight: 20254
 ---
 
-{{ experimental }}
+An edge cluster is a small simplyblock storage cluster at an edge site, such as a branch office, a factory, or a
+store. It consists of one or two storage nodes on the Kubernetes cluster of the site. The edge cluster does not run a
+control plane of its own. It is managed by a central simplyblock control plane on a hub cluster in the datacenter,
+which can manage many edge clusters.
 
-## Overview
-
-An edge deployment splits the management of storage from the storage itself. The simplyblock control plane runs once,
-on a hub cluster in the datacenter. Every edge site runs a small Kubernetes cluster with the storage nodes of one
-storage cluster, the Simplyblock Operator in the managed profile, and the CSI driver.
-
-![Edge clusters managed by a central simplyblock control plane](../assets/images/architecture/edge-clusters.svg)
+![Edge clusters managed by a central simplyblock control plane](../../assets/images/architecture/edge-clusters.svg)
 
 ## Components
 
@@ -24,41 +21,39 @@ storage cluster, the Simplyblock Operator in the managed profile, and the CSI dr
 | CSI driver                        | Edge cluster | Provisions and attaches volumes for the workloads of the site.                                                             |
 | Storage nodes                     | Edge workers | Serve the volumes over NVMe-oF from local NVMe devices or Linux block devices.                                             |
 
-The hub can be the same cluster that runs the simplyblock Disaster Recovery hub. See
-[Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md) for the local and
-the centralized placement of the control plane.
+The hub follows the centralized model described in [Control Plane and Operator](control-plane-and-operator.md). It
+can be the same cluster that runs the simplyblock Disaster Recovery hub.
 
 ## Control and Data Flow
 
 - **Edge to hub:** The operator at the edge reaches the Management API of the hub over HTTPS. It registers the storage
-  cluster, creates its storage nodes and pools, and reads their state. It authenticates with a bearer token from a
-  Secret.
+  cluster, creates its storage nodes and pools, and reads their state. It authenticates with a bearer token.
 - **Hub to edge:** The control plane reaches every storage node of every edge on the storage node API and the storage
-  node RPC ports. It configures the storage nodes, monitors them, and runs restarts and recovery.
+  node RPC ports. It configures and monitors the storage nodes and runs restarts and recovery.
 - **Data path:** Volume I/O stays at the edge. Workloads reach the storage nodes of their own site over NVMe-oF.
   Volume data never crosses the WAN.
 
-Storage at the edge keeps serving I/O while the WAN link to the hub is down. Management operations, such as creating a
-volume, and automatic recovery actions of the control plane wait until the link is back.
+Storage at the edge keeps serving I/O while the WAN link to the hub is down. Management operations, such as creating
+a volume, and automatic recovery actions of the control plane wait until the link is back.
 
 ## High Availability
 
 ### One-Node Edge Clusters
 
-A one-node edge cluster has a single storage node and is not highly available. Its storage cluster uses the
-erasure-coding scheme 1+0, and its journal is kept on the node itself. If the node fails, the volumes are
-unavailable until the node is back. Applications that need to survive the loss of the node require a second node
-(see below) or application-level replication.
+A one-node edge cluster has a single storage node and uses the erasure-coding scheme 1+0. It is not highly
+available: if the node fails, its volumes are unavailable until the node is back. Applications that must survive the
+loss of the node need a two-node edge cluster or application-level replication.
 
-### Two-Node Edge Clusters (Preview)
+### Two-Node Edge Clusters
 
-!!! warning "Preview"
-    Two-node edge clusters are not released yet. The control plane, the operator, and the storage nodes need the
-    arbitration protocol described here, which is under development. The behavior below may change before release.
+!!! note
+    Two-node edge clusters require two-node arbitration support in the control plane, the Simplyblock Operator, and
+    the storage nodes.
 
-A two-node edge cluster keeps a copy of the journal and the data on each node. Every volume has a primary on one node
-and a secondary on the other, and a workload connects to both over two NVMe-oF paths. When a node fails, the other
-node takes over leadership, the active path switches, and I/O continues after a short pause.
+A two-node edge cluster uses the erasure-coding scheme 1+1 on exactly two storage nodes and keeps a copy of the
+journal and the data on each node. Every volume has a primary on one node and a secondary on the other, and a
+workload connects to both over two NVMe-oF paths. When a node fails, the other node takes over leadership, the active
+path switches, and I/O continues after a short pause.
 
 With only two nodes, a broken link between the nodes looks the same to each node as a failed peer. To prevent both
 nodes from writing on their own (split brain), the control plane on the hub acts as the third vote:
@@ -72,19 +67,20 @@ nodes from writing on their own (split brain), the control plane on the hub acts
 - **Preferred node:** If neither node reaches the hub nor the other node, the preferred node continues after the hold
   time and the other node fences itself.
 - **Workload restart:** The operator taints the Kubernetes node of a fenced storage node with
-  `storage.simplyblock.io/fenced`, so that KubeVirt and Kubernetes restart the affected workloads on the other node.
+  `storage.simplyblock.io/fenced`, so that Kubernetes and KubeVirt restart the affected workloads on the other node.
 
-Two-node edge clusters require two independent network paths, see
-[Deployment Preparation](deployment-preparation.md#network).
-
-## Network Requirements
+## Network Paths
 
 | Path                   | Between                        | Purpose                                                   | Required for           |
 |------------------------|--------------------------------|-----------------------------------------------------------|------------------------|
 | Management uplink      | Edge workers and the hub       | Management API, storage node API, storage node RPC        | All edge clusters      |
 | Storage network        | Edge workers and their clients | NVMe-oF volume traffic                                    | All edge clusters      |
-| Link between the nodes | The two storage nodes          | Journal and data replication, hub-independent second path | Two-node edge clusters |
+| Link between the nodes | The two storage nodes          | Journal and data replication, second path besides the hub | Two-node edge clusters |
 
 For a two-node edge cluster, the link between the nodes and the management uplink must not share a switch, a cable,
-or a network interface. Otherwise, a single failure cuts both paths at the same time, and the hub cannot tell a failed
-node from a broken link.
+or a network interface. Otherwise, a single failure cuts both paths at the same time, and the hub cannot tell a
+failed node from a broken link.
+
+The requirements are listed in [Edge Cluster Requirements](../../deployment-preparation/edge-requirements.md), the
+deployment in [Deploying Edge Clusters](../../kubernetes/installation/edge-clusters.md), and the operation in
+[Operating Edge Clusters](../../kubernetes/operations/cluster/edge-clusters.md).
