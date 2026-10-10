@@ -16,6 +16,7 @@ additional pools. This section covers the full lifecycle of simplyblock-backed v
 - [Provisioning](provisioning.md)
 - [Volume Encryption](volume-encryption.md)
 - [Automatic Volume Placement](volume-placement.md)
+- [pNFS Volumes](pnfs.md)
 - [Snapshotting](snapshotting.md)
 - [Cloning](cloning.md)
 - [Expanding](expanding.md)

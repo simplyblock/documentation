@@ -7,6 +7,12 @@ weight: 30000
 Simplyblock has been tested on and recommends the following instance types. In general, there is no restriction on
 other instance types as long as they fulfill the system requirements.
 
+!!! note "pNFS volumes"
+    The pNFS metadata server requires a worker node with a usable `/dev/kvm` (see
+    [Virtualization Support for pNFS](hardware-requirements.md#virtualization-support-for-pnfs)). On a cloud instance,
+    this means nested virtualization, whose availability depends on the provider and the instance type, and which
+    may have to be enabled when the instance is created. Bare-metal instance types always expose `/dev/kvm`.
+
 ## AWS Amazon EC2 Recommendations
 
 Simplyblock can work with local instance storage (local NVMe devices) and Amazon EBS volumes. For performance reasons,
