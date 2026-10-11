@@ -9,12 +9,13 @@ weight: 30250
 A simplyblock logical volume is a block device, and a block device carries a filesystem that only one host may mount
 at a time. Volumes that several nodes write concurrently (`ReadWriteMany`) are therefore served through parallel NFS
 (pNFS), the NFSv4.1 extension that separates file metadata from file data. One logical volume backs each shared
-volume. A metadata server (MDS) owns its filesystem and answers metadata requests, while every client reads and writes
-the data directly over NVMe-oF, on the same namespace the metadata server formatted.
+volume. A metadata server (MDS) owns its filesystem and answers metadata requests, while clients read and write the data
+directly over NVMe-oF, on the same namespace the metadata server formatted.
 
-Metadata goes through the metadata server, data does not. Throughput therefore scales with the number of clients
-instead of being capped by a single NFS server, and a shared volume performs close to the same logical volume attached
-as a block device.
+Metadata goes through the metadata server, data normally does not. Throughput therefore scales with the number of
+clients instead of being capped by a single NFS server, and a shared volume performs close to the same logical volume
+attached as a block device. A client that cannot use the direct path falls back to sending its data through the
+metadata server (see [Data Path](#data-path)).
 
 pNFS is available on Kubernetes only but not on a legacy Docker-based deployment. Its configuration is described in
 [pNFS Volumes](../../kubernetes/usage/pnfs.md).
@@ -67,7 +68,8 @@ the logical volume, bypassing the metadata server.
 Three conditions have to hold for a client to use a layout:
 
 - The client node has the logical volume attached and can identify it by the namespace's NGUID.
-- The client kernel carries the pNFS block layout driver and can derive a unique ID from an NVMe namespace.
+- The client kernel carries the pNFS block layout driver with support for NVMe devices, which it finds through
+  `/dev/disk/by-id/nvme-eui.` links.
 - The namespace accepts persistent reservations. The metadata server registers a reservation key on it before
   handing out any layout and refuses to hand out layouts when that registration fails.
 

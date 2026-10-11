@@ -20,21 +20,18 @@ The following kernels are known to be compatible and tested. Additional kernel v
 
 ## Kernel Requirements for pNFS Clients
 
-Nodes that mount [pNFS volumes](../kubernetes/usage/pnfs.md) need two additional kernel features:
+Nodes that mount [pNFS volumes](../kubernetes/usage/pnfs.md) need the pNFS block layout driver, built with
+`CONFIG_PNFS_BLOCK` and usually loaded as the `blocklayoutdriver` module. It also serves the SCSI layout used by
+simplyblock. The driver must support NVMe devices, which it finds through `/dev/disk/by-id/nvme-eui.` links created by
+the CSI node plugin.
 
-- **pNFS block layout driver:** Built with `CONFIG_PNFS_BLOCK`, usually as the `blocklayoutdriver` module. It also
-  serves the SCSI layout used by simplyblock.
-- **`nvme_get_unique_id`:** The function by which the NFS client identifies an NVMe namespace named in a layout. It is
-  part of mainline kernels from 6.11 and is backported to some distribution kernels.
-
-Both depend on the kernel build, not on its version number. A node without them still mounts pNFS volumes, but routes
-all of their data through the metadata server, and its mounts report `pnfs=not configured` in
-`/proc/self/mountstats`.
+This depends on the kernel build, not on its version number. A node without it still mounts pNFS volumes, but routes
+all of their data through the metadata server. How to check a node is described in
+[Verifying the Direct Data Path](../kubernetes/usage/pnfs.md#verifying-the-direct-data-path).
 
 | OS                       | Linux Kernel | pNFS Client Support |
 |--------------------------|--------------|---------------------|
 | Red Hat Enterprise Linux | 5.14.0-687   | Yes (RHEL 9.8)      |
-| Red Hat Enterprise Linux | 5.14.0-503   | No (RHEL 9.5)       |
 
 The metadata server has no requirements on the host kernel beyond KVM, since it runs its own kernel inside a virtual
 machine.

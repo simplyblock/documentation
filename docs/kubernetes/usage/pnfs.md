@@ -8,8 +8,8 @@ weight: 40080
 
 A pNFS volume is a simplyblock volume that pods on several worker nodes read and write at the same time
 (`ReadWriteMany`). It carries an XFS filesystem that is shared through NFSv4.1. File metadata goes through a metadata
-server, while the data is read and written directly over NVMe-oF, which keeps a shared volume close to the
-performance of a block volume. The architecture is described in
+server, while the data is read and written directly over NVMe-oF on every node that meets the
+[client requirements](#requirements). This keeps a shared volume close to the performance of a block volume. The architecture is described in
 [ReadWriteMany (pNFS)](../../architecture/concepts/pnfs.md).
 
 `ReadWriteMany` is served only by pNFS volumes. A `ReadWriteMany` claim on any other StorageClass is refused,
@@ -18,15 +18,15 @@ including a claim with `volumeMode: Block`.
 ## Requirements
 
 **Metadata server nodes:** At least one worker node must expose a usable `/dev/kvm`, because the metadata server runs
-in a small virtual machine. On a cloud instance, this requires nested virtualization to be enabled on the instance.
+in a small virtual machine. On a virtualized cloud instance, this requires nested virtualization to be enabled on the instance.
 The CSI node plugin checks `/dev/kvm` on every node and labels the nodes that pass with
 `storage.simplyblock.io/kvm-capable=true`. A label set by hand is left untouched.
 
-**Client nodes:** Every worker node that runs a pod using a pNFS volume needs a kernel with the pNFS block layout
-driver (`CONFIG_PNFS_BLOCK`) and support for identifying NVMe namespaces to it (the `nvme_get_unique_id` function).
-This is a property of the kernel build, not of its version number. Red Hat Enterprise Linux 9.8 (kernel
-5.14.0-687) qualifies, while Red Hat Enterprise Linux 9.5 (kernel 5.14.0-503) does not. Red Hat-based distributions
-are validated. Debian and Ubuntu are not validated yet. No NFS packages are required on the host, because the NFS
+**Client nodes:** Every worker node that runs a pod using a pNFS volume needs
+a kernel with the pNFS block layout driver (`CONFIG_PNFS_BLOCK`), including its support for NVMe devices: the
+driver finds the device a layout names through a `/dev/disk/by-id/nvme-eui.` link, which the CSI node plugin creates. This
+is a property of the kernel build, not of its version number. Red Hat Enterprise Linux 9.8 (kernel 5.14.0-687) is
+validated. Debian and Ubuntu are not validated yet. No NFS packages are required on the host, because the NFS
 client tools ship with the CSI node plugin.
 
 A client node that does not meet the requirements still mounts the volume, but all data is routed through the
@@ -176,19 +176,28 @@ kubectl get pods -n simplyblock | grep pnfs-mds
 ## Verifying the Direct Data Path
 
 A client that cannot use the direct NVMe-oF path still reads and writes correctly, but through the metadata server,
-with much lower throughput. Nothing in Kubernetes reports this. Whether a node uses the direct path is shown in the
-NFS mount statistics of the node, where a pNFS mount using the direct path reports `pnfs=LAYOUT_SCSI`.
+with much lower throughput. Nothing in Kubernetes reports this. It is visible in the NFS mount statistics of the
+worker node, `/proc/self/mountstats`, in two places.
+
+The `nfsv4:` line of a mount shows the layout type the node negotiated. A mount that can use the direct path reports
+`pnfs=LAYOUT_SCSI`, and `pnfs=not configured` means that the node's kernel lacks the pNFS block layout driver.
 
 ```bash title="Checking the pNFS layout type of the mounts on a worker node"
 grep 'pnfs=' /proc/self/mountstats
 ```
 
-```plain title="Example output for a mount using the direct data path"
+```plain title="Example output for a mount using the SCSI layout"
 	nfsv4:	bm0=0xfdffbfff,bm1=0x40f9be3e,bm2=0x60800,acl=0x3,sessions,pnfs=LAYOUT_SCSI
 ```
 
-`pnfs=not configured` means that the node's kernel does not meet the
-[client requirements](#requirements).
+`pnfs=LAYOUT_SCSI` alone does not prove that data bypasses the metadata server, because a client that cannot open the
+device a layout names falls back without changing it. The per-operation counters of the mount show where the data
+goes. While an application writes to the volume, the `LAYOUTGET` count grows, while the `READ` and `WRITE` counts stay
+close to zero. Growing `READ` and `WRITE` counts mean that the data is routed through the metadata server.
+
+```bash title="Showing the data and layout operation counters of the mounts on a worker node"
+grep -E '^\s+(READ|WRITE|LAYOUTGET|GETDEVICEINFO):' /proc/self/mountstats
+```
 
 ## Using pNFS Volumes
 

@@ -10,8 +10,9 @@ other instance types as long as they fulfill the system requirements.
 !!! note "pNFS volumes"
     The pNFS metadata server requires a worker node with a usable `/dev/kvm` (see
     [Virtualization Support for pNFS](hardware-requirements.md#virtualization-support-for-pnfs)). On a cloud instance,
-    this means nested virtualization, whose availability depends on the provider and the instance type, and which
-    may have to be enabled when the instance is created. Bare-metal instance types always expose `/dev/kvm`.
+    this means nested virtualization on a virtualized instance type, whose availability depends on the provider and the
+    instance type, and which may have to be enabled when the instance is created. Bare-metal instance types run
+    directly on the hardware and expose `/dev/kvm` once the KVM kernel modules are loaded.
 
 ## AWS Amazon EC2 Recommendations
 
