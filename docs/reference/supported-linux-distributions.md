@@ -77,3 +77,7 @@ The following Linux distributions are considered tested and supported as NVMe-oF
 [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics
 on any Amazon Linux operates in a degraded state with the risk of connection outages. Alternatively,
 multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO.</span>
+
+Mounting [pNFS volumes](../kubernetes/usage/pnfs.md) requires additional kernel features that not every supported
+initiator kernel provides. Red Hat-based distributions are validated, while Debian and Ubuntu are not validated yet.
+See [Kernel Requirements for pNFS Clients](supported-linux-kernels.md#kernel-requirements-for-pnfs-clients).

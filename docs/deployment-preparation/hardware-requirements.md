@@ -147,6 +147,18 @@ dedicated cores must be assigned exclusively to the virtual machines running sto
 
 For deployments on Cloud-based platforms, see [cloud-instance recommendations](cloud-instance-recommendations.md).
 
+### Virtualization Support for pNFS
+
+This requirement applies only when [pNFS volumes](../kubernetes/usage/pnfs.md) are used.
+
+The pNFS metadata server runs in a micro virtual machine, so at least one Kubernetes worker node must expose a usable
+`/dev/kvm`. On bare metal, this requires the CPU virtualization extensions (Intel VT-x or AMD-V) to be enabled in the
+firmware. On a virtual machine, including a cloud instance, it requires nested virtualization. QEMU's software
+emulation is not used as a fallback.
+
+Qualifying nodes are detected by the CSI node plugin and labeled with `storage.simplyblock.io/kvm-capable=true`. At
+least two such nodes are recommended so that the metadata server can be rescheduled when its node is drained.
+
 ### Reference Matrix
 
 A full list of the supported architectures can be found in the
