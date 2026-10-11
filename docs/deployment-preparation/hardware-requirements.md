@@ -69,6 +69,11 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 8 vCPU per socket to simplyblock. For example, on a system with 32 cores (64 vCPU) per socket, this amounts to
 12.5% of vCPU capacity per host. For very IO-intensive applications, this amount should be increased.
 
+The share is configured as an absolute number of vCPUs per storage node, which applies to every node of the cluster:
+`--vcpu-count` on `{{ cliname }} cluster create` (or `vcpuCount` of the `StorageCluster` in Kubernetes). In the
+example above, that is a count of 8. A host with fewer than the configured count plus one vCPU for the system is
+refused as a storage node.
+
 ### Storage Node Isolation Behavior
 
 !!! warning
