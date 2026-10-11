@@ -9,8 +9,8 @@ weight: 30250
 A simplyblock logical volume is a block device, and a block device carries a filesystem that only one host may mount
 at a time. Volumes that several nodes write concurrently (`ReadWriteMany`) are therefore served through parallel NFS
 (pNFS), the NFSv4.1 extension that separates file metadata from file data. Each shared volume is backed by simplyblock
-logical volumes, currently by a single one. A metadata server (MDS) owns its filesystem and answers metadata requests, while clients read and write the data
-directly over NVMe-oF, on the same namespace the metadata server formatted.
+logical volumes. A metadata server (MDS) owns its filesystem and answers metadata requests, while clients read and
+write the data directly over NVMe-oF, on the same namespaces the metadata server formatted.
 
 Metadata goes through the metadata server, data normally does not. Throughput therefore scales with the number of
 clients instead of being capped by a single NFS server, and a shared volume performs close to the same logical volume
@@ -24,8 +24,8 @@ pNFS is available on Kubernetes only but not on a legacy Docker-based deployment
 
 A pNFS volume consists of four parts:
 
-- **Logical volumes:** The ordinary simplyblock logical volumes that carry the XFS filesystem, currently one per pNFS
-  volume. Erasure coding, replication, encryption, and QoS apply to them as to any other volume.
+- **Logical volumes:** The ordinary simplyblock logical volumes that carry the XFS filesystem. Erasure coding,
+  replication, encryption, and QoS apply to them as to any other volume.
 - **Metadata server:** One pod per storage cluster, serving every pNFS volume of that cluster.
 - **`NFSExport` resource:** One per volume, in the namespace of its PersistentVolumeClaim. It records which metadata
   server serves the volume and the address clients mount.
