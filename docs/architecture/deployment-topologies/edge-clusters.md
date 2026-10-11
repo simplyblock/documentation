@@ -40,9 +40,36 @@ a volume, and automatic recovery actions of the control plane wait until the lin
 
 ### One-Node Edge Clusters
 
-A one-node edge cluster has a single storage node and uses the erasure-coding scheme 1+0. It is not highly
+A one-node edge cluster has a single storage node and is declared as such (`singleNode`). It is not highly
 available: if the node fails, its volumes are unavailable until the node is back. Applications that must survive the
 loss of the node need a two-node edge cluster or application-level replication.
+
+Within the node, the cluster still protects against device failures. Erasure coding places every chunk of a stripe
+on a different device of the node, so any supported scheme can be used as long as the node has one device per chunk:
+
+| Scheme | Minimum devices | Device failures the data survives |
+|--------|-----------------|-----------------------------------|
+| 1+0    | 1               | 0                                 |
+| 1+1    | 2               | 1                                 |
+| 2+1    | 3               | 1                                 |
+| 4+1    | 5               | 1                                 |
+| 1+2    | 3               | 2                                 |
+| 2+2    | 4               | 2                                 |
+| 4+2    | 6               | 2                                 |
+
+The journal has its own protection, which depends on where it is placed:
+
+- **Journal partitions (NVMe devices, the default):** The journal is mirrored across the devices of the node: two
+  devices form a mirror (RAID 1), more devices form a mirror of two striped groups (RAID 0+1). The journal survives
+  the failure of any one device. Two devices failing at the same time are only survived if both are in the same
+  group, so a one-node cluster with 1+2, 2+2, or 4+2 is guaranteed to survive one device failure at a time, not
+  two at once.
+- **Dedicated journal device (`enableJournalDevice`, always used with Linux block devices):** The journal is on one
+  device and is not mirrored. A failure of that device stops the node, whatever the erasure-coding scheme.
+
+After a device failure, the data of the failed device is rebuilt onto the remaining devices of the node. This data
+migration runs in relaxed placement, which places chunks without the anti-affinity a larger cluster enforces, so it
+needs no second node. The remaining devices need enough free capacity to hold the rebuilt data.
 
 ### Two-Node Edge Clusters
 
@@ -54,6 +81,9 @@ A two-node edge cluster uses the erasure-coding scheme 1+1 on exactly two storag
 journal and the data on each node. Every volume has a primary on one node and a secondary on the other, and a
 workload connects to both over two NVMe-oF paths. When a node fails, the other node takes over leadership, the active
 path switches, and I/O continues after a short pause.
+
+A device failure on either node is survived as well: the other node holds a copy of the data and of the journal.
+Data migration after a device failure or after adding a device runs in relaxed placement, so it needs no third node.
 
 With only two nodes, a broken link between the nodes looks the same to each node as a failed peer. To prevent both
 nodes from writing on their own (split brain), the control plane on the hub acts as the third vote:

@@ -75,15 +75,29 @@ explicitly, as described in [Linux Block Devices](../../architecture/concepts/li
 
 ## Draft for a One-Node Edge Cluster
 
-A one-node edge cluster uses the erasure-coding scheme 1+0:
+A one-node edge cluster declares `singleNode` in the deployment document. The declaration lets any supported
+erasure-coding scheme run on the one storage node, with every chunk of a stripe on a different device. It is copied
+to `spec.singleNode` of the `StorageCluster` when the cluster is created and cannot be changed afterward.
 
-```bash title="One-node edge cluster"
+For a one-worker fleet, the discovery proposes `singleNode` and the scheme that the data devices of the worker
+carry: 2+1 with three or more devices, 1+1 with two, and 1+0 with one. A device dedicated to the journal does not
+count as a data device. Other schemes are chosen by setting the stripe, as long as the worker hands over one data
+device per chunk:
+
+```bash title="One-node edge cluster with six data devices"
 kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p '{
   "spec": {"cluster": {
     "name": "edge-site-a",
-    "stripe": {"dataChunks": 1, "parityChunks": 0}
+    "singleNode": true,
+    "stripe": {"dataChunks": 4, "parityChunks": 2}
   }}}'
 ```
+
+The validation of the document refuses a `singleNode` document with more than one storage node, or with a group
+that names fewer data devices than the scheme has chunks. `singleNode` and `twoNode` cannot both be set.
+
+How many device failures the node survives depends on the scheme and on the journal placement, as described in
+[Edge Clusters](../../architecture/deployment-topologies/edge-clusters.md#one-node-edge-clusters).
 
 ## Draft for a Two-Node Edge Cluster
 
@@ -93,7 +107,8 @@ kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p 
 
 A two-node edge cluster declares `twoNode` in the deployment document. The declaration lets the erasure-coding scheme
 1+1 run on exactly two storage nodes, which otherwise needs three. It is copied to `spec.twoNode` of the
-`StorageCluster` when the cluster is created:
+`StorageCluster` when the cluster is created. For a fleet of exactly two workers, the discovery proposes `twoNode`
+with 1+1. Other schemes still need their usual number of storage nodes:
 
 ```bash title="Two-node edge cluster"
 kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p '{
