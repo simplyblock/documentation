@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">pNFS sequence: open, layout, direct I/O, commit</title>
+<defs>
+<marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="559" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">Reading and writing a file on a pNFS volume</text>
+
+<rect x="80" y="60" width="200" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="180" y="85" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Client node</text>
+<rect x="380" y="60" width="200" height="40" rx="6" fill="#fff8e1" stroke="#d4a72c" stroke-width="1.25"/>
+<text x="480" y="85" font-size="13" font-weight="600" fill="#7d4e00" text-anchor="middle">Metadata server</text>
+<rect x="680" y="60" width="200" height="40" rx="6" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.25"/>
+<text x="780" y="85" font-size="13" font-weight="600" fill="#283593" text-anchor="middle">Logical volume (NVMe/TCP)</text>
+<path d="M180,100 L180,540" stroke="#9fa8da" stroke-width="1.25" stroke-dasharray="4 4"/>
+<path d="M480,100 L480,540" stroke="#d4a72c" stroke-width="1.25" stroke-dasharray="4 4"/>
+<path d="M780,100 L780,540" stroke="#9fa8da" stroke-width="1.25" stroke-dasharray="4 4"/>
+
+<path d="M480,130 L780,130" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="630" y="124" font-size="12" fill="#424a53" text-anchor="middle">0. register reservation key (once)</text>
+
+<path d="M180,172 L480,172" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="330" y="166" font-size="12" fill="#424a53" text-anchor="middle">1. OPEN file (NFSv4.1, TCP 2049)</text>
+<path d="M480,198 L180,198" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4" marker-end="url(#arr-gray)"/>
+<text x="330" y="192" font-size="12" fill="#424a53" text-anchor="middle">stateid</text>
+
+<path d="M180,240 L480,240" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="330" y="234" font-size="12" fill="#424a53" text-anchor="middle">2. LAYOUTGET (range, read or write)</text>
+<path d="M480,268 L180,268" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4" marker-end="url(#arr-gray)"/>
+<text x="330" y="262" font-size="12" fill="#424a53" text-anchor="middle">SCSI layout: device (NGUID) + extents</text>
+<rect x="400" y="276" width="160" height="34" rx="4" fill="#fff8e1" stroke="#d4a72c"/>
+<text x="480" y="290" font-size="11" fill="#7d4e00" text-anchor="middle">write extents zeroed</text>
+<text x="480" y="304" font-size="11" fill="#7d4e00" text-anchor="middle">on allocation</text>
+
+<path d="M180,340 L780,340" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<text x="480" y="334" font-size="12" font-weight="600" fill="#3949ab" text-anchor="middle">3. READ / WRITE the extents directly on the namespace</text>
+<path d="M780,366 L180,366" stroke="#3949ab" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr-sb)"/>
+<text x="480" y="360" font-size="12" fill="#3949ab" text-anchor="middle">completion (the metadata server is not involved)</text>
+
+<path d="M180,410 L480,410" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="330" y="404" font-size="12" fill="#424a53" text-anchor="middle">4. LAYOUTCOMMIT (new size, times)</text>
+<path d="M480,436 L180,436" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4" marker-end="url(#arr-gray)"/>
+<text x="330" y="430" font-size="12" fill="#424a53" text-anchor="middle">ok</text>
+
+<path d="M180,478 L480,478" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="330" y="472" font-size="12" fill="#424a53" text-anchor="middle">5. LAYOUTRETURN, CLOSE</text>
+<text x="180" y="524" font-size="12" fill="#57606a" text-anchor="middle">gray: metadata over NFS</text>
+<text x="780" y="524" font-size="12" fill="#3949ab" text-anchor="middle">blue: data over NVMe/TCP</text>
+</svg>

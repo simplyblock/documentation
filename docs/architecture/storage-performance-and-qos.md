@@ -117,6 +117,32 @@ zero-copy model across the entire storage processing chain. This includes the da
 entirely non-locking, asynchronous DPDK threading model. It enables avoiding Linux p-threads and any inter-thread
 synchronization, providing much higher latency predictability and a lower baseline latency.
 
+### Shared File Storage at Block Performance (pNFS)
+
+The properties above are not limited to block volumes. Shared file storage (`ReadWriteMany`) is served through
+[distributed file storage](concepts/distributed-file-storage.md) based on parallel NFS (pNFS), and its data path is the
+same NVMe/TCP data path:
+
+- **No file server in the data path:** A metadata server handles only file metadata (open, lookup, allocation,
+  layouts). File contents are read and written by every client directly on the simplyblock logical volume, over its
+  own NVMe/TCP connection. A classic NFS server, which every byte passes through, is the throughput and latency
+  bottleneck that pNFS removes.
+- **Throughput scales with clients and storage nodes:** Each client node drives its own NVMe/TCP queues to the
+  storage nodes in parallel, so aggregate throughput grows with the number of clients instead of being capped by one
+  server's CPU, memory, and network. A shared volume performs close to the same logical volume attached as a block
+  device.
+- **The same latency characteristics:** Reads and writes take the user-space, zero-copy SPDK path on the storage
+  nodes, with the core isolation and data placement described above. The only additional cost on the data path is one
+  write-zeroes operation when the metadata server allocates new blocks for a write, which makes completed writes
+  durable without waiting for a layout commit.
+- **QoS applies unchanged:** The volume and pool QoS limits and the QoS service classes below apply to the logical
+  volume behind a shared volume, as to any block volume.
+
+Metadata-heavy workloads (many small files, and frequent creates and deletes) are bound by the single metadata server per
+storage cluster rather than by the storage nodes. A client node whose kernel lacks the pNFS block layout driver falls
+back to sending its data through the metadata server, at a fraction of the throughput. See
+[Verifying the Direct Data Path](../kubernetes/usage/pnfs.md#verifying-the-direct-data-path).
+
 ### Advanced QoS (Quality of Service)
 
 Simplyblock implements two independent, critical QoS mechanisms.
