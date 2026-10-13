@@ -53,11 +53,11 @@ or application-level replication.
 | WAN link to the hub down                   | Both nodes keep serving I/O. The hub cannot decide anything until the link is back.                   |
 | One node fails                             | The surviving node holds I/O briefly, the hub grants it solo operation, and I/O continues.            |
 | Link between the nodes down, both nodes up | Both nodes hold I/O. The hub keeps the current leader of each volume group and fences the other node. |
-| Link between the nodes and WAN link down   | The preferred node continues after the hold time. The other node fences itself.                       |
-| One node fails while the WAN link is down  | If the survivor is the preferred node, it continues. Otherwise, it stops until the hub is reachable.  |
+| Link between the nodes and WAN link down   | Both nodes fence themselves after the hold time. I/O resumes once the hub is reachable.               |
+| One node fails while the WAN link is down  | The surviving node fences itself after the hold time and stops until the hub is reachable.            |
 | Device failure on one node                 | The other node holds a copy of the data and the journal. The data is rebuilt without a third node.    |
 
-Without the hub, a failed node and a broken link look the same, so a non-preferred node never continues on its own.
+Without the hub, a failed node and a broken link look the same, so no node continues on its own without a grant.
 
 ## Maintenance
 
@@ -81,9 +81,9 @@ operators talk to a control plane of the same or a newer release.
 
 ## Expansion
 
-The erasure-coding scheme of a cluster cannot be changed after the cluster is created, and neither can the
-`singleNode` declaration. A one-node edge cluster does not become highly available by adding a second storage node.
-A highly available edge site is created as a two-node edge cluster from the start.
+The erasure-coding scheme of a cluster cannot be changed after the cluster is created, and a cluster cannot be
+changed to or from the cluster mode `Single`. A one-node edge cluster does not become highly available by adding a
+second storage node. A highly available edge site is created as a two-node edge cluster from the start.
 
 Devices can be added to the storage nodes of an edge cluster. The data is rebalanced onto the new devices in relaxed
 placement, so a one-node or two-node cluster needs no additional node for it.
@@ -95,8 +95,8 @@ placement, so a one-node or two-node cluster needs no additional node for it.
 | `ControlPlane` is not `Available` at the edge  | The endpoint, the token Secret, and the CA Secret. The event `EndpointUnreachable` names the failing check. |
 | Storage nodes stay offline in the hub          | The ports 5000 and 8080-9044 from the hub to the edge workers.                                              |
 | Discovery reports no devices                   | `enableControlPlaneNodes`, the device mode (`enableLogicalBlockDevices`), and the device filters.           |
-| Activation of a 1+1 cluster on two nodes waits | The `twoNode` declaration of the deployment document or the `StorageCluster`.                               |
-| Activation of a one-node cluster waits         | The `singleNode` declaration, exactly one storage node, and one data device per chunk of the stripe.        |
+| Activation of a 1+1 cluster on two nodes waits | `clusterMode: Dual` in the deployment document or the `StorageCluster`.                                     |
+| Activation of a one-node cluster waits         | `clusterMode: Single`, exactly one storage node, and one data device per chunk of the stripe.               |
 
 For a two-node edge cluster, the arbitration state is read from the Management API of the hub:
 

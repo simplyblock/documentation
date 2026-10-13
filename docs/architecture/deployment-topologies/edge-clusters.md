@@ -40,7 +40,7 @@ a volume, and automatic recovery actions of the control plane wait until the lin
 
 ### One-Node Edge Clusters
 
-A one-node edge cluster has a single storage node and is declared as such (`singleNode`). It is not highly
+A one-node edge cluster has a single storage node and is declared as such (cluster mode `Single`). It is not highly
 available: if the node fails, its volumes are unavailable until the node is back. Applications that must survive the
 loss of the node need a two-node edge cluster or application-level replication.
 
@@ -77,10 +77,10 @@ needs no second node. The remaining devices need enough free capacity to hold th
     Two-node edge clusters require two-node arbitration support in the control plane, the Simplyblock Operator, and
     the storage nodes.
 
-A two-node edge cluster uses the erasure-coding scheme 1+1 on exactly two storage nodes and keeps a copy of the
-journal and the data on each node. Every volume has a primary on one node and a secondary on the other, and a
-workload connects to both over two NVMe-oF paths. When a node fails, the other node takes over leadership, the active
-path switches, and I/O continues after a short pause.
+A two-node edge cluster (cluster mode `Dual`) uses the erasure-coding scheme 1+1 on exactly two storage nodes and
+keeps a copy of the journal and the data on each node. Every volume has a primary on one node and a secondary on the
+other, and a workload connects to both over two NVMe-oF paths. When a node fails, the other node takes over
+leadership, the active path switches, and I/O continues after a short pause.
 
 A device failure on either node is survived as well: the other node holds a copy of the data and of the journal.
 Data migration after a device failure or after adding a device runs in relaxed placement, so it needs no third node.
@@ -94,8 +94,9 @@ nodes from writing on their own (split brain), the control plane on the hub acts
   A fenced node returns the held I/O as a path error, so the hosts retry on the other path.
 - **Leases:** Each node holds a lease from the hub. A lease only matters while a node holds I/O. A slow or broken
   link to the hub never fences a healthy pair.
-- **Preferred node:** If neither node reaches the hub nor the other node, the preferred node continues after the hold
-  time and the other node fences itself.
+- **No grant, no solo operation:** A node that has no grant from the hub when the hold time ends fences itself. If
+  neither node reaches the hub nor the other node, both nodes fence themselves, and I/O resumes once the hub is
+  reachable again.
 - **Workload restart:** The operator taints the Kubernetes node of a fenced storage node with
   `storage.simplyblock.io/fenced`, so that Kubernetes and KubeVirt restart the affected workloads on the other node.
 

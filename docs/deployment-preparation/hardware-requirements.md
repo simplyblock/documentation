@@ -28,9 +28,9 @@ network bandwidth, and free space on the boot disk.
 
 !!! note "Edge clusters"
     A storage node of an [edge cluster](../architecture/deployment-topologies/edge-clusters.md) needs at least
-    3 vCPUs and 3 GB of RAM. An edge cluster has one storage node (single-node declaration, any erasure-coding
-    scheme with one data device per chunk, for example, 2+1 on three devices) or two storage nodes (erasure coding 1+1
-    with the two-node declaration).
+    3 vCPUs and 3 GB of RAM. An edge cluster has one storage node (cluster mode `Single`, any erasure-coding
+    scheme with one data device per chunk, for example, 2+1 on three devices) or two storage nodes (cluster mode
+    `Dual`, erasure coding 1+1).
 
 !!! info
     In cloud environments including GCP and AWS, instance types are pre-configured. In general,
