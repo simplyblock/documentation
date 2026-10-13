@@ -64,15 +64,19 @@ Notes:
 
 ## Configured Subsystem Limit per Node
 
-The 75-subsystem ceiling applies on top of the per-node configured maximum, set at host configuration time:
+The maximum number of subsystems per storage node is a cluster-wide setting. Every node of the cluster uses the
+same value. It is set when the cluster is created:
 
-```bash title="Configure the maximum number of subsystems per node"
-{{ cliname }} storage-node configure --max-subsys <N> <FURTHER_OPTIONS>
+```bash title="Set the maximum number of subsystems per node"
+{{ cliname }} cluster create --max-subsys <N> <FURTHER_OPTIONS>
 ```
 
-The effective subsystem limit of a node is the **smaller** of `--max-subsys` and 75. The configured value also
-drives the node's memory reservation (huge pages), so it should reflect the actually planned number of volumes.
-It can be changed later via `{{ cliname }} storage-node restart --max-subsys <N>`.
+In Kubernetes, the same setting is `maxSubsystemCount` of the `StorageCluster`.
+
+The value cannot exceed the hard ceiling of 75, and a larger value is rejected. The configured value also drives each
+node's memory reservation (huge pages), so it should reflect the actually planned number of volumes. It can be
+changed later with `{{ cliname }} cluster update --max-subsys <N>`. Each node adopts the new value on its next
+restart.
 
 ## Namespaces per Subsystem
 

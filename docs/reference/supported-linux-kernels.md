@@ -18,6 +18,24 @@ The following kernels are known to be compatible and tested. Additional kernel v
 | Amazon Linux 2           | Kernel 5.10 AMI 2.0.20230822.0          | modprobe nvme-tcp |
 | Amazon Linux 2023        | 2023.1.20230825.0 x86_64 HVM kernel-6.1 | modprobe nvme-tcp |
 
+## Kernel Requirements for pNFS Clients
+
+Nodes that mount [pNFS volumes](../kubernetes/usage/pnfs.md) need the pNFS block layout driver, built with
+`CONFIG_PNFS_BLOCK` and usually loaded as the `blocklayoutdriver` module. It also serves the SCSI layout used by
+simplyblock. The driver must support NVMe devices, which it finds through `/dev/disk/by-id/nvme-eui.` links created by
+the CSI node plugin.
+
+This depends on the kernel build, not on its version number. A node without it still mounts pNFS volumes, but routes
+all of their data through the metadata server. How to check a node is described in
+[Verifying the Direct Data Path](../kubernetes/usage/pnfs.md#verifying-the-direct-data-path).
+
+| OS                       | Linux Kernel | pNFS Client Support |
+|--------------------------|--------------|---------------------|
+| Red Hat Enterprise Linux | 5.14.0-687   | Yes (RHEL 9.8)      |
+
+The metadata server has no requirements on the host kernel beyond KVM, since it runs its own kernel inside a virtual
+machine.
+
 !!! warning
     Amazon Linux 2 and Amazon Linux 2023 have a bug with
     [NVMe over Fabrics Multipathing](../important-notes/terminology.md#multipathing). That means that NVMe over Fabrics on any Amazon Linux operates in a degraded

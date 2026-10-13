@@ -89,6 +89,36 @@ reliability by using multiple connections, ensuring continuous access to storage
 implemented in Fibre Channel (FC), iSCSI, and NVMe-oF (including NVMe/TCP and NVMe/RoCE) environments, where high
 availability and optimized data transfer are critical.
 
+### pNFS (Parallel NFS)
+
+Parallel NFS (pNFS) is an extension of NFSv4.1 that separates file metadata from file data. A metadata server owns the
+filesystem and answers requests such as opening, creating, and locking files. For the data, it hands clients a layout,
+and the clients then read and write the storage directly instead of sending every byte through the server. Simplyblock
+uses pNFS with the SCSI layout type (RFC 8154) to provide volumes that several Kubernetes nodes write at the same time
+(ReadWriteMany). See [ReadWriteMany (pNFS)](../architecture/concepts/pnfs.md) for details.
+
+### Metadata Server (MDS)
+
+The metadata server (MDS) is the NFS server of a pNFS deployment. It holds the only mount of a shared filesystem,
+handles all metadata operations, and issues layouts to clients. In simplyblock, one metadata server per storage cluster
+serves every pNFS volume of that cluster. It runs as a pod in the operator's namespace, in a micro virtual machine with
+its own Linux kernel, so that no Kubernetes node has to run an NFS server.
+
+### pNFS Layout
+
+A layout is the description of where the data of a file lives, handed by a pNFS metadata server to a client. With the
+SCSI layout type used by simplyblock, a layout names a block device (the NVMe-oF namespace of the logical volume) and
+the block ranges of the file on it. A client holding a layout reads and writes these ranges directly over NVMe-oF. A
+client that cannot use a layout falls back to sending its data through the metadata server, which is correct but
+slower.
+
+### Persistent Reservation
+
+A persistent reservation is an NVMe (and SCSI) mechanism that controls which hosts may access a shared namespace. Each
+host registers a key, and a keyholder can revoke the access of other hosts. A pNFS metadata server registers a key on
+every exported namespace before it issues any layout and uses reservations to revoke the access of clients it no longer
+trusts. Simplyblock creates namespaces with persistent reservation support.
+
 ### Management Node
 
 A management node is a containerized component that orchestrates, monitors, and controls the distributed storage

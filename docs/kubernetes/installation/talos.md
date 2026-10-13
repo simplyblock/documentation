@@ -38,7 +38,6 @@ Run the following command on the admin control pod to calculate the huge pages r
 ```bash title="Run the huge memory calculator"
 {{ cliname }} storage-node configure \
   --calculate-hp-only \
-  --max-subsys <MAX_SUBSYSTEMS> \
   --number-of-devices <NUMBER_OF_DEVICES>
 ```
 
@@ -46,12 +45,16 @@ The following flags also affect the huge page calculation:
 
 - `--nodes-per-socket (default: 1)`
 - `--sockets-to-use (default: 0)`
-- `--cores-percentage (default: 0 / unset)`
+
+The maximum number of subsystems and the vCPU count are cluster-level settings (`maxSubsystemCount` and `vcpuCount`
+of the `StorageCluster`), which the host does not know before it joins the cluster. The calculator therefore sizes
+the host for the maximum of 75 subsystems and its default core layout, so the result is enough for any cluster
+setting.
 
 ```plain title="Example output of huge pages calculator"
 [demo@demo ~]# {{ cliname }} storage-node configure \
-  --calculate-hp-only --max-subsys 10 --number-of-devices 4
-2026-02-22 22:27:47,017: 140705369632256: INFO: The required number of huge pages on this host is: 5776 (11552 MB)
+  --calculate-hp-only --number-of-devices 4
+INFO: The required number of huge pages on this host is: <NUMBER_OF_PAGES> (<SIZE> MB)
 True
 ```
 

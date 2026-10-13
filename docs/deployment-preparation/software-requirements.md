@@ -27,6 +27,12 @@ A full overview of the supported operating systems for initiators can be found a
 - [Linux Distributions and Versions](../reference/supported-linux-distributions.md#hosts-initiators-accessing-storage-cluster-over-nvmf)
 - [Linux Kernel Versions](../reference/supported-linux-kernels.md)
 
+Initiators that mount [pNFS volumes](../kubernetes/usage/pnfs.md) additionally require a kernel with the pNFS block layout driver (`CONFIG_PNFS_BLOCK`), including its support for NVMe devices: the
+driver finds the device a layout names through a `/dev/disk/by-id/nvme-eui.` link, which the CSI node plugin creates. This
+depends on the kernel build, not on its version number. Red Hat Enterprise Linux 9.8 (kernel 5.14.0-687) is
+validated. A node without them still mounts pNFS volumes, but routes all of their data through the
+metadata server at a fraction of the throughput.
+
 # Kubernetes Requirements
 
 !!! important
@@ -52,6 +58,26 @@ For Kubernetes-based deployments, the following Kubernetes environments and dist
 Additionally, there are verified and supported operating systems for the Kubernetes worker nodes. A full reference is
 available at the [Supported Linux Distributions](../reference/supported-linux-distributions.md#kubernetes-hyper-converged-control-plane-and-storage-plane)
 reference.
+
+!!! note "Edge clusters"
+    An [edge cluster](../architecture/deployment-topologies/edge-clusters.md) runs the Simplyblock Operator in the
+    managed profile and connects to the control plane on a hub cluster:
+
+    - **Hub:** The control plane runs with the standalone profile. Its Management API is reachable from every edge
+      site, for example, through a LoadBalancer Service, an OpenShift Route, or an Ingress. Loopback and link-local
+      endpoints are rejected. A Secret with a static admin token, referenced by
+      `controlplane.local.adminTokenSecretRef`, lets edge operators authenticate, because the hub cannot verify a
+      service account token of another cluster.
+    - **Credentials at the edge:** The Management API endpoint, the admin token, the CA certificate of the Management
+      API if it is not in the system trust store, and the storage node image of the release.
+    - **Control plane nodes:** Small edge clusters often run storage on Kubernetes control plane nodes. The discovery
+      must then be allowed to use them (`enableControlPlaneNodes`).
+    - **Two-node OpenShift:** A two-node OpenShift cluster needs a tie-breaker for its own etcd, either OpenShift with
+      an arbiter node or OpenShift with fencing through the BMCs of the servers. This is independent of the storage
+      arbitration on the hub.
+    - **Node remediation:** For two-node edge clusters, Node Health Check with Self Node Remediation or Fence Agents
+      Remediation lets Kubernetes restart the workloads of a failed node. Without it, they wait for the default
+      eviction timeout.
 
 # Proxmox Requirements
 
