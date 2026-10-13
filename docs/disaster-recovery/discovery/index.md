@@ -31,6 +31,9 @@ A bundle is a DRProposal object on the hub. It holds everything needed to protec
 - The place of the application in a recovery plan, as a separate RecoveryPlan bundle per DR path.
 - Site-mapping changes, as a separate SiteMapping bundle per site.
 
+Bundles come from three sources: the rule engine on a site's graph, a [blueprint](blueprints.md) exported from
+another environment, and an [SRM import](srm-import.md). All of them are reviewed and approved the same way.
+
 Every proposed value carries its evidence (the graph edges it rests on) and a confidence. Values that cannot be
 decided become questions. Before approval, dr-hub evaluates the readiness checks against the proposed objects (a
 dry run) and attaches the result to the bundle.
@@ -56,3 +59,7 @@ yet. A DiscoveryRun in mode `AI` fails with the reason `NotImplemented`.
 - **[Using Discovery](using-discovery.md):** Running discovery, reading the graph, reviewing, approving, and rolling back
   bundles.
 - **[Reference](reference.md):** Bundle phases, configuration fields, run fields, annotations, and label keys.
+- **[Environment Promotion](blueprints.md):** Exporting the approved setup of UAT as a blueprint and proposing it in
+  production.
+- **[Migration From VMware Live Site Recovery](srm-import.md):** Importing SRM protection groups and recovery plans for
+  the VMs migrated with MTV.

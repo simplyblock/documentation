@@ -83,17 +83,31 @@ The following capabilities are available today:
 - **Protection:** Protection plans with the five method types, directed DR paths, and protected applications
   (discovered and managed). Asynchronous replication runs on the simplyblock CSI driver's csi-addons replication,
   with the backend pairing derived by dr-hub.
-- **Boot order:** Tiers with readiness gates, including `exec` gates.
+- **Boot order and workflows:** Tiers with readiness gates (including `exec` gates), health probes, external hooks,
+  and ordered recovery plans with priorities, dependencies, and gates between priorities. See
+  [Workflows and Recipes](configuration/workflows-and-recipes.md) and [Recovery Plans](operations/recovery-plans.md).
 - **Recovery actions:** Failover, Relocate, and failback, for single applications and for ordered recovery plans,
   with pre-flight readiness checks, external hooks, health probes, and reports. Restart in place after a storage
   recovery.
 - **Site mapper:** Site profiles, DHCP servers, and the mapping of the network attachments and guest addresses of
-  virtual machines between sites.
+  virtual machines between sites, with a selectable DHCP server for the test network of each DR path. See
+  [Site Profiles](configuration/site-profiles.md).
+- **Replicated StorageClass:** dr-hub creates a plan's replicated StorageClass on every site of the plan. See
+  [Protection Plans](configuration/protection-plans.md#provisioning-the-storageclass).
 - **Test failover:** Isolated test bubbles, with the storage operator's clones, and test schedules for discovered
   applications.
 - **Backup and restore:** Backups by the storage with the backup method types, and restore onto rebuilt sites.
 - **Hub recovery:** Signed DR state bundles and the `dr-restore` command-line tool.
 - **Control Center:** The Disaster recovery section of the simplyblock web console.
+
+The following capabilities are available as a preview:
+
+- **Discovery and proposals:** Dependency graphs of every site, whole-application bundles from a rule engine, dry runs,
+  and approval through a GitOps pull request or in the console. See [Discovery and Proposals](discovery/index.md).
+- **Environment promotion:** Blueprints of the approved setup of a test environment, proposed in production. See
+  [Environment Promotion](discovery/blueprints.md).
+- **Migration from VMware Live Site Recovery:** Protection groups and recovery plans imported from an SRM export and
+  proposed for the VMs migrated with MTV. See [Migration From VMware Live Site Recovery](discovery/srm-import.md).
 
 !!! info "Coming soon"
     - **Site mapper, further categories:** Storage classes, zones, load balancer addresses, domains, routes, and
@@ -104,6 +118,10 @@ The following capabilities are available today:
       [Relocate (Online)](operations/relocate-online.md).
     - **Storage deployment from the hub console:** Discovering and deploying a managed site's storage cluster from
       the Control Center. See [Control Center](control-center.md).
+    - **AI-assisted discovery:** Refining bundles with a Claude agent. Discovery runs in rules mode today.
+    - **Live SRM import:** Reading the configuration from the VMware Live Site Recovery REST API instead of an export
+      file.
+    - **Console screens for blueprints and SRM imports,** and writing blueprints into Git by dr-hub.
 
 ## Section Contents
 

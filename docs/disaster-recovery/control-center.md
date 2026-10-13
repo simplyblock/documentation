@@ -51,34 +51,30 @@ helm upgrade simplyblock-operator simplyblock/simplyblock-operator -n simplybloc
     not authenticate users itself. An authenticating proxy or the Ingress annotations provide the login, or
     `authMode: passthrough` passes on each user's own token.
 
-!!! info "Coming soon"
-    The full-mode console is part of the `feature/control-center-ui` line of the Simplyblock Operator and not yet
-    in a released operator chart. The DR-only console is in the DR hub chart.
-
 ## What the Console Does
 
 The Disaster recovery home shows the plans, paths, protected applications with their readiness per path, the running
 actions and tests, and the resolution inbox of the site mapper.
 
-| Screen                       | Creates and edits                                                                                                                                                              | Resources                      |
-|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------|
-| New plan, Edit S3 stores     | Sites, storage class selector, methods with their intervals, one S3 store per site, Velero namespace.                                                                          | `ProtectionPlan`               |
-| Declare path                 | Direction, allowed actions, test settings (isolated NAD, clone capacity, test-recent window).                                                                                  | `DRPath`                       |
-| Protect application          | Kind, namespaces, PVC selector, source and target, tiers with their ready conditions, health probes. *Edit tiers & probes* changes them later.                                 | `ProtectedApplication`         |
-| Register DHCP server         | Site, type, ConfigMap, and binding as the site's DHCP server.                                                                                                                  | `DHCPServer`, `SiteProfile`    |
-| Site profiles, Edit bindings | Logical networks per role, guest networks with subnet and reserved host IDs, the DHCP server per role.                                                                         | `SiteProfile`                  |
-| Application, Site mapping    | The findings, guest reservations, and renderings of an application (read-only).                                                                                                | `ProtectedApplication` status  |
-| Relocate, Failover, Test     | A recovery action or test along a path, with the override reason when the path is `NotReady` (`dr-admin` only). The action's phase strip, journal, and report follow in place. | `RecoveryAction`, `TestBubble` |
-| Recovery plans, Schedules    | Ordered plans of several applications, cron schedules of tests.                                                                                                                | `RecoveryPlan`, `TestSchedule` |
-| Restore                      | A restore of an application awaiting restore after a total loss.                                                                                                               | `RestoreAction`                |
-| Clusters, Logical volumes    | Full mode only: the storage side, for example, the landing copies and replicated snapshots on the target cluster, and the clone under the PVC's name after a fail-over.        | Storage resources              |
+| Screen                       | Creates and edits                                                                                                                                                                                                           | Resources                                      |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|
+| New plan, Edit S3 stores     | Sites, storage class selector, methods with their intervals, one S3 store per site, Velero namespace.                                                                                                                       | `ProtectionPlan`                               |
+| Declare path                 | Direction, allowed actions, test settings (isolated NAD, clone capacity, test-recent window).                                                                                                                               | `DRPath`                                       |
+| Protect application          | Kind, namespaces, PVC selector, source and target, tiers with their ready conditions, health probes. *Edit tiers & probes* changes them later.                                                                              | `ProtectedApplication`                         |
+| Register DHCP server         | Site, type, ConfigMap, and binding as the site's DHCP server.                                                                                                                                                               | `DHCPServer`, `SiteProfile`                    |
+| Site profiles, Edit bindings | Logical networks per role, guest networks with subnet and reserved host IDs, the DHCP server per role.                                                                                                                      | `SiteProfile`                                  |
+| Application, Site mapping    | The findings, guest reservations, and renderings of an application (read-only).                                                                                                                                             | `ProtectedApplication` status                  |
+| Relocate, Failover, Test     | A recovery action or test along a path, with the override reason when the path is `NotReady` (`dr-admin` only). The action's phase strip, journal, and report follow in place.                                              | `RecoveryAction`, `TestBubble`                 |
+| Recovery plans, Schedules    | Ordered plans of several applications, cron schedules of tests.                                                                                                                                                             | `RecoveryPlan`, `TestSchedule`                 |
+| Restore                      | A restore of an application awaiting restore after a total loss.                                                                                                                                                            | `RestoreAction`                                |
+| Discovery, Proposals         | The site graphs, the bundles with their evidence, questions, and dry run, runs of the rule engine, and the approval and rollback of bundles without a GitOps repository. See [Discovery and Proposals](discovery/index.md). | `DiscoveryGraph`, `DRProposal`, `DiscoveryRun` |
+| Clusters, Logical volumes    | Full mode only: the storage side, for example, the landing copies and replicated snapshots on the target cluster, and the clone under the PVC's name after a fail-over.                                                     | Storage resources                              |
 
-The deployment of a managed site's storage cluster (discovery, draft, approval) and the replicated StorageClass of a
-site are not in the console yet.
+The replicated StorageClass of a site is created by dr-hub from the plan, see
+[Protection Plans](configuration/protection-plans.md#provisioning-the-storageclass). The deployment of a managed site's
+storage cluster (discovery, draft, approval) is not in the console yet.
 
 !!! info "Coming soon"
     - **Deploying a site's storage from the hub:** A `StorageSiteDeployment` resource on the hub, reconciled through
       Open Cluster Management, lets the console discover a managed site's nodes, size the draft, and approve the
       deployment of its storage cluster.
-    - **StorageClass delivery:** dr-hub derives the replicated StorageClass from the plan's storage profile and
-      delivers it to every site of the plan.
