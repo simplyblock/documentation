@@ -75,15 +75,30 @@ explicitly, as described in [Linux Block Devices](../../architecture/concepts/li
 
 ## Draft for a One-Node Edge Cluster
 
-A one-node edge cluster uses the erasure-coding scheme 1+0:
+A one-node edge cluster sets `clusterMode` to `Single` in the deployment document. The cluster mode lets any
+supported erasure-coding scheme run on the one storage node, with every chunk of a stripe on a different device. It
+is copied to `spec.clusterMode` of the `StorageCluster` when the cluster is created. A cluster cannot be changed to
+or from `Single` afterward.
 
-```bash title="One-node edge cluster"
+For a one-worker fleet, the discovery proposes the cluster mode `Single` and the scheme that the data devices of the
+worker carry: 2+1 with three or more devices, 1+1 with two, and 1+0 with one. A device dedicated to the journal does
+not count as a data device. Other schemes are chosen by setting the stripe, as long as the worker hands over one data
+device per chunk:
+
+```bash title="One-node edge cluster with six data devices"
 kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p '{
   "spec": {"cluster": {
     "name": "edge-site-a",
-    "stripe": {"dataChunks": 1, "parityChunks": 0}
+    "clusterMode": "Single",
+    "stripe": {"dataChunks": 4, "parityChunks": 2}
   }}}'
 ```
+
+The validation of the document refuses a `Single` document with more than one storage node, or with a group that
+names fewer data devices than the scheme has chunks.
+
+How many device failures the node survives depends on the scheme and on the journal placement, as described in
+[Edge Clusters](../../architecture/deployment-topologies/edge-clusters.md#one-node-edge-clusters).
 
 ## Draft for a Two-Node Edge Cluster
 
@@ -91,30 +106,34 @@ kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p 
     Two-node edge clusters require two-node arbitration support in the control plane, the Simplyblock Operator, and
     the storage nodes.
 
-A two-node edge cluster declares `twoNode` in the deployment document. The declaration lets the erasure-coding scheme
-1+1 run on exactly two storage nodes, which otherwise needs three. It is copied to `spec.twoNode` of the
-`StorageCluster` when the cluster is created:
+A two-node edge cluster sets `clusterMode` to `Dual` in the deployment document. The cluster mode lets the
+erasure-coding scheme 1+1 run on exactly two storage nodes, which otherwise needs three. It is copied to
+`spec.clusterMode` of the `StorageCluster` when the cluster is created, together with `enableArbitration` and
+`arbitration`. For a fleet of exactly two workers, the discovery proposes the cluster mode `Dual` with 1+1. Other
+schemes still need their usual number of storage nodes:
 
 ```bash title="Two-node edge cluster"
 kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p '{
   "spec": {"cluster": {
     "name": "edge-site-b",
     "stripe": {"dataChunks": 1, "parityChunks": 1},
-    "twoNode": {
-      "arbitration": true,
-      "preferredNode": "edge-worker-1",
+    "clusterMode": "Dual",
+    "enableArbitration": true,
+    "arbitration": {
       "holdMs": 2500,
       "leaseTtlMs": 1500
     }
   }}}'
 ```
 
-| Field           | Default | Description                                                                          |
-|-----------------|---------|--------------------------------------------------------------------------------------|
-| `arbitration`   | Off     | Enables the arbitration of the hub between the two nodes.                            |
-| `preferredNode` | —       | Kubernetes node that continues when neither node reaches the hub nor the other node. |
-| `holdMs`        | `2500`  | How long a node holds write I/O after losing its peer. Must stay below 5 seconds.    |
-| `leaseTtlMs`    | `1500`  | Validity of the lease the hub grants each node. Must be shorter than the hold time.  |
+| Field                    | Default    | Description                                                                         |
+|--------------------------|------------|-------------------------------------------------------------------------------------|
+| `clusterMode`            | `Standard` | `Single` for one storage node, `Dual` for two, `Standard` for three or more.        |
+| `enableArbitration`      | Off        | Enables the arbitration of the hub between the two nodes.                           |
+| `arbitration.holdMs`     | `2500`     | How long a node holds write I/O after losing its peer. Must stay below 5 seconds.   |
+| `arbitration.leaseTtlMs` | `1500`     | Validity of the lease the hub grants each node. Must be shorter than the hold time. |
+
+`enableArbitration` and `arbitration` are refused unless `clusterMode` is `Dual`.
 
 ## Approving and Verifying
 
