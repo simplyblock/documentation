@@ -16,6 +16,12 @@ cluster lives in the same namespace: its `StorageNode`, `StorageDevice`, and `St
 policies and backups, and all operations on them. A `StoragePool` whose `clusterRef` names a cluster outside its own
 namespace is rejected.
 
+Two backup objects are the exception, so that a tenant can protect and recover its own data without access to the
+cluster's namespace. A `StorageBackup` request lives beside the claim it backs up, and a `StorageBackupOps` restore
+lives in the namespace of the claim it creates. A restore that names a backup or a cluster in another namespace is
+admitted only when the requesting user may read those objects there. See
+[Restoring Across Namespaces](../data-protection/backup-recovery.md#restoring-across-namespaces).
+
 This turns "administrator of cluster `production`" into "administrator of the namespace where `StorageCluster`
 `production` lives," which is a problem Kubernetes RBAC already solves. The recommended layout is one namespace per
 storage cluster.

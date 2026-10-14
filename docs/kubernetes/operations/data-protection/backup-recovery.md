@@ -1,23 +1,25 @@
 ---
 title: "Backup and Recovery"
-description: "Policy-driven backups of simplyblock volumes to Amazon S3 or S3-compatible object storage, observed as StorageBackup objects and restored with StorageBackupOps."
+description: "Policy-driven and on-demand backups of simplyblock volumes to Amazon S3 or S3-compatible object storage, observed as StorageBackup objects and restored with StorageBackupOps."
 weight: 10510
 ---
 
 Simplyblock backs up volumes to Amazon S3 or S3-compatible object storage as chains of incremental snapshots. On
-Kubernetes, backups are declared, not requested: the `StorageCluster` names the S3 location, a
-`StorageBackupPolicy` selects the claims to back up and sets the schedule and the retention, and the control plane
-takes the copies. Every copy found in the store appears as a `StorageBackup` object, and a copy is restored into a new
-claim with a `StorageBackupOps` operation.
+Kubernetes, the `StorageCluster` names the S3 location, a `StorageBackupPolicy` selects the claims to back up and sets
+the schedule and the retention, and the control plane takes the copies. A single backup of one claim can also be
+requested at any time by creating a `StorageBackup`, the way a `VolumeSnapshot` is created. Every copy found in the
+store appears as a `StorageBackup` object, and a copy is restored into a new claim with a `StorageBackupOps`
+operation.
 
-| Kind                  | Short name | Written by    | Purpose                                                         |
-|-----------------------|------------|---------------|-----------------------------------------------------------------|
-| `StorageCluster`      | `stc`      | Administrator | `spec.backup` names the S3 location and its credentials.        |
-| `StorageBackupPolicy` | `sbp`      | Administrator | Schedule and retention for the claims its selector matches.     |
-| `StorageBackup`       | `sb`       | Operator only | One backup found in the store. Observed, never created by hand. |
-| `StorageBackupOps`    | `sbops`    | Administrator | Restores one backup into a new claim.                           |
+| Kind                  | Short name | Written by            | Purpose                                                                        |
+|-----------------------|------------|-----------------------|--------------------------------------------------------------------------------|
+| `StorageCluster`      | `stc`      | Administrator         | `spec.backup` names the S3 location and its credentials.                       |
+| `StorageBackupPolicy` | `sbp`      | Administrator         | Schedule and retention for the claims its selector matches.                    |
+| `StorageBackup`       | `sb`       | Operator, or a user   | A record of one backup found in the store, or a user's request for one backup. |
+| `StorageBackupOps`    | `sbops`    | Administrator or user | Restores one backup into a new claim.                                          |
 
-All four live in the namespace of the `StorageCluster` and use the API version `storage.simplyblock.io/v1alpha2`.
+All four use the API version `storage.simplyblock.io/v1alpha2`. The policy and the backup records live in the namespace
+of the `StorageCluster`. A backup request lives in the namespace of its claim, and so does a restore.
 
 !!! info "Backups and disaster recovery"
     The backup bucket is part of the storage cluster and is configured when the cluster is deployed. Simplyblock
@@ -151,7 +153,8 @@ kubectl label pvc my-pvc -n simplyblock backup=nightly
 kubectl label pvc my-pvc -n simplyblock backup-
 ```
 
-A policy only selects claims in its own namespace, which is the namespace of the `StorageCluster`. An absent selector
+A policy only selects claims in its own namespace, which is the namespace of the `StorageCluster`. The backups it takes
+are recorded in that namespace too. An absent selector
 is reported with a `SelectorEmpty` event on the policy.
 
 The attached claims are listed in `status.attachedClaims`, and `status.lastBackupAt` holds the time of the most recent
@@ -166,11 +169,72 @@ NAME      CLUSTER      PHASE    SCHEDULE             CLAIMS   LASTBACKUP   AGE
 nightly   production   Active   15m,4 60m,11 24h,7   3        4m           2d
 ```
 
+## Requesting a Backup
+
+A single backup of one claim is requested by creating a `StorageBackup` with `spec.source.claimName`, the way a
+`VolumeSnapshot` is created. No policy is involved, so a claim can be backed up before an upgrade without giving it a
+schedule.
+
+```yaml title="Example of a backup request (backup-request.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageBackup
+metadata:
+  name: my-pvc-before-upgrade
+  namespace: app
+spec:
+  source:
+    claimName: my-pvc
+```
+
+```bash title="Requesting the backup"
+kubectl apply -f backup-request.yaml
+```
+
+Create the request in the namespace of the claim. The claim must be bound to a simplyblock volume, and the cluster
+that provisioned the volume must have `spec.backup` set. The operator finds the cluster from the volume, so a request
+has no `clusterRef`.
+
+| Field              | Description                                                                         |
+|--------------------|-------------------------------------------------------------------------------------|
+| `source.claimName` | Name of the claim to back up, in the namespace of the request. Required, immutable. |
+
+A `StorageBackup` sets exactly one of `spec.source` (a request) and `spec.clusterRef` (a record written by the
+operator). The API server rejects an object that sets both or neither.
+
+The operator snapshots the claim's volume and asks the control plane to back the snapshot up. `status.backup.backupID`
+is filled in once the control plane assigns the ID.
+
+```bash title="Watching the request"
+kubectl get storagebackup my-pvc-before-upgrade -n app -w
+```
+
+| Phase       | Meaning                                                                                       |
+|-------------|-----------------------------------------------------------------------------------------------|
+| `Pending`   | Waiting: the claim does not exist or is not bound yet, or the cluster has no backup store.    |
+| `Creating`  | The control plane is writing the copy.                                                        |
+| `Available` | The copy is complete and can be restored.                                                     |
+| `Failed`    | The claim is not on a simplyblock volume, or the control plane reported the backup as failed. |
+
+`status.message` gives the reason, and a `Pending` request emits a `BackupRequestBlocked` event. A request that is
+`Available` or `Failed` is not retried. To take another backup, create another request.
+
+The request is the only object for its copy. If you delete it, the copy stays in the store and the operator records it
+as a regular `StorageBackup` in the namespace of the cluster. If the store stops reporting the copy, the request is
+marked `Failed` and is not deleted.
+
+!!! note
+    Creating and deleting a request needs the `create` and `delete` verbs on `storagebackups` in the claim's namespace.
+    A record is still refused for every identity but the operator.
+
 ## Listing Backups
 
-Every backup in the store is mirrored as one `StorageBackup` object, named after its backup ID. The objects are
-observations: a validating webhook refuses a `StorageBackup` that is created or deleted by anybody but the operator,
-and deleting the object would never delete the copy in the bucket.
+Every backup in the store is mirrored as one `StorageBackup` object, named after its backup ID. Backups taken by a
+policy are always recorded in the namespace of the `StorageCluster`, whatever namespace the claim is in. A record is an
+observation, and `spec.clusterRef` names the cluster whose store holds the copy. A webhook refuses to create or delete a
+record for anyone but the operator, and deleting a record never deletes the copy in the bucket.
+
+The webhook does not block backup requests. An object with `spec.source` is a request, not a record, and a user can
+create and delete it. See [Requesting a Backup](#requesting-a-backup).
 
 ```bash title="Listing the backups of a cluster"
 kubectl get storagebackup -n simplyblock
@@ -181,7 +245,7 @@ NAME                                   CLAIM    PHASE       SIZE         COMPLET
 7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   my-pvc   Available   1073741824   3m          3m
 ```
 
-`status.phase` is one of `Pending`, `Creating`, `Available`, or `Failed`. `status.source` records where the copy came
+`status.phase` is one of `Pending`, `Creating`, `Available`, or `Failed`. The backup ID is in `status.backup.backupID`. `status.source` records where the copy came
 from (the claim, the PersistentVolume, the pool, the logical volume, the snapshot, and the filesystem type), and
 `status.backup` records the copy itself (its ID, size, the previous backup of the chain, and the timestamps). The
 objects carry the labels `storage.simplyblock.io/cluster`, `storage.simplyblock.io/claim`, and
@@ -196,8 +260,8 @@ kubectl get sb -n simplyblock -l storage.simplyblock.io/claim=my-pvc
 
 ## Restoring a Backup
 
-A backup is restored into a new claim by a `StorageBackupOps` operation with `action: Restore`. The claim named in
-`restore.claimName` must not exist yet, because a restore creates a claim and never replaces the data of an existing
+A backup is restored into a new claim by a `StorageBackupOps` operation with `action: Restore`. The backup can be a
+record or a request. The claim named in `restore.claimName` must not exist yet, because a restore creates a claim and never replaces the data of an existing
 one. The target pool is required, since a backup found in a shared store may come from a pool this cluster does not
 have.
 
@@ -208,8 +272,10 @@ metadata:
   name: restore-my-pvc
   namespace: simplyblock
 spec:
-  clusterRef: production
-  backupRef: 7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef
+  clusterRef:
+    name: production
+  backupRef:
+    name: 7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef
   action: Restore
   restore:
     claimName: restored-pvc
@@ -224,14 +290,47 @@ kubectl apply -f restore.yaml
 
 | Field                      | Description                                                                        |
 |----------------------------|------------------------------------------------------------------------------------|
-| `clusterRef`               | Name of the `StorageCluster` in the same namespace. Required.                      |
-| `backupRef`                | Name of the `StorageBackup` to restore, in the same namespace. Required.           |
+| `clusterRef.name`          | Name of the `StorageCluster`. Required.                                            |
+| `clusterRef.namespace`     | Namespace of the `StorageCluster`. Defaults to the namespace of the operation.     |
+| `backupRef.name`           | Name of the `StorageBackup` to restore, a record or a request. Required.           |
+| `backupRef.namespace`      | Namespace of the `StorageBackup`. Defaults to the namespace of the operation.      |
 | `action`                   | `Restore`, the only action. Required.                                              |
 | `abort`                    | Stops the restore, as long as no logical volume has been created yet.              |
 | `restore.claimName`        | Name of the claim to create. Required, and must not exist.                         |
-| `restore.targetPool`       | `StoragePool` to restore into. Required.                                           |
+| `restore.targetPool`       | `StoragePool` to restore into, read from the namespace of the cluster. Required.   |
 | `restore.claimLabels`      | Labels applied to the created claim, for example, to attach it to a backup policy. |
 | `restore.claimAnnotations` | Annotations applied to the created claim.                                          |
+
+`clusterRef` and `backupRef` are objects. The API server rejects a string such as `backupRef: 7fab02f8-...`.
+
+### Restoring Across Namespaces
+
+The claim is always created in the namespace of the operation. The backup and the cluster can be in other namespaces,
+so a team can restore into its own namespace by creating the operation there and naming them with their namespaces:
+
+```yaml title="Example of a restore from the namespace of the cluster into the namespace app"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageBackupOps
+metadata:
+  name: restore-my-pvc
+  namespace: app
+spec:
+  clusterRef:
+    name: production
+    namespace: simplyblock
+  backupRef:
+    name: 7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef
+    namespace: simplyblock
+  action: Restore
+  restore:
+    claimName: restored-pvc
+    targetPool: production-default
+```
+
+The operator reads these objects with its own permissions, so the webhook checks the requesting user first. For each
+reference outside the namespace of the operation, it refuses the operation unless the user may `get` the
+`StorageBackup`, the `StorageCluster`, and the `StoragePool` in their namespaces. References inside the operation's
+namespace need no extra permission.
 
 The restored claim is created in the namespace of the operation, with access mode `ReadWriteOnce` and the size of the
 backup. Its StorageClass is the default class of the target pool, or otherwise the first StorageClass assigned to the
@@ -250,7 +349,7 @@ restore-my-pvc   7fab02f8-03f6-4e76-a9ac-78b63b1ce8ef   Restore   Succeeded     
 
 While the phase is `Running`, `status.step.state` moves through `Validating`, `Restoring`, `AwaitingVolume`, and
 `Binding`. Once the phase is `Succeeded`, the claim is bound and can be attached to a pod. Two restores of the same
-backup run one after the other.
+backup run one after the other, including restores created in different namespaces.
 
 ## Restoring a Volume Group
 

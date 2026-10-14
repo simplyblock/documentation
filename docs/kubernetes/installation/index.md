@@ -54,7 +54,7 @@ The operator manages the following resources. All of them use the API version `s
 | `StoragePool`             | `sp`       | Entity   | A tenancy unit with capacity and QoS limits. StorageClasses attach to it by label.                           |
 | `StorageBackupPolicy`     | `sbp`      | Entity   | Backup schedule and retention for the claims its selector matches.                                           |
 | `StorageDevice`           | `sd`       | Observed | Mirrors one device of a storage node. Never written by users.                                                |
-| `StorageBackup`           | `sb`       | Observed | One backup found in the backup store. Never written by users.                                                |
+| `StorageBackup`           | `sb`       | Observed | One backup found in the backup store, or a user's request for one backup of a claim.                         |
 | `OperatorOps`             | `oops`     | Ops      | Discovers workers and devices and writes a draft `ClusterDeploymentConfig`.                                  |
 | `ControlPlaneOps`         | `cpops`    | Ops      | Restarts, upgrades, or backs up a local control plane.                                                       |
 | `StorageClusterOps`       | `scops`    | Ops      | Activates, expands, shuts down, starts, restarts, or rolling-restarts a cluster, or cancels a task.          |
