@@ -184,6 +184,47 @@ The architecture has the following properties.
     The management model is described in
     [Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md).
 
+## Shared File Storage (pNFS)
+
+{{ experimental }}
+
+[Distributed file storage](../architecture/concepts/distributed-file-storage.md) (`ReadWriteMany` volumes through
+pNFS) is not a separate architecture. It is added to any of the architectures above that run simplyblock on
+Kubernetes, and it is not available on a legacy Docker-based deployment.
+
+It adds one component: a metadata server per storage cluster. The metadata server runs as a StatefulSet of one replica
+in the operator's namespace, on a worker node with a usable `/dev/kvm`. The CSI node plugin labels such nodes with
+`storage.simplyblock.io/kvm-capable=true`. The metadata server is created when the first pNFS volume of a storage
+cluster is provisioned, after pNFS has been enabled on the `SimplyblockDriver` resource
+([Enabling pNFS](../kubernetes/usage/pnfs.md#enabling-pnfs)).
+
+How it fits each architecture:
+
+- **Single Kubernetes cluster, single storage cluster:** One metadata server serves every pNFS volume. Client nodes
+  (every node running a pod that uses a pNFS volume) attach the volumes over NVMe/TCP like block volumes and mount
+  the exports from the metadata server.
+- **Single Kubernetes cluster, multiple storage clusters:** One metadata server per storage cluster that has pNFS
+  volumes. Each serves only the volumes of its own cluster, so tenants or tiers stay separated for shared volumes too.
+- **Hyper-converged, disaggregated, or hybrid topologies:** The metadata server and the clients are ordinary worker
+  pods and nodes. In a disaggregated topology, the client nodes and the metadata server node need NVMe/TCP access to
+  the storage nodes, as for block volumes.
+- **DR hub architectures:** pNFS volumes run at each site like any other volume. Protecting pNFS volumes with the DR
+  stack (protection plans, failover, and relocation) is not available yet.
+
+Placement considerations:
+
+- At least two KVM-capable worker nodes are recommended, so that the metadata server can be rescheduled when its node
+  is drained. The metadata server is a single instance. While it restarts, metadata operations on its volumes stall,
+  and clients resume without remounting.
+- The metadata server pod must be allowed to run privileged in the operator's namespace (it uses `/dev/kvm` and
+  `/dev/net/tun`), but it uses neither the host network nor the host PID namespace.
+- Network access to the metadata server pods (NFS over TCP port 2049, through a Service ClusterIP per export) and to
+  the storage cluster's NVMe/TCP targets should be limited to the cluster's nodes.
+
+The node requirements are listed in
+[Hardware Requirements](hardware-requirements.md#virtualization-support-for-pnfs) and
+[Software Requirements](software-requirements.md#pnfs-requirements).
+
 ## Decision Table
 
 | Requirement                                                                              | Recommended architecture                                               |
@@ -196,3 +237,4 @@ The architecture has the following properties.
 | Recovery from loss of all clusters or ransomware                                         | Add `snapshot-s3` backups to a metro or async plan                     |
 | Many small or edge clusters, central management                                          | Central hub for DR and storage (coming soon)                           |
 | Strict isolation between clusters, independent upgrades                                  | Local control plane and operator per cluster, with or without a DR hub |
+| Files shared by pods on many nodes (`ReadWriteMany`)                                     | Any architecture above, plus [pNFS](#shared-file-storage-pnfs)         |
