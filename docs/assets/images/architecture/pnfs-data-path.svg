@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
-<title id="t">pNFS: metadata through the metadata server, data directly over NVMe/TCP</title>
+<title id="t">pNFS: metadata through the metadata server, data directly over NVMe-oF</title>
 <defs>
 <marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
 <marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
@@ -8,7 +8,7 @@
 <rect x="0.5" y="0.5" width="959" height="559" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
 <text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">pNFS: metadata and data take different paths</text>
 
-<rect x="24" y="60" width="912" height="290" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<rect x="24" y="60" width="912" height="246" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
 <text x="38" y="82" font-size="14" font-weight="600" fill="#1d4f91">Kubernetes cluster</text>
 
 <!-- worker nodes -->
@@ -16,19 +16,19 @@
 <text x="146" y="116" font-size="13" font-weight="600" fill="#1d4f91" text-anchor="middle">Worker node 1</text>
 <rect x="62" y="126" width="168" height="26" rx="5" fill="#ddf4ff" stroke="#54aeff"/><text x="146" y="144" font-size="12" fill="#0969da" text-anchor="middle">pods (ReadWriteMany)</text>
 <rect x="62" y="158" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="146" y="176" font-size="12" fill="#1a237e" text-anchor="middle">NFSv4.1 client, SCSI layout</text>
-<rect x="62" y="190" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="146" y="208" font-size="12" fill="#1a237e" text-anchor="middle">NVMe/TCP attachment</text>
+<rect x="62" y="190" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="146" y="208" font-size="12" fill="#1a237e" text-anchor="middle">NVMe-oF attachment</text>
 
 <rect x="262" y="96" width="196" height="132" rx="8" fill="#ffffff" stroke="#7aa7e6" stroke-width="1.25"/>
 <text x="360" y="116" font-size="13" font-weight="600" fill="#1d4f91" text-anchor="middle">Worker node 2</text>
 <rect x="276" y="126" width="168" height="26" rx="5" fill="#ddf4ff" stroke="#54aeff"/><text x="360" y="144" font-size="12" fill="#0969da" text-anchor="middle">pods (ReadWriteMany)</text>
 <rect x="276" y="158" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="360" y="176" font-size="12" fill="#1a237e" text-anchor="middle">NFSv4.1 client, SCSI layout</text>
-<rect x="276" y="190" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="360" y="208" font-size="12" fill="#1a237e" text-anchor="middle">NVMe/TCP attachment</text>
+<rect x="276" y="190" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="360" y="208" font-size="12" fill="#1a237e" text-anchor="middle">NVMe-oF attachment</text>
 
 <rect x="476" y="96" width="196" height="132" rx="8" fill="#ffffff" stroke="#7aa7e6" stroke-width="1.25"/>
 <text x="574" y="116" font-size="13" font-weight="600" fill="#1d4f91" text-anchor="middle">Worker node n</text>
 <rect x="490" y="126" width="168" height="26" rx="5" fill="#ddf4ff" stroke="#54aeff"/><text x="574" y="144" font-size="12" fill="#0969da" text-anchor="middle">pods (ReadWriteMany)</text>
 <rect x="490" y="158" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="574" y="176" font-size="12" fill="#1a237e" text-anchor="middle">NFSv4.1 client, SCSI layout</text>
-<rect x="490" y="190" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="574" y="208" font-size="12" fill="#1a237e" text-anchor="middle">NVMe/TCP attachment</text>
+<rect x="490" y="190" width="168" height="26" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="574" y="208" font-size="12" fill="#1a237e" text-anchor="middle">NVMe-oF attachment</text>
 
 <!-- MDS -->
 <rect x="700" y="96" width="220" height="190" rx="8" fill="#fff8e1" stroke="#d4a72c" stroke-width="1.25"/>
@@ -42,29 +42,30 @@
 <text x="810" y="234" font-size="12" fill="#424a53" text-anchor="middle">reservation key on namespace</text>
 <rect x="714" y="252" width="192" height="24" rx="5" fill="#e8eaf6" stroke="#3949ab"/><text x="810" y="269" font-size="12" fill="#1a237e" text-anchor="middle">Service ClusterIP per export</text>
 
-<!-- metadata arrows (dashed) -->
-<path d="M146,228 L146,300 L700,300" fill="none" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4" marker-end="url(#arr-gray)"/>
-<path d="M360,228 L360,300" fill="none" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4"/>
-<path d="M574,228 L574,300" fill="none" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4"/>
-<path d="M700,276 L700,300" fill="none" stroke="#57606a" stroke-width="0"/>
-<rect x="250" y="306" width="330" height="20" rx="3" fill="#ffffff" fill-opacity="0.95"/>
-<text x="415" y="321" font-size="12" fill="#424a53" text-anchor="middle">metadata only: OPEN, LOOKUP, LAYOUTGET, LAYOUTCOMMIT</text>
+<!-- metadata arrows (dashed), right half of each node -->
+<path d="M196,228 L196,262 L700,262" fill="none" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4" marker-end="url(#arr-gray)"/>
+<path d="M410,228 L410,262" fill="none" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4"/>
+<path d="M624,228 L624,262" fill="none" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4"/>
 
 <!-- storage cluster -->
-<rect x="24" y="390" width="912" height="140" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
-<text x="38" y="412" font-size="14" font-weight="600" fill="#283593">Simplyblock storage cluster</text>
-<rect x="160" y="428" width="640" height="80" rx="8" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="480" y="452" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Logical volume (one NVMe namespace, NGUID)</text>
-<text x="480" y="472" font-size="12" fill="#424a53" text-anchor="middle">XFS filesystem, erasure coding, QoS, encryption</text>
-<text x="480" y="490" font-size="12" fill="#424a53" text-anchor="middle">persistent reservations fence clients that lose their layouts</text>
+<rect x="24" y="326" width="912" height="136" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<rect x="48" y="346" width="864" height="80" rx="8" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="480" y="370" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Logical volume (one NVMe namespace, NGUID)</text>
+<text x="480" y="390" font-size="12" fill="#424a53" text-anchor="middle">XFS filesystem, erasure coding, QoS, encryption</text>
+<text x="480" y="408" font-size="12" fill="#424a53" text-anchor="middle">persistent reservations fence clients that lose their layouts</text>
+<text x="38" y="450" font-size="14" font-weight="600" fill="#283593">Simplyblock storage cluster</text>
 
-<!-- data arrows (solid blue) -->
-<path d="M146,228 L146,240 L230,428" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
-<path d="M360,228 L380,428" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
-<path d="M574,228 L560,428" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
-<path d="M810,286 L760,428" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
-<rect x="232" y="356" width="300" height="20" rx="3" fill="#ffffff" fill-opacity="0.95"/>
-<text x="382" y="371" font-size="12" font-weight="600" fill="#3949ab" text-anchor="middle">data: direct and in parallel over NVMe/TCP</text>
-<rect x="760" y="356" width="160" height="20" rx="3" fill="#ffffff" fill-opacity="0.95"/>
-<text x="840" y="371" font-size="12" fill="#424a53" text-anchor="middle">guest's own NVMe/TCP</text>
+<!-- data arrows (solid blue), left half of each node -->
+<path d="M110,228 L110,346" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<path d="M324,228 L324,346" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<path d="M538,228 L538,346" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<path d="M810,286 L810,346" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+
+<!-- legend -->
+<path d="M40,494 L84,494" fill="none" stroke="#57606a" stroke-width="1.25" stroke-dasharray="6 4" marker-end="url(#arr-gray)"/>
+<text x="96" y="498" font-size="12" fill="#424a53">metadata only: OPEN, LOOKUP, LAYOUTGET, LAYOUTCOMMIT</text>
+<path d="M500,494 L544,494" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<text x="556" y="498" font-size="12" font-weight="600" fill="#3949ab">data: direct and in parallel over NVMe-oF</text>
+<path d="M40,524 L84,524" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="96" y="528" font-size="12" fill="#424a53">metadata server guest's own NVMe-oF</text>
 </svg>
