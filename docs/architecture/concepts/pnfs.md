@@ -17,6 +17,9 @@ clients instead of being capped by a single NFS server, and a shared volume perf
 attached as a block device. A client that cannot use the direct path falls back to sending its data through the
 metadata server (see [Data Path](#data-path)).
 
+The principles of pNFS and how a file is read and written are introduced in
+[Distributed File Storage](distributed-file-storage.md). This page describes the components in detail.
+
 pNFS is available on Kubernetes only but not on a legacy Docker-based deployment. Its configuration is described in
 [pNFS Volumes](../../kubernetes/usage/pnfs.md).
 

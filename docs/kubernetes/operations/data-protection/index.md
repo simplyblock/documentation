@@ -4,9 +4,9 @@ description: "Protect the data of a simplyblock cluster on Kubernetes with polic
 weight: 10500
 ---
 
-Data is protected on three levels. A volume is backed up to S3-compatible object storage by a `StorageBackupPolicy`,
-and it is replicated to a second cluster for a controlled failover. The state of the control plane itself lives in
-FoundationDB and is backed up separately, since a cluster cannot be rebuilt from its volumes alone.
+Data is protected on three levels. A volume is backed up to S3-compatible object storage by a `StorageBackupPolicy` or
+on demand, and it is replicated to a second cluster for a controlled failover. The state of the control plane itself
+lives in FoundationDB and is backed up separately, since a cluster cannot be rebuilt from its volumes alone.
 
 The pages in this section protect volumes and the control plane of one simplyblock deployment. Protecting whole
 applications (their volumes together with their Kubernetes objects) across sites, with planned and unplanned

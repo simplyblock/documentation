@@ -79,6 +79,49 @@ reference.
       Remediation lets Kubernetes restart the workloads of a failed node. Without it, they wait for the default
       eviction timeout.
 
+# pNFS Requirements
+
+These requirements apply only when [pNFS volumes](../kubernetes/usage/pnfs.md) (`ReadWriteMany`,
+[distributed file storage](../architecture/concepts/distributed-file-storage.md)) are used. pNFS is available on
+Kubernetes only, not on a legacy Docker-based deployment.
+
+**Metadata server node:**
+
+- At least one worker node with a usable `/dev/kvm`: CPU virtualization extensions (Intel VT-x or AMD-V) enabled on
+  bare metal, or nested virtualization on a virtual machine or cloud instance. Software emulation is not used as a
+  fallback. See [Virtualization Support for pNFS](hardware-requirements.md#virtualization-support-for-pnfs).
+- The CSI node plugin labels qualifying nodes with `storage.simplyblock.io/kvm-capable=true`. At least two such nodes
+  are recommended, so that the metadata server can be rescheduled.
+- The operator's namespace must admit privileged pods (for example, the `privileged` Pod Security Standard), because
+  the metadata server pod uses the host devices `/dev/kvm` and `/dev/net/tun`.
+
+**Client nodes** (every worker node that runs a pod using a pNFS volume):
+
+- A kernel with the pNFS block layout driver (`CONFIG_PNFS_BLOCK`, usually the `blocklayoutdriver` module), which also
+  serves the SCSI layout simplyblock uses, with its support for NVMe devices. The kernel must carry
+  `nvme_get_unique_id`, so that the device a layout names can be identified. This is a property of the kernel build,
+  not of its version number: Red Hat Enterprise Linux 9.8 (kernel 5.14.0-687) is validated, while Red Hat Enterprise
+  Linux 9.5 (kernel 5.14.0-503) lacks it. Debian and Ubuntu are not validated yet. See
+  [Kernel Requirements for pNFS Clients](../reference/supported-linux-kernels.md#kernel-requirements-for-pnfs-clients).
+- No NFS packages (`nfs-utils`, `nfs-common`) are needed on the host. The NFS client tools ship with the CSI node
+  plugin.
+- A node that does not meet the kernel requirement still mounts pNFS volumes, but routes all of their data through the
+  metadata server.
+
+**Network:**
+
+- NFSv4.1 or NFSv4.2 over TCP port 2049 from every client node to the metadata server pod. Clients mount a Kubernetes
+  Service ClusterIP per export, so the CNI must route a kernel NFS mount to a ClusterIP. No portmapper (port 111) and no
+  `rpc.statd` are used.
+- NVMe/TCP from every client node and from the metadata server pod to the storage nodes, as for block volumes.
+
+**Configuration:**
+
+- pNFS is enabled on the `SimplyblockDriver` resource through `spec.pnfs.mds`. Without it, pNFS volumes stay
+  `Pending`. The metadata server's memory limit must be at least `512Mi` (default `2Gi`).
+- A StorageClass with `csi.storage.k8s.io/fstype: pnfs`, and a simplyblock StorageClass for the metadata server's
+  state disk (`1Gi` by default, created per storage cluster when none is given).
+
 # Proxmox Requirements
 
 The Proxmox integration supports any Proxmox installation of version 8.0 and higher.

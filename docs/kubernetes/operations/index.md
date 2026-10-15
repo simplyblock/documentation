@@ -131,7 +131,9 @@ offline, or a node migration in its `Promoting` step.
 | `StorageBackupOps`       | `sbops`    | `StorageBackup`       | `Restore`                                                                            |
 | `VolumeGroupSnapshotOps` | `vgsops`   | `VolumeGroupSnapshot` | `Restore`                                                                            |
 
-`PersistentVolumeOps` is cluster-scoped. Every other kind is namespaced and lives in the namespace of its target.
+`PersistentVolumeOps` is cluster-scoped. Every other kind is namespaced and lives in the namespace of its target, except
+`StorageBackupOps`, which lives in the namespace of the claim it creates and names its backup and cluster with
+namespaced references.
 `VolumeGroupSnapshotOps` is the one kind without `spec.abort` and without the `Aborted` phase.
 
 Some operations are raised by the operator itself. A cordoned worker raises a `HostMaintenance` operation, deleting a
