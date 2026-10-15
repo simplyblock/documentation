@@ -13,30 +13,31 @@ The concepts behind plans are explained in [Protection Plans and Paths](../../ar
 
 ## Specification
 
-| Field                                             | Required         | Description                                                                                                                                                             |
-|---------------------------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `metadata.name`                                   | Yes              | Plan name, at most 40 characters.                                                                                                                                       |
-| `spec.sites[]`                                    | Yes              | 2 to 16 sites.                                                                                                                                                          |
-| `spec.sites[].name`                               | Yes              | Site name within the plan (DNS label, at most 40 characters). DR paths and applications refer to it.                                                                    |
-| `spec.sites[].cluster`                            | Yes              | Name of the OCM ManagedCluster, equal to `clusterName` of the spoke chart.                                                                                              |
-| `spec.sites[].zone`                               | For `sync`       | Topology zone the site stands for (node label `topology.kubernetes.io/zone`). The sites of a sync plan are the zones of one cluster; optional for async plans.          |
-| `spec.sites[].region`                             | No               | Region of the site.                                                                                                                                                     |
-| `spec.sites[].veleroNamespace`                    | No               | Velero namespace on this site, overriding `spec.veleroNamespace`.                                                                                                       |
-| `spec.storageProfile.storageClassSelector`        | Yes              | Label selector for the protected StorageClasses on every site.                                                                                                          |
-| `spec.storageProfile.volumeSnapshotClassSelector` | No               | Label selector for the paired VolumeSnapshotClasses. Defaults to the StorageClass selector.                                                                             |
-| `spec.storageProfile.consistencyGroups`           | No               | `Enabled` replicates the volumes of an application together with one consistency point (VolumeGroupReplication). `Disabled` (default) replicates each volume by itself. |
-| `spec.storageProfile.groupStorageClassSelector`   | No               | With consistency groups enabled, the StorageClasses whose PVCs form groups. Unset means every selected class.                                                           |
-| `spec.methods[]`                                  | Yes              | 1 to 8 replication methods.                                                                                                                                             |
-| `spec.methods[].name`                             | Yes              | Method name, at most 20 characters. Applications refer to it.                                                                                                           |
-| `spec.methods[].type`                             | Yes              | `sync`, `async`, `s3-backup`, `sync-s3-backup`, or `async-s3-backup`. See [Replication Types](replication-types.md).                                                    |
-| `spec.methods[].schedulingInterval`               | For async types  | Replication interval of `async` and `async-s3-backup`, for example, `5m`, `1h`, or `1d`.                                                                                |
-| `spec.methods[].s3Backup.interval`                | For backup types | Backup interval of `s3-backup`, `sync-s3-backup`, and `async-s3-backup`, in the same notation.                                                                          |
-| `spec.methods[].s3Backup.retention`               | For backup types | Number of backups kept per volume (at least 1).                                                                                                                         |
-| `spec.methods[].replicationParameters`            | No               | Up to 16 parameters passed verbatim to the CSI driver.                                                                                                                  |
-| `spec.s3Profile.name`                             | One of           | Name of an existing S3 profile, shared by all sites.                                                                                                                    |
-| `spec.s3Profiles[]`                               | One of           | One S3 store per site.                                                                                                                                                  |
-| `spec.veleroNamespace`                            | No               | Velero namespace on the sites.                                                                                                                                          |
-| `spec.autoRestart.enabled`, `.stableFor`          | No               | Restarts the plan's applications in place after their storage cluster recovers from a suspension. See [Restart After a Storage Recovery](../operations/restart.md).     |
+| Field                                             | Required         | Description                                                                                                                                                              |
+|---------------------------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `metadata.name`                                   | Yes              | Plan name, at most 40 characters.                                                                                                                                        |
+| `spec.sites[]`                                    | Yes              | 2 to 16 sites.                                                                                                                                                           |
+| `spec.sites[].name`                               | Yes              | Site name within the plan (DNS label, at most 40 characters). DR paths and applications refer to it.                                                                     |
+| `spec.sites[].cluster`                            | Yes              | Name of the OCM ManagedCluster, equal to `clusterName` of the spoke chart.                                                                                               |
+| `spec.sites[].zone`                               | For `sync`       | Topology zone the site stands for (node label `topology.kubernetes.io/zone`). The sites of a sync plan are the zones of one cluster; optional for async plans.           |
+| `spec.sites[].region`                             | No               | Region of the site.                                                                                                                                                      |
+| `spec.sites[].veleroNamespace`                    | No               | Velero namespace on this site, overriding `spec.veleroNamespace`.                                                                                                        |
+| `spec.storageProfile.storageClassSelector`        | Yes              | Label selector for the protected StorageClasses on every site.                                                                                                           |
+| `spec.storageProfile.volumeSnapshotClassSelector` | No               | Label selector for the paired VolumeSnapshotClasses. Defaults to the StorageClass selector.                                                                              |
+| `spec.storageProfile.consistencyGroups`           | No               | `Enabled` replicates the volumes of an application together with one consistency point (VolumeGroupReplication). `Disabled` (default) replicates each volume by itself.  |
+| `spec.storageProfile.groupStorageClassSelector`   | No               | With consistency groups enabled, the StorageClasses whose PVCs form groups. Unset means every selected class.                                                            |
+| `spec.storageProfile.provision`                   | No               | Has dr-hub create the replicated StorageClass on every site of the plan (`name`, `pool`, `fsType`). See [Provisioning the StorageClass](#provisioning-the-storageclass). |
+| `spec.methods[]`                                  | Yes              | 1 to 8 replication methods.                                                                                                                                              |
+| `spec.methods[].name`                             | Yes              | Method name, at most 20 characters. Applications refer to it.                                                                                                            |
+| `spec.methods[].type`                             | Yes              | `sync`, `async`, `s3-backup`, `sync-s3-backup`, or `async-s3-backup`. See [Replication Types](replication-types.md).                                                     |
+| `spec.methods[].schedulingInterval`               | For async types  | Replication interval of `async` and `async-s3-backup`, for example, `5m`, `1h`, or `1d`.                                                                                 |
+| `spec.methods[].s3Backup.interval`                | For backup types | Backup interval of `s3-backup`, `sync-s3-backup`, and `async-s3-backup`, in the same notation.                                                                           |
+| `spec.methods[].s3Backup.retention`               | For backup types | Number of backups kept per volume (at least 1).                                                                                                                          |
+| `spec.methods[].replicationParameters`            | No               | Up to 16 parameters passed verbatim to the CSI driver.                                                                                                                   |
+| `spec.s3Profile.name`                             | One of           | Name of an existing S3 profile, shared by all sites.                                                                                                                     |
+| `spec.s3Profiles[]`                               | One of           | One S3 store per site.                                                                                                                                                   |
+| `spec.veleroNamespace`                            | No               | Velero namespace on the sites.                                                                                                                                           |
+| `spec.autoRestart.enabled`, `.stableFor`          | No               | Restarts the plan's applications in place after their storage cluster recovers from a suspension. See [Restart After a Storage Recovery](../operations/restart.md).      |
 
 The API server rejects a plan that mixes synchronous and asynchronous methods, puts the sites of a sync plan on
 different clusters or leaves their zone empty, lists the same combination of cluster and zone twice, or has
@@ -57,6 +58,28 @@ storageProfile:
 
 A VolumeSnapshotClass is only used if its driver matches the provisioner of a selected StorageClass. Only PVCs of
 selected StorageClasses are replicated. PVCs of other classes in a protected namespace are not protected.
+
+## Provisioning the StorageClass
+
+With `spec.storageProfile.provision`, dr-hub creates the replicated StorageClass on every site of the plan, so it is
+not written by hand per site. The class carries the `matchLabels` of `storageClassSelector`, names the site's
+simplyblock storage cluster (as reported by dr-agent) and the pool, and is applied through Open Cluster Management.
+
+```yaml title="A plan that creates its StorageClass on every site"
+spec:
+  storageProfile:
+    storageClassSelector:
+      matchLabels:
+        simplyblock.io/replicated: "true"
+    provision:
+      name: simplyblock-dr   # StorageClass name on every site
+      pool: dr-pool          # optional; empty uses the storage cluster's default pool
+      fsType: xfs            # optional; default XFS
+```
+
+Once created, the class belongs to the site. Retiring the plan removes the plan's labels and leaves the class, because
+existing volumes still name it. Without `provision`, the StorageClasses are the user's, and the selector only finds
+them.
 
 ## Changing the Replication Settings
 
