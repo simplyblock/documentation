@@ -4,8 +4,6 @@ description: "Enable discovery in the DR configuration, run the eBPF flow collec
 weight: 10281
 ---
 
-{{ experimental }}
-
 Discovery is configured in the section `spec.discovery` of the DRConfig `default` on the hub. The site agents receive
 their settings from the hub, so no configuration is needed on the sites.
 

@@ -4,8 +4,6 @@ description: "Export the approved DR setup of a test environment as a blueprint 
 weight: 10284
 ---
 
-{{ experimental }}
-
 Applications are usually set up and tested in a non-production environment, for example, UAT, before they go to
 production. Discovery has the most data there: the flow collector can watch all traffic, and failovers can be
 rehearsed. A blueprint carries the result to production. Production gets the same protection setup without repeating

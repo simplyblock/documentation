@@ -4,8 +4,6 @@ description: "Import the protection groups and recovery plans of VMware Live Sit
 weight: 10285
 ---
 
-{{ experimental }}
-
 A VMware Live Site Recovery setup consists of protection groups, recovery plans with priorities and dependencies,
 startup settings, network mappings, and IP customization. An SRM import turns that setup into a
 [blueprint](blueprints.md). The VMs migrated by the Migration Toolkit for Virtualization (MTV) are

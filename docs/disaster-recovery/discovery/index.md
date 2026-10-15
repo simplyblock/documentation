@@ -4,8 +4,6 @@ description: "Simplyblock DR discovers applications, their dependencies, and the
 weight: 10280
 ---
 
-{{ experimental }}
-
 Protecting an application by hand means choosing its namespaces and volumes, writing tiers with readiness gates and
 health probes, ordering it against other applications in a recovery plan, and binding the site networks. Discovery
 does this work from what the sites report. It builds a dependency graph of every site, finds the applications in it,
