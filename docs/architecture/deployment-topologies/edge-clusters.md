@@ -106,7 +106,7 @@ nodes from writing on their own (split brain), the control plane on the hub acts
 
 The arbitration runs in the control plane on the hub, so a failover of a two-node edge cluster needs a reachable
 hub. A surviving node never continues on its own, because it cannot tell a failed peer from a broken link. This
-trades availability for consistency: without the hub as third vote, a broken link could leave both nodes writing.
+trades availability for consistency: without the hub as the third vote, a broken link could leave both nodes writing.
 
 | Situation                                    | Behavior                                                                                                            |
 |----------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
@@ -117,8 +117,8 @@ trades availability for consistency: without the hub as third vote, a broken lin
 | A host loses its path to one node            | The host switches to the other path (NVMe multipathing). No hub involvement.                                        |
 | Two-node cluster without arbitration         | The surviving node continues on its own, without protection against split brain.                                    |
 
-A node failure during an outage of the hub therefore means downtime. Run the control plane of the hub highly
-available, or in a third failure domain that does not share power, network, or location with the two edge nodes.
+A node failure during an outage of the hub therefore means downtime. The control plane of the hub has to run highly
+available, or in a third failure domain that must not share power, network, or location with the two edge nodes.
 
 ## Network Paths
 

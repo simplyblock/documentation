@@ -284,11 +284,11 @@ management traffic. For management traffic, a 1 GBit/s network is sufficient and
     For two-node edge clusters, a failover decision of the hub must reach the nodes within the hold time of
     2.5 seconds, which works with a WAN round-trip time in the low hundreds of milliseconds.
 
-!!! important "Arbiter and control plane availability for two-node edge clusters"
+!!! important "Hub Availability for Two-Node Edge Clusters"
     A two-node edge cluster fails over only while the control plane of the hub is reachable, because the hub
     arbitrates between the two nodes. If a node fails while the hub is down or unreachable, the other node fences
-    itself and the volumes stay unavailable until the hub is back. Run the control plane highly available, or in a
-    third failure domain that shares neither power nor network with the two edge nodes. See
+    itself and the volumes stay unavailable until the hub is back. The control plane has to run highly available, or
+    in a third failure domain that must not share power, network, or location with the two edge nodes. See
     [Availability of the Hub](../architecture/deployment-topologies/edge-clusters.md#availability-of-the-hub).
 
 !!! important "Highly Available Control Plane"
