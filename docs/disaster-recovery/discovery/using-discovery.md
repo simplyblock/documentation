@@ -13,7 +13,7 @@ or with `kubectl` on the hub. Graphs are cluster-scoped. Bundles live in the Ram
 With `autoRules` enabled, dr-hub rebuilds a site's graph whenever the site's report changes and writes bundles
 without a request. A DiscoveryRun forces a pass, for a whole site or a few namespaces:
 
-```yaml title="A discovery run for one namespace"
+```yaml title="Example of a discovery run for one namespace"
 apiVersion: dr.simplyblock.io/v1alpha1
 kind: DiscoveryRun
 metadata:
@@ -26,7 +26,7 @@ spec:
     namespaces: [shop]
 ```
 
-The run's status shows its phase (`Pending`, `Running`, `Succeeded`, `Failed`), its progress and the bundles it
+The run's status shows its phase (`Pending`, `Running`, `Succeeded`, `Failed`), its progress, and the bundles it
 produced. A run scoped to namespaces never marks bundles of other namespaces as stale. Runs are started in the
 Control Center with **Run discovery**. The mode `AI` is planned and not implemented yet.
 
@@ -41,13 +41,13 @@ NAME     NODES   EDGES   CANDIDATES   BUILT
 site-a   212     540     6            2m
 ```
 
-The DiscoveryGraph of a site lists its application candidates in `status.candidates`: members, namespaces, a score
+The DiscoveryGraph of a site lists its application candidates in `status.candidates`: members, namespaces, a score,
 and, when an existing ProtectedApplication already covers most of the candidate's PVCs, the adopted application.
 Connections between candidates are listed in `status.interApp`. The full graph (nodes, edges, and evidence) is stored
 in compressed ConfigMap shards in the namespace of dr-hub.
 
 In the Control Center, the site page shows the candidates and a graph view of one candidate or namespace. Edges can
-be filtered by type: ownership, volume mounts, Service selection, configuration references, observed connections and
+be filtered by type: ownership, volume mounts, Service selection, configuration references, observed connections, and
 network attachments. Selecting a node or an edge shows its evidence.
 
 ## Reviewing a Bundle
@@ -67,7 +67,7 @@ A bundle shows:
 - **Summary and confidence:** What the bundle proposes and how sure the proposer is (0 to 1000, shown as a percentage).
 - **Objects:** The proposed ProtectedApplication, RecoveryPlan, SiteProfile, DHCPServer, or DRPath, each with the
   evidence and confidence of every field.
-- **Diff:** The difference to the live objects. A bundle for an adopted application only contains what changes.
+- **Diff:** The difference from the live objects. A bundle for an adopted application only contains what changes.
 - **Labels:** The labels to set on PVCs, VMs, and workloads, with their effect. A consistency-group label on a PVC that
   is already bound is listed as a late join. Such volumes are listed under migrations and join the group only once
   consistency groups can be formed after volume creation. A bundle never migrates a volume.

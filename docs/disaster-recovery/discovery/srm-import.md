@@ -1,12 +1,14 @@
 ---
 title: "Migration From VMware Live Site Recovery"
-description: "Preview: import the protection groups and recovery plans of VMware Live Site Recovery (SRM) and propose them for the VMs migrated to KubeVirt, for approval."
+description: "Import the protection groups and recovery plans of VMware Live Site Recovery (SRM) and propose them for the VMs migrated to KubeVirt, for approval."
 weight: 10285
 ---
 
-Customers moving from vSphere to KubeVirt bring their disaster recovery setup with them: protection groups, recovery
-plans with priorities and dependencies, startup settings, network mappings, and IP customization. An SRM import turns
-that setup into a [blueprint](blueprints.md). The VMs migrated by the Migration Toolkit for Virtualization (MTV) are
+{{ experimental }}
+
+A VMware Live Site Recovery setup consists of protection groups, recovery plans with priorities and dependencies,
+startup settings, network mappings, and IP customization. An SRM import turns that setup into a
+[blueprint](blueprints.md). The VMs migrated by the Migration Toolkit for Virtualization (MTV) are
 then proposed with the same grouping and boot order, through the same matching, approval, and rollback as every
 other bundle.
 
@@ -14,8 +16,8 @@ simplyblock DR does not migrate VMs. MTV migrates them, and the import uses its 
 
 !!! info
     The SRM import is part of the discovery preview. It reads the offline export of the Configuration Import/Export
-    Tool. Reading the configuration live from the VMware Live Site Recovery REST API and console screens for the
-    import are not available yet.
+    Tool. Reading the configuration live from the VMware Live Site Recovery REST API is not available yet, and
+    neither are console screens for the import.
 
 ## Supported Versions
 
@@ -63,7 +65,7 @@ spec:
 | `status.version`       | Blueprint version the import wrote, or found unchanged                     |
 | `status.counts`        | Protection groups, recovery plans, and VMs read                            |
 | `status.translation[]` | Every translated feature with its SRM object and support level (up to 500) |
-| `status.message`       | Reason of a failure                                                        |
+| `status.message`       | Reason for a failure                                                       |
 
 An import changes nothing on a site. It only writes the blueprint, which an
 [EnvironmentMapping](blueprints.md#mapping-a-blueprint) then matches against the site with the migrated VMs.
@@ -100,7 +102,7 @@ normalizes it (lower case, invalid characters replaced by `-`) and on its NIC MA
 default. A VM that matches none of these is a blocking question in the bundle.
 
 The bundles carry the source `srm:<blueprint>@<version>`. SRM's grouping and boot order take precedence over the
-roles discovery assigns, but they do not override what is observed silently. When the production graph shows a
+roles discovery assigns, but they do not silently override what is observed. When the production graph shows a
 dependency that SRM's order contradicts, for example, a VM that connects to a VM SRM starts later, the bundle asks.
 VMs that SRM protects but that are not migrated yet are `missing` questions. VMs in the namespaces that SRM never
 protected are `extra` questions.
@@ -114,6 +116,9 @@ revision waits for approval.
 
 ## Roles
 
-Only `dr-admin` creates SRMImports, because dr-hub reads the export from a ConfigMap or Secret of the request's
-namespace. The EnvironmentMapping for the SRM blueprint needs `dr-operator`. See
-[Environment Promotion](blueprints.md#roles).
+| Role          | Permissions                                                                                 |
+|---------------|---------------------------------------------------------------------------------------------|
+| `dr-operator` | Create the EnvironmentMapping for the SRM blueprint                                         |
+| `dr-admin`    | Create SRMImports, because the export is read from a ConfigMap or Secret of their namespace |
+
+See [Environment Promotion](blueprints.md#roles) for the other blueprint roles.

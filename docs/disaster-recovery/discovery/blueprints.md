@@ -1,13 +1,15 @@
 ---
 title: "Environment Promotion"
-description: "Preview: export the approved DR setup of a test environment as a blueprint and propose it in production, matched against the production site, for approval."
+description: "Export the approved DR setup of a test environment as a blueprint and propose it in production, matched against the production site, for approval."
 weight: 10284
 ---
 
+{{ experimental }}
+
 Applications are usually set up and tested in a non-production environment, for example, UAT, before they go to
-production. Discovery runs well there: the flow collector can watch all traffic, and failovers can be rehearsed. A
-blueprint carries the result to production. Production gets the same protection setup without repeating the
-discovery and without running the flow collector at all.
+production. Discovery has the most data there: the flow collector can watch all traffic, and failovers can be
+rehearsed. A blueprint carries the result to production. Production gets the same protection setup without repeating
+the discovery and without running the flow collector at all.
 
 A blueprint is the environment-neutral form of approved applications and their recovery plans. In production, an
 environment mapping translates its names, matches its members against the production site, and writes ordinary
@@ -60,7 +62,7 @@ reason.
 | `status.version`   | Blueprint version the export wrote, or found unchanged |
 | `status.exported`  | Applications in the blueprint                          |
 | `status.skipped[]` | Applications and plans left out, each with its reason  |
-| `status.message`   | Reason of a failure                                    |
+| `status.message`   | Reason for a failure                                   |
 
 An export writes nothing when the content did not change, so exporting again is safe. The blueprint version rises
 only with changed content.
@@ -145,9 +147,9 @@ namespace. The first rule with exactly one hit decides:
 |-------|------------------------------------------------------------------------------|------------|
 | 1     | Every identity label matches, for example, the `vmID` label of a migrated VM | 1.0        |
 | 2     | Same name and workload kind, images and role agree                           | 0.9        |
-| 2'    | Same name, images or role differ                                             | 0.7        |
-| 3     | VMs: a NIC MAC address matches                                               | 0.8        |
-| 4     | Same workload kind, role, image repositories, and release                    | 0.6        |
+| 3     | Same name, images or role differ                                             | 0.7        |
+| 4     | VMs: a NIC MAC address matches                                               | 0.8        |
+| 5     | Same workload kind, role, image repositories, and release                    | 0.6        |
 
 What cannot be matched becomes a question in the bundle:
 
@@ -178,7 +180,9 @@ The dry run, the pull request, the approval, and the rollback work as for every 
 
 ## Roles
 
-- **Role `dr-operator`:** Creates BlueprintExports, DRBlueprints, and EnvironmentMappings.
-- **Role `dr-admin`:** Everything of `dr-operator`, and the approval of bundles without a GitOps repository.
+| Role          | Permissions                                                                              |
+|---------------|------------------------------------------------------------------------------------------|
+| `dr-operator` | Create BlueprintExports, DRBlueprints, and EnvironmentMappings                           |
+| `dr-admin`    | Everything `dr-operator` may do, and approve bundles when no GitOps target is configured |
 
 Creating a blueprint or a mapping changes nothing on a site. Only an approved bundle does.

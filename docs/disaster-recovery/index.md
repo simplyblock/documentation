@@ -121,7 +121,8 @@ The following capabilities are available as a preview:
     - **AI-assisted discovery:** Refining bundles with a Claude agent. Discovery runs in rules mode today.
     - **Live SRM import:** Reading the configuration from the VMware Live Site Recovery REST API instead of an export
       file.
-    - **Console screens for blueprints and SRM imports,** and writing blueprints into Git by dr-hub.
+    - **Blueprint and SRM import screens:** Console screens for blueprints and SRM imports, and writing blueprints
+      into Git by dr-hub.
 
 ## Section Contents
 

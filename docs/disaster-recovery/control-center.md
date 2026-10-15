@@ -70,8 +70,8 @@ actions and tests, and the resolution inbox of the site mapper.
 | Discovery, Proposals         | The site graphs, the bundles with their evidence, questions, and dry run, runs of the rule engine, and the approval and rollback of bundles without a GitOps repository. See [Discovery and Proposals](discovery/index.md). | `DiscoveryGraph`, `DRProposal`, `DiscoveryRun` |
 | Clusters, Logical volumes    | Full mode only: the storage side, for example, the landing copies and replicated snapshots on the target cluster, and the clone under the PVC's name after a fail-over.                                                     | Storage resources                              |
 
-The replicated StorageClass of a site is created by dr-hub from the plan, see
-[Protection Plans](configuration/protection-plans.md#provisioning-the-storageclass). The deployment of a managed site's
+The replicated StorageClass of a site is created by dr-hub from the plan (see
+[Protection Plans](configuration/protection-plans.md#provisioning-the-storageclass)). The deployment of a managed site's
 storage cluster (discovery, draft, approval) is not in the console yet.
 
 !!! info "Coming soon"

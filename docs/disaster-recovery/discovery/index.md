@@ -1,12 +1,14 @@
 ---
 title: "Discovery and Proposals"
-description: "Preview: simplyblock DR discovers applications, their dependencies and their site mappings, and proposes the complete protection setup for approval."
+description: "Simplyblock DR discovers applications, their dependencies, and their site mappings, and proposes the complete protection setup of each for approval."
 weight: 10280
 ---
 
+{{ experimental }}
+
 Protecting an application by hand means choosing its namespaces and volumes, writing tiers with readiness gates and
-health probes, ordering it against other applications in a recovery plan and binding the site networks. Discovery
-does this work from what the sites report. It builds a dependency graph of every site, finds the applications in it
+health probes, ordering it against other applications in a recovery plan, and binding the site networks. Discovery
+does this work from what the sites report. It builds a dependency graph of every site, finds the applications in it,
 and proposes the complete protection setup of each application as one bundle. A person approves every bundle before
 anything changes.
 
@@ -14,8 +16,8 @@ anything changes.
 
 ## What Is Discovered
 
-- **Membership:** Which VMs, Deployments, StatefulSets and PVCs belong to one application. Membership is derived from
-  ownership, volume mounts, Service selectors, configuration references and observed network connections. It does not
+- **Membership:** Which VMs, Deployments, StatefulSets, and PVCs belong to one application. Membership is derived from
+  ownership, volume mounts, Service selectors, configuration references, and observed network connections. It does not
   rely on labels set in advance.
 - **Dependencies:** Which workload uses which Service, inside an application and between applications. The order of
   the tiers and the priorities of a recovery plan follow from them.
@@ -55,9 +57,9 @@ yet. A DiscoveryRun in mode `AI` fails with the reason `NotImplemented`.
 
 ## In This Section
 
-- **[Setup](setup.md):** Enabling discovery, the flow collector, the GitOps target and the roles.
-- **[Using Discovery](using-discovery.md):** Running discovery, reading the graph, reviewing, approving, and rolling back
-  bundles.
+- **[Setup](setup.md):** Enabling discovery, the flow collector, the GitOps target, and the roles.
+- **[Using Discovery](using-discovery.md):** Running discovery, reading the graph, reviewing, approving, and rolling
+  back bundles.
 - **[Reference](reference.md):** Bundle phases, configuration fields, run fields, annotations, and label keys.
 - **[Environment Promotion](blueprints.md):** Exporting the approved setup of UAT as a blueprint and proposing it in
   production.
