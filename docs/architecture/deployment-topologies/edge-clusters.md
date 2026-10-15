@@ -90,8 +90,10 @@ nodes from writing on their own (split brain), the control plane on the hub acts
 
 - **Hold:** A node that loses the connection to the journal of its peer holds its write I/O for a short time
   (2.5 seconds by default, below the host keep-alive timeout) and reports the event to the hub.
-- **Decision:** The hub decides which node continues. It grants that node solo operation and fences the other one.
-  A fenced node returns the held I/O as a path error, so the hosts retry on the other path.
+- **Decision:** When one node is lost, the hub grants the surviving node solo operation. When both nodes are
+  reachable but cannot reach each other (a broken link between them), the hub fences both nodes, because it cannot
+  decide which copy is current. A fenced node returns the held I/O as a path error, so the hosts retry on the other
+  path.
 - **Leases:** Each node holds a lease from the hub. A lease only matters while a node holds I/O. A slow or broken
   link to the hub never fences a healthy pair.
 - **No grant, no solo operation:** A node that has no grant from the hub when the hold time ends fences itself. If
@@ -99,6 +101,24 @@ nodes from writing on their own (split brain), the control plane on the hub acts
   reachable again.
 - **Workload restart:** The operator taints the Kubernetes node of a fenced storage node with
   `storage.simplyblock.io/fenced`, so that Kubernetes and KubeVirt restart the affected workloads on the other node.
+
+#### Availability of the Hub
+
+The arbitration runs in the control plane on the hub, so a failover of a two-node edge cluster needs a reachable
+hub. A surviving node never continues on its own, because it cannot tell a failed peer from a broken link. This
+trades availability for consistency: without the hub as the third vote, a broken link could leave both nodes writing.
+
+| Situation                                    | Behavior                                                                                                            |
+|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| A node fails, hub reachable                  | The surviving node is granted solo operation. I/O pauses for about 0.5 to 2 seconds.                                |
+| A node fails, hub not reachable              | The surviving node fences itself when the hold time ends. Volumes are unavailable until the hub is reachable again. |
+| The hub is not reachable, both nodes healthy | No effect. An expired lease never fences a healthy node.                                                            |
+| The link between the nodes breaks            | Both nodes are fenced. After the link is restored, the hub unfences both and restores leadership.                   |
+| A host loses its path to one node            | The host switches to the other path (NVMe multipathing). No hub involvement.                                        |
+| Two-node cluster without arbitration         | The surviving node continues on its own, without protection against split brain.                                    |
+
+A node failure during an outage of the hub therefore means downtime. The control plane of the hub has to run highly
+available, or in a third failure domain that must not share power, network, or location with the two edge nodes.
 
 ## Network Paths
 
