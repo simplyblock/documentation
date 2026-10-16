@@ -467,16 +467,9 @@ metadata:
   namespace: simplyblock
 spec:
   fabricType: tcp
-  enableNodeAffinity: true
   stripe:
     dataChunks: 1
     parityChunks: 0
-  warningThreshold:
-    capacity: 95
-    provisionedCapacity: 97
-  criticalThreshold:
-    capacity: 96
-    provisionedCapacity: 98
   maxSubsystemCount: 30          # a.k.a. max_lvol, moved here from StorageNodeSet
   vcpuCount: 16                  # SPDK vCPUs to allocate per node (see note below)
 ---
@@ -508,6 +501,11 @@ spec:
     - <worker-node-2>
     - <worker-node-3>
 ```
+
+!!! note "Fields left out of the example"
+    `warningThreshold`, `criticalThreshold`, and `enableNodeAffinity` are not set in the example. When omitted, the
+    control plane defaults apply (and an existing cluster keeps its stored values). `enableNodeAffinity` cannot be
+    changed once set.
 
 !!! note "`vcpuCount`, `skipKubeletConfiguration`, and `enableCpuTopology`"
     `vcpuCount` is computed as a percentage of each node's CPU count (e.g., 50% on OpenShift),
