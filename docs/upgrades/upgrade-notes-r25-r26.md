@@ -346,13 +346,19 @@ kubectl create secret generic simplyblock-simplyblock-cluster-upgrade \
     agent that was never scheduled. Apply the CRDs directly first, regardless of install vs. upgrade:
 
     ```bash title="Applying the operator CRDs before the Helm install"
-    kubectl apply --server-side --force-conflicts -f ./charts/simplyblock-operator/crds/
+    helm repo add simplyblock https://install.simplyblock.io/helm
+    helm repo update simplyblock
+    helm show crds simplyblock/simplyblock-operator --version 26.3.2 \
+        | kubectl apply --server-side --force-conflicts -f -
     ```
 
 Install the new operator chart with FDB creation disabled (FDB is already running):
 
 ```bash title="Installing the Simplyblock Operator chart with FDB creation disabled"
-helm upgrade --install simplyblock-operator ./charts/simplyblock-operator \
+helm repo add simplyblock https://install.simplyblock.io/helm
+helm repo update simplyblock
+helm upgrade --install simplyblock-operator simplyblock/simplyblock-operator \
+    --version 26.3.2 \
     --namespace simplyblock \
     --timeout 10m \
     --set operator.enabled=true \
