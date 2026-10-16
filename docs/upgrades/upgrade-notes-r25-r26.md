@@ -370,8 +370,14 @@ helm upgrade --install simplyblock-operator simplyblock/simplyblock-operator \
     --set controlplane.csiHostpathDriver.enabled=true \
     --set controlplane.storageclass.name=local-hostpath \
     --set controlplane.observability.minio.storageClass=local-hostpath \
-    --set csiConfig.simplybk.ip=http://simplyblock-webappapi.simplyblock:5000
+    --set tls.enabled=true \
+    --set tls.mutual_enabled=true
 ```
+
+!!! note "TLS and mTLS flags"
+    `tls.enabled` serves the webappapi over HTTPS, and `tls.mutual_enabled` also requires client certificates from the
+    chart's CA. Omit both for a cluster without TLS. cert-manager has to be installed (see the prerequisite above). The
+    chart creates its own self-signed issuer. The kept FDB stays plaintext, and Prometheus keeps serving HTTP on 9090.
 
 !!! note "Optional flags"
     - `controlplane.csiHostpathDriver.enabled` and `controlplane.storageclass.name`: pass them only if R25 used the
@@ -391,6 +397,10 @@ kubectl wait --for=condition=Ready pods --all -n simplyblock \
     still has the real credentials. The new chart also switches Prometheus to HTTPS with mTLS,
     so the ConfigMaps cannot simply be swapped. The credentials must be copied across. Skipping
     this step leaves Prometheus running with empty auth post-upgrade.
+
+!!! warning
+    The credentials have to be written into the new ConfigMap. Replacing it with an unmodified copy leaves them empty,
+    and the `cluster_metrics` scrape then fails with `401 Unauthorized`.
 
 ```bash title="Migrating the Prometheus basic_auth credentials into the new ConfigMap"
 OLD_CM=sbcli-simplyblock-prometheus-config   # <sbcli-release-name>-simplyblock-prometheus-config
