@@ -129,8 +129,13 @@ helm get manifest sbcli -n simplyblock 2>/dev/null | grep -A5 "simplyblock-fdb-c
 Force-shutdown each storage node. Using `--force` combines suspend and shutdown in one
 command and avoids failures when some nodes are already in a non-online state:
 
+!!! note "Multiple clusters"
+    If the Kubernetes cluster runs more than one Simplyblock cluster, the storage nodes of **all** clusters have to be
+    shut down. `sbctl sn list` returns the nodes of every cluster, so the loop below covers them.
+
+
 ```bash title="Force-shutting down every storage node"
-for NODE_ID in $(sbctl sn list | grep -v "offline" | awk '{print $2}'); do
+for NODE_ID in $(sbctl sn list --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin) if n['Status']!='offline'))"); do
     sbctl sn shutdown "$NODE_ID" --force
 done
 ```
@@ -151,7 +156,7 @@ sbctl sn list
     block the explicit `sn restart` in Step 10 (there is no `--force` flag for restart).
 
 ```bash title="Disabling the automatic restart on every storage node"
-for NODE_ID in $(sbctl sn list --json | jq -r '.[].UUID'); do
+for NODE_ID in $(sbctl sn list --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin)))"); do
     sbctl --dev sn set "$NODE_ID" auto_restart_disabled true
 done
 ```
@@ -166,9 +171,9 @@ sbctl cluster list-tasks "$CLUSTER_ID" --limit 0
 
 ```bash title="Canceling the running and new node_restart tasks"
 # Cancel any running/new node_restart tasks
-for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --json --limit 0 \
-    | jq -r '.[] | select(.function=="node_restart" and (.status=="running" or .status=="new")) | .id'); do
-    sbctl cluster cancel-task "$CLUSTER_ID" "$TASK_ID"
+for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --limit 0 \
+    | awk -F'|' 'NR>3 {for(i=2;i<=7;i++) gsub(/^ +| +$/,"",$i); if ($4=="node_restart" && ($6=="running" || $6=="new")) print $2}'); do
+    sbctl cluster cancel-task "$TASK_ID"
 done
 ```
 
@@ -294,7 +299,13 @@ kubectl create secret generic simplyblock-simplyblock-cluster-upgrade \
 
 !!! warning
     The secret name **must** match `simplyblock-<CR_NAME>-upgrade`, where `CR_NAME` is the `metadata.name` of the
-    StorageCluster CR applied in Step 7.
+    StorageCluster CR applied in Step 7. `CLUSTER_CR_NAME` is therefore the name chosen for the cluster in Step 7, and
+    it is used again in Step 9.
+
+!!! note "Multiple clusters"
+    Create one upgrade secret per cluster, each with its own cluster name, UUID, and secret (for example
+    `simplyblock-cluster1-upgrade` and `simplyblock-cluster2-upgrade`). Check each UUID against `sbctl cluster list`
+    before continuing.
 
 ### Step 6: Install the Operator Helm Chart (FDB Disabled)
 
@@ -352,10 +363,14 @@ helm upgrade --install simplyblock-operator ./charts/simplyblock-operator \
     --set image.operator.tag=<OPERATOR_TAG> \
     --set controlplane.csiHostpathDriver.enabled=true \
     --set controlplane.storageclass.name=local-hostpath \
+    --set controlplane.observability.minio.storageClass=local-hostpath \
     --set csiConfig.simplybk.ip=http://simplyblock-webappapi.simplyblock:5000
 ```
 
-Wait for operator pods:
+!!! note "Optional flags"
+    - `controlplane.csiHostpathDriver.enabled` and `controlplane.storageclass.name`: pass them only if R25 used the
+      hostpath CSI driver for FDB. Use the storage class FDB originally used.
+    - `controlplane.observability.minio.storageClass`: pass it if the cluster has no default `StorageClass`.
 
 ```bash title="Waiting for the operator pods to become ready"
 kubectl wait --for=condition=Ready pods --all -n simplyblock \
@@ -495,6 +510,14 @@ spec:
     `skipKubeletConfiguration` and `enableCpuTopology` flip relative to a standard OpenShift or vanilla K8s install.
     Detect Talos before deciding the values.
 
+!!! note "Multiple clusters"
+    Create one `StorageCluster`, one `StoragePool` per existing pool, and one `StorageNodeSet` for each Simplyblock
+    cluster, each with its own names (for example `cluster1`, `cluster1-nodes` and `cluster2`, `cluster2-nodes`).
+    Every `StorageNodeSet` lists only the worker nodes of its own cluster and references its own cluster in
+    `clusterName`. The `stripe` values (`dataChunks` and `parityChunks`) have to match the existing cluster (for
+    example 1/0 for a 1x1 and 2/2 for a 2x2 cluster). `vcpuCount` has to match the number of SPDK cores the storage
+    nodes already use (the `CPU` column of `sbctl sn list`).
+
 ```bash title="Applying the custom resources"
 kubectl apply -f storagecluster.yaml -n simplyblock
 ```
@@ -513,7 +536,7 @@ Run the migration script inside the admin pod to update storage node fields in t
 (`lvstore_ports`, `lvol_poller_mask`, `lvstore_stack_secondary`):
 
 ```bash title="Opening a shell in the admin pod"
-ADMIN_POD=$(kubectl get pods -n simplyblock -l app=simplyblock-admin \
+ADMIN_POD=$(kubectl get pods -n simplyblock -l app=simplyblock-admin-control \
     -o jsonpath='{.items[0].metadata.name}')
 
 kubectl exec -it -n simplyblock $ADMIN_POD -- bash
@@ -584,12 +607,17 @@ sbctl --dev cluster set $CLUSTER_UUID cr_name $CLUSTER_CR_NAME
 **Storage Nodes** (repeat for each):
 
 ```bash title="Registering the CR details on every storage node"
-for NODE_ID in $(sbctl sn list | grep -E "offline|in_creation" | awk '{print $2}'); do
+for NODE_ID in $(sbctl sn list --cluster-id "$CLUSTER_UUID" --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin)))"); do
     sbctl --dev sn set "$NODE_ID" cr_plural storagenodesets
     sbctl --dev sn set "$NODE_ID" cr_namespace simplyblock
-    sbctl --dev sn set "$NODE_ID" cr_name simplyblock-node
+    sbctl --dev sn set "$NODE_ID" cr_name <STORAGENODESET_CR_NAME>   # e.g. simplyblock-node
 done
 ```
+
+!!! note "Multiple clusters"
+    Run both blocks once per cluster. `CLUSTER_CR_NAME` is the name of that cluster's `StorageCluster` CR (for example
+    `cluster1`), and `<STORAGENODESET_CR_NAME>` is the name of that cluster's `StorageNodeSet` CR (for example
+    `cluster1-nodes`). Using the `StorageNodeSet` of another cluster registers the nodes with the wrong CR.
 
 !!! note "Provisional"
     The test code carries a TODO that `cr_plural` may need to change from
@@ -613,10 +641,10 @@ cancel them:
 sbctl cluster list-tasks "$CLUSTER_ID" --limit 0
 
 # Cancel any that are running or new
-for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --json --limit 0 \
-    | jq -r '.[] | select(.function=="node_restart" and (.status=="running" or .status=="new")) | .id'); do
+for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --limit 0 \
+    | awk -F'|' 'NR>3 {for(i=2;i<=7;i++) gsub(/^ +| +$/,"",$i); if ($4=="node_restart" && ($6=="running" || $6=="new")) print $2}'); do
     echo "Cancelling stale task: $TASK_ID"
-    sbctl cluster cancel-task "$CLUSTER_ID" "$TASK_ID"
+    sbctl cluster cancel-task "$TASK_ID"
 done
 ```
 
@@ -629,24 +657,56 @@ Restart each storage node with the new SPDK image and proxy image.
     online. Do **not** wait for cluster `active` between individual node restarts. Wait only for each node to reach
     `online`, then proceed to the next. Check cluster `active` only after **all** nodes have been restarted.
 
+#### Step 10.0: Prepare the Cluster Settings
+
+Run the following per cluster, before restarting its first node.
+
+For a **2x2 cluster** (`parityChunks: 2`), set the maximum fault tolerance to 2. Clusters created on R25 keep
+`max_fault_tolerance=1` after the upgrade, and the tertiary node is only assigned when it is 2 or higher. Skip this
+command for 1x1 clusters.
+
+```bash title="Setting the maximum fault tolerance of a 2x2 cluster"
+sbctl --dev cluster set <CLUSTER_UUID> max_fault_tolerance 2
+```
+
+Set the SPDK vCPU count at the cluster level. The value matches the number of SPDK cores the storage nodes already use
+and can be read from the `CPU` column of `sbctl sn list`. It has to be the same value as `vcpuCount` in the
+`StorageCluster` CR (Step 7).
+
+```bash title="Setting the SPDK vCPU count of the cluster"
+sbctl --dev cluster set <CLUSTER_UUID> spdk_vcpu_count <VCPU_COUNT>
+```
+
+Set the cluster status to `unready` so that it can be activated explicitly after the nodes are back:
+
+```bash title="Setting the cluster status to unready"
+sbctl --dev cluster set <CLUSTER_UUID> status unready
+```
+
 ```bash title="Restarting the storage nodes one at a time"
 export SPDK_IMAGE=<TARGET_SPDK_IMAGE>
 export SPDK_PROXY_IMAGE=<TARGET_DOCKER_IMAGE>
 
-for NODE_ID in $(sbctl sn list --json | jq -r '.[].UUID'); do
+for NODE_ID in $(sbctl sn list --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin)))"); do
     echo "Restarting node: $NODE_ID"
     sbctl -d --dev sn restart "$NODE_ID" \
         --spdk-image "$SPDK_IMAGE" \
         --spdk-proxy-image "$SPDK_PROXY_IMAGE"
 
     # Wait for this node to come online (up to 10 minutes)
-    while ! sbctl sn list --json | jq -e ".[] | select(.UUID==\"$NODE_ID\" and .Status==\"online\")" > /dev/null 2>&1; do
+    while ! sbctl sn list --json | python3 -c "import sys,json; sys.exit(0 if any(n['UUID']=='$NODE_ID' and n['Status']=='online' for n in json.load(sys.stdin)) else 1)"; do
         sleep 5
     done
     echo "  Node $NODE_ID is online"
 
     sleep 10  # brief pause before next node
 done
+
+
+Once every node of a cluster is `online`, activate the cluster. Repeat for each cluster:
+
+```bash title="Activating the cluster"
+sbctl cluster activate <CLUSTER_UUID>
 ```
 
 !!! note "Admin-control pod recycling"
@@ -677,8 +737,8 @@ remain `None` or `False` for 30-60 seconds after a node comes online while the
 monitoring loop catches up.
 
 ```bash title="Waiting for the cluster to become active"
-# Wait for cluster active
-while [ "$(sbctl cluster list --json | jq -r '.[0].Status')" != "ACTIVE" ]; do
+# Wait for cluster active (set CLUSTER_UUID to the cluster being checked)
+while ! sbctl cluster list | grep "$CLUSTER_UUID" | grep -qi "active"; do
     echo "Waiting for cluster to become active..."
     sleep 10
 done
@@ -689,7 +749,7 @@ echo "Cluster is active"
 # Wait for all nodes to report health_check=True (up to 2 minutes)
 TIMEOUT=120
 while [ $TIMEOUT -gt 0 ]; do
-    UNHEALTHY=$(sbctl sn list --json | jq '[.[] | select(.Health != "True")] | length')
+    UNHEALTHY=$(sbctl sn list --json | python3 -c "import sys,json; print(sum(1 for n in json.load(sys.stdin) if str(n['Health'])!='True'))")
     if [ "$UNHEALTHY" -eq 0 ]; then
         echo "All nodes are healthy"
         break
@@ -704,6 +764,153 @@ if [ $TIMEOUT -le 0 ]; then
     sbctl sn list
 fi
 ```
+
+### Step 10.2: Add the Tertiary Node to the Volumes (2x2 Clusters Only)
+
+Volumes created on R25 carry `nodes = [primary, secondary]`. Although the tertiary lvstore is now built and its
+listeners are published, the connect path list (read from `lvol.nodes` by `lvol_controller.connect_lvol`) still hands
+clients only two paths. The following script extends it to `[primary, secondary, tertiary]`.
+
+Save the script as `add_tertiary_to_lvol_nodes.py` and copy it into the admin pod:
+
+```bash title="Copying the script into the admin pod"
+kubectl cp add_tertiary_to_lvol_nodes.py simplyblock/$ADMIN_POD:/tmp/add_tertiary_to_lvol_nodes.py
+```
+
+```python title="add_tertiary_to_lvol_nodes.py"
+#!/usr/bin/env python3
+"""Append each primary's tertiary node to ``lvol.nodes`` on an upgraded cluster.
+
+Lvols created on 25.10.x carry ``nodes = [primary, secondary]``. After the
+tertiary lvstore has been built and its listeners published, the connect path
+list (lvol_controller.connect_lvol reads ``lvol.nodes``) still hands clients
+only two paths. This extends it to ``[primary, secondary, tertiary]``.
+
+The tertiary MUST be appended as the third entry: its subsystem was built in
+cntlid window 2000 (the window for path index 2), so any other position would
+disagree with what is already on the target.
+
+Dry run by default. Run inside the control-plane container:
+
+    python3 add_tertiary_to_lvol_nodes.py <cluster_id>            # report only
+    python3 add_tertiary_to_lvol_nodes.py <cluster_id> --apply    # write
+"""
+import argparse
+import sys
+
+from simplyblock_core.db_controller import DBController
+from simplyblock_core.models.lvol_model import LVol
+from simplyblock_core.rpc_client import RPCException
+
+SKIP_STATUSES = {LVol.STATUS_IN_DELETION, LVol.STATUS_IN_CREATION, LVol.STATUS_DELETED}
+
+
+def listener_present(tert, lvol):
+    """True when the tertiary serves ``lvol.nqn`` with a listener on the port
+    of the lvol's lvstore. A path the client cannot reach is not worth adding."""
+    port = str(tert.get_lvol_subsys_port(lvol.lvs_name))
+    subsys = tert.rpc_client().subsystem_get(lvol.nqn)
+    if not subsys:
+        return False, "no subsystem"
+    ports = {a.get("trsvcid") for a in subsys.get("listen_addresses", [])}
+    if port not in ports:
+        return False, f"no listener on port {port} (has {sorted(ports) or 'none'})"
+    return True, ""
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("cluster_id")
+    ap.add_argument("--apply", action="store_true", help="write the changes (default: dry run)")
+    ap.add_argument("--skip-listener-check", action="store_true",
+                    help="extend nodes even if the tertiary listener is not verified")
+    args = ap.parse_args()
+
+    db = DBController()
+    nodes_by_id = {n.get_id(): n for n in db.get_storage_nodes_by_cluster_id(args.cluster_id)}
+    counts = {"updated": 0, "would_update": 0, "already": 0, "skipped": 0}
+
+    for lvol in db.get_lvols(args.cluster_id):
+        lid = lvol.get_id()
+        if lvol.status in SKIP_STATUSES:
+            continue
+        primary = nodes_by_id.get(lvol.node_id)
+        if primary is None:
+            print(f"SKIP  {lid}: primary {lvol.node_id} not in cluster")
+            counts["skipped"] += 1
+            continue
+        sec_id, tert_id = primary.secondary_node_id, primary.tertiary_node_id
+        nodes = list(lvol.nodes or [])
+
+        if not tert_id:
+            print(f"SKIP  {lid}: primary {primary.get_id()[:8]} has no tertiary assigned")
+            counts["skipped"] += 1
+            continue
+        if nodes == [primary.get_id(), sec_id, tert_id]:
+            counts["already"] += 1
+            continue
+        if nodes != [primary.get_id(), sec_id]:
+            # Anything else (stale secondary, a relocation in flight, an
+            # unexpected length) needs a human look, not a blind append.
+            print(f"SKIP  {lid}: nodes {nodes} != [primary {primary.get_id()[:8]}, "
+                  f"secondary {sec_id[:8] if sec_id else '-'}]")
+            counts["skipped"] += 1
+            continue
+
+        tert = nodes_by_id.get(tert_id)
+        if tert is None:
+            print(f"SKIP  {lid}: tertiary {tert_id} not in cluster")
+            counts["skipped"] += 1
+            continue
+        if not args.skip_listener_check:
+            try:
+                ok, why = listener_present(tert, lvol)
+            except RPCException as e:  # report and move on; one unreachable node must not stop the sweep
+                ok, why = False, f"listener check failed: {e}"
+            if not ok:
+                print(f"SKIP  {lid}: tertiary {tert_id[:8]}: {why}")
+                counts["skipped"] += 1
+                continue
+
+        if not args.apply:
+            print(f"PLAN  {lid} ({lvol.lvs_name}): {nodes} + {tert_id}")
+            counts["would_update"] += 1
+            continue
+
+        expected = [primary.get_id(), sec_id]
+
+        def mutate(fresh, expected=expected, tert_id=tert_id):
+            # Re-check on the fresh record: abort if anything moved meanwhile.
+            if list(fresh.nodes or []) != expected:
+                return False
+            fresh.nodes = expected + [tert_id]
+
+        fresh = db.atomic_update(lvol, mutate)
+        if fresh is not None and list(fresh.nodes) == expected + [tert_id]:
+            print(f"DONE  {lid} ({lvol.lvs_name}): nodes -> {fresh.nodes}")
+            counts["updated"] += 1
+        else:
+            print(f"SKIP  {lid}: record changed during update, left alone")
+            counts["skipped"] += 1
+
+    print(f"\n{counts}" + ("" if args.apply else "  (dry run; pass --apply to write)"))
+    return 1 if counts["skipped"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+Run it inside the admin pod. The first run is a dry run and only reports the planned changes. Review the output, then
+run it again with `--apply`:
+
+```bash title="Running the script as a dry run, then applying it"
+python3 /tmp/add_tertiary_to_lvol_nodes.py <CLUSTER_UUID>
+python3 /tmp/add_tertiary_to_lvol_nodes.py <CLUSTER_UUID> --apply
+```
+
+**Expected**: Every volume reports `DONE` (or `already` in the summary on a repeated run), and the script exits with
+code 0. A `SKIP` line names the volume and the reason and needs a manual look.
 
 ### Step 11: Restart Workload Pods
 
@@ -720,3 +927,8 @@ Or for all deployments in a namespace:
 kubectl get deployments -n <namespace> -o name | \
     xargs -I{} kubectl rollout restart {} -n <namespace>
 ```
+
+!!! note "Pods that are not managed by a controller"
+    The NVMe/TCP connections of existing pods go stale when the storage nodes are shut down, and reads fail with
+    `Input/output error`. A pod without a controller (for example a bare test pod) is not recreated by a rollout.
+    Delete and recreate it. The PVC and its data are not affected.
