@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "documentation"
+  group: "documentation-${{ github.ref }}"
   cancel-in-progress: false
 
 defaults:
