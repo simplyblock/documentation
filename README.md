@@ -128,8 +128,18 @@ To build the static version, use the following command:
 ### Preparing the Deployment of a New Version
 
 Since the documentation system supports the deployment and management of multiple versions, previous and current
-versions are collected in the `./deployment/` folder. The symlinks are automatically updated according to the newest
-version, as is the `versions.json` file.
+versions are collected in the `deployments` branch. The branch holds only built documentation and shares no history
+with the source branches. Every release and update build commits its version into this branch, so the branch always
+carries the complete set of deployed versions, independent of the release branch a build runs from.
+
+The `doc-builder` expects the branch checked out as the `./deployment/` folder, which is ignored in the source
+branches. For a local deployment build, add it as a worktree once:
+
+```bash
+git worktree add deployment deployments
+```
+
+The symlinks are automatically updated according to the newest version, as is the `versions.json` file.
 
 To simplify the process of a new version deployment of the documentation, the `doc-builder` provides the necessary
 command.
@@ -152,7 +162,7 @@ The simplyblock documentation uses the following basic folder structure:
 
 ```plain
  documentation root
- ├─ deployment/                            (1)
+ ├─ deployment/ (deployments branch)       (1)
  |  ├─ .htaccess                           (2)
  |  ├─ versions.json (symlink)             (3)
  |  ├─ latest/ (symlink)                   (4)
@@ -177,7 +187,8 @@ The simplyblock documentation uses the following basic folder structure:
  └─ README.md                              (23)
 ```
 
-1. The `deployment` folder contains all currently built and deployed versions of the documentation.
+1. The `deployment` folder is a checkout of the `deployments` branch and contains all currently built and deployed
+   versions of the documentation.
 2. The `.htaccess` file contains the necessary redirect rules to automatically redirect to the latest version.
 3. The `versions.json` symlink links to `latest/versions.json`.
 4. The `latest` symlink links to the latest deployed version of the documentation.
@@ -490,15 +501,16 @@ In the branch, the following changes have to be performed:
 - Push the release branch and ensure the name is according to the pattern: `release/{version-number}` (e.g., `release/25.5.1`).
 
 After pushing the new release branch, the GitHub action builder kicks in, builds the version, deploys it to the live
-website and updates the latest symlink, creates the necessary tag for history reasons, and merges the built
-documentation back into the `main` branch (folder `deployment`) using an auto-generated and auto-merged pull request. 
+website and updates the latest symlink, commits the built version into the `deployments` branch, and creates the
+necessary tag for history reasons.
 
 As part of the build, the `sbcli` repository is pinned to the release version via `scripts/sbcli.lock`, and the
 `simplyblock-operator` repository is pinned via `scripts/operator.lock`. The operator lock is resolved automatically to
 the latest operator tag whose `MAJOR.MINOR` matches the release version — for example, release `26.2.4` resolves to the
 newest `v26.2.y` operator tag (the patch level may differ). If no matching operator tag exists (for example for older
-releases that predate the operator), the operator lock is skipped. Both lock files are committed on the version tag and
-removed again afterwards, so `main` never carries a pin.
+releases that predate the operator), the operator lock is skipped. Both lock files stay committed on the release
+branch and the version tag, so a later rebuild resolves the same references. Since nothing is merged back into `main`,
+`main` never carries a pin.
 
 No further action is required.
 
