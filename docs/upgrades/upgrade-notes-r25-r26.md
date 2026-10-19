@@ -719,7 +719,7 @@ R26 uses a different journal layout than R25. The script keeps the R25 layout, s
 
 Run the following script in the admin control pod before updating the storage nodes. It pins the layout and clears the stale journal records, and it must run before any node restart:
 
-```python
+```python title="Pinning the journal layout of a cluster"
 # Set <cluster_id> to your cluster ID.
 # If you have multiple clusters, repeat this for each cluster.
 CLUSTER_ID="<cluster_id>"
