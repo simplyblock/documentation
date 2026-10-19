@@ -61,6 +61,8 @@ sbctl backup restore
     --lvol=<LVOL>
     --pool=<POOL>
     --node=<NODE>
+    --access-key-id=<ACCESS_KEY_ID>
+    --secret-access-key=<SECRET_ACCESS_KEY>
 ```
 
 
@@ -73,6 +75,8 @@ sbctl backup restore
 | --lvol| The new logical volume name. | string | True | - |
 | --pool| The target pool name or id. | string | True | - |
 | --node| The target storage node id. | string | False | - |
+| --access-key-id| Access key for the backup's bucket, when it is not this cluster's own. | unknown | False | - |
+| --secret-access-key| Secret key for the backup's bucket, when it is not this cluster's own. | unknown | False | - |
 
 
 ## Export backup metadata to a JSON file for cross-cluster restore.
@@ -82,6 +86,7 @@ Export backup metadata to a JSON file for cross-cluster restore.
 ```bash
 sbctl backup export
     --cluster-id=<CLUSTER_ID>
+    --backup-id=<BACKUP_ID>
     --lvol=<LVOL>
     -o=<O>
 ```
@@ -90,28 +95,67 @@ sbctl backup export
 | Parameter | Description | Data Type | Required | Default |
 | --------- | ----------- | --------- | -------- | ------- |
 | --cluster-id| The cluster id. | string | False | - |
+| --backup-id| Export the chain ending at this backup and nothing else, which is the unit a restore needs. | string | False | - |
 | --lvol| Filter exports to a specific logical volume name. | string | False | - |
 | -o, --output| The output file path. | string | False | - |
 
 
-## Import backup metadata from a JSON file.
+## List the backups a bucket contains, reading its manifests. Needs no cluster.
 
-Import backup metadata from a JSON file.
+List the backups a bucket contains, reading its manifests. Needs no cluster.
 
 ```bash
-sbctl backup import
-    <METADATA_FILE>
-    --cluster-id=<CLUSTER_ID>
+sbctl backup discover
+    --bucket=<BUCKET>
+    --region=<REGION>
+    --endpoint=<ENDPOINT>
+    --access-key-id=<ACCESS_KEY_ID>
+    --secret-access-key=<SECRET_ACCESS_KEY>
+    --no-verify-tls
+    --path-style
 ```
 
 
-| Argument | Description | Data Type | Required |
-| -------- | ----------- | --------- | -------- |
-| METADATA_FILE | The path to JSON metadata file. | string | True |
+| Parameter | Description | Data Type | Required | Default |
+| --------- | ----------- | --------- | -------- | ------- |
+| --bucket| The bucket holding the backups. | string | True | - |
+| --region| The bucket's region. Omit to let the AWS SDK resolve it. | string | False | - |
+| --endpoint| Endpoint of an S3-compatible store, e.g. http://minio:9000. Omit for AWS. | string | False | - |
+| --access-key-id| Access key for the bucket. Omit to use the node's instance role. | unknown | False | - |
+| --secret-access-key| Secret key for the bucket. Omit to use the node's instance role. | unknown | False | - |
+| --no-verify-tls| Skip certificate verification for the endpoint. | marker | False | - |
+| --path-style| Use path-style addressing, as MinIO and most S3-compatible stores need. | marker | False | - |
+
+
+## Register the backups held in a bucket into this cluster.
+
+Register the backups held in a bucket into this cluster.
+
+```bash
+sbctl backup import
+    --cluster-id=<CLUSTER_ID>
+    --bucket=<BUCKET>
+    --from-file=<FROM_FILE>
+    --region=<REGION>
+    --endpoint=<ENDPOINT>
+    --access-key-id=<ACCESS_KEY_ID>
+    --secret-access-key=<SECRET_ACCESS_KEY>
+    --no-verify-tls
+    --path-style
+```
+
 
 | Parameter | Description | Data Type | Required | Default |
 | --------- | ----------- | --------- | -------- | ------- |
 | --cluster-id| The target cluster to import into (required for cross-cluster restore). | string | False | - |
+| --bucket| Import every backup in this bucket. Give this or --from-file, not both. | string | False | - |
+| --from-file| Import the backups in this file, from 'backup export'. It records which bucket each one lives in, so --bucket is neither needed nor accepted. | string | False | - |
+| --region| The bucket's region. Omit to let the AWS SDK resolve it. | string | False | - |
+| --endpoint| Endpoint of an S3-compatible store, e.g. http://minio:9000. Omit for AWS. | string | False | - |
+| --access-key-id| Access key for the bucket. Omit to use the node's instance role. | unknown | False | - |
+| --secret-access-key| Secret key for the bucket. Omit to use the node's instance role. | unknown | False | - |
+| --no-verify-tls| Skip certificate verification for the endpoint. | marker | False | - |
+| --path-style| Use path-style addressing, as MinIO and most S3-compatible stores need. | marker | False | - |
 
 
 ## Create a new backup policy.
@@ -206,38 +250,3 @@ sbctl backup policy-detach
 | POLICY_ID | The backup policy id. | string | True |
 | TARGET_TYPE | The target type. | string | True |
 | TARGET_ID | The target id (storage pool or logical volume id). | string | True |
-
-
-## List backup sources (local and imported clusters).
-
-List backup sources (local and imported clusters).
-
-```bash
-sbctl backup source-list
-    --cluster-id=<CLUSTER_ID>
-```
-
-
-| Parameter | Description | Data Type | Required | Default |
-| --------- | ----------- | --------- | -------- | ------- |
-| --cluster-id| The cluster id. | string | False | - |
-
-
-## Switch the active S3 backup source to a different cluster. Use 'local' or the local cluster id to switch back.
-
-Switch the active S3 backup source to a different cluster. Use 'local' or the local cluster id to switch back.
-
-```bash
-sbctl backup source-switch
-    <SOURCE_CLUSTER_ID>
-    --cluster-id=<CLUSTER_ID>
-```
-
-
-| Argument | Description | Data Type | Required |
-| -------- | ----------- | --------- | -------- |
-| SOURCE_CLUSTER_ID | The source cluster id or 'local'. | string | True |
-
-| Parameter | Description | Data Type | Required | Default |
-| --------- | ----------- | --------- | -------- | ------- |
-| --cluster-id| The cluster id. | string | False | - |

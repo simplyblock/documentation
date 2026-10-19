@@ -61,6 +61,7 @@ sbctl cluster create
     --hugepages-mem=<HUGEPAGES_MEM>
     --vcpu-count=<VCPU_COUNT>
     --hashicorp-vault-url=<HASHICORP_VAULT_URL>
+    --cluster-vip=<CLUSTER_VIP>
 ```
 
 
@@ -100,6 +101,7 @@ sbctl cluster create
 | --hugepages-mem| Huge-page memory floor per storage node, e.g. 4G. Cluster-wide; a node adopts it on its next restart. | string | False |  |
 | --vcpu-count| Absolute core budget for SPDK on every storage node, replacing the old cores-percentage: a percentage meant different things on different hardware, a count does not. One core beyond this is required for the system, so a node with fewer than count+1 vCPUs is refused rather than silently under-provisioned. | integer | False | 0 |
 | --hashicorp-vault-url| Hashicorp vault URL for storing encryption keys for this cluster | string | False | - |
+| --cluster-vip| Cluster Virtual IP, this is the load balancer IP or domain, would be used for the cluster logging ingress. | string | False | - |
 
 
 ## Adds a new cluster.

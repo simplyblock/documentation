@@ -1991,9 +1991,9 @@ enableFailureDomains: boolean
 | `rpcBasePort` _integer_ | RpcBasePort defines the base RPC service port. |  |  |
 | `snodeApiPort` _integer_ | SnodeApiPort defines the storage-node API port. |  |  |
 | `maxConcurrentWorkerRestarts` _integer_ | MaxConcurrentWorkerRestarts is the maximum number of Kubernetes worker nodes the operator<br />may drain and restart simultaneously. The effective concurrency applied by the drain<br />coordinator is min(MaxConcurrentWorkerRestarts, MaxFaultTolerance).<br />Defaults to 1 when unset. |  | Minimum: 1 <br />Optional: \{\} <br /> |
-| `maxSubsystemCount` _integer_ | MaxSubsystemCount is the maximum number of NVMe-oF subsystems per storage<br />node. Applies to every storage node in the cluster. Required: it sizes huge<br />pages, and a node that receives no value fails config generation outright<br />rather than falling back to a default. |  | Maximum: 75 <br />Minimum: 10 <br />Required: \{\} <br /> |
+| `maxSubsystemCount` _integer_ | MaxSubsystemCount is the maximum number of NVMe-oF subsystems per storage<br />node. Applies to every storage node in the cluster. Required: it sizes huge<br />pages, and a node that receives no value fails config generation outright<br />rather than falling back to a default. |  | Maximum: 500 <br />Minimum: 10 <br />Required: \{\} <br /> |
 | `maxHugePagesSize` _string_ | MaxHugePagesSize is the maximum allocatable size of huge pages on each<br />storage node (e.g. "100G", "1T"; a bare number is interpreted as GB). It is<br />a floor, not a cap: the effective huge-page allocation is the larger of this<br />value and the minimum the node's device and subsystem count requires. When<br />omitted the computed minimum is used. |  | Optional: \{\} <br /> |
-| `vcpuCount` _integer_ | VCPUCount is the number of vCPUs allocated to SPDK on each storage node.<br />This is an explicit core count, not a percentage. Required: the core layout<br />it produces must match across the cluster, so it is stated rather than left<br />to a per-node heuristic. |  | Minimum: 6 <br />Required: \{\} <br /> |
+| `vcpuCount` _integer_ | VCPUCount is the number of vCPUs allocated to SPDK on each storage node.<br />This is an explicit core count, not a percentage. Required: the core layout<br />it produces must match across the cluster, so it is stated rather than left<br />to a per-node heuristic. |  | Minimum: 4 <br />Required: \{\} <br /> |
 | `warningThreshold` _[CapacityThresholdSpec](#capacitythresholdspec)_ | WarningThresholdSpec defines warning-level capacity thresholds. |  |  |
 | `criticalThreshold` _[CapacityThresholdSpec](#capacitythresholdspec)_ | CriticalThresholdSpec defines critical-level capacity thresholds. |  |  |
 | `backup` _[BackupSpec](#backupspec)_ | Backup specifies the specification for backup to S3 configuration |  |  |
@@ -2211,6 +2211,18 @@ status:
   volumesMigrated: integer
   volumesPending: integer
   triggered: boolean
+  devicesMigrated: integer
+  devicesTotal: integer
+  devicesTriggered: boolean
+  reshuffleTriggered: boolean
+  removeTriggered: boolean
+  drainTargetsTried:
+    - pvName: string
+      targets:
+        - string
+      failures: integer
+      failingTarget: string
+      countedFailure: string
   startedAt: Time
   completedAt: Time
 ```
@@ -2300,6 +2312,18 @@ message: string
 volumesMigrated: integer
 volumesPending: integer
 triggered: boolean
+devicesMigrated: integer
+devicesTotal: integer
+devicesTriggered: boolean
+reshuffleTriggered: boolean
+removeTriggered: boolean
+drainTargetsTried:
+  - pvName: string
+    targets:
+      - string
+    failures: integer
+    failingTarget: string
+    countedFailure: string
 startedAt: Time
 completedAt: Time
 ```
@@ -2307,11 +2331,17 @@ completedAt: Time
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `phase` _[StorageNodeOpsPhase](#storagenodeopsphase)_ | Phase is the high-level lifecycle phase. |  | Enum: [Pending Running Succeeded Failed] <br />Optional: \{\} <br /> |
-| `subPhase` _[StorageNodeOpsSubPhase](#storagenodeopssubphase)_ | SubPhase tracks the active drain step when action=remove and phase=Running. |  | Enum: [Validating Suspending Migrating Verifying Removing Preparing Restarting Promoting] <br />Optional: \{\} <br /> |
+| `subPhase` _[StorageNodeOpsSubPhase](#storagenodeopssubphase)_ | SubPhase tracks the active drain step when action=remove and phase=Running. |  | Enum: [Validating Suspending ShuttingDown MigratingDevices Migrating Verifying Reshuffling Removing Preparing Restarting Promoting] <br />Optional: \{\} <br /> |
 | `message` _string_ | Message is a human-readable description of the current state or failure reason. |  | Optional: \{\} <br /> |
 | `volumesMigrated` _integer_ | VolumesMigrated is the count of volumes successfully migrated (drain only). |  | Optional: \{\} <br /> |
 | `volumesPending` _integer_ | VolumesPending is the count of volumes awaiting migration (drain only). |  | Optional: \{\} <br /> |
-| `triggered` _boolean_ | Triggered indicates the backend action POST has been sent (used during<br />Suspending to avoid duplicate POSTs across reconcile iterations). |  | Optional: \{\} <br /> |
+| `triggered` _boolean_ | Triggered indicates the backend action POST has been sent (the once-only<br />latch of the step that starts with a POST and then polls -- ShuttingDown<br />for a removal, and the suspend/restart actions -- so a reconcile that<br />runs again does not POST again). |  | Optional: \{\} <br /> |
+| `devicesMigrated` _integer_ | DevicesMigrated and DevicesTotal report the pre-removal device rebuild,<br />so the wait has a number attached to it rather than being a silent<br />several-minute pause in MigratingDevices. |  | Optional: \{\} <br /> |
+| `devicesTotal` _integer_ |  |  | Optional: \{\} <br /> |
+| `devicesTriggered` _boolean_ | DevicesTriggered is the once-only latch for the device rebuild, which<br />starts with a POST and is then polled, matching what Triggered does for<br />ShuttingDown. Its own field rather than a shared one so a later step<br />cannot inherit an earlier step's "already sent". |  | Optional: \{\} <br /> |
+| `reshuffleTriggered` _boolean_ | ReshuffleTriggered is retained so an upgrade does not drop the field from<br />a CR that still carries it. Nothing reads or writes it: see<br />StorageNodeOpsSubPhaseReshuffling. |  | Optional: \{\} <br /> |
+| `removeTriggered` _boolean_ | RemoveTriggered latches that the node DELETE was accepted. The DELETE<br />queues the removal rather than performing it, so Removing sends it once<br />and then follows the node to removed / removed_failed. Its own latch<br />because the status the drain hands the node over in (migrating_lvols)<br />is also one a running removal reads as, so the status alone cannot say<br />whether the DELETE has been sent. |  | Optional: \{\} <br /> |
+| `drainTargetsTried` _[VolumeDrainTargets](#volumedraintargets) array_ | DrainTargetsTried records, per volume, the migration targets that have<br />already failed for it.<br />Without it a retry is not a retry: the target is re-picked from the same<br />ordered candidate list with no memory, so a volume whose migration fails<br />on one node is handed straight back to that node. With a single volume<br />the pick is the first candidate every time, which is a loop rather than<br />an escalation. Recording the failure lets the next attempt move on, and<br />lets the drain say "every target has been tried" instead of retrying for<br />ever. |  | Optional: \{\} <br /> |
 | `startedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | StartedAt is when the operation began. |  | Optional: \{\} <br /> |
 | `completedAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | CompletedAt is when the operation finished (successfully or not). |  | Optional: \{\} <br /> |
 
@@ -2325,7 +2355,7 @@ steps when action=remove, and the Preparing → Migrating → Promoting steps wh
 action=migrate.
 
 _Validation:_
-- Enum: [Validating Suspending Migrating Verifying Removing Preparing Restarting Promoting]
+- Enum: [Validating Suspending ShuttingDown MigratingDevices Migrating Verifying Reshuffling Removing Preparing Restarting Promoting]
 
 _Appears in:_
 - [StorageNodeOpsStatus](#storagenodeopsstatus)
@@ -2334,8 +2364,11 @@ _Appears in:_
 | --- | --- |
 | `Validating` |  |
 | `Suspending` |  |
+| `ShuttingDown` | StorageNodeOpsSubPhaseShuttingDown stops the node before anything is<br />moved off it, which is the first thing a removal does on either path.<br />Suspending only excluded the node from new volume placement and left it<br />serving, so a drain and a `sbctl sn remove` reached the migration steps<br />with the node in opposite states. Every check asking "can this node still<br />answer?" was then right for one path and wrong for the other -- a class of<br />bug found repeatedly, one live cluster at a time. With the node down on<br />both paths, its volumes are served by their replicas for the whole drain<br />and the migration steps mean one thing.<br /> |
+| `MigratingDevices` | StorageNodeOpsSubPhaseMigratingDevices marks the pre-removal step: the<br />node's devices are failed and their data rebuilt onto peers, before any<br />lvol leaves the node.<br />It is a phase of its own because until now this work happened inside the<br />control plane's node delete, where it had no status, no events and no<br />progress: an operator watching a removal saw "Removing" for as long as it<br />took. The volumes still hosted here are served from their replicas while<br />it runs, which is measurably slower, so the phase reports how far along it<br />is rather than leaving that degradation unexplained.<br /> |
 | `Migrating` |  |
 | `Verifying` |  |
+| `Reshuffling` | StorageNodeOpsSubPhaseReshuffling is retained only so a CR that is<br />mid-flight across an upgrade can leave it; nothing enters it any more.<br />Reallocating this node's replica roles was briefly its own drain phase,<br />calling the control plane's phase 3b on its own. That step has a<br />precondition the drain could not meet: the removal frees the departing<br />node's own replica slots in phase 3a first, and 3b relies on those slots<br />to have somewhere to move into. Run without 3a on a cluster whose replica<br />slots are all occupied, it found no free slot, walked the ring of<br />occupants and refused on a cycle -- forever, since the step retried for<br />four hours (2026-09-26, a 7-node FTT2 cluster).<br />Reallocation belongs to the removal, which owns that ordering. Removing<br />issues the DELETE and the control plane does 3a, then 3b, as it always<br />did.<br /> |
 | `Removing` |  |
 | `Preparing` | StorageNodeOpsSubPhasePreparing marks that a migrate op is preparing the<br />target worker: cloning per-node config, labeling it into the storage<br />plane, and waiting until its storage-node-api pod is Ready and its per-pod<br />DNS name is published in the EndpointSlice — the precondition for the<br />control-plane restart to resolve node_address.<br /> |
 | `Restarting` | StorageNodeOpsSubPhaseRestarting marks that a migrate op has issued the<br />control-plane restart and confirmed the node entered in_restart; it is<br />now waiting for the node to come back online on the target host. The<br />restart is asynchronous, so the op only advances to Promoting after the<br />node has left online (restart started) and returned to online (restart<br />finished) — issuing /promote earlier races the in-flight restart's node<br />writes and leaves the relocated devices stuck in "new".<br /> |
@@ -3379,6 +3412,40 @@ throughputWeight: float
 | `latencyBenchmarkInterval` _[Duration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#duration-v1-meta)_ | LatencyBenchmarkInterval is how often fio benchmark Jobs run against each storage node.<br />Defaults to 5m. |  | Optional: \{\} <br /> |
 | `iopsWeight` _float_ | IOPSWeight is the weight applied to per-volume IOPS in the volume IO score. Defaults to 1.0. |  | Optional: \{\} <br /> |
 | `throughputWeight` _float_ | ThroughputWeight is the weight applied to per-volume throughput (MB/s) in the volume<br />IO score. Defaults to 0.1. |  | Optional: \{\} <br /> |
+
+
+#### VolumeDrainTargets
+
+
+
+VolumeDrainTargets is the set of migration targets already exhausted for one
+volume during a drain. Keyed by PV name because that is what the drain builds
+its VolumeMigration CRs from, so the key survives a control-plane restart and
+matches the CR that failed.
+
+
+
+_Appears in:_
+- [StorageNodeOpsStatus](#storagenodeopsstatus)
+
+_Example:_
+
+```yaml
+pvName: string
+targets:
+  - string
+failures: integer
+failingTarget: string
+countedFailure: string
+```
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `pvName` _string_ | PVName is the PersistentVolume whose migration these targets failed for. |  |  |
+| `targets` _string array_ | Targets are storage node UUIDs that have already failed for this volume<br />and must not be chosen again for it. |  | Optional: \{\} <br /> |
+| `failures` _integer_ | Failures counts consecutive failures for this volume that could not be<br />blamed on the target -- a consumer pod that is down, an unresolvable PV, a<br />busy cluster. Such a failure must not burn the target, or one dead client<br />exhausts every candidate; but it must not be retried for ever either, or<br />the drain recreates the same migration against the same node until someone<br />notices. The count bounds the second case: past MaxUnattributedFailures the<br />target is abandoned anyway, on the grounds that something here is not<br />working even if it cannot be pinned on the node.<br />Reset whenever a target is burned, so the next candidate starts fresh. |  | Optional: \{\} <br /> |
+| `failingTarget` _string_ | FailingTarget is the target the Failures count refers to. Unattributed<br />failures are only comparable against one node: ten failures spread over<br />three candidates say nothing about the third, but a count kept per volume<br />alone would have burnt it. The count restarts whenever the failing<br />migration's target differs from this one. |  | Optional: \{\} <br /> |
+| `countedFailure` _string_ | CountedFailure is the UID of the last failed VolumeMigration counted for<br />this volume. A failed CR stays until the drain deletes it, and the<br />reconcile that counts it can end before the delete lands -- the status<br />write failed, the delete failed, the operator restarted -- so the next<br />pass observes the same failure again. Recording which CR was counted<br />makes each failure count once. A recreated CR has a new UID. |  | Optional: \{\} <br /> |
 
 
 #### VolumeMigration

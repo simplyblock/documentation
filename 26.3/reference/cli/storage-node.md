@@ -32,6 +32,7 @@ Runs locally on to-be storage node hosts. Installs storage node dependencies and
 sbctl storage-node deploy
     --ifname=<IFNAME>
     --isolate-cores
+    --cluster-vip=<CLUSTER_VIP>
 ```
 
 
@@ -39,6 +40,7 @@ sbctl storage-node deploy
 | --------- | ----------- | --------- | -------- | ------- |
 | --ifname| The network interface to be used for communication between the control plane and the storage node. | string | False | - |
 | --isolate-cores| Isolates cores in kernel args for the provided CPU mask. Default: `false`. | marker | False | False |
+| --cluster-vip| This address will be used for the containers gelf driver address on port 12202 | string | False | - |
 
 
 ## Prepare a configuration file to be used when adding the storage node.
@@ -238,6 +240,7 @@ sbctl storage-node restart
     --node-addr=<NODE_ADDR>
     --force
     --ssd-pcie=<SSD_PCIE>
+    --data-nics=<DATA_NICS>
     --force-lvol-recreate
 ```
 
@@ -248,9 +251,10 @@ sbctl storage-node restart
 
 | Parameter | Description | Data Type | Required | Default |
 | --------- | ----------- | --------- | -------- | ------- |
-| --node-addr, --node-ip| Allows to restart an existing storage node on new host or hardware. Devices attached to storage nodes have to be attached to new hosts. Otherwise, they have to be marked as failed and removed from cluster. Triggers a pro-active migration of data from those devices onto other storage nodes.<br><br> The provided value must be presented in the form of _IP:PORT_. Be default the port number is _5000_. | string | False | - |
+| --node-addr, --node-ip| Allows to restart an existing storage node on new host or hardware. Devices attached to storage nodes have to be attached to new hosts. Otherwise, they have to be marked as failed and removed from cluster. Triggers a pro-active migration of data from those devices onto other storage nodes.<br><br> The provided value must be presented in the form of _IP:PORT_. Be default the port number is _5000_.<br><br> The node keeps its data NIC names and they are re-resolved on the new host. A NIC that is missing there, or that is not usable for the cluster's fabric, is dropped with a warning; the restart is refused only if none of them is usable. Pass `--data-nics` to move the node onto differently named interface(s). | string | False | - |
 | --force| Force restart. | marker | False | - |
 | --ssd-pcie| New Nvme PCIe address to add to the storage node. Can be more than one. | string | False |  |
+| --data-nics| Replaces the data network interface(s) the storage node advertises its NVMe-oF listeners on. Use this to swap a failed or renamed storage NIC for a different one without re-adding the node: the given interfaces are looked up on the (possibly new) host during the restart and become the node's new data NICs. If omitted, the existing data NICs are kept. Every named interface must exist on the host and be usable for the cluster's fabric (TCP and/or RoCE), otherwise the restart is refused. Note that the node's data IPs change: peer nodes re-establish their device connections on their own, but clients already connected over the old IP must reconnect. | string | False |  |
 | --force-lvol-recreate| Force logical volume recreation on node restart even if the logical volume bdev was not recovered. Default: `False`. | marker | False | False |
 
 

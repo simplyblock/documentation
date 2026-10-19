@@ -7,9 +7,7 @@ Every page of this documentation is available as Markdown: append `.md` to any p
 ## Overview
 
 - [Home](https://docs.simplyblock.io/latest/index.md): Home: Welcome to the Simplyblock Documentation, the comprehensive resource for understanding, deploying, and managing simplyblock's cloud-native platform.
-
-## Upgrades
-
+- [Upgrades](https://docs.simplyblock.io/latest/upgrades/index.md): Upgrade simplyblock.
 - [K8s Upgrade With Maintenance Window Upgrade (R25 to R26)](https://docs.simplyblock.io/latest/upgrades/upgrade-notes-r25-r26.md): Maintenance-window procedure to upgrade a Kubernetes cluster from the R25 Helm charts to the R26 Simplyblock Operator, from node shutdown to workload restart.
 
 ## Important Notes
@@ -213,7 +211,7 @@ Every page of this documentation is available as Markdown: append `.md` to any p
 ## Release Notes
 
 - [Release Notes](https://docs.simplyblock.io/latest/release-notes/index.md): Release Notes: Simplyblock regularly provides new releases with new features, performance enhancements, bugfixes, and more.
-- [26.3](https://docs.simplyblock.io/latest/release-notes/26-3.md): Release notes for Simplyblock 26.3, covering the new features and fixes of the control plane, the storage plane, the Simplyblock Operator, and Simplyblock CSI.
+- [26.3](https://docs.simplyblock.io/latest/release-notes/26-3.md): Release notes for Simplyblock 26.3 up to 26.3.2, covering the control plane, the storage plane, the Simplyblock Operator, and Simplyblock CSI.
 - [26.2-PRE](https://docs.simplyblock.io/latest/release-notes/26-2.md): Simplyblock is happy to release the general availability release of simplyblock 26.2-PRE.
 - [25.10.5](https://docs.simplyblock.io/latest/release-notes/25-10-5.md): Simplyblock is happy to release the general availability release of Simplyblock 25.10.5 It is possible to upgrade from 25.10.4 and 25.10.4.2.
 - [25.10.4](https://docs.simplyblock.io/latest/release-notes/25-10-4.md): Simplyblock is happy to release the general availability release of Simplyblock 25.10.4 It is possible to upgrade from 25.10.3.
