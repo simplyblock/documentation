@@ -120,7 +120,7 @@
     const button = document.createElement("button");
     button.className = "md-version__current";
     button.type = "button";
-    button.setAttribute("aria-label", `Select a ${label} version`);
+    button.setAttribute("aria-label", label === "Version" ? "Select a version" : `Select a version from ${label}`);
     button.textContent = containsCurrent ? current.title : label;
     root.appendChild(button);
 
