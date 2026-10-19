@@ -130,7 +130,7 @@ Force-shutdown each storage node. Using `--force` combines suspend and shutdown 
 command and avoids failures when some nodes are already in a non-online state:
 
 !!! note "Multiple clusters"
-    If the Kubernetes cluster runs more than one Simplyblock cluster, the storage nodes of **all** clusters have to be
+    If the Kubernetes cluster runs more than one simplyblock cluster, the storage nodes of **all** clusters have to be
     shut down. `sbctl sn list` returns the nodes of every cluster, so the loop below covers them.
 
 
@@ -379,7 +379,7 @@ helm upgrade --install simplyblock-operator simplyblock/simplyblock-operator \
     chart's CA. Omit both for a cluster without TLS. cert-manager has to be installed (see the prerequisite above). The
     kept FDB stays plaintext, and Prometheus keeps serving HTTP on 9090.
 
-    By default the chart creates a self-signed issuer. **This is for testing only. In production, create a
+    By default, the chart creates a self-signed issuer. **This is for testing only. In production, create a
     `ClusterIssuer` first and pass it:**
 
     ```yaml
@@ -543,8 +543,8 @@ spec:
     Detect Talos before deciding the values.
 
 !!! note "Multiple clusters"
-    Create one `StorageCluster`, one `StoragePool` per existing pool, and one `StorageNodeSet` for each Simplyblock
-    cluster, each with its own names (for example `cluster1`, `cluster1-nodes` and `cluster2`, `cluster2-nodes`).
+    Create one `StorageCluster`, one `StoragePool` per existing pool, and one `StorageNodeSet` for each simplyblock
+    cluster, each with its own names (for example, `cluster1`, `cluster1-nodes` and `cluster2`, `cluster2-nodes`).
     Every `StorageNodeSet` lists only the worker nodes of its own cluster and references its own cluster in
     `clusterName`. The `stripe` values (`dataChunks` and `parityChunks`) have to match the existing cluster (for
     example 1/0 for a 1x1 and 2/2 for a 2x2 cluster). `vcpuCount` has to match the number of SPDK cores the storage
@@ -733,7 +733,7 @@ for NODE_ID in $(sbctl sn list --json | python3 -c "import sys,json; print('\n'.
 
     sleep 10  # brief pause before next node
 done
-
+```
 
 Once every node of a cluster is `online`, activate the cluster. Repeat for each cluster:
 
@@ -962,5 +962,5 @@ kubectl get deployments -n <namespace> -o name | \
 
 !!! note "Pods that are not managed by a controller"
     The NVMe/TCP connections of existing pods go stale when the storage nodes are shut down, and reads fail with
-    `Input/output error`. A pod without a controller (for example a bare test pod) is not recreated by a rollout.
+    `Input/output error`. A pod without a controller (for example, a bare test pod) is not recreated by a rollout.
     Delete and recreate it. The PVC and its data are not affected.
