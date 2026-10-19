@@ -715,6 +715,27 @@ Set the cluster status to `unready` so that it can be activated explicitly after
 sbctl --dev cluster set <CLUSTER_UUID> status unready
 ```
 
+R26 uses a different journal layout than R25. The script keeps the R25 layout, so the storage nodes can read their existing data after the restart.
+
+Run the following script in the admin control pod before updating the storage nodes. It pins the layout and clears the stale journal records, and it must run before any node restart:
+
+```python
+# Set <cluster_id> to your cluster ID.
+# If you have multiple clusters, repeat this for each cluster.
+CLUSTER_ID="<cluster_id>"
+from simplyblock_core.db_controller import DBController
+db = DBController()
+cl = db.get_cluster_by_id(CLUSTER_ID)
+db.atomic_update(cl, lambda c: setattr(c, "jm_raid_layout", "legacy_nway"))
+
+for n in db.get_storage_nodes_by_cluster_id(CLUSTER_ID):
+    jd = n.jm_device
+    if jd and jd.jm_leg_bdevs:
+        jd.jm_leg_bdevs = []
+        jd.jm_leg_members = []
+        n.write_to_db()
+```
+
 ```bash title="Restarting the storage nodes one at a time"
 export SPDK_IMAGE=<TARGET_SPDK_IMAGE>
 export SPDK_PROXY_IMAGE=<TARGET_DOCKER_IMAGE>
