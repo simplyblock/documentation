@@ -6209,14 +6209,14 @@ access.</p>
 <h2 id="tls-on-openshift">TLS on OpenShift</h2>
 <p>TLS is enabled by default. On OpenShift, two certificate providers are available:</p>
 <ul>
-<li><strong>OpenShift service CA (<code>tls.provider=openshift</code>):</strong> Uses the certificates OpenShift issues for services. It
+<li><strong>OpenShift service CA (<code>tls.provider=OpenShift</code>):</strong> Uses the certificates OpenShift issues for services. It
   provides one-way TLS only, so <code>tls.mutual_enabled</code> must be set to <code>false</code>.</li>
 <li><strong>Cert-manager (<code>tls.provider=cert-manager</code>):</strong> Required for mutual TLS and for an external KMS.
   <a href="https://cert-manager.io/" rel="noopener" target="_blank">cert-manager&nbsp;⧉</a> must be installed first.</li>
 </ul>
 <div class="highlight"><span class="filename">Install the operator with the OpenShift service CA</span><pre><span></span><code>helm<span class="w"> </span>install<span class="w"> </span>simplyblock-operator<span class="w"> </span>simplyblock/simplyblock-operator<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--namespace<span class="w"> </span>simplyblock<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--set<span class="w"> </span>tls.provider<span class="o">=</span>openshift<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--set<span class="w"> </span>tls.provider<span class="o">=</span>OpenShift<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--set<span class="w"> </span>tls.mutual_enabled<span class="o">=</span><span class="nb">false</span>
 </code></pre></div>
 <p>For details, see <a href="../security/">Securing the Control Plane</a>.</p>
