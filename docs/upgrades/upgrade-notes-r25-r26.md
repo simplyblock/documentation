@@ -377,7 +377,25 @@ helm upgrade --install simplyblock-operator simplyblock/simplyblock-operator \
 !!! note "TLS and mTLS flags"
     `tls.enabled` serves the webappapi over HTTPS, and `tls.mutual_enabled` also requires client certificates from the
     chart's CA. Omit both for a cluster without TLS. cert-manager has to be installed (see the prerequisite above). The
-    chart creates its own self-signed issuer. The kept FDB stays plaintext, and Prometheus keeps serving HTTP on 9090.
+    kept FDB stays plaintext, and Prometheus keeps serving HTTP on 9090.
+
+    By default the chart creates a self-signed issuer. **This is for testing only. In production, create a
+    `ClusterIssuer` first and pass it:**
+
+    ```yaml
+    apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: my-ca-issuer
+    spec:
+      ca:
+        secretName: my-ca-keypair   # TLS secret with the CA key pair, in the cert-manager namespace
+    ```
+
+    ```bash
+        --set tls.cert-manager.createSelfSignedIssuer=false \
+        --set tls.cert-manager.cluster-issuer=my-ca-issuer
+    ```
 
 !!! note "Optional flags"
     - `controlplane.csiHostpathDriver.enabled` and `controlplane.storageclass.name`: pass them only if R25 used the
