@@ -1,0 +1,37 @@
+---
+title: "Storage Plane"
+description: "Storage Plane: Symptom: After a fresh deployment, the cluster cannot be activated."
+source: "https://docs.simplyblock.io/latest/reference/troubleshooting/storage-plane/"
+---
+
+# Storage Plane
+
+## Fresh Cluster Cannot Be Activated
+
+**Symptom:** After a fresh deployment, the cluster cannot be activated. The activation process hangs or fails, and the
+storage nodes show `n/0` disks available in the disks column (`sbctl storage-node list`).
+
+1. Remove all storage nodes: `sbctl storage-node remove <NODE_ID>`. The node must be online or
+   suspended, and the removal shuts the node down itself. `--force-remove` does not force a removal, but only
+   cancels active tasks of the node.
+2. Delete all storage nodes: `sbctl storage-node delete <NODE_ID>`
+3. Re-add all storage nodes. The disks should become active.
+4. Try to activate the cluster.
+
+## Storage Node Health Check Shows Health=False
+
+**Symptom:** The storage node health check returns _health=false_ (`sbctl storage-node list`).
+
+1. First run `sbctl storage-node check <NODE_ID>`.
+2. If the command keeps showing an unhealthy storage node, _shutdown_ and _restart_ the storage node.
+
+!!! danger
+    Never shutdown or restart a storage node while the cluster is in **degraded** state. This can lead to potential
+    I/O operation. This is independent of the cluster's high-availability status.<br/><br/ >
+    Check the cluster status with any of the following commands:
+
+    ```bash
+    sbctl cluster list
+    sbctl cluster get <cluster-id>
+    sbctl cluster show <cluster-id>
+    ```

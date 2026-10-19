@@ -1,0 +1,103 @@
+---
+title: "Home"
+description: "Home: Welcome to the Simplyblock Documentation, the comprehensive resource for understanding, deploying, and managing simplyblock's cloud-native platform."
+source: "https://docs.simplyblock.io/latest/"
+---
+
+# Welcome to the Simplyblock Documentation
+
+Welcome to the **Simplyblock Documentation**, the comprehensive resource for understanding, deploying, and managing
+simplyblock's cloud-native, high-performance storage platform. This documentation provides detailed information on
+architecture, installation, configuration, and best practices, with all the guidance necessary to maximize
+the efficiency and reliability of a simplyblock deployment.
+
+## Getting Started
+
+<div class="grid cards" markdown>
+-   :material-book-open-page-variant:{ .lg .middle } **Learn the basics**
+
+    ---
+
+    General information about simplyblock, the documentation, and
+    important terms. Read here first.
+
+    [:octicons-arrow-right-24: Important Notes](important-notes/index.md)
+
+- :material-floor-plan:{ .lg .middle } **Plan the deployment**
+
+    ---
+
+    Before starting to deploy simplyblock, take a moment to get
+    familiar with the required node sizing and other considerations for
+    a performant and stable cluster operation.
+
+    [:octicons-arrow-right-24: Deployment Planning](deployment-preparation/index.md)
+
+- :material-database-arrow-up:{ .lg .middle } **Deploy Simplyblock**
+
+    ---
+
+    Deploy simplyblock on Kubernetes as a hyper-converged storage platform,
+    or choose disaggregated and plain Linux models when stricter separation
+    is required.
+
+    [:octicons-arrow-right-24: Kubernetes Installation](kubernetes/installation/index.md)<br/>
+    [:octicons-arrow-right-24: Non-Kubernetes Installation](non-kubernetes/installation/index.md)
+
+- :material-cog-refresh:{ .lg .middle } **Operate Simplyblock**
+
+    ---
+
+    After the installation of a simplyblock cluster, learn how to
+    operate and maintain it.
+
+    [:octicons-arrow-right-24: Kubernetes Operations](kubernetes/operations/index.md)<br/>
+    [:octicons-arrow-right-24: Non-Kubernetes Operations](non-kubernetes/operations/index.md)
+
+</div>
+
+## Keep Updated
+
+Sign up for the simplyblock newsletter and keep updated on what's happening.
+
+<script charset="utf-8" type="text/javascript" src="//js-eu1.hsforms.net/forms/embed/v2.js"></script>
+<script>
+  let applyFormTheme = () => {};
+
+  hbspt.forms.create({
+    portalId: "145570463",
+    formId: "cbb58efc-4668-483b-a195-1d0ceab4bfb7",
+    region: "eu1",
+    onFormReady: function(form) {
+      applyFormTheme = () => {
+        const scheme = document.body?.dataset?.mdColorScheme || "default";
+        form.querySelectorAll("label, .hs-richtext").forEach(label => {
+          label.style.color = scheme === "slate" ? "#e2e8f0" : "rgba(0, 0, 0, 0.87)";
+        });
+      };
+      applyFormTheme();
+    }
+  });
+
+  function observeThemeToggle() {
+    const obs = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.type === "attributes" && m.attributeName === "data-md-color-scheme") {
+          applyFormTheme();
+          break;
+        }
+      }
+    });
+
+    obs.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-md-color-scheme"]
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", observeThemeToggle);
+  } else {
+    observeThemeToggle();
+  }
+</script>

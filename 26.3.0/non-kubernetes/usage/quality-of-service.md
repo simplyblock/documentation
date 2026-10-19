@@ -1,0 +1,59 @@
+---
+title: "Defining Quality of Service"
+description: "Defining Quality of Service: Simplyblock allows Quality of Service (QoS) limits to be applied to logical volumes (LVs) to control performance by defining."
+source: "https://docs.simplyblock.io/latest/non-kubernetes/usage/quality-of-service/"
+---
+
+# Defining Quality of Service
+
+Simplyblock allows Quality of Service (QoS) limits to be applied to logical volumes (LVs) to control performance by
+defining maximum IOPS and throughput. QoS settings can be configured during volume creation or adjusted on an
+active Logical Volume using the `sbctl` command line interface.
+
+Configuring QoS allows simplyblock logical volumes to deliver predictable performance by limiting resource consumption
+and ensuring balanced workload distribution across the storage cluster.
+
+## Setting QoS During Volume Creation
+
+QoS can be applied when creating a new logical volume:
+
+```bash
+sbctl volume add \
+  <VOLUME_NAME> \
+  <VOLUME_SIZE> \
+  <POOL_NAME> \
+  --max-rw-iops 3500 \
+  --max-rw-mbytes 125
+```
+
+### Parameters
+
+| Parameter                  | Description                        | Default |
+|----------------------------|------------------------------------|---------|
+| `--max-rw-iops <IOPS>`     | Maximum I/O operations per second. | 0       |
+| `--max-rw-mbytes <MBYTES>` | Maximum read/write throughput.     | 0       |
+| `--max-r-mbytes <MBYTES>`  | Maximum read throughput.           | 0       |
+| `--max-w-mbytes <MBYTES>`  | Maximum write throughput.          | 0       |
+
+To see all available parameters when creating a logical volume, see [Provisioning](provisioning.md).
+
+## Changing QoS on an Active Logical Volume
+
+QoS settings can also be updated on an existing logical volume:
+
+```bash
+sbctl volume qos-set \
+  <VOLUME_UUID> \
+  --max-rw-iops 5000 \
+  --max-rw-mbytes 250
+```
+
+## Verification
+
+To check the current QoS settings:
+
+```bash
+sbctl volume get <VOLUME_UUID>
+```
+
+Review the output for the active QoS configuration.

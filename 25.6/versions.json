@@ -1,0 +1,19 @@
+[
+  {
+    "version": "25.6",
+    "title": "25.6",
+    "aliases": [
+      "latest"
+    ]
+  },
+  {
+    "version": "25.3-PRE",
+    "title": "25.3-PRE",
+    "aliases": []
+  },
+  {
+    "version": "dev",
+    "title": "development",
+    "aliases": []
+  }
+]
