@@ -1,0 +1,144 @@
+---
+title: "Deploying Edge Clusters"
+description: "Deploy a simplyblock edge cluster with one or two nodes: prepare the hub, install the operator in the managed profile, and approve the draft."
+source: "https://docs.simplyblock.io/latest/kubernetes/installation/edge-clusters/"
+---
+
+# Deploying Edge Clusters
+
+An edge cluster is deployed with the same resources as any storage cluster. This page covers only the steps that
+differ for edge clusters. The edge-specific requirements are noted in
+[Hardware Requirements](../../deployment-preparation/hardware-requirements.md) and
+[Software Requirements](../../deployment-preparation/software-requirements.md).
+
+## Preparing the Hub
+
+The hub runs the control plane with the standalone profile, installed as described in
+[Install Simplyblock Operator](k8s-control-plane.md), with an admin token for the edge operators:
+
+```bash title="Create the admin token and install the hub"
+kubectl create namespace simplyblock
+kubectl -n simplyblock create secret generic sb-admin-token \
+    --from-literal=token="$(openssl rand -hex 32)"
+
+helm install simplyblock-operator simplyblock/simplyblock-operator \
+    --namespace simplyblock \
+    --set deployment.profile=standalone \
+    --set controlplane.local.adminTokenSecretRef=sb-admin-token
+```
+
+The Management API must be reachable from the edge sites, for example, through a LoadBalancer Service with the
+selector of the `simplyblock-webappapi` Service:
+
+```bash title="Expose the Management API to the edge sites"
+kubectl -n simplyblock expose service simplyblock-webappapi \
+    --name simplyblock-webappapi-edge --type LoadBalancer
+```
+
+## Installing the Operator at the Edge
+
+At the edge site, the operator is installed in the managed profile as described in
+[Connecting to an External Control Plane](install-csi.md). The token Secret holds the admin token of the hub. An edge
+cluster also needs the default storage node image, because it has no local control plane that names it:
+
+```bash title="Install the operator in the managed profile"
+helm install simplyblock-operator simplyblock/simplyblock-operator \
+    --namespace simplyblock \
+    --set deployment.profile=managed \
+    --set controlplane.managed.endpoint=https://<HUB-MANAGEMENT-API> \
+    --set controlplane.managed.credentialsSecretRef=cp-token \
+    --set controlplane.managed.caBundleSecretRef=cp-ca \
+    --set controlplane.managed.storageNodeImage=<STORAGE-NODE-IMAGE>
+```
+
+## Discovery
+
+The discovery follows [Create a Storage Cluster](k8s-storage-plane.md#manual-discovery). Small edge clusters often run
+storage on Kubernetes control plane nodes, which the discovery skips by default:
+
+```yaml title="discover-edge.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: OperatorOps
+metadata:
+  name: discover-edge
+  namespace: simplyblock
+spec:
+  action: Discover
+  discover:
+    configName: edge-draft
+    enableControlPlaneNodes: true
+    # Linux block devices instead of NVMe devices:
+    # enableLogicalBlockDevices: true
+    # forceJournalDevice: true
+```
+
+With Linux block devices, `forceJournalDevice` lets the run dedicate one of several equal devices to the journal. The discovery proposes whole disks only. Partitions of a disk shared with the operating system are selected
+explicitly, as described in [Linux Block Devices](../../architecture/concepts/linux-block-devices.md#partitions).
+
+## Draft for a One-Node Edge Cluster
+
+A one-node edge cluster sets `clusterMode` to `Single` in the deployment document. The cluster mode lets any
+supported erasure-coding scheme run on the one storage node, with every chunk of a stripe on a different device. It
+is copied to `spec.clusterMode` of the `StorageCluster` when the cluster is created. A cluster cannot be changed to
+or from `Single` afterward.
+
+For a one-worker fleet, the discovery proposes the cluster mode `Single` and the scheme that the data devices of the
+worker carry: 2+1 with three or more devices, 1+1 with two, and 1+0 with one. A device dedicated to the journal does
+not count as a data device. Other schemes are chosen by setting the stripe, as long as the worker hands over one data
+device per chunk:
+
+```bash title="One-node edge cluster with six data devices"
+kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p '{
+  "spec": {"cluster": {
+    "name": "edge-site-a",
+    "clusterMode": "Single",
+    "stripe": {"dataChunks": 4, "parityChunks": 2}
+  }}}'
+```
+
+The validation of the document refuses a `Single` document with more than one storage node, or with a group that
+names fewer data devices than the scheme has chunks.
+
+How many device failures the node survives depends on the scheme and on the journal placement, as described in
+[Edge Clusters](../../architecture/deployment-topologies/edge-clusters.md#one-node-edge-clusters).
+
+## Draft for a Two-Node Edge Cluster
+
+!!! note
+    Two-node edge clusters require two-node arbitration support in the control plane, the Simplyblock Operator, and
+    the storage nodes.
+
+A two-node edge cluster sets `clusterMode` to `Dual` in the deployment document. The cluster mode lets the
+erasure-coding scheme 1+1 run on exactly two storage nodes, which otherwise needs three. It is copied to
+`spec.clusterMode` of the `StorageCluster` when the cluster is created, together with `enableArbitration` and
+`arbitration`. For a fleet of exactly two workers, the discovery proposes the cluster mode `Dual` with 1+1. Other
+schemes still need their usual number of storage nodes:
+
+```bash title="Two-node edge cluster"
+kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p '{
+  "spec": {"cluster": {
+    "name": "edge-site-b",
+    "stripe": {"dataChunks": 1, "parityChunks": 1},
+    "clusterMode": "Dual",
+    "enableArbitration": true,
+    "arbitration": {
+      "holdMs": 2500,
+      "leaseTtlMs": 1500
+    }
+  }}}'
+```
+
+| Field                    | Default    | Description                                                                         |
+|--------------------------|------------|-------------------------------------------------------------------------------------|
+| `clusterMode`            | `Standard` | `Single` for one storage node, `Dual` for two, `Standard` for three or more.        |
+| `enableArbitration`      | Off        | Enables the arbitration of the hub between the two nodes.                           |
+| `arbitration.holdMs`     | `2500`     | How long a node holds write I/O after losing its peer. Must stay below 5 seconds.   |
+| `arbitration.leaseTtlMs` | `1500`     | Validity of the lease the hub grants each node. Must be shorter than the hold time. |
+
+`enableArbitration` and `arbitration` are refused unless `clusterMode` is `Dual`.
+
+## Approving and Verifying
+
+The draft is approved and the cluster verified as described in
+[Create a Storage Cluster](k8s-storage-plane.md#approve-the-deployment). The operator creates the storage cluster in
+the control plane of the hub, then the storage nodes and the storage pool with its StorageClass.
