@@ -1,0 +1,185 @@
+// Version selector in the header, built from the versions.json at the site root.
+//
+// The two newest release lines (26.4.x, 26.3.x, ...) get a dropdown each, the
+// development build gets a link, and every other version is listed in one
+// "Older" dropdown, grouped by release line. The dropdown holding the version
+// being read shows that version as its label. On narrow screens, a single
+// dropdown holds all groups. Each entry opens the same page in the other
+// version and falls back to that version's start page if the page does not
+// exist there.
+(function () {
+  "use strict";
+
+  const FEATURED_LINES = 2;
+  const DEV_VERSION = "dev";
+
+  const topic = document.querySelector(".md-header__topic");
+  const configElement = document.getElementById("__config");
+  if (!topic || !configElement) {
+    return;
+  }
+
+  // config.base is the relative path from the current page to the root of its
+  // version, so it resolves to e.g. https://docs.simplyblock.io/26.4-beta2/.
+  const versionRoot = new URL(JSON.parse(configElement.textContent).base + "/", location.href);
+  const currentDir = versionRoot.pathname.split("/").filter(Boolean).pop();
+  const pagePath = location.href.startsWith(versionRoot.href)
+    ? location.href.slice(versionRoot.href.length)
+    : "";
+
+  fetch(new URL("../versions.json", versionRoot))
+    .then((response) => (response.ok ? response.json() : Promise.reject(response.status)))
+    .then(render)
+    .catch(() => {
+      // Without versions.json (a local "mkdocs serve", for example), the header
+      // stays without a version selector.
+    });
+
+  // "26.4-beta2", "26.3.0", and "26.2-PRE" belong to the lines 26.4, 26.3, and
+  // 26.2. A name without a major.minor prefix has no line.
+  function lineOf(version) {
+    const match = /^(\d+)\.(\d+)/.exec(version);
+    return match ? { key: `${match[1]}.${match[2]}`, major: +match[1], minor: +match[2] } : null;
+  }
+
+  function render(versions) {
+    const current = versions.find(
+      (v) => v.version === currentDir || (v.aliases || []).includes(currentDir)
+    );
+
+    // versions.json lists the newest deployment first, so every line keeps that
+    // order and its first entry is the newest version of the line.
+    const lines = new Map();
+    const unversioned = [];
+    let dev = null;
+    for (const v of versions) {
+      if (v.version === DEV_VERSION) {
+        dev = v;
+        continue;
+      }
+      const line = lineOf(v.version);
+      if (!line) {
+        unversioned.push(v);
+        continue;
+      }
+      if (!lines.has(line.key)) {
+        lines.set(line.key, { ...line, versions: [] });
+      }
+      lines.get(line.key).versions.push(v);
+    }
+
+    const ordered = [...lines.values()].sort((a, b) => b.major - a.major || b.minor - a.minor);
+    const featured = ordered.slice(0, FEATURED_LINES);
+    const older = ordered.slice(FEATURED_LINES);
+    if (unversioned.length) {
+      older.push({ key: "other", versions: unversioned });
+    }
+
+    const container = document.createElement("div");
+    container.className = "sb-versions";
+
+    for (const line of featured) {
+      container.appendChild(
+        dropdown(`${line.key}.x`, [{ versions: line.versions }], current, "sb-versions__wide")
+      );
+    }
+    if (dev) {
+      container.appendChild(devLink(dev, current));
+    }
+    if (older.length) {
+      container.appendChild(
+        dropdown("Older", older.map((l) => ({ heading: l.key === "other" ? "Other" : `${l.key}.x`, versions: l.versions })), current, "sb-versions__wide")
+      );
+    }
+
+    // One dropdown for narrow screens, with every group as a heading.
+    const all = featured.map((l) => ({ heading: `${l.key}.x`, versions: l.versions }));
+    if (dev) {
+      all.push({ heading: "Development", versions: [dev] });
+    }
+    all.push(...older.map((l) => ({ heading: l.key === "other" ? "Other" : `${l.key}.x`, versions: l.versions })));
+    container.appendChild(
+      dropdown("Version", all, current, "sb-versions__narrow")
+    );
+
+    topic.appendChild(container);
+  }
+
+  function dropdown(label, groups, current, modifier) {
+    const containsCurrent = groups.some((g) => g.versions.includes(current));
+
+    const root = document.createElement("div");
+    root.className = `md-version sb-versions__group ${modifier}`;
+    if (containsCurrent) {
+      root.classList.add("sb-versions__group--current");
+    }
+    if (groups.some((g) => g.heading)) {
+      root.classList.add("sb-versions__group--grouped");
+    }
+
+    const button = document.createElement("button");
+    button.className = "md-version__current";
+    button.type = "button";
+    button.setAttribute("aria-label", `Select a ${label} version`);
+    button.textContent = containsCurrent ? current.title : label;
+    root.appendChild(button);
+
+    const list = document.createElement("ul");
+    list.className = "md-version__list";
+    for (const group of groups) {
+      if (group.heading) {
+        const heading = document.createElement("li");
+        heading.className = "md-version__item sb-versions__heading";
+        heading.textContent = group.heading;
+        list.appendChild(heading);
+      }
+      for (const v of group.versions) {
+        const item = document.createElement("li");
+        item.className = "md-version__item";
+        item.appendChild(versionLink(v, current, "md-version__link"));
+        list.appendChild(item);
+      }
+    }
+    root.appendChild(list);
+    return root;
+  }
+
+  function devLink(dev, current) {
+    const root = document.createElement("div");
+    root.className = "md-version sb-versions__group sb-versions__wide";
+    if (dev === current) {
+      root.classList.add("sb-versions__group--current");
+    }
+    const link = versionLink(dev, current, "md-version__current sb-versions__dev");
+    link.textContent = "Development";
+    root.appendChild(link);
+    return root;
+  }
+
+  function versionLink(v, current, className) {
+    const target = new URL(`../${v.version}/`, versionRoot);
+    const link = document.createElement("a");
+    link.className = className;
+    link.href = new URL(pagePath, target).href;
+    link.textContent = v.title;
+    if (v === current) {
+      link.setAttribute("aria-current", "page");
+    }
+    link.addEventListener("click", (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      event.preventDefault();
+      // Pages move between versions, so a page missing in the target version
+      // opens that version's start page instead of a 404.
+      fetch(link.href, { method: "HEAD" })
+        .then((response) => {
+          location.href = response.ok ? link.href : target.href;
+        })
+        .catch(() => {
+          location.href = target.href;
+        });
+    });
+    return link;
+  }
+})();
