@@ -1978,9 +1978,7 @@ _Underlying type:_ _string_
 ControlPlaneTLSProvider is who issues the control plane's serving certificate.
 
 The two values are each product's own spelling rather than this group's
-PascalCase, because they are not this group's words: they are what
-internal/utils/tls.go already matches on and what the control-plane image
-reads out of SB_TLS_PROVIDER.
+PascalCase, because they are not this group's words.
 
 _Validation:_
 - Enum: [cert-manager OpenShift]
@@ -2490,10 +2488,8 @@ _Underlying type:_ _string_
 
 DriverTLSProvider is where the TLS certificate on this connection comes
 from. The values are not this group's to spell: OpenShift and cert-manager
-are the two products, and the operator's own internal/utils package already
-carries these exact strings for the control plane's own SB_TLS_PROVIDER, so
-a driver and a control plane in the same namespace agree on the same word
-without a translation table between them.
+are the two products, and ControlPlaneTLSProvider uses the same words, so a
+driver and a control plane in the same namespace agree on the provider.
 
 _Validation:_
 - Enum: [OpenShift cert-manager]
