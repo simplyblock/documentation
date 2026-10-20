@@ -80,3 +80,26 @@ jobs:
     with:
       latest: ${{ needs.deployment.outputs.release-name }}
     secrets: inherit
+
+  # The version tag now marks the build, so the branch is no longer needed. A
+  # branch that moved on since the build is kept, because its own run is still
+  # to come and deletes it afterwards.
+  cleanup:
+    needs: [deployment, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Delete Branch: ${{ github.ref_name }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+          RELEASE_NAME: ${{ needs.deployment.outputs.release-name }}
+        run: |
+          tag_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/refs/tags/${RELEASE_NAME}" --jq .sha)
+          if ! branch_sha=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq .object.sha 2>/dev/null); then
+            echo "Branch ${BRANCH} is already gone"
+          elif [ "${branch_sha}" != "${tag_sha}" ]; then
+            echo "Branch ${BRANCH} moved past tag ${RELEASE_NAME}, keeping it"
+          else
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${BRANCH}"
+            echo "Deleted branch ${BRANCH}, tag ${RELEASE_NAME} marks the build"
+          fi
