@@ -8,3 +8,4 @@ scripts/sbcli-repo
 scripts/operator-repo
 docs/reference/api/openapi.json
 __pycache__
+deployment

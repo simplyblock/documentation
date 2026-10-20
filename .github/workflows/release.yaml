@@ -8,10 +8,9 @@ permissions:
   actions: write
   contents: write
   id-token: write
-  pull-requests: write
 
 concurrency:
-  group: "documentation"
+  group: "documentation-release"
   cancel-in-progress: false
 
 defaults:
@@ -21,19 +20,30 @@ defaults:
 jobs:
   deployment:
     runs-on: ubuntu-latest
+    outputs:
+      release-name: ${{ steps.release-name.outputs.name }}
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
         with:
           token: '${{ github.token }}'
+      - name: "Checkout Deployments"
+        uses: actions/checkout@v4
+        with:
+          ref: deployments
+          path: deployment
+          fetch-depth: 1
+          token: '${{ github.token }}'
       - name: "Prepare Documentation Builder"
         run: |
           ./doc-builder build-image
       - name: "Adjust Release Name: ${{ github.ref_name }}"
+        id: release-name
         env:
           name: "${{ github.ref_name }}"
         run: |
           echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
+          echo "name=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_OUTPUT
       - name: "Lock sbcli/sbcli version"
         run: |
           [ -f ./scripts/sbcli.lock ] || echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
@@ -48,48 +58,25 @@ jobs:
       - name: "Create Version Tag: ${{ env.RELEASE_NAME }}"
         run: |
           git config --global --add safe.directory $PWD
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add deployment
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
           git add scripts/sbcli.lock
           if [ -f scripts/operator.lock ]; then git add scripts/operator.lock; fi
-          git commit -m "Auto-Build: ${RELEASE_NAME}"
+          git commit -m "Auto-Build: Lock ${RELEASE_NAME}" || echo "Lock files unchanged"
           git tag ${RELEASE_NAME}
-          git rm scripts/sbcli.lock
-          if [ -f scripts/operator.lock ]; then git rm scripts/operator.lock; fi
-          git commit -m "Auto-Build: Post ${RELEASE_NAME}"
-          git push --all
-          git push --tags
-          rm ./deployment/versions.json
-          rm ./deployment/latest
-      - name: "Upload Documentation"
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.ftp_server }}
-          username: ${{ secrets.ftp_username }}
-          password: ${{ secrets.ftp_password }}
-          protocol: ftps
-          server-dir: /
-          local-dir: ./deployment/
-      - name: "Updating Latest"
-        uses: appleboy/ssh-action@v1.2.1
-        with:
-          host: ${{ secrets.ssh_server }}
-          port: ${{ secrets.ssh_port }}
-          username: ${{ secrets.ssh_username }}
-          key: ${{ secrets.ssh_key }}
-          script: |
-            ./update-docs.sh ${{ env.RELEASE_NAME }}
-      - name: "Create Pull Request for ${{ github.event.repository.default_branch }}"
-        id: open-pr
+          git push origin HEAD
+          git push origin ${RELEASE_NAME}
+      - name: "Publish to Deployments Branch: ${{ env.RELEASE_NAME }}"
+        working-directory: ./deployment
         run: |
-          gh pr create --title "[Automated] Merge ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}" --body "Merge ${{ env.RELEASE_NAME }} into ${{ github.event.repository.default_branch }}" --assignee ${{ github.actor }} --reviewer ${{ github.actor }} --base ${{ github.event.repository.default_branch }}
-          echo "pr_number=$(gh pr list --state open --json number --limit 1 | jq -r '.[0].number')" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-      - name: "Enable Auto-Merge PR to ${{ github.event.repository.default_branch }}"
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          token: "${{ github.token }}"
-          pull-request-number: ${{ steps.open-pr.outputs.pr_number }}
-          merge-method: merge
+          git add -A
+          git commit -m "Auto-Build: ${RELEASE_NAME}" -m "Source: ${{ github.ref_name }}@$(git -C .. rev-parse --short HEAD)" || echo "Build produced no changes to commit"
+          git pull --rebase origin deployments
+          git push origin HEAD:deployments
+
+  publish:
+    needs: deployment
+    uses: ./.github/workflows/publish-deployments.yaml
+    with:
+      latest: ${{ needs.deployment.outputs.release-name }}
+    secrets: inherit
