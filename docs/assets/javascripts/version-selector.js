@@ -1,10 +1,11 @@
 // Version selector in the header, built from the versions.json at the site root.
 //
-// The two newest release lines (26.4.x, 26.3.x, ...) get a dropdown each, the
-// development build gets a link, and every other version is listed in one
-// "Older" dropdown, grouped by release line. The dropdown holding the version
-// being read shows that version as its label. On narrow screens, a single
-// dropdown holds all groups. Each entry opens the same page in the other
+// The two newest release lines (26.4.x, 26.3.x, ...) get a dropdown each, and
+// every other version is listed in one "Other" dropdown: the development build
+// pinned to the top, then the older versions grouped by release line. The
+// dropdown holding the version being read shows that version as its label. On
+// narrow screens, a single dropdown holds all groups, with the development
+// build pinned to its top. Each entry opens the same page in the other
 // version and falls back to that version's start page if the page does not
 // exist there.
 (function () {
@@ -12,7 +13,7 @@
 
   const FEATURED_LINES = 2;
   const DEV_VERSION = "dev";
-  const DEV_LABEL = "Dev";
+  const DEV_LABEL = "Development";
   const DEV_DESCRIPTION = "Documentation of the version in development";
 
   const topic = document.querySelector(".md-header__topic");
@@ -73,8 +74,12 @@
     const ordered = [...lines.values()].sort((a, b) => b.major - a.major || b.minor - a.minor);
     const featured = ordered.slice(0, FEATURED_LINES);
     const older = ordered.slice(FEATURED_LINES);
+
+    const lineGroup = (l) => ({ heading: `${l.key}.x`, versions: l.versions });
+    const pinned = dev ? [{ pinned: true, versions: [dev] }] : [];
+    const olderGroups = older.map(lineGroup);
     if (unversioned.length) {
-      older.push({ key: "other", versions: unversioned });
+      olderGroups.push({ heading: "Unversioned", versions: unversioned });
     }
 
     const container = document.createElement("div");
@@ -85,23 +90,15 @@
         dropdown(`${line.key}.x`, [{ versions: line.versions }], current, "sb-versions__wide")
       );
     }
-    if (dev) {
-      container.appendChild(devLink(dev, current));
-    }
-    if (older.length) {
+    if (pinned.length || olderGroups.length) {
       container.appendChild(
-        dropdown("Older", older.map((l) => ({ heading: l.key === "other" ? "Other" : `${l.key}.x`, versions: l.versions })), current, "sb-versions__wide")
+        dropdown("Other", [...pinned, ...olderGroups], current, "sb-versions__wide")
       );
     }
 
-    // One dropdown for narrow screens, with every group as a heading.
-    const all = featured.map((l) => ({ heading: `${l.key}.x`, versions: l.versions }));
-    if (dev) {
-      all.push({ heading: "Development", versions: [dev] });
-    }
-    all.push(...older.map((l) => ({ heading: l.key === "other" ? "Other" : `${l.key}.x`, versions: l.versions })));
+    // One dropdown for narrow screens, with every release line as a heading.
     container.appendChild(
-      dropdown("Version", all, current, "sb-versions__narrow")
+      dropdown("Version", [...pinned, ...featured.map(lineGroup), ...olderGroups], current, "sb-versions__narrow")
     );
 
     topic.appendChild(container);
@@ -137,7 +134,7 @@
       }
       for (const v of group.versions) {
         const item = document.createElement("li");
-        item.className = "md-version__item";
+        item.className = group.pinned ? "md-version__item sb-versions__pinned" : "md-version__item";
         item.appendChild(versionLink(v, current, "md-version__link"));
         list.appendChild(item);
       }
@@ -146,18 +143,7 @@
     return root;
   }
 
-  function devLink(dev, current) {
-    const root = document.createElement("div");
-    root.className = "md-version sb-versions__group sb-versions__wide";
-    if (dev === current) {
-      root.classList.add("sb-versions__group--current");
-    }
-    root.appendChild(versionLink(dev, current, "md-version__current sb-versions__dev"));
-    return root;
-  }
-
-  // versions.json titles the development build "development", which is too
-  // wide for the header.
+  // versions.json titles the development build in lower case.
   function titleOf(v) {
     return v.version === DEV_VERSION ? DEV_LABEL : v.title;
   }

@@ -165,9 +165,9 @@ a img {
 }
 
 /* Version selector (assets/javascripts/version-selector.js): one dropdown per
-   featured release line, a development link, and an "Older" dropdown. They
-   reuse Material's .md-version styles; below 60em only the combined dropdown
-   is shown. */
+   featured release line and an "Other" dropdown with the development build
+   pinned to its top. They reuse Material's .md-version styles; below 60em only
+   the combined dropdown is shown. */
 .sb-versions {
   display: flex;
   align-items: center;
@@ -202,8 +202,8 @@ a img {
   font-weight: 700;
 }
 
-.md-version__current.sb-versions__dev::after {
-  display: none;
+.sb-versions__pinned {
+  border-bottom: .05rem solid var(--md-default-fg-color--lightest);
 }
 
 .sb-versions .md-version__link {
