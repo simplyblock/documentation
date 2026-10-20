@@ -1,0 +1,79 @@
+name: Publish Deployments
+
+# Called by the release workflows after they committed a build to the
+# deployments branch, or run manually to upload the deployments branch as it
+# is, for example after a change to .htaccess.
+on:
+  workflow_call:
+    inputs:
+      latest:
+        description: Point the latest symlink at this version after the upload
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      latest:
+        description: Point the latest symlink at this version after the upload (leave empty to keep it)
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: documentation-publish
+      cancel-in-progress: false
+      queue: max
+    steps:
+      - name: "Checkout Deployments"
+        uses: actions/checkout@v4
+        with:
+          ref: deployments
+          path: deployment
+          fetch-depth: 1
+      # The version comes from a manual input, so it reaches the shell through
+      # the environment and has to name a version the branch actually holds.
+      - name: "Check Latest Version: ${{ inputs.latest }}"
+        if: inputs.latest != ''
+        env:
+          LATEST: ${{ inputs.latest }}
+        run: |
+          if [[ ! "${LATEST}" =~ ^[0-9A-Za-z.-]+$ ]] || [ ! -d "./deployment/${LATEST}" ]; then
+            echo "Version ${LATEST} does not exist on the deployments branch"
+            exit 1
+          fi
+      # The server keeps its own latest symlink and versions.json, maintained
+      # by update-docs.sh; uploading the branch's copies would replace them.
+      - name: "Remove Server-Managed Links"
+        working-directory: ./deployment
+        run: |
+          rm -f ./versions.json ./latest
+      - name: "Upload Documentation"
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_username }}
+          password: ${{ secrets.ftp_password }}
+          protocol: ftps
+          server-dir: /
+          local-dir: ./deployment/
+      - name: "Updating Latest: ${{ inputs.latest }}"
+        if: inputs.latest != ''
+        uses: appleboy/ssh-action@v1.2.1
+        env:
+          LATEST: ${{ inputs.latest }}
+        with:
+          host: ${{ secrets.ssh_server }}
+          port: ${{ secrets.ssh_port }}
+          username: ${{ secrets.ssh_username }}
+          key: ${{ secrets.ssh_key }}
+          envs: LATEST
+          script: |
+            ./update-docs.sh "${LATEST}"
