@@ -607,7 +607,6 @@ A kind introduced in v1alpha2 has no v1alpha1 spelling.
 - [ClusterDeploymentConfig](#clusterdeploymentconfig)
 - [ControlPlane](#controlplane)
 - [ControlPlaneOps](#controlplaneops)
-- [NFSExport](#nfsexport)
 - [OperatorOps](#operatorops)
 - [PersistentVolumeOps](#persistentvolumeops)
 - [SimplyblockDriver](#simplyblockdriver)
@@ -2228,35 +2227,6 @@ volumesMigrated: integer
 | `volumesMigrated` _integer_ | VolumesMigrated is how many of them have completed. |  | Minimum: 0 <br /> |
 
 
-#### DriverPNFS
-
-
-
-DriverPNFS configures pNFS support, which makes the node plugin an NFS
-metadata server as well as an NVMe-oF initiator: on the host an export binds
-to, it makes a filesystem on the namespace, mounts it, and publishes it
-through the host's nfsd.
-
-Turning it on is not sufficient. The host needs nfs-utils and a running
-nfsd, and a client host needs blkmapd, neither of which a pod can install.
-A host missing either fails visibly in the export's Assembling phase.
-
-
-
-_Appears in:_
-- [SimplyblockDriverSpec](#simplyblockdriverspec)
-
-_Example:_
-
-```yaml
-enablePNFS: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `enablePNFS` _boolean_ | EnablePNFS gives the node plugin the four host directories an export is<br />assembled through. It is gated because a plugin not serving exports has<br />no use for them. | false | Optional: \{\} <br /> |
-
-
 #### DriverTLS
 
 
@@ -2796,137 +2766,6 @@ validationJobs:
 | `memberCount` _integer_ | MemberCount is how many volumes the migrated NVMe-oF subsystem holds, as<br />the control plane reports it. More than one member means the sibling<br />volumes move along with the named one, so the count is both the<br />operation's blast radius and the term the copy's deadline scales by. |  | Minimum: 0 <br />Optional: \{\} <br /> |
 | `connections` _[MigrationConnection](#migrationconnection) array_ | Connections are the paths the migration published on the target.<br />Verifying confirms none of them is left connected. |  | Optional: \{\} <br /> |
 | `validationJobs` _[ValidationJob](#validationjob) array_ | ValidationJobs are the Jobs started to check those paths. |  | Optional: \{\} <br /> |
-
-
-#### NFSExport
-
-
-
-NFSExport is one pNFS export: a volume, the host serving it, and the address
-clients mount.
-
-
-
-
-
-_Example:_
-
-```yaml
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: NFSExport
-metadata:
-  name: string
-spec:
-  volumeRef: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-  exportPath: '^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'
-  encrypted: boolean
-  sizeBytes: integer
-status:
-  phase: NFSExportPhase
-  phaseDeadline: Time
-  mdsNodeName: string
-  mdsNodeIP: string
-  serviceAddress: string
-  allowedClients:
-    - string
-  message: string
-  observedGeneration: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha2` | | |
-| `kind` _string_ | `NFSExport` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
-| `spec` _[NFSExportSpec](#nfsexportspec)_ |  |  |  |
-| `status` _[NFSExportStatus](#nfsexportstatus)_ |  |  |  |
-
-
-#### NFSExportPhase
-
-_Underlying type:_ _string_
-
-NFSExportPhase is the lifecycle position of an export.
-
-_Validation:_
-- Enum: [Pending Assembling Ready Degraded]
-
-_Appears in:_
-- [NFSExportStatus](#nfsexportstatus)
-
-| Field | Description |
-| --- | --- |
-| `Pending` | Pending is an export with no host bound yet: a wait, not a failure.<br /> |
-| `Assembling` | Assembling is the bound host attaching, formatting, mounting, publishing.<br /> |
-| `Ready` | Ready is an export a client can mount.<br /> |
-| `Degraded` | Degraded is an export the operator will not act further on. Reached by<br />declining to act: a stalled export is recoverable, a double-mounted one<br />is not.<br /> |
-
-
-#### NFSExportSpec
-
-
-
-NFSExportSpec is the desired state. The bound host is deliberately not here:
-it is an observed binding the operator owns, so it lives in status where a
-user edit cannot race it.
-
-
-
-_Appears in:_
-- [NFSExport](#nfsexport)
-
-_Example:_
-
-```yaml
-volumeRef: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-exportPath: '^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'
-encrypted: boolean
-sizeBytes: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `volumeRef` _string_ | VolumeRef is the CSI volume handle of the volume this export serves, in<br />the ordinary \{clusterID\}:\{poolID\}:\{lvolID\} form. It names no Kubernetes<br />object, so it is validated by pattern rather than resolved by a webhook.<br />It is the whole identity of the export. The backing namespace UUID and<br />the NFS fsid are both the volume's own id, so they are read from here<br />rather than stored beside it, where they could disagree with it.<br />Deliberately not a form of its own. A pNFS volume is an lvol with an<br />export in front of it, so its claim keeps the lvol's handle and every<br />other CSI call -- snapshot, clone, expand -- addresses it without having<br />to know an export is there. |  | Pattern: `^[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}:[^:]+:[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}$` <br />Required: \{\} <br /> |
-| `exportPath` _string_ | ExportPath is the server-side mount point. It carries the namespace,<br />because a PVC name is unique only within one. |  | Pattern: `^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$` <br />Required: \{\} <br /> |
-| `encrypted` _boolean_ | Encrypted says the control plane stacks a crypto bdev under this volume,<br />which makes an unwritten block read as pseudo-random plaintext rather<br />than as zeros. Assembly needs it: without it an empty encrypted volume<br />is mistaken for an occupied one, never formatted, and never mounts.<br />No omitempty: the field is immutable once set (below), and the CRD<br />enforces that by requiring it stay present once it is. The CSI<br />controller's unstructured Create always writes it explicitly, so an<br />unencrypted export's record already carries `encrypted: false` in<br />etcd; a typed client's own writes have to carry it too; omitempty<br />drops a false value from the JSON entirely, which reads to the CRD as<br />the field being removed and every subsequent write from this type --<br />starting with the reconciler's own finalizer add -- is then refused,<br />permanently, before the export can even begin assembling. |  | Optional: \{\} <br /> |
-| `sizeBytes` _integer_ | SizeBytes is the capacity the backing volume was last grown to.<br />It is not a request: the control plane has already resized the volume by<br />the time this is written. It is here so that growing one bumps the<br />record's generation, which is what tells the operator to re-assemble and<br />run xfs_growfs on the host -- the one machine that can, and the one no<br />CSI call ever reaches. |  | Optional: \{\} <br /> |
-
-
-#### NFSExportStatus
-
-
-
-NFSExportStatus is what the export currently is.
-
-
-
-_Appears in:_
-- [NFSExport](#nfsexport)
-
-_Example:_
-
-```yaml
-phase: NFSExportPhase
-phaseDeadline: Time
-mdsNodeName: string
-mdsNodeIP: string
-serviceAddress: string
-allowedClients:
-  - string
-message: string
-observedGeneration: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `phase` _[NFSExportPhase](#nfsexportphase)_ | Phase is the export's lifecycle position. |  | Enum: [Pending Assembling Ready Degraded] <br />Optional: \{\} <br /> |
-| `phaseDeadline` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | PhaseDeadline is when the current phase must be given up on. Persisted<br />because an operator restarted mid-assembly would otherwise grant a fresh<br />deadline on every pass and never time out. |  | Optional: \{\} <br /> |
-| `mdsNodeName` _string_ | MDSNodeName is the Kubernetes node serving this export, which is the one<br />running the csi-node pod that assembled it. It is not a StorageNode: an<br />MDS reaches the volume over NVMe-oF exactly as a client does, so it need<br />not hold any storage itself.<br />The serialization point for one-MDS-per-export: no second host is a<br />candidate until this field is rewritten. |  | Optional: \{\} <br /> |
-| `mdsNodeIP` _string_ | MDSNodeIP is the bound MDS host's own address. Not what a client mounts:<br />it is what the export's Service's EndpointSlice points at, so a client's<br />mount address (ServiceAddress) does not have to change when this does. |  | Optional: \{\} <br /> |
-| `serviceAddress` _string_ | ServiceAddress is the ClusterIP of the Service fronting this export,<br />which is the address a client mounts. It outlives any one MDSNodeIP: the<br />operator repoints the Service's EndpointSlice at whichever host is bound<br />rather than changing this value, so a client's mount survives the export<br />moving to a different host (design-pnfs-rwx.md §13.3). |  | Optional: \{\} <br /> |
-| `allowedClients` _string array_ | AllowedClients is what goes into the exports(5) entry: the internal<br />address of every node that could run a pod using this volume. |  | Optional: \{\} <br /> |
-| `message` _string_ | Message is a human-readable note on the current phase. |  | Optional: \{\} <br /> |
-| `observedGeneration` _integer_ | ObservedGeneration is the spec generation this status was computed from. |  | Optional: \{\} <br /> |
 
 
 #### NodeGroup
@@ -3992,8 +3831,6 @@ spec:
     enableTLS: boolean
     enableMutualTLS: boolean
     provider: DriverTLSProvider
-  pnfs:
-    enablePNFS: boolean
 status:
   phase: SimplyblockDriverPhase
   snapshotSupport: SnapshotSupportOrigin
@@ -4100,8 +3937,6 @@ tls:
   enableTLS: boolean
   enableMutualTLS: boolean
   provider: DriverTLSProvider
-pnfs:
-  enablePNFS: boolean
 ```
 
 | Field | Description | Default | Validation |
@@ -4120,7 +3955,6 @@ pnfs:
 | `enableServiceAccountAuth` _boolean_ | EnableServiceAccountAuth makes both plugins authenticate to the management<br />API with their pod's Kubernetes service-account token instead of the<br />static cluster secret. The control plane has to list those accounts in<br />SB_K8S_ADMIN_SERVICE_ACCOUNTS for it to work, which is why this is a<br />deployment-wide switch rather than a per-plugin one. | false | Optional: \{\} <br /> |
 | `enableVolumeSnapshots` _boolean_ | EnableVolumeSnapshots decides whether snapshot support is part of this<br />deployment: the VolumeSnapshotClass for DriverName, and the CRDs and a<br />controller where the cluster serves neither. False applies none of them. | true | Optional: \{\} <br /> |
 | `tls` _[DriverTLS](#drivertls)_ | TLS configures whether both plugins reach the control plane over TLS.<br />Unset is plaintext, the shape every deployment ran before this field<br />existed. Adopting a deployment that already runs TLS requires this to<br />agree with what its plugins are configured for, because it is not read<br />off the running objects. |  | Optional: \{\} <br /> |
-| `pnfs` _[DriverPNFS](#driverpnfs)_ | PNFS configures pNFS support on the node plugin. |  | Optional: \{\} <br /> |
 
 
 #### SimplyblockDriverStatus

@@ -41,7 +41,7 @@ access.
 
 TLS is enabled by default. On OpenShift, two certificate providers are available:
 
-- **OpenShift service CA (`tls.provider=OpenShift`):** Uses the certificates OpenShift issues for services. It
+- **OpenShift service CA (`tls.provider=openshift`):** Uses the certificates OpenShift issues for services. It
   provides one-way TLS only, so `tls.mutual_enabled` must be set to `false`.
 - **Cert-manager (`tls.provider=cert-manager`):** Required for mutual TLS and for an external KMS.
   [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} must be installed first.
@@ -49,7 +49,7 @@ TLS is enabled by default. On OpenShift, two certificate providers are available
 ```bash title="Install the operator with the OpenShift service CA"
 helm install simplyblock-operator simplyblock/simplyblock-operator \
     --namespace simplyblock \
-    --set tls.provider=OpenShift \
+    --set tls.provider=openshift \
     --set tls.mutual_enabled=false
 ```
 

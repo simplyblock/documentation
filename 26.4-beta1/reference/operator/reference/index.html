@@ -148,10 +148,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden="">
-        
-      </div>
-    
     
       
 
@@ -5917,15 +5913,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#driverpnfs" class="md-nav__link">
-    <span class="md-ellipsis">
-      DriverPNFS
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#drivertls" class="md-nav__link">
     <span class="md-ellipsis">
       DriverTLS
@@ -6073,42 +6060,6 @@
   <a href="#migrationstatus" class="md-nav__link">
     <span class="md-ellipsis">
       MigrationStatus
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexport" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExport
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexportphase" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExportPhase
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexportspec" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExportSpec
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexportstatus" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExportStatus
     </span>
   </a>
   
@@ -8618,15 +8569,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#driverpnfs" class="md-nav__link">
-    <span class="md-ellipsis">
-      DriverPNFS
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#drivertls" class="md-nav__link">
     <span class="md-ellipsis">
       DriverTLS
@@ -8774,42 +8716,6 @@
   <a href="#migrationstatus" class="md-nav__link">
     <span class="md-ellipsis">
       MigrationStatus
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexport" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExport
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexportphase" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExportPhase
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexportspec" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExportSpec
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nfsexportstatus" class="md-nav__link">
-    <span class="md-ellipsis">
-      NFSExportStatus
     </span>
   </a>
   
@@ -10753,7 +10659,6 @@ A kind introduced in v1alpha2 has no v1alpha1 spelling.</p>
 <li><a href="#clusterdeploymentconfig">ClusterDeploymentConfig</a></li>
 <li><a href="#controlplane">ControlPlane</a></li>
 <li><a href="#controlplaneops">ControlPlaneOps</a></li>
-<li><a href="#nfsexport">NFSExport</a></li>
 <li><a href="#operatorops">OperatorOps</a></li>
 <li><a href="#persistentvolumeops">PersistentVolumeOps</a></li>
 <li><a href="#simplyblockdriver">SimplyblockDriver</a></li>
@@ -13139,37 +13044,6 @@ value.</p>
 </tr>
 </tbody>
 </table>
-<h4 id="driverpnfs">DriverPNFS</h4>
-<p>DriverPNFS configures pNFS support, which makes the node plugin an NFS
-metadata server as well as an NVMe-oF initiator: on the host an export binds
-to, it makes a filesystem on the namespace, mounts it, and publishes it
-through the host's nfsd.</p>
-<p>Turning it on is not sufficient. The host needs nfs-utils and a running
-nfsd, and a client host needs blkmapd, neither of which a pod can install.
-A host missing either fails visibly in the export's Assembling phase.</p>
-<p><em>Appears in:</em>
-- <a href="#simplyblockdriverspec">SimplyblockDriverSpec</a></p>
-<p><em>Example:</em></p>
-<div class="highlight"><pre><span></span><code><span class="nt">enablePNFS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-<th>Default</th>
-<th>Validation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>enablePNFS</code> <em>boolean</em></td>
-<td>EnablePNFS gives the node plugin the four host directories an export is<br>assembled through. It is gated because a plugin not serving exports has<br>no use for them.</td>
-<td>false</td>
-<td>Optional: {} <br></td>
-</tr>
-</tbody>
-</table>
 <h4 id="drivertls">DriverTLS</h4>
 <p>DriverTLS configures whether this deployment's two plugins reach the
 control plane over TLS. Unset (every field at its zero value) is a
@@ -13987,228 +13861,6 @@ clean up.</p>
 <tr>
 <td><code>validationJobs</code> <em><a href="#validationjob">ValidationJob</a> array</em></td>
 <td>ValidationJobs are the Jobs started to check those paths.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-</tbody>
-</table>
-<h4 id="nfsexport">NFSExport</h4>
-<p>NFSExport is one pNFS export: a volume, the host serving it, and the address
-clients mount.</p>
-<p><em>Example:</em></p>
-<div class="highlight"><pre><span></span><code><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">storage.simplyblock.io/v1alpha2</span>
-<span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NFSExport</span>
-<span class="nt">metadata</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">spec</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">volumeRef</span><span class="p">:</span><span class="w"> </span><span class="s">'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'</span>
-<span class="w">  </span><span class="nt">exportPath</span><span class="p">:</span><span class="w"> </span><span class="s">'^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'</span>
-<span class="w">  </span><span class="nt">encrypted</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="w">  </span><span class="nt">sizeBytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
-<span class="nt">status</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">phase</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NFSExportPhase</span>
-<span class="w">  </span><span class="nt">phaseDeadline</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Time</span>
-<span class="w">  </span><span class="nt">mdsNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">  </span><span class="nt">mdsNodeIP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">  </span><span class="nt">serviceAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">  </span><span class="nt">allowedClients</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">  </span><span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">  </span><span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-<th>Default</th>
-<th>Validation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>apiVersion</code> <em>string</em></td>
-<td><code>storage.simplyblock.io/v1alpha2</code></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>kind</code> <em>string</em></td>
-<td><code>NFSExport</code></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>metadata</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta">ObjectMeta&nbsp;⧉</a></em></td>
-<td>Refer to Kubernetes API documentation for fields of <code>metadata</code>.</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>spec</code> <em><a href="#nfsexportspec">NFSExportSpec</a></em></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td><code>status</code> <em><a href="#nfsexportstatus">NFSExportStatus</a></em></td>
-<td></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h4 id="nfsexportphase">NFSExportPhase</h4>
-<p><em>Underlying type:</em> <em>string</em></p>
-<p>NFSExportPhase is the lifecycle position of an export.</p>
-<p><em>Validation:</em>
-- Enum: [Pending Assembling Ready Degraded]</p>
-<p><em>Appears in:</em>
-- <a href="#nfsexportstatus">NFSExportStatus</a></p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>Pending</code></td>
-<td>Pending is an export with no host bound yet: a wait, not a failure.<br></td>
-</tr>
-<tr>
-<td><code>Assembling</code></td>
-<td>Assembling is the bound host attaching, formatting, mounting, publishing.<br></td>
-</tr>
-<tr>
-<td><code>Ready</code></td>
-<td>Ready is an export a client can mount.<br></td>
-</tr>
-<tr>
-<td><code>Degraded</code></td>
-<td>Degraded is an export the operator will not act further on. Reached by<br>declining to act: a stalled export is recoverable, a double-mounted one<br>is not.<br></td>
-</tr>
-</tbody>
-</table>
-<h4 id="nfsexportspec">NFSExportSpec</h4>
-<p>NFSExportSpec is the desired state. The bound host is deliberately not here:
-it is an observed binding the operator owns, so it lives in status where a
-user edit cannot race it.</p>
-<p><em>Appears in:</em>
-- <a href="#nfsexport">NFSExport</a></p>
-<p><em>Example:</em></p>
-<div class="highlight"><pre><span></span><code><span class="nt">volumeRef</span><span class="p">:</span><span class="w"> </span><span class="s">'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'</span>
-<span class="nt">exportPath</span><span class="p">:</span><span class="w"> </span><span class="s">'^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'</span>
-<span class="nt">encrypted</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="nt">sizeBytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-<th>Default</th>
-<th>Validation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>volumeRef</code> <em>string</em></td>
-<td>VolumeRef is the CSI volume handle of the volume this export serves, in<br>the ordinary {clusterID}:{poolID}:{lvolID} form. It names no Kubernetes<br>object, so it is validated by pattern rather than resolved by a webhook.<br>It is the whole identity of the export. The backing namespace UUID and<br>the NFS fsid are both the volume's own id, so they are read from here<br>rather than stored beside it, where they could disagree with it.<br>Deliberately not a form of its own. A pNFS volume is an lvol with an<br>export in front of it, so its claim keeps the lvol's handle and every<br>other CSI call -- snapshot, clone, expand -- addresses it without having<br>to know an export is there.</td>
-<td></td>
-<td>Pattern: <code>^[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}:[^:]+:[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}$</code> <br>Required: {} <br></td>
-</tr>
-<tr>
-<td><code>exportPath</code> <em>string</em></td>
-<td>ExportPath is the server-side mount point. It carries the namespace,<br>because a PVC name is unique only within one.</td>
-<td></td>
-<td>Pattern: <code>^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$</code> <br>Required: {} <br></td>
-</tr>
-<tr>
-<td><code>encrypted</code> <em>boolean</em></td>
-<td>Encrypted says the control plane stacks a crypto bdev under this volume,<br>which makes an unwritten block read as pseudo-random plaintext rather<br>than as zeros. Assembly needs it: without it an empty encrypted volume<br>is mistaken for an occupied one, never formatted, and never mounts.<br>No omitempty: the field is immutable once set (below), and the CRD<br>enforces that by requiring it stay present once it is. The CSI<br>controller's unstructured Create always writes it explicitly, so an<br>unencrypted export's record already carries <code>encrypted: false</code> in<br>etcd; a typed client's own writes have to carry it too; omitempty<br>drops a false value from the JSON entirely, which reads to the CRD as<br>the field being removed and every subsequent write from this type --<br>starting with the reconciler's own finalizer add -- is then refused,<br>permanently, before the export can even begin assembling.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>sizeBytes</code> <em>integer</em></td>
-<td>SizeBytes is the capacity the backing volume was last grown to.<br>It is not a request: the control plane has already resized the volume by<br>the time this is written. It is here so that growing one bumps the<br>record's generation, which is what tells the operator to re-assemble and<br>run xfs_growfs on the host -- the one machine that can, and the one no<br>CSI call ever reaches.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-</tbody>
-</table>
-<h4 id="nfsexportstatus">NFSExportStatus</h4>
-<p>NFSExportStatus is what the export currently is.</p>
-<p><em>Appears in:</em>
-- <a href="#nfsexport">NFSExport</a></p>
-<p><em>Example:</em></p>
-<div class="highlight"><pre><span></span><code><span class="nt">phase</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NFSExportPhase</span>
-<span class="nt">phaseDeadline</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Time</span>
-<span class="nt">mdsNodeName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">mdsNodeIP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">serviceAddress</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">allowedClients</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">message</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">observedGeneration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integer</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Description</th>
-<th>Default</th>
-<th>Validation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>phase</code> <em><a href="#nfsexportphase">NFSExportPhase</a></em></td>
-<td>Phase is the export's lifecycle position.</td>
-<td></td>
-<td>Enum: [Pending Assembling Ready Degraded] <br>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>phaseDeadline</code> <em><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta">Time&nbsp;⧉</a></em></td>
-<td>PhaseDeadline is when the current phase must be given up on. Persisted<br>because an operator restarted mid-assembly would otherwise grant a fresh<br>deadline on every pass and never time out.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>mdsNodeName</code> <em>string</em></td>
-<td>MDSNodeName is the Kubernetes node serving this export, which is the one<br>running the csi-node pod that assembled it. It is not a StorageNode: an<br>MDS reaches the volume over NVMe-oF exactly as a client does, so it need<br>not hold any storage itself.<br>The serialization point for one-MDS-per-export: no second host is a<br>candidate until this field is rewritten.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>mdsNodeIP</code> <em>string</em></td>
-<td>MDSNodeIP is the bound MDS host's own address. Not what a client mounts:<br>it is what the export's Service's EndpointSlice points at, so a client's<br>mount address (ServiceAddress) does not have to change when this does.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>serviceAddress</code> <em>string</em></td>
-<td>ServiceAddress is the ClusterIP of the Service fronting this export,<br>which is the address a client mounts. It outlives any one MDSNodeIP: the<br>operator repoints the Service's EndpointSlice at whichever host is bound<br>rather than changing this value, so a client's mount survives the export<br>moving to a different host (design-pnfs-rwx.md §13.3).</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>allowedClients</code> <em>string array</em></td>
-<td>AllowedClients is what goes into the exports(5) entry: the internal<br>address of every node that could run a pod using this volume.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>message</code> <em>string</em></td>
-<td>Message is a human-readable note on the current phase.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>observedGeneration</code> <em>integer</em></td>
-<td>ObservedGeneration is the spec generation this status was computed from.</td>
 <td></td>
 <td>Optional: {} <br></td>
 </tr>
@@ -15755,8 +15407,6 @@ is the deployment that produces it.</p>
 <span class="w">    </span><span class="nt">enableTLS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">enableMutualTLS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">    </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DriverTLSProvider</span>
-<span class="w">  </span><span class="nt">pnfs</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">enablePNFS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="nt">status</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">phase</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SimplyblockDriverPhase</span>
 <span class="w">  </span><span class="nt">snapshotSupport</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SnapshotSupportOrigin</span>
@@ -15906,8 +15556,6 @@ controller plugin, their RBAC, and the CSIDriver registration they produce.</p>
 <span class="w">  </span><span class="nt">enableTLS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">enableMutualTLS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 <span class="w">  </span><span class="nt">provider</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DriverTLSProvider</span>
-<span class="nt">pnfs</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">enablePNFS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boolean</span>
 </code></pre></div>
 <table>
 <thead>
@@ -16000,12 +15648,6 @@ controller plugin, their RBAC, and the CSIDriver registration they produce.</p>
 <tr>
 <td><code>tls</code> <em><a href="#drivertls">DriverTLS</a></em></td>
 <td>TLS configures whether both plugins reach the control plane over TLS.<br>Unset is plaintext, the shape every deployment ran before this field<br>existed. Adopting a deployment that already runs TLS requires this to<br>agree with what its plugins are configured for, because it is not read<br>off the running objects.</td>
-<td></td>
-<td>Optional: {} <br></td>
-</tr>
-<tr>
-<td><code>pnfs</code> <em><a href="#driverpnfs">DriverPNFS</a></em></td>
-<td>PNFS configures pNFS support on the node plugin.</td>
 <td></td>
 <td>Optional: {} <br></td>
 </tr>
@@ -22217,7 +21859,7 @@ rebalance, and a device replacement are all performed by moving volumes.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 6, 2026 14:03:53 UTC">2026-10-06</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 20, 2026 16:04:30 UTC">2026-10-20</span>
   </span>
 
     
@@ -22353,12 +21995,14 @@ rebalance, and a device replacement are all performed by moving volumes.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tracking", "navigation.path", "navigation.indexes", "navigation.top", "navigation.tabs", "navigation.tabs.link", "navigation.tabs.sticky", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.tooltips", "content.code.copy", "content.code.annotate", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["navigation.tracking", "navigation.path", "navigation.indexes", "navigation.top", "navigation.tabs", "navigation.tabs.link", "navigation.tabs.sticky", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.tooltips", "content.code.copy", "content.code.annotate", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
       <script src="../../../assets/javascripts/bundle.f1b6f286.min.js"></script>
       
         <script src="../../../assets/javascripts/cpumask-calculator.js"></script>
+      
+        <script src="../../../assets/javascripts/version-selector.js"></script>
       
     
   

@@ -21223,7 +21223,6 @@ A kind introduced in v1alpha2 has no v1alpha1 spelling.
 - [ClusterDeploymentConfig](#clusterdeploymentconfig)
 - [ControlPlane](#controlplane)
 - [ControlPlaneOps](#controlplaneops)
-- [NFSExport](#nfsexport)
 - [OperatorOps](#operatorops)
 - [PersistentVolumeOps](#persistentvolumeops)
 - [SimplyblockDriver](#simplyblockdriver)
@@ -22844,35 +22843,6 @@ volumesMigrated: integer
 | `volumesMigrated` _integer_ | VolumesMigrated is how many of them have completed. |  | Minimum: 0 <br /> |
 
 
-#### DriverPNFS
-
-
-
-DriverPNFS configures pNFS support, which makes the node plugin an NFS
-metadata server as well as an NVMe-oF initiator: on the host an export binds
-to, it makes a filesystem on the namespace, mounts it, and publishes it
-through the host's nfsd.
-
-Turning it on is not sufficient. The host needs nfs-utils and a running
-nfsd, and a client host needs blkmapd, neither of which a pod can install.
-A host missing either fails visibly in the export's Assembling phase.
-
-
-
-_Appears in:_
-- [SimplyblockDriverSpec](#simplyblockdriverspec)
-
-_Example:_
-
-```yaml
-enablePNFS: boolean
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `enablePNFS` _boolean_ | EnablePNFS gives the node plugin the four host directories an export is<br />assembled through. It is gated because a plugin not serving exports has<br />no use for them. | false | Optional: \{\} <br /> |
-
-
 #### DriverTLS
 
 
@@ -23412,137 +23382,6 @@ validationJobs:
 | `memberCount` _integer_ | MemberCount is how many volumes the migrated NVMe-oF subsystem holds, as<br />the control plane reports it. More than one member means the sibling<br />volumes move along with the named one, so the count is both the<br />operation's blast radius and the term the copy's deadline scales by. |  | Minimum: 0 <br />Optional: \{\} <br /> |
 | `connections` _[MigrationConnection](#migrationconnection) array_ | Connections are the paths the migration published on the target.<br />Verifying confirms none of them is left connected. |  | Optional: \{\} <br /> |
 | `validationJobs` _[ValidationJob](#validationjob) array_ | ValidationJobs are the Jobs started to check those paths. |  | Optional: \{\} <br /> |
-
-
-#### NFSExport
-
-
-
-NFSExport is one pNFS export: a volume, the host serving it, and the address
-clients mount.
-
-
-
-
-
-_Example:_
-
-```yaml
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: NFSExport
-metadata:
-  name: string
-spec:
-  volumeRef: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-  exportPath: '^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'
-  encrypted: boolean
-  sizeBytes: integer
-status:
-  phase: NFSExportPhase
-  phaseDeadline: Time
-  mdsNodeName: string
-  mdsNodeIP: string
-  serviceAddress: string
-  allowedClients:
-    - string
-  message: string
-  observedGeneration: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `apiVersion` _string_ | `storage.simplyblock.io/v1alpha2` | | |
-| `kind` _string_ | `NFSExport` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
-| `spec` _[NFSExportSpec](#nfsexportspec)_ |  |  |  |
-| `status` _[NFSExportStatus](#nfsexportstatus)_ |  |  |  |
-
-
-#### NFSExportPhase
-
-_Underlying type:_ _string_
-
-NFSExportPhase is the lifecycle position of an export.
-
-_Validation:_
-- Enum: [Pending Assembling Ready Degraded]
-
-_Appears in:_
-- [NFSExportStatus](#nfsexportstatus)
-
-| Field | Description |
-| --- | --- |
-| `Pending` | Pending is an export with no host bound yet: a wait, not a failure.<br /> |
-| `Assembling` | Assembling is the bound host attaching, formatting, mounting, publishing.<br /> |
-| `Ready` | Ready is an export a client can mount.<br /> |
-| `Degraded` | Degraded is an export the operator will not act further on. Reached by<br />declining to act: a stalled export is recoverable, a double-mounted one<br />is not.<br /> |
-
-
-#### NFSExportSpec
-
-
-
-NFSExportSpec is the desired state. The bound host is deliberately not here:
-it is an observed binding the operator owns, so it lives in status where a
-user edit cannot race it.
-
-
-
-_Appears in:_
-- [NFSExport](#nfsexport)
-
-_Example:_
-
-```yaml
-volumeRef: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[^:]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-exportPath: '^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$'
-encrypted: boolean
-sizeBytes: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `volumeRef` _string_ | VolumeRef is the CSI volume handle of the volume this export serves, in<br />the ordinary \{clusterID\}:\{poolID\}:\{lvolID\} form. It names no Kubernetes<br />object, so it is validated by pattern rather than resolved by a webhook.<br />It is the whole identity of the export. The backing namespace UUID and<br />the NFS fsid are both the volume's own id, so they are read from here<br />rather than stored beside it, where they could disagree with it.<br />Deliberately not a form of its own. A pNFS volume is an lvol with an<br />export in front of it, so its claim keeps the lvol's handle and every<br />other CSI call -- snapshot, clone, expand -- addresses it without having<br />to know an export is there. |  | Pattern: `^[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}:[^:]+:[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}$` <br />Required: \{\} <br /> |
-| `exportPath` _string_ | ExportPath is the server-side mount point. It carries the namespace,<br />because a PVC name is unique only within one. |  | Pattern: `^/var/lib/simplyblock/exports/[A-Za-z0-9._-]+$` <br />Required: \{\} <br /> |
-| `encrypted` _boolean_ | Encrypted says the control plane stacks a crypto bdev under this volume,<br />which makes an unwritten block read as pseudo-random plaintext rather<br />than as zeros. Assembly needs it: without it an empty encrypted volume<br />is mistaken for an occupied one, never formatted, and never mounts.<br />No omitempty: the field is immutable once set (below), and the CRD<br />enforces that by requiring it stay present once it is. The CSI<br />controller's unstructured Create always writes it explicitly, so an<br />unencrypted export's record already carries `encrypted: false` in<br />etcd; a typed client's own writes have to carry it too; omitempty<br />drops a false value from the JSON entirely, which reads to the CRD as<br />the field being removed and every subsequent write from this type --<br />starting with the reconciler's own finalizer add -- is then refused,<br />permanently, before the export can even begin assembling. |  | Optional: \{\} <br /> |
-| `sizeBytes` _integer_ | SizeBytes is the capacity the backing volume was last grown to.<br />It is not a request: the control plane has already resized the volume by<br />the time this is written. It is here so that growing one bumps the<br />record's generation, which is what tells the operator to re-assemble and<br />run xfs_growfs on the host -- the one machine that can, and the one no<br />CSI call ever reaches. |  | Optional: \{\} <br /> |
-
-
-#### NFSExportStatus
-
-
-
-NFSExportStatus is what the export currently is.
-
-
-
-_Appears in:_
-- [NFSExport](#nfsexport)
-
-_Example:_
-
-```yaml
-phase: NFSExportPhase
-phaseDeadline: Time
-mdsNodeName: string
-mdsNodeIP: string
-serviceAddress: string
-allowedClients:
-  - string
-message: string
-observedGeneration: integer
-```
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `phase` _[NFSExportPhase](#nfsexportphase)_ | Phase is the export's lifecycle position. |  | Enum: [Pending Assembling Ready Degraded] <br />Optional: \{\} <br /> |
-| `phaseDeadline` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.36/#time-v1-meta)_ | PhaseDeadline is when the current phase must be given up on. Persisted<br />because an operator restarted mid-assembly would otherwise grant a fresh<br />deadline on every pass and never time out. |  | Optional: \{\} <br /> |
-| `mdsNodeName` _string_ | MDSNodeName is the Kubernetes node serving this export, which is the one<br />running the csi-node pod that assembled it. It is not a StorageNode: an<br />MDS reaches the volume over NVMe-oF exactly as a client does, so it need<br />not hold any storage itself.<br />The serialization point for one-MDS-per-export: no second host is a<br />candidate until this field is rewritten. |  | Optional: \{\} <br /> |
-| `mdsNodeIP` _string_ | MDSNodeIP is the bound MDS host's own address. Not what a client mounts:<br />it is what the export's Service's EndpointSlice points at, so a client's<br />mount address (ServiceAddress) does not have to change when this does. |  | Optional: \{\} <br /> |
-| `serviceAddress` _string_ | ServiceAddress is the ClusterIP of the Service fronting this export,<br />which is the address a client mounts. It outlives any one MDSNodeIP: the<br />operator repoints the Service's EndpointSlice at whichever host is bound<br />rather than changing this value, so a client's mount survives the export<br />moving to a different host (design-pnfs-rwx.md §13.3). |  | Optional: \{\} <br /> |
-| `allowedClients` _string array_ | AllowedClients is what goes into the exports(5) entry: the internal<br />address of every node that could run a pod using this volume. |  | Optional: \{\} <br /> |
-| `message` _string_ | Message is a human-readable note on the current phase. |  | Optional: \{\} <br /> |
-| `observedGeneration` _integer_ | ObservedGeneration is the spec generation this status was computed from. |  | Optional: \{\} <br /> |
 
 
 #### NodeGroup
@@ -24608,8 +24447,6 @@ spec:
     enableTLS: boolean
     enableMutualTLS: boolean
     provider: DriverTLSProvider
-  pnfs:
-    enablePNFS: boolean
 status:
   phase: SimplyblockDriverPhase
   snapshotSupport: SnapshotSupportOrigin
@@ -24716,8 +24553,6 @@ tls:
   enableTLS: boolean
   enableMutualTLS: boolean
   provider: DriverTLSProvider
-pnfs:
-  enablePNFS: boolean
 ```
 
 | Field | Description | Default | Validation |
@@ -24736,7 +24571,6 @@ pnfs:
 | `enableServiceAccountAuth` _boolean_ | EnableServiceAccountAuth makes both plugins authenticate to the management<br />API with their pod's Kubernetes service-account token instead of the<br />static cluster secret. The control plane has to list those accounts in<br />SB_K8S_ADMIN_SERVICE_ACCOUNTS for it to work, which is why this is a<br />deployment-wide switch rather than a per-plugin one. | false | Optional: \{\} <br /> |
 | `enableVolumeSnapshots` _boolean_ | EnableVolumeSnapshots decides whether snapshot support is part of this<br />deployment: the VolumeSnapshotClass for DriverName, and the CRDs and a<br />controller where the cluster serves neither. False applies none of them. | true | Optional: \{\} <br /> |
 | `tls` _[DriverTLS](#drivertls)_ | TLS configures whether both plugins reach the control plane over TLS.<br />Unset is plaintext, the shape every deployment ran before this field<br />existed. Adopting a deployment that already runs TLS requires this to<br />agree with what its plugins are configured for, because it is not read<br />off the running objects. |  | Optional: \{\} <br /> |
-| `pnfs` _[DriverPNFS](#driverpnfs)_ | PNFS configures pNFS support on the node plugin. |  | Optional: \{\} <br /> |
 
 
 #### SimplyblockDriverStatus
@@ -31071,8 +30905,13 @@ helm get manifest sbcli -n simplyblock 2>/dev/null | grep -A5 "simplyblock-fdb-c
 Force-shutdown each storage node. Using `--force` combines suspend and shutdown in one
 command and avoids failures when some nodes are already in a non-online state:
 
+!!! note "Multiple clusters"
+    If the Kubernetes cluster runs more than one simplyblock cluster, the storage nodes of **all** clusters have to be
+    shut down. `sbctl sn list` returns the nodes of every cluster, so the loop below covers them.
+
+
 ```bash title="Force-shutting down every storage node"
-for NODE_ID in $(sbctl sn list | grep -v "offline" | awk '{print $2}'); do
+for NODE_ID in $(sbctl sn list --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin) if n['Status']!='offline'))"); do
     sbctl sn shutdown "$NODE_ID" --force
 done
 ```
@@ -31093,7 +30932,7 @@ sbctl sn list
     block the explicit `sn restart` in Step 10 (there is no `--force` flag for restart).
 
 ```bash title="Disabling the automatic restart on every storage node"
-for NODE_ID in $(sbctl sn list --json | jq -r '.[].UUID'); do
+for NODE_ID in $(sbctl sn list --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin)))"); do
     sbctl --dev sn set "$NODE_ID" auto_restart_disabled true
 done
 ```
@@ -31108,9 +30947,9 @@ sbctl cluster list-tasks "$CLUSTER_ID" --limit 0
 
 ```bash title="Canceling the running and new node_restart tasks"
 # Cancel any running/new node_restart tasks
-for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --json --limit 0 \
-    | jq -r '.[] | select(.function=="node_restart" and (.status=="running" or .status=="new")) | .id'); do
-    sbctl cluster cancel-task "$CLUSTER_ID" "$TASK_ID"
+for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --limit 0 \
+    | awk -F'|' 'NR>3 {for(i=2;i<=7;i++) gsub(/^ +| +$/,"",$i); if ($4=="node_restart" && ($6=="running" || $6=="new")) print $2}'); do
+    sbctl cluster cancel-task "$TASK_ID"
 done
 ```
 
@@ -31236,7 +31075,13 @@ kubectl create secret generic simplyblock-simplyblock-cluster-upgrade \
 
 !!! warning
     The secret name **must** match `simplyblock-<CR_NAME>-upgrade`, where `CR_NAME` is the `metadata.name` of the
-    StorageCluster CR applied in Step 7.
+    StorageCluster CR applied in Step 7. `CLUSTER_CR_NAME` is therefore the name chosen for the cluster in Step 7, and
+    it is used again in Step 9.
+
+!!! note "Multiple clusters"
+    Create one upgrade secret per cluster, each with its own cluster name, UUID, and secret (for example
+    `simplyblock-cluster1-upgrade` and `simplyblock-cluster2-upgrade`). Check each UUID against `sbctl cluster list`
+    before continuing.
 
 ### Step 6: Install the Operator Helm Chart (FDB Disabled)
 
@@ -31277,13 +31122,19 @@ kubectl create secret generic simplyblock-simplyblock-cluster-upgrade \
     agent that was never scheduled. Apply the CRDs directly first, regardless of install vs. upgrade:
 
     ```bash title="Applying the operator CRDs before the Helm install"
-    kubectl apply --server-side --force-conflicts -f ./charts/simplyblock-operator/crds/
+    helm repo add simplyblock https://install.simplyblock.io/helm
+    helm repo update simplyblock
+    helm show crds simplyblock/simplyblock-operator --version 26.3.2 \
+        | kubectl apply --server-side --force-conflicts -f -
     ```
 
 Install the new operator chart with FDB creation disabled (FDB is already running):
 
 ```bash title="Installing the Simplyblock Operator chart with FDB creation disabled"
-helm upgrade --install simplyblock-operator ./charts/simplyblock-operator \
+helm repo add simplyblock https://install.simplyblock.io/helm
+helm repo update simplyblock
+helm upgrade --install simplyblock-operator simplyblock/simplyblock-operator \
+    --version 26.3.2 \
     --namespace simplyblock \
     --timeout 10m \
     --set operator.enabled=true \
@@ -31294,10 +31145,38 @@ helm upgrade --install simplyblock-operator ./charts/simplyblock-operator \
     --set image.operator.tag=<OPERATOR_TAG> \
     --set controlplane.csiHostpathDriver.enabled=true \
     --set controlplane.storageclass.name=local-hostpath \
-    --set csiConfig.simplybk.ip=http://simplyblock-webappapi.simplyblock:5000
+    --set controlplane.observability.minio.storageClass=local-hostpath \
+    --set tls.enabled=true \
+    --set tls.mutual_enabled=true
 ```
 
-Wait for operator pods:
+!!! note "TLS and mTLS flags"
+    `tls.enabled` serves the webappapi over HTTPS, and `tls.mutual_enabled` also requires client certificates from the
+    chart's CA. Omit both for a cluster without TLS. cert-manager has to be installed (see the prerequisite above). The
+    kept FDB stays plaintext, and Prometheus keeps serving HTTP on 9090.
+
+    By default, the chart creates a self-signed issuer. **This is for testing only. In production, create a
+    `ClusterIssuer` first and pass it:**
+
+    ```yaml
+    apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: my-ca-issuer
+    spec:
+      ca:
+        secretName: my-ca-keypair   # TLS secret with the CA key pair, in the cert-manager namespace
+    ```
+
+    ```bash
+        --set tls.cert-manager.createSelfSignedIssuer=false \
+        --set tls.cert-manager.cluster-issuer=my-ca-issuer
+    ```
+
+!!! note "Optional flags"
+    - `controlplane.csiHostpathDriver.enabled` and `controlplane.storageclass.name`: pass them only if R25 used the
+      hostpath CSI driver for FDB. Use the storage class FDB originally used.
+    - `controlplane.observability.minio.storageClass`: pass it if the cluster has no default `StorageClass`.
 
 ```bash title="Waiting for the operator pods to become ready"
 kubectl wait --for=condition=Ready pods --all -n simplyblock \
@@ -31312,6 +31191,10 @@ kubectl wait --for=condition=Ready pods --all -n simplyblock \
     still has the real credentials. The new chart also switches Prometheus to HTTPS with mTLS,
     so the ConfigMaps cannot simply be swapped. The credentials must be copied across. Skipping
     this step leaves Prometheus running with empty auth post-upgrade.
+
+!!! warning
+    The credentials have to be written into the new ConfigMap. Replacing it with an unmodified copy leaves them empty,
+    and the `cluster_metrics` scrape then fails with `401 Unauthorized`.
 
 ```bash title="Migrating the Prometheus basic_auth credentials into the new ConfigMap"
 OLD_CM=sbcli-simplyblock-prometheus-config   # <sbcli-release-name>-simplyblock-prometheus-config
@@ -31388,16 +31271,9 @@ metadata:
   namespace: simplyblock
 spec:
   fabricType: tcp
-  enableNodeAffinity: true
   stripe:
     dataChunks: 1
     parityChunks: 0
-  warningThreshold:
-    capacity: 95
-    provisionedCapacity: 97
-  criticalThreshold:
-    capacity: 96
-    provisionedCapacity: 98
   maxSubsystemCount: 30          # a.k.a. max_lvol, moved here from StorageNodeSet
   vcpuCount: 16                  # SPDK vCPUs to allocate per node (see note below)
 ---
@@ -31430,12 +31306,25 @@ spec:
     - <worker-node-3>
 ```
 
+!!! note "Fields left out of the example"
+    `warningThreshold`, `criticalThreshold`, and `enableNodeAffinity` are not set in the example. When omitted, the
+    control plane defaults apply (and an existing cluster keeps its stored values). `enableNodeAffinity` cannot be
+    changed once set.
+
 !!! note "`vcpuCount`, `skipKubeletConfiguration`, and `enableCpuTopology`"
     `vcpuCount` is computed as a percentage of each node's CPU count (e.g., 50% on OpenShift),
     not as a fixed value. Pick a number the operator's CRD will accept for the node sizing at hand rather
     than copying `16` verbatim. On Talos nodes the operator cannot modify kubelet configuration directly, so
     `skipKubeletConfiguration` and `enableCpuTopology` flip relative to a standard OpenShift or vanilla K8s install.
     Detect Talos before deciding the values.
+
+!!! note "Multiple clusters"
+    Create one `StorageCluster`, one `StoragePool` per existing pool, and one `StorageNodeSet` for each simplyblock
+    cluster, each with its own names (for example, `cluster1`, `cluster1-nodes` and `cluster2`, `cluster2-nodes`).
+    Every `StorageNodeSet` lists only the worker nodes of its own cluster and references its own cluster in
+    `clusterName`. The `stripe` values (`dataChunks` and `parityChunks`) have to match the existing cluster (for
+    example 1/0 for a 1x1 and 2/2 for a 2x2 cluster). `vcpuCount` has to match the number of SPDK cores the storage
+    nodes already use (the `CPU` column of `sbctl sn list`).
 
 ```bash title="Applying the custom resources"
 kubectl apply -f storagecluster.yaml -n simplyblock
@@ -31455,7 +31344,7 @@ Run the migration script inside the admin pod to update storage node fields in t
 (`lvstore_ports`, `lvol_poller_mask`, `lvstore_stack_secondary`):
 
 ```bash title="Opening a shell in the admin pod"
-ADMIN_POD=$(kubectl get pods -n simplyblock -l app=simplyblock-admin \
+ADMIN_POD=$(kubectl get pods -n simplyblock -l app=simplyblock-admin-control \
     -o jsonpath='{.items[0].metadata.name}')
 
 kubectl exec -it -n simplyblock $ADMIN_POD -- bash
@@ -31526,12 +31415,17 @@ sbctl --dev cluster set $CLUSTER_UUID cr_name $CLUSTER_CR_NAME
 **Storage Nodes** (repeat for each):
 
 ```bash title="Registering the CR details on every storage node"
-for NODE_ID in $(sbctl sn list | grep -E "offline|in_creation" | awk '{print $2}'); do
+for NODE_ID in $(sbctl sn list --cluster-id "$CLUSTER_UUID" --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin)))"); do
     sbctl --dev sn set "$NODE_ID" cr_plural storagenodesets
     sbctl --dev sn set "$NODE_ID" cr_namespace simplyblock
-    sbctl --dev sn set "$NODE_ID" cr_name simplyblock-node
+    sbctl --dev sn set "$NODE_ID" cr_name <STORAGENODESET_CR_NAME>   # e.g. simplyblock-node
 done
 ```
+
+!!! note "Multiple clusters"
+    Run both blocks once per cluster. `CLUSTER_CR_NAME` is the name of that cluster's `StorageCluster` CR (for example
+    `cluster1`), and `<STORAGENODESET_CR_NAME>` is the name of that cluster's `StorageNodeSet` CR (for example
+    `cluster1-nodes`). Using the `StorageNodeSet` of another cluster registers the nodes with the wrong CR.
 
 !!! note "Provisional"
     The test code carries a TODO that `cr_plural` may need to change from
@@ -31555,10 +31449,10 @@ cancel them:
 sbctl cluster list-tasks "$CLUSTER_ID" --limit 0
 
 # Cancel any that are running or new
-for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --json --limit 0 \
-    | jq -r '.[] | select(.function=="node_restart" and (.status=="running" or .status=="new")) | .id'); do
+for TASK_ID in $(sbctl cluster list-tasks "$CLUSTER_ID" --limit 0 \
+    | awk -F'|' 'NR>3 {for(i=2;i<=7;i++) gsub(/^ +| +$/,"",$i); if ($4=="node_restart" && ($6=="running" || $6=="new")) print $2}'); do
     echo "Cancelling stale task: $TASK_ID"
-    sbctl cluster cancel-task "$CLUSTER_ID" "$TASK_ID"
+    sbctl cluster cancel-task "$TASK_ID"
 done
 ```
 
@@ -31571,24 +31465,77 @@ Restart each storage node with the new SPDK image and proxy image.
     online. Do **not** wait for cluster `active` between individual node restarts. Wait only for each node to reach
     `online`, then proceed to the next. Check cluster `active` only after **all** nodes have been restarted.
 
+#### Step 10.0: Prepare the Cluster Settings
+
+Run the following per cluster, before restarting its first node.
+
+For a **2x2 cluster** (`parityChunks: 2`), set the maximum fault tolerance to 2. Clusters created on R25 keep
+`max_fault_tolerance=1` after the upgrade, and the tertiary node is only assigned when it is 2 or higher. Skip this
+command for 1x1 clusters.
+
+```bash title="Setting the maximum fault tolerance of a 2x2 cluster"
+sbctl --dev cluster set <CLUSTER_UUID> max_fault_tolerance 2
+```
+
+Set the SPDK vCPU count at the cluster level. The value matches the number of SPDK cores the storage nodes already use
+and can be read from the `CPU` column of `sbctl sn list`. It has to be the same value as `vcpuCount` in the
+`StorageCluster` CR (Step 7).
+
+```bash title="Setting the SPDK vCPU count of the cluster"
+sbctl --dev cluster set <CLUSTER_UUID> spdk_vcpu_count <VCPU_COUNT>
+```
+
+Set the cluster status to `unready` so that it can be activated explicitly after the nodes are back:
+
+```bash title="Setting the cluster status to unready"
+sbctl --dev cluster set <CLUSTER_UUID> status unready
+```
+
+R26 uses a different journal layout than R25. The script keeps the R25 layout, so the storage nodes can read their existing data after the restart.
+
+Run the following script in the admin control pod before updating the storage nodes. It pins the layout and clears the stale journal records, and it must run before any node restart:
+
+```python title="Pinning the journal layout of a cluster"
+# Set <cluster_id> to your cluster ID.
+# If you have multiple clusters, repeat this for each cluster.
+CLUSTER_ID="<cluster_id>"
+from simplyblock_core.db_controller import DBController
+db = DBController()
+cl = db.get_cluster_by_id(CLUSTER_ID)
+db.atomic_update(cl, lambda c: setattr(c, "jm_raid_layout", "legacy_nway"))
+
+for n in db.get_storage_nodes_by_cluster_id(CLUSTER_ID):
+    jd = n.jm_device
+    if jd and jd.jm_leg_bdevs:
+        jd.jm_leg_bdevs = []
+        jd.jm_leg_members = []
+        n.write_to_db()
+```
+
 ```bash title="Restarting the storage nodes one at a time"
 export SPDK_IMAGE=<TARGET_SPDK_IMAGE>
 export SPDK_PROXY_IMAGE=<TARGET_DOCKER_IMAGE>
 
-for NODE_ID in $(sbctl sn list --json | jq -r '.[].UUID'); do
+for NODE_ID in $(sbctl sn list --json | python3 -c "import sys,json; print('\n'.join(n['UUID'] for n in json.load(sys.stdin)))"); do
     echo "Restarting node: $NODE_ID"
     sbctl -d --dev sn restart "$NODE_ID" \
         --spdk-image "$SPDK_IMAGE" \
         --spdk-proxy-image "$SPDK_PROXY_IMAGE"
 
     # Wait for this node to come online (up to 10 minutes)
-    while ! sbctl sn list --json | jq -e ".[] | select(.UUID==\"$NODE_ID\" and .Status==\"online\")" > /dev/null 2>&1; do
+    while ! sbctl sn list --json | python3 -c "import sys,json; sys.exit(0 if any(n['UUID']=='$NODE_ID' and n['Status']=='online' for n in json.load(sys.stdin)) else 1)"; do
         sleep 5
     done
     echo "  Node $NODE_ID is online"
 
     sleep 10  # brief pause before next node
 done
+```
+
+Once every node of a cluster is `online`, activate the cluster. Repeat for each cluster:
+
+```bash title="Activating the cluster"
+sbctl cluster activate <CLUSTER_UUID>
 ```
 
 !!! note "Admin-control pod recycling"
@@ -31619,8 +31566,8 @@ remain `None` or `False` for 30-60 seconds after a node comes online while the
 monitoring loop catches up.
 
 ```bash title="Waiting for the cluster to become active"
-# Wait for cluster active
-while [ "$(sbctl cluster list --json | jq -r '.[0].Status')" != "ACTIVE" ]; do
+# Wait for cluster active (set CLUSTER_UUID to the cluster being checked)
+while ! sbctl cluster list | grep "$CLUSTER_UUID" | grep -qi "active"; do
     echo "Waiting for cluster to become active..."
     sleep 10
 done
@@ -31631,7 +31578,7 @@ echo "Cluster is active"
 # Wait for all nodes to report health_check=True (up to 2 minutes)
 TIMEOUT=120
 while [ $TIMEOUT -gt 0 ]; do
-    UNHEALTHY=$(sbctl sn list --json | jq '[.[] | select(.Health != "True")] | length')
+    UNHEALTHY=$(sbctl sn list --json | python3 -c "import sys,json; print(sum(1 for n in json.load(sys.stdin) if str(n['Health'])!='True'))")
     if [ "$UNHEALTHY" -eq 0 ]; then
         echo "All nodes are healthy"
         break
@@ -31646,6 +31593,153 @@ if [ $TIMEOUT -le 0 ]; then
     sbctl sn list
 fi
 ```
+
+### Step 10.2: Add the Tertiary Node to the Volumes (2x2 Clusters Only)
+
+Volumes created on R25 carry `nodes = [primary, secondary]`. Although the tertiary lvstore is now built and its
+listeners are published, the connect path list (read from `lvol.nodes` by `lvol_controller.connect_lvol`) still hands
+clients only two paths. The following script extends it to `[primary, secondary, tertiary]`.
+
+Save the script as `add_tertiary_to_lvol_nodes.py` and copy it into the admin pod:
+
+```bash title="Copying the script into the admin pod"
+kubectl cp add_tertiary_to_lvol_nodes.py simplyblock/$ADMIN_POD:/tmp/add_tertiary_to_lvol_nodes.py
+```
+
+```python title="add_tertiary_to_lvol_nodes.py"
+#!/usr/bin/env python3
+"""Append each primary's tertiary node to ``lvol.nodes`` on an upgraded cluster.
+
+Lvols created on 25.10.x carry ``nodes = [primary, secondary]``. After the
+tertiary lvstore has been built and its listeners published, the connect path
+list (lvol_controller.connect_lvol reads ``lvol.nodes``) still hands clients
+only two paths. This extends it to ``[primary, secondary, tertiary]``.
+
+The tertiary MUST be appended as the third entry: its subsystem was built in
+cntlid window 2000 (the window for path index 2), so any other position would
+disagree with what is already on the target.
+
+Dry run by default. Run inside the control-plane container:
+
+    python3 add_tertiary_to_lvol_nodes.py <cluster_id>            # report only
+    python3 add_tertiary_to_lvol_nodes.py <cluster_id> --apply    # write
+"""
+import argparse
+import sys
+
+from simplyblock_core.db_controller import DBController
+from simplyblock_core.models.lvol_model import LVol
+from simplyblock_core.rpc_client import RPCException
+
+SKIP_STATUSES = {LVol.STATUS_IN_DELETION, LVol.STATUS_IN_CREATION, LVol.STATUS_DELETED}
+
+
+def listener_present(tert, lvol):
+    """True when the tertiary serves ``lvol.nqn`` with a listener on the port
+    of the lvol's lvstore. A path the client cannot reach is not worth adding."""
+    port = str(tert.get_lvol_subsys_port(lvol.lvs_name))
+    subsys = tert.rpc_client().subsystem_get(lvol.nqn)
+    if not subsys:
+        return False, "no subsystem"
+    ports = {a.get("trsvcid") for a in subsys.get("listen_addresses", [])}
+    if port not in ports:
+        return False, f"no listener on port {port} (has {sorted(ports) or 'none'})"
+    return True, ""
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("cluster_id")
+    ap.add_argument("--apply", action="store_true", help="write the changes (default: dry run)")
+    ap.add_argument("--skip-listener-check", action="store_true",
+                    help="extend nodes even if the tertiary listener is not verified")
+    args = ap.parse_args()
+
+    db = DBController()
+    nodes_by_id = {n.get_id(): n for n in db.get_storage_nodes_by_cluster_id(args.cluster_id)}
+    counts = {"updated": 0, "would_update": 0, "already": 0, "skipped": 0}
+
+    for lvol in db.get_lvols(args.cluster_id):
+        lid = lvol.get_id()
+        if lvol.status in SKIP_STATUSES:
+            continue
+        primary = nodes_by_id.get(lvol.node_id)
+        if primary is None:
+            print(f"SKIP  {lid}: primary {lvol.node_id} not in cluster")
+            counts["skipped"] += 1
+            continue
+        sec_id, tert_id = primary.secondary_node_id, primary.tertiary_node_id
+        nodes = list(lvol.nodes or [])
+
+        if not tert_id:
+            print(f"SKIP  {lid}: primary {primary.get_id()[:8]} has no tertiary assigned")
+            counts["skipped"] += 1
+            continue
+        if nodes == [primary.get_id(), sec_id, tert_id]:
+            counts["already"] += 1
+            continue
+        if nodes != [primary.get_id(), sec_id]:
+            # Anything else (stale secondary, a relocation in flight, an
+            # unexpected length) needs a human look, not a blind append.
+            print(f"SKIP  {lid}: nodes {nodes} != [primary {primary.get_id()[:8]}, "
+                  f"secondary {sec_id[:8] if sec_id else '-'}]")
+            counts["skipped"] += 1
+            continue
+
+        tert = nodes_by_id.get(tert_id)
+        if tert is None:
+            print(f"SKIP  {lid}: tertiary {tert_id} not in cluster")
+            counts["skipped"] += 1
+            continue
+        if not args.skip_listener_check:
+            try:
+                ok, why = listener_present(tert, lvol)
+            except RPCException as e:  # report and move on; one unreachable node must not stop the sweep
+                ok, why = False, f"listener check failed: {e}"
+            if not ok:
+                print(f"SKIP  {lid}: tertiary {tert_id[:8]}: {why}")
+                counts["skipped"] += 1
+                continue
+
+        if not args.apply:
+            print(f"PLAN  {lid} ({lvol.lvs_name}): {nodes} + {tert_id}")
+            counts["would_update"] += 1
+            continue
+
+        expected = [primary.get_id(), sec_id]
+
+        def mutate(fresh, expected=expected, tert_id=tert_id):
+            # Re-check on the fresh record: abort if anything moved meanwhile.
+            if list(fresh.nodes or []) != expected:
+                return False
+            fresh.nodes = expected + [tert_id]
+
+        fresh = db.atomic_update(lvol, mutate)
+        if fresh is not None and list(fresh.nodes) == expected + [tert_id]:
+            print(f"DONE  {lid} ({lvol.lvs_name}): nodes -> {fresh.nodes}")
+            counts["updated"] += 1
+        else:
+            print(f"SKIP  {lid}: record changed during update, left alone")
+            counts["skipped"] += 1
+
+    print(f"\n{counts}" + ("" if args.apply else "  (dry run; pass --apply to write)"))
+    return 1 if counts["skipped"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+Run it inside the admin pod. The first run is a dry run and only reports the planned changes. Review the output, then
+run it again with `--apply`:
+
+```bash title="Running the script as a dry run, then applying it"
+python3 /tmp/add_tertiary_to_lvol_nodes.py <CLUSTER_UUID>
+python3 /tmp/add_tertiary_to_lvol_nodes.py <CLUSTER_UUID> --apply
+```
+
+**Expected**: Every volume reports `DONE` (or `already` in the summary on a repeated run), and the script exits with
+code 0. A `SKIP` line names the volume and the reason and needs a manual look.
 
 ### Step 11: Restart Workload Pods
 
@@ -31662,3 +31756,8 @@ Or for all deployments in a namespace:
 kubectl get deployments -n <namespace> -o name | \
     xargs -I{} kubectl rollout restart {} -n <namespace>
 ```
+
+!!! note "Pods that are not managed by a controller"
+    The NVMe/TCP connections of existing pods go stale when the storage nodes are shut down, and reads fail with
+    `Input/output error`. A pod without a controller (for example, a bare test pod) is not recreated by a rollout.
+    Delete and recreate it. The PVC and its data are not affected.
