@@ -12,6 +12,8 @@
 
   const FEATURED_LINES = 2;
   const DEV_VERSION = "dev";
+  const DEV_LABEL = "Dev";
+  const DEV_DESCRIPTION = "Documentation of the version in development";
 
   const topic = document.querySelector(".md-header__topic");
   const configElement = document.getElementById("__config");
@@ -121,7 +123,7 @@
     button.className = "md-version__current";
     button.type = "button";
     button.setAttribute("aria-label", label === "Version" ? "Select a version" : `Select a version from ${label}`);
-    button.textContent = containsCurrent ? current.title : label;
+    button.textContent = containsCurrent ? titleOf(current) : label;
     root.appendChild(button);
 
     const list = document.createElement("ul");
@@ -150,10 +152,14 @@
     if (dev === current) {
       root.classList.add("sb-versions__group--current");
     }
-    const link = versionLink(dev, current, "md-version__current sb-versions__dev");
-    link.textContent = "Development";
-    root.appendChild(link);
+    root.appendChild(versionLink(dev, current, "md-version__current sb-versions__dev"));
     return root;
+  }
+
+  // versions.json titles the development build "development", which is too
+  // wide for the header.
+  function titleOf(v) {
+    return v.version === DEV_VERSION ? DEV_LABEL : v.title;
   }
 
   function versionLink(v, current, className) {
@@ -161,7 +167,10 @@
     const link = document.createElement("a");
     link.className = className;
     link.href = new URL(pagePath, target).href;
-    link.textContent = v.title;
+    link.textContent = titleOf(v);
+    if (v.version === DEV_VERSION) {
+      link.title = DEV_DESCRIPTION;
+    }
     if (v === current) {
       link.setAttribute("aria-current", "page");
     }

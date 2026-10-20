@@ -176,6 +176,7 @@ a img {
 
 .sb-versions__group > .md-version__current {
   opacity: .7;
+  font-weight: 400;
 }
 
 [dir=ltr] .sb-versions .md-version__current {
