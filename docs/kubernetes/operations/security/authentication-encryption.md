@@ -116,6 +116,18 @@ StorageClass.
 A node removed from `allowedNodes` loses its label, and its NQN is removed from the allowed hosts of the pool. The node
 is rejected on its next connect attempt. A volume already connected on that node is not disconnected by the removal.
 
+## Worker Node Kernel Support
+
+Every node in `allowedNodes` needs a kernel built for DH-HMAC-CHAP. To check whether a node supports it, run the
+following through the CSI node plugin `Pod` on that node:
+
+```bash title="Checking a worker node for DH-HMAC-CHAP support"
+kubectl exec -n simplyblock <CSI_NODE_POD> -c csi-node -- cat /dev/nvme-fabrics | grep -o dhchap_secret
+```
+
+Without support, the mount fails with `option "dhchap_secret" ignored` in the `FailedMount` event. See
+[NVMe-oF Security](../../../architecture/concepts/nvmf-security.md#initiator-kernel-support) for details.
+
 ## Verifying the Configuration
 
 `status.allowedNodes` carries the node names the operator resolved and registered. A difference to

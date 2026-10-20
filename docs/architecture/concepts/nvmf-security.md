@@ -52,6 +52,18 @@ transferred between the host and the storage target is encrypted, providing conf
 PSK keys are automatically generated (256-bit random hex tokens) when a host is added to a volume in a pool with
 `psk` enabled in its security options.
 
+## Initiator Kernel Support
+
+DH-HMAC-CHAP and TLS/PSK are negotiated by the initiator's kernel, which has to be built with them. To check whether an
+initiator supports DH-HMAC-CHAP:
+
+```bash title="Check an initiator for DH-HMAC-CHAP support"
+grep -o dhchap_secret /dev/nvme-fabrics || echo "kernel has no in-band authentication support"
+```
+
+A kernel without support reports no configuration error. The connection is attempted without authentication, with
+`option "dhchap_secret" ignored` in the output, and the target refuses it.
+
 ## Configuration Levels
 
 NVMe-oF security is configured at the storage pool level and managed per volume/host. It is **not** configured at the cluster
