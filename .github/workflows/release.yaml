@@ -20,6 +20,8 @@ defaults:
 jobs:
   deployment:
     runs-on: ubuntu-latest
+    outputs:
+      release-name: ${{ steps.release-name.outputs.name }}
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
@@ -36,10 +38,12 @@ jobs:
         run: |
           ./doc-builder build-image
       - name: "Adjust Release Name: ${{ github.ref_name }}"
+        id: release-name
         env:
           name: "${{ github.ref_name }}"
         run: |
           echo "RELEASE_NAME=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_ENV
+          echo "name=$(echo ${name} | sed -e 's/.*\///g')" >> $GITHUB_OUTPUT
       - name: "Lock sbcli/sbcli version"
         run: |
           [ -f ./scripts/sbcli.lock ] || echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
@@ -69,23 +73,10 @@ jobs:
           git commit -m "Auto-Build: ${RELEASE_NAME}" -m "Source: ${{ github.ref_name }}@$(git -C .. rev-parse --short HEAD)" || echo "Build produced no changes to commit"
           git pull --rebase origin deployments
           git push origin HEAD:deployments
-          rm ./versions.json
-          rm ./latest
-      - name: "Upload Documentation"
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.ftp_server }}
-          username: ${{ secrets.ftp_username }}
-          password: ${{ secrets.ftp_password }}
-          protocol: ftps
-          server-dir: /
-          local-dir: ./deployment/
-      - name: "Updating Latest"
-        uses: appleboy/ssh-action@v1.2.1
-        with:
-          host: ${{ secrets.ssh_server }}
-          port: ${{ secrets.ssh_port }}
-          username: ${{ secrets.ssh_username }}
-          key: ${{ secrets.ssh_key }}
-          script: |
-            ./update-docs.sh ${{ env.RELEASE_NAME }}
+
+  publish:
+    needs: deployment
+    uses: ./.github/workflows/publish-deployments.yaml
+    with:
+      latest: ${{ needs.deployment.outputs.release-name }}
+    secrets: inherit

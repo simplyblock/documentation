@@ -8,8 +8,6 @@ extra:
   homepage_name: Simplyblock
   # Sole canonical for all versions — every page canonicalizes to the /latest alias.
   canonical_base: https://docs.simplyblock.io/latest/
-  version:
-    provider: mike
   social:
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/company/simplyblock-io
@@ -117,6 +115,7 @@ extra_css:
   - assets/stylesheets/swagger-theme.css
 extra_javascript:
   - assets/javascripts/cpumask-calculator.js
+  - assets/javascripts/version-selector.js
 validation:
   links:
     not_found: warn

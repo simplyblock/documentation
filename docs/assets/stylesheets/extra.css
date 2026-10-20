@@ -163,3 +163,76 @@ input[type=checkbox][disabled] {
 a img {
   border-radius: 10px;
 }
+
+/* Version selector (assets/javascripts/version-selector.js): one dropdown per
+   featured release line and an "Other" dropdown with the development build
+   pinned to its top. They reuse Material's .md-version styles; below 60em only
+   the combined dropdown is shown. */
+.sb-versions {
+  display: flex;
+  align-items: center;
+  gap: .2rem;
+}
+
+.sb-versions__group > .md-version__current {
+  opacity: .7;
+  font-weight: 400;
+}
+
+[dir=ltr] .sb-versions .md-version__current {
+  margin-left: .6rem;
+}
+
+[dir=ltr] .sb-versions__group:first-child .md-version__current {
+  margin-left: 1.4rem;
+}
+
+.sb-versions__group--grouped:focus-within .md-version__list,
+.sb-versions__group--grouped:hover .md-version__list {
+  max-height: 20rem;
+}
+
+.sb-versions__group--current > .md-version__current,
+.sb-versions__group:hover > .md-version__current,
+.sb-versions__group:focus-within > .md-version__current {
+  opacity: 1;
+}
+
+.sb-versions__group--current > .md-version__current {
+  font-weight: 700;
+}
+
+.sb-versions__pinned {
+  border-bottom: .05rem solid var(--md-default-fg-color--lightest);
+}
+
+.sb-versions .md-version__link {
+  font-weight: 400;
+}
+
+.sb-versions__heading {
+  scroll-snap-align: start;
+  padding: .4rem .6rem .2rem;
+  font-size: .6rem;
+  font-weight: 700;
+  color: var(--md-default-fg-color--light);
+}
+
+.sb-versions .md-version__link[aria-current="page"] {
+  font-weight: 700;
+  color: var(--md-accent-fg-color);
+}
+
+.sb-versions__narrow {
+  display: none;
+}
+
+@media screen and (max-width: 59.984375em) {
+  .sb-versions__wide {
+    display: none;
+  }
+
+  .sb-versions__narrow {
+    display: inline-block;
+  }
+}
