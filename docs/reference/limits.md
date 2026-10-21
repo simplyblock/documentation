@@ -12,7 +12,7 @@ control plane. Others depend on the node's vCPU count and memory configuration.
 | Limit                       | Value | What it counts                                                                                      |
 |-----------------------------|------:|-----------------------------------------------------------------------------------------------------|
 | Objects per node            | 6000  | Logical volumes, clones, and snapshots owned by the node (its logical volume store)                 |
-| NVMe-oF subsystems per node | 75    | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
+| NVMe-oF subsystems per node | 500   | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
 | Namespaces per subsystem    | 50    | Volumes (namespaces) sharing one NVMe-oF subsystem                                                  |
 
 These limits are enforced on every create path (volume create, snapshot create, clone). When a limit is reached,
@@ -20,7 +20,7 @@ the operation fails with an explanatory error, for example:
 
 ```plain title="Limit errors"
 Object limit reached on lvstore of node <NODE_ID>: 6000 objects (lvols/clones: 4100, snapshots: 1900); the hard limit is 6000 per lvstore
-Too many subsystems on node: <NODE_ID>, max subsystems reached: 75
+Too many subsystems on node: <NODE_ID>, max subsystems reached: 500
 max_namespace_per_subsys=64 exceeds the hard limit of 50 namespaces per subsystem
 ```
 
@@ -73,7 +73,7 @@ same value. It is set when the cluster is created:
 
 In Kubernetes, the same setting is `maxSubsystemCount` of the `StorageCluster`.
 
-The value cannot exceed the hard ceiling of 75, and a larger value is rejected. The configured value also drives each
+The value cannot exceed the hard ceiling of 500, and a larger value is rejected. The configured value also drives each
 node's memory reservation (huge pages), so it should reflect the actually planned number of volumes. It can be
 changed later with `{{ cliname }} cluster update --max-subsys <N>`. Each node adopts the new value on its next
 restart.
