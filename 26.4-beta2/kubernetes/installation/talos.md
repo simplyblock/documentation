@@ -50,7 +50,7 @@ The following flags also affect the huge page calculation:
 
 The maximum number of subsystems and the vCPU count are cluster-level settings (`maxSubsystemCount` and `vcpuCount`
 of the `StorageCluster`), which the host does not know before it joins the cluster. The calculator therefore sizes
-the host for the maximum of 75 subsystems and its default core layout, so the result is enough for any cluster
+the host for the maximum of 500 subsystems and its default core layout, so the result is enough for any cluster
 setting.
 
 ```plain title="Example output of huge pages calculator"
