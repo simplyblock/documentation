@@ -14,7 +14,7 @@ control plane. Others depend on the node's vCPU count and memory configuration.
 | Limit                       | Value | What it counts                                                                                      |
 |-----------------------------|------:|-----------------------------------------------------------------------------------------------------|
 | Objects per node            | 6000  | Logical volumes, clones, and snapshots owned by the node (its logical volume store)                 |
-| NVMe-oF subsystems per node | 75    | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
+| NVMe-oF subsystems per node | 500   | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
 | Namespaces per subsystem    | 50    | Volumes (namespaces) sharing one NVMe-oF subsystem                                                  |
 
 These limits are enforced on every create path (volume create, snapshot create, clone). When a limit is reached,
@@ -22,7 +22,7 @@ the operation fails with an explanatory error, for example:
 
 ```plain title="Limit errors"
 Object limit reached on lvstore of node <NODE_ID>: 6000 objects (lvols/clones: 4100, snapshots: 1900); the hard limit is 6000 per lvstore
-Too many subsystems on node: <NODE_ID>, max subsystems reached: 75
+Too many subsystems on node: <NODE_ID>, max subsystems reached: 500
 max_namespace_per_subsys=64 exceeds the hard limit of 50 namespaces per subsystem
 ```
 
@@ -66,13 +66,13 @@ Notes:
 
 ## Configured Subsystem Limit per Node
 
-The 75-subsystem ceiling applies on top of the per-node configured maximum, set at host configuration time:
+The 500-subsystem ceiling applies on top of the per-node configured maximum, set at host configuration time:
 
 ```bash title="Configure the maximum number of subsystems per node"
 sbctl storage-node configure --max-subsys <N> <FURTHER_OPTIONS>
 ```
 
-The effective subsystem limit of a node is the **smaller** of `--max-subsys` and 75. The configured value also
+The effective subsystem limit of a node is the **smaller** of `--max-subsys` and 500. The configured value also
 drives the node's memory reservation (huge pages), so it should reflect the actually planned number of volumes.
 It can be changed later via `sbctl storage-node restart --max-subsys <N>`.
 

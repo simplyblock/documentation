@@ -3366,7 +3366,7 @@ As hyper-converged deployments have to share vCPUs, it is recommended to dedicat
 For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on
 the assigned vCPUs and networking performance of the node. For each 10 GBit/s of dedicated network bandwidth
 it is recommended to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
-subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of 75 subsystems per
+subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of 500 subsystems per
 node applies. See [Limits](../reference/limits.md).
 
 | Unit                                     | Memory Requirement |
@@ -5115,7 +5115,7 @@ existing cluster, because a growth document adds nodes to a cluster whose settin
 | Field                                                         | Value                               | Purpose                                                                                                                              |
 |---------------------------------------------------------------|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `name`                                                        | Required, at most 63 characters     | Name of the `StorageCluster`. Discovery proposes `<draft name>-cluster`.                                                             |
-| `maxSubsystemCount`                                           | Required, 10 to 75                  | NVMe subsystems the cluster serves.                                                                                                  |
+| `maxSubsystemCount`                                           | Required, 10 to 500                 | NVMe subsystems the cluster serves.                                                                                                  |
 | `vcpuCount`                                                   | Required, at least 4                | vCPUs per storage node.                                                                                                              |
 | `minHugePagesSize`                                            | For example, `16G`                  | Minimum huge page memory per storage node.                                                                                           |
 | `stripe`                                                      | `dataChunks` and `parityChunks`     | The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md). Allowed: 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, 4+2.      |
@@ -28827,7 +28827,7 @@ control plane. Others depend on the node's vCPU count and memory configuration.
 | Limit                       | Value | What it counts                                                                                      |
 |-----------------------------|------:|-----------------------------------------------------------------------------------------------------|
 | Objects per node            | 6000  | Logical volumes, clones, and snapshots owned by the node (its logical volume store)                 |
-| NVMe-oF subsystems per node | 75    | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
+| NVMe-oF subsystems per node | 500   | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
 | Namespaces per subsystem    | 50    | Volumes (namespaces) sharing one NVMe-oF subsystem                                                  |
 
 These limits are enforced on every create path (volume create, snapshot create, clone). When a limit is reached,
@@ -28835,7 +28835,7 @@ the operation fails with an explanatory error, for example:
 
 ```plain title="Limit errors"
 Object limit reached on lvstore of node <NODE_ID>: 6000 objects (lvols/clones: 4100, snapshots: 1900); the hard limit is 6000 per lvstore
-Too many subsystems on node: <NODE_ID>, max subsystems reached: 75
+Too many subsystems on node: <NODE_ID>, max subsystems reached: 500
 max_namespace_per_subsys=64 exceeds the hard limit of 50 namespaces per subsystem
 ```
 
@@ -28879,13 +28879,13 @@ Notes:
 
 ## Configured Subsystem Limit per Node
 
-The 75-subsystem ceiling applies on top of the per-node configured maximum, set at host configuration time:
+The 500-subsystem ceiling applies on top of the per-node configured maximum, set at host configuration time:
 
 ```bash title="Configure the maximum number of subsystems per node"
 sbctl storage-node configure --max-subsys <N> <FURTHER_OPTIONS>
 ```
 
-The effective subsystem limit of a node is the **smaller** of `--max-subsys` and 75. The configured value also
+The effective subsystem limit of a node is the **smaller** of `--max-subsys` and 500. The configured value also
 drives the node's memory reservation (huge pages), so it should reflect the actually planned number of volumes.
 It can be changed later via `sbctl storage-node restart --max-subsys <N>`.
 
@@ -30000,7 +30000,7 @@ Simplyblock CSI.
   the count of its cluster, plus one core for the system, is refused instead of running on fewer cores than
   requested. `sbctl cluster update --vcpu-count` does not exist, because rewriting the core mask of every
   node belongs to a deliberate redeployment.
-- A configured subsystem limit above 75 per storage node is rejected, where it was accepted and then clamped
+- A configured subsystem limit above 500 per storage node is rejected, where it was accepted and then clamped
   silently before, so a node reserved huge pages for subsystems it could never serve. An lvstore serves at most 6000
   objects, counting volumes, clones, and snapshots, and a create beyond that limit is refused.
 - Failure domains are a deploy-time feature. A cluster cannot be upgraded into them, and `--enable-failure-domain`
