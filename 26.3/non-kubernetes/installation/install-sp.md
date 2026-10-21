@@ -174,7 +174,7 @@ sudo sbctl storage-node configure \
 
 The `--max-subsys` parameter defines the maximum number of NVMe-oF subsystems (and hence, in the default
 one-volume-per-subsystem layout, logical volumes) this node will serve. It drives the node's memory reservation
-and is capped by a hard limit of 75 subsystems per node (see [Limits](../../reference/limits.md)).
+and is capped by a hard limit of 500 subsystems per node (see [Limits](../../reference/limits.md)).
 
 ```plain title="Example output of storage node configure"
 [demo@demo-3 ~]# sudo sbctl storage-node configure --nodes-per-socket=2 --max-subsys=50
