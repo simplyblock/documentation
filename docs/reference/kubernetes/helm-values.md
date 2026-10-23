@@ -78,10 +78,10 @@ cluster to write one.
 | `csiConfig.simplybk.ip` | string | `nil` |  |
 | `csiConfig.simplybk.pool` | string | `nil` |  |
 | `csiConfig.simplybk.storageClassName` | string | `nil` |  |
-| `csiSecret.simplybk.secret` | string | (shipped default, see `values.yaml`) |  |
+| `csiSecret.simplybk.secret` | string | `nil` |  |
 | `multiCluster.enable` | bool | `false` |  |
 | `multiCluster.clusters[0].cluster_id` | string | `nil` |  |
-| `multiCluster.clusters[0].secret` | string | (shipped default, see `values.yaml`) |  |
+| `multiCluster.clusters[0].secret` | string | `nil` |  |
 | `multiCluster.clusters[0].workers` | string | `nil` |  |
 | `multiCluster.clusters[0].pool` | string | `nil` |  |
 | `multiCluster.clusters[0].storageClassName` | string | `nil` |  |
@@ -125,8 +125,8 @@ the first installation. See
 | `discovery.draft.images.spdkProxy` | string | `""` |  |
 | `discovery.draft.cluster.name` | string | `""` |  |
 | `discovery.draft.cluster.stripe` | object | `{}` |  |
-| `discovery.draft.cluster.enableChecksumValidation` | string | `nil` |  |
-| `discovery.draft.cluster.enableAtomicity4K` | string | `nil` |  |
+| `discovery.draft.cluster.enableChecksumValidation` | bool | `nil` |  |
+| `discovery.draft.cluster.enableAtomicity4K` | bool | `nil` |  |
 
 ## CSI Driver
 
@@ -590,8 +590,9 @@ volumes. Both are off by default. See [Installing Disaster Recovery](../../disas
 ## Transport Security
 
 The `tls` block is copied into the `tls` blocks of `ControlPlane/simplyblock` and `SimplyblockDriver/simplyblock`. TLS
-requires cert-manager or OpenShift. Mutual TLS is only allowed with cert-manager, and turning TLS off requires turning
-mutual TLS off with it. See [Securing the Control Plane](../../kubernetes/installation/security.md).
+requires cert-manager or OpenShift. Mutual TLS is only allowed with cert-manager, so both the `openshift` provider and
+turning TLS off require `tls.mutual_enabled: false`. See
+[Securing the Control Plane](../../kubernetes/installation/security.md).
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|

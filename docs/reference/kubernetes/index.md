@@ -156,10 +156,21 @@ deployment:
 
 ### Transport Security
 
-TLS and mutual TLS are on by default and require cert-manager or OpenShift. An existing cert-manager `ClusterIssuer` is
-used as shown in [Securing the Control Plane](../../kubernetes/installation/security.md#enabling-mtls-with-an-existing-issuer).
-On a cluster with neither, TLS is turned off. Mutual TLS has to be turned off with it, or the values schema rejects the
-file.
+TLS is on by default and requires cert-manager or OpenShift. Mutual TLS is on by default as well, but its client
+certificates are only issued by cert-manager. An existing cert-manager `ClusterIssuer` is used as shown in
+[Securing the Control Plane](../../kubernetes/installation/security.md#enabling-mtls-with-an-existing-issuer).
+
+With the `openshift` provider, the service CA of OpenShift issues the server certificates, and mutual TLS is turned
+off. The values schema rejects the file otherwise.
+
+```yaml title="Example of values for TLS on OpenShift (values.yaml)"
+tls:
+  enabled: true
+  provider: openshift
+  mutual_enabled: false
+```
+
+On a cluster with neither provider, TLS is turned off, and mutual TLS has to be turned off with it.
 
 ```yaml title="Example of values turning off TLS (values.yaml)"
 tls:
@@ -204,6 +215,17 @@ The Control Center proxies the Kubernetes API with its own service account by de
 shares its permissions. Authentication therefore belongs in front of the Ingress. The default Ingress annotations
 enable NGINX basic authentication as a stop-gap. The NetworkPolicy restricts the console's egress, and its
 `apiServerCidrs` are narrowed to the API server before it is enabled.
+
+The basic authentication reads its users from the Secret `simplyblock-control-center-auth`, which is not created by
+the chart. It is created in the release namespace beforehand, with an htpasswd file under the key `auth`. Without the
+Secret, the Ingress answers every request with HTTP 503.
+
+```bash title="Creating the basic authentication Secret for the Control Center Ingress"
+htpasswd -c auth admin
+kubectl create secret generic simplyblock-control-center-auth \
+    --namespace simplyblock \
+    --from-file=auth
+```
 
 ```yaml title="Example of values exposing the Control Center (values.yaml)"
 controlCenter:

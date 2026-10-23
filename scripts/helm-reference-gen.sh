@@ -14,15 +14,24 @@ if [ -z "${OPERATOR_ROOT:-}" ]; then
     OPERATOR_ROOT="$(cd "${DOCS_ROOT}/../simplyblock-manager" && pwd)"
   fi
 fi
+CHART_DIR_EXPLICIT="${CHART_DIR:-}"
 CHART_DIR="${CHART_DIR:-${OPERATOR_ROOT}/helm-charts/charts/simplyblock-operator}"
 OUTPUT_FILE="${OUTPUT_FILE:-${DOCS_ROOT}/docs/reference/kubernetes/helm-values.md}"
 TEMPLATE_FILE="${TEMPLATE_FILE:-${SCRIPT_DIR}/templates/helm-reference.md.gotmpl}"
 SECTIONS_DIR="${SECTIONS_DIR:-${SCRIPT_DIR}/templates/helm-sections}"
 HELM_DOCS_VERSION="${HELM_DOCS_VERSION:-v1.14.2}"
 
+# Older operator tags (v26.2 and earlier) do not carry the chart, which lived in
+# a repository of its own then. A lock file can pin such a tag, so a missing
+# chart leaves the committed page as it is rather than failing the build. A
+# chart directory named explicitly has to exist.
 if [ ! -f "${CHART_DIR}/Chart.yaml" ]; then
-  echo "Could not find the simplyblock-operator chart under ${CHART_DIR}." >&2
-  exit 1
+  if [ -n "${CHART_DIR_EXPLICIT:-}" ]; then
+    echo "Could not find the simplyblock-operator chart under ${CHART_DIR}." >&2
+    exit 1
+  fi
+  echo "No simplyblock-operator chart under ${CHART_DIR}, keeping ${OUTPUT_FILE} as it is."
+  exit 0
 fi
 
 WORK_DIR="$(mktemp -d)"

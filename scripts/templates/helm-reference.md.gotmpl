@@ -19,10 +19,18 @@ A value's description is taken from its "# --" comment in values.yaml. Without
 one, the cell stays empty; plain comments are notes for chart developers and
 are not rendered.
 
+A value's type is taken from the chart's values.schema.json where the schema
+states one, because helm-docs infers "string" for every unset value. Elsewhere
+the type helm-docs infers from the default is used.
+
 Shipped credentials (passwords, secrets, and password hashes) are not printed,
-so the page does not publish a default that has to be overridden anyway. Neither
-are long object and list defaults, which would only widen the table.
+so the page does not publish a default that has to be overridden anyway. An
+unset credential (nil or empty) is printed as it is. Long object and list
+defaults are not printed either, because they would only widen the table.
 */ -}}
+{{- $schema := dict -}}
+{{- with $.Files.Get "values.schema.json" }}{{ $schema = fromJson . }}{{ end -}}
+{{- $typeNames := dict "boolean" "bool" "integer" "int" "number" "float" "array" "list" "object" "object" "string" "string" -}}
 {{- $sections := list -}}
 {{- range .Values }}
 {{- $parts := splitList "." .Key }}
@@ -54,12 +62,30 @@ are long object and list defaults, which would only widen the table.
 {{- $leaf := last $parts }}
 {{- $raw := default .Default .AutoDefault }}
 {{- $default := $raw | replace "\n" " " | replace "|" "\\|" }}
-{{- if and (regexMatch "(?i)(password|secret|secretkey|sha2)$" $leaf) (ne $raw "`\"\"`") (eq .Type "string") }}
+{{- if and (regexMatch "(?i)(password|secret|secretkey|sha2)$" $leaf) (not (has $raw (list "`\"\"`" "`nil`"))) (eq .Type "string") }}
 {{- $default = "(shipped default, see `values.yaml`)" }}
 {{- else if and (has .Type (list "object" "list")) (gt (len $default) 60) }}
 {{- $default = "(see `values.yaml`)" }}
 {{- end }}
-| `{{ .Key }}` | {{ .Type }} | {{ $default }} | {{ if .Description }}{{ .Description | replace "\n" " " | replace "|" "\\|" }}{{ else }}{{ .AutoDescription | replace "\n" " " | replace "|" "\\|" }}{{ end }} |
+{{- $node := $schema }}
+{{- $found := true }}
+{{- range $parts }}
+{{- $part := trimAll "\"" . }}
+{{- if and $found (not (contains "[" $part)) (hasKey $node "properties") (hasKey $node.properties $part) }}
+{{- $node = index $node.properties $part }}
+{{- else }}
+{{- $found = false }}
+{{- end }}
+{{- end }}
+{{- $type := .Type }}
+{{- if and $found (hasKey $node "type") }}
+{{- $names := list }}
+{{- range (kindIs "slice" $node.type | ternary $node.type (list $node.type)) }}
+{{- if ne . "null" }}{{ $names = append $names (get $typeNames . | default .) }}{{ end }}
+{{- end }}
+{{- with $names }}{{ $type = join " or " . }}{{ end }}
+{{- end }}
+| `{{ .Key }}` | {{ $type }} | {{ $default }} | {{ if .Description }}{{ .Description | replace "\n" " " | replace "|" "\\|" }}{{ else }}{{ .AutoDescription | replace "\n" " " | replace "|" "\\|" }}{{ end }} |
 {{- end }}
 {{- end }}
 {{- end }}
