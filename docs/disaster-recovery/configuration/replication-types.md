@@ -81,6 +81,9 @@ the other cluster at the scheduling interval.
 - **Topology:** Two clusters that are managed by one simplyblock control plane. A replication target is named by the
   UUID of its storage cluster, so both storage clusters must belong to the same control plane.
 - **Distance:** No latency limit applies, because writes are acknowledged locally.
+- **I/O share:** Replication runs in its own service class on both storage clusters. Its share of the I/O, while
+  client volumes compete with it, is set by `StorageCluster.spec.serviceClasses.replicationShare` (see
+  [Service Classes](../../kubernetes/usage/service-classes.md)).
 - **Recovery point:** A failover loses at most the writes since the last completed replication, which is normally at
   most one interval. The achieved RPO of a failover is recorded in its report.
 - **Readiness:** If the last group sync of an application is older than 1.5 times the scheduling interval, the

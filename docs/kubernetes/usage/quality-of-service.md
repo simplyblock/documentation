@@ -12,6 +12,9 @@ an annotation.
 Per-volume limits are distinct from the limits of a whole `StoragePool` (`spec.limits`), which cap the pool as a
 budget. See [Multi-Tenancy](../operations/security/multi-tenancy.md) for pool limits.
 
+Limits are absolute ceilings. To give groups of volumes a relative share of the cluster's I/O under load instead, see
+[Service Classes](service-classes.md).
+
 ## Option 1: StorageClass
 
 Using StorageClass instances, QoS limits can be defined for all volumes sharing the same StorageClass. This enables the

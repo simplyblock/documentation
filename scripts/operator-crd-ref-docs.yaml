@@ -24,3 +24,8 @@ render:
     - name: KubeSnapshot
       package: github.com/simplyblock/atlas/statemachine
       link: https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/statemachine/kubernetes.go
+    # Every container image field is typed as an ImageReference, which atlas-lib
+    # declares for the same reason.
+    - name: ImageReference
+      package: github.com/simplyblock/atlas/crdtypes
+      link: https://github.com/simplyblock/simplyblock-operator/blob/main/atlas-lib/crdtypes/image.go

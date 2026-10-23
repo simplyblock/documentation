@@ -155,8 +155,11 @@ throughput to avoid noisy-neighbor effects and protect more critical workloads.
 
 #### QoS Service Classes
 
-On each cluster, up to 7 service classes can be defined (class 0 is the default). For each class, cluster performance (a
-combination of IOPS and throughput) can be allocated in relative terms (e.g., 20%) for performance guarantees.
+On each cluster, up to five service classes can be defined in addition to the default class. For each class, cluster
+performance (a combination of IOPS and throughput) can be allocated in relative terms (e.g., 20%) for performance
+guarantees. Two further classes are internal: one for metadata I/O and volume migration, and one for snapshot
+replication between clusters, whose share is configurable. See [Service Classes](../kubernetes/usage/service-classes.md)
+for the configuration.
 
 General-purpose volumes can be allocated in the default class, while more critical workloads can be split across other
 service classes. If other classes do not use up their quotas, the default class can still allocate all available
