@@ -45,6 +45,11 @@ If deploying onto an OpenShift cluster, there are additional environment-specifi
 If deploying onto a Talos cluster, there are additional environment-specific steps in the [Talos](talos.md) guide
 before continuing here.
 
+### Amazon EKS
+
+If deploying onto Amazon EKS with dedicated, tainted node groups, the discovery has to tolerate the taint of the
+storage node group. The [Amazon EKS](eks.md) guide shows the values and the discovery run.
+
 ### Networking
 
 Multiple ports must be open on storage node hosts.

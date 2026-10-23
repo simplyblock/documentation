@@ -50,6 +50,10 @@ For Kubernetes-based deployments, the following Kubernetes environments and dist
 | Talos                | 1.6.7 and higher                       |
 | OpenShift            | 4.19 and higher                        |
 
+!!! warning "Amazon EKS"
+    On Amazon EKS, nodes that mount simplyblock volumes require a node image with native NVMe multipathing. The
+    default Amazon Linux 2023 image does not provide it. See [Amazon EKS](amazon-eks.md#node-images).
+
 !!! info
     SUSE Rancher is a management plane, not a Kubernetes distribution. Simplyblock is installed into the downstream
     cluster it manages, which must run a supported RKE2 or K3s version. For details, see
