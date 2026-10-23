@@ -84,7 +84,7 @@ kubectl -n simplyblock get storagefenceremediation
 |-------------------|------------------------------------------------------------------------------------|
 | `Pending`         | The fence is not confirmed by the hub yet, or host fencing is off for the cluster. |
 | `Blocked`         | A volume of another CSI driver is attached to the node. `status.message` names it. |
-| `Tainted`         | The node carries `node.kubernetes.io/out-of-service`, and its workloads moved.     |
+| `Tainted`         | The node carries `node.kubernetes.io/out-of-service`.                              |
 
 ## Maintenance
 
@@ -97,7 +97,8 @@ continues and takes over the volumes.
 
 After a partition or a node failure in a two-node edge cluster, the hub waits until both nodes see each other again
 for a stable period (30 seconds by default). The returning node catches up with the journal and the data it missed,
-then rejoins as secondary. Moving leadership back to the returning node is an optional, planned step.
+then rejoins as secondary. The `storage.simplyblock.io/fenced` taint is removed once the cluster is back to normal.
+Moving leadership back to the returning node is an optional, planned step.
 
 With host fencing, the returning node gets its host access back in a fixed order: the storage has healed, the node is
 `Ready`, and no pod from before the fence is left on it (the out-of-service taint has removed them). Then the
@@ -131,8 +132,9 @@ placement, so a one-node or two-node cluster needs no additional node for it.
 | Activation of a one-node cluster waits         | `clusterMode: Single`, exactly one storage node, and one data device per chunk of the stripe.                      |
 | Host fence stays `unavailable`                 | The CSI node plugin runs on the node, and `status.remediation.reportedHostNQNs` of the StorageNode lists two NQNs. |
 | Host fence stays `releasable`                  | The node is `Ready`, and no pod from before the fence is left on it. The operator log names the reason.            |
-| Remediation stays `Blocked`                    | A volume of another CSI driver is attached. Detach it, or set `allowForeignVolumes` in the template.               |
+| Remediation stays `Blocked`                    | A volume of another CSI driver is attached. Detach it, or set `allowForeignVolumes` on the remediation itself.     |
 | A fenced node is not remediated                | The NodeHealthCheck has `maxUnhealthy: 1` and its selector matches the node.                                       |
+| `Tainted`, but the workloads did not move      | The pods and `VolumeAttachments` of the node. `Tainted` only confirms the taint, not the eviction.                 |
 
 For a two-node edge cluster, the arbitration state is read from the Management API of the hub:
 

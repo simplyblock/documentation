@@ -100,8 +100,10 @@ nodes from writing on their own (split brain), the control plane on the hub acts
 - **No grant, no solo operation:** A node that has no grant from the hub when the hold time ends fences itself. If
   neither node reaches the hub nor the other node, both nodes fence themselves, and I/O resumes once the hub is
   reachable again.
-- **Workload restart:** With host fencing, Kubernetes restarts the workloads of the losing node on the surviving
-  node within seconds, as described in the next section.
+- **Workload restart:** The Kubernetes node of a fenced storage node is tainted with `storage.simplyblock.io/fenced`
+  (effect `NoExecute`) by the operator, so that its pods are evicted. The taint is removed once the cluster is back
+  to normal. With host fencing, the workloads of the losing node also restart on the surviving node within seconds,
+  as described in the next section.
 
 #### Availability of the Hub
 
@@ -152,8 +154,8 @@ before the fence is gone from it (step 7). The pods of the storage nodes tolerat
 losing node heals through them.
 
 A host is fenced only when its state is unknown: the node is silent, the link between the nodes is broken, or an
-operator decided. Kubernetes restarts nothing when only the storage service of a node is affected, because the
-workloads on that node keep running through the path to the other node:
+administrator overrode the arbiter. Kubernetes restarts nothing when only the storage service of a node is affected,
+because the workloads on that node keep running through the path to the other node:
 
 | Event on one node                                           | Host fenced                     | Workloads restarted on the other node |
 |-------------------------------------------------------------|---------------------------------|---------------------------------------|
@@ -168,15 +170,17 @@ hub cannot fence. The remediation therefore refuses to taint a node with a volum
 unless the remediation template allows it.
 
 Host fencing is off by default and turned on per cluster, see
-[Deploying Edge Clusters](../../kubernetes/installation/edge-clusters.md#host-fencing). Without it, a fenced node is
-left to Kubernetes' own handling of an unreachable node, and a broken link between the nodes fences both nodes.
+[Deploying Edge Clusters](../../kubernetes/installation/edge-clusters.md#host-fencing). Without it, a fenced node only
+carries the `storage.simplyblock.io/fenced` taint. Pods on an unreachable node then wait for Kubernetes' own handling
+of an unreachable node, and a broken link between the nodes fences both nodes.
 
 ### Host Connection Settings
 
-Hosts connect to a two-node edge cluster with settings that the control plane sets for these clusters and the CSI
-driver applies: an NVMe keep-alive timeout of 2 seconds, so that a frozen storage node is detected within a few
-seconds, a fast I/O failure timeout of 8 seconds, longer than the hold time, and a controller loss timeout of
-3600 seconds, so that a path to a fenced node is retried instead of dropped. Other clusters keep their settings.
+Hosts connect to a two-node edge cluster with arbitration using settings that the control plane sets and the CSI driver
+applies: an NVMe keep-alive timeout of 2 seconds, so that a frozen storage node is detected within a few seconds, a fast
+I/O failure timeout of 8 seconds, longer than the hold time, and a controller loss timeout of 3600 seconds, so that a
+path to a fenced node is retried instead of dropped. Other clusters, including two-node clusters without arbitration,
+keep their settings.
 
 ## Network Paths
 

@@ -194,10 +194,11 @@ kind: NodeHealthCheck
 metadata:
   name: simplyblock-storage-fenced
 spec:
+  # The operator labels the Kubernetes nodes of a storage cluster with the
+  # cluster's name, whether they are workers or control-plane nodes.
   selector:
-    matchExpressions:
-      - key: node-role.kubernetes.io/worker
-        operator: Exists
+    matchLabels:
+      io.simplyblock.storagenodeset: edge-site-b
   # Required: with the default minHealthy of 51%, one of two nodes is never
   # remediated.
   maxUnhealthy: 1
@@ -216,17 +217,18 @@ spec:
 |----------------------------------|-----------------------|--------------------------------------------------------------------------------------------|
 | `maxUnhealthy`                   | `1`                   | With two nodes, the default `minHealthy` of 51% blocks the remediation of either node.     |
 | `unhealthyConditions[].duration` | `2s`                  | The condition is set only after the hub has fenced the host, so no grace period is needed. |
-| `selector`                       | The two storage nodes | On a two-node OpenShift cluster with an arbiter node, the arbiter node must not match.     |
+| `selector`                       | The two storage nodes | `io.simplyblock.storagenodeset` matches control-plane nodes as well, and no arbiter node.  |
 | `allowForeignVolumes`            | `false`               | Keeps a node with volumes of another CSI driver from being force-detached unfenced.        |
 
-The NodeHealthCheck operator creates and deletes `StorageFenceRemediation` resources with its own service account.
-The Simplyblock Operator grants it access through a ClusterRole with the label
+The template is copied into each `StorageFenceRemediation` when it is created, so a change to the template only applies
+to later remediations. The NodeHealthCheck operator creates and deletes `StorageFenceRemediation` resources with its own
+service account. The Simplyblock Operator grants it access through a ClusterRole with the label
 `rbac.ext-remediation/aggregate-to-ext-remediation: "true"`, which the chart installs.
 
 ### Host Connection Settings
 
-Nothing has to be configured on the hosts. The control plane sets the NVMe keep-alive, fast I/O failure, and
-controller loss timeouts for two-node edge clusters, and the CSI driver applies them when it connects a volume.
+Nothing has to be configured on the hosts. The control plane sets the NVMe keep-alive, fast I/O failure, and controller
+loss timeouts for two-node edge clusters with arbitration, and the CSI driver applies them when it connects a volume.
 
 ## Approving and Verifying
 
