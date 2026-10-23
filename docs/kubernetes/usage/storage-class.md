@@ -117,9 +117,11 @@ keys:
 nodes, `storage.simplyblock.io/storage-pool.<POOL_UUID>`, and it is only written when `allowedNodes` is non-empty (see
 [Host Authentication and Encryption](../operations/security/authentication-encryption.md)).
 
+`priority_class` names the [service class](service-classes.md) the pool's volumes run in.
+
 !!! note
-    `compression`, `replicate`, and `priority_class` are written into the class for completeness. The CSI driver
-    does not forward them when it creates a volume.
+    `compression` and `replicate` are written into the class for completeness. The CSI driver does not forward them
+    when it creates a volume.
 
 ## StorageClass Parameters
 
