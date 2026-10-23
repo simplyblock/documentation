@@ -121,19 +121,114 @@ kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p 
     "enableArbitration": true,
     "arbitration": {
       "holdMs": 2500,
-      "leaseTtlMs": 1500
+      "leaseTtlMs": 1500,
+      "hostFencing": true
     }
   }}}'
 ```
 
-| Field                    | Default    | Description                                                                         |
-|--------------------------|------------|-------------------------------------------------------------------------------------|
-| `clusterMode`            | `Standard` | `Single` for one storage node, `Dual` for two, `Standard` for three or more.        |
-| `enableArbitration`      | Off        | Enables the arbitration of the hub between the two nodes.                           |
-| `arbitration.holdMs`     | `2500`     | How long a node holds write I/O after losing its peer. Must stay below 5 seconds.   |
-| `arbitration.leaseTtlMs` | `1500`     | Validity of the lease the hub grants each node. Must be shorter than the hold time. |
+| Field                     | Default    | Description                                                                                                  |
+|---------------------------|------------|--------------------------------------------------------------------------------------------------------------|
+| `clusterMode`             | `Standard` | `Single` for one storage node, `Dual` for two, `Standard` for three or more.                                 |
+| `enableArbitration`       | Off        | Enables the arbitration of the hub between the two nodes.                                                    |
+| `arbitration.holdMs`      | `2500`     | How long a node holds write I/O after losing its peer. Must stay below 5 seconds.                            |
+| `arbitration.leaseTtlMs`  | `1500`     | Validity of the lease the hub grants each node. Must be shorter than the hold time.                          |
+| `arbitration.hostFencing` | Off        | Lets Kubernetes restart the workloads of a fenced node on the other node. See [Host Fencing](#host-fencing). |
 
 `enableArbitration` and `arbitration` are refused unless `clusterMode` is `Dual`.
+
+## Host Fencing
+
+With host fencing, Kubernetes follows the fencing decision of the hub: when the hub fences a node, the workloads of
+that node restart on the other node within seconds. The mechanism is described in
+[Edge Clusters](../../architecture/deployment-topologies/edge-clusters.md#coordination-with-kubernetes).
+
+### Prerequisites
+
+- The NodeHealthCheck operator of the medik8s project. On OpenShift, it is the Node Health Check Operator from
+  OperatorHub. It is the component that turns the `StorageFenced` condition into a remediation.
+- All stateful workloads on the two nodes use simplyblock volumes. The out-of-service taint force-detaches every
+  volume of a node, and only simplyblock volumes are fenced. A node with a volume of another CSI driver attached is
+  not remediated unless the remediation template allows it.
+- The CSI driver runs on both nodes. Its node plugin publishes the NVMe host NQN of the node as the annotation
+  `storage.simplyblock.io/nvme-host-nqn`, which the hub needs to fence the host.
+
+### Enabling Host Fencing
+
+Host fencing is set in the deployment document as shown above, or on an existing cluster:
+
+```bash title="Turn on host fencing for a two-node edge cluster"
+kubectl -n simplyblock patch storagecluster edge-site-b --type merge \
+    -p '{"spec": {"arbitration": {"hostFencing": true}}}'
+```
+
+The operator passes the setting to the hub and reports the NVMe host NQNs of both Kubernetes nodes. Each storage node
+lists two of them, the kernel default (`nqn.2014-08.org.nvmexpress:uuid:...`) and the simplyblock form
+(`nqn.2014-08.io.simplyblock:uuid:...`):
+
+```bash title="Check the reported host NQNs"
+kubectl -n simplyblock get storagenode \
+    -o jsonpath='{range .items[*]}{.spec.workerNode}{"\t"}{.status.remediation.reportedHostNQNs}{"\n"}{end}'
+```
+
+### Configuring NodeHealthCheck
+
+The remediation template names the simplyblock remediation, and the NodeHealthCheck triggers it on the
+`StorageFenced` condition:
+
+```yaml title="storage-fence-remediation.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageFenceRemediationTemplate
+metadata:
+  name: storage-fence
+  namespace: simplyblock
+spec:
+  template:
+    spec:
+      # Refuse the out-of-service taint while a volume of another CSI driver is
+      # attached to the node.
+      allowForeignVolumes: false
+---
+apiVersion: remediation.medik8s.io/v1alpha1
+kind: NodeHealthCheck
+metadata:
+  name: simplyblock-storage-fenced
+spec:
+  # The operator labels the Kubernetes nodes of a storage cluster with the
+  # cluster's name, whether they are workers or control-plane nodes.
+  selector:
+    matchLabels:
+      io.simplyblock.storagenodeset: edge-site-b
+  # Required: with the default minHealthy of 51%, one of two nodes is never
+  # remediated.
+  maxUnhealthy: 1
+  unhealthyConditions:
+    - type: StorageFenced
+      status: "True"
+      duration: 2s
+  remediationTemplate:
+    apiVersion: storage.simplyblock.io/v1alpha2
+    kind: StorageFenceRemediationTemplate
+    namespace: simplyblock
+    name: storage-fence
+```
+
+| Setting                          | Value                 | Why                                                                                        |
+|----------------------------------|-----------------------|--------------------------------------------------------------------------------------------|
+| `maxUnhealthy`                   | `1`                   | With two nodes, the default `minHealthy` of 51% blocks the remediation of either node.     |
+| `unhealthyConditions[].duration` | `2s`                  | The condition is set only after the hub has fenced the host, so no grace period is needed. |
+| `selector`                       | The two storage nodes | `io.simplyblock.storagenodeset` matches control-plane nodes as well, and no arbiter node.  |
+| `allowForeignVolumes`            | `false`               | Keeps a node with volumes of another CSI driver from being force-detached unfenced.        |
+
+The template is copied into each `StorageFenceRemediation` when it is created, so a change to the template only applies
+to later remediations. The NodeHealthCheck operator creates and deletes `StorageFenceRemediation` resources with its own
+service account. The Simplyblock Operator grants it access through a ClusterRole with the label
+`rbac.ext-remediation/aggregate-to-ext-remediation: "true"`, which the chart installs.
+
+### Host Connection Settings
+
+Nothing has to be configured on the hosts. The control plane sets the NVMe keep-alive, fast I/O failure, and controller
+loss timeouts for two-node edge clusters with arbitration, and the CSI driver applies them when it connects a volume.
 
 ## Approving and Verifying
 
