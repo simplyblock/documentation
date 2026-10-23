@@ -46,7 +46,7 @@ _Spread_, so that no two storage nodes share the same hardware.
       With 4 sites, two can be down concurrently. The protection overhead is x2 in both cases.
     - Use synchronous replication on top of per-zone distributed erasure coding. This works across two sites 
       and survives a site outage and a local node outage concurrently. The protection overhead is x2.5.
-    - in both cases, still use a placement group of type _Spread_ for the nodes in the storage node pool per AZ.
+    - In both cases, still use a placement group of type _Spread_ for the nodes in the storage node pool per AZ.
 
 ## Node Images
 
