@@ -6,7 +6,10 @@ weight: 30050
 
 Simplyblock runs on Amazon EKS with managed node groups. A production-like layout separates the control plane, the
 storage nodes, and the workloads that consume simplyblock volumes into dedicated node groups, each tainted so that
-nothing else is scheduled onto it.
+nothing else is scheduled onto it. 
+
+!!!! info
+     Hyper-converged deployments (co-location of workloads and storage) are supported on EKS, but complicate upgrades. 
 
 ## Node Groups
 
@@ -36,6 +39,13 @@ storage nodes for performance reasons.
 Storage nodes and client nodes are best placed in a single availability zone. Traffic between availability zones adds
 latency to every write and is billed. Within the zone, storage nodes are placed into a placement group of type
 _Spread_, so that no two storage nodes share the same hardware.
+
+!!! important
+    If you have to spread storage clusters across availability zones, you have two options:
+    - Use failure domains and the zone name to label nodes with the failure domain. This works across two or four sites.
+      With 4 sites, two can be down concurrently. The protection overhead is x2 in both cases.
+    - Use synchronous replication on top of per-zone distributed erasure coding. This works across two sites 
+      and survives a site outage and a local node outage concurrently. The protection overhead is x2.5.
 
 ## Node Images
 
