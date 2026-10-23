@@ -120,6 +120,16 @@ function gen_operator_ref() {
   ./scripts/operator-reference-gen.sh
 }
 
+function gen_helm_ref() {
+  if [ ! -d ./scripts/operator-repo ]; then
+    echo "The simplyblock-operator repository is not yet available. Please run ./doc-builder update-repositories and try again."
+    exit 1
+  fi
+
+  echo "Generating Helm chart values reference..."
+  ./scripts/helm-reference-gen.sh
+}
+
 function build_css() {
   ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/docs/scripts/build-css.sh" ${IMAGE_NAME}
 }
@@ -138,6 +148,11 @@ function build() {
 
   # Generates the markdown files for the sbcli reference pages
   if ! gen_sbcli_ref; then
+    exit 1
+  fi
+
+  # Generates the Helm chart values reference from the operator repository
+  if ! gen_helm_ref; then
     exit 1
   fi
 
@@ -279,6 +294,16 @@ function run_help() {
       echo "operator repository is pinned to that reference; otherwise the latest HEAD is"
       echo "used."
     ;;
+    "gen-helm-ref")
+      echo "Generates the simplyblock-operator Helm chart values reference"
+      echo "./doc-builder gen-helm-ref"
+      echo
+      echo "Regenerates docs/reference/kubernetes/helm-values.md from the chart's values.yaml"
+      echo "in the operator repository checked out at ./scripts/operator-repo (see"
+      echo "./doc-builder update-repositories). Requires Go to be installed. Descriptions"
+      echo "are taken from the '# --' comments in values.yaml. ./doc-builder build also"
+      echo "regenerates it as part of every build."
+    ;;
     *)
       echo "Unknown command. No help available."
     ;;
@@ -344,6 +369,13 @@ case "$1" in
     gen_operator_ref
   ;;
 
+  "gen-helm-ref")
+    # Test for help requested
+    run_help "$1" "$2"
+
+    gen_helm_ref
+  ;;
+
   *)
     echo "Simplyblock Documentation Builder"
     echo "Available commands:"
@@ -351,6 +383,7 @@ case "$1" in
     echo "  ./doc-builder update-repositories      Initialized or updated external repository"
     echo "  ./doc-builder gen-sbcli-ref            Generates the sbcli reference pages"
     echo "  ./doc-builder gen-operator-ref         Generates the operator API reference page"
+    echo "  ./doc-builder gen-helm-ref             Generates the Helm chart values reference page"
     echo "  ./doc-builder serve                    Live serving content changes"
     echo "  ./doc-builder build                    Building static documentation"
     echo "  ./doc-builder build-css                Building static CSS"
