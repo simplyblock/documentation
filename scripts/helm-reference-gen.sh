@@ -17,6 +17,7 @@ fi
 CHART_DIR="${CHART_DIR:-${OPERATOR_ROOT}/helm-charts/charts/simplyblock-operator}"
 OUTPUT_FILE="${OUTPUT_FILE:-${DOCS_ROOT}/docs/reference/kubernetes/helm-values.md}"
 TEMPLATE_FILE="${TEMPLATE_FILE:-${SCRIPT_DIR}/templates/helm-reference.md.gotmpl}"
+SECTIONS_DIR="${SECTIONS_DIR:-${SCRIPT_DIR}/templates/helm-sections}"
 HELM_DOCS_VERSION="${HELM_DOCS_VERSION:-v1.14.2}"
 
 if [ ! -f "${CHART_DIR}/Chart.yaml" ]; then
@@ -35,6 +36,10 @@ mkdir -p "${WORK_DIR}/charts"
 cp -R "${CHART_DIR}" "${WORK_DIR}/charts/"
 CHART_NAME="$(basename "${CHART_DIR}")"
 cp "${TEMPLATE_FILE}" "${WORK_DIR}/charts/${CHART_NAME}/reference.md.gotmpl"
+# The section introductions are read by the template through .Files, so they
+# go into the chart copy too. -L resolves the symlinks that file several keys
+# under one section.
+cp -RL "${SECTIONS_DIR}" "${WORK_DIR}/charts/${CHART_NAME}/sections"
 
 "${WORK_DIR}/bin/helm-docs" \
   --chart-search-root "${WORK_DIR}/charts" \

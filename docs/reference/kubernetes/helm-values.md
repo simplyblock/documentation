@@ -14,13 +14,23 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 [Simplyblock Helm Chart](index.md).
 
 
-## `clusterDnsDomain`
+## Cluster Domain
+
+The DNS domain of the Kubernetes cluster. Every in-cluster address and certificate name the chart and the operator
+build, and the FoundationDB cluster file, use it. It only needs to be changed on a cluster set up with a domain other
+than `cluster.local`.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
 | `clusterDnsDomain` | string | `"cluster.local"` |  |
 
-## `image`
+## Images
+
+The `image` block sets the images of the workloads the chart renders directly. The CSI driver image is set with
+`driver.image` instead.
+
+!!! warning
+    Overriding the pinned images can leave the deployment unusable. Change them only when requested by simplyblock.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -42,67 +52,33 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `image.numaResource.tag` | string | `"latest"` |  |
 | `image.numaResource.pullPolicy` | string | `"Always"` |  |
 
-## `rbac`
+## Supporting Resources
+
+These top-level values toggle the supporting resources the chart installs next to the operator: the CSI snapshot
+controller, the CSI-Addons controller, and their CRDs where the cluster does not serve them yet.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
 | `rbac.create` | bool | `true` |  |
-
-## `snapshotcontroller`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
 | `snapshotcontroller.create` | bool | `true` |  |
-
-## `csiaddons`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
 | `csiaddons.create` | bool | `false` |  |
 
-## `externallyManagedSecret`
+## CSI Credentials
+
+The `externallyManagedSecret`, `csiConfig`, `csiSecret`, and `multiCluster` values render the
+`simplyblock-csi-secret-v2` Secret with cluster credentials for the CSI driver. The credentials of the clusters the
+operator creates are maintained by the operator, so these values are only needed for clusters it does not create. A
+pool named in `csiConfig` or `multiCluster` also gets a block StorageClass, because no `StoragePool` exists for such a
+cluster to write one.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
 | `externallyManagedSecret.create` | bool | `true` |  |
-
-## `spdkdev`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
-| `spdkdev.create` | bool | `false` |  |
-
-## `csiConfig`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
 | `csiConfig.simplybk.uuid` | string | `nil` |  |
 | `csiConfig.simplybk.ip` | string | `nil` |  |
 | `csiConfig.simplybk.pool` | string | `nil` |  |
 | `csiConfig.simplybk.storageClassName` | string | `nil` |  |
-
-## `csiSecret`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
 | `csiSecret.simplybk.secret` | string | (shipped default, see `values.yaml`) |  |
-
-## `podAnnotations`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
-| `podAnnotations` | object | `{}` |  |
-
-## `simplyBlockAnnotations`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
-| `simplyBlockAnnotations` | object | `{}` |  |
-
-## `multiCluster`
-
-| Value | Type | Default | Description |
-|-------|------|---------|-------------|
 | `multiCluster.enable` | bool | `false` |  |
 | `multiCluster.clusters[0].cluster_id` | string | `nil` |  |
 | `multiCluster.clusters[0].secret` | string | (shipped default, see `values.yaml`) |  |
@@ -110,13 +86,22 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `multiCluster.clusters[0].pool` | string | `nil` |  |
 | `multiCluster.clusters[0].storageClassName` | string | `nil` |  |
 
-## `deployment`
+## Deployment Profile
+
+The `deployment` block selects which of the control plane, the CSI driver, and the first discovery run the chart
+renders. See [Deployment Profiles](index.md#deployment-profiles).
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
 | `deployment.profile` | string | `"standalone"` |  |
 
-## `discovery`
+## Discovery
+
+The `discovery` block configures the first discovery run, rendered for the `standalone` profile as an `OperatorOps`
+with the `Discover` action. The run inspects the workers and writes a `ClusterDeploymentConfig` in `Draft`. Nothing is
+deployed until the draft is approved. A finished run is not repeated on upgrade, so a changed value has no effect after
+the first installation. See
+[Narrowing the First Discovery Run](index.md#narrowing-the-first-discovery-run).
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -143,7 +128,11 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `discovery.draft.cluster.enableChecksumValidation` | string | `nil` |  |
 | `discovery.draft.cluster.enableAtomicity4K` | string | `nil` |  |
 
-## `driver`
+## CSI Driver
+
+The `driver` block is copied into `SimplyblockDriver/simplyblock`. From it, the CSI node and controller plugins, their
+RBAC, and the CSIDriver registration are deployed by the operator. An empty field takes the version shipped with the
+operator release.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -165,6 +154,14 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `driver.sidecarImages.healthMonitor` | string | `""` |  |
 | `driver.sidecarImages.nodeDriverRegistrar` | string | `""` |  |
 | `driver.sidecarImages.csiAddons` | string | `""` |  |
+
+## pNFS Metadata Server
+
+The `driver.pnfs` block configures the pNFS metadata server, which serves ReadWriteMany volumes. One metadata server
+pod runs per storage cluster, on a node with `/dev/kvm`. See [pNFS Volumes](../../kubernetes/usage/pnfs.md).
+
+| Value | Type | Default | Description |
+|-------|------|---------|-------------|
 | `driver.pnfs.mds.enabled` | bool | `true` |  |
 | `driver.pnfs.mds.nodeSelector` | object | `{}` |  |
 | `driver.pnfs.mds.tolerations` | list | `[]` |  |
@@ -174,7 +171,11 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `driver.pnfs.mds.dataNetwork.rangeStart` | string | `""` |  |
 | `driver.pnfs.mds.dataNetwork.rangeEnd` | string | `""` |  |
 
-## `controlplane`
+## Control Plane
+
+The `controlplane` block configures the control plane that `ControlPlane/simplyblock` describes, and the placement of
+the workloads the chart renders around it. The `local` values apply to the `standalone` profile, the `managed` values
+to the `managed` profile.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -183,6 +184,27 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `controlplane.managed.credentialsSecretRef` | string | `""` |  |
 | `controlplane.managed.caBundleSecretRef` | string | `""` |  |
 | `controlplane.managed.storageNodeImage` | string | `""` |  |
+| `controlplane.tolerations.create` | bool | `false` |  |
+| `controlplane.tolerations.list[0].operator` | string | `"Exists"` |  |
+| `controlplane.tolerations.list[0].effect` | string | `nil` |  |
+| `controlplane.tolerations.list[0].key` | string | `nil` |  |
+| `controlplane.tolerations.list[0].value` | string | `nil` |  |
+| `controlplane.nodeSelector.create` | bool | `false` |  |
+| `controlplane.nodeSelector.key` | string | `nil` |  |
+| `controlplane.nodeSelector.value` | string | `nil` |  |
+| `controlplane.storageclass.name` | string | `nil` |  |
+
+## Observability
+
+The `controlplane.observability` block installs the optional logging, metrics, and dashboard stack: Graylog, Grafana,
+Thanos, Fluent Bit, and the MongoDB and OpenSearch subcharts. It is intended for the `standalone` profile. See
+[Observability and Alert Notifications](index.md#observability-and-alert-notifications).
+
+!!! warning
+    The observability stack ships with default passwords. They must be overridden in production.
+
+| Value | Type | Default | Description |
+|-------|------|---------|-------------|
 | `controlplane.observability.enabled` | bool | `false` |  |
 | `controlplane.observability.secret` | string | (shipped default, see `values.yaml`) |  |
 | `controlplane.observability.mongodb.installCRDs` | bool | `true` |  |
@@ -198,6 +220,22 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `controlplane.observability.grafana.tag` | string | `"10.0.12"` |  |
 | `controlplane.observability.grafana.pullPolicy` | string | `"IfNotPresent"` |  |
 | `controlplane.observability.grafana.endpoint` | string | `""` |  |
+| `controlplane.observability.thanos.repository` | string | `"quay.io/simplyblock-io/thanos"` |  |
+| `controlplane.observability.thanos.tag` | string | `"v0.31.0"` |  |
+| `controlplane.observability.thanos.pullPolicy` | string | `"IfNotPresent"` |  |
+| `controlplane.observability.fluentbit.repository` | string | `"quay.io/simplyblock-io/fluent-bit"` |  |
+| `controlplane.observability.fluentbit.tag` | string | `"1.8.11"` |  |
+| `controlplane.observability.fluentbit.pullPolicy` | string | `"IfNotPresent"` |  |
+
+## Alert Notifications
+
+The `controlplane.observability.grafana.notifications` block provisions receivers into the `grafana-alerts` contact
+point. Every enabled channel is notified for every simplyblock alert. With none enabled, no contact point and no
+notification policy are provisioned. The credentials are rendered into the `simplyblock-grafana-alerting` ConfigMap, so
+read access to the release namespace is read access to them.
+
+| Value | Type | Default | Description |
+|-------|------|---------|-------------|
 | `controlplane.observability.grafana.notifications.slack.enabled` | bool | `false` |  |
 | `controlplane.observability.grafana.notifications.slack.url` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.teams.enabled` | bool | `false` |  |
@@ -222,50 +260,33 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `controlplane.observability.grafana.notifications.webhook.authorizationScheme` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.webhook.authorizationCredentials` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.webhook.maxAlerts` | int | `0` |  |
-| `controlplane.observability.thanos.repository` | string | `"quay.io/simplyblock-io/thanos"` |  |
-| `controlplane.observability.thanos.tag` | string | `"v0.31.0"` |  |
-| `controlplane.observability.thanos.pullPolicy` | string | `"IfNotPresent"` |  |
-| `controlplane.observability.minio.repository` | string | `"quay.io/simplyblock-io/minio"` |  |
-| `controlplane.observability.minio.tag` | string | `"RELEASE.2024-01-16T16-07-38Z"` |  |
-| `controlplane.observability.minio.pullPolicy` | string | `"IfNotPresent"` |  |
-| `controlplane.observability.minio.mcRepository` | string | `"quay.io/simplyblock-io/minio-client"` |  |
-| `controlplane.observability.minio.mcTag` | string | `"RELEASE.2024-01-16T16-06-34Z"` |  |
-| `controlplane.observability.minio.bucket` | string | `"thanos"` |  |
-| `controlplane.observability.minio.accessKey` | string | `"minioadmin"` |  |
-| `controlplane.observability.minio.secretKey` | string | (shipped default, see `values.yaml`) |  |
-| `controlplane.observability.minio.storageSize` | string | `"50Gi"` |  |
-| `controlplane.observability.minio.storageClass` | string | `nil` |  |
-| `controlplane.observability.fluentbit.repository` | string | `"quay.io/simplyblock-io/fluent-bit"` |  |
-| `controlplane.observability.fluentbit.tag` | string | `"1.8.11"` |  |
-| `controlplane.observability.fluentbit.pullPolicy` | string | `"IfNotPresent"` |  |
-| `controlplane.tolerations.create` | bool | `false` |  |
-| `controlplane.tolerations.list[0].operator` | string | `"Exists"` |  |
-| `controlplane.tolerations.list[0].effect` | string | `nil` |  |
-| `controlplane.tolerations.list[0].key` | string | `nil` |  |
-| `controlplane.tolerations.list[0].value` | string | `nil` |  |
-| `controlplane.nodeSelector.create` | bool | `false` |  |
-| `controlplane.nodeSelector.key` | string | `nil` |  |
-| `controlplane.nodeSelector.value` | string | `nil` |  |
-| `controlplane.storageclass.name` | string | `nil` |  |
-| `controlplane.storageclass.allowedTopologyZones` | list | `[]` |  |
+
+## FoundationDB
+
+The `controlplane.foundationdb` block configures the FoundationDB cluster that stores the control plane state of the
+`standalone` profile. See [Dedicated Control Plane Nodes](index.md#dedicated-control-plane-nodes).
+
+| Value | Type | Default | Description |
+|-------|------|---------|-------------|
 | `controlplane.foundationdb.installCRDs` | bool | `true` |  |
 | `controlplane.foundationdb.redundancyMode` | string | `"double"` |  |
 | `controlplane.foundationdb.nodeSelector` | object | `{}` |  |
 | `controlplane.foundationdb.tolerations` | list | `[]` |  |
-| `controlplane.foundationdb.image.operator.repository` | string | `"quay.io/simplyblock-io/fdb-kubernetes-operator"` |  |
-| `controlplane.foundationdb.image.operator.tag` | string | `"v2.13.0"` |  |
-| `controlplane.foundationdb.image.monitor.repository` | string | `"quay.io/simplyblock-io/fdb-kubernetes-monitor"` |  |
-| `controlplane.foundationdb.image.monitor.tag` | string | `"7.3.63"` |  |
-| `controlplane.foundationdb.image.mainContainer.baseImage` | string | `"quay.io/simplyblock-io/fdb-kubernetes-monitor"` |  |
 | `controlplane.foundationdb.exporter.enabled` | bool | `true` |  |
 
-## `volumeMigration`
+## Volume Migration
+
+The `volumeMigration` block selects the kind volume moves are raised with. Volume moves are raised when the
+rebalancer moves a volume off a busy node, when a node is drained, and when a claim is pinned to another node.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
 | `volumeMigration.legacy` | bool | `false` |  |
 
-## `csiLink`
+## CSI Link
+
+The `csiLink` block configures the endpoint the CSI node and controller pods dial on the operator. Through it, the
+operator queries the storage state of a node without anything listening on the node.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -274,7 +295,11 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `csiLink.serviceName` | string | `"simplyblock-csi-link"` |  |
 | `csiLink.audience` | string | `"simplyblock-csi-link"` |  |
 
-## `metricsAPI`
+## Metrics API
+
+The `metricsAPI` block configures the aggregated API `metrics.simplyblock.io/v1alpha2`. It serves capacity readings of
+storage clusters, storage nodes, storage pools, storage devices, and logical volumes, computed on demand and never
+stored. See [Capacity Metrics API](../../kubernetes/operations/monitoring/index.md#capacity-metrics-api).
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -282,7 +307,10 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `metricsAPI.port` | int | `6443` |  |
 | `metricsAPI.prometheusURL` | string | `"http://simplyblock-prometheus:9090"` |  |
 
-## `mongodb-kubernetes`
+## MongoDB
+
+The `mongodb-kubernetes` block is passed to the upstream `mongodb-kubernetes` chart, which is installed with
+`controlplane.observability.enabled` and runs the Graylog database.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -308,7 +336,10 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `mongodb-kubernetes.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchExpressions[0].values[0]` | string | `"mongodb"` |  |
 | `mongodb-kubernetes.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey` | string | `"kubernetes.io/hostname"` |  |
 
-## `opensearch`
+## OpenSearch
+
+The `opensearch` block is passed to the upstream `opensearch` chart, which is installed with
+`controlplane.observability.enabled` and stores the Graylog log data.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -338,7 +369,10 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `opensearch.extraEnvs[3].value` | string | `"true"` |  |
 | `opensearch.securityConfig.enabled` | bool | `false` |  |
 
-## `reloader`
+## Reloader
+
+The `reloader` block is passed to the upstream Stakater `reloader` chart. Reloader rolls the workloads that mount the
+FoundationDB cluster file when the coordinators move.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -351,7 +385,10 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `reloader.reloader.deployment.nodeSelector` | object | `{}` |  |
 | `reloader.reloader.deployment.tolerations` | list | `[]` |  |
 
-## `prometheus`
+## Prometheus
+
+The `prometheus` block is passed to the upstream `prometheus` chart. The instance stores the metrics the control plane
+pushes and ships them to Thanos. Values not listed here take the upstream defaults.
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -441,7 +478,11 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `prometheus.defaultBackend.image.image` | string | `"defaultbackend-amd64"` |  |
 | `prometheus.defaultBackend.image.tag` | string | `"1.5"` |  |
 
-## `controlCenter`
+## Control Center
+
+The `controlCenter` block deploys the Control Center web console. The console proxies the Kubernetes API, so
+authentication has to be put in front of it before it is exposed. See
+[Control Center With an Ingress](index.md#control-center-with-an-ingress).
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -514,7 +555,11 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `controlCenter.tolerations` | list | `[]` |  |
 | `controlCenter.podAnnotations` | object | `{}` |  |
 
-## `ramen`
+## Ramen
+
+The `ramen` block installs the upstream Ramen disaster recovery operators. The hub operator runs on the management
+cluster and requires Open Cluster Management. The DR cluster operator runs on each managed cluster that holds protected
+volumes. Both are off by default. See [Installing Disaster Recovery](../../disaster-recovery/install/index.md).
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
@@ -542,7 +587,11 @@ the chart's `values.yaml`. What the chart renders, and example values files for 
 | `ramen.nodeSelector` | object | `{}` |  |
 | `ramen.tolerations` | list | `[]` |  |
 
-## `tls`
+## Transport Security
+
+The `tls` block is copied into the `tls` blocks of `ControlPlane/simplyblock` and `SimplyblockDriver/simplyblock`. TLS
+requires cert-manager or OpenShift. Mutual TLS is only allowed with cert-manager, and turning TLS off requires turning
+mutual TLS off with it. See [Securing the Control Plane](../../kubernetes/installation/security.md).
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|

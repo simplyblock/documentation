@@ -1,7 +1,19 @@
 {{- /*
-Renders the values of the simplyblock-operator Helm chart with helm-docs,
-one table per top-level key. Run scripts/helm-reference-gen.sh, not helm-docs
-directly: the script adds the frontmatter and writes the page into docs/.
+Renders the values of the simplyblock-operator Helm chart with helm-docs, one
+section per category. Run scripts/helm-reference-gen.sh, not helm-docs
+directly: the script copies the section files into the chart, adds the
+frontmatter, and writes the page into docs/.
+
+A section is introduced by a file in scripts/templates/helm-sections, named
+after a key path (discovery.md, controlplane.observability.md) and holding the
+heading and the introduction. A value belongs to the longest key path that has
+a file, and sections with identical text are one section, so a symlink files
+several small keys under one heading. A top-level key without a file still gets
+a section, headed by the key itself, so no value goes missing.
+
+Sections are ordered by the first value that belongs to them, and every value
+of a section is listed in its table, even where values.yaml interleaves them
+with a nested section.
 
 A value's description is taken from its "# --" comment in values.yaml. Without
 one, the cell stays empty; plain comments are notes for chart developers and
@@ -11,18 +23,35 @@ Shipped credentials (passwords, secrets, and password hashes) are not printed,
 so the page does not publish a default that has to be overridden anyway. Neither
 are long object and list defaults, which would only widen the table.
 */ -}}
-{{- $prev := "" -}}
+{{- $sections := list -}}
 {{- range .Values }}
-{{- $top := index (splitList "." .Key) 0 }}
-{{- if ne $top $prev }}
-{{- $prev = $top }}
+{{- $parts := splitList "." .Key }}
+{{- $section := "" }}
+{{- $prefix := "" }}
+{{- range $i, $part := $parts }}
+{{- $prefix = ternary $part (printf "%s.%s" $prefix $part) (eq $i 0) }}
+{{- with $.Files.Get (printf "sections/%s.md" $prefix) }}{{ $section = . }}{{ end }}
+{{- end }}
+{{- if not $section }}{{ $section = printf "## `%s`" (index $parts 0) }}{{ end }}
+{{- if not (has $section $sections) }}{{ $sections = append $sections $section }}{{ end }}
+{{- end }}
+{{- range $current := $sections }}
 
-## `{{ $top }}`
+{{ trim $current }}
 
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
+{{- range $.Values }}
+{{- $parts := splitList "." .Key }}
+{{- $section := "" }}
+{{- $prefix := "" }}
+{{- range $i, $part := $parts }}
+{{- $prefix = ternary $part (printf "%s.%s" $prefix $part) (eq $i 0) }}
+{{- with $.Files.Get (printf "sections/%s.md" $prefix) }}{{ $section = . }}{{ end }}
 {{- end }}
-{{- $leaf := last (splitList "." .Key) }}
+{{- if not $section }}{{ $section = printf "## `%s`" (index $parts 0) }}{{ end }}
+{{- if eq $section $current }}
+{{- $leaf := last $parts }}
 {{- $raw := default .Default .AutoDefault }}
 {{- $default := $raw | replace "\n" " " | replace "|" "\\|" }}
 {{- if and (regexMatch "(?i)(password|secret|secretkey|sha2)$" $leaf) (ne $raw "`\"\"`") (eq .Type "string") }}
@@ -31,4 +60,6 @@ are long object and list defaults, which would only widen the table.
 {{- $default = "(see `values.yaml`)" }}
 {{- end }}
 | `{{ .Key }}` | {{ .Type }} | {{ $default }} | {{ if .Description }}{{ .Description | replace "\n" " " | replace "|" "\\|" }}{{ else }}{{ .AutoDescription | replace "\n" " " | replace "|" "\\|" }}{{ end }} |
+{{- end }}
+{{- end }}
 {{- end }}
