@@ -41,11 +41,12 @@ latency to every write and is billed. Within the zone, storage nodes are placed 
 _Spread_, so that no two storage nodes share the same hardware.
 
 !!! important
-    If you have to spread storage clusters across availability zones, you have two options:
+    To spread storage clusters across availability zones, you have two options:
     - Use failure domains and the zone name to label nodes with the failure domain. This works across two or four sites.
       With 4 sites, two can be down concurrently. The protection overhead is x2 in both cases.
     - Use synchronous replication on top of per-zone distributed erasure coding. This works across two sites 
       and survives a site outage and a local node outage concurrently. The protection overhead is x2.5.
+    - in both cases, still use a placement group of type _Spread_ for the nodes in the storage node pool per AZ.
 
 ## Node Images
 
