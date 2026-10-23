@@ -1,0 +1,34 @@
+{{- /*
+Renders the values of the simplyblock-operator Helm chart with helm-docs,
+one table per top-level key. Run scripts/helm-reference-gen.sh, not helm-docs
+directly: the script adds the frontmatter and writes the page into docs/.
+
+A value's description is taken from its "# --" comment in values.yaml. Without
+one, the cell stays empty; plain comments are notes for chart developers and
+are not rendered.
+
+Shipped credentials (passwords, secrets, and password hashes) are not printed,
+so the page does not publish a default that has to be overridden anyway. Neither
+are long object and list defaults, which would only widen the table.
+*/ -}}
+{{- $prev := "" -}}
+{{- range .Values }}
+{{- $top := index (splitList "." .Key) 0 }}
+{{- if ne $top $prev }}
+{{- $prev = $top }}
+
+## `{{ $top }}`
+
+| Value | Type | Default | Description |
+|-------|------|---------|-------------|
+{{- end }}
+{{- $leaf := last (splitList "." .Key) }}
+{{- $raw := default .Default .AutoDefault }}
+{{- $default := $raw | replace "\n" " " | replace "|" "\\|" }}
+{{- if and (regexMatch "(?i)(password|secret|secretkey|sha2)$" $leaf) (ne $raw "`\"\"`") (eq .Type "string") }}
+{{- $default = "(shipped default, see `values.yaml`)" }}
+{{- else if and (has .Type (list "object" "list")) (gt (len $default) 60) }}
+{{- $default = "(see `values.yaml`)" }}
+{{- end }}
+| `{{ .Key }}` | {{ .Type }} | {{ $default }} | {{ if .Description }}{{ .Description | replace "\n" " " | replace "|" "\\|" }}{{ else }}{{ .AutoDescription | replace "\n" " " | replace "|" "\\|" }}{{ end }} |
+{{- end }}
