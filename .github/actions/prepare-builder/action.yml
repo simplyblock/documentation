@@ -1,0 +1,29 @@
+name: "Prepare Documentation Builder"
+description: >
+  Builds the simplyblock/mkdocs-builder image with Buildx and loads it into the
+  local Docker daemon, so the doc-builder targets find it under the same tag as
+  after ./doc-builder build-image. The layers are cached in the GitHub Actions
+  cache, so a job only rebuilds what changed in the Dockerfile.
+
+runs:
+  using: composite
+  steps:
+    # The Dockerfile installs its pip and npm packages unpinned. A cache keyed
+    # on the Dockerfile alone would freeze them until the next Dockerfile
+    # change, so the cache scope also carries the ISO week: the first build of
+    # a week starts fresh and picks up the current package versions.
+    - name: "Determine Cache Scope"
+      id: cache-scope
+      shell: bash
+      run: |
+        echo "scope=mkdocs-builder-$(date -u +%G-W%V)" >> "${GITHUB_OUTPUT}"
+    - name: "Set Up Docker Buildx"
+      uses: docker/setup-buildx-action@v3
+    - name: "Build Documentation Builder Image"
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        load: true
+        tags: simplyblock/mkdocs-builder
+        cache-from: type=gha,scope=${{ steps.cache-scope.outputs.scope }}
+        cache-to: type=gha,mode=max,scope=${{ steps.cache-scope.outputs.scope }}

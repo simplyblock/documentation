@@ -34,8 +34,7 @@ jobs:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
       - name: "Prepare Documentation Builder"
-        run: |
-          ./doc-builder build-image
+        uses: ./.github/actions/prepare-builder
       - name: "Build Documentation Test"
         run: |
           ./doc-builder update-repositories
@@ -55,8 +54,7 @@ jobs:
         run: |
           echo "slug=${HEAD_REF//\//-}" >> "${GITHUB_OUTPUT}"
       - name: "Prepare Documentation Builder"
-        run: |
-          ./doc-builder build-image
+        uses: ./.github/actions/prepare-builder
       - name: "Build Documentation"
         run: |
           ./doc-builder update-repositories

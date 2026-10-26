@@ -29,8 +29,7 @@ jobs:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
       - name: "Prepare Documentation Builder"
-        run: |
-          ./doc-builder build-image
+        uses: ./.github/actions/prepare-builder
       # The sbcli reference is not committed, and the operator and Helm chart
       # references follow the operator repository, so all three are generated
       # before the checks run. Without them the links into the reference pages

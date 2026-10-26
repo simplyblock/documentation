@@ -35,8 +35,7 @@ jobs:
           fetch-depth: 1
           token: '${{ github.token }}'
       - name: "Prepare Documentation Builder"
-        run: |
-          ./doc-builder build-image
+        uses: ./.github/actions/prepare-builder
       - name: "Adjust Release Name: ${{ github.ref_name }}"
         id: release-name
         env:
