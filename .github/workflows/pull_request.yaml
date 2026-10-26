@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
+      - name: "Set Up Go Tools"
+        uses: ./.github/actions/go-tools
       - name: "Prepare Documentation Builder"
         run: |
           ./doc-builder build-image
@@ -54,6 +56,8 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
         run: |
           echo "slug=${HEAD_REF//\//-}" >> "${GITHUB_OUTPUT}"
+      - name: "Set Up Go Tools"
+        uses: ./.github/actions/go-tools
       - name: "Prepare Documentation Builder"
         run: |
           ./doc-builder build-image
