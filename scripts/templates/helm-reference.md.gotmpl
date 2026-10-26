@@ -21,7 +21,9 @@ are not rendered.
 
 A value's type is taken from the chart's values.schema.json where the schema
 states one, because helm-docs infers "string" for every unset value. Elsewhere
-the type helm-docs infers from the default is used.
+the type helm-docs infers from the default is used. A value the schema
+restricts to an enum gets the allowed values appended to its description, so
+the page lists exactly what Helm accepts.
 
 Shipped credentials (passwords, secrets, and password hashes) are not printed,
 so the page does not publish a default that has to be overridden anyway. An
@@ -77,6 +79,11 @@ defaults are not printed either, because they would only widen the table.
 {{- $found = false }}
 {{- end }}
 {{- end }}
+{{- if and $found (hasKey $node "$ref") }}
+{{- $definitions := $schema.definitions | default (index $schema "$defs") | default dict }}
+{{- $name := last (splitList "/" (index $node "$ref")) }}
+{{- if hasKey $definitions $name }}{{ $node = merge (dict) $node (index $definitions $name) }}{{ end }}
+{{- end }}
 {{- $type := .Type }}
 {{- if and $found (hasKey $node "type") }}
 {{- $names := list }}
@@ -85,7 +92,18 @@ defaults are not printed either, because they would only widen the table.
 {{- end }}
 {{- with $names }}{{ $type = join " or " . }}{{ end }}
 {{- end }}
-| `{{ .Key }}` | {{ $type }} | {{ $default }} | {{ if .Description }}{{ .Description | replace "\n" " " | replace "|" "\\|" }}{{ else }}{{ .AutoDescription | replace "\n" " " | replace "|" "\\|" }}{{ end }} |
+{{- $description := .Description | default .AutoDescription | replace "\n" " " | replace "|" "\\|" }}
+{{- if and $found (hasKey $node "enum") }}
+{{- $values := list }}
+{{- range $node.enum }}{{ if not (kindIs "invalid" .) }}{{ $values = append $values (printf "`%v`" .) }}{{ end }}{{ end }}
+{{- $allowed := "" }}
+{{- if eq (len $values) 1 }}{{ $allowed = first $values }}
+{{- else if eq (len $values) 2 }}{{ $allowed = join " or " $values }}
+{{- else if $values }}{{ $allowed = printf "%s, or %s" (join ", " (initial $values)) (last $values) }}
+{{- end }}
+{{- with $allowed }}{{ $description = trim (printf "%s One of %s." $description .) }}{{ end }}
+{{- end }}
+| `{{ .Key }}` | {{ $type }} | {{ $default }} | {{ $description }} |
 {{- end }}
 {{- end }}
 {{- end }}
