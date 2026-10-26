@@ -48,8 +48,7 @@ jobs:
             exit 1
           fi
       - name: "Prepare Documentation Builder"
-        run: |
-          ./doc-builder build-image
+        uses: ./.github/actions/prepare-builder
       - name: "Lock sbcli/sbcli version"
         run: |
           [ -f ./scripts/sbcli.lock ] || echo "${{ env.RELEASE_NAME }}" > ./scripts/sbcli.lock
