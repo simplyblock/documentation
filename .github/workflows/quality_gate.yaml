@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
+      - name: "Set Up Go Tools"
+        uses: ./.github/actions/go-tools
       - name: "Prepare Documentation Builder"
         uses: ./.github/actions/prepare-builder
       # The sbcli reference is not committed, and the operator and Helm chart

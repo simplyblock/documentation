@@ -1,0 +1,36 @@
+name: "Set Up Go Tools"
+description: >
+  Installs Go and restores the module and build caches for the tools the
+  reference generators compile: crd-ref-docs (scripts/operator-reference-gen.sh)
+  and helm-docs (scripts/helm-reference-gen.sh). Without it, every job
+  downloads a Go toolchain, about 70 modules, and compiles both tools.
+
+runs:
+  using: composite
+  steps:
+    # crd-ref-docs is built from its master branch and its go.mod asks for a
+    # newer Go than the runner ships, so the current stable release is
+    # installed rather than letting the go command download a toolchain.
+    - name: "Set Up Go"
+      uses: actions/setup-go@v5
+      with:
+        go-version: stable
+        cache: false
+    # setup-go keys its own cache on a go.sum, which this repository does not
+    # have. crd-ref-docs follows master, so a key on the generator scripts
+    # alone would keep its modules forever. The ISO week in the key refreshes
+    # the cache once a week; the scripts in it refresh it when a pin changes.
+    - name: "Determine Cache Week"
+      id: cache-week
+      shell: bash
+      run: |
+        echo "week=$(date -u +%G-W%V)" >> "${GITHUB_OUTPUT}"
+    - name: "Restore Go Caches"
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: go-tools-${{ runner.os }}-${{ steps.cache-week.outputs.week }}-${{ hashFiles('scripts/operator-reference-gen.sh', 'scripts/helm-reference-gen.sh') }}
+        restore-keys: |
+          go-tools-${{ runner.os }}-${{ steps.cache-week.outputs.week }}-

@@ -34,6 +34,8 @@ jobs:
           path: deployment
           fetch-depth: 1
           token: '${{ github.token }}'
+      - name: "Set Up Go Tools"
+        uses: ./.github/actions/go-tools
       - name: "Prepare Documentation Builder"
         uses: ./.github/actions/prepare-builder
       - name: "Adjust Release Name: ${{ github.ref_name }}"

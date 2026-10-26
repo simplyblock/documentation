@@ -47,6 +47,8 @@ jobs:
             echo "Release ${RELEASE_NAME} does not exist"
             exit 1
           fi
+      - name: "Set Up Go Tools"
+        uses: ./.github/actions/go-tools
       - name: "Prepare Documentation Builder"
         uses: ./.github/actions/prepare-builder
       - name: "Lock sbcli/sbcli version"
