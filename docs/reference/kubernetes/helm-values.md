@@ -46,7 +46,7 @@ The `image` block sets the images of the workloads the chart renders directly. T
 | `image.operator.repository` | string | `"quay.io/simplyblock-io/simplyblock-operator"` |  |
 | `image.operator.tag` | string | `"main"` |  |
 | `image.operator.pullPolicy` | string | `"Always"` |  |
-| `image.rebalancer.repository` | string | `"quay.io/simplyblock-io/simplyblock-rebalancer"` |  |
+| `image.rebalancer.repository` | string | `""` |  |
 | `image.rebalancer.tag` | string | `""` |  |
 | `image.numaResource.repository` | string | `"quay.io/simplyblock-io/numa-resource-plugin"` |  |
 | `image.numaResource.tag` | string | `"latest"` |  |
@@ -139,7 +139,7 @@ operator release.
 | `driver.driverName` | string | `"csi.simplyblock.io"` |  |
 | `driver.image.repository` | string | `""` |  |
 | `driver.image.tag` | string | `""` |  |
-| `driver.image.pullPolicy` | string | `"Always"` |  |
+| `driver.image.pullPolicy` | string | `"Always"` | One of `Always`, `Never`, or `IfNotPresent`. |
 | `driver.controllerReplicas` | int | `1` |  |
 | `driver.nodeSelector` | object | `{}` |  |
 | `driver.tolerations` | list | `[]` |  |
@@ -242,7 +242,7 @@ read access to the release namespace is read access to them.
 | `controlplane.observability.grafana.notifications.teams.url` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.pagerduty.enabled` | bool | `false` |  |
 | `controlplane.observability.grafana.notifications.pagerduty.integrationKey` | string | `""` |  |
-| `controlplane.observability.grafana.notifications.pagerduty.severity` | string | `"critical"` |  |
+| `controlplane.observability.grafana.notifications.pagerduty.severity` | string | `"critical"` | One of `info`, `warning`, `error`, or `critical`. |
 | `controlplane.observability.grafana.notifications.pagerduty.class` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.pagerduty.component` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.pagerduty.group` | string | `""` |  |
@@ -251,10 +251,10 @@ read access to the release namespace is read access to them.
 | `controlplane.observability.grafana.notifications.opsgenie.apiUrl` | string | `"https://api.opsgenie.com/v2/alerts"` |  |
 | `controlplane.observability.grafana.notifications.opsgenie.autoClose` | bool | `true` |  |
 | `controlplane.observability.grafana.notifications.opsgenie.overridePriority` | bool | `false` |  |
-| `controlplane.observability.grafana.notifications.opsgenie.sendTagsAs` | string | `"tags"` |  |
+| `controlplane.observability.grafana.notifications.opsgenie.sendTagsAs` | string | `"tags"` | One of `tags`, `details`, or `both`. |
 | `controlplane.observability.grafana.notifications.webhook.enabled` | bool | `false` |  |
 | `controlplane.observability.grafana.notifications.webhook.url` | string | `""` |  |
-| `controlplane.observability.grafana.notifications.webhook.httpMethod` | string | `"POST"` |  |
+| `controlplane.observability.grafana.notifications.webhook.httpMethod` | string | `"POST"` | One of `POST` or `PUT`. |
 | `controlplane.observability.grafana.notifications.webhook.username` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.webhook.password` | string | `""` |  |
 | `controlplane.observability.grafana.notifications.webhook.authorizationScheme` | string | `""` |  |
@@ -597,7 +597,7 @@ turning TLS off require `tls.mutual_enabled: false`. See
 | Value | Type | Default | Description |
 |-------|------|---------|-------------|
 | `tls.enabled` | bool | `true` |  |
-| `tls.provider` | string | `"cert-manager"` |  |
+| `tls.provider` | string | `"cert-manager"` | One of `openshift` or `cert-manager`. |
 | `tls.cert-manager.createSelfSignedIssuer` | bool | `true` |  |
 | `tls.cert-manager.cluster-issuer` | string | `"selfsigned"` |  |
 | `tls.cert-manager.namespace` | string | `"cert-manager"` |  |
