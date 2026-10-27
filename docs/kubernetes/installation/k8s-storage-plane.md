@@ -237,9 +237,12 @@ existing cluster, because a growth document adds nodes to a cluster whose settin
 
 ### Node Groups and Devices
 
-`spec.nodeSets` is how the workers are grouped. A set is an organizational unit, usually a rack; a group within it
-is the set of workers that share one configuration. Workers whose hardware differs go in their own group rather
-than being tuned individually.
+`spec.nodeSets` is how the workers are grouped. A node set becomes one storage cluster, and a group within it is the
+set of workers that share one configuration. Workers whose hardware differs go in their own group rather than being
+tuned individually. Racks and zones are groups of one node set, each with its own `failureDomain`.
+
+A document with a single node set creates a standalone cluster. A document with several node sets creates a
+supercluster, with one placement group per node set, see [Superclusters](#superclusters) below.
 
 | Level               | Bound    |
 |---------------------|----------|
@@ -253,7 +256,7 @@ Each group carries:
 |-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | `workers`                         | The Kubernetes node names.                                                                                                         |
 | `mgmtInterface`, `dataInterfaces` | The management and data network interfaces, up to 32 data interfaces.                                                              |
-| `devices`                         | Either `nvme` (PCI addresses) or `block` (for example, `/dev/sdb`), up to 128 each. Every group of a document uses the same class. |
+| `devices`                         | Either `nvme` (PCI addresses) or `block` (for example, `/dev/sdb`), up to 128 each. Every group of a node set uses the same class. |
 | `failureDomain`                   | The failure domain of all workers in the group, see [below](#failure-domains).                                                     |
 | `spdkSystemMemory`                | Huge page memory for the storage nodes of this group, for example, `8G`.                                                           |
 | `reservedSystemCPU`               | CPUs reserved for the host, for example, `0,1` or `0-3`.                                                                           |
@@ -261,6 +264,9 @@ Each group carries:
 
 Workers or devices that should not become part of the cluster, for example, a boot disk, are removed from the draft
 before approving.
+
+A storage cluster holds at most 32 storage nodes: the workers of a node set times the storage nodes per worker. A node
+set above the limit is refused with `MemberTooLarge`.
 
 ### Failure Domains
 
@@ -294,6 +300,21 @@ spec:
 
 For details, see [Failure Domains](../operations/cluster/failure-domains.md).
 
+### Superclusters
+
+A fleet that does not fit into one storage cluster is deployed as a supercluster. Discovery drafts one on its own
+when the workers exceed 32 storage nodes, span several regions, or differ in network interfaces or device class. The
+draft then holds several node sets, and its `status.message` names the placement groups the approval creates.
+
+Each node set becomes a [placement group](../../architecture/concepts/placement-groups.md): a complete storage cluster
+named `<cluster>-<nodeset>-<suffix>`. The supercluster takes the name in `spec.cluster.name`, and storage pools and
+StorageClasses name it like any cluster. Every new volume is placed into one placement group. A node set can override
+the sizing and the erasure coding scheme of the template for its own placement group.
+
+The topology, the sizing, and the validation of a supercluster are described in
+[Superclusters](../../architecture/deployment-topologies/superclusters.md) and
+[Managing Superclusters](../operations/scaling/superclusters.md).
+
 ### Copying, Splitting, and Hand-Authoring
 
 A `ClusterDeploymentConfig` is an ordinary Kubernetes resource, and the discovered draft is a starting point rather
@@ -301,8 +322,8 @@ than the only thing that may be approved. A reviewer can copy it under another n
 documents that are approved separately, or write one from scratch and never run discovery at all.
 
 Splitting is the usual reason. A draft covering three racks can become three documents, each holding one rack's
-node set, so each rack is reviewed and brought up on its own schedule. The first document creates the cluster and
-the other two name it in `spec.clusterRef`.
+groups, so each rack is reviewed and brought up on its own schedule. The first document creates the cluster and the
+other two name it in `spec.clusterRef`.
 
 A copy is a plain `kubectl get -o yaml`, edited and applied under a new name. Clear `metadata.resourceVersion`,
 `metadata.uid`, and `status` from it first, as with any copied resource.
@@ -330,7 +351,8 @@ few workers, with `StripeBelowMinimumWorkers`. The second is counted separately 
 number by running several nodes per socket on two workers has not bought the independent spare the count asks for:
 every node of a worker fails with the worker. An unstated scheme counts as 1+1.
 
-The operator activates the cluster as soon as all storage nodes of the document are `Online`.
+The operator activates the cluster as soon as all storage nodes of the document are `Online`. In a supercluster,
+the minimum applies to each node set, and each placement group is activated once its own storage nodes are `Online`.
 
 ## Approve the Deployment
 
@@ -361,8 +383,8 @@ steps `Validating`, `CreatingCluster`, `AwaitingCluster`, `CreatingNodes`, and `
 
 The expansion creates the following resources:
 
-- **`StorageCluster`:** Named after `spec.cluster.name`, in the namespace of the document. A namespace holds at most
-  one storage cluster.
+- **`StorageCluster`:** Named after `spec.cluster.name`, in the namespace of the document. For a supercluster, one
+  further `StorageCluster` is created per node set as its placement group.
 - **`StoragePool` `<cluster>-default`:** The default pool. It is created once and never recreated.
 - **StorageClass `simplyblock-<namespace>-<cluster>`:** The class of the default pool, with the provisioner
   `csi.simplyblock.io`, `WaitForFirstConsumer` binding, the reclaim policy `Delete`, and volume expansion enabled. It
@@ -385,8 +407,8 @@ kubectl -n simplyblock get storagecluster,storagenode,storagedevice,storagepool
 The same resources can be listed with their short names, `kubectl -n simplyblock get stc,sn,sd,sp`.
 
 ```plain title="Example output of kubectl -n simplyblock get stc"
-NAME         PHASE    STEP   STATUS   EC    UUID                                   AGE
-production   Online          active   2x1   bfa260ce-06a7-4bcb-a843-813d0be633af   12m
+NAME         PHASE    ROLE         STEP   STATUS   EC    UUID                                   AGE
+production   Online   Standalone          active   2x1   bfa260ce-06a7-4bcb-a843-813d0be633af   12m
 ```
 
 The `StorageCluster` phase is `Online` once the cluster is active. `Degraded` and `Unavailable` indicate problems,
@@ -580,8 +602,9 @@ carries no `spec.cluster` block, adds nodes to it. A discovery run with `spec.di
 growth draft from whatever workers are still unclaimed. See
 [Expanding a Storage Cluster](../operations/scaling/expanding-storage-cluster.md).
 
-**A second storage cluster.** A namespace holds at most one `StorageCluster`, so another cluster needs a namespace
-of its own, and it is recommended to point each one at a different set of workers.
+**A second storage cluster.** Several storage clusters can share a namespace, and each one is pointed at a different
+set of workers. Clusters that are meant to act as one are deployed as a supercluster instead, see
+[Managing Superclusters](../operations/scaling/superclusters.md).
 
 From here, [Operations](../operations/index.md) covers running the cluster, and [Usage](../usage/index.md) covers
 provisioning volumes from it.
