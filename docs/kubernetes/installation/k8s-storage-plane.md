@@ -296,7 +296,15 @@ spec:
           workers: [worker-3, worker-4]
           devices:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
+        - name: rack-c
+          failureDomain: rack-c
+          workers: [worker-5, worker-6]
+          devices:
+            nvme: ["0000:01:00.0", "0000:02:00.0"]
 ```
+
+Failure-domain mode needs at least as many failure domains as parity chunks plus two, with the same number of
+workers in each. A document that does not meet this is refused with `FailureDomainLayout`.
 
 For details, see [Failure Domains](../operations/cluster/failure-domains.md).
 

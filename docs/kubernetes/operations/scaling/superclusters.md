@@ -44,9 +44,9 @@ To decide by hand which workers form a placement group, the workers are labeled 
 after the value, and the automatic split is skipped for them.
 
 ```bash title="Assigning workers to placement groups"
-kubectl label node worker-01 worker-02 worker-03 worker-04 \
+kubectl label node worker-01 worker-02 worker-03 worker-04 worker-05 worker-06 \
     storage.simplyblock.io/placement-group=dense
-kubectl label node worker-05 worker-06 worker-07 worker-08 \
+kubectl label node worker-07 worker-08 worker-09 \
     storage.simplyblock.io/placement-group=fast
 ```
 
@@ -94,6 +94,11 @@ spec:
           workers: [worker-03, worker-04]
           devices:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
+        - name: zone-c
+          failureDomain: zone-c
+          workers: [worker-05, worker-06]
+          devices:
+            nvme: ["0000:01:00.0", "0000:02:00.0"]
     - name: fast
       cluster:
         vcpuCount: 16
@@ -103,15 +108,25 @@ spec:
       groups:
         - name: zone-a
           failureDomain: zone-a
-          workers: [worker-05, worker-06]
+          workers: [worker-07]
           devices:
             nvme: ["0000:01:00.0"]
         - name: zone-b
           failureDomain: zone-b
-          workers: [worker-07, worker-08]
+          workers: [worker-08]
+          devices:
+            nvme: ["0000:01:00.0"]
+        - name: zone-c
+          failureDomain: zone-c
+          workers: [worker-09]
           devices:
             nvme: ["0000:01:00.0"]
 ```
+
+With `enableFailureDomains`, every placement group needs at least as many failure domains as its parity chunks plus
+two, and the same number of workers in each of them. A layout that does not meet this is refused with
+`FailureDomainLayout`. Both placement groups of the example span all three zones, which also satisfies
+`MemberMissingFailureDomain`.
 
 `cluster` on a node set may carry `vcpuCount`, `maxSubsystemCount`, `minHugePagesSize`, `socketsToUse`,
 `nodesPerSocket`, and `stripe`. A field left unset takes the value of the template. Overrides are refused on a document
@@ -268,7 +283,8 @@ grown:
 | A placement group       | Adds the workers of every node set to that placement group, up to 32 nodes. |
 | A standalone cluster    | Adds the workers of every node set to that cluster, up to 32 nodes.         |
 
-A document that adds placement groups states their sizing in `spec.cluster`, whose `name` is ignored. Without
+A document that adds placement groups states their sizing in `spec.cluster`. The schema requires `spec.cluster.name`,
+but the value is not used, since the supercluster already has a name. Without
 `spec.cluster` it is refused with `MemberSizingUnstated`. Its node sets may override the sizing as in a creating
 document.
 
@@ -282,6 +298,7 @@ spec:
   approved: false
   clusterRef: production
   cluster:
+    name: production
     maxSubsystemCount: 50
     vcpuCount: 8
     stripe:
