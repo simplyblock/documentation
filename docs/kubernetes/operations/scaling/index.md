@@ -15,3 +15,4 @@ the new devices afterward.
 |-------------------------------------------------------------|----------------------------------------------------------------------------|
 | [Expanding a Storage Cluster](expanding-storage-cluster.md) | Adding storage nodes to a running cluster and following their integration. |
 | [Parallel Storage Node Addition](parallel-node-addition.md) | Provisioning several workers concurrently instead of one after another.    |
+| [Managing Superclusters](superclusters.md)                  | Combining several storage clusters into one, and placing volumes in them.  |
