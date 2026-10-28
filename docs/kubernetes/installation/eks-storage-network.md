@@ -14,6 +14,9 @@ the cluster setup the feature requires on EKS, and the two ways to place the sec
 primary ENI of the node, or in a subnet of its own. Each layout has its own routing problems and its own solution. The
 reasons are given with the steps, because the solutions follow from how Linux and the VPC route a packet.
 
+For the storage network options outside EKS, and how they compare, see
+[Storage Network Options](storage-network-options.md).
+
 !!! info "Scope and verification status"
     The setup in [Cluster Setup](#cluster-setup) and the layout in
     [Layout A: Same Subnet](#layout-a-same-subnet) were built and tested end to end on Amazon EKS 1.33 with Cilium
