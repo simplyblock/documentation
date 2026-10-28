@@ -83,6 +83,8 @@ For detailed CRD documentation, see [Simplyblock Operator](../../reference/opera
 - [Create a Storage Cluster](k8s-storage-plane.md): Discovery, review, approval, and the first volume.
 - [Connecting to an External Control Plane](install-csi.md): The managed profile for clusters without a local control
   plane.
+- [Storage Network on Amazon EKS](eks-storage-network.md): A dedicated data ENI with Cilium in ENI mode and Multus, in the
+  same subnet or a dedicated subnet.
 - [OpenShift](openshift.md): Security context constraints and TLS on OpenShift.
 - [SUSE Rancher and RKE2](rancher.md): Permissions and CPU topology on RKE2 and K3s clusters.
 - [Talos](talos.md): Kernel modules, huge pages, and permissions on Talos.
