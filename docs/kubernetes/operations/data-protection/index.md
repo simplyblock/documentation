@@ -16,4 +16,5 @@ failover, is the subject of [Disaster Recovery](../../../disaster-recovery/index
 |-----------------------------------------------------------|---------------------------------------------------------------------------------|
 | [Backup and Recovery](backup-recovery.md)                 | Backing up volumes to S3-compatible object storage, and restoring them.         |
 | [Asynchronous Replication](asynchronous-replication.md)   | Replicating volumes to a second cluster, with controlled failover and failback. |
+| [Online Cluster Migration](online-cluster-migration.md)   | Moving volumes to another cluster online, with migration plans and a cutover.   |
 | [FoundationDB Backup and Restore](foundationdb-backup.md) | Backing up and restoring the control plane state held in FoundationDB.          |
