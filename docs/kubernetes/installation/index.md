@@ -59,7 +59,7 @@ The operator manages the following resources. All of them use the API version `s
 | `ControlPlaneOps`         | `cpops`    | Ops      | Restarts, upgrades, or backs up a local control plane.                                                       |
 | `StorageClusterOps`       | `scops`    | Ops      | Activates, expands, shuts down, starts, restarts, or rolling-restarts a cluster, or cancels a task.          |
 | `StorageNodeOps`          | `snops`    | Ops      | Shuts down, restarts, suspends, resumes, removes, or migrates a storage node.                                |
-| `StorageDeviceOps`        | `sdops`    | Ops      | Restarts a storage device.                                                                                   |
+| `StorageDeviceOps`        | `sdops`    | Ops      | Restarts, fails, or checks the health of a storage device.                                                   |
 | `PersistentVolumeOps`     | `pvops`    | Ops      | Moves a persistent volume to another storage node. Cluster-scoped.                                           |
 | `StorageBackupOps`        | `sbops`    | Ops      | Restores a backup into a new PersistentVolumeClaim.                                                          |
 | `VolumeGroupSnapshotOps`  | `vgsops`   | Ops      | Restores every member of a VolumeGroupSnapshot.                                                              |
