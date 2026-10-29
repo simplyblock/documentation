@@ -4,8 +4,6 @@ description: "How simplyblock clusters use arbitrary Linux block devices, such a
 weight: 30650
 ---
 
-{{ experimental }}
-
 Storage is onboarded by a simplyblock storage cluster as NVMe PCIe devices by default. At deployment,
 NVMe controllers are detected on the PCI bus, unbound from the kernel driver, and attached natively to
 the simplyblock storage plane container.
@@ -14,10 +12,9 @@ The Linux block device mode (`lblk`) is an alternative, cluster-global device mo
 block device is accepted and no NVMe hardware is required at all: SAS or SATA SSDs behind an HBA,
 virtualized disks (virtio, Xen), or cloud volumes such as EBS.
 
-!!! warning
-    Linux block device support is experimental. It is intended for evaluation, for test environments,
-    and for deployments where NVMe devices are unavailable. For production-grade performance, local
-    NVMe devices are recommended.
+!!! info
+    Linux block devices are attached through the kernel block layer, which adds latency compared with the native
+    NVMe path. Where the lowest latency matters, local NVMe devices are recommended.
 
 LUNs of an FC, iSCSI, or NVMe-oF storage array are used the same way, see [Storage Arrays](storage-arrays.md).
 

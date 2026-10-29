@@ -4,8 +4,6 @@ description: "Provision ReadWriteMany simplyblock volumes on Kubernetes through 
 weight: 40080
 ---
 
-{{ experimental }}
-
 A pNFS volume is a simplyblock volume that pods on several worker nodes read and write at the same time
 (`ReadWriteMany`). It carries an XFS filesystem that is shared through NFSv4.1. File metadata goes through a metadata
 server, while the data is read and written directly over NVMe-oF on every node that meets the
