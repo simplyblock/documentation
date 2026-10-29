@@ -25,13 +25,22 @@ local NVMe devices. The architecture and the division of tasks between the array
 
 Every host that runs a storage node gets its own LUNs, which are not shared with any other host:
 
-| LUN         | Count     | Size                                                                                                                  |
-|-------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
-| Journal LUN | 1         | About 3% of the host's data LUN capacity, at least 2 GiB. It has to be the smallest LUN of the host.                  |
-| Data LUNs   | 1 or more | Large and equal in size, on all hosts. Thin LUNs are sized for the expected growth, so that they never need resizing. |
+| LUN       | Count     | Size                                                                                                                  |
+|-----------|-----------|-----------------------------------------------------------------------------------------------------------------------|
+| Data LUNs | 1 or more | Large and equal in size, on all hosts. Thin LUNs are sized for the expected growth, so that they never need resizing. |
 
-A storage node needs at least two LUNs: the journal LUN and one data LUN. The smallest LUN of a host is dedicated to
-the journal.
+No separate journal LUN is required. When the storage node is configured, simplyblock partitions the smallest LUN of
+the host (or its only one) into a journal partition and a data partition. The journal partition takes 3% of the
+host's LUN capacity by default, at least 2 GiB, and the rest of that LUN carries data like every other LUN. This
+layout requires one storage node per host.
+
+Because the array's RAID already protects the LUN, a journal on the same LUN as data is sufficient. In addition,
+every write is journaled on other storage nodes as well, so the journal survives the loss of a host or its LUN.
+
+!!! info "Dedicated journal LUN"
+    A small dedicated journal LUN can still be used instead, with `enableJournalDevice` (see
+    [Storage Array LUNs](../kubernetes/installation/k8s-storage-plane.md#storage-array-luns)). The smallest LUN of
+    each host is then the journal and carries no data.
 
 !!! important
     LUNs cannot be resized after a storage node uses them, and a LUN cannot be added to a running storage node yet.
