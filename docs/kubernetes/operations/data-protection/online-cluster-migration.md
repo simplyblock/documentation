@@ -88,7 +88,7 @@ and the cutover is retried.
 !!! info
     The cutover relies on the ANA path states of NVMe multipathing. A client without native NVMe multipathing cannot
     switch paths, and the cutover interrupts the I/O of the volume (see
-    [EKS Node Images](../../../deployment-preparation/eks.md#node-images)).
+    [EKS Node Images](../../installation/eks.md#node-images)).
 
 ## Prerequisites and Limits
 

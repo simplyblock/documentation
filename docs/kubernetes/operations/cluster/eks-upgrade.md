@@ -15,7 +15,7 @@ This page covers the Kubernetes version of the EKS cluster. Upgrading simplybloc
 ## Prerequisites
 
 - The control plane persistence is backed by EBS (see
-  [Storage for the Control Plane](../../../deployment-preparation/eks.md#storage-for-the-control-plane)). An
+  [Storage for the Control Plane](../../installation/eks.md#storage-for-the-control-plane)). An
   upgrade of a managed node group replaces its nodes with new instances, and host-local data does not survive it.
 - The control plane node group has `updateConfig.maxUnavailable: 1`, so that only one control plane node is replaced at
   a time.
@@ -87,4 +87,4 @@ New storage capacity on the new Kubernetes version is added as a new node group:
 4. Remove the old storage cluster and its node group once all volumes have moved.
 
 Client node groups are replaced like any other workload node group. A replacement client node group uses a node image
-with native NVMe multipathing (see [Node Images](../../../deployment-preparation/eks.md#node-images)).
+with native NVMe multipathing (see [Node Images](../../installation/eks.md#node-images)).

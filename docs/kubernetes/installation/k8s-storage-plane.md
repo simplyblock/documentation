@@ -54,16 +54,12 @@ storage node group. The [EKS](eks.md) guide shows the values and the discovery r
 
 On GKE with dedicated, tainted node pools, the same applies: the discovery tolerates the taint of the storage node
 pool, as shown in the [EKS](eks.md) guide. The node pools are prepared as described in
-[GKE](../../deployment-preparation/gke.md).
+[GKE](gke.md).
 
 ### Networking
 
-Multiple ports must be open on storage node hosts.
-
-It is required to use one or more separate VLANs for simplyblock. Ports within the same VLAN do not require extra
-firewall rules, but ports between the control plane and storage networks typically do.
-
-{% include 'network-port-table.md' %}
+Multiple ports must be open on storage node hosts. The VLAN layout and the ports are listed in
+[Network](../../deployment-preparation/network.md#ports).
 
 ## Discover Workers and Devices
 

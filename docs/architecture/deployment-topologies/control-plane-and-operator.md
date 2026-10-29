@@ -87,5 +87,5 @@ control planes on the sites as well as with a centralized control plane: the sam
 components and the simplyblock control plane.
 
 The hub requirements are described in
-[Disaster Recovery Requirements](../../deployment-preparation/dr-requirements.md), and the combinations of DR and
+[Disaster Recovery Requirements](../../disaster-recovery/install/requirements.md), and the combinations of DR and
 management topologies in [Deployment Architectures](../../deployment-preparation/deployment-architectures.md).

@@ -23,7 +23,7 @@ cluster.
 | `enableJournalDevice`                      | Dedicates the smallest device of each worker to the journal, instead of a journal partition on every device. Required for Linux block devices.                                         |
 | `enableChecksumValidation`                 | Inline CRC validation of every I/O, which detects silent data corruption.                                                                                                              |
 | `enableAtomicity4K`                        | Enforces 4K write atomicity on devices with a smaller logical block size, so that checksum validation can run on them. Requires `enableChecksumValidation`.                            |
-| `socketsToUse`, `nodesPerSocket`           | The NUMA sockets used on each worker and the number of storage nodes per socket (see [NUMA Considerations](../../deployment-preparation/numa-considerations.md)).                      |
+| `socketsToUse`, `nodesPerSocket`           | The NUMA sockets used on each worker and the number of storage nodes per socket (see [NUMA Considerations](../../deployment-preparation/sizing.md)).                                   |
 | `enableNodeAffinity`                       | Serves a volume's I/O from the devices of its own node where possible (see [Configuring Node Affinity](../operations/cluster/node-affinity.md)).                                       |
 | `kms`                                      | An external key management system for the volume encryption keys (see [External Key Management](../../architecture/concepts/external-key-management.md)).                              |
 

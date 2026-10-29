@@ -85,6 +85,9 @@ For detailed CRD documentation, see [Simplyblock Operator](../../reference/opera
   can change later.
 - [Connecting to an External Control Plane](install-csi.md): The managed profile for clusters without a local control
   plane.
+- [Air Gap Installation](air-gap.md): Mirroring the images into a local container registry.
+- [EKS](eks.md): Instance types, node groups, node images, EBS storage, and the Helm values on EKS.
+- [GKE](gke.md): Machine types, node pools with local NVMe SSDs, and node images on GKE.
 - [OpenShift](openshift.md): Security context constraints and TLS on OpenShift.
 - [SUSE Rancher and RKE2](rancher.md): Permissions and CPU topology on RKE2 and K3s clusters.
 - [Talos](talos.md): Kernel modules, huge pages, and permissions on Talos.

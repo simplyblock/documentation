@@ -67,7 +67,7 @@ methods:
 
 !!! info "Coming soon"
     - **Stretched storage cluster type:** The stretched simplyblock storage cluster that a sync plan protects is not
-      released yet. See [Stretched Storage Cluster](../../deployment-preparation/dr-requirements.md#stretched-storage-cluster).
+      released yet. See [Stretched Storage Cluster](../install/requirements.md#stretched-storage-cluster).
     - **Managed applications:** GitOps-delivered applications on a sync plan are refused, because their GitOps owner
       would undo the pinning and scaling.
     - **Restore of a `sync-s3-backup` application onto a rebuilt stretch cluster.**
@@ -221,4 +221,4 @@ application by construction and needs no group.
 | Per-site S3 stores in the plan (`spec.s3Profiles`)           | For `sync-s3-backup`     | For `async-s3-backup`      | Yes         |
 
 The hardware, network, and S3 requirements are described in
-[Disaster Recovery Requirements](../../deployment-preparation/dr-requirements.md).
+[Disaster Recovery Requirements](../install/requirements.md).

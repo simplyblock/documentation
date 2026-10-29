@@ -1,7 +1,7 @@
 ---
 title: "GKE"
 description: "Prepare a GKE cluster for simplyblock: recommended machine types with local NVMe SSDs, dedicated node pools, taints, node images, and control plane storage."
-weight: 30060
+weight: 40060
 ---
 
 Simplyblock runs in production on Google Kubernetes Engine (GKE) with dedicated node pools. As on EKS, a
@@ -14,7 +14,7 @@ volumes into dedicated node pools, each tainted so that nothing else is schedule
 ## Node Pools
 
 The following node pools are recommended. Machine types are examples; the
-[hardware requirements](hardware-requirements.md) and the [recommended machine types](#machine-types) apply.
+[hardware requirements](../../deployment-preparation/hardware-requirements.md) and the [recommended machine types](#machine-types) apply.
 
 | Node Pool     | Purpose                                                                     | Example Machine Type                  | Example Taint                                      |
 |---------------|-----------------------------------------------------------------------------|---------------------------------------|----------------------------------------------------|
@@ -29,7 +29,7 @@ plane is installed and when the storage cluster is deployed. Each node pool also
 cluster keeps discovery runs of different clusters apart.
 
 Storage nodes and client nodes are best placed in a single zone, since traffic between zones adds latency to every
-write. A storage cluster can span zones with [failure domains](../architecture/concepts/failure-domains.md), using
+write. A storage cluster can span zones with [failure domains](../../architecture/concepts/failure-domains.md), using
 the zone as the failure domain label.
 
 ## Machine Types
@@ -63,7 +63,7 @@ At least 8 vCPUs are required for a storage node.
 
 !!! note "pNFS volumes"
     The pNFS metadata server requires a worker node with a usable `/dev/kvm` (see
-    [Virtualization Support for pNFS](hardware-requirements.md#virtualization-support-for-pnfs)). On GKE, this means a
+    [Virtualization Support for pNFS](../../deployment-preparation/hardware-requirements.md#virtualization-support-for-pnfs)). On GKE, this means a
     node pool with nested virtualization enabled, where the machine type supports it.
 
 ## Creating the Node Pools
@@ -85,7 +85,7 @@ SSDs.
 ## Node Images
 
 Nodes that mount simplyblock volumes require the `nvme-tcp` kernel module and native
-[NVMe over Fabrics multipathing](../important-notes/terminology.md#multipathing) (`CONFIG_NVME_MULTIPATH`). Client
+[NVMe over Fabrics multipathing](../../important-notes/terminology.md#multipathing) (`CONFIG_NVME_MULTIPATH`). Client
 node pools therefore use a node image that provides both, for example, Ubuntu (`--image-type UBUNTU_CONTAINERD`).
 Whether a node supports native NVMe multipathing is checked on the host:
 
@@ -106,10 +106,10 @@ Host-local storage is not suitable, because an upgrade of a node pool replaces i
 
 TLS is enabled by default and requires cert-manager, unless TLS is explicitly turned off. cert-manager is installed into
 the system node pool before the Simplyblock Operator. For details, see
-[Install Simplyblock Operator](../kubernetes/installation/k8s-control-plane.md#prerequisites).
+[Install Simplyblock Operator](k8s-control-plane.md#prerequisites).
 
 ## Next Steps
 
-The installation follows the same procedure as on [EKS](../kubernetes/installation/eks.md), with the node pools in
+The installation follows the same procedure as on [EKS](eks.md), with the node pools in
 place of the node groups. The discovery detects GKE as the environment, and the storage nodes leave the kubelet
 configuration of the workers unchanged.

@@ -82,7 +82,7 @@ data of a shared volume:
 - [Deployment Architectures](../../deployment-preparation/deployment-architectures.md#shared-file-storage-pnfs)
   describes where the metadata server runs in each architecture.
 - The node requirements are listed in [Hardware Requirements](../../deployment-preparation/hardware-requirements.md#virtualization-support-for-pnfs)
-  and [Software Requirements](../../deployment-preparation/software-requirements.md#pnfs-requirements).
+  and [Software Requirements](../../deployment-preparation/software-requirements.md#pnfs).
 
 Striping one shared volume across several logical volumes, and creating a pNFS volume from a snapshot or another
 volume, are not available yet.

@@ -57,7 +57,7 @@ A plan cannot mix synchronous and asynchronous types, and every application uses
 
 DR uses two kinds of S3 buckets: the DR metadata buckets of the sites for the Kubernetes objects of protected
 applications and the volume backups of the backup method types, and an archive bucket for the hub state and the
-reports. See [S3 Buckets](../deployment-preparation/dr-requirements.md#s3-buckets).
+reports. See [S3 Buckets](install/requirements.md#s3-buckets).
 
 ## Lifecycle
 
@@ -74,7 +74,7 @@ Protecting an application follows four stages:
 4. **Operate:** Monitor readiness, fail over, fail back, and restore from backups or after
    the loss of the hub. See [Operations](operations/index.md).
 
-The hub and site requirements are listed in [DR Requirements](../deployment-preparation/dr-requirements.md).
+The hub and site requirements are listed in [DR Requirements](install/requirements.md).
 
 ## Available Today and Coming Soon
 

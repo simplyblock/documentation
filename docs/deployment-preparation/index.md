@@ -1,49 +1,31 @@
 ---
 title: "Deployment Preparation"
-description: "Deployment Preparation: Proper deployment planning is essential for ensuring the performance, scalability, and resilience of a simplyblock storage cluster."
+description: "Plan a simplyblock deployment before installing it: the architecture, fault tolerance, sizing, hardware and storage devices, network, and software."
 weight: 10090
 ---
 
-Proper deployment planning is essential for ensuring the performance, scalability, and resilience of a simplyblock
-storage cluster.
+This section covers the decisions to make and the infrastructure to prepare before simplyblock is installed. The pages
+follow the order in which a deployment is usually planned. The installation itself, including the preparation of
+specific platforms such as EKS, GKE, OpenShift, Rancher, or Talos, is described in
+[Install](../kubernetes/installation/index.md).
 
-## Deployment Model
+## Plan
 
-Simplyblock is deployed on Kubernetes and OpenShift and is managed through the Simplyblock Operator and its custom
-resources. Both **disaggregated** deployments, with dedicated workers for storage nodes (by default in the same cluster), and
-**hyper-converged** deployments, co-located with compute workloads, are supported, as well as a hybrid of both. A
-wide range of Kubernetes distributions and operating systems is supported. If the same cluster is used to serve and
-consume the storage, there is no essential difference between the models from a deployment perspective: the choice
-becomes a question of node selection only. The topologies are described in
-[Deployment Topologies](../architecture/deployment-topologies/index.md).
+| Step | Page                                                           | Decides                                                                                       |
+|------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| 1    | [Deployment Architectures](deployment-architectures.md)        | How many Kubernetes and storage clusters, where the control plane runs, and disaster recovery |
+| 2    | [Fault Tolerance and Erasure Coding](erasure-coding-scheme.md) | The erasure coding scheme, the minimum number of nodes, and failure domains                   |
+| 3    | [Sizing](sizing.md)                                            | vCPUs, memory, and NUMA placement of the storage nodes, and the size of the control plane     |
 
-## Deployment Architectures and Disaster Recovery
+## Requirements
 
-Before sizing individual nodes, the overall architecture has to be chosen: how many Kubernetes clusters and storage
-clusters are involved, where the control plane runs, and whether a hub cluster coordinates disaster recovery between
-sites.
+| Page                                                     | Covers                                                                                     |
+|----------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| [Hardware and Storage Devices](hardware-requirements.md) | Minimum hardware, CPU architectures, virtualization, NVMe devices, and Linux block devices |
+| [Storage Arrays](storage-arrays.md)                      | Running on FC, iSCSI, or NVMe-oF array LUNs                                                |
+| [Network](network.md)                                    | Storage and management networks, fabrics, ports, and edge sites                            |
+| [Software Requirements](software-requirements.md)        | Kubernetes distributions, client node kernels, NVMe multipathing, and pNFS                 |
 
-- **[Deployment Architectures](deployment-architectures.md):** Supported architectures with and without disaster
-  recovery, from a single cluster to a hub with several site clusters, and a decision table.
-- **[Disaster Recovery Requirements](dr-requirements.md):** Hub cluster sizing, Kubernetes versions, site cluster
-  prerequisites, S3, networking, and site labeling for simplyblock Disaster Recovery.
-
-## Storage Arrays
-
-Simplyblock can also run on the LUNs of an existing FC, iSCSI, or NVMe-oF storage array instead of local NVMe
-devices. [Storage Arrays](storage-arrays.md) describes the LUN layout, the RAID and erasure coding choice, thin
-provisioning, and multipathing.
-
-## General Information on Requirements
-
-Before installation, key factors such as node sizing, storage capacity, and fault tolerance mechanisms should be
-carefully evaluated to match workload requirements. This section provides guidance on sizing management nodes and
-storage nodes, helping administrators allocate adequate CPU, memory, and disk resources for optimal cluster performance.
-
-Additionally, it explores selectable erasure coding schemes, detailing how different configurations impact storage
-efficiency, redundancy, and recovery performance. Other critical considerations, such as network infrastructure,
-high-availability strategies, and workload-specific optimizations, are also covered to assist in designing a simplyblock
-deployment that meets both operational and business needs.
-
-This guidance applies to all deployment topologies, with special sizing notes for hyper-converged Kubernetes and
-OpenShift deployments, where compute and storage share cluster nodes.
+The deployment topologies behind these decisions (hyper-converged, disaggregated, local or hub control plane) are
+explained in [Deployment Topologies](../architecture/deployment-topologies/index.md), and the prerequisites of
+disaster recovery in [Disaster Recovery Requirements](../disaster-recovery/install/requirements.md).

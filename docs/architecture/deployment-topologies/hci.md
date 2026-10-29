@@ -50,7 +50,7 @@ clusters. See [Data Locality](../storage-performance-and-qos.md#data-locality) f
 
 - **Shared resources:** Storage nodes reserve CPU cores and huge-page memory on the workers they run on. These
   resources are not available to applications. See the hyper-converged notes in
-  [Hardware Requirements](../../deployment-preparation/hardware-requirements.md#hyper-converged-sizing-guidance).
+  [Hardware Requirements](../../deployment-preparation/sizing.md#hyper-converged-sizing-guidance).
 - **Coupled maintenance:** Worker maintenance, reboots, and upgrades also affect the storage node on that worker, so
   the maintenance of compute and storage has to be coordinated.
 - **Coupled scaling:** Adding compute also adds storage and the other way round, which fits workloads whose storage

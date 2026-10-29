@@ -15,7 +15,7 @@ The hub must be installed first, as described in [Installing the Hub](hub.md).
 Before a site joins, the following must be in place on the site cluster:
 
 - **Kubernetes:** A supported Kubernetes or OpenShift version, as listed in
-  [Disaster Recovery Requirements](../../deployment-preparation/dr-requirements.md).
+  [Disaster Recovery Requirements](requirements.md).
 - **Simplyblock storage:** A simplyblock storage cluster with the Simplyblock Operator and the simplyblock CSI driver
   (see [Install Simplyblock CSI](../../kubernetes/installation/install-csi.md)). The CSI driver must support
   csi-addons VolumeReplication, and VolumeGroupReplication when consistency groups are enabled in the protection plan.
