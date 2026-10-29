@@ -8,7 +8,7 @@ Simplyblock can be deployed on the LUNs of an existing Fibre Channel, iSCSI, or 
 local NVMe devices. The architecture and the division of tasks between the array and simplyblock are described in
 [Storage Arrays](../architecture/concepts/storage-arrays.md). This page lists what has to be prepared.
 
-## Array Configuration
+## Recommended Array Configuration
 
 - **RAID level:** RAID 5 for the LUNs. Together with an `n+1` erasure coding scheme in simplyblock, this tolerates
   two failures, similar to RAID 6.
