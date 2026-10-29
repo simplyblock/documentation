@@ -104,8 +104,11 @@ The schema enforces these rules:
 - All networks of a cluster use the same kind of attachment.
 - `hostInterface` has no `addressPool`, because the interface carries the host's own address.
 - `podNetwork` is the only network of the cluster: one data network, no management network, no `addressPool`.
-- A group that declares `network` names no `mgmtInterface` and no `dataInterfaces`. Discovery proposes them, so they are
-  removed from the draft before it is approved.
+- With `spec.cluster.network` set, no group names a `mgmtInterface` or `dataInterfaces`. Discovery proposes them, so
+  they are removed from the draft before it is approved.
+- A group's own `networkAttachment` field, which discovery drafts when it finds definitions in the namespace, is not
+  deployed. The operator holds the `ClusterDeploymentConfig` with the event `NetworkAttachmentNotDeployable`. The
+  network is declared in `spec.cluster.network` instead, and the field is removed from the groups.
 - The network is fixed when the cluster is created.
 
 ## Requirements of Every Attached Network
@@ -123,8 +126,9 @@ Options 3 to 7 have the following requirements in common.
 | The CSI node plugin on every worker, linked to the operator                 | The operator reads interface addresses and checks the reachability through the CSI node plugins.                                                                                                                                                                                |
 | Two interfaces of a pod do not share a subnet                               | Two routes for one subnet cause replies to leave the wrong interface. A definition that must share a subnet chains the `sbr` plugin (see [Storage Network on Amazon EKS](eks-storage-network.md#problem-a1-routing-in-the-spdk-pod)).                                           |
 
-The control plane's pods, the node agent, and the SPDK proxy leave the host network when a network is declared. The CSI
-node plugin and the node-preparation jobs stay on the host network.
+The control plane runs on the pod network in every option. When a network is declared, the node agent and the SPDK
+pod leave the host network as well. The CSI node plugin, the volume migration jobs, and the node-preparation jobs stay
+on the host network, because the NVMe over TCP initiator reconnects from the host's network namespace.
 
 ## Option 1: Host Network
 
@@ -163,8 +167,8 @@ survives restarts of the pod, while the pod's own address changes with each rest
 | No network policy that blocks the storage ports between hosts, SPDK pods, and Services | The listeners use the ports the control plane allocates from 4420 upward.                                                                                              |
 | A pod MTU as large as the network allows                                               | The MTU of the pod network bounds the NVMe over TCP payload per packet. With an overlay, the pod MTU is the underlay MTU minus the encapsulation (50 bytes for VXLAN). |
 
-Multus is not needed. On Cilium, native routing performs better than a tunnel: in the test cluster, 39.8k IOPS against
-32.7k IOPS across nodes.
+Multus is not needed. On Cilium, native routing performs better than a tunnel: in an early test on the same cluster,
+native routing gave about a fifth more 4K random-read IOPS across nodes than VXLAN.
 
 **Configuration in simplyblock.**
 
@@ -441,8 +445,9 @@ address sits on the parent can therefore reach the SPDK pods of other nodes but 
 
 The consequences without a sibling:
 
-- The operator's reachability check fails from each node to its own SPDK pod. The node stays in `Provisioning` with the
-  event `DataNetworkHostUnreachable` and the message `no route to host` or a timeout.
+- The operator's reachability check fails from each node to its own SPDK pod. The node stays in `Provisioning`, its
+  network in `Unavailable` with `hostReachable` set to `false`, and the event `DataNetworkHostUnreachable` names the
+  worker that cannot reach the SPDK listener.
 - On an operator that does not check, a client on the storage node silently uses the remote paths only: in the test
   cluster, 35.1k instead of 47.4k IOPS, and the volume loses its local path for failover.
 
