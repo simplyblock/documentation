@@ -52,6 +52,14 @@ the pod template.
 Without tiers, two default tiers are used: `tier-config` with ConfigMaps, Secrets, and ServiceAccounts, and
 `tier-workloads` with everything else.
 
+### Pods Are Not Captured
+
+The Recipe that dr-hub generates from the tiers never captures Pods (and never the Recipe itself). Pods are
+recreated on the target by what owns them, for example, a Deployment or a VirtualMachine, and Ramen replicates the
+volumes itself. Capturing Pods would only run the backup hooks in their annotations: KubeVirt annotates every
+virt-launcher pod with `virt-freezer` freeze and unfreeze hooks, and a capture that froze a VM while it was still
+booting could leave its guest frozen. A pod without a controller is therefore not restored.
+
 ### Suggested Tiers
 
 For a discovered application, a boot order is suggested from its objects in `status.suggestedTiers`. The
@@ -276,7 +284,8 @@ quiesces a database, a Ramen Recipe can be written by hand and referenced from t
    exclusive.
 
 The Recipe is used as it is and is never modified. The `recipe-valid` readiness check blocks actions until
-the Recipe exists on the cluster the application currently runs on.
+the Recipe exists on the cluster the application currently runs on. Like the generated Recipe, a hand-written one
+should exclude `pods` from its resource groups (see [Pods Are Not Captured](#pods-are-not-captured)).
 
 ```yaml title="Hand-written Ramen Recipe with a quiesce hook (recipe-shop.yaml)"
 apiVersion: ramendr.openshift.io/v1alpha1
@@ -297,6 +306,7 @@ spec:
         - serviceaccounts
       excludedResourceTypes:
         - recipes.ramendr.openshift.io
+        - pods
     - name: database
       type: resource
       includedNamespaces:
@@ -306,12 +316,14 @@ spec:
           app: shop-db
       excludedResourceTypes:
         - recipes.ramendr.openshift.io
+        - pods
     - name: rest
       type: resource
       includedNamespaces:
         - shop
       excludedResourceTypes:
         - recipes.ramendr.openshift.io
+        - pods
   volumes:
     name: volumes
     type: volume

@@ -111,14 +111,19 @@ installation, and the simplyblock backup buckets with the storage clusters (see
   a hub where the S3 profiles are configured by other means, for example, an ACM or ODF hub with
   `bootstrap.enabled=false`.
 
-| Field            | Description                                                                                                                                 |
-|------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `site`           | Site of the plan the store belongs to.                                                                                                      |
-| `bucket`         | Bucket name.                                                                                                                                |
-| `endpoint`       | S3 endpoint URL. Any S3-compatible object store is supported.                                                                               |
-| `region`         | Bucket region.                                                                                                                              |
-| `secretRef`      | Name of a Secret in the Ramen namespace with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, usually `ramen-s3-secret` from the hub chart. |
-| `caCertificates` | Base64-encoded CA certificates for an endpoint with a private CA.                                                                           |
+| Field            | Description                                                                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `site`           | Site of the plan the store belongs to.                                                                                                                                                                                           |
+| `bucket`         | Bucket name.                                                                                                                                                                                                                     |
+| `endpoint`       | S3 endpoint URL. Any S3-compatible object store is supported.                                                                                                                                                                    |
+| `region`         | Bucket region. Required: Ramen's S3 client needs it, also for MinIO and other S3 servers (usually `us-east-1` there). The webhook refuses a new or changed store without a region and suggests the region an AWS endpoint names. |
+| `secretRef`      | Name of a Secret in the Ramen namespace with `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, usually `ramen-s3-secret` from the hub chart.                                                                                      |
+| `caCertificates` | Base64-encoded CA certificates for an endpoint with a private CA.                                                                                                                                                                |
+
+A store's Ramen profile is named once, when the store is first used, and recorded in `status.s3Stores[].profileName`.
+Later changes of the region, the Secret, or the CA certificates keep that name. Moving a store to another bucket or
+endpoint is refused while the plan protects applications, because Ramen keeps their metadata in the old store. The
+applications must be unprotected first, or a new plan is created.
 
 ## Status
 

@@ -28,7 +28,10 @@ A test failover requires the following:
   `TestFailover` resource (`storage.simplyblock.io/v1alpha2`) on the hub: one per protected PVC, created by dr-hub.
   The operator resolves the newest replicated snapshot of the volume through the control plane, clones it on the
   target storage cluster, and places a bound PersistentVolume and PersistentVolumeClaim in the bubble namespace,
-  with the source's volume mode and filesystem. Where the hub does not serve that resource, the storage publishes
+  with the source's volume mode and filesystem. For a consistency group, one `TestFailover` covers the group
+  (`scope: Group`), and dr-hub names the source site's storage cluster in `spec.sourceStorageCluster`, taken from
+  dr-agent's status. A hub that runs apart from the sites has no local StorageCluster to resolve it from. The
+  operator must support that field. Where the hub does not serve that resource, the storage publishes
   its replicated consistency points as VolumeSnapshotContents (label `dr.simplyblock.io/replicated-snapshot=true`),
   and dr-agent clones them.
 

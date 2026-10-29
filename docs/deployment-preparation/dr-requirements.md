@@ -124,6 +124,9 @@ Every site cluster must provide:
 
 - **Simplyblock with CSI replication support:** The simplyblock CSI driver with support for csi-addons
   VolumeReplication (and VolumeGroupReplication when consistency groups are used).
+- **Storage devices:** The storage cluster of a site may use NVMe devices or Linux block devices, for example, cloud
+  volumes such as Amazon EBS in a `LogicalBlock` storage cluster (see
+  [Linux Block Devices](../architecture/concepts/linux-block-devices.md)). Disaster recovery works the same on both.
 - **Snapshot support:** The external snapshot controller with the VolumeSnapshot and VolumeGroupSnapshot CRDs. They
   are part of every simplyblock installation: the Simplyblock Operator Helm chart installs them by default
   (`snapshotcontroller.create`), independent of DR.

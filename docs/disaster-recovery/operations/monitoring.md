@@ -52,16 +52,17 @@ applicable and never lower the verdict.
 
 ### ProtectedApplication
 
-| Field                   | Content                                                                                                                                                                                                     |
-|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `status.paths[]`        | One entry per declared path: `name`, `from`, `to`, `actions`, and `readiness` (with `verdict`, `checks[]`, and `lastTransitionTime`). Each check has `name`, `status`, `blocking`, `reason`, and `message`. |
-| `status.currentCluster` | The cluster the application runs on.                                                                                                                                                                        |
-| `status.recipe`         | The Recipe in use: `name`, `namespace`, `generated`, and `hash`.                                                                                                                                            |
-| `status.siteMapping`    | `Resolved`, `Open`, `NotApplicable`, or `Unknown`: whether every site-specific reference of the application's VMs resolves. See [Site Profiles](../configuration/site-profiles.md).                         |
-| `status.mapping`        | The findings and guest reservations of the site mapper, with their per-path results.                                                                                                                        |
-| `status.zoneBinding`    | Sync applications: the zone binding that holds the application in its zone.                                                                                                                                 |
-| `status.lastAction`     | The most recent recovery action of the application.                                                                                                                                                         |
-| `status.conditions`     | `Bound` and `Protected`.                                                                                                                                                                                    |
+| Field                   | Content                                                                                                                                                                                                      |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `status.paths[]`        | One entry per declared path: `name`, `from`, `to`, `actions`, and `readiness` (with `verdict`, `checks[]`, and `lastTransitionTime`). Each check has `name`, `status`, `blocking`, `reason`, and `message`.  |
+| `status.currentCluster` | The cluster the application runs on.                                                                                                                                                                         |
+| `status.recipe`         | The Recipe in use: `name`, `namespace`, `generated`, and `hash`.                                                                                                                                             |
+| `status.siteMapping`    | `Resolved`, `Open`, `NotApplicable`, or `Unknown`: whether every site-specific reference of the application's VMs resolves. See [Site Profiles](../configuration/site-profiles.md).                          |
+| `status.mapping`        | The findings and guest reservations of the site mapper, with their per-path results.                                                                                                                         |
+| `status.replication`    | Async applications: `lastSyncTime`, the newest consistency point replicated to the peer, and `interval`, the plan's scheduling interval. The RPO a failover would have now is the time since `lastSyncTime`. |
+| `status.zoneBinding`    | Sync applications: the zone binding that holds the application in its zone.                                                                                                                                  |
+| `status.lastAction`     | The most recent recovery action of the application.                                                                                                                                                          |
+| `status.conditions`     | `Bound` and `Protected`.                                                                                                                                                                                     |
 
 ### ProtectionPlan
 
@@ -72,7 +73,8 @@ matched.
 
 ### DRPath
 
-`status.applications` lists the applications on the path, `status.lastActions[]` the latest actions along it, and the
+`status.applications` lists the applications on the path, `status.lastActions[]` the latest actions along it (for a
+test, with its `outcome`: `Passed`, `Failed`, `FailedInvariant`, or `Unsupported`), and the
 `Valid` condition whether the path is usable. `status.profileConsistency` and `status.profileComparison[]` hold the
 comparison of the two sites' profiles (see [Site Profiles](../configuration/site-profiles.md)).
 
@@ -137,37 +139,44 @@ kubectl -n ramen-ops get events --field-selector involvedObject.kind=ProtectedAp
 dr-hub serves Prometheus metrics over HTTPS on port `8443` of the dr-hub pod (named port `metrics`). The certificate
 is self-signed.
 
-| Metric                       | Type      | Labels                                              | Meaning                                                                                                    |
-|------------------------------|-----------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| `dr_readiness_verdict`       | Gauge     | `namespace`, `application`, `path`, `verdict`       | 1 for the current verdict of the application on the path, 0 for the other verdicts.                        |
-| `dr_action_duration_seconds` | Histogram | `namespace`, `application`, `path`, `kind`, `phase` | Duration of finished recovery actions, by outcome phase.                                                   |
-| `dr_action_rto_seconds`      | Gauge     | `namespace`, `application`, `path`, `kind`          | RTO of the last completed action: creation until health probes passed.                                     |
-| `dr_achieved_rpo_seconds`    | Gauge     | `namespace`, `application`, `path`                  | Achieved RPO of the last failover: start of the volume switch minus the last replicated consistency point. |
+| Metric                            | Type      | Labels                                              | Meaning                                                                                                                                                                                      |
+|-----------------------------------|-----------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `dr_readiness_verdict`            | Gauge     | `namespace`, `application`, `path`, `verdict`       | 1 for the current verdict of the application on the path, 0 for the other verdicts.                                                                                                          |
+| `dr_action_duration_seconds`      | Histogram | `namespace`, `application`, `path`, `kind`, `phase` | Duration of finished recovery actions, by outcome phase.                                                                                                                                     |
+| `dr_action_rto_seconds`           | Gauge     | `namespace`, `application`, `path`, `kind`          | RTO of the last completed action: creation until health probes passed.                                                                                                                       |
+| `dr_achieved_rpo_seconds`         | Gauge     | `namespace`, `application`, `path`                  | Achieved RPO of the last failover: start of the volume switch minus the last replicated consistency point.                                                                                   |
+| `dr_replication_lag_seconds`      | Gauge     | `namespace`, `application`                          | Age of the last replicated consistency point (now minus Ramen's `lastGroupSyncTime`): the RPO an unplanned failover would have now. Async applications only, once a group sync was reported. |
+| `dr_replication_interval_seconds` | Gauge     | `namespace`, `application`                          | Scheduling interval of the application's async replication method.                                                                                                                           |
 
-The Helm chart ships neither a metrics Service nor a ServiceMonitor. With the Prometheus Operator, a PodMonitor such
-as the following example can be created:
+The replication series are recomputed with the readiness every minute.
 
-```yaml title="Example PodMonitor (not shipped with the chart)"
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: dr-hub
-  namespace: dr-simplyblock
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: dr-hub
-  podMetricsEndpoints:
-    - port: metrics
-      scheme: https
-      path: /metrics
-      tlsConfig:
-        insecureSkipVerify: true
-```
+### Scraping and Shipped Alerts
 
-### Suggested Alerts
+The hub chart creates the Service `dr-hub-metrics` on the metrics port (`monitoring.enabled`). Where the Prometheus
+Operator's kinds (`monitoring.coreos.com/v1`) exist on the hub, it also creates a ServiceMonitor `dr-hub` (HTTPS,
+without certificate verification) and a PrometheusRule `dr-hub` with the following alerts:
 
-The following Prometheus rules are examples:
+| Alert                      | Severity | Fires when                                                                                         |
+|----------------------------|----------|----------------------------------------------------------------------------------------------------|
+| `DRApplicationNotReady`    | warning  | An application is `NotReady` on a path for `notReadyFor` (default `5m`)                            |
+| `DRReplicationLagHigh`     | warning  | The replication lag exceeds `lagFactor` (default 2) times the interval for `lagFor` (default `5m`) |
+| `DRReplicationLagCritical` | critical | The replication lag exceeds `criticalLagFactor` (default 6) times the interval for `lagFor`        |
+
+| Chart value                                   | Default | Description                                                        |
+|-----------------------------------------------|---------|--------------------------------------------------------------------|
+| `monitoring.enabled`                          | `true`  | Creates the metrics Service, and enables the two objects below     |
+| `monitoring.labels`                           | Empty   | Labels a Prometheus selects ServiceMonitors and rules by           |
+| `monitoring.serviceMonitor.enabled`           | `true`  | Creates the ServiceMonitor                                         |
+| `monitoring.serviceMonitor.interval`          | `30s`   | Scrape interval                                                    |
+| `monitoring.prometheusRule.enabled`           | `true`  | Creates the PrometheusRule                                         |
+| `monitoring.prometheusRule.notReadyFor`       | `5m`    | How long an application is `NotReady` before the alert fires       |
+| `monitoring.prometheusRule.lagFor`            | `5m`    | How long the lag is too high before the lag alerts fire            |
+| `monitoring.prometheusRule.lagFactor`         | `2`     | Lag, as a multiple of the interval, for `DRReplicationLagHigh`     |
+| `monitoring.prometheusRule.criticalLagFactor` | `6`     | Lag, as a multiple of the interval, for `DRReplicationLagCritical` |
+
+### Further Alerts
+
+The following Prometheus rules are examples of alerts the chart does not ship:
 
 ```yaml title="Example PrometheusRule"
 apiVersion: monitoring.coreos.com/v1
@@ -179,13 +188,6 @@ spec:
   groups:
     - name: dr-simplyblock
       rules:
-        - alert: DRApplicationNotReady
-          expr: dr_readiness_verdict{verdict="NotReady"} == 1
-          for: 10m
-          labels:
-            severity: critical
-          annotations:
-            summary: "A protected application cannot be moved along one of its DR paths"
         - alert: DRFailoverRPOAboveInterval
           # 300 = the method's schedulingInterval (5m) in seconds
           expr: dr_achieved_rpo_seconds > 300
@@ -201,7 +203,8 @@ spec:
 
 An ongoing RPO breach of an async application (last group sync older than 1.5 times the interval) turns the
 `ramen-healthy` check red with the reason `RPOExceeded`, so it fires `DRApplicationNotReady`. The metric
-`dr_achieved_rpo_seconds` is written only after a failover.
+`dr_achieved_rpo_seconds` is written only after a failover. `dr_replication_lag_seconds` shows the current RPO at any
+time.
 
 ## Reports
 

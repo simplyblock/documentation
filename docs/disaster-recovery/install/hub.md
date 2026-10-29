@@ -143,6 +143,10 @@ helm install dr-simplyblock-hub simplyblock/dr-simplyblock-hub \
 | `console.enabled`                     | `false`                               | Deploys the DR-only Control Center next to `dr-hub`. See [Control Center](../control-center.md).                                        |
 | `console.role`                        | `operator`                            | The DR role the console's ServiceAccount holds in service-account mode: `viewer`, `operator`, or `admin`.                               |
 | `console.ingress.enabled`, `.host`    | `false`, empty                        | The console's Ingress. Authentication belongs in front of it.                                                                           |
+| `monitoring.enabled`                  | `true`                                | Creates the `dr-hub-metrics` Service. See [Monitoring](../operations/monitoring.md#prometheus-metrics).                                 |
+| `monitoring.serviceMonitor.enabled`   | `true`                                | Creates a ServiceMonitor where the Prometheus Operator is installed.                                                                    |
+| `monitoring.prometheusRule.enabled`   | `true`                                | Creates a PrometheusRule with the DR alerts where the Prometheus Operator is installed.                                                 |
+| `monitoring.labels`                   | Empty                                 | Labels a Prometheus selects ServiceMonitors and rules by, for example, `release: kube-prometheus-stack`.                                |
 
 The `DRConfig` created by the chart is kept when the release is uninstalled. After the installation, it is changed
 directly:

@@ -22,6 +22,7 @@ A bundle contains the following:
 - **Site registrations:** The joined sites and their dr-agent addons.
 - **S3 profiles:** The S3 store configuration of the sites.
 - **Simplyblock DR resources:** ProtectionPlans, DRPaths, ProtectedApplications, RecoveryPlans, and TestSchedules.
+- **Site mapper:** The SiteProfiles and DHCPServers, so that a restored hub keeps the network bindings of the sites.
 - **Protection state:** The protection state of every application, so that a restored hub takes over the running
   protection instead of starting it anew.
 
