@@ -38,14 +38,14 @@ kubectl -n simplyblock get controlplane,storagecluster,storagenodes,storagepools
 
 ## Resource Status at a Glance
 
-| Resource            | Short name | Health fields                                                                                                |
-|---------------------|------------|--------------------------------------------------------------------------------------------------------------|
-| `ControlPlane`      | `cp`       | `status.phase` (`Installing`, `Available`, `Degraded`, `Unavailable`), `status.components`, `status.version` |
-| `StorageCluster`    | `stc`      | `status.phase`, `status.status` (backend state), `status.maxFaultTolerance`, `status.tasks`                  |
-| `StorageNode`       | `sn`       | `status.phase`, `status.status`, `status.health`, `status.resources`                                         |
-| `StorageDevice`     | `sd`       | `status.phase` (`Online`, `Degraded`, `Unknown`, `Removed`, `Failed`), `status.deviceStatus`                 |
-| `StoragePool`       | `sp`       | `status.phase` (`Pending`, `Ready`, `Deleting`), `status.limits`                                             |
-| `SimplyblockDriver` | `sbd`      | `status.phase`, `status.nodesReady`, `status.nodesTotal`, `status.controllerReady`                           |
+| Resource            | Short name | Health fields                                                                                                 |
+|---------------------|------------|---------------------------------------------------------------------------------------------------------------|
+| `ControlPlane`      | `cp`       | `status.phase` (`Installing`, `Available`, `Degraded`, `Unavailable`), `status.components`, `status.version`  |
+| `StorageCluster`    | `stc`      | `status.phase`, `status.status` (backend state), `status.maxFaultTolerance`, `status.tasks`                   |
+| `StorageNode`       | `sn`       | `status.phase`, `status.status`, `status.health`, `status.resources`                                          |
+| `StorageDevice`     | `sd`       | `status.phase` (`Online`, `Degraded`, `Unknown`, `Removed`, `Failed`), `status.deviceStatus`, `status.health` |
+| `StoragePool`       | `sp`       | `status.phase` (`Pending`, `Ready`, `Deleting`), `status.limits`                                              |
+| `SimplyblockDriver` | `sbd`      | `status.phase`, `status.nodesReady`, `status.nodesTotal`, `status.controllerReady`                            |
 
 Every status carries a `message` with the latest human-readable finding. The details of each resource are covered in
 [Cluster Health](cluster-health.md).
@@ -89,12 +89,14 @@ administers the namespace of the `StorageCluster`.
 | Storage node status   | unreachable/offline nodes, node-level anomalies             | `kubectl get sn`, alerts       |
 | Logical volume status | volume health/offline conditions                            | Metrics API, CLI, Grafana      |
 | Performance           | throughput, IOPS, latency trends                            | CLI, Grafana                   |
+| Device health         | slow devices, SMART warnings and failures                   | `kubectl get sd`, alerts       |
 | Events and logs       | operational events, service/component errors                | `kubectl get events`, Graylog  |
 
 ## Monitoring Guides
 
 - [Cluster Health](cluster-health.md)
 - [Logical Volume Conditions](lvol-conditions.md)
+- [Device Health](device-health.md)
 - [Alerting](alerts.md)
 - [Accessing Grafana](accessing-grafana.md)
 - [Accessing Graylog](accessing-graylog.md)
