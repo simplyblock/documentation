@@ -39,10 +39,12 @@ the source keeps serving them. A migration plan in the control plane holds the v
 target storage node, and forecasts when the migration completes. Each source storage node migrates one volume at a
 time.
 
-Each volume ends with a cutover. The target cluster exposes the volume under the same NVMe subsystem, and its paths
-are connected on the consuming Kubernetes node beforehand. The source paths are then made inaccessible, the remaining
-delta is copied during a short I/O freeze, and the target paths become optimized. The client switches paths through
-NVMe multipathing, and the pod is not restarted.
+Each volume ends with a cutover, and the cutover is online. The target volume is exposed under the same NQN as the
+source, with its paths in the ANA state `inaccessible`, and these paths are connected on the consuming Kubernetes node
+beforehand. The source is then fenced by making all of its paths inaccessible, and the remaining delta is transferred
+during a brief I/O freeze. Finally, the ANA states flip: the storage node that leads the target logical volume store,
+normally the primary, becomes optimized, and the other online members of the target non-optimized. Queued I/O drains
+on the target without a disconnect, and the workload keeps running.
 
 On Kubernetes, a migration is started by a `ReplicationOps` resource with `action: migration`, which can cover every
 volume of a storage cluster. See
