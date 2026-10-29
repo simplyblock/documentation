@@ -11,7 +11,7 @@ outside the protected sites, so that it survives the loss of any single site.
 Before installing, the hub must meet the [Disaster Recovery Requirements](../../deployment-preparation/dr-requirements.md).
 
 !!! warning
-    Amazon EKS cannot be used as the hub cluster. OCM requires the hub's API server to sign
+    EKS cannot be used as the hub cluster. OCM requires the hub's API server to sign
     `kube-apiserver-client` certificate signing requests, which EKS does not do. EKS clusters can be used as site
     clusters.
 

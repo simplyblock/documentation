@@ -1,12 +1,12 @@
 ---
-title: "Amazon EKS"
-description: "Install simplyblock on Amazon EKS with tainted node groups: place the control plane and the CSI driver, and point the discovery at the storage node group."
+title: "EKS"
+description: "Install simplyblock on EKS with tainted node groups: place the control plane and the CSI driver, and point the discovery at the storage node group."
 weight: 40050
 ---
 
-On Amazon EKS, the installation follows the general procedure of [installing the Simplyblock Operator](k8s-control-plane.md)
+On EKS, the installation follows the general procedure of [installing the Simplyblock Operator](k8s-control-plane.md)
 and [creating a storage cluster](k8s-storage-plane.md). The differences come from the dedicated, tainted node groups
-described in [Amazon EKS](../../deployment-preparation/amazon-eks.md): every simplyblock component has to be placed
+described in [EKS](../../deployment-preparation/eks.md): every simplyblock component has to be placed
 onto its node group and has to tolerate its taint.
 
 The examples on this page use the following labels and taints. They are examples and are replaced with the ones of the
@@ -23,7 +23,7 @@ actual node groups.
 The placement is stated in the Helm values. The Simplyblock Operator and the CSI controller run on the untainted system
 node group and need no placement.
 
-```yaml title="Helm values for Amazon EKS (values-eks.yaml)"
+```yaml title="Helm values for EKS (values-eks.yaml)"
 controlplane:
   # StorageClass of the FoundationDB volumes; EKS has no default StorageClass.
   storageclass:
@@ -177,4 +177,4 @@ The FoundationDB, API, task, and monitoring pods run on the control plane nodes,
 storage nodes, and a CSI node plugin pod runs on every client node.
 
 On the client nodes, the volumes are attached with native NVMe multipathing. How to check it is described in
-[Node Images](../../deployment-preparation/amazon-eks.md#node-images).
+[Node Images](../../deployment-preparation/eks.md#node-images).

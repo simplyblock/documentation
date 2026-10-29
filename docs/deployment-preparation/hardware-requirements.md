@@ -35,7 +35,7 @@ network bandwidth, and free space on the boot disk.
 !!! info
     In cloud environments including GCP and AWS, instance types are pre-configured. In general,
     there are no restrictions on instance types as long as these system requirements are met. However, it is highly
-    recommended to stay with the [Recommended Cloud Instance Types](cloud-instance-recommendations.md) for production.
+    recommended to stay with the recommended instance types for [EKS](eks.md#instance-types) and [GKE](gke.md#machine-types) for production.
 
     For [hyper-converged](../architecture/deployment-topologies/hci.md) deployments, it is important that node sizing
     applies to the dedicated resources consumed by simplyblock. Hyper-converged instances must provide enough of
@@ -159,7 +159,7 @@ Proxmox, Nitro (AWS EC2) and GCP.
 For storage node production deployments, _SR-IOV_ is required for NVMe devices and network interfaces (NICs). Furthermore,
 dedicated cores must be assigned exclusively to the virtual machines running storage node (no over-provisioning).
 
-For deployments on Cloud-based platforms, see [cloud-instance recommendations](cloud-instance-recommendations.md).
+For deployments on Cloud-based platforms, see the recommendations for [EKS](eks.md#instance-types) and [GKE](gke.md#machine-types).
 
 ### Virtualization Support for pNFS
 

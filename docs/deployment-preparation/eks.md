@@ -1,10 +1,10 @@
 ---
-title: "Amazon EKS"
-description: "Prepare an Amazon EKS cluster for simplyblock: dedicated node groups, taints, node images with NVMe multipathing, and EBS-backed control plane storage."
+title: "EKS"
+description: "Prepare an EKS cluster for simplyblock: recommended instance types, dedicated node groups, taints, node images with NVMe multipathing, and EBS storage."
 weight: 30050
 ---
 
-Simplyblock runs on Amazon EKS with managed node groups. A production-like layout separates the control plane, the
+Simplyblock runs on EKS with managed node groups. A production-like layout separates the control plane, the
 storage nodes, and the workloads that consume simplyblock volumes into dedicated node groups, each tainted so that
 nothing else is scheduled onto it.
 
@@ -13,9 +13,8 @@ nothing else is scheduled onto it.
 
 ## Node Groups
 
-The following node groups are recommended. Instance types are examples; the requirements of the
-[hardware requirements](hardware-requirements.md) and the [cloud instance recommendations](cloud-instance-recommendations.md#aws-amazon-ec2-recommendations)
-apply.
+The following node groups are recommended. Instance types are examples; the
+[hardware requirements](hardware-requirements.md) and the [recommended instance types](#instance-types) apply.
 
 | Node Group    | Purpose                                                                              | Example Instance Type              | Example Taint                                      |
 |---------------|--------------------------------------------------------------------------------------|------------------------------------|----------------------------------------------------|
@@ -25,14 +24,47 @@ apply.
 | Clients       | Workloads that mount simplyblock volumes                                             | Any                                | `simplyblock.io/role=client:NoSchedule`            |
 
 The taint keys and values are examples. Any taint works, as long as the same taint is referenced when the control
-plane is installed and when the storage cluster is deployed (see [Amazon EKS](../kubernetes/installation/eks.md)).
+plane is installed and when the storage cluster is deployed (see [EKS](../kubernetes/installation/eks.md)).
 
 Each node group also carries a label, for example, `sb-role: controlplane`, `sb-role: storage-a`, or `sb-role: client`.
 The label is what the Helm values and the discovery select nodes by. A storage node group per storage cluster keeps
 discovery runs of different clusters apart.
 
-Storage nodes require instances with local NVMe instance storage. Amazon EBS volumes work, but are not recommended for
+Storage nodes require instances with local NVMe instance storage. EBS volumes work, but are not recommended for
 storage nodes for performance reasons.
+
+## Instance Types
+
+Simplyblock has been tested on and recommends the following instance types. Other instance types can be used as long
+as they fulfill the [hardware requirements](hardware-requirements.md). At least 8 vCPUs are required for a storage
+node.
+
+Three criteria drive the choice of an instance type for storage nodes:
+
+- The minimum requirements of vCPUs and RAM
+- Locally attached NVMe devices
+- Network performance (dedicated, not "up to")
+
+For storage nodes ***in disaggregated clusters***, the following instance types are commonly recommended:
+
+| Instance Type   | vCPU(s) | RAM    | Locally Attached Storage | Network Performance |
+|-----------------|---------|--------|--------------------------|---------------------|
+| _i4g.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.5 GBit/s         |
+| _i4g.16xlarge_  | 64      | 512 GB | 4x 3750 GB               | 37.5 GBit/s         |
+| _i3en.6xlarge_  | 24      | 192 GB | 2x 7500 GB               | 25 GBit/s           |
+| _i3en.12xlarge_ | 48      | 384 GB | 4x 7500 GB               | 50 GBit/s           |
+| _i3en.24xlarge_ | 96      | 768 GB | 8x 7500 GB               | 100 GBit/s          |
+| _m5d.4xlarge_   | 16      | 64 GB  | 2x 300 GB                | 10 GBit/s           |
+| _i4i.8xlarge_   | 32      | 256 GB | 2x 3750 GB               | 18.75 GBit/s        |
+| _i4i.12xlarge_  | 48      | 384 GB | 3x 3750 GB               | 28.12 GBit/s        |
+
+For hyper-converged workers, any instance type with a local NVMe SSD can be chosen.
+
+!!! note "pNFS volumes"
+    The pNFS metadata server requires a worker node with a usable `/dev/kvm` (see
+    [Virtualization Support for pNFS](hardware-requirements.md#virtualization-support-for-pnfs)). On EC2, this means
+    nested virtualization on a virtualized instance type, where the instance type supports it, or a bare-metal
+    instance type, which exposes `/dev/kvm` once the KVM kernel modules are loaded.
 
 ### Availability Zones and Placement
 
@@ -136,15 +168,15 @@ managedNodeGroups:
 ```
 
 `updateConfig.maxUnavailable: 1` makes an upgrade of the control plane node group replace one node at a time (see
-[Upgrading Amazon EKS](../kubernetes/operations/cluster/eks-upgrade.md)).
+[Upgrading EKS](../kubernetes/operations/cluster/eks-upgrade.md)).
 
 ## Storage for the Control Plane
 
 FoundationDB and Prometheus of the control plane store their data on persistent volumes. An EKS cluster has no default
-StorageClass, so the Amazon EBS CSI driver add-on and a gp3 StorageClass are created first. The node role (or an IAM
+StorageClass, so the EBS CSI driver add-on and a gp3 StorageClass are created first. The node role (or an IAM
 role for the add-on's service account) needs the AWS managed policy `AmazonEBSCSIDriverPolicy`.
 
-```bash title="Installing the Amazon EBS CSI driver add-on"
+```bash title="Installing the EBS CSI driver add-on"
 aws eks create-addon --cluster-name <CLUSTER_NAME> --addon-name aws-ebs-csi-driver
 ```
 
@@ -180,4 +212,4 @@ helm install cert-manager jetstack/cert-manager \
 ## Next Steps
 
 With the node groups, the StorageClass, and cert-manager in place, the installation continues with
-[Amazon EKS](../kubernetes/installation/eks.md).
+[EKS](../kubernetes/installation/eks.md).

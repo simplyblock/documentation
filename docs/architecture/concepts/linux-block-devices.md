@@ -12,7 +12,7 @@ the simplyblock storage plane container.
 
 The Linux block device mode (`lblk`) is an alternative, cluster-global device mode. In it, any Linux
 block device is accepted and no NVMe hardware is required at all: SAS or SATA SSDs behind an HBA,
-virtualized disks (virtio, Xen), or cloud volumes such as Amazon EBS.
+virtualized disks (virtio, Xen), or cloud volumes such as EBS.
 
 !!! warning
     Linux block device support is experimental. It is intended for evaluation, for test environments,

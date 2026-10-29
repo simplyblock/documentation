@@ -78,7 +78,7 @@ The following Linux distributions are considered tested and supported as NVMe-oF
 on any Amazon Linux operates in a degraded state with the risk of connection outages. Alternatively,
 multipathing must be configured using the Linux Device Manager (dm) via DM-MPIO. The kernel of the Amazon Linux 2023
 EKS node image is built without native NVMe multipathing, and Kubernetes nodes that mount simplyblock volumes therefore
-use another image, see [Amazon EKS](../deployment-preparation/amazon-eks.md#node-images).</span>
+use another image, see [EKS](../deployment-preparation/eks.md#node-images).</span>
 
 Mounting [pNFS volumes](../kubernetes/usage/pnfs.md) requires additional kernel features that not every supported
 initiator kernel provides. Red Hat-based distributions are validated, while Debian and Ubuntu are not validated yet.

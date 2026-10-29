@@ -45,10 +45,16 @@ If deploying onto an OpenShift cluster, there are additional environment-specifi
 If deploying onto a Talos cluster, there are additional environment-specific steps in the [Talos](talos.md) guide
 before continuing here.
 
-### Amazon EKS
+### EKS
 
-If deploying onto Amazon EKS with dedicated, tainted node groups, the discovery has to tolerate the taint of the
-storage node group. The [Amazon EKS](eks.md) guide shows the values and the discovery run.
+If deploying onto EKS with dedicated, tainted node groups, the discovery has to tolerate the taint of the
+storage node group. The [EKS](eks.md) guide shows the values and the discovery run.
+
+### GKE
+
+On GKE with dedicated, tainted node pools, the same applies: the discovery tolerates the taint of the storage node
+pool, as shown in the [EKS](eks.md) guide. The node pools are prepared as described in
+[GKE](../../deployment-preparation/gke.md).
 
 ### Networking
 

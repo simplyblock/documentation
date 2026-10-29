@@ -93,16 +93,16 @@ All DR state lives in the etcd of the hub. For etcd:
 | Kubernetes version      | 1.30 or later                                                 | 1.30 or later, and the simplyblock requirements in [Software Requirements](software-requirements.md) |
 | OpenShift               | Supported (primary target)                                    | Supported (primary target), including OpenShift Virtualization                                       |
 | Upstream Kubernetes     | Supported, for example, RKE2, K3s, and kubeadm-based clusters | Supported, for example, RKE2, K3s, and kubeadm-based clusters                                        |
-| Amazon EKS              | Not supported                                                 | Supported                                                                                            |
+| EKS                     | Not supported                                                 | Supported                                                                                            |
 | Existing ACM or ODF hub | Supported with the bundled bootstrap disabled                 | -                                                                                                    |
 
 Both Helm charts (hub and site) require Kubernetes 1.30 or later. Upstream Kubernetes with KubeVirt, Multus, and
 MetalLB is supported for virtual machine workloads next to OpenShift Virtualization.
 
-!!! warning "Amazon EKS cannot be the hub"
+!!! warning "EKS cannot be the hub"
     OCM registers every site with a client certificate that the hub's API server signs
     (`kubernetes.io/kube-apiserver-client` certificate signing requests). The hub distribution must therefore sign
-    these requests. Amazon EKS does not, so it cannot host the hub. Sites on Amazon EKS are supported.
+    these requests. EKS does not, so it cannot host the hub. Sites on EKS are supported.
 
 The hub installs pinned versions of its dependencies. Installing never downloads anything, and all images can be
 mirrored into a private registry with the `bootstrap.imageRegistry` Helm value.
@@ -125,7 +125,7 @@ Every site cluster must provide:
 - **Simplyblock with CSI replication support:** The simplyblock CSI driver with support for csi-addons
   VolumeReplication (and VolumeGroupReplication when consistency groups are used).
 - **Storage devices:** The storage cluster of a site may use NVMe devices or Linux block devices, for example, cloud
-  volumes such as Amazon EBS in a `LogicalBlock` storage cluster (see
+  volumes such as EBS in a `LogicalBlock` storage cluster (see
   [Linux Block Devices](../architecture/concepts/linux-block-devices.md)). Disaster recovery works the same on both.
 - **Snapshot support:** The external snapshot controller with the VolumeSnapshot and VolumeGroupSnapshot CRDs. They
   are part of every simplyblock installation: the Simplyblock Operator Helm chart installs them by default
@@ -301,7 +301,7 @@ sites and presents the same volumes on both of them.
 
 - A separate hub cluster with at least three nodes is available (virtual machines, bare metal, or HyperShift).
 - The hub runs Kubernetes 1.30 or later and signs `kubernetes.io/kube-apiserver-client` certificate requests (not
-  Amazon EKS).
+  EKS).
 - The hub nodes meet the sizing recommendation, and etcd runs on fast local disks.
 - Every site runs Kubernetes 1.30 or later and meets the simplyblock software and hardware requirements.
 - The simplyblock CSI driver on every site supports csi-addons replication.

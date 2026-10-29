@@ -40,19 +40,19 @@ metadata server at a fraction of the throughput.
 
 For Kubernetes-based deployments, the following Kubernetes environments and distributions are supported:
 
-| Distribution         | Versions                               |
-|----------------------|----------------------------------------|
-| Amazon EKS           | 1.30 and higher                        |
-| Google GKE           | 1.30 and higher - non production only! |
-| K3s                  | 1.33 and higher                        |
-| Kubernetes (vanilla) | 1.33 and higher                        |
-| RKE2                 | 1.33 and higher                        |
-| Talos                | 1.6.7 and higher                       |
-| OpenShift            | 4.19 and higher                        |
+| Distribution         | Versions         |
+|----------------------|------------------|
+| EKS                  | 1.30 and higher  |
+| GKE                  | 1.30 and higher  |
+| K3s                  | 1.33 and higher  |
+| Kubernetes (vanilla) | 1.33 and higher  |
+| RKE2                 | 1.33 and higher  |
+| Talos                | 1.6.7 and higher |
+| OpenShift            | 4.19 and higher  |
 
-!!! warning "Amazon EKS"
-    On Amazon EKS, nodes that mount simplyblock volumes require a node image with native NVMe multipathing. The
-    default Amazon Linux 2023 image does not provide it. See [Amazon EKS](amazon-eks.md#node-images).
+!!! warning "EKS"
+    On EKS, nodes that mount simplyblock volumes require a node image with native NVMe multipathing. The
+    default Amazon Linux 2023 image does not provide it. See [EKS](eks.md#node-images).
 
 !!! info
     SUSE Rancher is a management plane, not a Kubernetes distribution. Simplyblock is installed into the downstream
