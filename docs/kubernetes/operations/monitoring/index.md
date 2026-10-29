@@ -88,8 +88,8 @@ administers the namespace of the `StorageCluster`.
 | Capacity              | critical/warning capacity thresholds, provisioning pressure | Metrics API, alerts            |
 | Storage node status   | unreachable/offline nodes, node-level anomalies             | `kubectl get sn`, alerts       |
 | Logical volume status | volume health/offline conditions                            | Metrics API, CLI, Grafana      |
-| Performance           | throughput, IOPS, latency trends                            | CLI, Grafana                   |
-| Device health         | slow devices, SMART warnings and failures                   | `kubectl get sd`, alerts       |
+| Performance           | throughput, IOPS, latency trends                            | Prometheus, Grafana, CLI       |
+| Device health         | slow devices, SMART warnings, and SMART failures            | `kubectl get sd`, alerts       |
 | Events and logs       | operational events, service/component errors                | `kubectl get events`, Graylog  |
 
 ## Monitoring Guides
@@ -98,5 +98,6 @@ administers the namespace of the `StorageCluster`.
 - [Logical Volume Conditions](lvol-conditions.md)
 - [Device Health](device-health.md)
 - [Alerting](alerts.md)
+- [Prometheus Metrics](prometheus-metrics.md)
 - [Accessing Grafana](accessing-grafana.md)
 - [Accessing Graylog](accessing-graylog.md)

@@ -194,7 +194,9 @@ The operator records each change of a verdict as an event on the `StorageDevice`
 kubectl get events -n simplyblock --field-selector involvedObject.kind=StorageDevice
 ```
 
-It also exports the verdicts and readings as Prometheus metrics, with the labels `cluster`, `node`, and `device`:
+It also exports the verdicts and readings as Prometheus metrics, with the labels `cluster`, `node`, and `device`. They
+are served by the metrics endpoint of the operator, which has to be turned on (see
+[Simplyblock Operator Metrics](prometheus-metrics.md#simplyblock-operator-metrics)):
 
 | Metric                                        | Description                                                           |
 |-----------------------------------------------|-----------------------------------------------------------------------|
