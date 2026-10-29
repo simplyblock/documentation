@@ -73,7 +73,7 @@ S3-compatible object store can be used.
 
 These DR metadata buckets also receive the volume backups of the backup method types. The archive bucket of the hub
 is the second kind of bucket and is configured when the hub is installed. See
-[S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+[S3 Buckets](../../disaster-recovery/install/requirements.md#s3-buckets).
 
 ## DR Paths
 

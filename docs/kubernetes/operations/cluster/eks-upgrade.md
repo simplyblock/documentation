@@ -1,10 +1,10 @@
 ---
-title: "Upgrading Amazon EKS"
-description: "Upgrade the Kubernetes version of an Amazon EKS cluster that runs simplyblock: the EKS control plane, the control plane node group, and new storage capacity."
+title: "Upgrading EKS"
+description: "Upgrade the Kubernetes version of an EKS cluster that runs simplyblock: the EKS control plane, the control plane node group, and new storage capacity."
 weight: 10135
 ---
 
-An Amazon EKS cluster that runs simplyblock is upgraded to a new Kubernetes version in steps. The EKS control plane
+An EKS cluster that runs simplyblock is upgraded to a new Kubernetes version in steps. The EKS control plane
 moves first, then the node group of the simplyblock control plane, one node at a time. Storage node groups are not
 rolled in place: new storage capacity is added as a new node group on the new version, and volumes move onto it with an
 online migration.
@@ -14,8 +14,8 @@ This page covers the Kubernetes version of the EKS cluster. Upgrading simplybloc
 
 ## Prerequisites
 
-- The control plane persistence is backed by Amazon EBS (see
-  [Storage for the Control Plane](../../../deployment-preparation/amazon-eks.md#storage-for-the-control-plane)). An
+- The control plane persistence is backed by EBS (see
+  [Storage for the Control Plane](../../installation/eks.md#storage-for-the-control-plane)). An
   upgrade of a managed node group replaces its nodes with new instances, and host-local data does not survive it.
 - The control plane node group has `updateConfig.maxUnavailable: 1`, so that only one control plane node is replaced at
   a time.
@@ -87,4 +87,4 @@ New storage capacity on the new Kubernetes version is added as a new node group:
 4. Remove the old storage cluster and its node group once all volumes have moved.
 
 Client node groups are replaced like any other workload node group. A replacement client node group uses a node image
-with native NVMe multipathing (see [Node Images](../../../deployment-preparation/amazon-eks.md#node-images)).
+with native NVMe multipathing (see [Node Images](../../installation/eks.md#node-images)).

@@ -1,14 +1,14 @@
 ---
 title: "Disaster Recovery Requirements"
 description: "Requirements for simplyblock Disaster Recovery: hub cluster sizing, Kubernetes versions, site cluster prerequisites, S3 buckets, networking, and site labeling."
-weight: 29980
+weight: 10105
 ---
 
 Simplyblock Disaster Recovery (DR) consists of a hub cluster, which holds the DR configuration and drives every
 action, and two or more site clusters, which run the applications and the simplyblock storage. This page lists the
 requirements for the hub, the sites, the S3 object storage, and the network between them, as well as the node labels
 that assign nodes to sites. A checklist at the end summarizes the preparation. The architectures that these
-requirements apply to are described in [Deployment Architectures](deployment-architectures.md).
+requirements apply to are described in [Deployment Architectures](../../deployment-preparation/deployment-architectures.md).
 
 ## Hub Cluster
 
@@ -19,7 +19,7 @@ point with it.
 !!! info "Central storage management"
     The same hub cluster can also host the centralized simplyblock control plane, which manages the storage of the
     sites. See
-    [Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md).
+    [Control Plane and Operator](../../architecture/deployment-topologies/control-plane-and-operator.md).
 
 ### High Availability
 
@@ -33,7 +33,7 @@ The hub requires at least three nodes. Three nodes are needed for:
 
 While the hub is unavailable, protected applications keep running and replicating on the sites, but no DR action can
 be started. A lost hub is rebuilt from its signed state bundle in S3. See
-[Hub Recovery](../disaster-recovery/operations/hub-recovery.md).
+[Hub Recovery](../operations/hub-recovery.md).
 
 ### Deployment Options
 
@@ -88,21 +88,21 @@ All DR state lives in the etcd of the hub. For etcd:
 
 ## Kubernetes Versions and Distributions
 
-| Requirement             | Hub                                                           | Sites                                                                                                |
-|-------------------------|---------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| Kubernetes version      | 1.30 or later                                                 | 1.30 or later, and the simplyblock requirements in [Software Requirements](software-requirements.md) |
-| OpenShift               | Supported (primary target)                                    | Supported (primary target), including OpenShift Virtualization                                       |
-| Upstream Kubernetes     | Supported, for example, RKE2, K3s, and kubeadm-based clusters | Supported, for example, RKE2, K3s, and kubeadm-based clusters                                        |
-| Amazon EKS              | Not supported                                                 | Supported                                                                                            |
-| Existing ACM or ODF hub | Supported with the bundled bootstrap disabled                 | -                                                                                                    |
+| Requirement             | Hub                                                           | Sites                                                                                                                             |
+|-------------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| Kubernetes version      | 1.30 or later                                                 | 1.30 or later, and the simplyblock requirements in [Software Requirements](../../deployment-preparation/software-requirements.md) |
+| OpenShift               | Supported (primary target)                                    | Supported (primary target), including OpenShift Virtualization                                                                    |
+| Upstream Kubernetes     | Supported, for example, RKE2, K3s, and kubeadm-based clusters | Supported, for example, RKE2, K3s, and kubeadm-based clusters                                                                     |
+| EKS                     | Not supported                                                 | Supported                                                                                                                         |
+| Existing ACM or ODF hub | Supported with the bundled bootstrap disabled                 | -                                                                                                                                 |
 
 Both Helm charts (hub and site) require Kubernetes 1.30 or later. Upstream Kubernetes with KubeVirt, Multus, and
 MetalLB is supported for virtual machine workloads next to OpenShift Virtualization.
 
-!!! warning "Amazon EKS cannot be the hub"
+!!! warning "EKS cannot be the hub"
     OCM registers every site with a client certificate that the hub's API server signs
     (`kubernetes.io/kube-apiserver-client` certificate signing requests). The hub distribution must therefore sign
-    these requests. Amazon EKS does not, so it cannot host the hub. Sites on Amazon EKS are supported.
+    these requests. EKS does not, so it cannot host the hub. Sites on EKS are supported.
 
 The hub installs pinned versions of its dependencies. Installing never downloads anything, and all images can be
 mirrored into a private registry with the `bootstrap.imageRegistry` Helm value.
@@ -116,7 +116,7 @@ mirrored into a private registry with the `bootstrap.imageRegistry` Helm value.
 
 On a hub that already runs Red Hat Advanced Cluster Management (ACM) and OpenShift Data Foundation (ODF) DR, the
 bundled OCM and Ramen installation is disabled (`bootstrap.enabled: false`). Protection plans then reference an
-existing Ramen S3 profile. See [Install the Hub](../disaster-recovery/install/hub.md).
+existing Ramen S3 profile. See [Install the Hub](hub.md).
 
 ## Site Cluster Requirements
 
@@ -125,8 +125,8 @@ Every site cluster must provide:
 - **Simplyblock with CSI replication support:** The simplyblock CSI driver with support for csi-addons
   VolumeReplication (and VolumeGroupReplication when consistency groups are used).
 - **Storage devices:** The storage cluster of a site may use NVMe devices or Linux block devices, for example, cloud
-  volumes such as Amazon EBS in a `LogicalBlock` storage cluster (see
-  [Linux Block Devices](../architecture/concepts/linux-block-devices.md)). Disaster recovery works the same on both.
+  volumes such as EBS in a `LogicalBlock` storage cluster (see
+  [Linux Block Devices](../../architecture/concepts/linux-block-devices.md)). Disaster recovery works the same on both.
 - **Snapshot support:** The external snapshot controller with the VolumeSnapshot and VolumeGroupSnapshot CRDs. They
   are part of every simplyblock installation: the Simplyblock Operator Helm chart installs them by default
   (`snapshotcontroller.create`), independent of DR.
@@ -138,12 +138,12 @@ Every site cluster must provide:
 - **Optional KubeVirt:** KubeVirt or OpenShift Virtualization for protecting virtual machines.
 - **Optional flow collector for discovery:** Linux 5.8 or newer on every node, tracefs, and an agent namespace that
   admits pods with the capabilities `CAP_BPF`, `CAP_PERFMON`, and `CAP_SYS_RESOURCE` (see
-  [Discovery Setup](../disaster-recovery/discovery/setup.md#the-flow-collector)).
+  [Discovery Setup](../discovery/setup.md#the-flow-collector)).
 - **Optional Multus network attachment for tests:** An isolated NetworkAttachmentDefinition without uplink for test
   bubbles of virtual machines with secondary networks.
 - **Identical names on both sites, except VM networks:** The site mapper translates the Multus network attachments
   and guest addresses of virtual machines between the sites (see
-  [Site Profiles and Mappings](../disaster-recovery/configuration/site-profiles.md)). Everything else recovers as
+  [Site Profiles and Mappings](../configuration/site-profiles.md)). Everything else recovers as
   captured: storage class names, zone names, and other classes that applications reference must exist with the same
   names on the target site.
 
@@ -155,13 +155,13 @@ preinstalled in conflicting versions:
 
 Single components can be left out if they already exist on a site. The site stack also contains a snapshot
 controller and csi-addons, which are not needed on a simplyblock site and are left out when the site joins. See
-[Join Sites](../disaster-recovery/install/sites.md).
+[Join Sites](sites.md).
 
 ## S3 Buckets
 
 A disaster recovery setup uses two kinds of S3 buckets. They hold different data, serve different recovery cases, and
 are configured in different places. The storage-level backups of a simplyblock storage cluster, described in
-[Backup and Recovery](../kubernetes/operations/data-protection/backup-recovery.md), are independent of DR.
+[Backup and Recovery](../../kubernetes/operations/data-protection/backup-recovery.md), are independent of DR.
 
 | Bucket             | Content                                                                                                          | Used for                                                                                                                              | Configured in | Configured when |
 |--------------------|------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|---------------|-----------------|
@@ -182,8 +182,8 @@ store, so a plan with such a method declares its stores per site (`spec.s3Profil
 - **Configuration:** Declared per site in the protection plan (`spec.s3Profiles` with bucket, endpoint, region, and
   credential Secret), or referenced as an existing profile (`spec.s3Profile`). The credential Secret is created by the
   hub chart from `s3Credentials` and distributed to the sites by the hub, so the sites need no credentials of their
-  own. See [Install the Hub](../disaster-recovery/install/hub.md)
-  and [Protection Plans](../disaster-recovery/configuration/protection-plans.md#s3-profiles).
+  own. See [Install the Hub](hub.md)
+  and [Protection Plans](../configuration/protection-plans.md#s3-profiles).
 - **Reachability:** From the hub and from every site of the plan.
 - **Location:** Outside the protected sites, or at least not only at one of them, since the bucket is needed after
   the loss of a site.
@@ -195,13 +195,13 @@ PDF report of every finished recovery action and test. It is the bucket that mus
 and the sites, and therefore the one that needs object lock.
 
 - **Configuration:** In the hub chart under `drConfig.spec.archive`, with its own credential Secret and the bundle
-  signing key. See [Archive and State Bundle](../disaster-recovery/install/archive.md).
+  signing key. See [Archive and State Bundle](archive.md).
 - **Reachability:** From the hub, and from the location where a lost hub is rebuilt.
 
 ### Simplyblock Backup Buckets
 
 Simplyblock storage clusters back up volumes as incremental copy-on-write snapshots to S3, independent of DR (see
-[Backup and Recovery](../kubernetes/operations/data-protection/backup-recovery.md)). The backup method types of a
+[Backup and Recovery](../../kubernetes/operations/data-protection/backup-recovery.md)). The backup method types of a
 protection plan use the same mechanism, but with the site's DR metadata store as the target and the interval and
 retention of the method, so no separate bucket is needed for DR.
 
@@ -229,9 +229,9 @@ distribution: 6443 for most distributions, 443 for many managed and hosted API e
 
 For storage-level replication, the storage clusters of the sites need network connectivity between their storage
 nodes, and between the storage nodes and the control plane they are attached to. The ports are listed in the network
-port table of [Kubernetes Storage Plane Installation](../kubernetes/installation/k8s-storage-plane.md#networking). The
+port table of [Kubernetes Storage Plane Installation](../../kubernetes/installation/k8s-storage-plane.md#networking). The
 prerequisites of the replication relationship itself are described in
-[Asynchronous Replication](../kubernetes/operations/data-protection/asynchronous-replication.md).
+[Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
 
 ### Latency
 
@@ -244,7 +244,7 @@ changes of one scheduling interval within that interval.
 
 After a failover or relocation, clients have to reach the application at its new site. In the current release, the
 switch of DNS records, global server load balancing (GSLB), and virtual IP addresses is performed by external
-postTargetReady hooks. See [Site Profiles](../disaster-recovery/configuration/site-profiles.md).
+postTargetReady hooks. See [Site Profiles](../configuration/site-profiles.md).
 
 ## Assigning Clusters to Sites
 
@@ -267,7 +267,7 @@ spec:
 No label is set on the cluster or its nodes. The assignment is made in two steps, both by the DR administrator:
 
 1. **Cluster name at join:** When the site cluster joins the hub, the spoke chart value `clusterName` sets the name
-   under which it is registered on the hub (see [Join Sites](../disaster-recovery/install/sites.md)). The name is
+   under which it is registered on the hub (see [Join Sites](sites.md)). The name is
    unique on the hub and must be reused when the site rejoins after a hub recovery.
 2. **Site in the protection plan:** The protection plan maps each site name to one of those cluster names in
    `spec.sites[].cluster`. The DR hub reads the plan and treats everything that runs on that cluster as part of the
@@ -281,11 +281,11 @@ The optional `zone` and `region` of a site are descriptive attributes of the who
 
 For a synchronous plan, the sites are the zones of one stretch cluster: every site names the same cluster and its own
 zone, matched against the node label `topology.kubernetes.io/zone`, and dr-agent moves the applications between the
-zones. See [Replication Types](../disaster-recovery/configuration/replication-types.md#synchronous-replication).
+zones. See [Replication Types](../configuration/replication-types.md#synchronous-replication).
 
 Independent of DR, the standard node labels `topology.kubernetes.io/zone` and `topology.kubernetes.io/region` are
 still useful within a cluster, for example, for the topology-aware scheduling of workloads or for the failure domains
-of a storage cluster (see [Failure Domains](../architecture/concepts/failure-domains.md)). They are not a DR
+of a storage cluster (see [Failure Domains](../../architecture/concepts/failure-domains.md)). They are not a DR
 requirement.
 
 ### Stretched Storage Cluster
@@ -301,7 +301,7 @@ sites and presents the same volumes on both of them.
 
 - A separate hub cluster with at least three nodes is available (virtual machines, bare metal, or HyperShift).
 - The hub runs Kubernetes 1.30 or later and signs `kubernetes.io/kube-apiserver-client` certificate requests (not
-  Amazon EKS).
+  EKS).
 - The hub nodes meet the sizing recommendation, and etcd runs on fast local disks.
 - Every site runs Kubernetes 1.30 or later and meets the simplyblock software and hardware requirements.
 - The simplyblock CSI driver on every site supports csi-addons replication.
