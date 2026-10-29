@@ -4,8 +4,6 @@ description: "Plan a simplyblock deployment on FC, iSCSI, or NVMe-oF storage arr
 weight: 30150
 ---
 
-{{ experimental }}
-
 Simplyblock can be deployed on the LUNs of an existing Fibre Channel, iSCSI, or NVMe-oF storage array instead of
 local NVMe devices. The architecture and the division of tasks between the array and simplyblock are described in
 [Storage Arrays](../architecture/concepts/storage-arrays.md). This page lists what has to be prepared.

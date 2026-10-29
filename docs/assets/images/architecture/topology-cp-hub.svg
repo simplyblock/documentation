@@ -7,21 +7,21 @@
 </defs>
 <rect x="0.5" y="0.5" width="959" height="559" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
 <text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">Centralized control plane and operator on a hub</text>
-<rect x="461" y="22" width="102" height="22" rx="11" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/><text x="512" y="37.5" font-size="13" font-weight="600" fill="#0969da" text-anchor="middle">coming soon</text>
+
 
 <rect x="24" y="72" width="360" height="430" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
 <text x="38" y="94" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Hub (management) cluster</text>
 <rect x="40" y="124" width="220" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="150" y="146" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
-<text x="150" y="163" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">fleet / hub mode</text>
+<text x="150" y="163" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">standalone profile</text>
 <rect x="40" y="244" width="220" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="150" y="266" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Control plane</text>
 <text x="150" y="283" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">mgmt pods + FoundationDB</text>
 <rect x="40" y="364" width="220" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="150" y="386" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Central authorization</text>
-<text x="150" y="403" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">RBAC / IdP</text>
+<text x="150" y="386" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Management API</text>
+<text x="150" y="403" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">bearer token, TLS</text>
 <rect x="276" y="112" width="92" height="374" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
-<text x="322" y="303.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">OCM hub</text>
+<text x="322" y="303.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">HTTPS + RPC</text>
 <path d="M150,174 L150,244" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
 <rect x="109.2" y="199" width="81.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
 <text x="150" y="213.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">reconciles</text>
@@ -32,9 +32,9 @@
 <rect x="480" y="72" width="456" height="130" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
 <text x="494" y="94" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Managed cluster 1 (edge)</text>
 <rect x="496" y="108" width="100" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
-<text x="546" y="130.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<text x="546" y="130.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Operator</text>
 <rect x="608" y="108" width="164" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="690" y="130.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<text x="690" y="130.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">managed profile</text>
 <rect x="784" y="108" width="136" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="852" y="130.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
 <rect x="496" y="154" width="132" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
@@ -45,13 +45,13 @@
 <text x="850" y="176.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage node 3</text>
 <path d="M368,126 L496,126" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
 <rect x="416.3" y="116" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
-<text x="432" y="130.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<text x="432" y="130.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">API</text>
 <rect x="480" y="222" width="456" height="130" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
 <text x="494" y="244" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Managed cluster 2 (edge)</text>
 <rect x="496" y="258" width="100" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
-<text x="546" y="280.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<text x="546" y="280.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Operator</text>
 <rect x="608" y="258" width="164" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="690" y="280.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<text x="690" y="280.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">managed profile</text>
 <rect x="784" y="258" width="136" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="852" y="280.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
 <rect x="496" y="304" width="132" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
@@ -62,13 +62,13 @@
 <text x="850" y="326.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage node 3</text>
 <path d="M368,276 L496,276" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
 <rect x="416.3" y="266" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
-<text x="432" y="280.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<text x="432" y="280.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">API</text>
 <rect x="480" y="372" width="456" height="130" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
 <text x="494" y="394" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Managed cluster 3 (site)</text>
 <rect x="496" y="408" width="100" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
-<text x="546" y="430.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<text x="546" y="430.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Operator</text>
 <rect x="608" y="408" width="164" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="690" y="430.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<text x="690" y="430.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">managed profile</text>
 <rect x="784" y="408" width="136" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="852" y="430.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
 <rect x="496" y="454" width="132" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
@@ -79,7 +79,7 @@
 <text x="850" y="476.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage node 3</text>
 <path d="M368,426 L496,426" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
 <rect x="416.3" y="416" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
-<text x="432" y="430.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<text x="432" y="430.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">API</text>
 <line x1="24" y1="516" x2="936" y2="516" stroke="#d0d7de" stroke-width="1"/>
 <rect x="24" y="527" width="20" height="14" rx="3" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.25"/>
 <text x="52" y="538.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">Kubernetes cluster</text>

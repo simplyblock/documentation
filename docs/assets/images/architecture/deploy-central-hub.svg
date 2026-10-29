@@ -20,9 +20,8 @@
 <rect x="147" y="188" width="164" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
 <text x="229" y="210.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen hub operator</text>
 <rect x="488" y="108" width="432" height="132" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
-<text x="502" y="130" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Simplyblock (fleet mode)</text>
-<rect x="701.2" y="113" width="102" height="22" rx="11" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
-<text x="752.1" y="128.5" font-size="13" font-weight="600" fill="#0969da" text-anchor="middle">coming soon</text>
+<text x="502" y="130" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Simplyblock (standalone profile)</text>
+
 <rect x="504" y="140" width="180" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="594" y="162.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
 <rect x="696" y="140" width="125" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
@@ -38,7 +37,7 @@
 <rect x="40" y="388" width="219" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
 <text x="149.5" y="410.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen DR cluster operator</text>
 <rect x="40" y="436" width="148" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="114" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<text x="114" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Operator (managed)</text>
 <rect x="196" y="436" width="92" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="242" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
 <rect x="40" y="484" width="252" height="76" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
@@ -61,7 +60,7 @@
 <rect x="354" y="388" width="219" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
 <text x="463.5" y="410.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen DR cluster operator</text>
 <rect x="354" y="436" width="148" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="428" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<text x="428" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Operator (managed)</text>
 <rect x="510" y="436" width="92" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="556" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
 <rect x="354" y="484" width="252" height="76" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
@@ -84,7 +83,7 @@
 <rect x="668" y="388" width="219" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
 <text x="777.5" y="410.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen DR cluster operator</text>
 <rect x="668" y="436" width="148" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
-<text x="742" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">simplyblock agent</text>
+<text x="742" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Operator (managed)</text>
 <rect x="824" y="436" width="92" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
 <text x="870" y="458.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
 <rect x="668" y="484" width="252" height="76" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
