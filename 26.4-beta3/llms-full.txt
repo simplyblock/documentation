@@ -4212,7 +4212,7 @@ refused as a storage node.
 For RAM, it is required to define the maximum number of NVMe-oF subsystems per node. This depends on
 the assigned vCPUs and networking performance of the node. For each 10 GBit/s of dedicated network bandwidth
 it is recommended to use at least 3 subsystems. For each vCPU exceeding 8, it is recommended to use one additional
-subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of 75 subsystems per
+subsystem. Use the lower of both values (dedicated network bandwidth, vCPUs). A hard limit of 500 subsystems per
 node applies. See [Limits](../reference/limits.md).
 
 !!! note "Edge clusters"
@@ -6276,7 +6276,7 @@ existing cluster, because a growth document adds nodes to a cluster whose settin
 | Field                                                         | Value                               | Purpose                                                                                                                              |
 |---------------------------------------------------------------|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `name`                                                        | Required, at most 63 characters     | Name of the `StorageCluster`. Discovery proposes `<draft name>-cluster`.                                                             |
-| `maxSubsystemCount`                                           | Required, 10 to 75                  | NVMe subsystems the cluster serves.                                                                                                  |
+| `maxSubsystemCount`                                           | Required, 10 to 500                 | NVMe subsystems the cluster serves.                                                                                                  |
 | `vcpuCount`                                                   | Required, at least 4                | vCPUs per storage node.                                                                                                              |
 | `minHugePagesSize`                                            | For example, `16G`                  | Minimum huge page memory per storage node.                                                                                           |
 | `stripe`                                                      | `dataChunks` and `parityChunks`     | The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md). Allowed: 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, 4+2.      |
@@ -7571,8 +7571,8 @@ The following flags also affect the huge page calculation:
 
 The maximum number of subsystems and the vCPU count are cluster-level settings (`maxSubsystemCount` and `vcpuCount`
 of the `StorageCluster`), which the host does not know before it joins the cluster. The calculator therefore sizes
-the host for the maximum of 75 subsystems and its default core layout, so the result is enough for any cluster
-setting.
+the host for the default of 75 subsystems and its default core layout. For a `maxSubsystemCount` above 75, add 20
+pages (40 MiB) for every additional subsystem, up to the maximum of 500.
 
 ```plain title="Example output of huge pages calculator"
 [demo@demo ~]# sbctl storage-node configure \
@@ -35272,7 +35272,7 @@ control plane. Others depend on the node's vCPU count and memory configuration.
 | Limit                       | Value | What it counts                                                                                      |
 |-----------------------------|------:|-----------------------------------------------------------------------------------------------------|
 | Objects per node            | 6000  | Logical volumes, clones, and snapshots owned by the node (its logical volume store)                 |
-| NVMe-oF subsystems per node | 75    | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
+| NVMe-oF subsystems per node | 500   | Subsystems for which the node is the primary. Namespaced volumes sharing one subsystem count as one |
 | Namespaces per subsystem    | 50    | Volumes (namespaces) sharing one NVMe-oF subsystem                                                  |
 
 These limits are enforced on every create path (volume create, snapshot create, clone). When a limit is reached,
@@ -35280,7 +35280,7 @@ the operation fails with an explanatory error, for example:
 
 ```plain title="Limit errors"
 Object limit reached on lvstore of node <NODE_ID>: 6000 objects (lvols/clones: 4100, snapshots: 1900); the hard limit is 6000 per lvstore
-Too many subsystems on node: <NODE_ID>, max subsystems reached: 75
+Too many subsystems on node: <NODE_ID>, max subsystems reached: 500
 max_namespace_per_subsys=64 exceeds the hard limit of 50 namespaces per subsystem
 ```
 
@@ -35333,7 +35333,7 @@ sbctl cluster create --max-subsys <N> <FURTHER_OPTIONS>
 
 In Kubernetes, the same setting is `maxSubsystemCount` of the `StorageCluster`.
 
-The value cannot exceed the hard ceiling of 75, and a larger value is rejected. The configured value also drives each
+The value cannot exceed the hard ceiling of 500, and a larger value is rejected. The configured value also drives each
 node's memory reservation (huge pages), so it should reflect the actually planned number of volumes. It can be
 changed later with `sbctl cluster update --max-subsys <N>`. Each node adopts the new value on its next
 restart.
@@ -36369,6 +36369,9 @@ node label it names changes from `simplyblock.io/pool.<namespace>.<cluster>.<poo
 
 ### Changes in 26.4.0-beta3
 
+- The maximum number of NVMe-oF subsystems per storage node is raised from 75 to 500
+  ([Limits](../reference/limits.md)). Each subsystem reserves huge page memory, so `maxSubsystemCount` should
+  reflect the planned number of volumes.
 - The TLS settings of the installation are read from `ControlPlane.spec.source.local.tls`, which cannot be changed
   once set. The environment variables `SB_TLS_SERVE`, `SB_TLS_CONNECT`, `SB_TLS_CLIENT_AUTH`, and `FDB_TLS_*` are
   removed from the operator.
@@ -36637,7 +36640,7 @@ Simplyblock CSI.
   the count of its cluster, plus one core for the system, is refused instead of running on fewer cores than
   requested. `sbctl cluster update --vcpu-count` does not exist, because rewriting the core mask of every
   node belongs to a deliberate redeployment.
-- A configured subsystem limit above 75 per storage node is rejected, where it was accepted and then clamped
+- A configured subsystem limit above 500 per storage node is rejected, where it was accepted and then clamped
   silently before, so a node reserved huge pages for subsystems it could never serve. An lvstore serves at most 6000
   objects, counting volumes, clones, and snapshots, and a create beyond that limit is refused.
 - Failure domains are a deploy-time feature. A cluster cannot be upgraded into them, and `--enable-failure-domain`
