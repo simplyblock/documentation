@@ -19,6 +19,8 @@ virtualized disks (virtio, Xen), or cloud volumes such as Amazon EBS.
     and for deployments where NVMe devices are unavailable. For production-grade performance, local
     NVMe devices are recommended.
 
+LUNs of an FC, iSCSI, or NVMe-oF storage array are used the same way, see [Storage Arrays](storage-arrays.md).
+
 ## Device Modes
 
 The device mode is chosen once, at cluster creation, and applies to every storage node in the

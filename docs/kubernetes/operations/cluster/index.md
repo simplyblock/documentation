@@ -25,3 +25,4 @@ The operation pattern that every Ops kind shares is described in [Operations](..
 | [Upgrading a Cluster](cluster-upgrade.md)                     | Upgrading the operator, the control plane, and the storage plane.                |
 | [Managing Failure Domains](failure-domains.md)                | Grouping storage nodes into fault groups, so that chunks are spread across them. |
 | [Configuring Node Affinity](node-affinity.md)                 | Keeping the data of a logical volume on the storage node that owns it.           |
+| [Operating on Storage Arrays](storage-arrays.md)              | Capacity, growth, failures, and data protection of a cluster on array LUNs.      |
