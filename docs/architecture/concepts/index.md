@@ -9,7 +9,7 @@ deployment, whether the storage nodes run hyper-converged with the applications 
 
 | Area                   | Concepts                                                                                                                                                                                             |
 |------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Cluster and storage    | [Simplyblock Cluster](simplyblock-cluster.md), [Storage Pooling](storage-pooling.md), [Linux Block Devices](linux-block-devices.md)                                                                  |
+| Cluster and storage    | [Simplyblock Cluster](simplyblock-cluster.md), [Storage Pooling](storage-pooling.md), [Linux Block Devices](linux-block-devices.md), [Storage Arrays](storage-arrays.md)                             |
 | Volumes                | [Logical Volumes](logical-volumes.md), [NVMe Namespaces and Subsystems](nvme-namespaces-and-subsystems.md), [Persistent Volumes](persistent-volumes.md), [Snapshots and Clones](snapshots-clones.md) |
 | Shared file storage    | [Distributed File Storage](distributed-file-storage.md), [ReadWriteMany (pNFS)](pnfs.md)                                                                                                             |
 | Security               | [NVMe over Fabrics Security](nvmf-security.md), [External Key Management](external-key-management.md)                                                                                                |

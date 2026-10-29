@@ -28,6 +28,12 @@ sites.
 - **[Disaster Recovery Requirements](dr-requirements.md):** Hub cluster sizing, Kubernetes versions, site cluster
   prerequisites, S3, networking, and site labeling for simplyblock Disaster Recovery.
 
+## Storage Arrays
+
+Simplyblock can also run on the LUNs of an existing FC, iSCSI, or NVMe-oF storage array instead of local NVMe
+devices. [Storage Arrays](storage-arrays.md) describes the LUN layout, the RAID and erasure coding choice, thin
+provisioning, and multipathing.
+
 ## General Information on Requirements
 
 Before installation, key factors such as node sizing, storage capacity, and fault tolerance mechanisms should be

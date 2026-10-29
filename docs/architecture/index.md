@@ -1,11 +1,28 @@
 ---
 title: Architecture
-description: "The architecture of simplyblock: its components, performance and QoS, high availability, deployment topologies, and the core concepts of the storage platform."
+description: "The architecture of simplyblock: one NVMe-oF storage platform for block, shared file (pNFS), and object storage, with its components and core concepts."
 weight: 10080
 ---
 
-Simplyblock is a cloud-native, software-defined block storage platform built for high performance, scalability, and
-resilience. It serves logical volumes over NVMe/TCP and NVMe/RoCE and is deployed and operated through Kubernetes.
+Simplyblock is a cloud-native, software-defined storage platform built for high performance, scalability, and
+resilience. It is deployed and operated through Kubernetes, and it serves three kinds of storage from the same
+NVMe-oF infrastructure and the same storage clusters:
+
+- **Block storage:** Logical volumes over NVMe/TCP and NVMe/RoCE.
+- **Shared file storage:** `ReadWriteMany` volumes through [parallel NFS (pNFS)](concepts/pnfs.md), whose clients
+  read and write the data directly over NVMe-oF.
+- **Object storage:** An S3-compatible interface (coming soon as a beta).
+
+File and object storage are built on top of the block layer, so all three share the benefits of the storage
+architecture:
+
+- Distributed scale-out storage with high IOPS and low latency
+- Live storage migration between clusters
+- Policy-based asynchronous replication, and synchronous replication with stretched clusters (coming soon)
+- Efficient, policy-based backup and restore
+- Granular encryption with end-to-end key management through an external KMS
+- True QoS and performance isolation
+- Compression and deduplication
 
 This section explains how simplyblock works internally. Understanding the architecture helps with planning a
 deployment, sizing a cluster, and choosing between the available protection and placement options.

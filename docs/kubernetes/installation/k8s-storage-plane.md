@@ -268,6 +268,55 @@ before approving.
 A storage cluster holds at most 32 storage nodes: the workers of a node set times the storage nodes per worker. A node
 set above the limit is refused with `MemberTooLarge`.
 
+### Storage Array LUNs
+
+{{ experimental }}
+
+On a [storage array](../../architecture/concepts/storage-arrays.md), the devices are the LUNs of each worker, listed
+under `devices.block`. Block devices require `enableJournalDevice`, which dedicates the smallest LUN of each worker
+to the journal. A discovery run with `enableLogicalBlockDevices` and `forceJournalDevice` drafts the document, or it
+is written by hand.
+
+Every worker has its own LUNs with their own WWNs, so the persistent device paths differ per worker. Each worker
+then gets a group of its own:
+
+```yaml title="Deployment document for LUNs of a storage array"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
+metadata:
+  name: array-cluster
+  namespace: simplyblock
+spec:
+  approved: false
+  cluster:
+    name: array-cluster
+    enableJournalDevice: true
+    vcpuCount: 8
+    minHugePagesSize: 8G
+    stripe:
+      dataChunks: 4
+      parityChunks: 1
+  nodeSets:
+    - name: array
+      groups:
+        - name: worker-01
+          workers: [worker-01]
+          devices:
+            block:
+              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a01   # journal LUN, the smallest
+              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a02   # data LUN
+        - name: worker-02
+          workers: [worker-02]
+          devices:
+            block:
+              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a11
+              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a12
+        # ... one group per worker, at least six workers for 4+1
+```
+
+The LUN layout, the erasure coding scheme, and the multipathing requirements are described in
+[Storage Arrays](../../deployment-preparation/storage-arrays.md).
+
 ### Failure Domains
 
 With `spec.cluster.enableFailureDomains: true`, every group must carry a `failureDomain` label, for example, a rack
