@@ -1,180 +1,151 @@
 ---
 title: "Performance and QoS"
-description: "Performance and QoS: Storage performance can be categorized by latency (the aggregate response time of an I/O request from the host to the storage system) and."
+description: "How simplyblock keeps storage latency low and predictable, from its user-space NVMe data path to data placement, and how caps and service classes isolate I/O."
 weight: 20100
 ---
 
-## Storage Performance Indicators
+Simplyblock is built for low and, above all, predictable latency. This page explains how storage performance is
+measured, which design decisions keep it consistent, and how quality of service (QoS) keeps workloads from
+interfering with each other.
 
-Storage performance can be categorized by latency (the aggregate response time of an I/O request from the host to the
-storage system) and throughput. Throughput can be broken down into random IOPS throughput and sequential throughput.
+## Measuring Storage Performance
 
-IOPS and sequential throughput must be measured relative to capacity (i.e., IOPS per TB).
+Storage performance is described by three indicators:
 
-Latency and IOPS throughput depend heavily on the I/O operation (read, write, unmap) and the I/O size (4K, 8K, 16K,
-32K, ...). For comparability, it is typically tested with a 4K I/O size, but tests with 8K to 128K are standard too.
+- **Latency:** The time an I/O request takes from the host to the storage and back.
+- **IOPS:** The number of random I/O operations per second, usually measured with 4 KiB requests.
+- **Throughput:** The amount of sequential data transferred per second, usually measured with 128 KiB requests or
+  larger.
 
-Latency is strongly influenced by the overall load on the overall storage system. If there is intense I/O pressure,
-queues build up and response times go up. This is no different from a traffic jam on the highway or a queue at the
-airline counter. Therefore, to compare latency results, it must be measured under a fixed system load (amount of
-parallel I/O, its size, and I/O type mix).
+All three depend on the I/O type (read, write, unmap), the I/O size, and the load on the system. Under heavy load,
+queues build up and latency rises, so latency results are only comparable at the same load. IOPS and throughput are
+best compared relative to capacity, for example, IOPS per TB.
 
 !!! important
-    For latency, consistency matters. High latency variability, especially in the tail, can severely impact workloads.
-    Therefore, the 99th percentile latency may be more important than the average or median.
+    For latency, consistency matters more than the average. Outliers in the tail slow down applications, so the 99th
+    percentile latency is often more meaningful than the mean or the median.
 
-## Challenges with Hyper-Converged and Software-Defined Storage
+Software-defined and hyper-converged storage often struggle with exactly this consistency. Load spreads unevenly
+across nodes, the operating system schedules storage threads next to application threads, and mixed workloads
+compete for the same devices and links. The sections below describe how simplyblock avoids these effects.
 
-Unequal load distribution across cluster nodes, and the dynamics of specific nodes under Linux or Windows (dynamic
-multithreading, network bandwidth fluctuations, etc.), create significant challenges for consistent, high storage
-performance in such an environment.
+## How Simplyblock Keeps Latency Low
 
-Mixed I/O patterns increase these challenges from different workloads.
+### NVMe From End to End
 
-This can cause substantial variability in latency, IOPS throughput, and high-tail latency, with a negative impact on
-workloads.
+Every hop of the data path uses NVMe: the local devices of a storage node, the connection from a host to the
+cluster, and the traffic between storage nodes. Hosts connect over NVMe/TCP or NVMe/RoCE (RDMA over Converged
+Ethernet, RoCEv2). NVMe is asynchronous and highly parallel, so it avoids the bottlenecks that protocols such as
+iSCSI show under mixed I/O. RoCEv2 further lowers the latency and, in particular, the tail latency compared with TCP,
+and it is routable over standard IP networks.
 
-## Simplyblock: How Ultra-Low Latency In The 99th Percentile Is Ensured
+### User-Space, Zero-Copy Data Plane
 
-Simplyblock exhibits a range of architectural characteristics and features to guarantee consistently low latency and
-IOPS in both disaggregated and hyper-converged environments.
+The data plane of a storage node is built on [SPDK](https://spdk.io/){:target="_blank" rel="noopener"}. It takes
+the devices away from the Linux kernel and processes all I/O in user space, without copying data, without locks,
+and without interrupts. This removes context switches and thread synchronization from the data path, which lowers
+the baseline latency and makes it far more predictable.
+
+### Dedicated Cores and NUMA Awareness
+
+A storage node runs on CPU cores that are isolated from the operating system, including interrupt handling, and
+its threads are pinned to those cores. On servers with several CPU sockets, one storage node is deployed per socket
+and uses only that socket's memory, network interfaces, and NVMe devices. No scheduling delays and no cross-socket
+memory access slow down the storage processing.
+
+### Balanced, Distributed Data Placement
+
+Data is split into small chunks and spread across all devices of all storage nodes, relative to their capacity. As a
+result, every device, node, and network link carries a similar share of the load, and no single node becomes a
+hotspot. Adding nodes or devices increases performance almost linearly.
+
+After failures, expansions, or node removals, the cluster rebalances in the background (see
+[Automatic Rebalancing](concepts/automatic-rebalancing.md)). Rebalancing moves large contiguous segments, which is
+far cheaper than many small random writes, and it runs in an internal service class, so client I/O always keeps
+the larger share of the cluster's performance.
 
 ### Data Locality
 
-Simplyblock uses NVMe/TCP or NVMe/RDMA (RoCEv2) to connect initiators (storage consumers) to the storage cluster. While those protocols
-are networked and allow any type of distributed topology between clients and cluster nodes, simplyblock can co-locate data with the
-workloads that use it to reduce network latency and bandwidth utilization.
-
-In simplyblock, front storage (the NVMe-oF volumes, the "docking points" of the clients into the cluster) and back storage (the actual
-NVMe storage layer) are distributed separately. All back storage devices of the cluster can be accessed from any front storage entry point
-using cluster-internal NVMe-oF.
+Simplyblock separates the layer that clients connect to (the front storage, which holds the NVMe-oF volumes) from
+the layer that stores the data (the back storage, which consists of the NVMe devices). Every front storage entry
+point reaches every back storage device over cluster-internal NVMe-oF. This separation makes data locality
+possible, but it does not require it.
 
 !!! info "Data locality is turned off by default"
-    By default, simplyblock does not apply data locality, not even in a hyper-converged deployment. Instead, it distributes volumes and
-    their data to achieve a fully balanced load across all nodes, devices, and network links of the cluster. Data locality is a
-    trade-off that is enabled on purpose where lower latency and less network traffic matter more than an even cluster balance.
+    By default, simplyblock does not apply data locality, not even in a hyper-converged deployment. It distributes
+    volumes and their data for a fully balanced load across all nodes, devices, and network links. Data locality is
+    enabled on purpose where lower latency and less network traffic matter more than an even cluster balance.
 
-Data locality has two aspects, which are independent of each other:
+Data locality has two independent parts:
 
-1. **Pod locality (front storage):** The NVMe-oF volume is placed on the storage node on the same worker as the pod that consumes
-   it. The I/O between the pod and its volume then stays on the worker, which eliminates one network hop. When a pod is relocated to
-   another worker, its NVMe-oF volume follows the workload instantly with an
-   [instant volume migration](concepts/volume-migration.md). Only the front storage moves, no data is copied. On Kubernetes, pod
-   locality is requested per volume (see [Co-Locating a Volume With a Pod](../kubernetes/usage/volume-placement.md#co-locating-a-volume-with-a-pod)).
-2. **Back storage locality (node affinity):** If node affinity is turned on, the primary chunk or data copy of a volume is co-located
-   with its front storage NVMe-oF volume on a best-effort basis. This reduces the network load and improves the latency further, but it
-   concentrates data on the nodes that host the volumes and therefore impacts the balance of the cluster. Node affinity is a
-   cluster-wide setting and is turned off by default (see [Configuring Node Affinity](../kubernetes/operations/cluster/node-affinity.md)).
-   When the front storage of a volume moves, its back storage does not move instantly. Once the cluster is rebalanced in the
-   background, the data is moved to satisfy node affinity again.
+| Part                         | What it does                                                                                                                                                                    | How it is enabled                                                                                                          |
+|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Pod locality (front storage) | Places the NVMe-oF volume on the storage node on the pod's worker, which saves one network hop. When the pod moves, the volume follows it with an instant volume migration.     | Per volume, see [Co-Locating a Volume With a Pod](../kubernetes/usage/volume-placement.md#co-locating-a-volume-with-a-pod) |
+| Node affinity (back storage) | Keeps the primary data of a volume on the node that hosts the volume, on a best-effort basis. This lowers latency and network load further, but concentrates data on that node. | Per cluster, see [Configuring Node Affinity](../kubernetes/operations/cluster/node-affinity.md)                            |
 
-The rebalancing algorithm which moves data around is optimized for minimal overhead:
+An [instant volume migration](concepts/volume-migration.md) moves only the front storage, so no data is copied.
+With node affinity turned on, the back storage follows later, through the background rebalancing.
 
-* First, it tries to maximize transfer size, in fact turning smaller random writes into large sequential writes, which are much more efficient.
-* Secondly, it runs in the background and does not consume more than 20% of cluster resources (guaranteed by QoS). Therefore, its impact on
-  I/O performance is quite limited. With node affinity turned on, volumes therefore converge toward full data locality whenever possible.
-* At the same time, this does not result in any hard limits.
-    * For example, in a cluster with 2 PB of storage, it is still possible to create a single volume consuming all of these 2 PB.
-    * Also, it can be balanced against scalability and consistency. Meaning, if I/O-intensive workloads are not well-balanced across worker nodes,
-      data locality could lead to actually worse performance. Therefore, data locality is not an absolute requirement, but remains a best effort,
-      and is balanced against an optimal distribution of I/O across nodes.
-
-### Pseudo-Randomized, Distributed Data Placement With Fast Re-Balancing
-
-Simplyblock is a fully distributed solution. Back-storage is balanced across all nodes in the cluster on a very granular
-level. Relative to their capacity and performance, each device and node in the cluster receives a similar amount and
-size of I/O. This feature ensures an entirely equal distribution of load across the network, compute, and NVMe drives.
-
-In case of drive or node failures, distributed rebalancing occurs to reach the fully balanced state as quickly as
-possible. When adding drives and nodes, performance increases in a **linear manner**. This mechanism avoids local
-overload and keeps latency and IOPS throughput consistent across the cluster, independent of which node is accessed.
-
-### Built End-To-End With And For NVMe
-
-Storage access is entirely based on NVMe (local back-storage) and NVMe over Fabric (hosts to storage nodes and storage
-nodes to storage nodes). This protocol is inherently asynchronous and supports highly parallel processing, eliminating
-bottlenecks specific to mixed I/O patterns on other protocols (such as iSCSI) and ensuring consistently low latency.
-
-### Support for ROCEv2
-
-Simplyblock also supports NVMe over RDMA (ROCEv2). RDMA, as a transport layer, offers significant latency and tail
-latency advantages over TCP. Today, RDMA can be used in most datacenter environments because it requires only specific
-hardware features from NICs, which are available across a broad range of models. It runs over UDP/IP and, as such, does
-not require any changes to the networking.
-
-### Full Core-Isolation And NUMA Awareness
-
-Simplyblock implements full CPU core isolation and NUMA socket affinity. Simplyblock’s storage nodes are auto-deployed
-per NUMA socket and utilize only socket-specific resources, meaning compute, memory, network interfaces, and NVMe.
-
-All CPU cores assigned to simplyblock are isolated from the operating system (user-space compute and IRQ handling), and
-internal threads are pinned to cores. This avoids any scheduling-induced delays or variability in storage processing.
-
-### User-Space, Zero-Copy Framework (Lockless and Asynchronous)
-
-Simplyblock uses a user-space framework ([SPDK](https://spdk.io/){:target="_blank" rel="noopener"}). SPDK implemented a
-zero-copy model across the entire storage processing chain. This includes the data plane, the Linux vfio driver, and the
-entirely non-locking, asynchronous DPDK threading model. It enables avoiding Linux p-threads and any inter-thread
-synchronization, providing much higher latency predictability and a lower baseline latency.
+Data locality is always best-effort. It never limits the size of a volume, and it gives way where it would overload
+a node. If I/O-intensive workloads are spread unevenly across workers, strict locality would make performance
+worse, so simplyblock balances locality against an even distribution of I/O.
 
 ### Shared File Storage at Block Performance (pNFS)
 
-The properties above are not limited to block volumes. Shared file storage (`ReadWriteMany`) is served through
-[distributed file storage](concepts/distributed-file-storage.md) based on parallel NFS (pNFS), and its data path is the
-same NVMe/TCP data path:
+Shared file storage (`ReadWriteMany`) is served through [distributed file storage](concepts/distributed-file-storage.md)
+based on parallel NFS (pNFS), and it uses the same NVMe data path as block volumes:
 
-- **No file server in the data path:** A metadata server handles only file metadata (open, lookup, allocation,
-  layouts). File contents are read and written by every client directly on the simplyblock logical volume, over its
-  own NVMe/TCP connection. A classic NFS server, which every byte passes through, is the throughput and latency
-  bottleneck that pNFS removes.
-- **Throughput scales with clients and storage nodes:** Each client node drives its own NVMe/TCP queues to the
-  storage nodes in parallel, so aggregate throughput grows with the number of clients instead of being capped by one
-  server's CPU, memory, and network. A shared volume performs close to the same logical volume attached as a block
-  device.
-- **The same latency characteristics:** Reads and writes take the user-space, zero-copy SPDK path on the storage
-  nodes, with the core isolation and data placement described above. The only additional cost on the data path is one
-  write-zeroes operation when the metadata server allocates new blocks for a write, which makes completed writes
-  durable without waiting for a layout commit.
-- **QoS applies unchanged:** The volume and pool QoS limits and the QoS service classes below apply to the logical
-  volume behind a shared volume, as to any block volume.
+- **No file server in the data path:** A metadata server handles only file metadata, such as opens, lookups, and
+  allocations. Every client reads and writes file contents directly on the logical volume over its own NVMe/TCP
+  connection.
+- **Throughput scales with the clients:** Each client node drives its own connections to the storage nodes, so the
+  total throughput grows with the number of clients instead of being capped by a single server.
+- **Same latency and QoS:** Reads and writes take the same user-space path on the storage nodes, and the caps and
+  service classes below apply unchanged. The only extra cost is one write-zeroes operation when the metadata server
+  allocates new blocks.
 
-Metadata-heavy workloads (many small files, and frequent creates and deletes) are bound by the single metadata server per
-storage cluster rather than by the storage nodes. A client node whose kernel lacks the pNFS block layout driver falls
-back to sending its data through the metadata server, at a fraction of the throughput. See
-[Verifying the Direct Data Path](../kubernetes/usage/pnfs.md#verifying-the-direct-data-path).
+Workloads with many small files, or with frequent creates and deletes, are bound by the single metadata server per
+storage cluster. A client node whose kernel lacks the pNFS block layout driver falls back to sending its data
+through the metadata server, at a fraction of the throughput (see
+[Verifying the Direct Data Path](../kubernetes/usage/pnfs.md#verifying-the-direct-data-path)).
 
-### Advanced QoS (Quality of Service)
+## Quality of Service
 
-Simplyblock implements two independent, critical QoS mechanisms.
+Simplyblock offers two independent QoS mechanisms: caps, which set an absolute ceiling, and service classes, which
+guarantee a relative share.
 
-#### Volume and Pool-Level Caps
+### Caps on Volumes and Pools
 
-A cap, such as an IOPS, throughput limit, or a combination of both, can be set on an individual volume or an entire pool
-within the cluster. Through this limit, general-purpose volumes can be pooled and limited in their total IOPS or
-throughput to avoid noisy-neighbor effects and protect more critical workloads.
+A cap limits the IOPS, the throughput, or both, of a single volume or of a whole storage pool. Pooling
+general-purpose volumes under a common cap keeps them from crowding out more critical workloads (the
+noisy-neighbor effect). See [Defining Quality of Service](../kubernetes/usage/quality-of-service.md).
 
-#### QoS Service Classes
+### Service Classes
 
-On each cluster, up to five service classes can be defined in addition to the default class. For each class, cluster
-performance (a combination of IOPS and throughput) can be allocated in relative terms (e.g., 20%) for performance
-guarantees. Two further classes are internal: one for metadata I/O and volume migration, and one for snapshot
-replication between clusters, whose share is configurable. See [Service Classes](../kubernetes/usage/service-classes.md)
-for the configuration.
+A service class reserves a relative share of the cluster's I/O for a group of volumes. Every volume belongs to
+exactly one class:
 
-General-purpose volumes can be allocated in the default class, while more critical workloads can be split across other
-service classes. If other classes do not use up their quotas, the default class can still allocate all available
-resources.
+- **Default:** Every volume that names no other class.
+- **Up to five named classes:** Each with its own weight, for example, for databases or other critical workloads.
+- **Two internal classes:** One for metadata I/O and data migration, and one for replication between clusters, whose
+  share is configurable.
 
-#### Why QoS Service Classes are Critical
+When classes compete, each one receives a share in proportion to its weight. A class that does not use its share
+leaves it to the others, so no capacity sits idle. See [Service Classes](../kubernetes/usage/service-classes.md) for
+the configuration.
 
-Why is a limit not sufficient? Imagine a heavily mixed workload in the cluster. Some workloads are read-intensive, while
-others are write-intensive. Some workloads require a lot of small random I/O, while others read and write large
-sequential I/O. There is no absolute number of IOPS or throughput a cluster can provide, considering the dynamics of
-workloads.
+### Why Caps Alone Are Not Enough
 
-Therefore, using absolute limits on one pool of volumes is effective for protecting others from spillover effects and
-undesired behavior. Still, it does not guarantee performance for a particular class of volumes.
+A cluster does not have a fixed number of IOPS or a fixed throughput. What it delivers depends on the mix of reads
+and writes, and of small random and large sequential I/O. A cap therefore protects other workloads from a volume or
+a pool, but it cannot guarantee performance to anyone.
 
-Service classes provide a much better degree of isolation under the consideration of dynamic workloads. As long as a
-particular service class is not overloaded, the general I/O pressure on the cluster will not matter for the performance
-of volumes in that class.
+A service class can. As long as a class does not exceed its own share, the load in the rest of the cluster does not
+affect the performance of its volumes.
+
+## Monitoring Performance
+
+The I/O statistics of clusters, nodes, devices, pools, and volumes are exported as Prometheus metrics (see
+[Prometheus Metrics](../kubernetes/operations/monitoring/prometheus-metrics.md)). Devices whose latency falls
+behind the rest of the cluster are detected and reported automatically (see
+[Device Health](../kubernetes/operations/monitoring/device-health.md)).

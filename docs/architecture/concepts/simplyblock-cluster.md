@@ -1,67 +1,62 @@
 ---
 title: Simplyblock Cluster
-description: "Simplyblock Cluster: The simplyblock storage platform consists of three different types of cluster nodes and belongs to the control plane or storage plane."
+description: "A simplyblock deployment consists of a control plane and one or more storage clusters, whose storage nodes take primary, secondary, and tertiary roles."
 weight: 30000
 ---
 
-The simplyblock storage platform consists of three different types of cluster nodes and belongs to the control plane
-or storage plane.
-
-A node, in simplyblock terminology, is either a set of pods in Kubernetes or a stack of Docker containers deployed under
-plain Linux.
+A simplyblock deployment consists of two planes: the control plane, which manages the storage, and the storage
+plane, which serves it. Both run as pods in Kubernetes and are deployed and managed by the Simplyblock Operator.
 
 ## Control Plane
 
-The control plane orchestrates, monitors, and controls the overall storage infrastructure. It provides centralized
-administration, policy enforcement, and automation for managing storage nodes, logical volumes (LVs), and cluster-wide
-configurations. The control plane operates independently of the storage plane, ensuring that control and metadata
-operations do not interfere with data processing. It facilitates provisioning, fault management, and system scaling
-while offering APIs and CLI tools for seamless integration with external management systems. A single control plane
-can manage multiple clusters.
+The control plane orchestrates, monitors, and controls the storage clusters. It holds their state, exposes the
+management API, runs health checks, collects statistics, and executes long-running tasks, such as node restarts,
+migrations, and backups. A single control plane can manage several storage clusters.
 
-The control plane is distributed and can be deployed either on plain Linux (using Docker containers) or
-into an existing Kubernetes cluster. Within Kubernetes, an operator is part of the control plane and uses its own API
-services.
+The control plane is separate from the storage plane and not in the I/O path: volumes keep serving I/O while it is
+unavailable. It consists of the management API, task runners, and a FoundationDB database, and it optionally
+includes an observability stack (Prometheus, Grafana, and Graylog) for a quick start. Larger deployments usually
+feed metrics and logs into their existing observability stack instead.
 
-Using the operator, storage cluster operations are fully based on Custom Resource Definitions (CRDs) and become entirely
-Kubernetes-native.
-
-The control plane also contains an optional observability stack to get started quickly. For large deployments, users
-usually integrate feeds of telemetry and logs with their own, often preexisting, observability stack.
+On Kubernetes, the Simplyblock Operator manages the control plane and the storage clusters through custom
+resources, which makes all storage operations Kubernetes-native. See
+[Simplyblock Architecture](../simplyblock-architecture.md#control-plane) for the components.
 
 ## Storage Plane
 
-The storage plane is the layer responsible for managing and distributing data across storage nodes within a cluster. It
-handles data placement, replication, fault tolerance, and access control, ensuring that logical volumes (LVs) provide
-high-performance, low-latency storage to applications. The storage plane operates independently of the control plane,
-allowing seamless scalability and dynamic resource allocation without disrupting system operations. By leveraging
-NVMe-oF (TCP and RoCEv2) and software-defined storage principles, simplyblock’s storage plane ensures efficient data distribution,
-high availability, and resilience, making it ideal for cloud-native and high-performance computing environments.
-
-It either deploys onto plain Linux (Docker containers) or as pods into existing Kubernetes clusters, where it can be run
-on dedicated storage node workers or in a mix with compute (hyper-converged).
-
-## Management Node
-
-A management node is a node of the control plane cluster. The management node runs the necessary management services
-including the Cluster API, services such as Grafana, Prometheus, and Graylog, as well as the FoundationDB database
-cluster.
+The storage plane stores the data and serves all I/O. It consists of one or more storage clusters, each formed by a
+group of storage nodes. Within a cluster, the storage plane handles data placement, erasure coding, failover, and
+rebalancing. It runs on dedicated storage workers, on the same workers as the applications (hyper-converged), or in
+a mix of both (see [Deployment Topologies](../deployment-topologies/index.md)).
 
 ## Storage Node
 
-A storage node is a node of the storage plane cluster. The storage node provides storage capacity to the distributed
-storage pool of a specific storage cluster. The storage node runs the necessary data management services including
-the Storage Node Management API, the SPDK service, and handles logical volume primary connections of NVMe-oF
-multipathing.
+A storage node is a pod that takes over the storage devices of its Kubernetes worker and contributes them to the
+storage cluster. By default, one storage node runs per worker. Workers with several CPU sockets can run one storage
+node per socket, each using only the resources of its socket.
 
-## Secondary Node
+Every storage node owns a logical volume store, in which the logical volumes it serves as primary are created. The
+data of those volumes is spread across the devices of all storage nodes of the cluster.
 
-A secondary node is a node of the storage plane cluster. The secondary node provides automatic fail over and high
-availability for logical volumes using NVMe-oF multipathing. In a highly available cluster, simplyblock automatically
-provisions secondary nodes alongside primary nodes and assigns one secondary node per primary.
+## Primary, Secondary, and Tertiary Roles
 
-## Client-side Storage Drivers
+Every logical volume store is served by more than one storage node, so that its volumes survive a node failure:
 
-This includes the Kubernetes CSI driver, the Proxmox driver, and the OpenStack driver (experimental). Those drivers automate
-volume lifecycle operations such as creating, attaching, resizing, deleting, snapshotting, and cloning volumes. In Kubernetes,
-the Simplyblock Operator provides additional volume lifecycle management beyond the constraints of the standard CSI Model.
+- **Primary:** The node that owns the logical volume store and serves the I/O of its volumes.
+- **Secondary:** A second node that keeps a ready copy of the logical volume store and takes over when the primary
+  fails.
+- **Tertiary:** With two parity chunks, a third node that keeps another copy, so that the volumes survive two node
+  failures.
+
+These are roles, not node types. Every storage node is the primary of its own logical volume store and, at the same
+time, the secondary or tertiary of the stores of other nodes. Only a dedicated secondary node, which is optional,
+holds no store of its own. The roles are assigned when the cluster is activated
+and always placed on different hosts and, with [failure domains](failure-domains.md), in different domains wherever
+possible. See [High Availability and Fault Tolerance](../high-availability-fault-tolerance.md#node-failures).
+
+## Client-Side Storage Drivers
+
+Client-side drivers connect workloads to their volumes and automate the volume lifecycle: creating, attaching,
+resizing, snapshotting, cloning, and deleting. On Kubernetes, this is the simplyblock CSI driver, complemented by the
+Simplyblock Operator for operations beyond the standard CSI model. Drivers for Proxmox and OpenStack (experimental)
+are available as well.

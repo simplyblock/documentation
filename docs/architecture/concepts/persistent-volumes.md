@@ -1,25 +1,39 @@
 ---
 title: "Persistent Volumes"
-description: "Persistent Volumes (PVs) in Kubernetes provide a mechanism for managing storage resources independently of individual Pods."
+description: "How Kubernetes persistent volumes map onto simplyblock logical volumes: provisioning, access modes, reclaim policies, and multipath NVMe-oF connections."
 weight: 30200
 ---
 
-Persistent Volumes (PVs) in Kubernetes provide a mechanism for managing storage resources independently of individual
-Pods. Unlike ephemeral storage, which is tied to the lifecycle of a Pod, PVs ensure data persists across Pod restarts
-and rescheduling, enabling stateful applications to function reliably in a Kubernetes cluster.
+Persistent Volumes (PVs) in Kubernetes provide storage whose lifecycle is independent of individual pods. Unlike
+ephemeral storage, which ends with its pod, the data of a PV survives pod restarts and rescheduling, which lets
+stateful applications run reliably in a Kubernetes cluster.
 
-In Kubernetes, storage resources are abstracted through the Persistent Volume framework, which decouples storage
-provisioning from application deployment. A **Persistent Volume (PV)** represents a piece of storage that has been
-provisioned in the cluster, while a **Persistent Volume Claim (PVC)** is a request for storage made by an application.
+Kubernetes separates the request for storage from its provisioning. A **PersistentVolumeClaim (PVC)** is the
+request an application makes, and a **PersistentVolume (PV)** is the storage that fulfills it. A **StorageClass**
+describes how a PV is provisioned.
 
-Key characteristics of Persistent Volumes include:
+Key characteristics of persistent volumes include:
 
-- **Decoupled Storage Management:** PVs exist independently of Pods, allowing storage to persist even when Pods are deleted or rescheduled.
-- **Dynamic and Static Provisioning:** Storage can be provisioned manually by administrators (static provisioning) or automatically by storage classes (dynamic provisioning).
-- **Access Modes:** PVs support multiple access modes, such as ReadWriteOnce (RWO), ReadOnlyMany (ROX), and ReadWriteMany (RWX), defining how storage can be accessed by Pods.
-- **Reclaim Policies:** When a PV is no longer needed, it can be retained, recycled, or deleted based on its configured reclaim policy.
-- **Storage Classes:** Kubernetes allows administrators to define different types of storage using StorageClasses, enabling automated provisioning of PVs based on workload requirements.
+- **Decoupled storage management:** PVs exist independently of pods, so storage persists when pods are deleted or
+  rescheduled.
+- **Dynamic provisioning:** A claim against a StorageClass makes the CSI driver create a matching volume
+  automatically.
+- **Access modes:** Define how pods may use a volume, for example, `ReadWriteOnce` (one worker) or `ReadWriteMany`
+  (many workers at once).
+- **Reclaim policies:** Decide whether a volume is deleted or retained once its claim is removed.
 
-In simplyblock, each PV is connected to the storage cluster with NVMe-oF (TCP, RoCEv2) through multiple paths to
-multiple storage nodes, with the primary path being a local loopback when possible. Each PV is implemented as a
-namespace in an NVMe-oF subsystem on the storage nodes.
+## Persistent Volumes in Simplyblock
+
+Each simplyblock PV is backed by a [logical volume](logical-volumes.md), which is created in the
+[storage pool](storage-pooling.md) of the StorageClass. The logical volume is an NVMe namespace in an NVMe-oF
+subsystem. The CSI node plugin connects it to the worker of the consuming pod over NVMe/TCP or NVMe/RoCE, with one
+path to every storage node that serves the volume: the optimized path to the primary and standby paths to the
+secondary and tertiary. The volume is handed to the pod as a raw block device or with a filesystem.
+
+| Access mode     | Served by                                                            |
+|-----------------|----------------------------------------------------------------------|
+| `ReadWriteOnce` | Any simplyblock StorageClass, as a block device or with a filesystem |
+| `ReadWriteMany` | StorageClasses with [pNFS](pnfs.md) only, as shared file storage     |
+
+See [Provisioning](../../kubernetes/usage/provisioning.md) and [Storage Classes](../../kubernetes/usage/storage-class.md)
+for the usage.

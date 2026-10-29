@@ -1,46 +1,49 @@
 ---
 title: "Snapshots and Clones"
-description: "Snapshots and Clones: Volume snapshots and volume clones are essential data management features in distributed storage systems that enable data protection."
+description: "Simplyblock snapshots capture a volume instantly with copy-on-write, and clones turn any snapshot into a writable volume without copying data."
 weight: 30500
 ---
 
-Volume snapshots and volume clones are essential data management features in distributed storage systems that enable
-data protection, recovery, and replication. While both techniques involve capturing the state of a volume at a specific
-point in time, they serve distinct purposes and operate using different mechanisms.
+Snapshots and clones both capture the state of a volume at a point in time. A snapshot is a read-only record of that
+state, used for protection and recovery. A clone is a new, writable volume that starts from a snapshot.
 
 ## Volume Snapshots
 
-In simplyblock, a volume snapshot can be taken instantly. It contains the read-only (frozen) state of the volume at the
-time it was taken, while the source volume then operates with Copy-on-Write (CoW) semantics.
+A snapshot is taken instantly and holds the read-only (frozen) state of the volume at that moment. Afterward, the
+volume continues with copy-on-write semantics: new writes go to new blocks, and the blocks the snapshot references
+are kept unchanged.
 
-Multiple snapshots can coexist for a particular volume, representing different frozen generations or versions of that
-volume, and they are ordered in time (a snapshot references the changed data delta between its predecessor and its
-successor).
-
-Volume snapshots can be independently deleted, backed up to S3, and replicated into other clusters. New volumes can be
-created from any Snapshot (copy-on-write cloning).
+The snapshots of a volume form a chain ordered in time, in which each snapshot references only the data that
+changed since its predecessor. Snapshots are deleted independently of each other, and their data is kept as long as
+a later snapshot or a clone still needs it.
 
 Key characteristics of volume snapshots include:
 
-- **Space Efficiency:** Snapshots share common data blocks with the original volume, requiring minimal additional
-  storage.
-- **Fast Creation:** As snapshots do not duplicate data immediately, they can be created almost instantaneously.
-- **Versioning and Recovery:** Users can revert a volume to a previous state using snapshots, aiding in disaster
-  recovery and data protection.
-- **Performance Considerations:** While snapshots are efficient, excessive snapshot accumulation can impact performance
-  due to metadata overhead and fragmentation.
+- **Instant and space-efficient:** No data is copied when a snapshot is taken. Snapshots share their blocks with
+  the volume and with each other.
+- **Basis for data protection:** Snapshots are what backups to S3 and replication to another cluster transfer,
+  incrementally from one snapshot to the next.
+- **Consistency groups:** The volumes of an application, for example, the data and log volumes of a database, can
+  form a consistency group. A group snapshot captures all of them at the same instant (crash-consistent), and the
+  group is replicated and failed over together.
+- **Bounded chains:** Every snapshot deepens the chain that reads of the volume and its clones walk. A volume
+  therefore has at most 100 active snapshots (see [Limits](../../reference/limits.md)).
 
 ## Volume Clones
 
-A volume clone is a writable, independent copy of a storage volume created from either an existing volume or a
-snapshot. Unlike snapshots, clones are fully functional duplicates that can operate as separate storage entities.
+A clone is a writable volume created from a snapshot. It shares all blocks with the snapshot and allocates new
+capacity only for the data written to it afterward. Restoring a snapshot means creating a clone of it, which
+leaves the original volume and its snapshot untouched.
 
 Key characteristics of volume clones include:
 
-- **Writable and Independent:** Clones can be modified without affecting the original volume.
-- **Use Case for Testing and Development:** Clones are commonly used for staging environments, testing, and application
-  sandboxing.
-- **Storage Overhead:** Unlike snapshots, clones may require additional storage capacity to accommodate changes made
-  after cloning.
-- **Immediate Availability:** A clone provides an instant copy of the original volume, avoiding long data copying
-  processes.
+- **Instant:** A clone is available immediately, whatever the size of the volume, because no data is copied.
+- **Writable and independent:** Changes to a clone do not affect the source volume or the snapshot, and the other
+  way round.
+- **Space-efficient:** A clone consumes capacity only for the data that differs from its snapshot.
+- **Typical uses:** Restores, test and development environments, staging, and sandboxes for analytics or
+  upgrades. A snapshot can have up to 500 active clones.
+
+On Kubernetes, snapshots are `VolumeSnapshot` and `VolumeGroupSnapshot` objects, and clones are claims that name a
+snapshot or another claim as their data source. See [Snapshotting](../../kubernetes/usage/snapshotting.md) and
+[Cloning](../../kubernetes/usage/cloning.md).

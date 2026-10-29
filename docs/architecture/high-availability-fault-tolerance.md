@@ -1,129 +1,130 @@
 ---
 title: "High Availability and Fault Tolerance"
-description: "High Availability and Fault Tolerance: Simplyblock is designed to provide enterprise-grade high availability (HA) and fault tolerance for enterprise and."
+description: "How simplyblock keeps volumes available through device, node, rack, and site failures: erasure coding, failover paths, the write journal, and replication."
 weight: 20200
 ---
 
-Simplyblock is designed to provide enterprise-grade high availability (HA) and fault tolerance for enterprise and
-cloud-native storage environments. Through a combination of distributed architecture and advanced data protection
-mechanisms, simplyblock ensures continuous data access, resilience against failures, and minimal service disruption.
-Fault tolerance is embedded at multiple levels of the system, from data redundancy to control plane and storage path
-resilience.
+Simplyblock protects data and keeps volumes available at every level, from a single device up to a whole site. No
+component is a single point of failure: data, data paths, the storage nodes, and the control plane are all
+redundant, and failures are handled automatically.
 
-## Fault Tolerance and High-Availability Mechanisms
+## Protection at a Glance
 
-Simplyblock’s architecture provides robust fault tolerance and high availability by combining distributed erasure
-coding, multipath access with failover, and redundant management and storage planes. These capabilities ensure that
-simplyblock storage clusters deliver the reliability and resiliency required for critical, high-demand workloads in
-modern distributed environments.
+| Failure                             | Protection                                                                                     | Section                                                         |
+|-------------------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| Device                              | Erasure coding, automatic detection of failing devices, and rebuild onto the remaining devices | [Device Failures](#device-failures)                             |
+| Storage node                        | Erasure coding across nodes, and failover to a secondary (and tertiary) path                   | [Node Failures](#node-failures)                                 |
+| Rack, cabinet, or availability zone | Failure domains, which spread data, journal copies, and failover paths across the domains      | [Failure Domains](#failure-domains)                             |
+| Control plane                       | Replicated management services and database. The control plane is not in the I/O path          | [Control Plane](#control-plane)                                 |
+| Storage cluster or site             | Asynchronous replication to another cluster, and backups to S3                                 | [Protection Beyond One Cluster](#protection-beyond-one-cluster) |
 
-### 1. Distributed Erasure Coding
+## Erasure Coding
 
-Simplyblock protects data using distributed erasure coding, which ensures that data is striped across multiple
-storage nodes along with parity fragments. This provides:
+Every stripe of data is split into data chunks and protected by parity chunks, written as `data+parity`, for
+example, `2+1` or `4+2`. Each chunk of a stripe is stored on a different storage node, so the parity count is the
+number of nodes (or devices) that can fail at the same time without data loss:
 
-- **Redundancy:** Data can be reconstructed even if one or more nodes fail, depending on the configured erasure coding
-  scheme (such as _1+1_, _1+2_, _2+1_, or _2+2_).
-- **Efficiency:** Storage overhead is minimized compared to full replication while maintaining strong fault tolerance.
-- **Automatic Rebuilds:** In the event of node or disk failures, missing data is rebuilt automatically using parity
-  information stored across the cluster.
+- **One parity chunk** (`1+1`, `2+1`, `4+1`) tolerates one failure.
+- **Two parity chunks** (`1+2`, `2+2`, `4+2`) tolerate two failures.
 
-!!! important
-    Simplyblock provides support for so-called stretch clusters. This deployment topology adds disaster recovery
-    across failure domains (such as racks, cabinets, or sites) to improve protection from failed drives and
-    single-site high availability. This is achieved with minimum protection overhead.
+Erasure coding needs far less extra capacity than keeping full copies. For example, `4+2` tolerates two failures
+with 50% overhead, while three full copies would need 200%. See [Erasure Coding](concepts/erasure-coding.md) for the
+supported schemes.
 
-    For example, if a cluster is span across 6 racks, it is possible to protect from a single entire rack
-    outage and a concurrent node outage on another rack or drive failures on any other node with an storage
-    overhead of just 50%.
+## Device Failures
 
-Clusters can be deployed with [failure domains](concepts/failure-domains.md): storage nodes are tagged with the
-rack, cabinet, or availability zone they belong to, and simplyblock spreads data chunks, journal copies, and
-failover paths across the domains. A failure-domain cluster keeps serving I/O through the outage of one entire
-domain (and, with two parity chunks, one additional node or drive failure in another domain).
+The control plane watches every device and reacts before a failing device slows down or endangers the cluster:
 
-### 2. Multipathing with Primary and Secondary Nodes
+- **Detection:** A device that returns I/O errors to a quorum of the other nodes is excluded cluster-wide, even if
+  its own controller still reports it healthy. Devices are also checked through their SMART data, and devices whose
+  latency falls behind the rest of the cluster are flagged as slow (see
+  [Device Health](../kubernetes/operations/monitoring/device-health.md)).
+- **Continued service:** Reads of the missing data are reconstructed from the remaining chunks, so volumes keep
+  serving I/O.
+- **Rebuild:** When a device is failed, its data is rebuilt from parity onto the remaining devices of the cluster
+  (failure migration), which restores full redundancy without a replacement device (see
+  [Automatic Rebalancing](concepts/automatic-rebalancing.md)). A device that was only briefly unavailable is
+  re-admitted automatically and catches up.
 
-Simplyblock supports NVMe over Fabrics (NVMe-oF) multipathing to provide path redundancy between clients and
-storage:
+## Node Failures
 
-- **Primary and Secondary Paths:** Each logical volume (LV) is accessible through both a primary node and one or
-  more secondary nodes.
-- **Automatic Failover:** If the primary node becomes unavailable, traffic is automatically redirected to a secondary
-  node with minimal disruption.
-- **Load Balancing:** Multipathing also distributes I/O across available paths to optimize performance and reliability.
+Each logical volume is reachable over several NVMe-oF paths, one per storage node that serves it:
 
-The number of secondary node paths is automatically configured based on the selected erasure coding scheme.
+- **Primary:** Serves the I/O of the volume. Its path is the optimized one.
+- **Secondary:** Holds a ready copy of the volume's metadata. Its path is non-optimized and takes over when the
+  primary fails.
+- **Tertiary:** A second standby with two parity chunks, so that the volume survives two node failures.
 
-Any erasure coding scheme with a parity level of _1_ (`1+1`, `2+1`, `4+1`) has a single secondary path, while schemes
-with a parity level of _2_ (`1+2`, `2+2`, `4+2`) have two secondary paths.
+The host's NVMe multipathing uses the optimized path and switches to a standby path within seconds when the primary
+fails, without any intervention (NVMe asymmetric namespace access, ANA). Because erasure coding places the data
+chunks on other nodes, the new primary reads and writes the same data. When the failed node returns, it catches up
+and takes its role back.
 
-The number of secondary paths defines how many storage nodes can be lost at the same time without impacting the
-availability of the logical volume.
+Writes are recorded in a distributed, high-availability write journal with copies on several nodes before they are
+acknowledged, so a failover continues from a consistent state.
 
-In addition to the node-level path redundancy, simplyblock supports multipathing across independent **storage
-networks**: storage nodes attached with multiple data interfaces in separate VLANs expose every path on every
-network, multiplying the number of client connections (for example, four connections with one failover path and
-two networks, or six with two failover paths). This provides an alternative to link aggregation (LACP, MLAG).
+### Failover Paths and Network Paths
 
-### 3. Redundant Control Plane and Storage Plane
+Simplyblock uses NVMe multipathing in two different ways, which complement each other:
 
-To ensure cluster-wide availability, simplyblock operates with full redundancy in both its control plane and
-storage plane:
+| Paths                                                             | Purpose                                 | Path selection                                                                                          |
+|-------------------------------------------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------|
+| To different storage nodes (primary, secondary, tertiary)         | Survive node failures                   | Active/standby through ANA. Only the primary path carries I/O, so there is no load balancing.           |
+| To the same storage node over several storage networks (optional) | Survive network failures, add bandwidth | Active/active. I/O is spread round-robin across the paths to the node that currently serves the volume. |
 
-- **Control Plane:**
-    - Runs as replicated pods: the management API with two replicas by default and a FoundationDB cluster with three
-      or five coordinators.
-    - Responsible for cluster health, topology management, and coordination.
-    - Remains operational if a single pod or Kubernetes worker fails, and is not in the I/O path: volumes keep
-      serving I/O while it is unavailable.
+The network paths are optional. Storage nodes and hosts are then attached with several data interfaces, each in its
+own VLAN, and every failover path is available on every network. This multiplies the connections, for example, four
+connections with one failover path and two networks, or six with two failover paths. It is an alternative to link
+aggregation (LACP, MLAG).
 
-- **Storage Plane (Storage Nodes):**
-    - Storage services are distributed across multiple storage nodes.
-    - Data and workloads are automatically rebalanced and protected in case of node or device failures.
-    - Failures are handled transparently with automatic recovery processes.
+### Small Clusters
 
-## Benefits of Simplyblock’s High-Availability Design
+A regular cluster needs at least three storage nodes. Smaller clusters, for example, at edge locations, are
+supported with their own trade-offs (see [Edge Clusters](deployment-topologies/edge-clusters.md)):
 
-- No single point of failure across the control plane, storage plane, and data paths.
-- Seamless failover and recovery from node, network, or disk failures.
-- Efficient use of storage capacity while ensuring redundancy through erasure coding.
-- Continuous operation during maintenance and upgrade procedures.
+- **One node:** Protects against device failures through erasure coding across the devices of the node, but not
+  against the loss of the node itself.
+- **Two nodes:** Each node takes over the volumes of the other. An arbiter decides which node keeps serving when the
+  two lose contact, and the hosts of the other node are fenced, so a volume never has two writers.
 
-### 4. Asynchronous Replication (new)
+## Failure Domains
 
-This new feature allows to protect data stored in a cluster from a site disaster with only 60 seconds of RPO, if
-bandwidth and/or latency between sites do not allow for stretch clusters.
+Storage nodes can be grouped into [failure domains](concepts/failure-domains.md), such as racks, cabinets, or
+availability zones. Simplyblock then spreads data chunks, journal copies, and failover paths across the domains, so
+the cluster keeps serving I/O through the loss of a whole domain. With two parity chunks and enough domains, it also
+survives one further node or device failure in another domain.
 
-The feature can be enabled selectively on a per-volume level at volume create time or later on. It requires the
-control plane to be distributed across two sites, serving one single-site storage cluster on each site.
+For example, a cluster spread across six racks with `4+2` survives the loss of one entire rack together with a node
+or drive failure in another rack, at a capacity overhead of 50%.
 
-On disaster fail-over, workloads have to be restarted to reconnect after as short loss of I/O to the now
-automatically redirected paths. Fail-back considers two scenarios:
+## Control Plane
 
-- old site cannot be recovered, a fresh storage cluster is redeployed. All data will be replicated back to the
-original site into the fresh cluster, and ultimately fail-back is possible without I/O interrupt by rolling over the
-NVMe-oF connections.
+The control plane runs as replicated pods: the management API with two replicas by default, and a FoundationDB
+database with three or five coordinators. It survives the loss of a single pod or Kubernetes worker.
 
-- old site can be recovered, and in this scenario only the delta between old and new sites will be replicated back
-and again, ultimately fail-back is possible without I/O interrupt by rolling over the
-NVMe-oF connections.
+The control plane is not in the I/O path. Volumes keep serving I/O while it is unavailable. Only management
+operations and automated recovery wait until it is back.
 
-The feature also allows monitoring of active and completed replications and generally to control the backlog.
+## Protection Beyond One Cluster
 
-### 5. Backup/Restore (new)
+Erasure coding and failover protect against failures inside one storage cluster. Against the loss of a whole
+cluster or site, simplyblock offers:
 
-This new feature requires an S3-compatible backup store such as MinIO or AWS S3. It comes with backup policy (retention)
-management and auto-backup. It is very storage and time-efficient as delta-snapshots are used to recurringly store only
-changed data of volumes. The number and timing of individual generations of the backup can be controlled.
-Older versions can be auto-merged into full backups. Backups can be restored:
+- **Asynchronous replication:** Volumes are replicated to a second storage cluster at an interval of one minute or
+  more, sending only the changes since the last cycle. Volumes of a consistency group are replicated together. A
+  failover promotes the replicated state on the target, and a failback returns to the original cluster after only
+  the changes have been sent back. See [Asynchronous Replication](../kubernetes/operations/data-protection/asynchronous-replication.md).
+- **Online cluster migration:** Volumes are moved to another cluster while their workloads keep running, with a
+  short I/O freeze at the cutover. See
+  [Online Cluster Migration](../kubernetes/operations/data-protection/online-cluster-migration.md).
+- **Backups to S3:** Volumes are backed up incrementally to an S3-compatible object store, on a schedule with
+  retention, and can be restored into the same or another cluster. See
+  [Backup and Recovery](../kubernetes/operations/data-protection/backup-recovery.md).
+- **Disaster recovery for applications:** Whole applications, their volumes together with their Kubernetes objects,
+  are protected across sites with planned and unplanned failover. See
+  [Disaster Recovery](../disaster-recovery/index.md).
 
-- using the latest or older generations of data
-- into the same storage cluster or a different storage cluster
-- managing encrypted data via self-contained, encrypted keys and an external KMS
-
-### 6. Synchronous Replication (outlook)
-
-This planned feature will enable two-site synchronous replication with strong consistency within a single cluster
-without using the stretch feature. It comes at a higher data protection overhead, but in return treats two parts of
-the cluster (one on each site) with independent erasure coding, increasing the overall degree of data protection.
+!!! info "Coming soon"
+    Synchronous replication with no data loss (RPO of zero) will be provided by a storage cluster stretched across
+    two sites in metro distance. See
+    [Deployment Architectures](../deployment-preparation/deployment-architectures.md#metro-stretched-storage-cluster-with-synchronous-replication).

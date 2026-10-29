@@ -1,28 +1,41 @@
 ---
 title: "Erasure Coding"
-description: "Erasure coding is a data protection mechanism used in distributed storage systems to enhance fault tolerance and optimize storage efficiency."
+description: "How simplyblock protects data with distributed erasure coding: data and parity chunks on different nodes, the supported schemes, and their overhead."
 weight: 30600
 ---
 
-Erasure coding is a data protection mechanism used in distributed storage systems to enhance fault tolerance and
-optimize storage efficiency. It provides redundancy by dividing data into multiple fragments and encoding it with
-additional parity fragments, enabling data recovery in the event of node failures.
+Erasure coding protects data with less capacity overhead than full copies. Data is split into **k** data chunks, and
+**m** parity chunks are computed from them. Together, the **k+m** chunks form a stripe. Any **k** chunks of a stripe
+are enough to reconstruct it, so up to **m** chunks can be lost or corrupted without losing data.
 
-Traditional data redundancy methods, such as replication, require multiple full copies of data, leading to significant
-storage overhead. Erasure coding improves upon this by using mathematical algorithms to generate parity fragments,
-allowing data reconstruction with lower overhead.
+Replication, by comparison, keeps full copies. To survive two failures, three copies are needed, a capacity overhead
+of 200%. Erasure coding with `4+2` survives the same two failures with an overhead of 50%.
 
-The core principle of erasure coding involves breaking data into **k** data fragments and computing **m** parity
-fragments. These **k+m** fragments are distributed across multiple storage nodes. The system can recover lost data using
-any **k** available fragments, even if up to **m** fragments are missing or corrupted.
+## Distributed Erasure Coding in Simplyblock
 
-Simplyblock supports **k** values of 1, 2, and 4, as well as **m** values of 0, 1, and 2. It is important to
-note that the erasure coding is distributed, in which every chunk of a stripe is stored on a different node. This
-way, data is not only protected from drive loss but also stays available in case one or two nodes are not
-operational.
+Simplyblock places every chunk of a stripe on a different storage node. Data is therefore protected not only from
+device failures, but stays available when one or two whole nodes are down. With
+[failure domains](failure-domains.md), the chunks are also spread across racks or zones. In a
+[single-node cluster](../deployment-topologies/edge-clusters.md#one-node-edge-clusters), the chunks are placed on
+different devices of the node instead.
 
-Erasure coding has a number of key characteristics:
+The scheme is chosen once, when the cluster is created, and applies to all volumes of the cluster.
 
-- **High Fault Tolerance:** Erasure coding can tolerate multiple node failures while allowing full data recovery.
-- **Storage Efficiency:** Compared to replication, erasure coding requires less additional storage to achieve similar levels of redundancy.
-- **Flexibility:** The parameters **k** and **m** can be adjusted to balance redundancy, performance, and storage overhead.
+| Scheme | Tolerated failures | Capacity overhead | Minimum nodes |
+|--------|--------------------|-------------------|---------------|
+| `1+0`  | 0                  | 0%                | 1             |
+| `1+1`  | 1                  | 100%              | 3             |
+| `2+1`  | 1                  | 50%               | 4             |
+| `4+1`  | 1                  | 25%               | 6             |
+| `1+2`  | 2                  | 200%              | 5             |
+| `2+2`  | 2                  | 100%              | 6             |
+| `4+2`  | 2                  | 50%               | 8             |
+
+The minimum node count includes spare nodes, so that the cluster can rebuild the data of a failed node onto the
+others and keep full redundancy. A scheme without parity (`1+0`) offers no protection against failures.
+
+The number of parity chunks also decides the failover paths of every volume: one parity chunk gives each volume a
+secondary path, and two parity chunks give it a secondary and a tertiary path (see
+[High Availability and Fault Tolerance](../high-availability-fault-tolerance.md#node-failures)).
+
+See [Erasure Coding Configuration](../../deployment-preparation/erasure-coding-scheme.md) for how to choose a scheme.

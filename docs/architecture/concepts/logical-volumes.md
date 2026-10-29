@@ -1,47 +1,46 @@
 ---
 title: "Logical Volumes"
-description: "Logical Volumes (LVs) in Simplyblock are virtual NVMe devices that provide scalable, high-performance storage within a distributed storage cluster."
+description: "Logical volumes in simplyblock are thin-provisioned virtual NVMe devices, carved from a storage pool and spread across all devices of a storage cluster."
 weight: 30100
 ---
 
-Logical Volumes (LVs) in simplyblock are virtual NVMe devices that provide scalable, high-performance storage within a
-distributed storage cluster. They enable flexible storage allocation, efficient resource utilization, and seamless data
-management for cloud-native applications.
+A logical volume (LV) is a virtual NVMe device that simplyblock carves out of a storage pool. To a host, it looks
+like a local NVMe drive. Its data, however, is spread across all devices of all storage nodes in the cluster, and it
+is reached over NVMe-oF (NVMe/TCP or NVMe/RoCE).
 
-A Logical Volume (LV) in simplyblock is an abstracted storage entity dynamically allocated from a storage pool managed
-by the simplyblock system. Unlike traditional block storage, simplyblock’s LVs offer advanced features such as thin
-provisioning, snapshotting, and replication to enhance resilience and scalability.
+Key characteristics of logical volumes include:
 
-A volume is connected to the cluster via NVMe-oF (TCP or RoCEv2).
+- **Thin provisioning:** Capacity is allocated only when data is written. A volume can be larger than the free
+  capacity of the cluster at the time it is created.
+- **Dynamic sizing:** Volumes are created, resized, and deleted on demand, without touching the underlying
+  hardware.
+- **Performance:** Every volume uses the performance of the whole cluster, and caps and service classes control its
+  share (see [Performance and QoS](../storage-performance-and-qos.md#quality-of-service)).
+- **Fault tolerance:** Data is protected with erasure coding, and in a highly available cluster, every volume has a
+  failover path on at least one other node.
+- **Data services:** Volumes can be snapshotted, cloned, encrypted, backed up to S3, and replicated to another
+  cluster.
 
-Key characteristics of Logical Volumes include:
+A volume is not tied to the capacity of a single node, but its size and the number of objects that depend on it are
+bounded: a volume can be up to 70 TiB in size and have up to 100 snapshots, and each snapshot up to 500 clones. A
+storage node serves up to 6,000 volumes, snapshots, and clones as primary. See [Limits](../../reference/limits.md)
+for all limits.
 
-- **Dynamic Allocation:** LVs can be created, resized, and deleted on demand without manual intervention in the
-  underlying hardware.
-- **Thin Provisioning:** Storage space is allocated only when needed, optimizing resource utilization.
-- **High Performance:** Simplyblock’s architecture ensures low-latency access to LVs, making them suitable for demanding
-  workloads.
-- **Fault Tolerance:** Data is distributed across multiple nodes to prevent data loss and improve reliability.
+## Subsystems and Namespaces
 
-Simplyblock has no limit to the capacity of a single volume in relation to the size of the cluster: a single volume
-can consume all the cluster capacity, or cluster capacity can be distributed across 50,000 volumes.
+Each volume is exposed as an NVMe namespace inside an NVMe-oF subsystem. By default, every volume gets a subsystem of
+its own. Volumes can also share a subsystem, up to 50 namespaces per subsystem, which is set through the storage
+pool or the StorageClass.
 
-Volumes can also contain an almost arbitrary number of snapshots, and new volumes can be created from any snapshot
-(copy-on-write cloning).
+A subsystem comes with its own set of network connections, one per queue pair. The number of queue pairs a host uses
+is limited by its CPU cores: a host with 10 vCPUs connects with at most 10 queue pairs, even if the subsystem offers
+more. Every subsystem also costs memory and connections on the storage node, so the number of subsystems per node is
+limited.
 
-Simplyblock allows to "tune" the performance and network isolation of volumes and the cardinality between NVMe
-namespaces (`/dev/nvme1n1`, `/dev/nvme1n2`, ...) and NVMe subsystems (`/dev/nvme1n1`, `/dev/nvme2n1`, ...)
-can be set on storage-pool level.
+As a rule of thumb:
 
-NVMe subsystems can be created with a number of namespaces in between one and 500.
+- **A few high-performance volumes:** One volume per subsystem gives each volume its own connections.
+- **Many small volumes:** Sharing subsystems, for example, 16 or 32 namespaces per subsystem, keeps the number of
+  subsystems and connections manageable.
 
-A subsystem comes with its own set of TCP connections. The amount corresponds to the number of queue pairs on the subsystem but
-is always limited by the number of cores/vcpus on the client. Meaning, a client with 10 vCPUs cannot connect via more than 10
-queue pairs to any NVMe-oF subsystem, even if that subsystem provides 32 or more queue pairs.
-
-Depending on the size of a storage node and particularly its available network bandwidth, the upper recommended limit of
-subsystems per node typically lies between five and 50. Therefore, it depends on the upper number of provisioned volumes targeted per node
-how to set the relationship between namespaces and subsystems.
-
-If the target is only a handful of high-performance volumes, the number of namespaces can be set to 1. However, if the
-target is, for example, 2,000 small volumes, the number of namespaces should be set to a higher value, for example, 100.
+See [NVMe Namespaces and Subsystems](nvme-namespaces-and-subsystems.md) for details.

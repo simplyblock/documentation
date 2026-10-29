@@ -1,47 +1,34 @@
 ---
 title: "What is Simplyblock?"
-description: "What is Simplyblock?: Simplyblock is a high-performance, distributed storage orchestration layer designed for cloud-native environments."
+description: "Simplyblock is a distributed, NVMe-native block storage platform for Kubernetes, which serves volumes over NVMe/TCP and NVMe/RoCE with predictable low latency."
 weight: 20000
 ---
 
-Simplyblock is a high-performance, distributed storage orchestration layer designed for cloud-native environments. It
-provides NVMe over TCP (NVMe/TCP) block storage to hosts and offers block storage to containers through its Container
-Storage Interface (CSI) and Proxmox drivers.
+Simplyblock is a high-performance, distributed block storage platform for cloud-native environments. It pools the
+storage devices of many servers into one storage cluster and serves logical volumes over NVMe over Fabrics
+(NVMe/TCP or NVMe/RoCE). On Kubernetes, the Simplyblock Operator deploys and manages the platform, and workloads
+consume storage through the simplyblock CSI driver. Integrations for Proxmox and OpenStack are available as well.
 
-## What makes Simplyblock Special?
+## What Makes Simplyblock Special?
 
-- **Environment Agnostic:** Simplyblock operates seamlessly across major cloud providers, regional, and specialized
-  providers, bare-metal and virtual provisioners, and private clouds, including both virtualized and bare-metal
-  Kubernetes environments.
-
-- **NVMe-Optimized:** Simplyblock is built from scratch around NVMe. All internal and external storage access is
-  entirely based on NVMe and NVMe over Fabric (TCP, RDMA). This includes local back-storage on storage nodes,
-  host-to-cluster, and node-to-node traffic. Together with the user-space data plane, distributed data placement, and
-  advanced quality of service (QoS) and other characteristics, this makes simplyblock the storage platform with the most
-  advanced performance guarantees in hyper-converged solutions available today.
-
-- **User-Space Data Plane:** Simplyblock data plane is built entirely in user-space with an interrupt-free, lockless,
-  zero-copy architecture with thread-to-core pinning. The hot data path entirely avoids Linux kernel involvement, data
-  copies, dynamic thread scheduling, and inter-thread synchronization. Its deployment is fully numa-node-aware.
-
-- **Advanced QoS:** Simplyblock provides not only IOPS or throughput-based caps, but also true QoS service classes,
-  effectively isolating I/O traffic.
-
-- **Distributed Data Placement:** Simplyblock's advanced data placement, which is based on small, fixed-size data
-  chunks, ensures a perfectly balanced utilization of storage, compute, and network bandwidth, avoiding any performance
-  bottlenecks local to specific nodes. This provides almost linear performance scalability for the cluster.
-
-- **Containerized Architecture:** The solution comprises:
-    - **Storage Nodes:** Container stacks delivering distributed data services via NVMe over Fabrics (NVMe over TCP),
-      forming storage clusters.
-    - **Management Nodes:** Container stacks offering control and management services, collectively known as the control
-      plane.
-
-- **Platform Support:** Simplyblock supports deployment on virtual machines, bare-metal instances, and Kubernetes
-  containers, compatible with x86 and ARM architectures.
-
-- **Deployment Flexibility:** Simplyblock offers the greatest deployment flexibility in the industry. It can be deployed
-  **hyper-converged**, **disaggregated**, and in a **hybrid fashion**, combining the best of both worlds.
+- **NVMe from end to end:** All storage access uses NVMe and NVMe over Fabrics: on the storage nodes, from the hosts
+  to the cluster, and between the storage nodes. Besides NVMe devices, Linux block devices, such as SAS or SATA SSDs,
+  partitions, and cloud volumes, can be used as storage.
+- **User-space data plane:** The data plane runs entirely in user space, without interrupts, locks, or data copies,
+  on dedicated CPU cores and per NUMA socket. The hot data path never involves the Linux kernel.
+- **Distributed data placement:** Data is spread in small chunks across all devices and nodes, which keeps the load
+  balanced and lets performance grow almost linearly with the cluster.
+- **Advanced QoS:** Besides IOPS and throughput caps, service classes guarantee groups of volumes their share of
+  the cluster's performance.
+- **High availability:** Distributed erasure coding, NVMe multipathing with automatic failover, and failure domains
+  keep volumes available through device, node, and rack failures.
+- **Data services:** Thin provisioning, instant snapshots and clones, encryption at rest with external key
+  management, backups to S3, replication between clusters, and shared file storage (`ReadWriteMany`) through pNFS.
+- **Kubernetes-native operations:** Clusters, nodes, devices, pools, and operations, such as restarts, upgrades, and
+  migrations, are declared as custom resources and run by the Simplyblock Operator.
+- **Deployment flexibility:** Storage nodes run **hyper-converged** on the application workers, **disaggregated** on
+  dedicated workers, or in a **hybrid** mix of both, on bare metal or virtual machines, in public clouds or on
+  premises, on x86-64 and ARM64 CPUs.
 
 ## Customer Benefits Across Industries
 

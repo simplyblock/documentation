@@ -1,65 +1,49 @@
 ---
 title: NVMe Namespaces And Subsystems
-description: "NVMe Namespaces And Subsystems: Connecting to a storage volume, both locally and via NVMe-oF, requires a subsystem and a namespace."
+description: "How simplyblock exposes volumes as NVMe namespaces in NVMe-oF subsystems, and when several volumes should share one subsystem."
 weight: 30190
 ---
 
-Connecting to a storage volume, both locally and via NVMe over Fabrics (NVMe-oF), requires a subsystem and a namespace.
+A host reaches an NVMe-oF volume through two entities: a subsystem, which the host connects to, and a namespace,
+which holds the data.
 
-An NVMe-oF subsystem is the exported entity that the host connects to over the fabric (RDMA, TCP).
-A subsystem is identified by its unique worldwide name (NQN) and can be roughly seen as a
-controller, which exposes and connects one or multiple namespaces (actual volumes) to hosts.
+## Subsystems
 
-The NQN of a subsystem can contain the namespace UUID and is worldwide unique.
-In simplyblock, it looks as follows (the last part behind `:lvol:<uuid>` indicates the namespace representing the volume):
+An NVMe-oF subsystem is the entity a host connects to over the fabric (TCP or RDMA). It is roughly the equivalent
+of an NVMe controller and exposes one or more namespaces. A subsystem is identified by its worldwide unique NVMe
+Qualified Name (NQN). In simplyblock, the NQN contains the cluster ID and, after `:lvol:`, the ID of the volume:
 
 ```plain title="Example NQN"
-qn.2023-02.io.simplyblock:136012a7-f386-4091-ae0f-4e763059e9c8:lvol:6809b758-1c73-451f-810c-210c18d6aa14
+nqn.2023-02.io.simplyblock:136012a7-f386-4091-ae0f-4e763059e9c8:lvol:6809b758-1c73-451f-810c-210c18d6aa14
 ```
 
-Together with the IP address, the fully qualified subsystem address has to be given to connect, but
-In simplyblock this process is either automated (CSI, OpenStack, or Proxmox) or guided (plain Linux initiators).
+To connect, a host needs the NQN and the addresses of the storage nodes. The CSI driver and the Proxmox and
+OpenStack drivers do this automatically. Each subsystem uses its own queue pairs, each backed by a network
+connection, such as a TCP socket. More queue pairs make a volume faster, but cost resources on the storage node and
+the host.
 
-It’s roughly equivalent to an NVMe controller or logical device that can contain one or more namespaces.
+## Namespaces
 
-Now, subsystems are backed by multiple queue pairs, each of which is backed by a network connection such as a TCP socket.
-More queue pairs require more resources from the cluster but make the volumes faster.
+A namespace is the block storage region that holds the data, the NVMe equivalent of a SCSI LUN. It has a namespace
+ID (NSID), a size, a block format, and a UUID. Each namespace of a subsystem appears on the host as its own block
+device, which is formatted with a filesystem or used for raw block I/O:
 
-Namespaces on the other side are actual block storage regions that hold user data.
-
-It’s the NVMe analog of a "LUN" in SCSI, the entity that actually stores and serves data blocks. It consists of a NSID
-(namespace id), size, block format, and UUID.
-
-When a host connects to the subsystem, each namespace appears as a separate block device:
-
-```plain title="Example Host Devices for a Shared Subsystem"
+```plain title="Example host devices of a shared subsystem"
 /dev/nvme0n1
 /dev/nvme0n2
 ```
 
-All namespaces on the same subsystem use the same network connections to transfer I/O.
+## Sharing a Subsystem
 
-It’s what is used for:
+By default, every simplyblock volume gets a subsystem of its own. Volumes can also share a subsystem, with up to 50
+namespaces per subsystem. All namespaces of a subsystem share its network connections.
 
-Creating a filesystem (e.g., mkfs.ext4 /dev/nvme0n1)
-Raw block I/O (e.g., via fio, dd, or SPDK bdevs)
-So the namespace is the thing data is actually read from and written to.
+| Layout                        | Suited for                                                                               |
+|-------------------------------|------------------------------------------------------------------------------------------|
+| One namespace per subsystem   | A few performance-critical volumes, each with its own connections                        |
+| Many namespaces per subsystem | Many smaller volumes, which would otherwise exceed the subsystem limit of a storage node |
 
-!!! info
-    In simplyblock, the number of namespace volumes to be created can be defined for a particular
-    subsystem. This allows sharing of subsystems by Linux block devices (e.g., nvme0nX), where each of them
-    is less performance-critical. In Kubernetes, to use different relationships (e.g., 1:10) between subsystem
-    and namespace, different storage classes are required.
-
-Volumes can be created manually with multiple namespaces per subsystem:
-
-```bash title="Create Volume with Shared Subsystem"
-{{ cliname }} volume add lvol01 100G pool01 --max-namespace-per-subsys 10
-```
-
-This adds a new subsystem with a namespace and allows up to nine more namespaces on this volume.
-New namespaces can be added to the same subsystem using:
-
-```bash title="Add Volume to Existing Namespace"
-{{ cliname }} volume add lvol02 100G pool01 --namespace <UUID>
-```
+The number of namespaces per subsystem is a setting of the storage pool, so different layouts use different
+storage pools and StorageClasses (see [Namespace Volumes](../../kubernetes/usage/storage-class.md#namespace-volumes)).
+Shared subsystems are aligned with the storage pools: volumes of different pools never share a subsystem. The
+subsystem and namespace limits are listed in [Limits](../../reference/limits.md).

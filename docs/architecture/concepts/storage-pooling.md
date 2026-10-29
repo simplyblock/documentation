@@ -1,38 +1,37 @@
 ---
 title: "Storage Pooling"
-description: "Storage pooling is a technique used in distributed data storage systems to aggregate multiple storage devices into a single, unified storage resource."
+description: "Simplyblock aggregates the devices of all storage nodes into one storage cluster and divides it into storage pools, which carry limits and volume defaults."
 weight: 30000
 ---
 
-Storage pooling is a technique used in distributed data storage systems to aggregate multiple storage devices into a
-single, unified storage resource. This approach enhances resource utilization, improves scalability, and simplifies
-management by abstracting physical storage infrastructure into a logical storage pool.
+Storage pooling aggregates many storage devices into a single, unified storage resource. Instead of assigning
+devices to specific applications, which leaves capacity stranded, simplyblock combines the devices of all storage
+nodes of a cluster and allocates capacity to volumes on demand.
 
-Traditional storage architectures often rely on dedicated storage devices assigned to specific applications or
-workloads, leading to inefficiencies in resource allocation and potential underutilization. Storage pooling addresses
-these challenges by combining storage resources from multiple nodes into a shared pool, allowing dynamic allocation
-based on demand.
+Simplyblock pools storage on two levels:
 
-Key characteristics of storage pooling include:
+- **The storage cluster** combines the devices of all its storage nodes, NVMe devices or
+  [Linux block devices](linux-block-devices.md), into one distributed capacity. Adding devices or nodes expands it
+  without interrupting operations.
+- **Storage pools** divide a cluster logically, for example, per tenant, team, or workload type. Every volume belongs
+  to one pool. A pool reserves no devices, so all pools share the capacity and performance of the whole cluster.
 
-- **Resource Aggregation:** Multiple physical storage devices, such as HDDs, SSDs, or NVMe drives, are combined into a single logical storage entity.
-- **Dynamic Allocation:** Storage capacity can be allocated dynamically to workloads based on usage patterns and demand.
-- **Improved Efficiency:** By eliminating the constraints of static storage assignments, storage pooling optimizes resource utilization and reduces wasted capacity.
-- **Scalability:** Additional storage devices or nodes can seamlessly integrate into the storage pool without disrupting operations.
-- **Simplified Management:** Centralized control and monitoring enable streamlined administration of storage resources.
-- **Security Options:** Storage pools can define NVMe-oF security settings (DH-HMAC-CHAP authentication and TLS/PSK
-  encryption) that are automatically applied to all volumes created within the pool. See
-  [NVMe-oF Security](nvmf-security.md) for details.
+A storage pool carries the settings for its volumes:
+
+- **Limits:** A capacity limit for the pool, and IOPS and throughput caps for the pool as a whole and per volume.
+- **Volume defaults:** Encryption, the [service class](../storage-performance-and-qos.md#service-classes), the number
+  of namespaces per NVMe-oF subsystem, client-side compression and deduplication, and the transport (TCP or RDMA).
+- **Security:** NVMe-oF host authentication (DH-HMAC-CHAP) and transport encryption (TLS), applied to every volume
+  of the pool (see [NVMe over Fabrics Security](nvmf-security.md)).
+
+On Kubernetes, a pool is a `StoragePool` resource and comes with its own StorageClass (see
+[Storage Classes](../../kubernetes/usage/storage-class.md)).
 
 !!! important
-    Due to dual-layer virtualization (front storage is virtualized separately from back storage), simplyblock is able
-    to achieve true consolidation of entire cluster resources into a single storage pool.
+    Because the front storage is virtualized separately from the back storage, a pool is not bound to particular
+    nodes or devices. Volumes of any size up to the per-volume limit can be carved from it, and its capacity and
+    performance grow with the cluster.
 
-    This means that there is no physical limit on how to carve logical volumes from that pool. For example, if a total
-    pool is 2 PB in size, a single volume can be sized 2 PB or 10,000 small volumes can be created. Also it means that
-    capacity and total performance of a pool scales linearly when the pool is expanded.
-
-    As this characteristic conflicts with the benefits of data locality, data locality is turned off by default, and
-    data is distributed for a fully balanced load. When enabled, data locality is applied on a best-effort basis and
-    without damaging the performance of parts of volumes through localized bottlenecks (see
+    This conflicts with data locality, so data locality is turned off by default and data is distributed for a fully
+    balanced load. When enabled, data locality is applied on a best-effort basis (see
     [Data Locality](../storage-performance-and-qos.md#data-locality)).

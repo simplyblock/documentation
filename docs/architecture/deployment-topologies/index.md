@@ -52,4 +52,5 @@ once that is available. The supported combinations are shown in
 - [Control Plane and Operator](control-plane-and-operator.md)
 - [HCI (Hyper-Converged)](hci.md)
 - [Disaggregated](disaggregated.md)
+- [Edge Clusters](edge-clusters.md)
 - [Superclusters](superclusters.md)
