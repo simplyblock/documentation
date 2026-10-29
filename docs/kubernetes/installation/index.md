@@ -81,6 +81,8 @@ For detailed CRD documentation, see [Simplyblock Operator](../../reference/opera
 - [Securing the Control Plane](security.md): TLS, mutual TLS, and an external KMS.
 - [Install Simplyblock Operator](k8s-control-plane.md): The Helm installation and its key values.
 - [Create a Storage Cluster](k8s-storage-plane.md): Discovery, review, approval, and the first volume.
+- [Cluster Deployment Options](cluster-deployment-options.md): The options of a new storage cluster and which of them
+  can change later.
 - [Connecting to an External Control Plane](install-csi.md): The managed profile for clusters without a local control
   plane.
 - [OpenShift](openshift.md): Security context constraints and TLS on OpenShift.

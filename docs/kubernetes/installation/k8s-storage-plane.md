@@ -214,7 +214,8 @@ reads it again.
 ### Cluster Template
 
 `spec.cluster` is the template of the storage cluster to create. It is ignored when `spec.clusterRef` names an
-existing cluster, because a growth document adds nodes to a cluster whose settings are already decided.
+existing cluster, because a growth document adds nodes to a cluster whose settings are already decided. The options
+and which of them can change later are explained in [Cluster Deployment Options](cluster-deployment-options.md).
 
 !!! warning "This is the last chance to change these"
     Most of the fields below are immutable on the created `StorageCluster`. `enableDriveFormat` is also
