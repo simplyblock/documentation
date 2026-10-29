@@ -9,6 +9,9 @@ and [creating a storage cluster](k8s-storage-plane.md). The differences come fro
 described in [Amazon EKS](../../deployment-preparation/amazon-eks.md): every simplyblock component has to be placed
 onto its node group and has to tolerate its taint.
 
+A dedicated network interface for the storage traffic is described in
+[Storage Network on Amazon EKS](eks-storage-network.md).
+
 The examples on this page use the following labels and taints. They are examples and are replaced with the ones of the
 actual node groups.
 
