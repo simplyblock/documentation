@@ -4,8 +4,6 @@ description: "How simplyblock provides shared file storage: pNFS separates file 
 weight: 30240
 ---
 
-{{ experimental }}
-
 A simplyblock logical volume is a block device. A block device carries a filesystem that only one host may mount at a
 time, which is enough for most databases and stateful services but not for workloads that share files between many
 nodes: content repositories, build caches, AI training data, shared home directories, or the disks of virtual machines

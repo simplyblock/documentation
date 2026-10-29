@@ -4,8 +4,6 @@ description: "How simplyblock serves ReadWriteMany volumes through pNFS: a metad
 weight: 30250
 ---
 
-{{ experimental }}
-
 A simplyblock logical volume is a block device, and a block device carries a filesystem that only one host may mount
 at a time. Volumes that several nodes write concurrently (`ReadWriteMany`) are therefore served through parallel NFS
 (pNFS), the NFSv4.1 extension that separates file metadata from file data. Each shared volume is backed by simplyblock

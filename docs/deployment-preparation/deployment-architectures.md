@@ -182,8 +182,6 @@ installation in [Connecting to an External Control Plane](../kubernetes/installa
 
 ## Shared File Storage (pNFS)
 
-{{ experimental }}
-
 [Distributed file storage](../architecture/concepts/distributed-file-storage.md) (`ReadWriteMany` volumes through
 pNFS) is not a separate architecture. It is added to any of the architectures above that run simplyblock on
 Kubernetes, and it is not available on a legacy Docker-based deployment.
