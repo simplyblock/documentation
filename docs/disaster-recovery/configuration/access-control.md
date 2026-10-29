@@ -10,11 +10,11 @@ RBAC alone cannot express, such as who may override a readiness verdict.
 
 ## Roles
 
-| ClusterRole   | Read           | Write                                                                                               | Special                      |
-|---------------|----------------|-----------------------------------------------------------------------------------------------------|------------------------------|
-| `dr-viewer`   | All DR objects | None                                                                                                | None                         |
-| `dr-operator` | As `dr-viewer` | ProtectedApplication, RecoveryAction, RecoveryPlan, TestBubble, TestSchedule                        | None                         |
-| `dr-admin`    | As `dr-viewer` | As `dr-operator`, plus ProtectionPlan, DRPath, DRConfig, RestoreAction, SiteProfile, and DHCPServer | `override` on RecoveryAction |
+| ClusterRole   | Read           | Write                                                                                                                                                                    | Special                                                              |
+|---------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| `dr-viewer`   | All DR objects | None                                                                                                                                                                     | None                                                                 |
+| `dr-operator` | As `dr-viewer` | ProtectedApplication, RecoveryAction, RecoveryPlan, TestBubble, TestSchedule, DiscoveryRun, BlueprintExport, DRBlueprint, EnvironmentMapping, and requests on DRProposal | None                                                                 |
+| `dr-admin`    | As `dr-viewer` | As `dr-operator`, plus ProtectionPlan, DRPath, DRConfig, RestoreAction, SiteProfile, DHCPServer, LabelRequest, and SRMImport                                             | `override` on RecoveryAction, `approve` and `rollback` on DRProposal |
 
 The division follows the responsibilities in a typical organization:
 
@@ -22,7 +22,8 @@ The division follows the responsibilities in a typical organization:
 - **Operators:** Platform operators protect applications, run planned failovers, unplanned failovers, and tests. They
   cannot change sites, paths, or the DR configuration, and they cannot move an application that is `NotReady`.
 - **Administrators:** DR administrators define the topology (plans and paths), change the DR configuration, restore
-  applications from backups, and decide on overrides.
+  applications from backups, and decide on overrides. Without a GitOps repository, they also approve and roll back
+  discovery bundles (see [Discovery and Proposals](../discovery/index.md#approval)).
 
 The chart binds none of the roles. They are bound to users or groups with ClusterRoleBindings for access to all
 namespaces, as shown in [Installing the Hub](../install/hub.md#granting-access), or with RoleBindings for access to
@@ -37,12 +38,14 @@ the kind of binding and on where the DR resources live.
 
 ### Where DR Resources Live
 
-| Resource                                                                  | Scope      | Namespace                                                                            |
-|---------------------------------------------------------------------------|------------|--------------------------------------------------------------------------------------|
-| ProtectionPlan, DRPath, DRConfig                                          | Cluster    | None                                                                                 |
-| ProtectedApplication of a managed (GitOps) application                    | Namespaced | The application's own namespace, next to its Placement                               |
-| ProtectedApplication of a discovered application                          | Namespaced | The Ramen ops namespace (`ramen-ops` by default, `DRConfig.spec.ramen.opsNamespace`) |
-| RecoveryAction, RecoveryPlan, TestBubble, TestSchedule, and RestoreAction | Namespaced | The namespace of the applications they act on                                        |
+| Resource                                                                                  | Scope      | Namespace                                                                            |
+|-------------------------------------------------------------------------------------------|------------|--------------------------------------------------------------------------------------|
+| ProtectionPlan, DRPath, DRConfig                                                          | Cluster    | None                                                                                 |
+| ProtectedApplication of a managed (GitOps) application                                    | Namespaced | The application's own namespace, next to its Placement                               |
+| ProtectedApplication of a discovered application                                          | Namespaced | The Ramen ops namespace (`ramen-ops` by default, `DRConfig.spec.ramen.opsNamespace`) |
+| RecoveryAction, RecoveryPlan, TestBubble, TestSchedule, and RestoreAction                 | Namespaced | The namespace of the applications they act on                                        |
+| DiscoveryGraph                                                                            | Cluster    | None                                                                                 |
+| DRProposal, DiscoveryRun, DRBlueprint, BlueprintExport, EnvironmentMapping, and SRMImport | Namespaced | The Ramen ops namespace, next to the discovered applications they propose            |
 
 A RecoveryAction, TestBubble, or RestoreAction references its application by name, and only within its own namespace.
 A RecoveryPlan groups applications of one namespace. The namespace is therefore the boundary of every DR action.
@@ -188,6 +191,8 @@ The admission checks enforce rules that involve other objects or the requester:
 - **Deletion:** A DR path or protection plan that applications still use can only be deleted after
   `dr.simplyblock.io/confirm-delete: "true"` has been set on it.
 - **Overrides:** A readiness override requires the `override` verb.
+- **Bundle requests:** Approving or rolling back a discovery bundle in the Control Center requires the `approve` or
+  `rollback` verb on `drproposals`. The requesting user is stamped into `dr.simplyblock.io/request-by`.
 
 !!! warning
     While `dr-hub` is unavailable, DR objects cannot be created or changed,

@@ -107,39 +107,42 @@ helm install dr-simplyblock-hub simplyblock/dr-simplyblock-hub \
 
 ## Chart Values
 
-| Value                                 | Default                               | Description                                                                                                                      |
-|---------------------------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `image.registry`                      | `quay.io/simplyblock-io`              | Registry of the `dr-hub` image. The same image carries `dr-bootstrap` and `dr-restore`.                                          |
-| `image.tag`                           | Chart `appVersion`                    | Image tag.                                                                                                                       |
-| `image.pullPolicy`                    | `IfNotPresent`                        | Image pull policy.                                                                                                               |
-| `imagePullSecrets`                    | `[]`                                  | Pull secrets for the hub images.                                                                                                 |
-| `hub.replicas`                        | `1`                                   | Replicas of the `dr-hub` Deployment.                                                                                             |
-| `hub.logLevel`                        | `info`                                | Log level of `dr-hub`.                                                                                                           |
-| `hub.resources`                       | 50m CPU, 128 Mi request, 512 Mi limit | Resources of `dr-hub`.                                                                                                           |
-| `hub.nodeSelector`, `hub.tolerations` | Empty                                 | Scheduling of `dr-hub`.                                                                                                          |
-| `webhooks.enabled`                    | `true`                                | Deploys the admission webhooks.                                                                                                  |
-| `webhooks.certManager`                | `false`                               | Issues the webhook serving certificate with cert-manager instead of a chart-generated one.                                       |
-| `bootstrap.enabled`                   | `true`                                | Installs OCM and Ramen on the hub and delivers the site stack to joining clusters. Set to `false` on an existing ACM or ODF hub. |
-| `bootstrap.imageRegistry`             | Empty                                 | Mirror registry for every bootstrapped image.                                                                                    |
-| `bootstrap.waitTimeout`               | `15m`                                 | Maximum time for each wait of the bootstrap Job.                                                                                 |
-| `bootstrap.timeoutSeconds`            | `1500`                                | Maximum run time of the whole bootstrap Job.                                                                                     |
-| `s3Credentials`                       | Empty                                 | AWS credentials file with `aws_access_key_id` and `aws_secret_access_key`, passed with `--set-file`.                             |
-| `s3SecretNames`                       | `[ramen-s3-secret]`                   | Names of the S3 Secrets created in the Ramen namespace.                                                                          |
-| `agent.installNamespace`              | `simplyblock-dr-agent`                | Namespace of `dr-agent` on every site.                                                                                           |
-| `agent.statusInterval`                | `15s`                                 | How often `dr-agent` reports its status to the hub.                                                                              |
-| `agent.veleroNamespace`               | `velero`                              | Velero namespace on the sites.                                                                                                   |
-| `agent.testReadRules`                 | `[]`                                  | Extra read rules for kinds that the Recipe checks of applications select during a test.                                          |
-| `agent.resources`                     | 20m CPU, 64 Mi request, 256 Mi limit  | Resources of `dr-agent`.                                                                                                         |
-| `agent.installStrategy.type`          | `Manual`                              | Rollout of the `dr-agent` addon when the bootstrap is disabled: `Manual` or `Placements`.                                        |
-| `agent.installStrategy.placements`    | `[]`                                  | Placements that select the sites for the `Placements` strategy.                                                                  |
-| `drConfig.create`                     | `true`                                | Creates the `DRConfig` singleton on install.                                                                                     |
-| `drConfig.ramenNamespace`             | `ramen-system`                        | Ramen namespace on the hub.                                                                                                      |
-| `drConfig.veleroNamespace`            | `velero`                              | Velero namespace on the sites.                                                                                                   |
-| `drConfig.opsNamespace`               | `ramen-ops`                           | Ramen operations namespace.                                                                                                      |
-| `drConfig.spec`                       | See the chart                         | Initial `DRConfig` spec (executor, agent, archive, retention, feature gates).                                                    |
-| `console.enabled`                     | `false`                               | Deploys the DR-only Control Center next to `dr-hub`. See [Control Center](../control-center.md).                                 |
-| `console.role`                        | `operator`                            | The DR role the console's ServiceAccount holds in service-account mode: `viewer`, `operator`, or `admin`.                        |
-| `console.ingress.enabled`, `.host`    | `false`, empty                        | The console's Ingress. Authentication belongs in front of it.                                                                    |
+| Value                                 | Default                               | Description                                                                                                                             |
+|---------------------------------------|---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `image.registry`                      | `quay.io/simplyblock-io`              | Registry of the `dr-hub` image. The same image carries `dr-bootstrap` and `dr-restore`.                                                 |
+| `image.tag`                           | Chart `appVersion`                    | Image tag.                                                                                                                              |
+| `image.pullPolicy`                    | `IfNotPresent`                        | Image pull policy.                                                                                                                      |
+| `imagePullSecrets`                    | `[]`                                  | Pull secrets for the hub images.                                                                                                        |
+| `hub.replicas`                        | `1`                                   | Replicas of the `dr-hub` Deployment.                                                                                                    |
+| `hub.logLevel`                        | `info`                                | Log level of `dr-hub`.                                                                                                                  |
+| `hub.resources`                       | 50m CPU, 128 Mi request, 512 Mi limit | Resources of `dr-hub`.                                                                                                                  |
+| `hub.nodeSelector`, `hub.tolerations` | Empty                                 | Scheduling of `dr-hub`.                                                                                                                 |
+| `webhooks.enabled`                    | `true`                                | Deploys the admission webhooks.                                                                                                         |
+| `webhooks.certManager`                | `false`                               | Issues the webhook serving certificate with cert-manager instead of a chart-generated one.                                              |
+| `bootstrap.enabled`                   | `true`                                | Installs OCM and Ramen on the hub and delivers the site stack to joining clusters. Set to `false` on an existing ACM or ODF hub.        |
+| `bootstrap.imageRegistry`             | Empty                                 | Mirror registry for every bootstrapped image.                                                                                           |
+| `bootstrap.waitTimeout`               | `15m`                                 | Maximum time for each wait of the bootstrap Job.                                                                                        |
+| `bootstrap.timeoutSeconds`            | `1500`                                | Maximum run time of the whole bootstrap Job.                                                                                            |
+| `s3Credentials`                       | Empty                                 | AWS credentials file with `aws_access_key_id` and `aws_secret_access_key`, passed with `--set-file`.                                    |
+| `s3SecretNames`                       | `[ramen-s3-secret]`                   | Names of the S3 Secrets created in the Ramen namespace.                                                                                 |
+| `agent.installNamespace`              | `simplyblock-dr-agent`                | Namespace of `dr-agent` on every site.                                                                                                  |
+| `agent.statusInterval`                | `15s`                                 | How often `dr-agent` reports its status to the hub.                                                                                     |
+| `agent.veleroNamespace`               | `velero`                              | Velero namespace on the sites.                                                                                                          |
+| `agent.testReadRules`                 | `[]`                                  | Extra read rules for kinds that the Recipe checks of applications select during a test.                                                 |
+| `agent.resources`                     | 20m CPU, 64 Mi request, 256 Mi limit  | Resources of `dr-agent`.                                                                                                                |
+| `agent.flows.enabled`                 | `true`                                | Deploys the `dr-flows` eBPF flow collector of discovery on every site. See [Discovery Setup](../discovery/setup.md#the-flow-collector). |
+| `agent.flows.tolerations`             | Every taint tolerated                 | Tolerations of `dr-flows`.                                                                                                              |
+| `agent.flows.resources`               | 10m CPU, 32 Mi request, 128 Mi limit  | Resources of `dr-flows`.                                                                                                                |
+| `agent.installStrategy.type`          | `Manual`                              | Rollout of the `dr-agent` addon when the bootstrap is disabled: `Manual` or `Placements`.                                               |
+| `agent.installStrategy.placements`    | `[]`                                  | Placements that select the sites for the `Placements` strategy.                                                                         |
+| `drConfig.create`                     | `true`                                | Creates the `DRConfig` singleton on install.                                                                                            |
+| `drConfig.ramenNamespace`             | `ramen-system`                        | Ramen namespace on the hub.                                                                                                             |
+| `drConfig.veleroNamespace`            | `velero`                              | Velero namespace on the sites.                                                                                                          |
+| `drConfig.opsNamespace`               | `ramen-ops`                           | Ramen operations namespace.                                                                                                             |
+| `drConfig.spec`                       | See the chart                         | Initial `DRConfig` spec (executor, agent, archive, retention, feature gates).                                                           |
+| `console.enabled`                     | `false`                               | Deploys the DR-only Control Center next to `dr-hub`. See [Control Center](../control-center.md).                                        |
+| `console.role`                        | `operator`                            | The DR role the console's ServiceAccount holds in service-account mode: `viewer`, `operator`, or `admin`.                               |
+| `console.ingress.enabled`, `.host`    | `false`, empty                        | The console's Ingress. Authentication belongs in front of it.                                                                           |
 
 The `DRConfig` created by the chart is kept when the release is uninstalled. After the installation, it is changed
 directly:
@@ -172,7 +175,7 @@ in the new release.
 `dr-hub` validates DR objects with admission webhooks on port 9443, served through the `dr-hub-webhook` Service. The
 webhooks check references between objects (for example, the path an action takes), whether the requester may
 override a readiness verdict, and that finished runs are not changed. They also stamp the creator on every
-RecoveryAction and TestBubble.
+RecoveryAction and TestBubble, and the requester of every request on a discovery bundle (DRProposal).
 
 The serving certificate is generated by the chart and kept across upgrades. To have cert-manager issue it instead,
 cert-manager must be installed on the hub, and `webhooks.certManager=true` is set.
@@ -211,11 +214,11 @@ and site stacks appear in `status.agents` and `status.stack` once site clusters 
 The chart creates three ClusterRoles but binds none of them. They must be bound to the users or groups that work with
 disaster recovery:
 
-| ClusterRole   | Grants                                                                                                                                          |
-|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `dr-viewer`   | Read access to all DR objects.                                                                                                                  |
-| `dr-operator` | `dr-viewer`, plus writing protected applications, recovery actions, recovery plans, test bubbles, and test schedules.                           |
-| `dr-admin`    | `dr-operator`, plus writing protection plans, DR paths, the DR configuration, and restore actions, and the `override` verb on recovery actions. |
+| ClusterRole   | Grants                                                                                                                                                                                                                                                          |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `dr-viewer`   | Read access to all DR objects.                                                                                                                                                                                                                                  |
+| `dr-operator` | `dr-viewer`, plus writing protected applications, recovery actions, recovery plans, test bubbles, and test schedules, starting discovery runs, requesting and rejecting discovery bundles, and writing blueprints, blueprint exports, and environment mappings. |
+| `dr-admin`    | `dr-operator`, plus writing protection plans, DR paths, the DR configuration, restore actions, and SRM imports, the `override` verb on recovery actions, and the `approve` and `rollback` verbs on discovery bundles.                                           |
 
 ```yaml title="Binding the DR roles to groups (dr-rolebindings.yaml)"
 apiVersion: rbac.authorization.k8s.io/v1

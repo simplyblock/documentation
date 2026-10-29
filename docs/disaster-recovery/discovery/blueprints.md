@@ -17,6 +17,15 @@ environment mapping translates its names, matches its members against the produc
     Environment promotion is part of the discovery preview. The console screens for exporting and mapping blueprints
     are not available yet. Blueprints and mappings are created as resources on the hub.
 
+## Prerequisites in Production
+
+Matching reads the production site's DiscoveryGraph, so discovery must be enabled on the production hub
+(`spec.discovery.enabled: true`). The flow collector can stay off: listing the production sites in
+`spec.discovery.flows.optOut`, or setting the chart value `agent.flows.enabled: false`, leaves the graph with the
+facts and configuration references of the sites. With `autoRules: false`, production gets bundles only from the
+blueprint and from explicit discovery runs. Without discovery, an EnvironmentMapping reports `Matched=False` with the
+reason `NoGraph`, and a BlueprintExport fails.
+
 ## Flow
 
 1. **Approve in UAT:** Discover the applications in UAT and approve their bundles until they are `Applied`. See
@@ -161,7 +170,14 @@ What cannot be matched becomes a question in the bundle:
 PVCs mounted by matched workloads and VMs join the application even without a PVC member in the blueprint.
 
 The match result per application is in `status.applications[]` (`matched`, `missing`, `ambiguous`, `extra`, and the
-bundle), and the condition `Matched` summarizes it.
+bundle), and the condition `Matched` summarizes it. `status.observedVersion` is the blueprint version that was
+matched, and `status.proposals` lists the bundles the mapping wrote. A mapping is matched again when it, its
+blueprint, or the site's graph changes, and at every graph rebuild interval.
+
+```bash title="Listing blueprints and mappings"
+kubectl -n ramen-ops get drblueprints
+kubectl -n ramen-ops get environmentmappings
+```
 
 ## Bundles From a Blueprint
 
