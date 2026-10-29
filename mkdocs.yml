@@ -3,6 +3,9 @@ site_url: https://docs.simplyblock.io/
 repo_url: https://github.com/simplyblock/documentation
 edit_uri: edit/main/docs/
 copyright: "&copy; 2024-2026 Simplyblock GmbH"
+# Sections that are temporarily disabled. They stay in the repository but are not built.
+exclude_docs: |
+  deployment-preparation/data-migration/
 extra:
   homepage: https://www.simplyblock.io
   homepage_name: Simplyblock
