@@ -7,8 +7,7 @@ weight: 30150
 A simplyblock storage node serves NVMe over TCP from its SPDK pod. Where that traffic flows is a choice of the
 deployment: on an interface of the host, on the pod network of the cluster's CNI, or on an interface that Multus
 attaches to the SPDK pod. This page describes every option simplyblock supports. For each option, it lists what the
-cluster and its network have to provide, what is configured in simplyblock, and the caveats
-found while testing.
+cluster and its network have to provide, what is configured in simplyblock, and its caveats.
 
 [Storage Network on Amazon EKS](eks-storage-network.md) covers the cloud-specific setup on EKS in depth. This page links
 to it where the options meet.
@@ -32,25 +31,6 @@ to it where the options meet.
 
 Options 3 to 7 attach the network through a `NetworkAttachmentDefinition` (a _definition_) and share the requirements
 in [Requirements of Every Attached Network](#requirements-of-every-attached-network).
-
-### Measured Performance
-
-The table gives the throughput of each option on one test cluster, to show the relative cost of the paths. It is not a
-sizing guide: the numbers depend on the NIC, the CPU, the MTU, and the CNI's datapath.
-
-| Option                          | 4K random read, queue depth 32, client on the storage node | Same, client on another node |
-|---------------------------------|------------------------------------------------------------|------------------------------|
-| 1. Host network (VF)            | 46.8k IOPS                                                 | 46.2k IOPS                   |
-| 2. Pod network (Cilium, native) | 32.8k IOPS                                                 | 32.5k IOPS                   |
-| 4. `macvlan` on a dedicated VF  | 51.6k IOPS                                                 | 51.2k IOPS                   |
-| 5. VLAN on the CNI's NIC        | 47.4k IOPS                                                 | 41.3k IOPS                   |
-| 6. `macvlan` on the CNI's NIC   | 45.4k IOPS                                                 | 39.5k IOPS                   |
-| 7. VF from a device plugin      | 46.8k IOPS                                                 | 44.9k IOPS                   |
-
-Test cluster: four Talos Linux workers as virtual machines, two Mellanox ConnectX-3 virtual functions per worker (MTU
-9000), a virtio interface for the CNI (MTU 1500), Cilium 1.20 in native routing mode, erasure coding 2+1, one 2 GiB
-volume. Every option in the table also passed a restart of the storage node under verified writes and a live volume
-migration under verified writes without an I/O error.
 
 ## Choosing an Option
 
@@ -167,8 +147,8 @@ survives restarts of the pod, while the pod's own address changes with each rest
 | No network policy that blocks the storage ports between hosts, SPDK pods, and Services | The listeners use the ports the control plane allocates from 4420 upward.                                                                                              |
 | A pod MTU as large as the network allows                                               | The MTU of the pod network bounds the NVMe over TCP payload per packet. With an overlay, the pod MTU is the underlay MTU minus the encapsulation (50 bytes for VXLAN). |
 
-Multus is not needed. On Cilium, native routing performs better than a tunnel: in an early test on the same cluster,
-native routing gave about a fifth more 4K random-read IOPS across nodes than VXLAN.
+Multus is not needed. On Cilium, native routing performs better than a tunnel, because it avoids the encapsulation
+and the smaller MTU.
 
 **Configuration in simplyblock.**
 
@@ -186,7 +166,7 @@ The operator reports each node's network as `cni`, interface `eth0`, with the Se
 `Attached` once the pod runs behind the Service.
 
 **Caveats.** All storage traffic passes the CNI's datapath, which costs throughput and latency compared with a NIC of its
-own (see [Measured Performance](#measured-performance)). The storage traffic cannot be separated from the pod traffic by
+own. The storage traffic cannot be separated from the pod traffic by
 the network.
 
 ## Option 3: Dedicated Interface (host-device)
@@ -448,8 +428,8 @@ The consequences without a sibling:
 - The operator's reachability check fails from each node to its own SPDK pod. The node stays in `Provisioning`, its
   network in `Unavailable` with `hostReachable` set to `false`, and the event `DataNetworkHostUnreachable` names the
   worker that cannot reach the SPDK listener.
-- On an operator that does not check, a client on the storage node silently uses the remote paths only: in the test
-  cluster, 35.1k instead of 47.4k IOPS, and the volume loses its local path for failover.
+- On an operator that does not check, a client on the storage node silently uses the remote paths only, with lower throughput,
+  and the volume loses its local path for failover.
 
 The solution is a second `macvlan` interface on the same parent for the host, which carries the host's storage address.
 Two `macvlan` interfaces of one parent reach each other. The parent itself keeps no address in the storage subnet.
@@ -538,20 +518,3 @@ VF's PCI address.
 | `NetworkInterfaceNoAddress`                                                                                  | No `addressPool`, and the interface named in the definition has no usable IPv4 address on the host                | Assign an address to the interface, or declare an `addressPool`.                                 |
 | The SPDK pod does not start, and Multus reports `Link not found`                                             | The `master` or `device` named in the definition does not exist on the node                                       | Create the interface (for example, the VLAN interface) on every storage node.                    |
 | No traffic reaches a `macvlan` interface                                                                     | The switch or virtual switch drops unknown MAC addresses                                                          | Allow additional MAC addresses on the ports, or use `ipvlan`, option 5 with a VLAN, or option 7. |
-
-## Verification Status
-
-Options 1, 2, and 4 to 7 were deployed and tested end to end on the test cluster described in
-[Measured Performance](#measured-performance): deployment, I/O with verification, a restart of a storage node under I/O,
-and a live volume migration under I/O. Option 3 was deployed and tested with I/O and a restart of a storage node on the
-same cluster, and on Amazon EKS as described in [Storage Network on Amazon EKS](eks-storage-network.md). The following
-parts are not verified:
-
-- A live volume migration on option 3. Option 7 with `host-device` moves the VF with the same plugin and passed it.
-- The `sriov` plugin of option 7 with a physical function. The test cluster only had VFs passed through to virtual
-  machines and used `host-device` with `deviceID`, which takes the device from the same allocation and the same pod
-  request.
-- `ipvlan` on the CNI's NIC (option 6 with `ipvlan`).
-- Option 2 on Amazon EKS, and the live volume migration of option 2 on GKE Dataplane V2.
-- MTU above 1500 on the pod network, and on a VLAN of the CNI's NIC.
-- Cilium network policies, the host firewall, and transparent encryption on the storage path.
