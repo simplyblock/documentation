@@ -109,7 +109,9 @@ well before it fires.
 The device mode is cluster-global and deploy-time only: `nvme` and `lblk` devices cannot be mixed
 within one cluster, and the mode cannot be changed after cluster creation. In `lblk` mode,
 the journal needs a dedicated device, or a journal partition split from the smallest selected partition. Growing a
-node's device set at restart time is not supported.
+node's device set at restart time is not supported. A device whose block device has grown, such as a resized LUN,
+takes its new size online (see
+[Operating on Storage Arrays](../../kubernetes/operations/cluster/storage-arrays.md#growing-the-luns)).
 
 SMART health telemetry is not available for AIO-backed devices. Device-level performance depends on
 the underlying block device and the kernel block layer, so higher latency than with SPDK-native NVMe

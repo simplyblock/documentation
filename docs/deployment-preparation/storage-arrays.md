@@ -27,19 +27,19 @@ local NVMe devices. The architecture and the division of tasks between the array
 
 Every host that runs a storage node gets its own LUNs, which are not shared with any other host:
 
-| LUN         | Count     | Size                                                                                                                  |
-|-------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
-| Journal LUN | 1         | About 3% of the host's data LUN capacity, at least 2 GiB. It has to be the smallest LUN of the host.                  |
-| Data LUNs   | 1 or more | Large and equal in size, on all hosts. Thin LUNs are sized for the expected growth, so that they never need resizing. |
+| LUN         | Count     | Size                                                                                                                   |
+|-------------|-----------|------------------------------------------------------------------------------------------------------------------------|
+| Journal LUN | 1         | About 3% of the host's data LUN capacity, at least 2 GiB. It has to be the smallest LUN of the host.                   |
+| Data LUNs   | 1 or more | Large and equal in size, on all hosts. Thin LUNs are sized for the expected growth, so that they rarely need resizing. |
 
 A storage node needs at least two LUNs: the journal LUN and one data LUN. The smallest LUN of a host is dedicated to
 the journal.
 
 !!! important
-    LUNs cannot be resized after a storage node uses them, and a LUN cannot be added to a running storage node yet.
-    Capacity is added with new storage nodes and their LUNs (see
-    [Operating on Storage Arrays](../kubernetes/operations/cluster/storage-arrays.md#adding-capacity)). Large thin
-    LUNs avoid the need for either.
+    Data LUNs can be grown online, as long as all of them grow by the same factor, but never shrunk. A LUN cannot be
+    added to a running storage node yet. See
+    [Operating on Storage Arrays](../kubernetes/operations/cluster/storage-arrays.md#adding-capacity). Large thin
+    LUNs make either step rare.
 
 ## Erasure Coding Scheme
 
