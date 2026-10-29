@@ -63,9 +63,19 @@ and takes its role back.
 Writes are recorded in a distributed, high-availability write journal with copies on several nodes before they are
 acknowledged, so a failover continues from a consistent state.
 
-Storage nodes can also be connected through several independent storage networks, each in its own VLAN. Every path
-is then available on every network, which multiplies the paths (for example, four connections with one failover
-path and two networks). This is an alternative to link aggregation (LACP, MLAG).
+### Failover Paths and Network Paths
+
+Simplyblock uses NVMe multipathing in two different ways, which complement each other:
+
+| Paths                                                             | Purpose                                 | Path selection                                                                                          |
+|-------------------------------------------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------|
+| To different storage nodes (primary, secondary, tertiary)         | Survive node failures                   | Active/standby through ANA. Only the primary path carries I/O, so there is no load balancing.           |
+| To the same storage node over several storage networks (optional) | Survive network failures, add bandwidth | Active/active. I/O is spread round-robin across the paths to the node that currently serves the volume. |
+
+The network paths are optional. Storage nodes and hosts are then attached with several data interfaces, each in its
+own VLAN, and every failover path is available on every network. This multiplies the connections, for example, four
+connections with one failover path and two networks, or six with two failover paths. It is an alternative to link
+aggregation (LACP, MLAG).
 
 ### Small Clusters
 
