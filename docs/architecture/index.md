@@ -8,6 +8,14 @@ Simplyblock is a cloud-native, software-defined storage platform designed for hi
 resilience. It provides NVMe over TCP (NVMe/TCP) and NVMe over RDMA (ROCEv2) block storage, enabling efficient data
 access across distributed environments.
 
+!!! Info
+    In addition to NVMe-over-Fabric block storage, simplyblock now also provides high-performance file and object storage (S3).
+    All storage interfaces are built over the same distributed, high-performance, scale-out storage platform with the 
+    same capabilities for data protection, distributed erasure coding, security, encryption, asynchronous or synchronous 
+    replication and disaster recovery, built-in backup and restore - including automated cyber-attack recovery- and optional    
+    compression and deduplication. Because the high-speed data path is decoupled from the meta-data path for file- and 
+    object storage, the performance (latency, IOPS and throughput) is similar to the native block storage performance. 
+
 Understanding the architecture, key concepts, and common terminology is
 essential for effectively deploying and managing simplyblock across different infrastructure setups, including
 Kubernetes clusters, virtualized environments, and bare-metal deployments. This documentation provides a comprehensive
