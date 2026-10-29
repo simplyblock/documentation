@@ -89,12 +89,42 @@ older, the cluster event log holds an `ALERT_RAISED` and an `ALERT_RESOLVED` ent
 | `cluster_degraded`                      | critical | The cluster is degraded.                                          | A node was stopped by an operator.                         |
 | `cluster_suspended`                     | critical | The cluster is suspended.                                         | Never. A suspended cluster serves no I/O.                  |
 | `device_unavailable`                    | critical | A device on an **online** node is unavailable, failed or removed. | The operator removed it, or the node itself is not online. |
+| `device_unhealthy`                      | critical | The SMART health log of a serving device reports it failing.      | The node is not online, or the health report has expired.  |
+| `device_unhealthy`                      | warning  | The SMART health log of a serving device raises a warning.        | The node is not online, or the health report has expired.  |
+| `device_slow`                           | warning  | A serving device performs far worse than the rest of its fleet.   | The node is not online, or the health report has expired.  |
 | `node_jc_compression_error`             | critical | The journal reported a compression error.                         | —                                                          |
 | `node_unrecoverable_io_error`           | critical | An unrecoverable I/O error (a *distr error* in the event log).    | —                                                          |
 | `node_unrecoverable_jc_error`           | critical | An unrecoverable journal error.                                   | —                                                          |
 | `api_slow`                              | critical | Mean control plane API request latency above 15 seconds.          | —                                                          |
 | `cluster_capacity_critical`             | warning  | Absolute capacity passed `--cap-crit`.                            | —                                                          |
 | `cluster_provisioned_capacity_critical` | warning  | Provisioned capacity passed `--prov-cap-crit`.                    | —                                                          |
+
+### Device Health Alerts
+
+`device_slow` and `device_unhealthy` come from the health assessment that the Simplyblock Operator reports for each
+device: a comparison of its performance with the other devices of the cluster, and the verdict of its SMART health
+log. Their `details` carry the verdict and its reason. The checks are described in
+[Device Health](../../kubernetes/operations/monitoring/device-health.md).
+
+The operator sends each assessment to the control plane, and repeats it every five minutes while it does not change:
+
+```plain title="Health assessment endpoint"
+PUT /api/v2/clusters/<CLUSTER_UUID>/storage-nodes/<NODE_UUID>/devices/<DEVICE_UUID>/health-assessment
+```
+
+```json title="Example of a health assessment"
+{
+  "reporter": "simplyblock-operator",
+  "reported_at": "2026-10-29T10:15:00Z",
+  "valid_seconds": 900,
+  "performance": {"verdict": "slow", "reason": "latency 4.2x the fleet median at 1.0x its share"},
+  "smart": {"verdict": "ok", "reason": "no warning in the health log"}
+}
+```
+
+The latest assessment is stored on the device and returned with it by the device endpoints. An assessment is valid
+for `valid_seconds` after `reported_at`. Once it expires, the alerts it raised resolve, so a reporter that stops
+cannot leave an alert firing forever. Any monitoring system can report device health this way, not only the operator.
 
 ### Why Operator-Initiated States Are Not Alerts
 

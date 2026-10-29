@@ -9,8 +9,9 @@ A storage node is described by its `StorageNode` resource, one per worker and NU
 completion by the Simplyblock Operator. Two operations are raised by the operator itself: a `HostMaintenance` when the
 worker of a node is cordoned, and a `Remove` when a `StorageNode` that holds data is deleted.
 
-A single device of a node is restarted with a `StorageDeviceOps` resource, as described in
-[Storage Node Actions](storage-node-actions.md#restarting-a-storage-device).
+A single device of a node is restarted or failed with a `StorageDeviceOps` resource, as described in
+[Restarting a Storage Device](storage-node-actions.md#restarting-a-storage-device) and
+[Failing a Storage Device](storage-node-actions.md#failing-a-storage-device).
 
 ## Topics
 
