@@ -17,7 +17,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Check the capacity, health, and I/O statistics of the logical volume behind a simplyblock PersistentVolumeClaim with the metrics API and the CLI.">
+        <meta name="description" content="Check the capacity, health, and I/O statistics of the logical volume behind a simplyblock PersistentVolumeClaim with the metrics API, Prometheus, and the CLI.">
       
       
       <link rel="canonical" href="https://docs.simplyblock.io/latest/kubernetes/operations/monitoring/lvol-conditions/">
@@ -26,7 +26,7 @@
         <link rel="prev" href="../cluster-health/">
       
       
-        <link rel="next" href="../alerts/">
+        <link rel="next" href="../device-health/">
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
@@ -81,7 +81,7 @@
       
         <meta property="og:title" content="Logical Volume Conditions - Simplyblock Documentation">
       
-        <meta property="og:description" content="Check the capacity, health, and I/O statistics of the logical volume behind a simplyblock PersistentVolumeClaim with the metrics API and the CLI.">
+        <meta property="og:description" content="Check the capacity, health, and I/O statistics of the logical volume behind a simplyblock PersistentVolumeClaim with the metrics API, Prometheus, and the CLI.">
       
         <meta property="og:image" content="https://docs.simplyblock.io/26.4-beta3/assets/images/social/kubernetes/operations/monitoring/lvol-conditions.png">
       
@@ -97,7 +97,7 @@
       
         <meta name="twitter:title" content="Logical Volume Conditions - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Check the capacity, health, and I/O statistics of the logical volume behind a simplyblock PersistentVolumeClaim with the metrics API and the CLI.">
+        <meta name="twitter:description" content="Check the capacity, health, and I/O statistics of the logical volume behind a simplyblock PersistentVolumeClaim with the metrics API, Prometheus, and the CLI.">
       
         <meta name="twitter:image" content="https://docs.simplyblock.io/26.4-beta3/assets/images/social/kubernetes/operations/monitoring/lvol-conditions.png">
       
@@ -3613,6 +3613,8 @@
       
         
       
+        
+      
     
     
       
@@ -3706,6 +3708,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../data-protection/online-cluster-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Online Cluster Migration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../data-protection/foundationdb-backup/" class="md-nav__link">
         
   
@@ -3742,6 +3766,10 @@
       
         
           
+        
+      
+        
+      
         
       
         
@@ -3920,11 +3948,55 @@
   
   
     <li class="md-nav__item">
+      <a href="../device-health/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Device Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../alerts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Alerting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prometheus-metrics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus Metrics
     
   </span>
   
@@ -6732,7 +6804,8 @@
 <p>Logical volumes are the core storage abstraction in simplyblock, representing high-performance, distributed NVMe
 block devices backed by the cluster. On Kubernetes, every PersistentVolumeClaim of the simplyblock CSI driver is backed
 by one logical volume. Its capacity is readable from the claim's own namespace through the metrics API, and its health
-and I/O statistics are available through the CLI and the Grafana dashboards.</p>
+and I/O statistics are exported as Prometheus metrics, which also feed the Grafana dashboards, and are available
+through the CLI.</p>
 <h2 id="finding-the-logical-volume-of-a-claim">Finding the Logical Volume of a Claim</h2>
 <p>The volume handle of a PersistentVolume has the form <code>&lt;clusterUUID&gt;:&lt;poolUUID&gt;:&lt;volumeUUID&gt;</code>, where the last part is
 the UUID of the logical volume.</p>
@@ -6750,6 +6823,12 @@ claim's namespace. It reports the volume handle, the PersistentVolume, the pool,
 <p>Access follows Kubernetes RBAC, so a user bound to the built-in <code>view</code> role in the namespace can read the capacity of
 the volumes there. See <a href="../#capacity-metrics-api">Capacity Metrics API</a>.</p>
 <h2 id="accessing-logical-volume-statistics">Accessing Logical Volume Statistics</h2>
+<p>The I/O statistics of every logical volume are exported as Prometheus metrics, labeled with the PersistentVolumeClaim
+the volume belongs to. They include read, write, and unmap operations, bytes, and latency, and the volume's capacity
+and status. See <a href="../prometheus-metrics/">Prometheus Metrics</a> for the full list and example queries.</p>
+<div class="highlight"><span class="filename">IOPS of the volume behind a claim</span><pre><span></span><code>rate(simplyblock_lvol_read_operations_total{pvc_name="data"}[5m])
+  + rate(simplyblock_lvol_write_operations_total{pvc_name="data"}[5m])
+</code></pre></div>
 <p>To access a logical volume's performance and I/O statistics, the <code>sbctl</code> command line tool can be used in the
 <code>simplyblock-admin-control</code> pod (see <a href="../cluster-health/#using-the-cli">Using the CLI</a>):</p>
 <div class="highlight"><span class="filename">Accessing the statistics of a logical volume</span><pre><span></span><code>sbctl<span class="w"> </span>volume<span class="w"> </span>get-io-stats<span class="w"> </span>&lt;VOLUME_ID&gt;
@@ -6781,7 +6860,7 @@ also available through Grafana in the logical volume's dashboard.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 10:53:14 UTC">2026-10-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 15:27:22 UTC">2026-10-29</span>
   </span>
 
     

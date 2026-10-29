@@ -17,7 +17,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Restart-based relocation of whole workloads between sites with simplyblock DR, and the planned online migration of VMs and volumes across clusters.">
+        <meta name="description" content="Restart-based relocation of whole workloads between sites with simplyblock DR, and the online migration of volumes between clusters and nodes.">
       
       
       <link rel="canonical" href="https://docs.simplyblock.io/latest/architecture/concepts/relocation/">
@@ -81,7 +81,7 @@
       
         <meta property="og:title" content="Relocation - Simplyblock Documentation">
       
-        <meta property="og:description" content="Restart-based relocation of whole workloads between sites with simplyblock DR, and the planned online migration of VMs and volumes across clusters.">
+        <meta property="og:description" content="Restart-based relocation of whole workloads between sites with simplyblock DR, and the online migration of volumes between clusters and nodes.">
       
         <meta property="og:image" content="https://docs.simplyblock.io/26.4-beta3/assets/images/social/architecture/concepts/relocation.png">
       
@@ -97,7 +97,7 @@
       
         <meta name="twitter:title" content="Relocation - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Restart-based relocation of whole workloads between sites with simplyblock DR, and the planned online migration of VMs and volumes across clusters.">
+        <meta name="twitter:description" content="Restart-based relocation of whole workloads between sites with simplyblock DR, and the online migration of volumes between clusters and nodes.">
       
         <meta name="twitter:image" content="https://docs.simplyblock.io/26.4-beta3/assets/images/social/architecture/concepts/relocation.png">
       
@@ -1586,15 +1586,6 @@
   <a href="#online-migration-across-clusters" class="md-nav__link">
     <span class="md-ellipsis">
       Online Migration Across Clusters
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#volume-cutover-between-clusters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Volume Cutover Between Clusters
     </span>
   </a>
   
@@ -3695,6 +3686,8 @@
       
         
       
+        
+      
     
     
       
@@ -3788,6 +3781,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/data-protection/online-cluster-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Online Cluster Migration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../kubernetes/operations/data-protection/foundationdb-backup/" class="md-nav__link">
         
   
@@ -3822,6 +3837,10 @@
       
         
           
+        
+      
+        
+      
         
       
         
@@ -3927,11 +3946,55 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/monitoring/device-health/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Device Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../kubernetes/operations/monitoring/alerts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Alerting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/monitoring/prometheus-metrics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus Metrics
     
   </span>
   
@@ -6693,15 +6756,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#volume-cutover-between-clusters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Volume Cutover Between Clusters
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#volume-migration-within-a-cluster" class="md-nav__link">
     <span class="md-ellipsis">
       Volume Migration Within a Cluster
@@ -6747,8 +6801,8 @@
 
 <p>Relocation moves a running workload to another location. Simplyblock distinguishes three kinds of relocation. A DR
 relocation moves entire applications between Kubernetes clusters and restarts them on the target site. An online
-migration across clusters would move virtual machines and volumes without a restart and is planned for the future.
-Within a single storage cluster, volumes already move between storage nodes online today.</p>
+cluster migration moves volumes from one storage cluster to another without restarting the workloads that use them.
+Within a single storage cluster, volumes move between storage nodes online.</p>
 <h2 id="dr-relocation-restart-based">DR Relocation (Restart-Based)</h2>
 <p>A DR relocation is a planned move of a protected application, including its Kubernetes objects and its volumes,
 along a DR path. It is requested as a <code>RecoveryAction</code> of kind <code>Relocate</code> on the DR hub and applies to a single
@@ -6768,20 +6822,22 @@ the application runs on the source again.</p>
 <p>Failback is a relocation along the reverse DR path. The differences between a relocation and an unplanned failover
 are described in <a href="../failover/">Failover</a>.</p>
 <h2 id="online-migration-across-clusters">Online Migration Across Clusters</h2>
-<div class="admonition info">
-<p class="admonition-title">Coming soon</p>
-<p>Online migration across clusters is not designed yet. It is intended to cover the live migration of KubeVirt virtual
-machines and the live migration of volumes from one simplyblock cluster to another, without restarting the
-workload. Until it is available, workloads move between clusters with a restart-based DR relocation.</p>
-</div>
-<h2 id="volume-cutover-between-clusters">Volume Cutover Between Clusters</h2>
-<p>Below the application level, the storage-level asynchronous replication of simplyblock can prepare a planned cutover
-of individual volumes to another storage cluster of the same control plane. A replication policy in <code>migration</code> mode
-replicates the volumes to the target cluster while they keep serving I/O on the source. The cutover itself is then
-committed per volume: the volume is frozen briefly, the remaining delta is transferred, and the target cluster serves
-the volume from then on. The workload has to reconnect to the volume on the target cluster, so this is not an online
-migration of the workload. See
-<a href="../../../kubernetes/operations/data-protection/asynchronous-replication/">Asynchronous Replication</a>.</p>
+<p>An online cluster migration moves volumes to another storage cluster of the same control plane while their workloads
+keep running. The volumes are replicated to the target cluster with asynchronous replication in <code>migration</code> mode while
+the source keeps serving them. A migration plan in the control plane holds the volumes, places each of them on a
+target storage node, and forecasts when the migration completes. Each source storage node migrates one volume at a
+time.</p>
+<p>Each volume ends with a cutover, and the cutover is online. The target volume is exposed under the same NQN as the
+source, with its paths in the ANA state <code>inaccessible</code>, and these paths are connected on the consuming Kubernetes node
+beforehand. The source is then fenced by making all of its paths inaccessible, and the remaining delta is transferred
+during a brief I/O freeze. Finally, the ANA states flip: the storage node that leads the target logical volume store,
+normally the primary, becomes optimized, and the other online members of the target non-optimized. Queued I/O drains
+on the target without a disconnect, and the workload keeps running.</p>
+<p>On Kubernetes, a migration is started by a <code>ReplicationOps</code> resource with <code>action: migration</code>, which can cover every
+volume of a storage cluster. See
+<a href="../../../kubernetes/operations/data-protection/online-cluster-migration/">Online Cluster Migration</a>.</p>
+<p>The live migration of KubeVirt virtual machines between clusters is not covered by it. Workloads that cannot rely on
+NVMe multipathing move between clusters with a restart-based DR relocation.</p>
 <h2 id="volume-migration-within-a-cluster">Volume Migration Within a Cluster</h2>
 <p>Within one simplyblock storage cluster, volumes can already be migrated online between storage nodes without service
 interruption, for example, to follow a workload for data locality, to balance I/O, or to drain a node before its
@@ -6813,7 +6869,7 @@ removal. See <a href="../volume-migration/">Volume Migration</a>.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 10:53:14 UTC">2026-10-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 15:27:22 UTC">2026-10-29</span>
   </span>
 
     

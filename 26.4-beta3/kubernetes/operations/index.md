@@ -125,7 +125,7 @@ offline, or a node migration in its `Promoting` step.
 |--------------------------|------------|-----------------------|--------------------------------------------------------------------------------------|
 | `StorageClusterOps`      | `scops`    | `StorageCluster`      | `Activate`, `Expand`, `Shutdown`, `Start`, `Restart`, `RollingRestart`, `CancelTask` |
 | `StorageNodeOps`         | `snops`    | `StorageNode`         | `Shutdown`, `Restart`, `Suspend`, `Resume`, `Remove`, `Migrate`, `HostMaintenance`   |
-| `StorageDeviceOps`       | `sdops`    | `StorageDevice`       | `Restart`                                                                            |
+| `StorageDeviceOps`       | `sdops`    | `StorageDevice`       | `Restart`, `Fail`, `CheckHealth`                                                     |
 | `StoragePoolOps`         | `spops`    | `StoragePool`         | None usable yet. `Rebalance` is declared but refused at run time.                    |
 | `ControlPlaneOps`        | `cpops`    | `ControlPlane`        | `Restart`, `Upgrade`, `Backup`                                                       |
 | `OperatorOps`            | `oops`     | The worker nodes      | `Discover`                                                                           |

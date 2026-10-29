@@ -116,8 +116,8 @@ The following capabilities are available as a preview:
       literal values. Until then, these must carry identical names on both sites.
     - **Hub restore action:** A `RestoreHub` recovery action on a running hub (the `dr-restore` tool covers this today).
     - **Hosted-cluster tests:** Test failovers inside a hosted cluster with mirrored networks.
-    - **Online relocation:** Moving running workloads between sites without a restart. See
-      [Relocate (Online)](operations/relocate-online.md).
+    - **Online relocation:** Live migration of KubeVirt virtual machines between sites without a restart. Volumes
+      already move between clusters online. See [Relocate (Online)](operations/relocate-online.md).
     - **Storage deployment from the hub console:** Discovering and deploying a managed site's storage cluster from
       the Control Center. See [Control Center](control-center.md).
     - **AI-assisted discovery:** Refining bundles with a Claude agent. Discovery runs in rules mode today.

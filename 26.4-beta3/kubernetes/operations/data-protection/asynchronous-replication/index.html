@@ -26,7 +26,7 @@
         <link rel="prev" href="../backup-recovery/">
       
       
-        <link rel="next" href="../foundationdb-backup/">
+        <link rel="next" href="../online-cluster-migration/">
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
@@ -3615,6 +3615,8 @@
       
         
       
+        
+      
     
     
       
@@ -3919,6 +3921,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../online-cluster-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Online Cluster Migration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../foundationdb-backup/" class="md-nav__link">
         
   
@@ -3953,6 +3977,10 @@
       
         
           
+        
+      
+        
+      
         
       
         
@@ -4058,11 +4086,55 @@
   
   
     <li class="md-nav__item">
+      <a href="../../monitoring/device-health/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Device Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../monitoring/alerts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Alerting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../monitoring/prometheus-metrics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus Metrics
     
   </span>
   
@@ -7027,18 +7099,10 @@ tests, and relocation, is covered by <a href="../../../../disaster-recovery/">Di
 <h2 id="scope-and-prerequisites">Scope and Prerequisites</h2>
 <p>Asynchronous replication with controlled failover and failback is a Kubernetes-only feature, managed by the
 Simplyblock Operator.</p>
-<p>Both clusters have to be represented by a <code>StorageCluster</code> resource in the same namespace as the replication
-resources, which means both are attached to the same simplyblock control plane. A cluster is referenced by the name
-of its <code>StorageCluster</code>, and its UUID has to be reported in <code>status.uuid</code> before replication can be configured.
-Cross-namespace references are not supported. Both clusters have to be active with their storage nodes online, and
-the two clusters need network interconnectivity.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>With the <code>v1alpha2</code> API, a namespace admits one <code>StorageCluster</code> only, while a <code>ReplicationPair</code> resolves both of
-its clusters in its own namespace. Until the replication kinds follow the new API, a pair between two
-<code>StorageCluster</code> objects cannot be declared on a fresh <code>v1alpha2</code> installation. Confirm the supported setup with
-simplyblock support before planning replication.</p>
-</div>
+<p>Both clusters have to be attached to the same simplyblock control plane. A cluster is referenced by the name of its
+<code>StorageCluster</code> in the namespace of the replication resources, whose UUID has to be reported in <code>status.uuid</code> before
+replication can be configured, or by the cluster's UUID. Both clusters have to be active with their storage nodes
+online, and the two clusters need network interconnectivity.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>For multi-site setups, such as disaster recovery or offsite failover, a distributed control plane is highly
@@ -7080,7 +7144,7 @@ the operator, and the fourth is created to trigger an operation.</p>
 <td><code>ReplicationOps</code></td>
 <td><code>replops</code></td>
 <td>One per operation</td>
-<td>Triggers a failover or a failback and records its outcome.</td>
+<td>Triggers a failover, a failback, or a migration and records its outcome.</td>
 </tr>
 </tbody>
 </table>
@@ -7170,6 +7234,8 @@ dr-policy   site-a-to-site-b   failover   5m         true    4       2m
 </tbody>
 </table>
 <p>An interval that cannot be parsed as a duration falls back to five minutes.</p>
+<p>A policy in the <code>migration</code> mode moves its volumes to the target cluster online. The move is started by a
+<code>ReplicationOps</code> with <code>action: migration</code> and is described in <a href="../online-cluster-migration/">Online Cluster Migration</a>.</p>
 <h2 id="selecting-the-volumes-to-replicate">Selecting the Volumes to Replicate</h2>
 <p>A volume is opted into replication by the <code>storage.simplyblock.io/replication-policy</code> annotation, which names a
 <code>ReplicationPolicy</code> in the namespace of the PVC. The annotation is read from the PVC and from its StorageClass, and
@@ -7186,9 +7252,11 @@ provisioned from it, while annotating a single PVC replicates only that volume.<
 <div class="highlight"><span class="filename">Opting a single PVC into a replication policy</span><pre><span></span><code>kubectl<span class="w"> </span>annotate<span class="w"> </span>pvc<span class="w"> </span>my-pvc<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>storage.simplyblock.io/replication-policy<span class="o">=</span>dr-policy
 </code></pre></div>
-<p>The annotation is honored on a new PVC and on an already-bound one. A <code>ReplicationSlot</code> is created as soon as the PVC
-is <code>Bound</code> and the named policy is ready, and it is named <code>&lt;policy&gt;-&lt;pvc&gt;</code>. The slot is owned by its PVC, so deleting
-the PVC deletes the slot and stops replication for that volume.</p>
+<p>The annotation names a policy in the namespace of the PVC, or a policy in another namespace as <code>&lt;namespace&gt;/&lt;name&gt;</code>,
+for example, <code>simplyblock/dr-policy</code>. The annotation is honored on a new PVC and on an already-bound one. A
+<code>ReplicationSlot</code> is created as soon as the PVC is <code>Bound</code> and the named policy is ready, and it is named
+<code>&lt;policy&gt;-&lt;pvc&gt;</code>. The slot is owned by its PVC, so deleting the PVC deletes the slot and stops replication for that
+volume.</p>
 <h3 id="changing-or-removing-the-policy">Changing or Removing the Policy</h3>
 <p>Pointing the annotation at a different policy is carried out as a detach followed by a fresh attach, which means the
 new target receives a full copy of the volume. The existing slot is deleted first, and the replacement slot is
@@ -7224,11 +7292,11 @@ normal replication and <code>target</code> after a failover.</p>
 </tr>
 <tr>
 <td><code>cutover_pending</code></td>
-<td>A planned cutover has been prepared on the backend and is awaiting its commit.</td>
+<td>A planned cutover has been prepared on the backend and is waiting for the preconnect.</td>
 </tr>
 <tr>
 <td><code>cutover_done</code></td>
-<td>The cutover has completed.</td>
+<td>The cutover has completed, and the target cluster serves the volume.</td>
 </tr>
 <tr>
 <td><code>failed_over</code></td>
@@ -7263,8 +7331,8 @@ successful snapshot in <code>status.lastReplicatedAt</code>. After a failed back
 the same poll and reflected into the slot.</p>
 <h2 id="failover">Failover</h2>
 <p>A failover is never performed automatically. It is triggered by creating a <code>ReplicationOps</code> resource with
-<code>action: failover</code>, which covers both the unplanned failover of a lost site and the planned cutover of a <code>migration</code>
-policy.</p>
+<code>action: failover</code>, for example, after the loss of a site. The planned, online move of volumes to the target cluster
+uses <code>action: migration</code> instead, as described in <a href="../online-cluster-migration/">Online Cluster Migration</a>.</p>
 <div class="highlight"><span class="filename">Failing over every volume of a policy to the target cluster</span><pre><span></span><code>kubectl<span class="w"> </span>apply<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
 <span class="s">apiVersion: storage.simplyblock.io/v1alpha1</span>
 <span class="s">kind: ReplicationOps</span>
@@ -7354,8 +7422,10 @@ failback-dr-policy   failback   policy   dr-policy   Running     CommittingFailb
 </code></pre></div>
 <p><code>status.phase</code> moves from <code>Pending</code> through <code>Running</code> to <code>Succeeded</code> or <code>Failed</code>, and <code>status.subphase</code> names the
 step within <code>Running</code>: <code>TriggeringFailover</code>, <code>TriggeringTargetFailover</code>, <code>UpdatingSlotStatuses</code>, <code>StartingFailback</code>,
-or <code>CommittingFailback</code>. The per-volume outcome is held in <code>status.results</code>, where each entry carries the slot it
-belongs to, a status of <code>succeeded</code>, <code>skipped</code>, or <code>failed</code>, and a detail message.</p>
+or <code>CommittingFailback</code>. The subphases of a migration are listed in
+<a href="../online-cluster-migration/#watching-a-migration">Watching a Migration</a>. The per-volume outcome is held in
+<code>status.results</code>, where each entry carries the slot it belongs to, a status of <code>succeeded</code>, <code>skipped</code>, or <code>failed</code>, and
+a detail message.</p>
 <div class="highlight"><span class="filename">Reading the per-volume outcome of an operation</span><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>replicationops<span class="w"> </span>failover-dr-policy<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.results}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
@@ -7385,7 +7455,7 @@ deleted with the pair.</p>
 <tr>
 <td><code>CutoverPending</code></td>
 <td><code>ReplicationSlot</code></td>
-<td>A planned cutover is awaiting its commit.</td>
+<td>A planned cutover is waiting for the preconnect.</td>
 </tr>
 <tr>
 <td><code>FailedOver</code></td>
@@ -7442,7 +7512,7 @@ deleted with the pair.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 10:53:14 UTC">2026-10-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 15:27:22 UTC">2026-10-29</span>
   </span>
 
     

@@ -201,8 +201,9 @@ kubectl get storagenodeops -n simplyblock \
 ## Restarting a Storage Device
 
 A single device of a storage node is restarted with a `StorageDeviceOps` resource, which recycles that one device
-instead of the whole node. The other devices of the node keep serving throughout. `Restart` is the only action of the
-kind.
+instead of the whole node. The other devices of the node keep serving throughout. The kind has three actions:
+`Restart`, `Fail`, described in [Failing a Storage Device](#failing-a-storage-device), and `CheckHealth`, described in
+[Device Health](../monitoring/device-health.md#checking-a-device-on-demand).
 
 The target is a `StorageDevice`, the read-only mirror of one device that the operator keeps per device and names
 `<storage-node>-<first 8 characters of the device ID>`.
@@ -227,3 +228,67 @@ The operation runs the steps `Requesting` and `Awaiting`, and it succeeds once t
 device status seen when the operation started is recorded in `status.deviceStatusBefore`. Only one operation acts on a
 device at a time, tracked in `StorageDevice.status.activeOpsRef`. An abort is honored only in `Requesting`, before the
 restart has been sent.
+
+## Failing a Storage Device
+
+A device that can no longer be trusted, because its health log reports it failing, because it stays slow after a
+restart, or because it keeps producing I/O errors, is failed with the action `Fail`. A failed device is taken out of
+the data path for good, and the control plane rebuilds the data it held onto the remaining devices of the cluster.
+The [device health checks](../monitoring/device-health.md) are the usual reason to fail a device.
+
+!!! warning
+    A failure cannot be undone. The device never serves data again, and its capacity leaves the cluster. Before
+    failing a device, make sure the remaining devices have enough free capacity to hold the rebuilt data, and that
+    no other device or storage node of the cluster is unavailable, because the rebuild reads the remaining copies.
+
+```yaml title="Example of failing a device"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageDeviceOps
+metadata:
+  name: fail-device-a03b9e44
+  namespace: simplyblock
+spec:
+  deviceRef: simplyblock-cluster-worker-3-0-a03b9e44
+  action: Fail
+```
+
+The operation runs three steps:
+
+| Step       | What happens                                                                                     | Abortable |
+|------------|--------------------------------------------------------------------------------------------------|-----------|
+| `Removing` | The device is removed from the data path. The control plane fails only a device that is removed. | Yes       |
+| `Failing`  | The device is set to failed.                                                                     | No        |
+| `Awaiting` | The operator waits until the control plane reports the device as failed.                         | No        |
+
+The operation succeeds once the device reports `failed` or `failed_and_migrated`, and the `StorageDevice` moves to the
+phase `Failed`. An abort is honored only in `Removing`, and only while the device is still serving: once it has been
+removed, no call puts it back.
+
+The control plane refuses the failure while a restart of the same device is in progress, or while a volume migration
+runs anywhere in the cluster. A device is therefore failed only once such work has finished. A refused operation fails
+with the reason, and the device it removed stays removed.
+
+### Failure Migration
+
+Failing a device starts the failure migration, which the control plane runs centrally, without any further action:
+
+1. Every online storage node drops the device from its cluster map, so no new data is placed on it and no read is
+   served from it.
+2. The control plane starts `failed_device_migration` tasks on every storage node that holds a logical volume store,
+   because the data of every logical volume store is striped across the devices of the whole cluster.
+   A node that is being removed hands its tasks to its secondary or tertiary node.
+3. The tasks rebuild the data of the device from the remaining copies or parity onto the other devices of the
+   cluster, which restores the full redundancy. A task that fails is retried until it succeeds.
+4. Once every task has finished, the device reports `failed_and_migrated`.
+
+The volumes stay online throughout. Until the migration finishes, the data that was on the device has one copy or
+parity block fewer than the cluster is configured for. The progress is visible in the tasks of the cluster:
+
+```bash title="Watching the failure migration"
+kubectl get storagecluster simplyblock-cluster -n simplyblock \
+    -o jsonpath='{range .status.tasks[*]}{.id}{"\t"}{.type}{"\t"}{.status}{"\n"}{end}' \
+    | grep failed_device_migration
+```
+
+The device health alerts of a failed device resolve, because the device no longer serves. The physical drive can
+then be pulled from the host.

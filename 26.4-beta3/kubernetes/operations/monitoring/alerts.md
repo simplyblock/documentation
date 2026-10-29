@@ -87,3 +87,11 @@ It suppresses the states an operator caused on purpose, such as a node that was 
 removed, and it drops each alert as soon as the condition ends. The cluster UUID is held in
 `StorageCluster.status.uuid`. See [Alerts Endpoint](../../../reference/api/alerts.md) for the full list of alert kinds,
 the query parameters, and how to forward the alerts to a Slack webhook.
+
+## Device Health Alerts
+
+The Simplyblock Operator checks every storage device for slow performance against the rest of the cluster and for
+SMART health, and reports the results to the control plane. The alerts endpoint raises them as `device_slow` and
+`device_unhealthy`, with the same raising and resolving as every other alert. The same results are exported as
+Prometheus metrics of the operator, so an Alertmanager that watches the Kubernetes cluster can alert on them as well.
+See [Device Health](device-health.md) for the checks, the metrics, and example alert rules.

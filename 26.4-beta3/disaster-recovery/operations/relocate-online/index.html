@@ -17,7 +17,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Online relocation of running workloads between sites without restart, with cross-cluster VM live migration and simplyblock volume migration (coming soon).">
+        <meta name="description" content="Online relocation of running workloads between sites without restart: cross-cluster VM live migration (coming soon) and online volume migration.">
       
       
       <link rel="canonical" href="https://docs.simplyblock.io/latest/disaster-recovery/operations/relocate-online/">
@@ -81,7 +81,7 @@
       
         <meta property="og:title" content="Relocate (Online) - Simplyblock Documentation">
       
-        <meta property="og:description" content="Online relocation of running workloads between sites without restart, with cross-cluster VM live migration and simplyblock volume migration (coming soon).">
+        <meta property="og:description" content="Online relocation of running workloads between sites without restart: cross-cluster VM live migration (coming soon) and online volume migration.">
       
         <meta property="og:image" content="https://docs.simplyblock.io/26.4-beta3/assets/images/social/disaster-recovery/operations/relocate-online.png">
       
@@ -97,7 +97,7 @@
       
         <meta name="twitter:title" content="Relocate (Online) - Simplyblock Documentation">
       
-        <meta name="twitter:description" content="Online relocation of running workloads between sites without restart, with cross-cluster VM live migration and simplyblock volume migration (coming soon).">
+        <meta name="twitter:description" content="Online relocation of running workloads between sites without restart: cross-cluster VM live migration (coming soon) and online volume migration.">
       
         <meta name="twitter:image" content="https://docs.simplyblock.io/26.4-beta3/assets/images/social/disaster-recovery/operations/relocate-online.png">
       
@@ -3601,6 +3601,8 @@
       
         
       
+        
+      
     
     
       
@@ -3694,6 +3696,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/data-protection/online-cluster-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Online Cluster Migration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../kubernetes/operations/data-protection/foundationdb-backup/" class="md-nav__link">
         
   
@@ -3728,6 +3752,10 @@
       
         
           
+        
+      
+        
+      
         
       
         
@@ -3833,11 +3861,55 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/monitoring/device-health/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Device Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../kubernetes/operations/monitoring/alerts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Alerting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/monitoring/prometheus-metrics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus Metrics
     
   </span>
   
@@ -6613,19 +6685,16 @@
 
   <h1>Relocate (Online)</h1>
 
-<p>An online relocation would move a running application from one site to another without stopping it. This is not
-available in simplyblock DR today.</p>
+<p>An online relocation moves a running application from one site to another without stopping it.</p>
+<p>Simplyblock volumes already move between storage clusters of one control plane while they stay in use, with an
+<a href="../../../kubernetes/operations/data-protection/online-cluster-migration/">online cluster migration</a>. The cutover of each
+volume holds I/O for a brief freeze, and the workload keeps running.</p>
 <div class="admonition info">
 <p class="admonition-title">Coming soon</p>
-<p>Online relocation will migrate running workloads across clusters without a restart:</p>
-<ul>
-<li><strong>Live VM migration:</strong> Cross-cluster live migration of KubeVirt virtual machines, so that a VM keeps running
-  while it moves to the other site.</li>
-<li><strong>Live volume migration:</strong> Migration of simplyblock volumes between storage clusters while they stay in use.</li>
-</ul>
-<p>This capability is not designed yet. Today, every move between sites is a
-<a href="../relocate-restart/">restart-based relocation</a>: the application is stopped on the source and restarted on the
-target after a final sync.</p>
+<p><strong>Live VM migration:</strong> Cross-cluster live migration of KubeVirt virtual machines, so that a VM keeps running while
+it moves to the other site, is not available yet. Until then, a recovery action of simplyblock DR moves an
+application between sites with a <a href="../relocate-restart/">restart-based relocation</a>: the application is stopped on
+the source and restarted on the target after a final sync.</p>
 <p>Within a single storage cluster, simplyblock volumes can already be migrated online between storage nodes. See
 <a href="../../../kubernetes/operations/volumes/volume-migration/">Volume Migration</a>.</p>
 </div>
@@ -6649,7 +6718,7 @@ target after a final sync.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 10:53:14 UTC">2026-10-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 15:27:22 UTC">2026-10-29</span>
   </span>
 
     

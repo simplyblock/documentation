@@ -3606,6 +3606,8 @@
       
         
       
+        
+      
     
     
       
@@ -3699,6 +3701,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/data-protection/online-cluster-migration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Online Cluster Migration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../kubernetes/operations/data-protection/foundationdb-backup/" class="md-nav__link">
         
   
@@ -3733,6 +3757,10 @@
       
         
           
+        
+      
+        
+      
         
       
         
@@ -3838,11 +3866,55 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/monitoring/device-health/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Device Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../kubernetes/operations/monitoring/alerts/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
     Alerting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../kubernetes/operations/monitoring/prometheus-metrics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Prometheus Metrics
     
   </span>
   
@@ -5420,6 +5492,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#device-health-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Device Health Alerts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#why-operator-initiated-states-are-not-alerts" class="md-nav__link">
     <span class="md-ellipsis">
       Why Operator-Initiated States Are Not Alerts
@@ -6742,6 +6823,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#device-health-alerts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Device Health Alerts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#why-operator-initiated-states-are-not-alerts" class="md-nav__link">
     <span class="md-ellipsis">
       Why Operator-Initiated States Are Not Alerts
@@ -6957,6 +7047,24 @@ older, the cluster event log holds an <code>ALERT_RAISED</code> and an <code>ALE
 <td>The operator removed it, or the node itself is not online.</td>
 </tr>
 <tr>
+<td><code>device_unhealthy</code></td>
+<td>critical</td>
+<td>The SMART health log of a serving device reports it failing.</td>
+<td>The node is not online, or the health report has expired.</td>
+</tr>
+<tr>
+<td><code>device_unhealthy</code></td>
+<td>warning</td>
+<td>The SMART health log of a serving device raises a warning.</td>
+<td>The node is not online, or the health report has expired.</td>
+</tr>
+<tr>
+<td><code>device_slow</code></td>
+<td>warning</td>
+<td>A serving device performs far worse than the rest of its fleet.</td>
+<td>The node is not online, or the health report has expired.</td>
+</tr>
+<tr>
 <td><code>node_jc_compression_error</code></td>
 <td>critical</td>
 <td>The journal reported a compression error.</td>
@@ -6994,6 +7102,25 @@ older, the cluster event log holds an <code>ALERT_RAISED</code> and an <code>ALE
 </tr>
 </tbody>
 </table>
+<h3 id="device-health-alerts">Device Health Alerts</h3>
+<p><code>device_slow</code> and <code>device_unhealthy</code> come from the health assessment that the Simplyblock Operator reports for each
+device: a comparison of its performance with the other devices of the cluster, and the verdict of its SMART health
+log. Their <code>details</code> carry the verdict and its reason. The checks are described in
+<a href="../../../kubernetes/operations/monitoring/device-health/">Device Health</a>.</p>
+<p>The operator sends each assessment to the control plane, and repeats it every five minutes while it does not change:</p>
+<div class="highlight"><span class="filename">Health assessment endpoint</span><pre><span></span><code>PUT /api/v2/clusters/&lt;CLUSTER_UUID&gt;/storage-nodes/&lt;NODE_UUID&gt;/devices/&lt;DEVICE_UUID&gt;/health-assessment
+</code></pre></div>
+<div class="highlight"><span class="filename">Example of a health assessment</span><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"reporter"</span><span class="p">:</span><span class="w"> </span><span class="s2">"simplyblock-operator"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"reported_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-10-29T10:15:00Z"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"valid_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">900</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"performance"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"verdict"</span><span class="p">:</span><span class="w"> </span><span class="s2">"slow"</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"latency 4.2x the fleet median at 1.0x its share"</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"smart"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"verdict"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ok"</span><span class="p">,</span><span class="w"> </span><span class="nt">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"no warning in the health log"</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The latest assessment is stored on the device and returned with it by the device endpoints. An assessment is valid
+for <code>valid_seconds</code> after <code>reported_at</code>. Once it expires, the alerts it raised resolve, so a reporter that stops
+cannot leave an alert firing forever. Any monitoring system can report device health this way, not only the operator.</p>
 <h3 id="why-operator-initiated-states-are-not-alerts">Why Operator-Initiated States Are Not Alerts</h3>
 <p>Every condition in the table above is also produced deliberately, many times a day, by ordinary operations. An
 operator shuts a node down, so the node is offline and the cluster is degraded. A node restarts, so its peers go
@@ -7111,7 +7238,7 @@ and its resolution.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 10:53:14 UTC">2026-10-29</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="October 29, 2026 15:27:22 UTC">2026-10-29</span>
   </span>
 
     

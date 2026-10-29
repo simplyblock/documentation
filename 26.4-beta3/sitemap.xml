@@ -449,6 +449,10 @@
          <lastmod>2026-10-29</lastmod>
     </url>
     <url>
+         <loc>https://docs.simplyblock.io/26.4-beta3/kubernetes/operations/data-protection/online-cluster-migration/</loc>
+         <lastmod>2026-10-29</lastmod>
+    </url>
+    <url>
          <loc>https://docs.simplyblock.io/26.4-beta3/kubernetes/operations/monitoring/</loc>
          <lastmod>2026-10-29</lastmod>
     </url>
@@ -469,7 +473,15 @@
          <lastmod>2026-10-29</lastmod>
     </url>
     <url>
+         <loc>https://docs.simplyblock.io/26.4-beta3/kubernetes/operations/monitoring/device-health/</loc>
+         <lastmod>2026-10-29</lastmod>
+    </url>
+    <url>
          <loc>https://docs.simplyblock.io/26.4-beta3/kubernetes/operations/monitoring/lvol-conditions/</loc>
+         <lastmod>2026-10-29</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.simplyblock.io/26.4-beta3/kubernetes/operations/monitoring/prometheus-metrics/</loc>
          <lastmod>2026-10-29</lastmod>
     </url>
     <url>

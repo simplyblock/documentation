@@ -3170,7 +3170,7 @@ The following volumes cannot be relocated:
   `EncryptedVolumeNotMovable`.
 - **Members of a consistency group:** Moving one volume off the group's logical volume store breaks the group.
 - **Volumes outside a supercluster:** Moving a volume between unrelated clusters is a matter of
-  [asynchronous replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+  [online cluster migration](../../kubernetes/operations/data-protection/online-cluster-migration.md).
 
 ---
 
@@ -3456,8 +3456,8 @@ volumes. The application can then be relocated to that site.
 
 Relocation moves a running workload to another location. Simplyblock distinguishes three kinds of relocation. A DR
 relocation moves entire applications between Kubernetes clusters and restarts them on the target site. An online
-migration across clusters would move virtual machines and volumes without a restart and is planned for the future.
-Within a single storage cluster, volumes already move between storage nodes online today.
+cluster migration moves volumes from one storage cluster to another without restarting the workloads that use them.
+Within a single storage cluster, volumes move between storage nodes online.
 
 ## DR Relocation (Restart-Based)
 
@@ -3483,20 +3483,25 @@ are described in [Failover](failover.md).
 
 ## Online Migration Across Clusters
 
-!!! info "Coming soon"
-    Online migration across clusters is not designed yet. It is intended to cover the live migration of KubeVirt virtual
-    machines and the live migration of volumes from one simplyblock cluster to another, without restarting the
-    workload. Until it is available, workloads move between clusters with a restart-based DR relocation.
+An online cluster migration moves volumes to another storage cluster of the same control plane while their workloads
+keep running. The volumes are replicated to the target cluster with asynchronous replication in `migration` mode while
+the source keeps serving them. A migration plan in the control plane holds the volumes, places each of them on a
+target storage node, and forecasts when the migration completes. Each source storage node migrates one volume at a
+time.
 
-## Volume Cutover Between Clusters
+Each volume ends with a cutover, and the cutover is online. The target volume is exposed under the same NQN as the
+source, with its paths in the ANA state `inaccessible`, and these paths are connected on the consuming Kubernetes node
+beforehand. The source is then fenced by making all of its paths inaccessible, and the remaining delta is transferred
+during a brief I/O freeze. Finally, the ANA states flip: the storage node that leads the target logical volume store,
+normally the primary, becomes optimized, and the other online members of the target non-optimized. Queued I/O drains
+on the target without a disconnect, and the workload keeps running.
 
-Below the application level, the storage-level asynchronous replication of simplyblock can prepare a planned cutover
-of individual volumes to another storage cluster of the same control plane. A replication policy in `migration` mode
-replicates the volumes to the target cluster while they keep serving I/O on the source. The cutover itself is then
-committed per volume: the volume is frozen briefly, the remaining delta is transferred, and the target cluster serves
-the volume from then on. The workload has to reconnect to the volume on the target cluster, so this is not an online
-migration of the workload. See
-[Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+On Kubernetes, a migration is started by a `ReplicationOps` resource with `action: migration`, which can cover every
+volume of a storage cluster. See
+[Online Cluster Migration](../../kubernetes/operations/data-protection/online-cluster-migration.md).
+
+The live migration of KubeVirt virtual machines between clusters is not covered by it. Workloads that cannot rely on
+NVMe multipathing move between clusters with a restart-based DR relocation.
 
 ## Volume Migration Within a Cluster
 
@@ -5569,7 +5574,7 @@ The operator manages the following resources. All of them use the API version `s
 | `ControlPlaneOps`         | `cpops`    | Ops      | Restarts, upgrades, or backs up a local control plane.                                                       |
 | `StorageClusterOps`       | `scops`    | Ops      | Activates, expands, shuts down, starts, restarts, or rolling-restarts a cluster, or cancels a task.          |
 | `StorageNodeOps`          | `snops`    | Ops      | Shuts down, restarts, suspends, resumes, removes, or migrates a storage node.                                |
-| `StorageDeviceOps`        | `sdops`    | Ops      | Restarts a storage device.                                                                                   |
+| `StorageDeviceOps`        | `sdops`    | Ops      | Restarts, fails, or checks the health of a storage device.                                                   |
 | `PersistentVolumeOps`     | `pvops`    | Ops      | Moves a persistent volume to another storage node. Cluster-scoped.                                           |
 | `StorageBackupOps`        | `sbops`    | Ops      | Restores a backup into a new PersistentVolumeClaim.                                                          |
 | `VolumeGroupSnapshotOps`  | `vgsops`   | Ops      | Restores every member of a VolumeGroupSnapshot.                                                              |
@@ -9268,7 +9273,7 @@ offline, or a node migration in its `Promoting` step.
 |--------------------------|------------|-----------------------|--------------------------------------------------------------------------------------|
 | `StorageClusterOps`      | `scops`    | `StorageCluster`      | `Activate`, `Expand`, `Shutdown`, `Start`, `Restart`, `RollingRestart`, `CancelTask` |
 | `StorageNodeOps`         | `snops`    | `StorageNode`         | `Shutdown`, `Restart`, `Suspend`, `Resume`, `Remove`, `Migrate`, `HostMaintenance`   |
-| `StorageDeviceOps`       | `sdops`    | `StorageDevice`       | `Restart`                                                                            |
+| `StorageDeviceOps`       | `sdops`    | `StorageDevice`       | `Restart`, `Fail`, `CheckHealth`                                                     |
 | `StoragePoolOps`         | `spops`    | `StoragePool`         | None usable yet. `Rebalance` is declared but refused at run time.                    |
 | `ControlPlaneOps`        | `cpops`    | `ControlPlane`        | `Restart`, `Upgrade`, `Backup`                                                       |
 | `OperatorOps`            | `oops`     | The worker nodes      | `Discover`                                                                           |
@@ -10090,8 +10095,10 @@ New storage capacity on the new Kubernetes version is added as a new node group:
 1. Create a new storage node group. It runs the version of the upgraded EKS control plane.
 2. Run a discovery against the new node group and approve the draft, as described in
    [Additional Storage Clusters](../../installation/eks.md#additional-storage-clusters).
-3. Move the volumes from the old storage cluster to the new one with an online migration, using
-   [asynchronous replication](../data-protection/asynchronous-replication.md) in the `migration` mode.
+3. Move the volumes from the old storage cluster to the new one with an
+   [online cluster migration](../data-protection/online-cluster-migration.md). A `ReplicationOps` with
+   `action: migration` and `scope: cluster` moves every claim of the old storage cluster, and `deleteSource: true`
+   deletes each source volume after its cutover.
 4. Remove the old storage cluster and its node group once all volumes have moved.
 
 Client node groups are replaced like any other workload node group. A replacement client node group uses a node image
@@ -10549,8 +10556,9 @@ A storage node is described by its `StorageNode` resource, one per worker and NU
 completion by the Simplyblock Operator. Two operations are raised by the operator itself: a `HostMaintenance` when the
 worker of a node is cordoned, and a `Remove` when a `StorageNode` that holds data is deleted.
 
-A single device of a node is restarted with a `StorageDeviceOps` resource, as described in
-[Storage Node Actions](storage-node-actions.md#restarting-a-storage-device).
+A single device of a node is restarted or failed with a `StorageDeviceOps` resource, as described in
+[Restarting a Storage Device](storage-node-actions.md#restarting-a-storage-device) and
+[Failing a Storage Device](storage-node-actions.md#failing-a-storage-device).
 
 ## Topics
 
@@ -10767,8 +10775,9 @@ kubectl get storagenodeops -n simplyblock \
 ## Restarting a Storage Device
 
 A single device of a storage node is restarted with a `StorageDeviceOps` resource, which recycles that one device
-instead of the whole node. The other devices of the node keep serving throughout. `Restart` is the only action of the
-kind.
+instead of the whole node. The other devices of the node keep serving throughout. The kind has three actions:
+`Restart`, `Fail`, described in [Failing a Storage Device](#failing-a-storage-device), and `CheckHealth`, described in
+[Device Health](../monitoring/device-health.md#checking-a-device-on-demand).
 
 The target is a `StorageDevice`, the read-only mirror of one device that the operator keeps per device and names
 `<storage-node>-<first 8 characters of the device ID>`.
@@ -10793,6 +10802,70 @@ The operation runs the steps `Requesting` and `Awaiting`, and it succeeds once t
 device status seen when the operation started is recorded in `status.deviceStatusBefore`. Only one operation acts on a
 device at a time, tracked in `StorageDevice.status.activeOpsRef`. An abort is honored only in `Requesting`, before the
 restart has been sent.
+
+## Failing a Storage Device
+
+A device that can no longer be trusted, because its health log reports it failing, because it stays slow after a
+restart, or because it keeps producing I/O errors, is failed with the action `Fail`. A failed device is taken out of
+the data path for good, and the control plane rebuilds the data it held onto the remaining devices of the cluster.
+The [device health checks](../monitoring/device-health.md) are the usual reason to fail a device.
+
+!!! warning
+    A failure cannot be undone. The device never serves data again, and its capacity leaves the cluster. Before
+    failing a device, make sure the remaining devices have enough free capacity to hold the rebuilt data, and that
+    no other device or storage node of the cluster is unavailable, because the rebuild reads the remaining copies.
+
+```yaml title="Example of failing a device"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageDeviceOps
+metadata:
+  name: fail-device-a03b9e44
+  namespace: simplyblock
+spec:
+  deviceRef: simplyblock-cluster-worker-3-0-a03b9e44
+  action: Fail
+```
+
+The operation runs three steps:
+
+| Step       | What happens                                                                                     | Abortable |
+|------------|--------------------------------------------------------------------------------------------------|-----------|
+| `Removing` | The device is removed from the data path. The control plane fails only a device that is removed. | Yes       |
+| `Failing`  | The device is set to failed.                                                                     | No        |
+| `Awaiting` | The operator waits until the control plane reports the device as failed.                         | No        |
+
+The operation succeeds once the device reports `failed` or `failed_and_migrated`, and the `StorageDevice` moves to the
+phase `Failed`. An abort is honored only in `Removing`, and only while the device is still serving: once it has been
+removed, no call puts it back.
+
+The control plane refuses the failure while a restart of the same device is in progress, or while a volume migration
+runs anywhere in the cluster. A device is therefore failed only once such work has finished. A refused operation fails
+with the reason, and the device it removed stays removed.
+
+### Failure Migration
+
+Failing a device starts the failure migration, which the control plane runs centrally, without any further action:
+
+1. Every online storage node drops the device from its cluster map, so no new data is placed on it and no read is
+   served from it.
+2. The control plane starts `failed_device_migration` tasks on every storage node that holds a logical volume store,
+   because the data of every logical volume store is striped across the devices of the whole cluster.
+   A node that is being removed hands its tasks to its secondary or tertiary node.
+3. The tasks rebuild the data of the device from the remaining copies or parity onto the other devices of the
+   cluster, which restores the full redundancy. A task that fails is retried until it succeeds.
+4. Once every task has finished, the device reports `failed_and_migrated`.
+
+The volumes stay online throughout. Until the migration finishes, the data that was on the device has one copy or
+parity block fewer than the cluster is configured for. The progress is visible in the tasks of the cluster:
+
+```bash title="Watching the failure migration"
+kubectl get storagecluster simplyblock-cluster -n simplyblock \
+    -o jsonpath='{range .status.tasks[*]}{.id}{"\t"}{.type}{"\t"}{.status}{"\n"}{end}' \
+    | grep failed_device_migration
+```
+
+The device health alerts of a failed device resolve, because the device no longer serves. The physical drive can
+then be pulled from the host.
 
 ---
 
@@ -12756,7 +12829,8 @@ than it was built with. The combined capacity requires the metrics exporter to b
   any placement group names it.
 - **Shared workers:** A worker serves one placement group only.
 - **Pool limits:** A pool of a supercluster carries a capacity limit only, as every pool does.
-- **Replication:** A `ReplicationPair` cannot name a supercluster. Placement groups are named directly.
+- **Replication:** A `ReplicationPair` cannot name a supercluster, and neither can an
+  [online cluster migration](../data-protection/online-cluster-migration.md). Placement groups are named directly.
 
 ---
 
@@ -12776,6 +12850,7 @@ failover, is the subject of [Disaster Recovery](../../../disaster-recovery/index
 |-----------------------------------------------------------|---------------------------------------------------------------------------------|
 | [Backup and Recovery](backup-recovery.md)                 | Backing up volumes to S3-compatible object storage, and restoring them.         |
 | [Asynchronous Replication](asynchronous-replication.md)   | Replicating volumes to a second cluster, with controlled failover and failback. |
+| [Online Cluster Migration](online-cluster-migration.md)   | Moving volumes to another cluster online, with migration plans and a cutover.   |
 | [FoundationDB Backup and Restore](foundationdb-backup.md) | Backing up and restoring the control plane state held in FoundationDB.          |
 
 ---
@@ -13187,17 +13262,10 @@ For how this storage-level replication relates to application-level disaster rec
 Asynchronous replication with controlled failover and failback is a Kubernetes-only feature, managed by the
 Simplyblock Operator.
 
-Both clusters have to be represented by a `StorageCluster` resource in the same namespace as the replication
-resources, which means both are attached to the same simplyblock control plane. A cluster is referenced by the name
-of its `StorageCluster`, and its UUID has to be reported in `status.uuid` before replication can be configured.
-Cross-namespace references are not supported. Both clusters have to be active with their storage nodes online, and
-the two clusters need network interconnectivity.
-
-!!! warning
-    With the `v1alpha2` API, a namespace admits one `StorageCluster` only, while a `ReplicationPair` resolves both of
-    its clusters in its own namespace. Until the replication kinds follow the new API, a pair between two
-    `StorageCluster` objects cannot be declared on a fresh `v1alpha2` installation. Confirm the supported setup with
-    simplyblock support before planning replication.
+Both clusters have to be attached to the same simplyblock control plane. A cluster is referenced by the name of its
+`StorageCluster` in the namespace of the replication resources, whose UUID has to be reported in `status.uuid` before
+replication can be configured, or by the cluster's UUID. Both clusters have to be active with their storage nodes
+online, and the two clusters need network interconnectivity.
 
 !!! note
     For multi-site setups, such as disaster recovery or offsite failover, a distributed control plane is highly
@@ -13214,7 +13282,7 @@ the operator, and the fourth is created to trigger an operation.
 | `ReplicationPair`   | `relpair`  | One per cluster pair   | Declares the source and the target cluster of a replication relationship. |
 | `ReplicationPolicy` | `repl`     | One per schedule       | Sets the cadence, the mode, and the snapshot retention of a pair.         |
 | `ReplicationSlot`   | `relslot`  | One per replicated PVC | Holds the live per-volume replication state. Created by the operator.     |
-| `ReplicationOps`    | `replops`  | One per operation      | Triggers a failover or a failback and records its outcome.                |
+| `ReplicationOps`    | `replops`  | One per operation      | Triggers a failover, a failback, or a migration and records its outcome.  |
 
 A pair is reusable. Several policies can reference the same pair to replicate between the same two clusters with
 different schedules or retention.
@@ -13299,6 +13367,9 @@ dr-policy   site-a-to-site-b   failover   5m         true    4       2m
 
 An interval that cannot be parsed as a duration falls back to five minutes.
 
+A policy in the `migration` mode moves its volumes to the target cluster online. The move is started by a
+`ReplicationOps` with `action: migration` and is described in [Online Cluster Migration](online-cluster-migration.md).
+
 ## Selecting the Volumes to Replicate
 
 A volume is opted into replication by the `storage.simplyblock.io/replication-policy` annotation, which names a
@@ -13321,9 +13392,11 @@ kubectl annotate pvc my-pvc -n simplyblock \
     storage.simplyblock.io/replication-policy=dr-policy
 ```
 
-The annotation is honored on a new PVC and on an already-bound one. A `ReplicationSlot` is created as soon as the PVC
-is `Bound` and the named policy is ready, and it is named `<policy>-<pvc>`. The slot is owned by its PVC, so deleting
-the PVC deletes the slot and stops replication for that volume.
+The annotation names a policy in the namespace of the PVC, or a policy in another namespace as `<namespace>/<name>`,
+for example, `simplyblock/dr-policy`. The annotation is honored on a new PVC and on an already-bound one. A
+`ReplicationSlot` is created as soon as the PVC is `Bound` and the named policy is ready, and it is named
+`<policy>-<pvc>`. The slot is owned by its PVC, so deleting the PVC deletes the slot and stops replication for that
+volume.
 
 ### Changing or Removing the Policy
 
@@ -13362,8 +13435,8 @@ normal replication and `target` after a failover.
 | State             | Description                                                                                   |
 |-------------------|-----------------------------------------------------------------------------------------------|
 | `replicating`     | Steady state. Snapshots are taken and transferred on the policy's interval.                   |
-| `cutover_pending` | A planned cutover has been prepared on the backend and is awaiting its commit.                |
-| `cutover_done`    | The cutover has completed.                                                                    |
+| `cutover_pending` | A planned cutover has been prepared on the backend and is waiting for the preconnect.         |
+| `cutover_done`    | The cutover has completed, and the target cluster serves the volume.                          |
 | `failed_over`     | The volume is served by the target cluster. `status.targetNQN` carries the NQN on the target. |
 | `detaching`       | Replication is being stopped and the replication snapshots are being deleted on both sides.   |
 | `error`           | A backend call failed. `status.message` holds the reason, and the attach is retried.          |
@@ -13393,8 +13466,8 @@ the same poll and reflected into the slot.
 ## Failover
 
 A failover is never performed automatically. It is triggered by creating a `ReplicationOps` resource with
-`action: failover`, which covers both the unplanned failover of a lost site and the planned cutover of a `migration`
-policy.
+`action: failover`, for example, after the loss of a site. The planned, online move of volumes to the target cluster
+uses `action: migration` instead, as described in [Online Cluster Migration](online-cluster-migration.md).
 
 ```bash title="Failing over every volume of a policy to the target cluster"
 kubectl apply -n simplyblock -f - <<EOF
@@ -13482,8 +13555,10 @@ failback-dr-policy   failback   policy   dr-policy   Running     CommittingFailb
 
 `status.phase` moves from `Pending` through `Running` to `Succeeded` or `Failed`, and `status.subphase` names the
 step within `Running`: `TriggeringFailover`, `TriggeringTargetFailover`, `UpdatingSlotStatuses`, `StartingFailback`,
-or `CommittingFailback`. The per-volume outcome is held in `status.results`, where each entry carries the slot it
-belongs to, a status of `succeeded`, `skipped`, or `failed`, and a detail message.
+or `CommittingFailback`. The subphases of a migration are listed in
+[Watching a Migration](online-cluster-migration.md#watching-a-migration). The per-volume outcome is held in
+`status.results`, where each entry carries the slot it belongs to, a status of `succeeded`, `skipped`, or `failed`, and
+a detail message.
 
 ```bash title="Reading the per-volume outcome of an operation"
 kubectl get replicationops failover-dr-policy -n simplyblock \
@@ -13507,7 +13582,7 @@ The operator emits Kubernetes events on the affected resources. Useful reasons t
 | Reason              | Emitted on        | Meaning                                                  |
 |---------------------|-------------------|----------------------------------------------------------|
 | `Replicating`       | `ReplicationSlot` | The volume is attached and replicating.                  |
-| `CutoverPending`    | `ReplicationSlot` | A planned cutover is awaiting its commit.                |
+| `CutoverPending`    | `ReplicationSlot` | A planned cutover is waiting for the preconnect.         |
 | `FailedOver`        | `ReplicationSlot` | The volume is now served by the target cluster.          |
 | `Detached`          | `ReplicationSlot` | Replication was stopped for the volume.                  |
 | `Error`             | `ReplicationSlot` | A backend call for the volume failed.                    |
@@ -13519,6 +13594,382 @@ The operator emits Kubernetes events on the affected resources. Useful reasons t
 kubectl get events -n simplyblock --watch \
     --field-selector reason=FailedOver
 ```
+
+---
+
+<!-- source: https://docs.simplyblock.io/latest/kubernetes/operations/data-protection/online-cluster-migration/ -->
+
+# Online Cluster Migration
+
+Online cluster migration moves volumes from one simplyblock storage cluster to another while the workloads that use
+them keep running. It is built on [asynchronous replication](asynchronous-replication.md) in the `migration` mode: the
+volumes are copied to the target cluster while the source keeps serving them, and each volume ends with a short I/O
+freeze, the cutover, after which the target cluster serves it. Pods are not restarted, and the PersistentVolumes and
+PersistentVolumeClaims stay as they are.
+
+A typical use is replacing a storage cluster, for example, when the storage node group of an Amazon EKS cluster moves
+to a new Kubernetes version (see [Upgrading Amazon EKS](../cluster/eks-upgrade.md)).
+
+Online cluster migration is different from [volume migration](../../../architecture/concepts/volume-migration.md),
+which moves a volume between the storage nodes of one cluster, and from
+[relocation](../scaling/superclusters.md#relocating-a-volume), which moves a volume between the placement groups of a
+supercluster.
+
+## How a Migration Runs
+
+The storage control plane drives every migration through a **migration plan**. A plan holds the volumes to move, the
+target storage node chosen for each of them, and their progress. On Kubernetes, the Simplyblock Operator creates and
+follows the plan on behalf of a `ReplicationOps` resource.
+
+Every volume of a plan passes through these steps:
+
+1. **Initial copy:** Replication in the `migration` mode starts for the volume, unless it already replicates to the
+   target cluster. The first snapshot carries the whole volume to the target cluster.
+2. **Catch-up:** Further snapshots on the replication interval carry the data written since.
+3. **Convergence:** Once replication is close behind the source, the cutover takes snapshots back to back until a
+   round transfers in about two seconds, so that little is left to copy during the freeze.
+4. **Preconnect:** The writable copy of the volume is prepared on the target cluster, and the target paths are
+   connected on the Kubernetes node that consumes the volume.
+5. **Cutover:** The source stops serving the volume, the remaining delta is copied, and the target paths become
+   active. Client I/O is held during this freeze and resumes on the target cluster.
+
+While a volume is in the first three steps, its data is still served by the source cluster, and a failure only delays
+the migration.
+
+### One Volume per Storage Node
+
+A source storage node migrates one volume at a time, from its first snapshot through its cutover. The other volumes of
+the node wait: they take no replication snapshots and transfer nothing until the volume ahead of them has cut over.
+Storage nodes progress in parallel. A volume whose cutover failed or was canceled releases the node, so that one
+failing volume does not hold up the others.
+
+Volumes are queued largest first, so that the longest copies start early. The members of a consistency group move
+together and share one turn.
+
+Transfers and cutovers are also serialized per logical volume store of the source cluster. The volumes of different
+logical volume stores cut over in parallel.
+
+### Target Placement
+
+Each volume is assigned to a target storage node when the plan is created. Among the online storage nodes of the
+target cluster that are below their subsystem limit, the control plane picks the one with the lowest planned load: the
+provisioned size of the volumes on the node plus that of the volumes already headed for it. Ties go to the node with
+fewer subsystems. Volumes that already replicate to the target keep their target node, and volumes that share an NVMe
+subsystem or a consistency group are placed together.
+
+### The Cutover
+
+The cutover runs as follows:
+
+1. **Prepare:** A writable clone of the last replicated snapshot is created on the target cluster.
+2. **Preconnect:** The operator starts a preconnect Job on the Kubernetes node that runs a pod mounting the claim. The
+   Job connects the target cluster's paths to the volume's NVMe subsystem, and the operator then signals the control
+   plane to proceed. A volume without a running consumer proceeds without a preconnect. The control plane waits up to
+   120 seconds for the signal and then proceeds without it.
+3. **Fence:** Every reachable path of the source cluster is set to the ANA state `inaccessible`. Client I/O queues on
+   the client.
+4. **Final delta:** The data written since the last replicated snapshot is copied into the clone on the target
+   cluster.
+5. **Switch:** The target paths are set to `optimized` on the leading storage node and `non_optimized` on the others.
+   The queued I/O drains to the target cluster.
+
+The freeze lasts from the fence to the switch and typically takes a few seconds. A volume written faster than it
+replicates freezes for longer, because the convergence stops after at most 12 rounds and the remaining delta is copied
+during the freeze.
+
+The cutover is carried out by the storage nodes that lead the logical volume stores on both sides, so it also
+completes while a primary storage node is down. While a tertiary node leads the target logical volume store, the
+cutover waits. If a node is lost during the freeze, the source paths are restored, the client resumes on the source,
+and the cutover is retried.
+
+!!! info
+    The cutover relies on the ANA path states of NVMe multipathing. A client without native NVMe multipathing cannot
+    switch paths, and the cutover interrupts the I/O of the volume (see
+    [Amazon EKS Node Images](../../../deployment-preparation/amazon-eks.md#node-images)).
+
+## Prerequisites and Limits
+
+- **One control plane:** Both clusters are attached to the same simplyblock control plane and have network
+  connectivity to each other.
+- **Replication resources:** A `ReplicationPair` from the source to the target cluster and a `ReplicationPolicy` with
+  `mode: migration` that references it, as described in [Asynchronous Replication](asynchronous-replication.md).
+- **Free capacity on the source:** The snapshot of a volume's initial copy keeps every block that is overwritten while
+  the copy runs, up to the volume's used size. A plan is refused when the source cluster is at or above its capacity
+  warning threshold. A plan is accepted with a warning when the free capacity of the source is smaller than the used
+  size of the selected volumes.
+- **Write rate:** A volume converges only while replication outruns the writes of its clients. The forecast reports
+  a logical volume store whose volumes are written at 90% of its replication throughput or more as not converging.
+  Their cutover does not start until the write rate drops.
+- **Encrypted volumes:** Encrypted volumes cannot be migrated. Deleting the source would delete the only copy of the
+  key, and replication does not carry the key to the target.
+- **Consistency groups:** A consistency group is migrated as a whole. A plan that selects only some of its members
+  skips them.
+- **Disaster recovery relationships:** A volume that replicates in the `failover` mode is not moved by a selection of
+  a whole cluster or pool. A volume that replicates to a third cluster is skipped.
+- **Preconnect:** Target paths are connected on one Kubernetes node per volume, the node of the first running pod (by
+  name) that mounts the claim.
+
+## Starting a Migration on Kubernetes
+
+A migration is started by a `ReplicationOps` resource with `action: migration`. The `cluster` scope moves every claim
+whose volume lives on the source cluster, in every namespace, and enrolls the claims that are not replicated yet under
+the migration policy named in `spec.policyRef`.
+
+```yaml title="Example of a migration policy (migration-policy.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationPolicy
+metadata:
+  name: move-to-new
+  namespace: simplyblock
+spec:
+  pairRef: old-to-new
+  mode: migration
+  interval: 1m
+```
+
+```yaml title="Example of a migration of a whole cluster (migrate-cluster.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationOps
+metadata:
+  name: migrate-old-cluster
+  namespace: simplyblock
+spec:
+  action: migration
+  scope: cluster
+  ref: simplyblock-cluster-old
+  policyRef: move-to-new
+  deleteSource: true
+```
+
+```bash title="Starting the migration"
+kubectl apply -f migration-policy.yaml
+kubectl apply -f migrate-cluster.yaml
+```
+
+### Migration Fields
+
+| Field          | Description                                                                                                                                              |
+|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `action`       | `migration`.                                                                                                                                             |
+| `scope`        | Which volumes move. See the table below.                                                                                                                 |
+| `ref`          | The resource the scope refers to. For the `cluster` scope, the name of the source `StorageCluster`, or its UUID.                                         |
+| `policyRef`    | Required for the `cluster` scope and refused for every other scope. Names a `ReplicationPolicy` with `mode: migration` whose pair starts at the source.  |
+| `dryRun`       | Publishes the plan and its forecast without enrolling, replicating, or cutting over anything. The operation succeeds once the forecast is in its status. |
+| `deleteSource` | Deletes each source volume after its cutover. See [After the Cutover](#after-the-cutover).                                                               |
+
+`policyRef` and `dryRun` are immutable and are only accepted with `action: migration`.
+
+| Scope     | `spec.ref` names a  | Volumes that move                                                                       |
+|-----------|---------------------|-----------------------------------------------------------------------------------------|
+| `cluster` | `StorageCluster`    | Every bound claim, in any namespace, whose volume lives on the named cluster right now. |
+| `target`  | `ReplicationPair`   | Every volume of every policy that references the pair.                                  |
+| `policy`  | `ReplicationPolicy` | Every volume attached to the policy.                                                    |
+| `volume`  | `ReplicationSlot`   | A single volume.                                                                        |
+
+### Selecting Claims with the Cluster Scope
+
+With the `cluster` scope, the operator decides for every bound claim:
+
+- **Already under the policy:** A claim whose `ReplicationSlot` follows `spec.policyRef` is included.
+- **Not replicated:** A claim without a slot and without a replication policy is enrolled. The operator sets the
+  `storage.simplyblock.io/replication-policy` annotation on the claim, and a slot is created for it as for any
+  annotated claim. A claim outside the policy's namespace is annotated with `<namespace>/<name>` of the policy.
+- **Under another policy:** A claim whose slot, annotation, or StorageClass names another policy is skipped and
+  never overwritten.
+- **Moved away:** A claim whose volume has already left the source cluster is skipped with the detail
+  `moved to cluster <id>`.
+
+The plan is created only once every included volume replicates. Until then, the operation stays in the subphase
+`Enrolling` or `AwaitingReplication`. A slot in `error` becomes a `failed` result, and a slot that is `failed_over`
+is skipped and has to be failed back first.
+
+### Forecasting with a Dry Run
+
+A dry run shows which volumes would move, to which target storage nodes, how much data that is, and how long it is
+expected to take, before anything starts.
+
+```yaml title="Example of a dry run (migrate-cluster-dry-run.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha1
+kind: ReplicationOps
+metadata:
+  name: migrate-old-cluster-forecast
+  namespace: simplyblock
+spec:
+  action: migration
+  scope: cluster
+  ref: simplyblock-cluster-old
+  policyRef: move-to-new
+  dryRun: true
+```
+
+```bash title="Reading the forecast of the dry run"
+kubectl get replicationops migrate-old-cluster-forecast -n simplyblock \
+    -o jsonpath='{.status.forecast}' | jq .
+```
+
+## Watching a Migration
+
+The operation stays `Running` until every volume has cut over. It ends in `Succeeded` when every volume moved, and in
+`Failed` when any volume did not, with the outcome of each volume kept in `status.results`. The operator reads the
+plan every 30 seconds. The wide output adds the forecast time to completion and the convergence verdict.
+
+```bash title="Watching a migration"
+kubectl get replicationops -n simplyblock -o wide -w
+```
+
+```plain title="Example output of the migration listing"
+NAME                  ACTION      SCOPE     REF                       PHASE     SUBPHASE       ETA    CONVERGING   AGE
+migrate-old-cluster   migration   cluster   simplyblock-cluster-old   Running   TrackingPlan   5400   true         42m
+```
+
+`status.subphase` names the step of the operation:
+
+| Subphase              | Meaning                                                                                         |
+|-----------------------|-------------------------------------------------------------------------------------------------|
+| `Enrolling`           | Claims were annotated, and their replication slots do not exist yet.                            |
+| `AwaitingReplication` | A slot does not replicate yet. The plan is created once every slot does.                        |
+| `CreatingPlan`        | The plan is being created in the control plane.                                                 |
+| `TrackingPlan`        | The plan runs. `status.planID` names it.                                                        |
+| `AwaitingCutover`     | A control plane without migration plans received one cutover per volume, and they are followed. |
+
+### Per-Volume Progress
+
+Each entry of `status.results` carries the slot in `slotRef`, the claim in `pvcRef`, an outcome in `status`
+(`pending`, `succeeded`, `skipped`, or `failed`), and a `detail`. For a volume in the plan, it also carries
+`targetNodeID`, `bytesRemaining`, `etaSeconds`, and the plan's state of the volume in `state`:
+
+| State          | Meaning                                                                      |
+|----------------|------------------------------------------------------------------------------|
+| `waiting`      | Another volume of the same source storage node is migrating.                 |
+| `replicating`  | The initial copy or the catch-up runs.                                       |
+| `queued`       | Caught up, and waiting for the logical volume store's cutover slot.          |
+| `converging`   | Taking the back-to-back snapshots that shrink the final delta.               |
+| `cutting_over` | The target copy is prepared. The preconnect, the freeze, and the switch run. |
+| `done`         | The target cluster serves the volume.                                        |
+| `failed`       | The volume did not move. `detail` holds the reason.                          |
+| `canceled`     | The cutover was canceled before it started.                                  |
+| `skipped`      | The volume was not taken into the plan. `detail` holds the reason.           |
+
+```bash title="Reading the per-volume progress of a migration"
+kubectl get replicationops migrate-old-cluster -n simplyblock \
+    -o jsonpath='{.status.results}' | jq .
+```
+
+### Forecast
+
+`status.forecast` holds the estimate for the whole migration. It is recomputed on every read, because client writes
+during the copy add to the data still to transfer.
+
+| Field                   | Description                                                                                     |
+|-------------------------|-------------------------------------------------------------------------------------------------|
+| `bytesRemaining`        | Data still to be copied across all volumes.                                                     |
+| `etaSeconds`            | Forecast time until the last volume has cut over. Unset while the migration does not converge.  |
+| `completesAt`           | Forecast completion time. Unset while the migration does not converge.                          |
+| `throughputBytesPerSec` | The transfer rate the forecast assumes.                                                         |
+| `throughputMeasured`    | `false` while no transfer has completed and a default rate of 200 MiB/s is assumed.             |
+| `converging`            | `false` when the volumes of a logical volume store are written about as fast as they replicate. |
+| `dirtyBytesPerSec`      | The rate at which clients write to the volumes still being copied.                              |
+| `notConvergingLVS`      | The logical volume stores of the source whose volumes are written faster than they replicate.   |
+
+The throughput is measured per logical volume store from the plan's completed transfers. Until a cutover has been
+measured, each pending cutover counts as 60 seconds. `status.warnings` lists risks the control plane found when it
+created the plan, such as too little free capacity on the source.
+
+### Events
+
+| Reason                 | Emitted on        | Meaning                                                                          |
+|------------------------|-------------------|----------------------------------------------------------------------------------|
+| `MigrationPlanCreated` | `ReplicationOps`  | The plan was created. The message holds the number of volumes and the forecast.  |
+| `MigrationForecast`    | `ReplicationOps`  | A dry run completed with its forecast.                                           |
+| `NotConverging`        | `ReplicationOps`  | Clients write faster than replication transfers.                                 |
+| `Converging`           | `ReplicationOps`  | Replication outruns the client writes again.                                     |
+| `MigrationComplete`    | `ReplicationOps`  | Every volume of the plan has cut over.                                           |
+| `Failed`               | `ReplicationOps`  | The operation failed. `status.message` holds the reason.                         |
+| `CutoverPending`       | `ReplicationSlot` | The cutover of the volume is prepared and waits for the preconnect.              |
+| `PreconnectStarted`    | `ReplicationSlot` | The preconnect Job connects the target paths on the consuming node.              |
+| `PreconnectFailed`     | `ReplicationSlot` | The preconnect Job failed. The cutover is held, and the Job is retried.          |
+| `LatePreconnect`       | `ReplicationSlot` | The target paths were connected after the switch, because the window was missed. |
+| `VolumeMoved`          | `ReplicationSlot` | The slot follows its volume to the cluster that serves it now.                   |
+
+## After the Cutover
+
+Once a volume has cut over, replication of the source volume stops, and its slot reaches `cutover_done`. The
+PersistentVolume keeps its volume handle, which still names the source cluster, and the CSI driver follows the
+replication relationship to the volume that serves the data.
+
+With `deleteSource: true`, the source volume is deleted after its cutover. The replication snapshots its data sat on
+are retired with it: the snapshots taken of it for the migration and, after an earlier migration, the copies it was
+cloned from. The control plane deletes each retired snapshot once nothing depends on it anymore. User snapshots are
+never retired, and neither is the latest recovery point of a consistency group. A failed delete of the source does
+not fail the cutover.
+
+Without `deleteSource`, the source volume and its replication snapshots stay on the source cluster and keep using
+capacity there. The source paths stay `inaccessible`.
+
+## Moving Volumes Back
+
+A volume moves back, or on to a further cluster, with another migration in the opposite direction: a `ReplicationPair`
+and a migration policy from the cluster that serves the volume now, and a new `ReplicationOps`. The `cluster` scope
+locates each claim by where its volume lives now, not by its volume handle. A slot that finished an earlier migration
+does not hold the claim, and the claim is enrolled under the new policy.
+
+When a volume returns to the cluster it came from, it takes back its original volume UUID there, so that the volume
+handle of the PersistentVolume addresses it directly again. The return does not start replication of its own.
+
+## Canceling a Migration
+
+Deleting a `ReplicationOps` releases its lock but does not stop the plan, which keeps running in the control plane. A
+plan is canceled through the control plane, with the plan ID from `status.planID`:
+
+```bash title="Canceling a migration plan"
+kubectl -n simplyblock exec -it deploy/simplyblock-admin-control -- \
+    sbctl cluster migrate-cancel <PLAN_ID>
+```
+
+A cancel stops every cutover that has not yet prepared its target copy. A cutover that has already prepared it is
+left to finish, because stopping it would leave a half-built target. The canceled volumes keep replicating. Removing
+the replication policy annotation from their claims stops the replication, as described in
+[Changing or Removing the Policy](asynchronous-replication.md#changing-or-removing-the-policy).
+
+## Using the Control Plane Directly
+
+The migration plans can also be managed with the CLI of the control plane and through its API, for example, to move
+volumes of a cluster that the operator does not manage.
+
+```bash title="Forecasting, starting, and following a migration with the CLI"
+sbctl cluster migrate <SOURCE_CLUSTER_ID> --target-cluster-id <TARGET_CLUSTER_ID> --dry-run
+sbctl cluster migrate <SOURCE_CLUSTER_ID> --target-cluster-id <TARGET_CLUSTER_ID> --delete-source
+sbctl cluster migrate-list <SOURCE_CLUSTER_ID>
+sbctl cluster migrate-status <PLAN_ID>
+```
+
+| Option                | Description                                                                                      |
+|-----------------------|--------------------------------------------------------------------------------------------------|
+| `--target-cluster-id` | The destination cluster. Required.                                                               |
+| `--pool`              | Only the volumes of this storage pool (ID). Without it, every volume of the cluster is selected. |
+| `--lvols`             | Only these volumes, as a comma-separated list of IDs.                                            |
+| `--delete-source`     | Deletes each source volume once its cutover has completed.                                       |
+| `--interval-min`      | Replication interval in minutes for the volumes the plan starts replicating. Defaults to `1`.    |
+| `--dry-run`           | Shows the selection, the target storage nodes, and the forecast without starting anything.       |
+
+The API serves the same operations under `/api/v2/clusters/{cluster_id}/migration-plans`, where `cluster_id` is the
+source cluster:
+
+| Method   | Path         | Description                                                            |
+|----------|--------------|------------------------------------------------------------------------|
+| `POST`   | `/`          | Creates a plan. Returns `201`, or `200` with `id: null` for a dry run. |
+| `GET`    | `/`          | Lists the plans of the cluster.                                        |
+| `GET`    | `/{plan_id}` | Returns a plan with the live state of each volume and the forecast.    |
+| `DELETE` | `/{plan_id}` | Cancels a plan. Returns `204`.                                         |
+
+The body of a `POST` takes `target_cluster_id`, `name`, `pool_id`, `lvol_ids`, `delete_source`, `interval_min`, and
+`dry_run`. `target_cluster_id` may be left out when the listed volumes already replicate to one cluster. `name` makes
+the request idempotent: an unfinished plan of the same name is returned instead of a second plan. Volumes listed in
+`lvol_ids` are taken even when they replicate in the `failover` mode, which a selection of a whole cluster or pool
+skips.
+
+The plan's `status` is `running`, `done`, `partial` (finished, and some volumes did not move), `failed` (no volume
+moved), or `canceled`.
 
 ---
 
@@ -14019,14 +14470,14 @@ kubectl -n simplyblock get controlplane,storagecluster,storagenodes,storagepools
 
 ## Resource Status at a Glance
 
-| Resource            | Short name | Health fields                                                                                                |
-|---------------------|------------|--------------------------------------------------------------------------------------------------------------|
-| `ControlPlane`      | `cp`       | `status.phase` (`Installing`, `Available`, `Degraded`, `Unavailable`), `status.components`, `status.version` |
-| `StorageCluster`    | `stc`      | `status.phase`, `status.status` (backend state), `status.maxFaultTolerance`, `status.tasks`                  |
-| `StorageNode`       | `sn`       | `status.phase`, `status.status`, `status.health`, `status.resources`                                         |
-| `StorageDevice`     | `sd`       | `status.phase` (`Online`, `Degraded`, `Unknown`, `Removed`, `Failed`), `status.deviceStatus`                 |
-| `StoragePool`       | `sp`       | `status.phase` (`Pending`, `Ready`, `Deleting`), `status.limits`                                             |
-| `SimplyblockDriver` | `sbd`      | `status.phase`, `status.nodesReady`, `status.nodesTotal`, `status.controllerReady`                           |
+| Resource            | Short name | Health fields                                                                                                 |
+|---------------------|------------|---------------------------------------------------------------------------------------------------------------|
+| `ControlPlane`      | `cp`       | `status.phase` (`Installing`, `Available`, `Degraded`, `Unavailable`), `status.components`, `status.version`  |
+| `StorageCluster`    | `stc`      | `status.phase`, `status.status` (backend state), `status.maxFaultTolerance`, `status.tasks`                   |
+| `StorageNode`       | `sn`       | `status.phase`, `status.status`, `status.health`, `status.resources`                                          |
+| `StorageDevice`     | `sd`       | `status.phase` (`Online`, `Degraded`, `Unknown`, `Removed`, `Failed`), `status.deviceStatus`, `status.health` |
+| `StoragePool`       | `sp`       | `status.phase` (`Pending`, `Ready`, `Deleting`), `status.limits`                                              |
+| `SimplyblockDriver` | `sbd`      | `status.phase`, `status.nodesReady`, `status.nodesTotal`, `status.controllerReady`                            |
 
 Every status carries a `message` with the latest human-readable finding. The details of each resource are covered in
 [Cluster Health](cluster-health.md).
@@ -14069,14 +14520,17 @@ administers the namespace of the `StorageCluster`.
 | Capacity              | critical/warning capacity thresholds, provisioning pressure | Metrics API, alerts            |
 | Storage node status   | unreachable/offline nodes, node-level anomalies             | `kubectl get sn`, alerts       |
 | Logical volume status | volume health/offline conditions                            | Metrics API, CLI, Grafana      |
-| Performance           | throughput, IOPS, latency trends                            | CLI, Grafana                   |
+| Performance           | throughput, IOPS, latency trends                            | Prometheus, Grafana, CLI       |
+| Device health         | slow devices, SMART warnings, and SMART failures            | `kubectl get sd`, alerts       |
 | Events and logs       | operational events, service/component errors                | `kubectl get events`, Graylog  |
 
 ## Monitoring Guides
 
 - [Cluster Health](cluster-health.md)
 - [Logical Volume Conditions](lvol-conditions.md)
+- [Device Health](device-health.md)
 - [Alerting](alerts.md)
+- [Prometheus Metrics](prometheus-metrics.md)
 - [Accessing Grafana](accessing-grafana.md)
 - [Accessing Graylog](accessing-graylog.md)
 
@@ -14225,7 +14679,8 @@ also available through Grafana in the cluster's dashboard, see [Accessing Grafan
 Logical volumes are the core storage abstraction in simplyblock, representing high-performance, distributed NVMe
 block devices backed by the cluster. On Kubernetes, every PersistentVolumeClaim of the simplyblock CSI driver is backed
 by one logical volume. Its capacity is readable from the claim's own namespace through the metrics API, and its health
-and I/O statistics are available through the CLI and the Grafana dashboards.
+and I/O statistics are exported as Prometheus metrics, which also feed the Grafana dashboards, and are available
+through the CLI.
 
 ## Finding the Logical Volume of a Claim
 
@@ -14256,6 +14711,15 @@ the volumes there. See [Capacity Metrics API](index.md#capacity-metrics-api).
 
 ## Accessing Logical Volume Statistics
 
+The I/O statistics of every logical volume are exported as Prometheus metrics, labeled with the PersistentVolumeClaim
+the volume belongs to. They include read, write, and unmap operations, bytes, and latency, and the volume's capacity
+and status. See [Prometheus Metrics](prometheus-metrics.md) for the full list and example queries.
+
+```plain title="IOPS of the volume behind a claim"
+rate(simplyblock_lvol_read_operations_total{pvc_name="data"}[5m])
+  + rate(simplyblock_lvol_write_operations_total{pvc_name="data"}[5m])
+```
+
 To access a logical volume's performance and I/O statistics, the `sbctl` command line tool can be used in the
 `simplyblock-admin-control` pod (see [Using the CLI](cluster-health.md#using-the-cli)):
 
@@ -14275,6 +14739,260 @@ sbctl volume check <VOLUME_ID>
 ```
 
 All details of the command are available in the [CLI reference](../../../reference/cli/index.md).
+
+---
+
+<!-- source: https://docs.simplyblock.io/latest/kubernetes/operations/monitoring/device-health/ -->
+
+# Device Health
+
+A storage device rarely fails all at once. A drive that wears out, or whose host storage degrades, usually keeps
+answering I/O for a long time before it stops, so the control plane never marks it unavailable. In the meantime, it
+slows down the whole cluster: every write is mirrored or erasure-coded across devices, and a write completes only when
+its slowest copy does. One slow device therefore sets the latency of every volume striped across it.
+
+The Simplyblock Operator watches for both signs. It compares the performance of each device with the other devices of
+its cluster, and it reads the SMART health log of each device on a schedule and on request. Both results are recorded
+on the `StorageDevice`, emitted as Kubernetes events and Prometheus metrics, and reported to the control plane. The
+control plane then raises them as alerts, next to every other alert of the cluster.
+
+## Performance Monitoring
+
+Once a minute, the operator compares every storage device with the other devices of its fleet, using the I/O counters
+that the control plane exports to Prometheus. The fleet of a device is the set of serving devices (phase `Online` or
+`Degraded`) of the same cluster and the same role. Journal devices are compared only with other journal devices,
+because they carry the journal's small sequential writes, not data stripes.
+
+Each comparison covers the past ten minutes:
+
+- **IOPS** is the rate of read and write operations.
+- **Latency** is the mean time per operation.
+- **Weight** is the device's capacity, because capacity is what the cluster places data by. The **share** of a device
+  is the part of the fleet's IOPS that its weight entitles it to.
+- **Fleet latency** is the median latency of the fleet's I/O, weighted by IOPS. A median keeps the device being
+  assessed from pulling the reference toward itself.
+
+| Condition                                                                                       | Verdict   |
+|-------------------------------------------------------------------------------------------------|-----------|
+| The device serves fewer than 5 IOPS, or its fleet has fewer than 3 devices that serve 5 or more | `Unknown` |
+| The device serves at least twice its share                                                      | `Ok`      |
+| Its latency is at least 3 times the fleet latency and at least 2 ms above it                    | `Slow`    |
+| It serves at most half its share at 1.5 times the fleet latency or more, and at least 2 ms more | `Slow`    |
+| None of the above                                                                               | `Ok`      |
+
+The comparison is relative to the load, so heavy load alone does not make a device slow. A node that returns after an
+outage receives the writes it missed, and its devices queue them. They then carry more than their share, and their
+latency is caused by that load, not by the hardware, so a rebuild raises no alert. A device that is saturated, in
+contrast, serves less than its share while it is slower, and is reported. A device that serves less than its share at
+normal latency is usually one that data has not been rebalanced onto yet, and is `Ok`.
+
+A verdict changes only after it is confirmed: three assessments in a row must find a device slow before it is reported
+`Slow`, and five must find it fine before it returns to `Ok`. An `Unknown` assessment changes neither the verdict nor
+the count. The verdict survives a restart of the operator.
+
+The performance check needs the Prometheus of the control plane, which the operator reads at the address set in the
+Helm value `metricsAPI.prometheusURL`. Without it, only the SMART check runs.
+
+## SMART Health Checks
+
+The operator reads the health log of every device every six hours, oldest first, and at most ten devices per pass, so a
+large fleet is read over several minutes instead of in one burst. The control plane performs the read:
+
+- An NVMe device attached to SPDK is read through SPDK.
+- A Linux block device (see [Linux Block Devices](../../../architecture/concepts/linux-block-devices.md)) is read by
+  the storage node agent, with `nvme smart-log` for an NVMe namespace and with `smartctl` for any other device.
+- A device without a health log, such as a virtual disk, reports `Unsupported`.
+
+| Health log                                                                                                         | Verdict       |
+|--------------------------------------------------------------------------------------------------------------------|---------------|
+| NVMe critical warning: spare capacity, reliability degraded, read-only mode, volatile backup, or persistent memory | `Failing`     |
+| Available spare at or below the threshold of the device                                                            | `Failing`     |
+| SATA or SAS self-assessment failed                                                                                 | `Failing`     |
+| NVMe critical warning: temperature                                                                                 | `Warning`     |
+| At least 90% of the rated life used, media errors, reallocated sectors, or pending sectors                         | `Warning`     |
+| None of the above, with at least one reading reported                                                              | `Ok`          |
+| No reading that can be judged                                                                                      | `Unknown`     |
+| No health log available                                                                                            | `Unsupported` |
+
+Only what the device itself declares about its own reliability makes it `Failing`. Wear, temperature, and error
+counts that a drive keeps working through are warnings.
+
+A read that fails, for example, because the control plane cannot reach the node, keeps the previous verdict, records
+the failure in the reason, and is retried after fifteen minutes. An unreachable node says nothing about the drive, so
+a `Failing` verdict is not cleared because of it.
+
+!!! note
+    On Linux block devices, SATA and SAS drives are read with `smartctl`. On a storage node without `smartctl`, these
+    drives report `Unsupported`. NVMe namespaces are read with `nvme smart-log`.
+
+## Reading Device Health
+
+The verdicts appear as the `Performance` and `SMART` columns of the `StorageDevice` list:
+
+```bash title="Listing the health of every device"
+kubectl get storagedevices -n simplyblock
+```
+
+```plain title="Example output"
+NAME                                       PHASE    PERFORMANCE   SMART     ...
+simplyblock-cluster-worker-1-0-5e0000a1    Online   Ok            Ok
+simplyblock-cluster-worker-2-0-7c11d2f0    Online   Slow          Ok
+simplyblock-cluster-worker-3-0-a03b9e44    Online   Ok            Warning
+```
+
+The details are held in `status.health`:
+
+```bash title="Reading the health of one device"
+kubectl get storagedevice simplyblock-cluster-worker-2-0-7c11d2f0 -n simplyblock \
+    -o jsonpath='{.status.health}' | jq
+```
+
+| Field                                              | Description                                                             |
+|----------------------------------------------------|-------------------------------------------------------------------------|
+| `performance.verdict`                              | `Ok`, `Slow`, or `Unknown`.                                             |
+| `performance.reason`                               | Why the device has the verdict, in words.                               |
+| `performance.since`                                | When the verdict last changed.                                          |
+| `performance.assessedAt`                           | When the device was last assessed.                                      |
+| `performance.latencyMicroseconds`                  | The mean latency of the device.                                         |
+| `performance.fleetLatencyMicroseconds`             | The fleet latency it was compared with.                                 |
+| `performance.latencyRatioPercent`                  | The latency of the device as a percentage of the fleet latency.         |
+| `performance.iopsRatioPercent`                     | The IOPS of the device as a percentage of its share.                    |
+| `smart.verdict`                                    | `Ok`, `Warning`, `Failing`, `Unsupported`, or `Unknown`.                |
+| `smart.reason`                                     | Why the device has the verdict, in words.                               |
+| `smart.checkedAt`                                  | When the health log was last read.                                      |
+| `smart.source`                                     | What read the health log: `spdk`, `nvme-cli`, or `smartctl`.            |
+| `smart.criticalWarning`                            | The NVMe critical warning bits.                                         |
+| `smart.temperatureCelsius`                         | The temperature of the device.                                          |
+| `smart.availableSparePercent`                      | The remaining spare capacity of an NVMe device.                         |
+| `smart.availableSpareThresholdPercent`             | The spare capacity below which the NVMe device declares itself failing. |
+| `smart.percentageUsed`                             | The estimated part of the rated life used.                              |
+| `smart.mediaErrors`                                | The number of unrecovered data integrity errors.                        |
+| `smart.powerOnHours`, `smart.unsafeShutdowns`      | The power-on hours and the number of unsafe shutdowns.                  |
+| `smart.smartPassed`                                | The result of the self-assessment of a SATA or SAS drive.               |
+| `smart.reallocatedSectors`, `smart.pendingSectors` | The remapped and pending sectors of a SATA or SAS drive.                |
+
+The status is written when a verdict changes, and otherwise at most every fifteen minutes. The Prometheus metrics
+below carry the readings at full resolution.
+
+## Checking a Device on Demand
+
+A `StorageDeviceOps` with the action `CheckHealth` reads the health log of one device immediately, instead of at the
+next scheduled read. It is the way to confirm a suspicion, or to check a replacement drive, without waiting for the
+schedule.
+
+```yaml title="Example of an on-demand health check (check-device.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageDeviceOps
+metadata:
+  name: check-device-a03b9e44
+  namespace: simplyblock
+spec:
+  deviceRef: simplyblock-cluster-worker-3-0-a03b9e44
+  action: CheckHealth
+```
+
+```bash title="Running the check and reading its result"
+kubectl apply -f check-device.yaml
+kubectl get storagedeviceops check-device-a03b9e44 -n simplyblock \
+    -o jsonpath='{.status.phase}{"\t"}{.status.message}{"\n"}'
+```
+
+The operation has a single step, `Requesting`. It changes nothing on the device and can be aborted at any time. Its
+result is recorded, published, and reported exactly as a scheduled read is, and the message of the succeeded operation
+states the verdict. If the health log cannot be read, the operation fails with the reason.
+
+## Centralized Reporting
+
+The operator reports the verdicts of every serving device to the control plane. A report is sent when a verdict
+changes, and repeated every five minutes while it does not. The control plane stores the latest report on the device,
+where it is returned with the device by the API, and turns it into alerts:
+
+| Alert kind         | Severity                                      | Fires while                                    |
+|--------------------|-----------------------------------------------|------------------------------------------------|
+| `device_slow`      | warning                                       | The performance verdict of the device is slow. |
+| `device_unhealthy` | critical for `Failing`, warning for `Warning` | The SMART verdict is failing or warning.       |
+
+These alerts are raised and resolved like every other alert of the cluster, through the
+[Alerts Endpoint](../../../reference/api/alerts.md). They stay quiet while the node of the device is not online, while
+the device is not serving (it already raises `device_unavailable`), and for a device that was removed on purpose.
+
+Each report is valid for fifteen minutes. If the operator stops reporting, the alerts resolve once the last report
+expires, instead of firing forever on stale information.
+
+## Events and Metrics
+
+The operator records each change of a verdict as an event on the `StorageDevice`:
+
+| Event                        | Type      | Recorded when                              |
+|------------------------------|-----------|--------------------------------------------|
+| `DeviceSlow`                 | `Warning` | The device became slow.                    |
+| `DevicePerformanceRecovered` | `Normal`  | The device is no longer slow.              |
+| `DeviceSMARTWarning`         | `Warning` | The health log raised a warning.           |
+| `DeviceSMARTFailing`         | `Warning` | The health log reports the device failing. |
+| `DeviceSMARTRecovered`       | `Normal`  | The health log no longer raises a concern. |
+| `DeviceHealthCheckFailed`    | `Warning` | The health log could not be read.          |
+
+```bash title="Listing the health events of the storage devices"
+kubectl get events -n simplyblock --field-selector involvedObject.kind=StorageDevice
+```
+
+It also exports the verdicts and readings as Prometheus metrics, with the labels `cluster`, `node`, and `device`. They
+are served by the metrics endpoint of the operator, which has to be turned on (see
+[Simplyblock Operator Metrics](prometheus-metrics.md#simplyblock-operator-metrics)):
+
+| Metric                                        | Description                                                           |
+|-----------------------------------------------|-----------------------------------------------------------------------|
+| `simplyblock_storagedevice_performance_state` | 1 for the current performance verdict (label `verdict`), 0 otherwise. |
+| `simplyblock_storagedevice_smart_state`       | 1 for the current SMART verdict (label `verdict`), 0 otherwise.       |
+| `simplyblock_storagedevice_latency_ratio`     | The latency of the device over the fleet latency.                     |
+| `simplyblock_storagedevice_iops_share_ratio`  | The IOPS of the device over its share.                                |
+
+A Prometheus Alertmanager that already watches the Kubernetes cluster can alert on the metrics directly:
+
+```yaml title="Example of Prometheus alert rules for device health"
+groups:
+  - name: simplyblock-device-health
+    rules:
+      - alert: SimplyblockDeviceSlow
+        expr: simplyblock_storagedevice_performance_state{verdict="Slow"} == 1
+        labels:
+          severity: warning
+        annotations:
+          summary: "A simplyblock storage device is slow"
+      - alert: SimplyblockDeviceFailing
+        expr: simplyblock_storagedevice_smart_state{verdict="Failing"} == 1
+        labels:
+          severity: critical
+        annotations:
+          summary: "A simplyblock storage device reports failing SMART health"
+```
+
+## Acting on a Verdict
+
+The operator reports a slow or failing device and leaves the decision to an administrator. It does not restart or
+fail a device by itself, because a measurement is not a decision: a device can be slow because of its host, and a
+restart of the device is the first thing to try.
+
+- A **slow** device is first restarted, as described in
+  [Restarting a Storage Device](../storage-nodes/storage-node-actions.md#restarting-a-storage-device). A device that
+  stays slow afterward, or a device whose host storage cannot be fixed, is failed.
+- A **failing** device is failed and replaced. The control plane then rebuilds its data onto the remaining devices, as
+  described in [Failing a Storage Device](../storage-nodes/storage-node-actions.md#failing-a-storage-device).
+- A **warning** is a reason to plan a replacement and to watch the device more closely, for example, with an on-demand
+  check.
+
+## Configuration
+
+The checks are enabled by default. They are controlled by these arguments of the operator:
+
+| Argument                   | Default | Description                                           |
+|----------------------------|---------|-------------------------------------------------------|
+| `--enable-device-health`   | `true`  | Runs the checks and accepts the `CheckHealth` action. |
+| `--device-health-interval` | `1m`    | How often the performance of the fleet is assessed.   |
+| `--device-health-window`   | `10m`   | The period each performance assessment averages over. |
+| `--device-smart-interval`  | `6h`    | How often the health log of each device is read.      |
+
+The thresholds of the performance comparison are fixed and apply to every cluster managed by the operator.
 
 ---
 
@@ -14363,6 +15081,230 @@ It suppresses the states an operator caused on purpose, such as a node that was 
 removed, and it drops each alert as soon as the condition ends. The cluster UUID is held in
 `StorageCluster.status.uuid`. See [Alerts Endpoint](../../../reference/api/alerts.md) for the full list of alert kinds,
 the query parameters, and how to forward the alerts to a Slack webhook.
+
+## Device Health Alerts
+
+The Simplyblock Operator checks every storage device for slow performance against the rest of the cluster and for
+SMART health, and reports the results to the control plane. The alerts endpoint raises them as `device_slow` and
+`device_unhealthy`, with the same raising and resolving as every other alert. The same results are exported as
+Prometheus metrics of the operator, so an Alertmanager that watches the Kubernetes cluster can alert on them as well.
+See [Device Health](device-health.md) for the checks, the metrics, and example alert rules.
+
+---
+
+<!-- source: https://docs.simplyblock.io/latest/kubernetes/operations/monitoring/prometheus-metrics/ -->
+
+# Prometheus Metrics
+
+Simplyblock exports its I/O statistics, capacity, status, CPU utilization, and replication health as Prometheus
+metrics. They are the source of the Grafana dashboards, and any Prometheus-compatible system can scrape and query them
+directly, for example, to build its own dashboards, alert rules, or capacity reports.
+
+There are two sources:
+
+- The **control plane exporter** publishes the state of every cluster, storage node, device, pool, logical volume,
+  and replication relationship. It is scraped by the Prometheus of the control plane's observability stack.
+- The **Simplyblock Operator** publishes the state of the Kubernetes resources it manages and of the operations it
+  runs.
+
+## Control Plane Exporter
+
+The exporter is served by the management API:
+
+```plain title="Scrape endpoint"
+GET /api/v2/metrics
+```
+
+The Prometheus of the control plane scrapes it every 30 seconds as the job `simplyblock_metrics`, from the
+`simplyblock-webappapi` service, authenticated with its Kubernetes service account token. An external Prometheus
+can scrape it the same way, with the cluster's API credentials (see [API / Developer SDK](../../../reference/api/index.md))
+or with a service account token that the control plane admits for metrics.
+
+Every series is rebuilt from the cluster database on each scrape. An object that no longer exists stops being
+exported, and every instance of the management API returns the same values.
+
+### Labels
+
+| Level          | Labels                                                                          |
+|----------------|---------------------------------------------------------------------------------|
+| Cluster        | `cluster`, `cluster_name`                                                       |
+| Storage node   | `cluster`, `cluster_name`, `snode`, `hostname`                                  |
+| Device         | `cluster`, `cluster_name`, `snode`, `device`                                    |
+| Pool           | `cluster`, `cluster_name`, `pool`, `pool_name`                                  |
+| Logical volume | `cluster`, `cluster_name`, `pool`, `pool_name`, `lvol`, `lvol_name`, `pvc_name` |
+| Replication    | The logical volume labels, and `policy`, `policy_name`, `peer_cluster`          |
+| CPU core       | The storage node labels, and `core_id`                                          |
+| CPU thread     | The CPU core labels, and `thread_name`                                          |
+
+The labels `cluster`, `snode`, `device`, `pool`, `lvol`, and `policy` hold UUIDs, so series of different levels join on
+them. For example, the `pool` label of a logical volume series matches the `pool` label of its pool. The `*_name`
+labels and `pvc_name` hold the human-readable names for filters and legends. `pvc_name` is the PersistentVolumeClaim
+the volume belongs to.
+
+### I/O Statistics
+
+The following counters exist for each of the levels `cluster`, `snode`, `device`, `pool`, and `lvol`, so the name of
+a metric is `simplyblock_<level>_<name>`, for example, `simplyblock_lvol_read_operations_total`:
+
+| Name                        | Type    | Description                                |
+|-----------------------------|---------|--------------------------------------------|
+| `read_operations_total`     | Counter | Read operations since the counter started. |
+| `read_bytes_total`          | Counter | Bytes read.                                |
+| `read_latency_ticks_total`  | Counter | Accumulated read latency, in SPDK ticks.   |
+| `write_operations_total`    | Counter | Write operations.                          |
+| `write_bytes_total`         | Counter | Bytes written.                             |
+| `write_latency_ticks_total` | Counter | Accumulated write latency, in SPDK ticks.  |
+| `unmap_operations_total`    | Counter | Unmap (trim) operations.                   |
+| `unmap_bytes_total`         | Counter | Bytes unmapped.                            |
+| `unmap_latency_ticks_total` | Counter | Accumulated unmap latency, in SPDK ticks.  |
+
+The counters are cumulative, so IOPS and throughput are their rates, and a restart of a storage node is handled by
+`rate()`:
+
+```plain title="IOPS and throughput of each logical volume"
+sum by (lvol_name, pvc_name) (rate(simplyblock_lvol_read_operations_total[5m]) + rate(simplyblock_lvol_write_operations_total[5m]))
+sum by (lvol_name, pvc_name) (rate(simplyblock_lvol_read_bytes_total[5m]) + rate(simplyblock_lvol_write_bytes_total[5m]))
+```
+
+The mean latency is the rate of the latency counter divided by the rate of the operation counter. Summing both before
+the division gives the correct mean of a node or a cluster as well. The result is in SPDK ticks. On the device level,
+`simplyblock_device_tick_rate_hertz` holds the tick rate of the node that measures the device, which converts ticks
+into seconds:
+
+```plain title="Mean write latency of each device, in seconds"
+rate(simplyblock_device_write_latency_ticks_total[5m])
+  / rate(simplyblock_device_write_operations_total[5m])
+  / simplyblock_device_tick_rate_hertz
+```
+
+### Capacity
+
+The following gauges are in bytes. They hold the effective capacity, which is what clients can store, so the ratio of
+provisioned to total capacity is meaningful. The `raw` gauges hold the physical capacity the devices report. The
+difference to the effective capacity is the erasure-coding overhead.
+
+| Name                     | Levels                                       | Description               |
+|--------------------------|----------------------------------------------|---------------------------|
+| `size_total_bytes`       | `cluster`, `snode`, `device`, `pool`, `lvol` | Total effective capacity. |
+| `size_used_bytes`        | `cluster`, `snode`, `device`, `pool`, `lvol` | Used effective capacity.  |
+| `size_free_bytes`        | `cluster`, `snode`, `device`, `pool`, `lvol` | Free effective capacity.  |
+| `size_provisioned_bytes` | `cluster`, `snode`                           | Provisioned capacity.     |
+| `size_total_raw_bytes`   | `cluster`, `snode`, `device`                 | Total physical capacity.  |
+| `size_used_raw_bytes`    | `cluster`, `snode`, `device`                 | Used physical capacity.   |
+| `size_free_raw_bytes`    | `cluster`, `snode`, `device`                 | Free physical capacity.   |
+
+The thresholds configured on the cluster are exported as ratios, so they compare directly with a ratio of the byte
+gauges:
+
+| Metric                                                              | Description                                                                                             |
+|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `simplyblock_cluster_capacity_warning_threshold_ratio`              | Used-capacity ratio that raises a warning.                                                              |
+| `simplyblock_cluster_capacity_critical_threshold_ratio`             | Used-capacity ratio that raises a critical alert.                                                       |
+| `simplyblock_cluster_provisioned_capacity_warning_threshold_ratio`  | Provisioned-capacity ratio that raises a warning. It can exceed 1, because provisioning may overcommit. |
+| `simplyblock_cluster_provisioned_capacity_critical_threshold_ratio` | Provisioned-capacity ratio that raises a critical alert.                                                |
+
+```plain title="Clusters above their critical capacity threshold"
+simplyblock_cluster_size_used_bytes / simplyblock_cluster_size_total_bytes
+  > on (cluster) simplyblock_cluster_capacity_critical_threshold_ratio
+```
+
+### Status and Health
+
+| Metric                            | Labels                       | Description                                                               |
+|-----------------------------------|------------------------------|---------------------------------------------------------------------------|
+| `simplyblock_<level>_status`      | The level's labels, `status` | 1 on the series whose `status` label is the current status of the object. |
+| `simplyblock_snode_health_check`  | Storage node labels          | 1 when the latest health check passed, 0 when it failed.                  |
+| `simplyblock_device_health_check` | Device labels                | 1 when the latest health check passed, 0 when it failed.                  |
+| `simplyblock_lvol_health_check`   | Logical volume labels        | 1 when the latest health check passed, 0 when it failed.                  |
+
+The status gauge exists for the levels `cluster`, `snode`, `device`, `pool`, and `lvol`. The `status` label holds the
+status as the control plane reports it, for example, `online`, `offline`, `unavailable`, or `degraded`. An alert
+names the status it cares about:
+
+```plain title="Storage nodes that are not online"
+simplyblock_snode_status{status!="online"} == 1
+```
+
+An object without a health check verdict has no `health_check` series.
+
+### CPU Utilization
+
+The reactors and lightweight threads of SPDK on each storage node are exported as cumulative tick counters:
+
+| Metric                                       | Labels            | Description                 |
+|----------------------------------------------|-------------------|-----------------------------|
+| `simplyblock_snode_reactor_busy_ticks_total` | CPU core labels   | Ticks the reactor was busy. |
+| `simplyblock_snode_reactor_idle_ticks_total` | CPU core labels   | Ticks the reactor was idle. |
+| `simplyblock_snode_reactor_irq_ticks_total`  | CPU core labels   | Ticks spent in interrupts.  |
+| `simplyblock_snode_reactor_sys_ticks_total`  | CPU core labels   | Ticks spent in the kernel.  |
+| `simplyblock_snode_thread_busy_ticks_total`  | CPU thread labels | Ticks the thread was busy.  |
+| `simplyblock_snode_thread_idle_ticks_total`  | CPU thread labels | Ticks the thread was idle.  |
+
+```plain title="Utilization of each reactor"
+rate(simplyblock_snode_reactor_busy_ticks_total[5m])
+  / (rate(simplyblock_snode_reactor_busy_ticks_total[5m]) + rate(simplyblock_snode_reactor_idle_ticks_total[5m]))
+```
+
+### Replication
+
+Each logical volume that replicates to another cluster has the following gauges, with the replication labels:
+
+| Metric                                      | Description                                                                                                                    |
+|---------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `simplyblock_replication_lag_seconds`       | Age of the newest snapshot that has been fully replicated. Absent before the first one.                                        |
+| `simplyblock_replication_backlog_bytes`     | Bytes of snapshots that are queued and not yet shipped.                                                                        |
+| `simplyblock_replication_last_sync_seconds` | Duration of the last completed shipping cycle.                                                                                 |
+| `simplyblock_replication_last_sync_bytes`   | Size of the last shipped snapshot.                                                                                             |
+| `simplyblock_replication_rpo_violation`     | 1 while the lag exceeds the recovery point objective of the policy, 0 otherwise. Absent when the policy declares no objective. |
+| `simplyblock_replication_degraded`          | 1 while the replication is degraded or in error, 0 otherwise.                                                                  |
+
+```plain title="Volumes that miss their recovery point objective"
+simplyblock_replication_rpo_violation == 1
+```
+
+See [Asynchronous Replication](../data-protection/asynchronous-replication.md) for the replication policies.
+
+### Storage Node Latency Probe
+
+When automatic volume rebalancing is enabled, a probe on each storage node measures the write latency of the node
+with small random writes. Its results are scraped as the job `simplyblock_rebalancer_probe`:
+
+| Metric                                      | Labels            | Description                                |
+|---------------------------------------------|-------------------|--------------------------------------------|
+| `simplyblock_node_fio_write_latency_p50_ns` | `cluster`, `node` | Median latency of 4K random writes, in ns. |
+| `simplyblock_node_fio_write_latency_p99_ns` | `cluster`, `node` | 99th percentile of the same, in ns.        |
+
+## Simplyblock Operator Metrics
+
+The operator registers its metrics with its own metrics endpoint. The endpoint is turned on with the operator
+argument `--metrics-bind-address`, for example, `:8443` for HTTPS, and is off when the argument is not set.
+
+!!! note
+    The Helm chart of the Simplyblock Operator does not set `--metrics-bind-address`, so these metrics are not
+    exposed by a default installation, and the Prometheus of the control plane does not scrape them.
+
+The metrics are named after the resource they describe. The `*_phase_state` gauges are 1 on the series whose `phase`
+label is the current phase and 0 on the others. The `*_operations_total` counters and `*_duration_seconds` histograms
+cover the `*Ops` resources, with the labels `action` and `result` (`succeeded`, `failed`, or `aborted`).
+
+| Area               | Metrics                                                                                                                                                                                                                                           | Labels                                                              |
+|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| Storage devices    | `simplyblock_storagedevice_capacity_bytes`, `_used_bytes`, `_phase_state`                                                                                                                                                                         | `cluster`, `node`, `device`, (`phase`)                              |
+| Device health      | `simplyblock_storagedevice_performance_state`, `_smart_state`, `_latency_ratio`, `_iops_share_ratio`                                                                                                                                              | `cluster`, `node`, `device`, (`verdict`)                            |
+| Storage nodes      | `simplyblock_storagenode_phase_state`, `_devices_count`, `_devices_failed_count`, `_network_attached_state`, `_network_host_reachable_state`, `_provisioning_duration_seconds`                                                                    | `cluster`, `node`, (`phase`, `network`)                             |
+| Node operations    | `simplyblock_storagenode_operations_total`, `_operation_duration_seconds`, `_operation_step_duration_seconds`, `_operation_lock_wait_seconds`, `_drain_volumes_migrated_total`, `_drain_blocked_volumes_count`, `_maintenance_hold_seconds`       | `cluster`, `action`, `result`, `step`, `reason`                     |
+| Storage clusters   | `simplyblock_storagecluster_phase_state`, `_operations_total`, `_operation_duration_seconds`, `_operation_step_duration_seconds`, `_rolling_restart_node_index_count`, `_rolling_restart_node_count`                                              | `cluster`, `phase`, `action`, `result`, `step`                      |
+| Superclusters      | `simplyblock_supercluster_member_count`, `_capacity_bytes`, `_placement_decisions_total`, `_placement_duration_seconds`                                                                                                                           | `namespace`, `supercluster`, `state`, `kind`, `cluster`, `result`   |
+| Storage pools      | `simplyblock_storagepool_capacity_bytes`, `_used_bytes`, `_provisioned_bytes`, `_volumes_count`, `_bound_volumes_count`, `_storageclasses_count`, `_phase_state`, `_operations_total`                                                             | `cluster`, `pool`, (`phase`, `action`, `result`)                    |
+| Persistent volumes | `simplyblock_persistentvolume_operations_total`, `_operation_duration_seconds`, `_operation_step_duration_seconds`, `_operation_queued_seconds`                                                                                                   | `cluster`, `action`, `result`, `step`                               |
+| Backups            | `simplyblock_storagebackup_completions_total`, `_duration_seconds`, `_size_bytes`, `_age_seconds`, `_available_count`, `_operations_total`, `simplyblock_storagebackuppolicy_attached_claims_count`, `simplyblock_group_restore_duration_seconds` | `cluster`, `policy`, `claim`, `action`, `result`                    |
+| Volume rebalancing | `simplyblock_rebalancer_evaluation_total`, `_migrations_total`, `_pinned_blocked_total`, `_max_latency_deviation_pct`, `_node_latency_deviation_pct`, `_baseline_ns`, `_cooldown_volumes`                                                         | `cluster`, `node`, `result`, `source_node`, `target_node`           |
+| Control plane      | `simplyblock_controlplane_ready_state`, `_component_ready_count`, `_component_desired_count`, `_probe_duration_seconds`, `_probe_failures_total`, `_operations_total`                                                                             | `namespace`, `component`, `essential`, `reason`, `action`, `result` |
+| CSI driver         | `simplyblock_simplyblockdriver_version_info`, `_nodes_ready_count`, `_nodes_expected_count`, `_controller_ready_state`                                                                                                                            | `namespace`, `version`                                              |
+| Deployment         | `simplyblock_clusterdeploymentconfig_phase_state`, `_expansion_duration_seconds`, `_nodes_created_total`, `simplyblock_operator_discovery_workers_found_count`, `_discovery_devices_found_count`                                                  | `namespace`, `name`, `phase`, `reason`                              |
+
+In the table, a name that starts with an underscore continues the prefix of the first metric of its row. The device
+health metrics are described in [Device Health](device-health.md#events-and-metrics).
 
 ---
 
@@ -14949,8 +15891,8 @@ The following capabilities are available as a preview:
       literal values. Until then, these must carry identical names on both sites.
     - **Hub restore action:** A `RestoreHub` recovery action on a running hub (the `dr-restore` tool covers this today).
     - **Hosted-cluster tests:** Test failovers inside a hosted cluster with mirrored networks.
-    - **Online relocation:** Moving running workloads between sites without a restart. See
-      [Relocate (Online)](operations/relocate-online.md).
+    - **Online relocation:** Live migration of KubeVirt virtual machines between sites without a restart. Volumes
+      already move between clusters online. See [Relocate (Online)](operations/relocate-online.md).
     - **Storage deployment from the hub console:** Discovering and deploying a managed site's storage cluster from
       the Control Center. See [Control Center](control-center.md).
     - **AI-assisted discovery:** Refining bundles with a Claude agent. Discovery runs in rules mode today.
@@ -19265,19 +20207,17 @@ when the old primary becomes reachable again. To opt out, annotate the Protected
 
 # Relocate (Online)
 
-An online relocation would move a running application from one site to another without stopping it. This is not
-available in simplyblock DR today.
+An online relocation moves a running application from one site to another without stopping it.
+
+Simplyblock volumes already move between storage clusters of one control plane while they stay in use, with an
+[online cluster migration](../../kubernetes/operations/data-protection/online-cluster-migration.md). The cutover of each
+volume holds I/O for a brief freeze, and the workload keeps running.
 
 !!! info "Coming soon"
-    Online relocation will migrate running workloads across clusters without a restart:
-
-    - **Live VM migration:** Cross-cluster live migration of KubeVirt virtual machines, so that a VM keeps running
-      while it moves to the other site.
-    - **Live volume migration:** Migration of simplyblock volumes between storage clusters while they stay in use.
-
-    This capability is not designed yet. Today, every move between sites is a
-    [restart-based relocation](relocate-restart.md): the application is stopped on the source and restarted on the
-    target after a final sync.
+    **Live VM migration:** Cross-cluster live migration of KubeVirt virtual machines, so that a VM keeps running while
+    it moves to the other site, is not available yet. Until then, a recovery action of simplyblock DR moves an
+    application between sites with a [restart-based relocation](relocate-restart.md): the application is stopped on
+    the source and restarted on the target after a final sync.
 
     Within a single storage cluster, simplyblock volumes can already be migrated online between storage nodes. See
     [Volume Migration](../../kubernetes/operations/volumes/volume-migration.md).
@@ -20462,12 +21402,42 @@ older, the cluster event log holds an `ALERT_RAISED` and an `ALERT_RESOLVED` ent
 | `cluster_degraded`                      | critical | The cluster is degraded.                                          | A node was stopped by an operator.                         |
 | `cluster_suspended`                     | critical | The cluster is suspended.                                         | Never. A suspended cluster serves no I/O.                  |
 | `device_unavailable`                    | critical | A device on an **online** node is unavailable, failed or removed. | The operator removed it, or the node itself is not online. |
+| `device_unhealthy`                      | critical | The SMART health log of a serving device reports it failing.      | The node is not online, or the health report has expired.  |
+| `device_unhealthy`                      | warning  | The SMART health log of a serving device raises a warning.        | The node is not online, or the health report has expired.  |
+| `device_slow`                           | warning  | A serving device performs far worse than the rest of its fleet.   | The node is not online, or the health report has expired.  |
 | `node_jc_compression_error`             | critical | The journal reported a compression error.                         | —                                                          |
 | `node_unrecoverable_io_error`           | critical | An unrecoverable I/O error (a *distr error* in the event log).    | —                                                          |
 | `node_unrecoverable_jc_error`           | critical | An unrecoverable journal error.                                   | —                                                          |
 | `api_slow`                              | critical | Mean control plane API request latency above 15 seconds.          | —                                                          |
 | `cluster_capacity_critical`             | warning  | Absolute capacity passed `--cap-crit`.                            | —                                                          |
 | `cluster_provisioned_capacity_critical` | warning  | Provisioned capacity passed `--prov-cap-crit`.                    | —                                                          |
+
+### Device Health Alerts
+
+`device_slow` and `device_unhealthy` come from the health assessment that the Simplyblock Operator reports for each
+device: a comparison of its performance with the other devices of the cluster, and the verdict of its SMART health
+log. Their `details` carry the verdict and its reason. The checks are described in
+[Device Health](../../kubernetes/operations/monitoring/device-health.md).
+
+The operator sends each assessment to the control plane, and repeats it every five minutes while it does not change:
+
+```plain title="Health assessment endpoint"
+PUT /api/v2/clusters/<CLUSTER_UUID>/storage-nodes/<NODE_UUID>/devices/<DEVICE_UUID>/health-assessment
+```
+
+```json title="Example of a health assessment"
+{
+  "reporter": "simplyblock-operator",
+  "reported_at": "2026-10-29T10:15:00Z",
+  "valid_seconds": 900,
+  "performance": {"verdict": "slow", "reason": "latency 4.2x the fleet median at 1.0x its share"},
+  "smart": {"verdict": "ok", "reason": "no warning in the health log"}
+}
+```
+
+The latest assessment is stored on the device and returned with it by the device endpoints. An assessment is valid
+for `valid_seconds` after `reported_at`. Once it expires, the alerts it raised resolve, so a reporter that stops
+cannot leave an alert firing forever. Any monitoring system can report device health this way, not only the operator.
 
 ### Why Operator-Initiated States Are Not Alerts
 
@@ -24367,7 +25337,7 @@ Every `v1alpha2` kind belongs to one of three categories:
 | `StorageNode`             | `sn`       | Namespaced                             | Entity   | One storage node on a worker and socket. Owned by its cluster.                                                          | [Storage Nodes](../../kubernetes/operations/storage-nodes/index.md)                                                                                                                                                          |
 | `StorageNodeOps`          | `snops`    | Namespaced                             | Action   | `Shutdown`, `Restart`, `Suspend`, `Resume`, `Remove`, `Migrate`, or `HostMaintenance`.                                  | [Storage Node Actions](../../kubernetes/operations/storage-nodes/storage-node-actions.md)                                                                                                                                    |
 | `StorageDevice`           | `sd`       | Namespaced                             | Observed | Mirrors one device of a storage node. Owned by its node.                                                                | [Cluster Health](../../kubernetes/operations/monitoring/cluster-health.md)                                                                                                                                                   |
-| `StorageDeviceOps`        | `sdops`    | Namespaced                             | Action   | `Restart` of one device.                                                                                                | [Restarting a Storage Device](../../kubernetes/operations/storage-nodes/storage-node-actions.md#restarting-a-storage-device)                                                                                                 |
+| `StorageDeviceOps`        | `sdops`    | Namespaced                             | Action   | `Restart`, `Fail`, or `CheckHealth` of one device.                                                                      | [Restarting a Storage Device](../../kubernetes/operations/storage-nodes/storage-node-actions.md#restarting-a-storage-device)                                                                                                 |
 | `StoragePool`             | `sp`       | Namespaced                             | Entity   | A tenancy unit with limits, volume defaults, and allowed nodes. StorageClasses attach to it by label.                   | [Multi-Tenancy](../../kubernetes/operations/security/multi-tenancy.md#storage-pools-as-tenancy-units), [Storage Class](../../kubernetes/usage/storage-class.md)                                                              |
 | `StoragePoolOps`          | `spops`    | Namespaced                             | Action   | `Rebalance` is declared but refused at run time.                                                                        | [Operation Kinds](../../kubernetes/operations/index.md#operation-kinds)                                                                                                                                                      |
 | `PersistentVolumeOps`     | `pvops`    | Cluster                                | Action   | `Migrate`: moves the logical volume of a PersistentVolume to another storage node.                                      | [Volume Migration](../../kubernetes/operations/volumes/volume-migration.md)                                                                                                                                                  |

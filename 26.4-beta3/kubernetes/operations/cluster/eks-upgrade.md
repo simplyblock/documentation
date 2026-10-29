@@ -82,8 +82,10 @@ New storage capacity on the new Kubernetes version is added as a new node group:
 1. Create a new storage node group. It runs the version of the upgraded EKS control plane.
 2. Run a discovery against the new node group and approve the draft, as described in
    [Additional Storage Clusters](../../installation/eks.md#additional-storage-clusters).
-3. Move the volumes from the old storage cluster to the new one with an online migration, using
-   [asynchronous replication](../data-protection/asynchronous-replication.md) in the `migration` mode.
+3. Move the volumes from the old storage cluster to the new one with an
+   [online cluster migration](../data-protection/online-cluster-migration.md). A `ReplicationOps` with
+   `action: migration` and `scope: cluster` moves every claim of the old storage cluster, and `deleteSource: true`
+   deletes each source volume after its cutover.
 4. Remove the old storage cluster and its node group once all volumes have moved.
 
 Client node groups are replaced like any other workload node group. A replacement client node group uses a node image
