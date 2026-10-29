@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="380" viewBox="0 0 960 380" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">Discovery and proposals in simplyblock Disaster Recovery</title>
+<defs>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+</defs>
+<rect x="0" y="0" width="960" height="380" fill="#ffffff"/>
+<!-- site -->
+<rect x="20" y="20" width="250" height="200" rx="10" fill="#f6f8fa" stroke="#424a53" stroke-width="1.5"/>
+<text x="145" y="46" text-anchor="middle" font-size="15" font-weight="700" fill="#424a53">Site cluster</text>
+<rect x="40" y="62" width="210" height="70" rx="6" fill="#ffffff" stroke="#424a53"/>
+<text x="145" y="84" text-anchor="middle" font-size="12" font-weight="600" fill="#1a237e">dr-agent</text>
+<text x="145" y="102" text-anchor="middle" font-size="11" fill="#424a53">object facts, config references</text>
+<text x="145" y="118" text-anchor="middle" font-size="11" fill="#424a53">(Secret key names only)</text>
+<rect x="40" y="142" width="210" height="58" rx="6" fill="#ffffff" stroke="#424a53"/>
+<text x="145" y="164" text-anchor="middle" font-size="12" font-weight="600" fill="#1a237e">dr-flows (eBPF)</text>
+<text x="145" y="182" text-anchor="middle" font-size="11" fill="#424a53">TCP connections, per node</text>
+<!-- hub -->
+<rect x="320" y="20" width="400" height="200" rx="10" fill="#f4f8fe" stroke="#1a237e" stroke-width="1.5"/>
+<text x="520" y="46" text-anchor="middle" font-size="15" font-weight="700" fill="#1a237e">Hub cluster: dr-hub</text>
+<rect x="340" y="62" width="170" height="70" rx="6" fill="#e8eaf6" stroke="#1a237e"/>
+<text x="425" y="84" text-anchor="middle" font-size="12" font-weight="600" fill="#1a237e">DiscoveryGraph</text>
+<text x="425" y="102" text-anchor="middle" font-size="11" fill="#424a53">nodes, edges, evidence</text>
+<text x="425" y="118" text-anchor="middle" font-size="11" fill="#424a53">application candidates</text>
+<rect x="530" y="62" width="170" height="70" rx="6" fill="#e8eaf6" stroke="#1a237e"/>
+<text x="615" y="84" text-anchor="middle" font-size="12" font-weight="600" fill="#1a237e">Rule engine</text>
+<text x="615" y="102" text-anchor="middle" font-size="11" fill="#424a53">tiers, gates, probes, labels</text>
+<text x="615" y="118" text-anchor="middle" font-size="11" fill="#424a53">recovery plans, site mappings</text>
+<rect x="340" y="142" width="360" height="58" rx="6" fill="#e8eaf6" stroke="#1a237e"/>
+<text x="520" y="164" text-anchor="middle" font-size="12" font-weight="600" fill="#1a237e">DRProposal (one bundle per application)</text>
+<text x="520" y="182" text-anchor="middle" font-size="11" fill="#424a53">diff, evidence, confidence, questions, dry-run of the readiness checks</text>
+<!-- git -->
+<rect x="770" y="20" width="170" height="200" rx="10" fill="#f0faf4" stroke="#1b5e20" stroke-width="1.5"/>
+<text x="855" y="46" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">GitOps repository</text>
+<text x="855" y="78" text-anchor="middle" font-size="11" fill="#424a53">one pull request</text>
+<text x="855" y="94" text-anchor="middle" font-size="11" fill="#424a53">per bundle</text>
+<text x="855" y="120" text-anchor="middle" font-size="11" fill="#424a53">questions as a task list</text>
+<text x="855" y="146" text-anchor="middle" font-size="11" font-weight="600" fill="#1b5e20">merge = approve</text>
+<text x="855" y="166" text-anchor="middle" font-size="11" font-weight="600" fill="#1b5e20">revert = roll back</text>
+<!-- applied -->
+<rect x="320" y="270" width="620" height="90" rx="10" fill="#f6f8fa" stroke="#424a53" stroke-width="1.5"/>
+<text x="630" y="296" text-anchor="middle" font-size="15" font-weight="700" fill="#424a53">Applied DR configuration</text>
+<text x="630" y="320" text-anchor="middle" font-size="12" fill="#424a53">ProtectedApplication, RecoveryPlan, SiteProfile, DHCPServer on the hub</text>
+<text x="630" y="340" text-anchor="middle" font-size="12" fill="#424a53">labels on PVCs, VMs and workloads on the site, through LabelRequests</text>
+<!-- arrows -->
+<line x1="270" y1="120" x2="338" y2="98" stroke="#57606a" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="296" y="96" text-anchor="middle" font-size="11" fill="#57606a">reports</text>
+<line x1="510" y1="97" x2="528" y2="97" stroke="#57606a" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="615" y1="132" x2="615" y2="140" stroke="#57606a" stroke-width="1.5" marker-end="url(#arr)"/>
+<line x1="700" y1="171" x2="768" y2="140" stroke="#57606a" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="740" y="176" text-anchor="middle" font-size="11" fill="#57606a">PR</text>
+<line x1="855" y1="220" x2="855" y2="268" stroke="#57606a" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="900" y="250" text-anchor="middle" font-size="11" fill="#57606a">sync</text>
+</svg>
