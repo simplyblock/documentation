@@ -31,7 +31,7 @@ helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 
 helm install simplyblock-operator simplyblock/simplyblock-operator \
-    --version 26.4.0-beta2
+    --version 26.4.0-beta3 \
     --namespace simplyblock \
     --create-namespace
 ```
