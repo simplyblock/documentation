@@ -82,8 +82,13 @@ step.
 ## Rollback
 
 If the application does not reach the target within `spec.timeout` (default `30m`) in `TargetStarting`, a `Relocate`
-rolls back: the application is returned to the source, the `postTargetReady` hooks are re-run at the source, and the
-action ends in `RolledBack`. There is no storage-level rollback.
+rolls back only while the source is still untouched, that is, while Ramen's progression is no further than
+`FinalSyncComplete`. The application then stays at the source, the `postTargetReady` hooks are re-run at the source,
+and the action ends in `RolledBack`. There is no storage-level rollback.
+
+Once Ramen is past the final sync, the volumes on the source are demoted and the source cleanup removes the
+application there. A timeout from that point on ends the action in `Failed`, with a message that the application
+serves at neither site and that Ramen keeps retrying the move.
 
 After `TargetStarting`, there is no rollback. If the application moved but does not become healthy in `Workflow`, or
 a `postTargetReady` hook fails, the action ends in `Failed` with the application running on the target.

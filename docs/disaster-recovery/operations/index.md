@@ -13,11 +13,11 @@ step, and a finished action produces a report. This page gives an overview of th
 A recovery action has one of three kinds. For a move, the target is the `to` site of the action's DR path, and the
 path must list the kind in `spec.actions`. A `Restart` names no path, because it stays on the application's site.
 
-| Kind       | Use                                                                                                | Final sync | Data loss              | Rollback                                                   |
-|------------|----------------------------------------------------------------------------------------------------|------------|------------------------|------------------------------------------------------------|
-| `Relocate` | [Planned failover](planned-failover.md), [failback, and permanent moves](relocate-restart.md)      | Yes        | None                   | Yes, on timeout while the application starts on the target |
-| `Failover` | [Unplanned failover](unplanned-failover.md) when the source site is lost or unusable               | No         | Up to the achieved RPO | No                                                         |
-| `Restart`  | [Restart in place](restart.md) after the application's storage cluster recovered from a suspension | None       | None                   | No                                                         |
+| Kind       | Use                                                                                                | Final sync | Data loss              | Rollback                                                                          |
+|------------|----------------------------------------------------------------------------------------------------|------------|------------------------|-----------------------------------------------------------------------------------|
+| `Relocate` | [Planned failover](planned-failover.md), [failback, and permanent moves](relocate-restart.md)      | Yes        | None                   | Yes, on timeout while the source is untouched (up to Ramen's `FinalSyncComplete`) |
+| `Failover` | [Unplanned failover](unplanned-failover.md) when the source site is lost or unusable               | No         | Up to the achieved RPO | No                                                                                |
+| `Restart`  | [Restart in place](restart.md) after the application's storage cluster recovered from a suspension | None       | None                   | No                                                                                |
 
 A failback is a `Relocate` along the reverse path. Every kind restarts the application. For a sync application, the
 sites are the zones of one stretch cluster, and dr-agent moves the application between them without Ramen. Moving
@@ -26,7 +26,9 @@ running workloads without a restart is described in [Relocate (Online)](relocate
 ## RecoveryAction Lifecycle
 
 A recovery action passes through the following phases in order. It resumes at the phase it stopped in after a
-restart of dr-hub.
+restart of dr-hub. The time budget of a step (hooks, the Ramen move, health probes, guest checks, restart, and zone
+moves) counts from the later of the step's start and dr-hub's start, so a restart of dr-hub gives a running step its
+full budget again.
 
 | Phase             | What happens                                                                                                                                                                                                        |
 |-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -40,7 +42,7 @@ restart of dr-hub.
 | `Confirming`      | Completes the report.                                                                                                                                                                                               |
 | `Completed`       | The application runs and is healthy on the target.                                                                                                                                                                  |
 | `Failed`          | The action stopped. The step that failed is in `status.steps`.                                                                                                                                                      |
-| `RolledBack`      | A `Relocate` timed out while starting on the target and was returned to the source.                                                                                                                                 |
+| `RolledBack`      | A `Relocate` timed out before Ramen released the source and stays at the source. See [Planned Failover](planned-failover.md#rollback).                                                                              |
 
 The RTO is measured from the creation of the action until all health probes pass. The action times out after
 `spec.timeout` (default `30m`).

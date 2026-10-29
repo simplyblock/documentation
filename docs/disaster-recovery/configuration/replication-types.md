@@ -198,6 +198,13 @@ application's owner meets before the PVCs are provisioned, and DR does not set o
 - **One group per application and namespace:** Ramen creates one VolumeGroupReplication per namespace and group.
 - **Readiness:** The blocking check `consistency-group-labels` fails when a PVC on a group StorageClass has no label,
   the PVCs of a namespace span two groups, or a group also holds PVCs of another namespace.
+- **Binding:** dr-hub does not bind a new application while that check fails. The `Bound` condition says why
+  (`not protected: ...`). Otherwise, Ramen would create a VolumeGroupReplication that the storage cannot form, and the
+  protection could not be removed again. An application that is already bound stays bound when a PVC added later
+  breaks the rule, and readiness reports it.
+- **Grouped PVCs need groups enabled:** An application whose PVCs carry the consistency-group label, for example,
+  from a Helm chart or StatefulSet template, belongs in a plan with `consistencyGroups: Enabled`. Its volumes were
+  created in one backend group, and moving them one by one with groups disabled can fail to promote them on the target.
 
 Consistency groups are disabled by default. A synchronous stretch volume is consistent across all volumes of an
 application by construction and needs no group.

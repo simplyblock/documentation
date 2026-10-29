@@ -22,8 +22,14 @@ A bundle contains the following:
 - **Site registrations:** The joined sites and their dr-agent addons.
 - **S3 profiles:** The S3 store configuration of the sites.
 - **Simplyblock DR resources:** ProtectionPlans, DRPaths, ProtectedApplications, RecoveryPlans, and TestSchedules.
+- **Site mapper:** The SiteProfiles and DHCPServers, so that a restored hub keeps the network bindings of the sites.
 - **Protection state:** The protection state of every application, so that a restored hub takes over the running
   protection instead of starting it anew.
+
+The objects of [discovery](../discovery/index.md) (graphs, bundles, runs, blueprints, and environment mappings) are
+not part of a bundle. A restored hub with discovery enabled rebuilds the graphs from the sites' reports, and the rule
+engine proposes again. Blueprints are copied to the restored hub again, and bundle manifests in a GitOps repository
+are synced by the GitOps tool.
 
 A bundle contains no Secrets and no finished runs (these are archived as reports). The following Secrets must be kept
 in safekeeping outside the clusters:

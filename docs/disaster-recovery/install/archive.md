@@ -29,6 +29,7 @@ A DR state bundle contains:
 
 - **DR configuration:** The `DRConfig` and all DR objects (protection plans, DR paths, protected applications,
   recovery plans, and test schedules).
+- **Site mapper:** The site profiles and DHCP servers.
 - **Sites:** The managed clusters the hub expects.
 - **Generated Recipes:** The Recipes generated for protected applications.
 

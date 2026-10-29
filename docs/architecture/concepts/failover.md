@@ -12,14 +12,14 @@ distinguish a lost site from a transient outage.
 
 ## Planned and Unplanned
 
-| Aspect                | Planned (`Relocate`)                             | Unplanned (`Failover`)            |
-|-----------------------|--------------------------------------------------|-----------------------------------|
-| Typical cause         | Maintenance, datacenter move, failback           | Loss or outage of the source site |
-| Source site           | Reachable and healthy                            | Down or unreliable                |
-| Final synchronization | Yes, after the application stopped on the source | No                                |
-| Data loss             | None                                             | Up to the recovery point (RPO)    |
-| preSource hooks       | Must succeed, otherwise nothing moves            | Best effort, capped at 2 minutes  |
-| Rollback on timeout   | Rolls back to the source site                    | No rollback                       |
+| Aspect                | Planned (`Relocate`)                                | Unplanned (`Failover`)            |
+|-----------------------|-----------------------------------------------------|-----------------------------------|
+| Typical cause         | Maintenance, datacenter move, failback              | Loss or outage of the source site |
+| Source site           | Reachable and healthy                               | Down or unreliable                |
+| Final synchronization | Yes, after the application stopped on the source    | No                                |
+| Data loss             | None                                                | Up to the recovery point (RPO)    |
+| preSource hooks       | Must succeed, otherwise nothing moves               | Best effort, capped at 2 minutes  |
+| Rollback on timeout   | Rolls back to the source site, up to the final sync | No rollback                       |
 
 For a relocation, the application is stopped on the source, the remaining changes are synchronized, and the volumes
 are demoted on the source and promoted on the target. A failover promotes the last replicated state on the target
