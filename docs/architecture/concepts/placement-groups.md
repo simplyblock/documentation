@@ -127,4 +127,4 @@ The following volumes cannot be relocated:
   `EncryptedVolumeNotMovable`.
 - **Members of a consistency group:** Moving one volume off the group's logical volume store breaks the group.
 - **Volumes outside a supercluster:** Moving a volume between unrelated clusters is a matter of
-  [asynchronous replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+  [online cluster migration](../../kubernetes/operations/data-protection/online-cluster-migration.md).

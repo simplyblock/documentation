@@ -394,4 +394,5 @@ than it was built with. The combined capacity requires the metrics exporter to b
   any placement group names it.
 - **Shared workers:** A worker serves one placement group only.
 - **Pool limits:** A pool of a supercluster carries a capacity limit only, as every pool does.
-- **Replication:** A `ReplicationPair` cannot name a supercluster. Placement groups are named directly.
+- **Replication:** A `ReplicationPair` cannot name a supercluster, and neither can an
+  [online cluster migration](../data-protection/online-cluster-migration.md). Placement groups are named directly.
