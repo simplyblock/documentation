@@ -1,13 +1,13 @@
 ---
 title: "Relocation"
-description: "Restart-based relocation of whole workloads between sites with simplyblock DR, and the planned online migration of VMs and volumes across clusters."
+description: "Restart-based relocation of whole workloads between sites with simplyblock DR, and the online migration of volumes between clusters and nodes."
 weight: 30930
 ---
 
 Relocation moves a running workload to another location. Simplyblock distinguishes three kinds of relocation. A DR
 relocation moves entire applications between Kubernetes clusters and restarts them on the target site. An online
-migration across clusters would move virtual machines and volumes without a restart and is planned for the future.
-Within a single storage cluster, volumes already move between storage nodes online today.
+cluster migration moves volumes from one storage cluster to another without restarting the workloads that use them.
+Within a single storage cluster, volumes move between storage nodes online.
 
 ## DR Relocation (Restart-Based)
 
@@ -33,20 +33,23 @@ are described in [Failover](failover.md).
 
 ## Online Migration Across Clusters
 
-!!! info "Coming soon"
-    Online migration across clusters is not designed yet. It is intended to cover the live migration of KubeVirt virtual
-    machines and the live migration of volumes from one simplyblock cluster to another, without restarting the
-    workload. Until it is available, workloads move between clusters with a restart-based DR relocation.
+An online cluster migration moves volumes to another storage cluster of the same control plane while their workloads
+keep running. The volumes are replicated to the target cluster with asynchronous replication in `migration` mode while
+the source keeps serving them. A migration plan in the control plane holds the volumes, places each of them on a
+target storage node, and forecasts when the migration completes. Each source storage node migrates one volume at a
+time.
 
-## Volume Cutover Between Clusters
+Each volume ends with a cutover. The target cluster exposes the volume under the same NVMe subsystem, and its paths
+are connected on the consuming Kubernetes node beforehand. The source paths are then made inaccessible, the remaining
+delta is copied during a short I/O freeze, and the target paths become optimized. The client switches paths through
+NVMe multipathing, and the pod is not restarted.
 
-Below the application level, the storage-level asynchronous replication of simplyblock can prepare a planned cutover
-of individual volumes to another storage cluster of the same control plane. A replication policy in `migration` mode
-replicates the volumes to the target cluster while they keep serving I/O on the source. The cutover itself is then
-committed per volume: the volume is frozen briefly, the remaining delta is transferred, and the target cluster serves
-the volume from then on. The workload has to reconnect to the volume on the target cluster, so this is not an online
-migration of the workload. See
-[Asynchronous Replication](../../kubernetes/operations/data-protection/asynchronous-replication.md).
+On Kubernetes, a migration is started by a `ReplicationOps` resource with `action: migration`, which can cover every
+volume of a storage cluster. See
+[Online Cluster Migration](../../kubernetes/operations/data-protection/online-cluster-migration.md).
+
+The live migration of KubeVirt virtual machines between clusters is not covered by it. Workloads that cannot rely on
+NVMe multipathing move between clusters with a restart-based DR relocation.
 
 ## Volume Migration Within a Cluster
 
