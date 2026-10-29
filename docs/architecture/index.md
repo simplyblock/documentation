@@ -9,7 +9,7 @@ resilience. It provides NVMe over TCP (NVMe/TCP) and NVMe over RDMA (ROCEv2) blo
 access across distributed environments.
 
 !!! Info
-    In addition to NVMe-over-Fabric block storage, Simplyblock now also provides high-performance file and object storage (S3).
+    In addition to NVMe-over-Fabric block storage, simplyblock now also provides high-performance file and object storage (S3).
     All storage interfaces are built over the same distributed, high-performance, scale-out storage platform with the 
     same capabilities for data protection, distributed erasure coding, security, encryption, asynchronous or synchronous 
     replication and disaster recovery, built-in backup and restore - including automated cyber-attack recovery- and optional    
