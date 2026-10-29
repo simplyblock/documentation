@@ -28,17 +28,10 @@ For how this storage-level replication relates to application-level disaster rec
 Asynchronous replication with controlled failover and failback is a Kubernetes-only feature, managed by the
 Simplyblock Operator.
 
-Both clusters have to be represented by a `StorageCluster` resource in the same namespace as the replication
-resources, which means both are attached to the same simplyblock control plane. A cluster is referenced by the name
-of its `StorageCluster`, and its UUID has to be reported in `status.uuid` before replication can be configured.
-Cross-namespace references are not supported. Both clusters have to be active with their storage nodes online, and
-the two clusters need network interconnectivity.
-
-!!! warning
-    With the `v1alpha2` API, a namespace admits one `StorageCluster` only, while a `ReplicationPair` resolves both of
-    its clusters in its own namespace. Until the replication kinds follow the new API, a pair between two
-    `StorageCluster` objects cannot be declared on a fresh `v1alpha2` installation. Confirm the supported setup with
-    simplyblock support before planning replication.
+Both clusters have to be attached to the same simplyblock control plane. A cluster is referenced by the name of its
+`StorageCluster` in the namespace of the replication resources, whose UUID has to be reported in `status.uuid` before
+replication can be configured, or by the cluster's UUID. Both clusters have to be active with their storage nodes
+online, and the two clusters need network interconnectivity.
 
 !!! note
     For multi-site setups, such as disaster recovery or offsite failover, a distributed control plane is highly
@@ -55,7 +48,7 @@ the operator, and the fourth is created to trigger an operation.
 | `ReplicationPair`   | `relpair`  | One per cluster pair   | Declares the source and the target cluster of a replication relationship. |
 | `ReplicationPolicy` | `repl`     | One per schedule       | Sets the cadence, the mode, and the snapshot retention of a pair.         |
 | `ReplicationSlot`   | `relslot`  | One per replicated PVC | Holds the live per-volume replication state. Created by the operator.     |
-| `ReplicationOps`    | `replops`  | One per operation      | Triggers a failover or a failback and records its outcome.                |
+| `ReplicationOps`    | `replops`  | One per operation      | Triggers a failover, a failback, or a migration and records its outcome.  |
 
 A pair is reusable. Several policies can reference the same pair to replicate between the same two clusters with
 different schedules or retention.
@@ -140,6 +133,9 @@ dr-policy   site-a-to-site-b   failover   5m         true    4       2m
 
 An interval that cannot be parsed as a duration falls back to five minutes.
 
+A policy in the `migration` mode moves its volumes to the target cluster online. The move is started by a
+`ReplicationOps` with `action: migration` and is described in [Online Cluster Migration](online-cluster-migration.md).
+
 ## Selecting the Volumes to Replicate
 
 A volume is opted into replication by the `storage.simplyblock.io/replication-policy` annotation, which names a
@@ -162,9 +158,11 @@ kubectl annotate pvc my-pvc -n simplyblock \
     storage.simplyblock.io/replication-policy=dr-policy
 ```
 
-The annotation is honored on a new PVC and on an already-bound one. A `ReplicationSlot` is created as soon as the PVC
-is `Bound` and the named policy is ready, and it is named `<policy>-<pvc>`. The slot is owned by its PVC, so deleting
-the PVC deletes the slot and stops replication for that volume.
+The annotation names a policy in the namespace of the PVC, or a policy in another namespace as `<namespace>/<name>`,
+for example, `simplyblock/dr-policy`. The annotation is honored on a new PVC and on an already-bound one. A
+`ReplicationSlot` is created as soon as the PVC is `Bound` and the named policy is ready, and it is named
+`<policy>-<pvc>`. The slot is owned by its PVC, so deleting the PVC deletes the slot and stops replication for that
+volume.
 
 ### Changing or Removing the Policy
 
@@ -203,8 +201,8 @@ normal replication and `target` after a failover.
 | State             | Description                                                                                   |
 |-------------------|-----------------------------------------------------------------------------------------------|
 | `replicating`     | Steady state. Snapshots are taken and transferred on the policy's interval.                   |
-| `cutover_pending` | A planned cutover has been prepared on the backend and is awaiting its commit.                |
-| `cutover_done`    | The cutover has completed.                                                                    |
+| `cutover_pending` | A planned cutover has been prepared on the backend and is waiting for the preconnect.         |
+| `cutover_done`    | The cutover has completed, and the target cluster serves the volume.                          |
 | `failed_over`     | The volume is served by the target cluster. `status.targetNQN` carries the NQN on the target. |
 | `detaching`       | Replication is being stopped and the replication snapshots are being deleted on both sides.   |
 | `error`           | A backend call failed. `status.message` holds the reason, and the attach is retried.          |
@@ -234,8 +232,8 @@ the same poll and reflected into the slot.
 ## Failover
 
 A failover is never performed automatically. It is triggered by creating a `ReplicationOps` resource with
-`action: failover`, which covers both the unplanned failover of a lost site and the planned cutover of a `migration`
-policy.
+`action: failover`, for example, after the loss of a site. The planned, online move of volumes to the target cluster
+uses `action: migration` instead, as described in [Online Cluster Migration](online-cluster-migration.md).
 
 ```bash title="Failing over every volume of a policy to the target cluster"
 kubectl apply -n simplyblock -f - <<EOF
@@ -323,8 +321,10 @@ failback-dr-policy   failback   policy   dr-policy   Running     CommittingFailb
 
 `status.phase` moves from `Pending` through `Running` to `Succeeded` or `Failed`, and `status.subphase` names the
 step within `Running`: `TriggeringFailover`, `TriggeringTargetFailover`, `UpdatingSlotStatuses`, `StartingFailback`,
-or `CommittingFailback`. The per-volume outcome is held in `status.results`, where each entry carries the slot it
-belongs to, a status of `succeeded`, `skipped`, or `failed`, and a detail message.
+or `CommittingFailback`. The subphases of a migration are listed in
+[Watching a Migration](online-cluster-migration.md#watching-a-migration). The per-volume outcome is held in
+`status.results`, where each entry carries the slot it belongs to, a status of `succeeded`, `skipped`, or `failed`, and
+a detail message.
 
 ```bash title="Reading the per-volume outcome of an operation"
 kubectl get replicationops failover-dr-policy -n simplyblock \
@@ -348,7 +348,7 @@ The operator emits Kubernetes events on the affected resources. Useful reasons t
 | Reason              | Emitted on        | Meaning                                                  |
 |---------------------|-------------------|----------------------------------------------------------|
 | `Replicating`       | `ReplicationSlot` | The volume is attached and replicating.                  |
-| `CutoverPending`    | `ReplicationSlot` | A planned cutover is awaiting its commit.                |
+| `CutoverPending`    | `ReplicationSlot` | A planned cutover is waiting for the preconnect.         |
 | `FailedOver`        | `ReplicationSlot` | The volume is now served by the target cluster.          |
 | `Detached`          | `ReplicationSlot` | Replication was stopped for the volume.                  |
 | `Error`             | `ReplicationSlot` | A backend call for the volume failed.                    |
