@@ -20,7 +20,7 @@ within a cluster (hyper-converged, disaggregated, or hybrid) is independent of t
 | DR hub with local storage: metro                     | 1 hub + 2 sites          | 1, stretched across both sites | Yes, DR only        | `sync`        |
 | DR hub with local storage: async                     | 1 hub + 2 or more sites  | 1 per site                     | Yes, DR only        | `async`       |
 | DR hub with local storage: backup                    | 1 hub + 1 or more sites  | 1 per site                     | Yes, DR only        | `snapshot-s3` |
-| Central hub for DR and storage (coming soon)         | 1 hub + managed clusters | 1 or more per managed cluster  | Yes, DR and storage | All           |
+| Central hub for DR and storage                       | 1 hub + managed clusters | 1 or more per managed cluster  | Yes, DR and storage | All           |
 
 ## Single Kubernetes Cluster, Single Storage Cluster
 
@@ -159,30 +159,26 @@ The architecture has the following properties.
 
 ## Central Hub for DR and Storage
 
-!!! info "Coming soon"
-    The hub deployment of the Simplyblock Operator and control plane is not released yet. Today, the hub runs the DR
-    components only, and the simplyblock operators and control planes run at the sites (see
-    [DR Hub with Local Storage](#dr-hub-with-local-storage)).
+One hub cluster runs both the DR components and the centralized simplyblock control plane. The managed clusters run
+the OCM klusterlet, dr-agent, and the Ramen DR cluster operator for DR, and the Simplyblock Operator in the `managed`
+profile, the CSI driver, and the storage nodes for storage. Storage and DR are then managed in one place.
 
-    In this architecture, one hub cluster runs both the DR components and the centralized simplyblock operator and
-    control plane. The managed clusters run the OCM klusterlet, dr-agent, the Ramen DR cluster operator,
-    lightweight simplyblock agents, the CSI driver, and the storage nodes. Storage and DR are then managed and
-    authorized in one place.
+![Central hub for DR and simplyblock storage management](../assets/images/architecture/deploy-central-hub.svg)
 
-    ![Central hub for DR and simplyblock storage management](../assets/images/architecture/deploy-central-hub.svg)
+The architecture has the following properties.
 
-    The architecture has the following properties.
+- **When to use:** Many small clusters, for example, edge locations, that should be managed centrally and keep a
+  minimal footprint.
+- **Components:** Hub cluster with OCM hub, Ramen hub operator, dr-hub, DR console, and the simplyblock control
+  plane with its operator. Managed clusters with the DR site stack, the Simplyblock Operator in the `managed`
+  profile, the CSI driver, and the storage nodes.
+- **Failure behavior:** Volumes keep serving I/O while the hub is unavailable, but neither storage management nor DR
+  actions are possible, so the hub has to be highly available and its state recoverable.
+- **Replication types:** `sync`, `async`, and `snapshot-s3`, depending on the protection plans.
 
-    - **When to use:** Many small clusters, for example, edge locations, that should be managed centrally and keep a
-      minimal footprint.
-    - **Components:** Hub cluster with OCM hub, Ramen hub operator, dr-hub, DR console, simplyblock operator, and
-      control plane. Managed clusters with agents, CSI driver, and storage nodes.
-    - **Failure behavior:** While the hub is unavailable, neither storage management nor DR actions are possible, so
-      the hub has to be highly available and its state recoverable.
-    - **Replication types:** `sync`, `async`, and `snapshot-s3`, depending on the protection plans.
-
-    The management model is described in
-    [Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md).
+The management model is described in
+[Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md), and the
+installation in [Connecting to an External Control Plane](../kubernetes/installation/install-csi.md).
 
 ## Shared File Storage (pNFS)
 
@@ -235,6 +231,6 @@ The node requirements are listed in
 | Two sites at metro distance, no data loss on site loss                                   | DR hub with metro (stretched storage cluster, `sync`)                  |
 | Sites in different regions, recovery point of minutes                                    | DR hub with async (separate site clusters, `async`)                    |
 | Recovery from loss of all clusters or ransomware                                         | Add `snapshot-s3` backups to a metro or async plan                     |
-| Many small or edge clusters, central management                                          | Central hub for DR and storage (coming soon)                           |
+| Many small or edge clusters, central management                                          | Central hub for DR and storage                                         |
 | Strict isolation between clusters, independent upgrades                                  | Local control plane and operator per cluster, with or without a DR hub |
 | Files shared by pods on many nodes (`ReadWriteMany`)                                     | Any architecture above, plus [pNFS](#shared-file-storage-pnfs)         |

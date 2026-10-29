@@ -270,8 +270,6 @@ set above the limit is refused with `MemberTooLarge`.
 
 ### Storage Array LUNs
 
-{{ experimental }}
-
 On a [storage array](../../architecture/concepts/storage-arrays.md), the devices are the LUNs of each worker, listed
 under `devices.block`. Block devices require `enableJournalDevice`, which dedicates the smallest LUN of each worker
 to the journal. A discovery run with `enableLogicalBlockDevices` and `forceJournalDevice` drafts the document, or it

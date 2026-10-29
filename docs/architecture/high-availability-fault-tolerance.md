@@ -31,6 +31,29 @@ Erasure coding needs far less extra capacity than keeping full copies. For examp
 with 50% overhead, while three full copies would need 200%. See [Erasure Coding](concepts/erasure-coding.md) for the
 supported schemes.
 
+!!! info "Storage arrays and local RAID controllers"
+    When simplyblock runs on the LUNs of a [storage array](concepts/storage-arrays.md) (FC, iSCSI, or NVMe-oF) or
+    on the volumes of a local hardware RAID controller, single drive failures are already handled below
+    simplyblock by the RAID of the array or controller. Simplyblock then does not need to protect against them and
+    focuses on the failures the RAID cannot cover: the loss of an entire storage node, or of an entire array or
+    controller with all of its LUNs.
+
+    One parity chunk is therefore usually enough. RAID 5 below simplyblock combined with an `n+1` scheme, such as
+    `4+1`, tolerates two failures, similar to RAID 6, at as little as 25% additional capacity overhead. Both kinds of
+    devices are used through the [Linux block device mode](concepts/linux-block-devices.md).
+
+!!! info "Superclusters and placement groups"
+    The fault tolerance of a cluster is set by its erasure coding scheme and does not grow with the number of nodes,
+    while the chance of more concurrent failures than the scheme tolerates does. A storage cluster therefore holds at
+    most 32 storage nodes, and larger fleets are built as a [supercluster](deployment-topologies/superclusters.md) of
+    several [placement groups](concepts/placement-groups.md).
+
+    Each placement group is a complete storage cluster with its own erasure coding, failure domains, journal, and
+    failover paths. A volume's data lives in exactly one placement group and is never spread across them, so each
+    placement group also isolates its volumes from failures in the other placement groups. Even a failure beyond
+    the tolerance of one placement group affects only the volumes placed in it. Volumes can be moved between
+    placement groups online with a [relocation](concepts/relocation.md).
+
 ## Device Failures
 
 The control plane watches every device and reacts before a failing device slows down or endangers the cluster:

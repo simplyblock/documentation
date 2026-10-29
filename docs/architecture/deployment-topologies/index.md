@@ -24,10 +24,9 @@ and a large datacenter cluster can run disaggregated storage with its own local 
 
 ## Control Plane and Operator Placement
 
-- **Local:** Every Kubernetes cluster runs its own control plane and Simplyblock Operator. This is the model that is
-  available today.
-- **Hub:** A hub (management) cluster runs the operator and the control plane centrally, and the managed clusters
-  only run lightweight agents, the CSI driver, and the storage nodes. The hub model is coming soon.
+- **Local:** Every Kubernetes cluster runs its own control plane and Simplyblock Operator.
+- **Hub:** A hub (management) cluster runs the control plane centrally, and the managed clusters only run the
+  Simplyblock Operator in the `managed` profile, the CSI driver, and the storage nodes.
 
 The details and a comparison are in [Control Plane and Operator](control-plane-and-operator.md).
 
@@ -43,8 +42,8 @@ The details and a comparison are in [Control Plane and Operator](control-plane-a
 ## Relation to Disaster Recovery
 
 Disaster recovery adds a hub cluster that coordinates several site clusters. The DR hub is independent of the
-management topology described here, but the same hub cluster can also host the centralized simplyblock control plane
-once that is available. The supported combinations are shown in
+management topology described here, but the same hub cluster can also host the centralized simplyblock control
+plane. The supported combinations are shown in
 [Deployment Architectures](../../deployment-preparation/deployment-architectures.md).
 
 ## Pages in This Section

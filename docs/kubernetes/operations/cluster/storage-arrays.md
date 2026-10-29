@@ -4,8 +4,6 @@ description: "Operate a simplyblock cluster on storage array LUNs: capacity on t
 weight: 10165
 ---
 
-{{ experimental }}
-
 A storage cluster on the LUNs of a [storage array](../../../architecture/concepts/storage-arrays.md) is operated like
 any other simplyblock cluster. This page covers what is different: capacity on two levels, the growth of the
 cluster, and the tasks that stay with simplyblock instead of the array.

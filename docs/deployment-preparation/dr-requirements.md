@@ -16,9 +16,9 @@ The DR hub runs the Open Cluster Management (OCM) hub, the Ramen hub operator, a
 separate Kubernetes cluster, not on one of the site clusters, so that the loss of a site never takes the DR control
 point with it.
 
-!!! info "Coming soon"
-    Once the hub deployment of the Simplyblock Operator and control plane is released, the same hub cluster can also
-    host the centralized simplyblock storage management. See
+!!! info "Central storage management"
+    The same hub cluster can also host the centralized simplyblock control plane, which manages the storage of the
+    sites. See
     [Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md).
 
 ### High Availability

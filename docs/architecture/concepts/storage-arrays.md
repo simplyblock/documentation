@@ -4,8 +4,6 @@ description: "How simplyblock runs on LUNs of an existing FC, iSCSI, or NVMe-oF 
 weight: 30655
 ---
 
-{{ experimental }}
-
 Simplyblock can run on the LUNs of an existing storage array instead of local NVMe devices. Every storage node's
 host is given LUNs over Fibre Channel, iSCSI (also iSER), or NVMe over Fabrics (NVMe/FC, NVMe/TCP, NVMe/RoCE), and
 simplyblock uses them as [Linux block devices](linux-block-devices.md). On top of them, it provides its full feature

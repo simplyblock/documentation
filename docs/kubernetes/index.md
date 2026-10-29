@@ -30,10 +30,10 @@ Before deploying, review the node sizing, network, and erasure coding guidance i
 [Deployment Preparation](../deployment-preparation/index.md). That guidance applies to all deployment models, with
 additional sizing notes for hyper-converged clusters where compute and storage share nodes.
 
-!!! info "Coming soon"
-    A centralized hub deployment is in development. In this model, the Simplyblock Operator and the control plane run
-    on a hub cluster that manages the storage of many member Kubernetes clusters through Open Cluster Management (OCM).
-    See [Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md).
+The control plane runs either in the same Kubernetes cluster or centrally on a hub cluster that manages the storage
+of many Kubernetes clusters. With a hub, the other clusters run the Simplyblock Operator in the `managed` profile, the
+CSI driver, and the storage nodes only. See
+[Control Plane and Operator](../architecture/deployment-topologies/control-plane-and-operator.md).
 
 ## What This Section Covers
 

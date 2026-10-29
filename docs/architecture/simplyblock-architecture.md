@@ -66,8 +66,8 @@ The control plane is not in the I/O path. Volumes keep serving I/O while it is u
 operations and automated recovery wait until it returns. All communication between the control plane and the
 storage nodes is secured with TLS.
 
-The control plane and the operator can run locally in every Kubernetes cluster or, in the future, centrally on a hub
-cluster (see [Control Plane and Operator](deployment-topologies/control-plane-and-operator.md)). Details of the
+The control plane can run locally in every Kubernetes cluster or centrally on a hub cluster that manages many
+Kubernetes clusters (see [Control Plane and Operator](deployment-topologies/control-plane-and-operator.md)). Details of the
 components are in [Control Plane Cluster Architecture](../kubernetes/installation/management-cluster-architecture.md).
 
 ## CSI Driver
