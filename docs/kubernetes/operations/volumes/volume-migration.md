@@ -122,8 +122,6 @@ An unknown UUID is rejected by the PVC webhook. A value that cannot be resolved 
 
 ## Auto-Rebalancing
 
-{{ experimental }}
-
 When enabled, the operator continuously evaluates the per-node load and migrates volumes off overloaded ("hot") nodes
 onto less-loaded ("cold") nodes. It creates the same `PersistentVolumeOps` objects as a manual migration, so every
 move stays observable through `kubectl get pvops`.
@@ -144,8 +142,8 @@ spec:
 ```
 
 !!! warning
-    Automatic rebalancing is considered an experimental feature. Its algorithm is subject to change and is not optimal.
-    It is not yet recommended for any production environment.
+    The algorithm of the automatic rebalancing is subject to change and is not yet optimal. It is not yet recommended
+    for production environments.
 
 | Field                         | Default         | Description                                                                                                  |
 |-------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------|

@@ -10,8 +10,8 @@ volumes are copied to the target cluster while the source keeps serving them, an
 freeze, the cutover, after which the target cluster serves it. Pods are not restarted, and the PersistentVolumes and
 PersistentVolumeClaims stay as they are.
 
-A typical use is replacing a storage cluster, for example, when the storage node group of an Amazon EKS cluster moves
-to a new Kubernetes version (see [Upgrading Amazon EKS](../cluster/eks-upgrade.md)).
+A typical use is replacing a storage cluster, for example, when the storage node group of an EKS cluster moves
+to a new Kubernetes version (see [Upgrading EKS](../cluster/eks-upgrade.md)).
 
 Online cluster migration is different from [volume migration](../../../architecture/concepts/volume-migration.md),
 which moves a volume between the storage nodes of one cluster, and from
@@ -88,7 +88,7 @@ and the cutover is retried.
 !!! info
     The cutover relies on the ANA path states of NVMe multipathing. A client without native NVMe multipathing cannot
     switch paths, and the cutover interrupts the I/O of the volume (see
-    [Amazon EKS Node Images](../../../deployment-preparation/amazon-eks.md#node-images)).
+    [EKS Node Images](../../installation/eks.md#node-images)).
 
 ## Prerequisites and Limits
 

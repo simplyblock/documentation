@@ -1,51 +1,60 @@
 ---
-title: "Erasure Coding Scheme"
-description: "Choosing the appropriate erasure coding scheme is crucial when deploying a simplyblock storage cluster, as it directly impacts data redundancy, storage."
-weight: 30100
+title: "Fault Tolerance and Erasure Coding"
+description: "Choose the erasure coding scheme and fault tolerance of a simplyblock cluster: supported schemes, minimum nodes, failure domains, small clusters, and arrays."
+weight: 29975
 ---
 
-Choosing the appropriate **erasure coding scheme** is crucial when deploying a simplyblock storage cluster, as it
-directly impacts **data redundancy, storage efficiency, and overall system performance**. Simplyblock currently supports
-the following erasure coding schemes: `1+0`, `1+1`, `2+1`, `4+1`, `1+2`, `2+2`, and `4+2`. Understanding the
-trade-offs between redundancy and storage utilization helps to determine the best option for a given workload. All schemas
-have been performance-optimized by specialized algorithms. There is, however, a remaining capacity-to-performance
-trade-off.
+The erasure coding scheme decides how many failures a storage cluster tolerates, how much capacity protection costs,
+and how many storage nodes the cluster needs. It is chosen once, when the cluster is created, and applies to all
+volumes of the cluster. How erasure coding works is explained in
+[Erasure Coding](../architecture/concepts/erasure-coding.md).
 
-## Erasure Coding Schemes
+## Supported Schemes
 
-Erasure coding (EC) is a **data protection mechanism** that distributes data and parity across multiple storage nodes,
-allowing data recovery in case of hardware failures. The notation **k+m** represents:
+A scheme `k+m` splits data into `k` data chunks and adds `m` parity chunks, each on a different storage node:
 
-- **k:** The number of data fragments.
-- **m:** The number of parity/coding fragments.
+- **FTT** (failures to tolerate) is the number of storage nodes that can fail at the same time without data loss
+  (`m`).
+- **Overhead** is the additional raw capacity stored on top of the usable data.
+- **Minimum nodes** is the number of storage nodes required for full redundancy, including the spare capacity to
+  rebuild a failed node.
 
-For more information on erasure coding, see the dedicated concept page for
-[erasure coding](../architecture/concepts/erasure-coding.md).
-
-The table below gives an overview of the supported schemes:
-
-- **FTT** (failures to tolerate) is the number of storage nodes that can fail with no data loss (`m`).
-- **Data protection overhead** is the additional raw capacity stored on top of the usable data (e.g., 100% means the
-  cluster holds 2× the raw capacity for the usable amount, and 0% means no protection).
-- **IOPS r/w performance and latency** is a relative rating of read/write IOPS and latency.
-- **Minimum nodes** is the number of storage nodes required for full redundancy.
-
-| Schema | FTT | Data Protection Overhead | IOPS R/W Performance and Latency | Minimum Nodes |
-|--------|-----|--------------------------|----------------------------------|---------------|
-| `1+0`  | 0   | 0%                       | Very good                        | 1             |
-| `1+1`  | 1   | 100%                     | Excellent                        | 3             |
-| `2+1`  | 1   | 50%                      | Very good                        | 4             |
-| `4+1`  | 1   | 25%                      | Very good                        | 6             |
-| `1+2`  | 2   | 200%                     | Very good                        | 5             |
-| `2+2`  | 2   | 100%                     | Very good                        | 6             |
-| `4+2`  | 2   | 50%                      | Very good                        | 8             |
+| Scheme | FTT | Overhead | IOPS and Latency | Minimum Nodes |
+|--------|-----|----------|------------------|---------------|
+| `1+0`  | 0   | 0%       | Very good        | 1             |
+| `1+1`  | 1   | 100%     | Excellent        | 3             |
+| `2+1`  | 1   | 50%      | Very good        | 4             |
+| `4+1`  | 1   | 25%      | Very good        | 6             |
+| `1+2`  | 2   | 200%     | Very good        | 5             |
+| `2+2`  | 2   | 100%     | Very good        | 6             |
+| `4+2`  | 2   | 50%      | Very good        | 8             |
 
 ## Choosing the Scheme
 
-When selecting an erasure coding scheme for simplyblock, consider the following:
+1. **Failures to tolerate:** One parity chunk survives one node failure, and two parity chunks survive two. Two parity
+   chunks also give every volume a second standby path (see
+   [High Availability and Fault Tolerance](../architecture/high-availability-fault-tolerance.md)).
+2. **Capacity:** Wider schemes cost less capacity. `4+1` and `4+2` have the lowest overhead for their fault tolerance.
+3. **Performance:** `1+1` and `1+2` keep full copies, which gives the lowest latency and the fastest rebuilds. Wider
+   schemes reconstruct lost data from parity.
+4. **Cluster size:** The scheme sets the minimum number of nodes. Small clusters therefore use `1+1` or `2+1`, and
+   larger clusters can use the wider schemes.
 
-1. **Redundancy Requirements:** If the priority is maximum data protection and quick recovery, `1+1` or `1+2` are ideal. For a balance between protection and efficiency, `2+1` or `2+2` is preferred.
-2. **Storage Capacity:** `1+1` requires double the storage space, whereas `2+1` provides better storage efficiency. `1+2` requires triple the storage space, whereas `2+2` provides great storage efficiency and fault tolerance.
-3. **Performance Needs:** `1+1` and `2+2` offer faster reads and writes due to mirroring, while `2+1` and `2+2` reduce write amplification and optimize for storage usage.
-4. **Cluster Size:** **Smaller clusters** benefit from **1+1** or `1+2` due to its simplicity and faster rebuild times, whereas `2+1` and `2+2` are more effective in **larger clusters**.
-5. **Recovery Time Objectives (RTOs):** If minimizing downtime is critical, `1+1` and `1+2` offer near-instant recovery compared to `2+1` and `2+2` which require rebuilding of the lost data from parity information.
+## Failure Domains
+
+With [failure domains](../architecture/concepts/failure-domains.md), the chunks of a stripe are also spread across
+racks or zones. Activation then requires at least `parity chunks + 2` domains with an equal number of hosts each. How
+many whole domains a scheme survives depends on the number of domains, as shown in
+[Failure Domains and Erasure Coding Schemes](../architecture/concepts/failure-domains.md#failure-domains-and-erasure-coding-schemes).
+
+## Small Clusters
+
+One-node and two-node [edge clusters](../architecture/deployment-topologies/edge-clusters.md) place the chunks on
+different devices of a node instead. A one-node cluster supports every scheme with one data device per chunk, and a
+two-node cluster uses `1+1`.
+
+## Storage Arrays and RAID Controllers
+
+On [storage array](storage-arrays.md) LUNs or volumes of a local RAID controller, the RAID below simplyblock already
+handles drive failures. An `n+1` scheme, preferably `4+1`, is then sufficient: on top of RAID 5, it tolerates two
+failures, similar to RAID 6, with as little as 25% additional overhead.

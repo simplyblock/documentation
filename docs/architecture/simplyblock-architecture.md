@@ -4,17 +4,20 @@ description: "The simplyblock architecture: Simplyblock Operator, control plane,
 weight: 20100
 ---
 
-Simplyblock is a cloud-native, distributed block storage platform for Kubernetes. It pools the NVMe devices of many
-storage nodes into one storage cluster and serves logical volumes over NVMe over Fabrics (NVMe/TCP or NVMe/RoCE).
-The platform is deployed and operated entirely through Kubernetes: the Simplyblock Operator installs and manages
-every component from custom resources, and workloads consume storage through the simplyblock CSI driver.
+Simplyblock is a cloud-native, distributed storage platform for Kubernetes. It pools the block devices of many
+storage nodes into one storage cluster: local NVMe devices, other local SSDs and disks, or the LUNs of a storage
+array. It serves logical volumes as block storage over NVMe over Fabrics (NVMe/TCP or NVMe/RoCE), and as shared file
+storage through [pNFS](concepts/pnfs.md) on the same volumes. The platform is deployed and operated entirely through
+Kubernetes: the Simplyblock Operator installs and manages every component from custom resources, and workloads
+consume storage through the simplyblock CSI driver.
 
 The architecture consists of four layers:
 
 - **Simplyblock Operator:** The Kubernetes-native management layer that turns custom resources into a running
-  storage platform.
+  storage platform and keeps it in line with the state of the Kubernetes cluster.
 - **Control plane:** The management API, the task runner, and the state database of one or more storage clusters.
-- **CSI driver:** The interface between Kubernetes workloads and simplyblock volumes.
+- **CSI driver:** The interface between Kubernetes workloads and simplyblock volumes, including the volume lifecycle
+  across clusters for disaster recovery.
 - **Storage plane:** The storage nodes, which serve all I/O. It is fully distributed and consists of a front
   storage layer and a back storage layer.
 
@@ -38,8 +41,22 @@ custom resources of the `*Ops` kinds (for example, `StorageNodeOps` or `StorageC
 tracked, abortable state machine and records its outcome in its status. Capacity metrics of clusters, nodes, pools,
 devices, and volumes are served by a read-only aggregated API (`metrics.simplyblock.io`).
 
-The operator talks to the control plane through its management API. It never accesses the storage nodes directly
-for data operations. See [Install](../kubernetes/installation/index.md) for the installation flow and the
+The operator works on two sides:
+
+- **Kubernetes:** It watches its own custom resources and also standard Kubernetes objects directly through the
+  Kubernetes API, for example, worker nodes (a worker that goes away or returns), storage node pods, and
+  PersistentVolumeClaims (a volume pinned to another storage node is migrated). It deploys the storage node pods,
+  the CSI driver, and the StorageClasses, and records its progress as Kubernetes events and in the status of its
+  resources.
+- **Control plane:** Storage operations, such as adding a node, creating a pool, or migrating a volume, go through
+  the management API. The operator never accesses the storage nodes directly for data operations.
+
+The operator also runs admission webhooks. Validating webhooks reject invalid custom resources and invalid volume
+pins before they are stored. Mutating webhooks add a placement hint to new PersistentVolumeClaims, so that the
+primary of a new volume lands on the least-loaded storage node, and inject the latency-benchmark sidecar into storage
+node pods when it is enabled. A conversion webhook translates between the versions of the custom resources.
+
+See [Install](../kubernetes/installation/index.md) for the installation flow and the
 [Simplyblock Operator reference](../reference/operator/index.md) for all kinds.
 
 ## Control Plane
@@ -66,8 +83,8 @@ The control plane is not in the I/O path. Volumes keep serving I/O while it is u
 operations and automated recovery wait until it returns. All communication between the control plane and the
 storage nodes is secured with TLS.
 
-The control plane and the operator can run locally in every Kubernetes cluster or, in the future, centrally on a hub
-cluster (see [Control Plane and Operator](deployment-topologies/control-plane-and-operator.md)). Details of the
+The control plane can run locally in every Kubernetes cluster or centrally on a hub cluster that manages many
+Kubernetes clusters (see [Control Plane and Operator](deployment-topologies/control-plane-and-operator.md)). Details of the
 components are in [Control Plane Cluster Architecture](../kubernetes/installation/management-cluster-architecture.md).
 
 ## CSI Driver
@@ -75,12 +92,23 @@ components are in [Control Plane Cluster Architecture](../kubernetes/installatio
 The simplyblock CSI driver implements the Kubernetes Container Storage Interface. Its controller creates, resizes,
 snapshots, clones, and deletes volumes through the management API. Its node plugin connects a volume to the worker
 of the consuming pod over NVMe-oF, with one path to every storage node that serves the volume, and mounts it into the
-pod. Workloads use standard Kubernetes objects: StorageClass, PersistentVolumeClaim, and VolumeSnapshot.
+pod. Workloads use standard Kubernetes objects: StorageClass, PersistentVolumeClaim, VolumeSnapshot, and
+VolumeGroupSnapshot for crash-consistent snapshots of several volumes.
+
+For disaster recovery, the CSI driver extends the standard interface with the
+[csi-addons](https://github.com/csi-addons/spec){:target="_blank" rel="noopener"} replication service. It enables and
+disables replication of a volume or a volume group, promotes and demotes volumes between clusters, resynchronizes a
+former primary, and reports the replication state. A PersistentVolume keeps its volume handle across fail-over and
+relocation, and the driver resolves the handle through the replication relationship to the copy that currently serves
+the volume. This is the interface that the [Disaster Recovery](../disaster-recovery/index.md) orchestration uses to
+move applications with their volumes between clusters.
 
 ## Storage Plane
 
 The storage plane consists of storage nodes. A storage node is a pod on a Kubernetes worker that takes over one or
-more NVMe devices of that worker. By default, one storage node runs per worker, and larger workers can run one or
+more block devices of that worker: local NVMe devices, other local SSDs and disks, or the LUNs of an FC, iSCSI, or
+NVMe-oF storage array (see [Linux Block Devices](concepts/linux-block-devices.md) and
+[Storage Arrays](concepts/storage-arrays.md)). By default, one storage node runs per worker, and larger workers can run one or
 more storage nodes per CPU socket. The storage nodes of a storage cluster together form one distributed system with
 two separately distributed layers: the front storage and the back storage.
 
@@ -104,10 +132,11 @@ The front storage is the layer that clients connect to. It holds the logical vol
 
 ### Back Storage
 
-The back storage is the layer that stores the data on the NVMe devices.
+The back storage is the layer that stores the data on the block devices.
 
 - **Distributed data placement:** Data written to a logical volume is split into chunks and distributed across all
-  devices of all storage nodes in the cluster. Every front storage entry point can reach every back storage device
+  devices of all storage nodes in the cluster (or, in a supercluster, of its
+  [placement group](concepts/placement-groups.md)). Every front storage entry point can reach every back storage device
   over cluster-internal NVMe-oF. Access to a volume is therefore parallelized across many nodes and devices, and the
   capacity and performance of the whole cluster are available to every volume.
 - **Distributed erasure coding:** Every stripe of data chunks is protected by parity chunks (for example, `2+1` or
@@ -122,10 +151,11 @@ The back storage is the layer that stores the data on the NVMe devices.
 ### Storage Node Internals
 
 The data plane of a storage node is built on a fork of SPDK (Storage Performance Development Kit) and DPDK (Data Plane
-Development Kit). Simplyblock detaches the NVMe devices from the Linux kernel and handles all communication with the
-hardware in user space. This removes transitions between user space and kernel, reduces context switches, and keeps
-the latency low. Storage nodes use dedicated CPU cores and huge-page memory (see
-[Hardware Requirements](../deployment-preparation/hardware-requirements.md)).
+Development Kit). It runs in user space with polling instead of interrupts, which removes transitions between user
+space and kernel, reduces context switches, and keeps the latency low. Local NVMe devices are detached from the Linux
+kernel and driven directly by the user-space NVMe driver. Other block devices, such as SATA or SAS disks and array
+LUNs, stay with the Linux kernel and are accessed through its block layer. Storage nodes use dedicated CPU cores and
+huge-page memory (see [Sizing](../deployment-preparation/sizing.md)).
 
 ## Placement Models
 
@@ -143,18 +173,19 @@ selection of the workers that run storage nodes differs. See [Deployment Topolog
 - **Transport security:** Hosts can be authenticated with DH-HMAC-CHAP, and the transport can be secured with TLS
   (see [NVMe over Fabrics Security](concepts/nvmf-security.md)).
 - **Multi-tenancy:** Storage pools separate tenants with their own limits and defaults.
-- **Snapshots, backups, and disaster recovery:** Copy-on-write snapshots and clones, backups to S3, and
-  replication between clusters are the basis for [Disaster Recovery](../disaster-recovery/index.md).
+- **Snapshots, backups, and disaster recovery:** Copy-on-write snapshots and clones, policy-based backups to S3,
+  and policy-based asynchronous replication between clusters are the basis for
+  [Disaster Recovery](../disaster-recovery/index.md).
 
 ## Technologies in Simplyblock
 
 Simplyblock builds on a set of open-source technologies.
 
-| Component        | Technologies                                                                                                                                                                                                                                                                                             |
-|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Networking       | [NVMe-oF](https://nvmexpress.org/){:target="_blank" rel="noopener"}, [NVMe/TCP](../important-notes/terminology.md#nvmetcp-nvme-over-tcp), [NVMe/RoCE](../important-notes/terminology.md#nvmeroce-nvme-over-rdma-over-converged-ethernet), [DPDK](https://www.dpdk.org/){:target="_blank" rel="noopener"} |
-| Storage          | [SPDK](https://spdk.io/){:target="_blank" rel="noopener"}, [FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"}                                                                                                                                                                |
-| Kubernetes       | [Kubernetes CSI](https://kubernetes-csi.github.io/docs/){:target="_blank" rel="noopener"}, [FoundationDB Operator](https://github.com/FoundationDB/fdb-kubernetes-operator){:target="_blank" rel="noopener"}                                                                                             |
-| Observability    | [Prometheus](https://prometheus.io/){:target="_blank" rel="noopener"}, [Grafana](https://grafana.com/){:target="_blank" rel="noopener"}                                                                                                                                                                  |
-| Logging          | [Graylog](https://graylog.org/){:target="_blank" rel="noopener"}, [OpenSearch](https://opensearch.org/){:target="_blank" rel="noopener"}, [MongoDB](https://www.mongodb.com/){:target="_blank" rel="noopener"}                                                                                           |
-| Operating System | [Linux](https://www.kernel.org/){:target="_blank" rel="noopener"}                                                                                                                                                                                                                                        |
+| Component        | Technologies                                                                                                                                                                                                                                                                                                     |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Networking       | [NVMe-oF](https://nvmexpress.org/){:target="_blank" rel="noopener"}, [NVMe/TCP](../important-notes/terminology.md#nvmetcp-nvme-over-tcp), [NVMe/RoCE](../important-notes/terminology.md#nvmeroce-nvme-over-rdma-over-converged-ethernet), [DPDK](https://www.dpdk.org/){:target="_blank" rel="noopener"}         |
+| Storage          | [SPDK](https://spdk.io/){:target="_blank" rel="noopener"}, [FoundationDB](https://www.foundationdb.org/){:target="_blank" rel="noopener"}                                                                                                                                                                        |
+| Kubernetes       | [Kubernetes CSI](https://kubernetes-csi.github.io/docs/){:target="_blank" rel="noopener"}, [csi-addons](https://github.com/csi-addons/kubernetes-csi-addons){:target="_blank" rel="noopener"}, [FoundationDB Operator](https://github.com/FoundationDB/fdb-kubernetes-operator){:target="_blank" rel="noopener"} |
+| Observability    | [Prometheus](https://prometheus.io/){:target="_blank" rel="noopener"}, [Grafana](https://grafana.com/){:target="_blank" rel="noopener"}                                                                                                                                                                          |
+| Logging          | [Graylog](https://graylog.org/){:target="_blank" rel="noopener"}, [OpenSearch](https://opensearch.org/){:target="_blank" rel="noopener"}, [MongoDB](https://www.mongodb.com/){:target="_blank" rel="noopener"}                                                                                                   |
+| Operating System | [Linux](https://www.kernel.org/){:target="_blank" rel="noopener"}                                                                                                                                                                                                                                                |

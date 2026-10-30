@@ -15,7 +15,7 @@ installation.
 The installation follows the same order on every deployment:
 
 1. **Prerequisites:** The hub and site clusters, the S3 buckets, and the network paths described in
-   [Disaster Recovery Requirements](../../deployment-preparation/dr-requirements.md) are in place. Each site runs a
+   [Disaster Recovery Requirements](requirements.md) are in place. Each site runs a
    simplyblock storage cluster with the simplyblock CSI driver.
 2. **Hub:** The `dr-simplyblock-hub` chart installs OCM, the Ramen hub operator, and `dr-hub` on the hub cluster. See
    [Installing the Hub](hub.md).
@@ -75,7 +75,7 @@ For an air-gapped installation, the images are mirrored into a local registry, a
 - **Klusterlet images:** `images.registry` of the spoke chart points to the mirror of
   `quay.io/open-cluster-management`.
 
-General guidance on mirroring images is available in [Air-Gapped Installation](../../deployment-preparation/air-gap/index.md).
+General guidance on mirroring images is available in [Air-Gapped Installation](../../kubernetes/installation/air-gap.md).
 
 ## Installing on an Existing ACM or ODF Hub
 
@@ -91,6 +91,7 @@ OpenShift Data Foundation (ODF), the bootstrap is turned off with `bootstrap.ena
 
 ## Pages in This Section
 
+- [Disaster Recovery Requirements](requirements.md)
 - [Installing the Hub](hub.md)
 - [Archive and State Bundle](archive.md)
 - [Joining Site Clusters](sites.md)

@@ -45,19 +45,21 @@ If deploying onto an OpenShift cluster, there are additional environment-specifi
 If deploying onto a Talos cluster, there are additional environment-specific steps in the [Talos](talos.md) guide
 before continuing here.
 
-### Amazon EKS
+### EKS
 
-If deploying onto Amazon EKS with dedicated, tainted node groups, the discovery has to tolerate the taint of the
-storage node group. The [Amazon EKS](eks.md) guide shows the values and the discovery run.
+If deploying onto EKS with dedicated, tainted node groups, the discovery has to tolerate the taint of the
+storage node group. The [EKS](eks.md) guide shows the values and the discovery run.
+
+### GKE
+
+On GKE with dedicated, tainted node pools, the same applies: the discovery tolerates the taint of the storage node
+pool, as shown in the [EKS](eks.md) guide. The node pools are prepared as described in
+[GKE](gke.md).
 
 ### Networking
 
-Multiple ports must be open on storage node hosts.
-
-It is required to use one or more separate VLANs for simplyblock. Ports within the same VLAN do not require extra
-firewall rules, but ports between the control plane and storage networks typically do.
-
-{% include 'network-port-table.md' %}
+Multiple ports must be open on storage node hosts. The VLAN layout and the ports are listed in
+[Network](../../deployment-preparation/network.md#ports).
 
 ## Discover Workers and Devices
 
@@ -208,7 +210,8 @@ reads it again.
 ### Cluster Template
 
 `spec.cluster` is the template of the storage cluster to create. It is ignored when `spec.clusterRef` names an
-existing cluster, because a growth document adds nodes to a cluster whose settings are already decided.
+existing cluster, because a growth document adds nodes to a cluster whose settings are already decided. The options
+and which of them can change later are explained in [Cluster Deployment Options](cluster-deployment-options.md).
 
 !!! warning "This is the last chance to change these"
     Most of the fields below are immutable on the created `StorageCluster`. `enableDriveFormat` is also
@@ -269,8 +272,6 @@ A storage cluster holds at most 32 storage nodes: the workers of a node set time
 set above the limit is refused with `MemberTooLarge`.
 
 ### Storage Array LUNs
-
-{{ experimental }}
 
 On a [storage array](../../architecture/concepts/storage-arrays.md), the devices are the LUNs of each worker, listed
 under `devices.block`. Block devices require `enableJournalDevice`, which dedicates the smallest LUN of each worker

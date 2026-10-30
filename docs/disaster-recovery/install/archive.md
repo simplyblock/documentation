@@ -12,7 +12,7 @@ finished runs are never pruned from the hub.
 
 The archive bucket is separate from the DR metadata buckets of the sites, which hold the Kubernetes objects of the
 protected applications, and from the simplyblock backup buckets of the storage clusters, which hold volume data. See
-[S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+[S3 Buckets](requirements.md#s3-buckets).
 
 ## What the Archive Contains
 

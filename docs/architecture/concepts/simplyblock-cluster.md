@@ -58,5 +58,5 @@ possible. See [High Availability and Fault Tolerance](../high-availability-fault
 
 Client-side drivers connect workloads to their volumes and automate the volume lifecycle: creating, attaching,
 resizing, snapshotting, cloning, and deleting. On Kubernetes, this is the simplyblock CSI driver, complemented by the
-Simplyblock Operator for operations beyond the standard CSI model. Drivers for Proxmox and OpenStack (experimental)
+Simplyblock Operator for operations beyond the standard CSI model. Drivers for Proxmox and OpenStack
 are available as well.

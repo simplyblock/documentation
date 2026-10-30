@@ -64,5 +64,5 @@ release:
 - [Workflows and Recipes](../disaster-recovery/configuration/workflows-and-recipes.md): Tiers and readiness checks
   that define the recovery order.
 - [Test Failover](../disaster-recovery/testing/test-failover.md): Tests in an isolated bubble.
-- [Disaster Recovery Requirements](../deployment-preparation/dr-requirements.md): The hub, the sites, and the S3
+- [Disaster Recovery Requirements](../disaster-recovery/install/requirements.md): The hub, the sites, and the S3
   buckets.

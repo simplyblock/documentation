@@ -4,8 +4,6 @@ description: "How simplyblock provides shared file storage: pNFS separates file 
 weight: 30240
 ---
 
-{{ experimental }}
-
 A simplyblock logical volume is a block device. A block device carries a filesystem that only one host may mount at a
 time, which is enough for most databases and stateful services but not for workloads that share files between many
 nodes: content repositories, build caches, AI training data, shared home directories, or the disks of virtual machines
@@ -82,7 +80,7 @@ data of a shared volume:
 - [Deployment Architectures](../../deployment-preparation/deployment-architectures.md#shared-file-storage-pnfs)
   describes where the metadata server runs in each architecture.
 - The node requirements are listed in [Hardware Requirements](../../deployment-preparation/hardware-requirements.md#virtualization-support-for-pnfs)
-  and [Software Requirements](../../deployment-preparation/software-requirements.md#pnfs-requirements).
+  and [Software Requirements](../../deployment-preparation/software-requirements.md#pnfs).
 
 Striping one shared volume across several logical volumes, and creating a pNFS volume from a snapshot or another
 volume, are not available yet.

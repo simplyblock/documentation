@@ -8,10 +8,10 @@ The hub cluster runs the DR control plane: the Open Cluster Management (OCM) clu
 and `dr-hub`. All three are installed by the `dr-simplyblock-hub` Helm chart. The hub should be a dedicated cluster
 outside the protected sites, so that it survives the loss of any single site.
 
-Before installing, the hub must meet the [Disaster Recovery Requirements](../../deployment-preparation/dr-requirements.md).
+Before installing, the hub must meet the [Disaster Recovery Requirements](requirements.md).
 
 !!! warning
-    Amazon EKS cannot be used as the hub cluster. OCM requires the hub's API server to sign
+    EKS cannot be used as the hub cluster. OCM requires the hub's API server to sign
     `kube-apiserver-client` certificate signing requests, which EKS does not do. EKS clusters can be used as site
     clusters.
 
@@ -26,7 +26,7 @@ its own credential:
 | Archive bucket     | Signed state bundles and reports                                                         | A Secret in the `dr-simplyblock` namespace, see [Archive and State Bundle](archive.md)      | The hub only (`drConfig.spec.archive.credentialsSecretRef`)                                             |
 
 The simplyblock backup buckets of the storage clusters are not configured in DR. They are set when each storage
-cluster is deployed. See [S3 Buckets](../../deployment-preparation/dr-requirements.md#s3-buckets).
+cluster is deployed. See [S3 Buckets](requirements.md#s3-buckets).
 
 The sites do not need credentials of their own. All sites use the DR metadata credential that the hub distributes
 to them, so a single DR metadata bucket with a single credential can serve every site of every plan. That bucket must
