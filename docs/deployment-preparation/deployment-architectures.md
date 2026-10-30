@@ -83,7 +83,7 @@ Components common to all three variants:
 
 If the hub fails, protected applications keep running and replicating, but no DR action can be started until the hub
 is available again or has been rebuilt. See [Hub Recovery](../disaster-recovery/operations/hub-recovery.md). The
-requirements for the hub and the sites are listed in [Disaster Recovery Requirements](dr-requirements.md).
+requirements for the hub and the sites are listed in [Disaster Recovery Requirements](../disaster-recovery/install/requirements.md).
 
 ### Metro: Stretched Storage Cluster with Synchronous Replication
 
@@ -182,8 +182,6 @@ installation in [Connecting to an External Control Plane](../kubernetes/installa
 
 ## Shared File Storage (pNFS)
 
-{{ experimental }}
-
 [Distributed file storage](../architecture/concepts/distributed-file-storage.md) (`ReadWriteMany` volumes through
 pNFS) is not a separate architecture. It is added to any of the architectures above that run simplyblock on
 Kubernetes, and it is not available on a legacy Docker-based deployment.
@@ -219,7 +217,7 @@ Placement considerations:
 
 The node requirements are listed in
 [Hardware Requirements](hardware-requirements.md#virtualization-support-for-pnfs) and
-[Software Requirements](software-requirements.md#pnfs-requirements).
+[Software Requirements](software-requirements.md#pnfs).
 
 ## Decision Table
 

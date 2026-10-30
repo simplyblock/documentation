@@ -1,7 +1,7 @@
 ---
 title: "Storage Arrays"
 description: "Plan a simplyblock deployment on FC, iSCSI, or NVMe-oF storage array LUNs: LUN layout per host, RAID and erasure coding, thin pools, and multipathing."
-weight: 30150
+weight: 29990
 ---
 
 Simplyblock can be deployed on the LUNs of an existing Fibre Channel, iSCSI, or NVMe-oF storage array instead of

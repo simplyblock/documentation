@@ -4,8 +4,6 @@ description: "Reference for the PVC annotations and StorageCluster fields that c
 weight: 40050
 ---
 
-{{ experimental }}
-
 The primary storage node of a new volume is decided when the volume is provisioned. Several mechanisms can decide it,
 each driven by a PVC annotation and evaluated in a fixed order. The first mechanism that applies wins, and the
 remaining ones are not evaluated. If none applies, the storage cluster's built-in default placement is used.

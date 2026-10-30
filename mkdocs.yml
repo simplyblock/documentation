@@ -3,6 +3,9 @@ site_url: https://docs.simplyblock.io/
 repo_url: https://github.com/simplyblock/documentation
 edit_uri: edit/main/docs/
 copyright: "&copy; 2024-2026 Simplyblock GmbH"
+# Sections that are temporarily disabled. They stay in the repository but are not built.
+exclude_docs: |
+  kubernetes/operations/data-protection/data-migration.md
 extra:
   homepage: https://www.simplyblock.io
   homepage_name: Simplyblock
@@ -40,6 +43,15 @@ plugins:
   - render_swagger:
       allow_arbitrary_locations: true
       css: ../../../assets/stylesheets/swagger-ui.css
+  - redirects:
+      redirect_maps:
+        deployment-preparation/amazon-eks.md: kubernetes/installation/eks.md
+        deployment-preparation/eks.md: kubernetes/installation/eks.md
+        deployment-preparation/cloud-instance-recommendations.md: kubernetes/installation/eks.md
+        deployment-preparation/cluster-deployment-options.md: kubernetes/installation/cluster-deployment-options.md
+        deployment-preparation/numa-considerations.md: deployment-preparation/sizing.md
+        deployment-preparation/dr-requirements.md: disaster-recovery/install/requirements.md
+        deployment-preparation/air-gap/index.md: kubernetes/installation/air-gap.md
   - mkdocs-nav-weight:
       section_renamed: true
   - git-revision-date-localized:
