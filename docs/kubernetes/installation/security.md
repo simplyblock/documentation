@@ -6,7 +6,7 @@ weight: 30050
 
 This page covers two security features for simplyblock on Kubernetes: transport-layer encryption and mutual
 authentication for the control plane (mTLS), and offloading volume encryption keys to an external Key Management
-Service (KMS).
+Service (KMS). It also lists the workloads that run on the host network or with elevated privileges, and why.
 
 mTLS must be configured before an external KMS can be wired up: the KMS authenticates simplyblock components using a
 certificate issued by the operator-managed certificate authority, which is only provisioned when mTLS is active.
@@ -179,3 +179,66 @@ kubectl -n simplyblock logs deploy/simplyblock-operator
 Creating a new encrypted volume after the KMS is wired up exercises the path end-to-end. The volume's encryption key
 material is then stored in the KMS rather than alongside the cluster. See
 [Volume Encryption](../usage/volume-encryption.md).
+
+## Host Network and Privileged Workloads
+
+Most simplyblock components run on the pod network. The workloads below run on the host network of their worker node
+or share its PID namespace, and all but one of them are privileged. They are listed so that security reviews, network
+policies, and Pod Security settings can account for them.
+
+| Workload                                                 | Runs                                             | Privileged |
+|----------------------------------------------------------|--------------------------------------------------|------------|
+| CSI node plugin (`simplyblock-csi-node`)                 | DaemonSet, every worker                          | Yes        |
+| pNFS metadata server proxy (`simplyblock-csi-mds-proxy`) | DaemonSet, KVM-capable workers, while pNFS is on | No         |
+| Node probe (`sb-nodeprobe-*`)                            | One-shot Job per node during discovery           | Yes        |
+| Volume migration Job                                     | One-shot Job on the target node                  | Yes        |
+| Latency baseline Job                                     | One-shot Job on the measured storage node        | Yes        |
+| Storage node agent                                       | DaemonSet, storage workers, host PID namespace   | Yes        |
+| SPDK pod of a storage node                               | Storage node, only with `spdkOnHostNetwork`      | Yes        |
+
+The pNFS metadata server pod itself is not on the host network. Only its proxy is.
+
+### Why the Host Network Is Needed
+
+**CSI node plugin, volume migration Job, and latency baseline Job:** These connect to storage nodes over NVMe/TCP. A
+connect opens its sockets in the caller's network namespace, but the kernel reconnects from a thread in the host's
+network namespace. A pod that connected from the pod network would be moved to the host network on the first connection
+reset, so these workloads connect from the host network from the start. The CSI node plugin is privileged because it
+mounts volumes and loads the `nvme-tcp` and `nvme-rdma` kernel modules.
+
+**pNFS metadata server proxy:** The metadata server runs in a virtual machine inside a pod and needs NVMe/TCP
+connections to the storage nodes. The listeners of a storage node are bound to the node's data interface and refuse a
+connection from a pod on the same node. The proxy opens these connections from the host network on behalf of the
+metadata server. It is the least privileged host-network workload: it runs as a non-root user, drops all Linux
+capabilities, has a read-only root filesystem, mounts no host path, and has no Kubernetes API token. It listens on port
+`9811` of the node address and dials only the listener ports of the storage cluster.
+
+**Node probe:** The probe inventories the worker's network interfaces, addresses, and NVMe devices for discovery. A
+network namespace filters the interfaces in `/sys`, so a probe on the pod network would see only the pod's `eth0`. The
+probe runs as root because it reads the host mount table and opens block devices.
+
+**Storage node agent:** The agent runs on the pod network in every storage network configuration. It reads the
+worker's interfaces and addresses, and opens the connections of the storage node, by entering the network namespace
+of the host's PID 1. That requires the host PID namespace, not the host network, so the agent's API listens only on its
+pod address.
+
+**SPDK pod:** The pod is on the host network only when the cluster declares `spdkOnHostNetwork: true`, or declares no
+storage network at all, which is the behavior of clusters created before the setting existed. It then serves NVMe/TCP
+on the worker's own interfaces. With `podNetwork: true`, it runs on the pod network. See
+[Storage Network](storage-network.md).
+
+### Reducing the Host-Network Footprint
+
+- **pNFS:** The proxy runs only while the pNFS metadata server is enabled. If no `ReadWriteMany` volumes are needed,
+  set `driver.pnfs.mds.enabled=false` at installation. The next reconciliation deletes the proxy.
+- **Network policies:** Policies that select pods do not apply to pods on the host network. Access to these workloads
+  has to be restricted on the worker's firewall or security group instead, and NVMe/TCP access to the storage nodes
+  limited to the cluster's nodes.
+
+### Platform Requirements
+
+- **Pod Security Admission:** The operator's namespace must allow the `privileged` level. A namespace on `baseline` or
+  `restricted` rejects the CSI node plugin and the Jobs above.
+- **OpenShift:** Host-network pods need a security context constraint. The proxy's service account is bound to the
+  `hostnetwork-v2` constraint automatically by the operator. The privileged workloads need the `privileged` constraint,
+  which is granted manually before installation. See [OpenShift](openshift.md).

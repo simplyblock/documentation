@@ -81,12 +81,16 @@ For detailed CRD documentation, see [Simplyblock Operator](../../reference/opera
 - [Securing the Control Plane](security.md): TLS, mutual TLS, and an external KMS.
 - [Install Simplyblock Operator](k8s-control-plane.md): The Helm installation and its key values.
 - [Create a Storage Cluster](k8s-storage-plane.md): Discovery, review, approval, and the first volume.
+- [Storage Network](storage-network.md): The host network, the pod network, and Multus data networks with
+  host-device, macvlan, ipvlan, VLANs, and SR-IOV, with the requirements of each.
 - [Cluster Deployment Options](cluster-deployment-options.md): The options of a new storage cluster and which of them
   can change later.
 - [Connecting to an External Control Plane](install-csi.md): The managed profile for clusters without a local control
   plane.
 - [Air Gap Installation](air-gap.md): Mirroring the images into a local container registry.
 - [EKS](eks.md): Instance types, node groups, node images, EBS storage, and the Helm values on EKS.
+- [Storage Network on Amazon EKS](eks-storage-network.md): A dedicated data ENI with Cilium in ENI mode and Multus, in
+  the same subnet or a dedicated subnet.
 - [GKE](gke.md): Machine types, node pools with local NVMe SSDs, and node images on GKE.
 - [OpenShift](openshift.md): Security context constraints and TLS on OpenShift.
 - [SUSE Rancher and RKE2](rancher.md): Permissions and CPU topology on RKE2 and K3s clusters.
