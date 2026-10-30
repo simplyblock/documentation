@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">Copy-on-write after a snapshot: the logical volume store offloads the cluster copy through the striped volume to the back storage, which records it as a page copy without moving data</title>
+<defs>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+<marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a7f37"/></marker>
+<marker id="arr-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9a6700"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="639" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">First write after a snapshot: the cluster copy becomes metadata</text>
+
+<!-- client -->
+<rect x="24" y="58" width="540" height="54" rx="8" fill="#ddf4ff" stroke="#54aeff" stroke-width="1.25"/>
+<text x="40" y="80" font-size="14" font-weight="600" fill="#0969da">Client</text>
+<text x="40" y="100" font-size="12" fill="#24292f">4 KiB write to a volume block whose cluster is still shared with a snapshot</text>
+
+<line x1="294" y1="112" x2="294" y2="140" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<circle cx="318" cy="126" r="10" fill="#3949ab"/><text x="318" y="130" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+
+<!-- logical volume store -->
+<rect x="24" y="142" width="540" height="96" rx="8" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="40" y="164" font-size="14" font-weight="600" fill="#1d4f91">Logical volume store (front storage)</text>
+<text x="40" y="186" font-size="12" fill="#24292f">Allocates a new cluster for the volume, in the same copy domain</text>
+<text x="40" y="203" font-size="12" fill="#24292f">(stripe leg) as the snapshot's cluster, and offloads the copy:</text>
+<rect x="40" y="211" width="340" height="20" rx="4" fill="#e8eaf6" stroke="#3949ab"/>
+<text x="210" y="225" font-size="12" fill="#1a237e" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace">COPY(snapshot cluster → new cluster)</text>
+
+<line x1="294" y1="238" x2="294" y2="266" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<circle cx="318" cy="252" r="10" fill="#3949ab"/><text x="318" y="256" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+
+<!-- raid0 -->
+<rect x="24" y="268" width="540" height="58" rx="8" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="40" y="290" font-size="14" font-weight="600" fill="#1d4f91">Striped volume (RAID 0 over back storage volumes)</text>
+<text x="40" y="312" font-size="12" fill="#24292f">Passes the COPY to the one leg that holds both clusters</text>
+
+<line x1="294" y1="326" x2="294" y2="354" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<circle cx="318" cy="340" r="10" fill="#3949ab"/><text x="318" y="344" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+
+<!-- back storage -->
+<rect x="24" y="356" width="540" height="112" rx="8" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="40" y="378" font-size="14" font-weight="600" fill="#1d4f91">Back storage volume (one page per cluster)</text>
+<text x="40" y="400" font-size="12" fill="#24292f">Page copy: one journal record, replicated like every write.</text>
+<text x="40" y="417" font-size="12" fill="#24292f">The new page refers to the snapshot page's physical pages.</text>
+<text x="40" y="434" font-size="12" font-weight="600" fill="#24292f">No data is read, written, or sent over the network.</text>
+<circle cx="52" cy="453" r="10" fill="#1a7f37"/><text x="52" y="457" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="70" y="457" font-size="12" fill="#24292f">The 4 KiB write goes to a fresh physical page on the same device</text>
+
+<!-- devices -->
+<line x1="170" y1="468" x2="170" y2="508" stroke="#9a6700" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-amber)"/>
+<line x1="250" y1="468" x2="250" y2="508" stroke="#1a7f37" stroke-width="2" marker-end="url(#arr-green)"/>
+<line x1="390" y1="468" x2="390" y2="508" stroke="#9a6700" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-amber)"/>
+<line x1="470" y1="468" x2="470" y2="508" stroke="#1a7f37" stroke-width="2" marker-end="url(#arr-green)"/>
+
+<rect x="24" y="510" width="540" height="108" rx="8" fill="#ffffff" stroke="#7aa7e6" stroke-width="1.25"/>
+<text x="40" y="530" font-size="13" font-weight="600" fill="#1d4f91">Devices (one column of the page per device)</text>
+<rect x="56" y="540" width="232" height="66" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="172" y="556" font-size="12" font-weight="600" fill="#24292f" text-anchor="middle">Device A</text>
+<rect x="66" y="564" width="104" height="34" rx="4" fill="#fff8c5" stroke="#d4a72c"/>
+<text x="118" y="578" font-size="11" fill="#7d4e00" text-anchor="middle">physical page</text><text x="118" y="592" font-size="11" fill="#7d4e00" text-anchor="middle">shared, read-only</text>
+<rect x="176" y="564" width="104" height="34" rx="4" fill="#dafbe1" stroke="#2da44e"/>
+<text x="228" y="578" font-size="11" fill="#116329" text-anchor="middle">physical page</text><text x="228" y="592" font-size="11" fill="#116329" text-anchor="middle">new writes</text>
+<rect x="300" y="540" width="232" height="66" rx="6" fill="#f6f8fa" stroke="#8c959f"/>
+<text x="416" y="556" font-size="12" font-weight="600" fill="#24292f" text-anchor="middle">Device B (other node)</text>
+<rect x="310" y="564" width="104" height="34" rx="4" fill="#fff8c5" stroke="#d4a72c"/>
+<text x="362" y="578" font-size="11" fill="#7d4e00" text-anchor="middle">physical page</text><text x="362" y="592" font-size="11" fill="#7d4e00" text-anchor="middle">shared, read-only</text>
+<rect x="420" y="564" width="104" height="34" rx="4" fill="#dafbe1" stroke="#2da44e"/>
+<text x="472" y="578" font-size="11" fill="#116329" text-anchor="middle">physical page</text><text x="472" y="592" font-size="11" fill="#116329" text-anchor="middle">new writes</text>
+
+<!-- comparison -->
+<rect x="590" y="58" width="346" height="560" rx="10" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="608" y="84" font-size="15" font-weight="600" fill="#24292f">Cost of the first write</text>
+<text x="608" y="102" font-size="12" fill="#57606a">to a cluster after a snapshot</text>
+
+<rect x="606" y="118" width="314" height="196" rx="8" fill="#ffffff" stroke="#d0d7de"/>
+<text x="622" y="142" font-size="13" font-weight="600" fill="#cf222e">Full cluster copy (without page copy)</text>
+<text x="622" y="166" font-size="12" fill="#24292f">• read the whole snapshot cluster</text>
+<text x="622" y="186" font-size="12" fill="#24292f">• write it to the new cluster, with parity,</text>
+<text x="634" y="202" font-size="12" fill="#24292f">to devices on other nodes</text>
+<text x="622" y="222" font-size="12" fill="#24292f">• persist the cluster metadata</text>
+<text x="622" y="242" font-size="12" fill="#24292f">• only then the 4 KiB write</text>
+<text x="622" y="266" font-size="12" fill="#57606a">Megabytes of reads and writes for</text>
+<text x="622" y="282" font-size="12" fill="#57606a">kilobytes of data; other I/O on the</text>
+<text x="622" y="298" font-size="12" fill="#57606a">same channel waits behind the copy.</text>
+
+<rect x="606" y="330" width="314" height="166" rx="8" fill="#ffffff" stroke="#2da44e" stroke-width="1.5"/>
+<text x="622" y="354" font-size="13" font-weight="600" fill="#1a7f37">Page copy</text>
+<text x="622" y="378" font-size="12" fill="#24292f">• one small journal record</text>
+<text x="622" y="398" font-size="12" fill="#24292f">• persist the cluster metadata</text>
+<text x="622" y="418" font-size="12" fill="#24292f">• the 4 KiB write</text>
+<text x="622" y="442" font-size="12" fill="#57606a">The first write after a snapshot costs</text>
+<text x="622" y="458" font-size="12" fill="#57606a">about as much as any other write, no</text>
+<text x="622" y="474" font-size="12" fill="#57606a">matter how often snapshots are taken.</text>
+
+<rect x="606" y="512" width="314" height="90" rx="8" fill="#ffffff" stroke="#d0d7de"/>
+<text x="622" y="536" font-size="13" font-weight="600" fill="#24292f">Fallback</text>
+<text x="622" y="558" font-size="12" fill="#24292f">A copy that cannot be done as a page</text>
+<text x="622" y="574" font-size="12" fill="#24292f">copy is declined, and the volume store</text>
+<text x="622" y="590" font-size="12" fill="#24292f">copies the cluster in full, as before.</text>
+</svg>
