@@ -28,6 +28,9 @@ Key characteristics of volume snapshots include:
   group is replicated and failed over together.
 - **Bounded chains:** Every snapshot deepens the chain that reads of the volume and its clones walk. A volume
   therefore has at most 100 active snapshots (see [Limits](../../reference/limits.md)).
+- **Copy-on-write without data copies:** With page copy, the first write to a block after a snapshot does not copy
+  the snapshot's data. The back storage records a reference instead and merges the data back when the snapshot is
+  deleted (see [Snapshot Copy-on-Write](snapshot-copy-on-write.md)).
 
 ## Volume Clones
 
