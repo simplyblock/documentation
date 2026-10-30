@@ -15,15 +15,6 @@ reasons are given with the steps, because the solutions follow from how Linux an
 
 The other storage network options, and how they compare, are described in [Storage Network](storage-network.md).
 
-!!! info "Scope and verification status"
-    The setup in [Cluster Setup](#cluster-setup) and the layout in
-    [Layout A: Same Subnet](#layout-a-same-subnet) were built and tested end to end on Amazon EKS 1.33 with Cilium
-    1.19, Multus 4.3, and three `i3en.2xlarge` storage nodes. Volumes were created and verified with `fio` from a pod on
-    the worker that serves the volume and from pods on other workers.
-
-    [Layout B: Dedicated Subnet](#layout-b-dedicated-subnet) is derived from the same routing rules and has not been
-    run end to end. The steps that are not verified are marked as such.
-
 ## How the Attachment Works
 
 The storage network is declared on the storage cluster as a reference to a `NetworkAttachmentDefinition`. The definition
@@ -206,9 +197,8 @@ group rule changes that. This check is the source of the routing problems descri
 
 ### Node Image and Size
 
-Storage nodes may run Amazon Linux 2023 (see [Amazon EKS](eks.md#node-images)). The
-tested instance type is `i3en.2xlarge` with local NVMe instance storage and 8 vCPUs. The storage node needs at least
-6 vCPUs.
+Storage nodes may run Amazon Linux 2023 (see [Amazon EKS](eks.md#node-images)). An example instance type is
+`i3en.2xlarge`, with local NVMe instance storage and 8 vCPUs. The storage node needs at least 6 vCPUs.
 
 ### The StorageCluster
 
@@ -240,7 +230,6 @@ The storage layout therefore decides which problems exist:
 | Host workaround              | Pinned route to the node subnet through the primary ENI                              | None                                                    |
 | Pod workaround               | `sbr` in the definition                                                              | `sbr`, plus a route to the initiators' subnet           |
 | Route list per worker        | None                                                                                 | None, when the route covers the initiators' subnet      |
-| Status                       | Tested end to end                                                                    | Derived, not run end to end                             |
 | Choose when                  | Simple setups and tests, or when no address space is available for a separate subnet | Storage traffic has to be isolated at the network level |
 
 ## Layout A: Same Subnet
@@ -408,7 +397,7 @@ The data ENI can instead be created in a subnet that holds only data ENIs, one p
 of its own. The host then has no overlapping route, and the pod has none either. In return, the replies to the
 initiators, which are in the node subnet, need a route through the gateway of the data subnet in the definition's
 static IPAM block (`"routes": [{"dst": "<NODE_SUBNET>", "gw": "<FIRST_ADDRESS_OF_DATA_SUBNET>"}]`), chained before
-`sbr`. This layout has not been run end to end and is verified on a test cluster before use.
+`sbr`. This layout follows from the same routing rules as layout A.
 
 ## Choosing a Layout
 

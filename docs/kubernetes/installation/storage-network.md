@@ -61,7 +61,8 @@ storage nodes have, and what the network accepts.
 3. **The storage nodes have SR-IOV NICs, and SPDK has to stay out of the host's network namespace:** option 7. The VF
    gives SPDK a hardware interface, and the NIC's embedded switch carries the traffic to the host.
 4. **The storage nodes have a spare storage NIC, and SPDK has to stay out of the host's network namespace:** option 4,
-   or option 3 when the network routes between the storage subnet and the hosts.
+   or option 3 when the network routes between the storage subnet and the hosts. A routed path is acceptable only
+   where [Production Recommendations](#production-recommendations) allow it.
 5. **The storage nodes have one NIC, and storage has to stay off the CNI's datapath:** option 5 when the switches can
    trunk a VLAN to the nodes, option 6 otherwise.
 6. **Nothing can be prepared on the hosts, or the bandwidth is capped by the infrastructure anyway:** option 2.
@@ -322,8 +323,9 @@ spec:
   config: '{"cniVersion":"0.3.1","name":"storage-data","type":"macvlan","master":"eth1","mode":"bridge","mtu":9000,"capabilities":{"ips":true},"ipam":{"type":"static"}}'
 ```
 
-For `ipvlan`, the type is `ipvlan` and the mode `l2`. The network is declared with an `addressPool` in the storage subnet, outside the range of the hosts' own storage
-addresses, as in [Configuration in Simplyblock](#configuration-in-simplyblock).
+For `ipvlan`, the type is `ipvlan` and the mode `l2`. The network is declared with an `addressPool` in the storage
+subnet, outside the range of the hosts' own storage addresses, as in
+[Configuration in Simplyblock](#configuration-in-simplyblock).
 
 With the host's address moved from the parent to the sibling, the parent carries no address. Discovery then finds no
 data NIC on the workers and drafts `podNetwork: true` without a data network. The draft's `network` is therefore set as
@@ -456,8 +458,9 @@ Where the `sriov` plugin is not available, or the nodes see only VFs, a `host-de
 
 The network is declared with an `addressPool`. The VF is unknown until the device plugin allocates it, so no address
 can be read from it beforehand, and the operator holds a node with an event that says so when the pool is missing. The
-operator reads the annotation and passes the resource to the control plane, which requests one of it for the SPDK
-container. Nothing else is configured for the resource.
+operator reads the annotation when it checks the definition, records the resource on the node as
+`status.network[].resource` beside the assigned address, and passes it to the control plane with the network, which
+requests one of it for the SPDK container. Nothing else is configured for the resource.
 
 ## The Host-Side Sibling Interface
 
@@ -542,7 +545,7 @@ kubectl -n simplyblock get storagenode \
 
 Every node reaches `Online`. Each data network is `Attached`, with `hostReachable` set to `true` and the address taken
 from the pool, or adopted from the interface. On the pod network, the network is `pod` and the address is the
-Service address.
+Service address. On option 7, the network also carries `resource`, the device plugin resource the SPDK pod requests.
 
 The paths of a volume on a client node show whether the local storage node is reachable. On the host, or in a
 privileged pod on the client's node:
