@@ -35,9 +35,6 @@ The initiator is always the host. Every option therefore has to give every worke
 storage address, including the storage node on the same worker. The operator checks that path before it reports a node
 online.
 
-The workloads that run on the host network or privileged, and why, are listed in
-[Host Network and Privileged Workloads](security.md#host-network-and-privileged-workloads).
-
 ## The Options at a Glance
 
 | Option                                                                          | Declared as                | Multus | Storage traffic flows over                                  | Typical use                                            |

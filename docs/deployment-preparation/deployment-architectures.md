@@ -211,9 +211,7 @@ Placement considerations:
   is drained. The metadata server is a single instance. While it restarts, metadata operations on its volumes stall,
   and clients resume without remounting.
 - The metadata server pod must be allowed to run privileged in the operator's namespace (it uses `/dev/kvm` and
-  `/dev/net/tun`), but it uses neither the host network nor the host PID namespace. Its companion proxy, a DaemonSet
-  that opens the metadata server's connections to the storage nodes, runs on the host network without privileges. See
-  [Host Network and Privileged Workloads](../kubernetes/installation/security.md#host-network-and-privileged-workloads).
+  `/dev/net/tun`), but it uses neither the host network nor the host PID namespace.
 - Network access to the metadata server pods (NFS over TCP port 2049, through a Service ClusterIP per export) and to
   the storage cluster's NVMe/TCP targets should be limited to the cluster's nodes.
 
