@@ -54,8 +54,10 @@ whole storage cluster. Where several arrays are available, the hosts can be spre
 
 Thin provisioning applies twice: simplyblock allocates volume capacity only when it is written, and the array
 allocates LUN capacity only when simplyblock writes to it. This allows large LUNs at no upfront cost, which avoids
-resizing them later. Where LUNs do have to grow, simplyblock takes the new size online, as long as all data LUNs grow
-by the same factor, since every device keeps the placement weight of its original size.
+resizing them later. Where LUNs do have to grow, simplyblock takes the new size online. If all data LUNs grow by the
+same factor, the ratio between the placement weights stays the same and no data moves. If they grow unevenly, the
+weights are set to the new sizes and the cluster is rebalanced, which moves a large part of the data in the
+background.
 
 Two effects have to be considered:
 

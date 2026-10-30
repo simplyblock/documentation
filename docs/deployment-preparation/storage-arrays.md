@@ -36,8 +36,8 @@ A storage node needs at least two LUNs: the journal LUN and one data LUN. The sm
 the journal.
 
 !!! important
-    Data LUNs can be grown online, as long as all of them grow by the same factor, but never shrunk. A LUN cannot be
-    added to a running storage node yet. See
+    Data LUNs can be grown online, but never shrunk. Growing all of them by the same factor moves no data, while an
+    uneven growth rebalances the cluster. A LUN cannot be added to a running storage node yet. See
     [Operating on Storage Arrays](../kubernetes/operations/cluster/storage-arrays.md#adding-capacity). Large thin
     LUNs make either step rare.
 

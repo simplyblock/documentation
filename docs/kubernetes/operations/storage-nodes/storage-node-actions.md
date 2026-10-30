@@ -315,6 +315,7 @@ devices have all grown by the same factor. A device whose block device has not g
 operation still succeeds.
 
 The control plane refuses the growth, and the operation fails, for a device that is not a Linux block device, that is
-not online, or whose block device has shrunk. Since a device keeps the placement weight of its original size, the
-added capacity is only fully usable once all data devices have grown by the same factor. Growing all of them at once
-is described in [Operating on Storage Arrays](../cluster/storage-arrays.md#growing-the-luns).
+not online, or whose block device has shrunk. The action does not change the device's placement weight, so the
+added capacity is only fully usable once all data devices have grown by the same factor, or once `GrowDevices` has
+updated the weights after an uneven growth. Growing all of them at once is described in
+[Operating on Storage Arrays](../cluster/storage-arrays.md#growing-the-luns).
