@@ -355,7 +355,8 @@ the host and the SPDK pod, on the same node as well. No host-side sibling interf
 | VFs in kernel mode (a network interface), not bound to `vfio-pci`                    | The SPDK pod uses the VF as a kernel interface for NVMe over TCP.      |
 
 On OpenShift, the SR-IOV Network Operator provides the VFs, the device plugin, and the `sriov` plugin, and generates the
-definition from a `SriovNetwork` resource.
+definition from a `SriovNetwork` resource. The `SriovNetwork` sets `ipam` to `'{"type": "static"}'` and `capabilities`
+to `'{"ips": true}'`, so that the generated definition meets the requirements above.
 
 ```json title="Device plugin pool that selects the VFs of a physical function"
 {
