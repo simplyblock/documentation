@@ -61,6 +61,11 @@ pool, as shown in the [EKS](eks.md) guide. The node pools are prepared as descri
 Multiple ports must be open on storage node hosts. The VLAN layout and the ports are listed in
 [Network](../../deployment-preparation/network.md#ports).
 
+The SPDK pods serve the volumes on the host network, on the pod network, or on dedicated interfaces that Multus
+attaches. The choice is declared in `spec.cluster.network` of the `ClusterDeploymentConfig` and cannot be changed after
+the cluster is created. The options, their requirements, and the production recommendations are described in
+[Storage Network](storage-network.md).
+
 ## Discover Workers and Devices
 
 A discovery run inspects the workers, starts one probe job per worker, and writes the result as a draft
@@ -258,7 +263,7 @@ Each group carries:
 | Field                             | Purpose                                                                                                                            |
 |-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | `workers`                         | The Kubernetes node names.                                                                                                         |
-| `mgmtInterface`, `dataInterfaces` | The management and data network interfaces, up to 32 data interfaces.                                                              |
+| `mgmtInterface`, `dataInterfaces` | The management and data network interfaces, up to 32 data interfaces. `dataInterfaces` only with `spdkOnHostNetwork`.              |
 | `devices`                         | Either `nvme` (PCI addresses) or `block` (for example, `/dev/sdb`), up to 128 each. Every group of a node set uses the same class. |
 | `failureDomain`                   | The failure domain of all workers in the group, see [below](#failure-domains).                                                     |
 | `spdkSystemMemory`                | Huge page memory for the storage nodes of this group, for example, `8G`.                                                           |

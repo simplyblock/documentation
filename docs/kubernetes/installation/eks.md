@@ -213,6 +213,9 @@ helm install cert-manager jetstack/cert-manager \
 
 On EKS, the installation follows the general procedure of [installing the Simplyblock Operator](k8s-control-plane.md) and [creating a storage cluster](k8s-storage-plane.md). Every simplyblock component has to be placed onto its node group and has to tolerate its taint.
 
+A dedicated network interface for the storage traffic, a second ENI on each storage node, is described in
+[Storage Network on Amazon EKS](eks-storage-network.md).
+
 The examples on this page use the following labels and taints. They are examples and are replaced with the ones of the
 actual node groups.
 
