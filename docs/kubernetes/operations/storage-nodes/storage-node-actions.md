@@ -199,9 +199,8 @@ kubectl get storagenodeops -n simplyblock \
 ## Restarting a Storage Device
 
 A single device of a storage node is restarted with a `StorageDeviceOps` resource, which recycles that one device
-instead of the whole node. The other devices of the node keep serving throughout. The kind has four actions:
-`Restart`, `Fail`, described in [Failing a Storage Device](#failing-a-storage-device), `Grow`, described in
-[Growing a Storage Device](#growing-a-storage-device), and `CheckHealth`, described in
+instead of the whole node. The other devices of the node keep serving throughout. The kind has three actions:
+`Restart`, `Fail`, described in [Failing a Storage Device](#failing-a-storage-device), and `CheckHealth`, described in
 [Device Health](../monitoring/device-health.md#checking-a-device-on-demand).
 
 The target is a `StorageDevice`, the read-only mirror of one device that the operator keeps per device and names
@@ -291,31 +290,3 @@ kubectl get storagecluster simplyblock-cluster -n simplyblock \
 
 The device health alerts of a failed device resolve, because the device no longer serves. The physical drive can
 then be pulled from the host.
-
-## Growing a Storage Device
-
-A Linux block device whose block device has grown, for example, a LUN grown on its storage array, takes its new size
-online with the action `Grow`. The device keeps serving: its pending I/O is drained and held for a moment while it
-switches over to the new size.
-
-```yaml title="Example of a device growth"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: StorageDeviceOps
-metadata:
-  name: grow-device-5e0000a1
-  namespace: simplyblock
-spec:
-  deviceRef: simplyblock-cluster-worker-1-0-5e0000a1
-  action: Grow
-```
-
-The operation runs the single step `Requesting`, which can be aborted, and records the outcome in `status.growth`:
-the size before and after, the size the device's placement weight is derived from, and whether the cluster's data
-devices have all grown by the same factor. A device whose block device has not grown is left unchanged, and the
-operation still succeeds.
-
-The control plane refuses the growth, and the operation fails, for a device that is not a Linux block device, that is
-not online, or whose block device has shrunk. The action does not change the device's placement weight, so the
-added capacity is only fully usable once all data devices have grown by the same factor, or once `GrowDevices` has
-updated the weights after an uneven growth. Growing all of them at once is described in
-[Operating on Storage Arrays](../cluster/storage-arrays.md#growing-the-luns).
