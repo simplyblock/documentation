@@ -52,13 +52,6 @@ For every storage node, the operator then proceeds as follows:
    TCP connection to the SPDK listener at that address. The network is recorded as `Attached`, and the node is
    reported `Online`, only when every worker reaches it.
 
-The operator does not write the definition, the routes, or the node's network configuration. It reads the address of
-the interface and verifies the result. The rest of this page covers what the cluster, the nodes, and the definition
-have to provide.
-
-Because the address is the address the interface already holds in the VPC, no address has to be typed per node, and the
-VPC, which only delivers the addresses assigned to an ENI, delivers the traffic.
-
 !!! note "No data interfaces"
     Discovery finds the data ENI on the workers and drafts `spdkOnHostNetwork: true` with `dataInterfaces`. The
     schema allows `dataInterfaces` only on the host network, so they are removed from the groups when the draft is
@@ -84,10 +77,6 @@ The cluster runs Cilium as the primary CNI in _ENI mode_, with native routing an
 cert-manager, and other components on their pod addresses. With an overlay datapath (VXLAN or Geneve), pod addresses
 exist only between the nodes, and the managed control plane cannot reach them. Webhook calls time out and installs
 fail. In ENI mode, every pod has a VPC address that the control plane routes to directly.
-
-**Why not chain Cilium on top of the AWS VPC CNI.** The VPC CNI would own the ENIs, including the data ENI, unless
-every ENI is tagged `node.k8s.amazonaws.com/no_manage=true`. Cilium in ENI mode has an exclusion tag of its own, and
-only one component manages ENIs. Both options keep pod addresses routable. The ENI mode of Cilium was chosen and tested.
 
 **Why no VPC CNI and no kube-proxy add-on.** The cluster is created with `bootstrap_self_managed_addons = false`. Cilium
 is installed before the nodes join, because a node created before a CNI exists never becomes ready and the managed node
@@ -333,14 +322,6 @@ table 100:   10.10.0.0/20 dev data0
 The definition names no routes and no per-worker addresses. The operator takes the plugin's first entry when it reads the
 interface, so `device` is found in a chained definition.
 
-**Check.**
-
-```bash title="Inspecting the routing of the SPDK pod"
-kubectl -n simplyblock debug <SPDK_POD> -it --image=nicolaka/netshoot --target=spdk-container -- sh -c 'ip route; ip rule'
-```
-
-The main table has only the `eth0` route, and a rule `from <data address> lookup <table>` exists.
-
 ### Problem A2: Routing on the Worker Host
 
 **Symptom.** Before the first node is added, or after a storage node pod restarts, pods on the worker cannot resolve
@@ -382,25 +363,10 @@ The step uses the instance metadata, so no CIDR is typed. It runs once in the us
 cluster, and is sufficient for the lifetime of the node: a drop-in is configuration, not a one-off `ip route` command.
 It has to exist before the first node-add, because the first address read needs a working host network.
 
-On a running node, the same commands create the drop-in, and a reload applies it without a reboot:
-
-```bash title="Applying the drop-in on a running node"
-networkctl reload
-networkctl reconfigure ens5
-```
-
 !!! warning "Image-specific names"
     `ens5` and `70-eks-ens5.network` are the names the Amazon Linux 2023 EKS image generates for the primary ENI. Another
     image or operating system names the interface and its configuration differently. The step has to be adapted to the
     image, preferably by matching the primary interface by its MAC address and not by its name.
-
-**Check.**
-
-```bash title="Checking the host route"
-ip route get <POD_ADDRESS_OF_ANOTHER_NODE>
-```
-
-The answer names `dev ens5`.
 
 ### Create the Cluster in Layout A
 
@@ -438,155 +404,31 @@ kubectl -n simplyblock get clusterdeploymentconfig discovered-initial-discovery 
 
 ## Layout B: Dedicated Subnet
 
-!!! warning "Not verified end to end"
-    The reasoning follows from the same routing rules as layout A. The route in the definition and its interaction with
-    `sbr` have not been run on a cluster. Verify them on a test cluster first.
-
-The data ENI is created in a subnet that holds only data ENIs, for example, `10.10.100.0/24`. The subnet has its own route
-table without a route out of the VPC, so storage traffic stays inside it. A subnet belongs to one availability zone, so
-each zone that hosts storage nodes needs its own data subnet.
-
-```plain title="Layout B, one worker"
-VPC 10.10.0.0/16
-
- node subnet 10.10.0.0/20       data subnet 10.10.100.0/24
- worker
- ├─ ens5  10.10.2.132/20        primary ENI, the host and Cilium
- ├─ (pod ENIs of Cilium)        pod addresses
- └─ ens6  10.10.100.17/24       data ENI, moved into the SPDK pod
-```
-
-### What Is Easier Than in Layout A
-
-- **The host has no conflict.** The subnets differ, so the host's route for `10.10.0.0/20` exists only on `ens5`. The
-  default route of `ens5` has the lower metric. The host reaches the SPDK address through its primary ENI and the VPC.
-  No host workaround is needed.
-- **The pod has no overlapping route.** The connected route of `data0` covers only `10.10.100.0/24`. The pod's traffic to
-  other pods stays on `eth0`.
-
-### Problem B1: Replies to Initiators on Other Subnets
-
-**Symptom.** A volume attach from a worker fails. The connection to the SPDK address times out, and the reachability
-check reports `DataNetworkHostUnreachable`.
-
-**Cause.** The initiators are hosts in the node subnet, which is not the data subnet. A request reaches the data ENI
-through the VPC and the pod answers by its own routes. The pod's default route is `eth0`, so the reply leaves the pod
-network with the data address as source. The VPC drops it, and a strict reverse-path filter drops the request before it
-is answered.
-
-**Solution.** A route for the initiators' subnet through the gateway of the data subnet, in the static IPAM block of
-the definition. The VPC reserves the first host address of every subnet for its router, so the gateway of
-`10.10.100.0/24` is `10.10.100.1`.
-
-```yaml title="NetworkAttachmentDefinition for layout B (fabric-data), not verified"
-apiVersion: k8s.cni.cncf.io/v1
-kind: NetworkAttachmentDefinition
-metadata:
-  name: fabric-data
-  namespace: simplyblock
-spec:
-  config: |
-    {
-      "cniVersion": "0.3.1",
-      "name": "fabric-data",
-      "plugins": [
-        {
-          "type": "host-device",
-          "device": "ens6",
-          "capabilities": { "ips": true },
-          "ipam": {
-            "type": "static",
-            "routes": [ { "dst": "10.10.0.0/20", "gw": "10.10.100.1" } ]
-          }
-        },
-        { "type": "sbr" }
-      ]
-    }
-```
-
-- `dst` is the subnet in which the worker hosts have their primary ENI, so one route covers every initiator and no
-  list per worker is needed.
-- `gw` is the first address of the data subnet.
-- `sbr` is kept for a reason: it is expected to move the route into the source-based table, so the route applies only
-  to packets sourced from the data address. This is the unverified part.
-
-**Why `sbr` matters here.** In the node subnet, hosts and pods share one address range with Cilium in ENI mode. A route for
-`10.10.0.0/20` in the pod's main table would also catch the pod's traffic to other pods and send it out of `data0` with
-the pod address as source, which the VPC drops. If `sbr` does not move the route, two fallbacks exist:
-
-- Put the pod addresses into subnets of their own (`eni.nodeSpec.subnetTags`, and `eni.nodeSpec.firstInterfaceIndex: 1`
-  so that Cilium does not use the primary ENI for pods), so that the route covers only hosts.
-- List one `/32` route per initiator. The list changes whenever a worker is replaced and does not scale.
-
-### Create the Cluster in Layout B
-
-1. Create the data subnet and its route table with only the local route, one per availability zone with storage nodes.
-2. Create the data ENIs in that subnet (`<DATA_ENI_SUBNET_ID>` in the boot step) and allow the node security group
-   in the data security group.
-3. Create the definition with the route and `sbr`. No host workaround is needed.
-4. Continue as in layout A.
+The data ENI can instead be created in a subnet that holds only data ENIs, one per availability zone, with a route table
+of its own. The host then has no overlapping route, and the pod has none either. In return, the replies to the
+initiators, which are in the node subnet, need a route through the gateway of the data subnet in the definition's
+static IPAM block (`"routes": [{"dst": "<NODE_SUBNET>", "gw": "<FIRST_ADDRESS_OF_DATA_SUBNET>"}]`), chained before
+`sbr`. This layout has not been run end to end and is verified on a test cluster before use.
 
 ## Choosing a Layout
 
-A dedicated subnet is the conventional design for storage traffic on AWS: it separates routing, access control, and
-address space, and the host needs no special configuration. It asks for more planning: a CIDR per availability zone, a
-route for the initiators' subnet, and a decision about whether pods share the node subnet.
-
-The same subnet needs no address planning and no route to the initiators. It asks for two workarounds that have to be
-present in the node configuration and the definition, and it gives up network-level isolation. Both workarounds are
-configuration that is applied once. Neither is something an administrator runs by hand during operation.
-
-The bandwidth of an ENI does not depend on its subnet. The network bandwidth of an EC2 instance is a limit of the
-instance as a whole, and a second ENI does not add to it on a single-network-card instance type such as `i3en`. A single
-TCP flow is also limited by AWS, so the number of NVMe/TCP connections matters more than the choice of ENI.
+A dedicated subnet separates routing, access control, and address space, at the cost of a CIDR per availability zone
+and a route to the initiators. The same subnet needs no address planning, but needs the two workarounds of layout A and
+gives up network-level isolation. Neither layout adds bandwidth: the network bandwidth of an EC2 instance is a limit of
+the instance as a whole, and a single TCP flow is limited by AWS as well, so the number of NVMe/TCP connections matters
+more than the choice of ENI.
 
 ## Verification
 
-After the node group, Cilium, Multus, and the operator are installed and the draft is approved:
-
 ```bash title="Checking the storage nodes"
 kubectl -n simplyblock get storagenode \
-  -o custom-columns=NODE:.spec.workerNode,PHASE:.status.phase,PORT:.status.ports.nvmeof,NET:.status.network
+    -o custom-columns=NODE:.spec.workerNode,PHASE:.status.phase,NET:.status.network
 ```
 
 Every node reaches `Online` with a network entry in phase `Attached` and `hostReachable: true`. The `assigned` address
-is the address of the data ENI on the host. The control plane reports the same address on the pod's `data0`.
-
-To verify the data path, create a volume and run a write and a verify from a pod on the worker that serves the volume,
-and from pods on other workers:
-
-```yaml title="Pod that writes and verifies a volume with fio"
-apiVersion: v1
-kind: Pod
-metadata:
-  name: fio-1
-spec:
-  nodeSelector:
-    kubernetes.io/hostname: <WORKER_NAME>
-  restartPolicy: Never
-  containers:
-    - name: fio
-      image: alpine:3.22
-      command:
-        - sh
-        - -c
-        - >
-          apk add --no-cache fio >/dev/null &&
-          fio --name=w --filename=/data/f --size=1G --bs=4k --rw=randwrite --iodepth=16
-          --ioengine=libaio --direct=1 --verify=crc32c --do_verify=1 --group_reporting
-      volumeMounts:
-        - name: d
-          mountPath: /data
-  volumes:
-    - name: d
-      persistentVolumeClaim:
-        claimName: vol-1
-```
-
-!!! important "Pin test pods with a selector, not a node name"
-    A pod that sets `spec.nodeName` bypasses the scheduler. A `WaitForFirstConsumer` StorageClass then never binds the
-    claim, because the scheduler never selects a node. A `nodeSelector` on `kubernetes.io/hostname` pins the pod and keeps
-    the scheduler involved.
+is the address of the data ENI on the host. A volume is then written and verified from a pod on the worker that serves
+it and from pods on other workers, each pinned with a `nodeSelector` on `kubernetes.io/hostname`, because a pod that
+sets `spec.nodeName` bypasses the scheduler and never binds a `WaitForFirstConsumer` claim.
 
 ## Troubleshooting
 
@@ -598,13 +440,3 @@ spec:
 | `NetworkAttachmentFailed`, "names no device or PCI address"                                      | The definition has no `device`, `master`, or `pciBusID`                                               | Add the interface to the first plugin of the definition.                                             |
 | `DataNetworkHostUnreachable` naming a worker                                                     | No route or security group rule between that worker and the data ENI, or no return path               | Check the data security group (node security group admitted), and the routes of the layout.          |
 | A claim stays `Pending` with `WaitForFirstConsumer`                                              | The pod sets `spec.nodeName`                                                                          | Pin with a `nodeSelector`.                                                                           |
-
-## Not Verified
-
-The following parts have not been verified on Amazon EKS:
-
-- Layout B end to end, including the route in the definition and its behavior with `sbr`.
-- `macvlan` and `ipvlan` attachments, which need secondary addresses or MAC addresses registered with the VPC.
-- Storage nodes in several availability zones, which need a data subnet in each zone.
-- Other node images than Amazon Linux 2023, for the host workaround of layout A.
-- The throughput of the storage network. The verification above checks correctness, not performance.

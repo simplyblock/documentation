@@ -294,12 +294,7 @@ the host gets a route to the storage subnet:
 ip route add 10.10.10.0/24 via 192.168.10.1 dev eth0
 ```
 
-Without a path, the reachability check fails on every worker and the nodes stay in `Provisioning`:
-
-```plain title="Example event of a node without a path from the host"
-Cannot reach the SPDK listener at 10.10.10.67:4421 on network "storage-data" from worker worker-2
-(dial tcp 10.10.10.67:4421: i/o timeout), so volumes cannot be attached from it.
-```
+Without a path, the reachability check fails on every worker, and the nodes stay in `Provisioning`.
 
 **Caveats.** An interface that returns to the host without its address, for example, after its storage node was
 removed, holds the next node on that worker until the address is restored. With an `addressPool`, the interface needs no
@@ -320,49 +315,17 @@ interfaces in the parent's subnet.
 | A host-side sibling interface on every node, with the host's storage address | A host cannot reach the `macvlan` or `ipvlan` interfaces of its own NIC (see [The Host-Side Sibling Interface](#the-host-side-sibling-interface)).                                                   |
 | An `addressPool`                                                             | The parent stays on the host. Without a pool, the SPDK pod would take the parent's address, and the pod and the host would hold the same address.                                                    |
 
-=== "macvlan"
-    ```yaml title="Example of a macvlan definition (storage-data)"
-    apiVersion: k8s.cni.cncf.io/v1
-    kind: NetworkAttachmentDefinition
-    metadata:
-      name: storage-data
-      namespace: simplyblock
-    spec:
-      config: |
-        {
-          "cniVersion": "0.3.1",
-          "name": "storage-data",
-          "type": "macvlan",
-          "master": "eth1",
-          "mode": "bridge",
-          "mtu": 9000,
-          "capabilities": { "ips": true },
-          "ipam": { "type": "static" }
-        }
-    ```
+```yaml title="Example of a macvlan definition (storage-data)"
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: storage-data
+  namespace: simplyblock
+spec:
+  config: '{"cniVersion":"0.3.1","name":"storage-data","type":"macvlan","master":"eth1","mode":"bridge","mtu":9000,"capabilities":{"ips":true},"ipam":{"type":"static"}}'
+```
 
-=== "ipvlan"
-    ```yaml title="Example of an ipvlan definition (storage-data)"
-    apiVersion: k8s.cni.cncf.io/v1
-    kind: NetworkAttachmentDefinition
-    metadata:
-      name: storage-data
-      namespace: simplyblock
-    spec:
-      config: |
-        {
-          "cniVersion": "0.3.1",
-          "name": "storage-data",
-          "type": "ipvlan",
-          "master": "eth1",
-          "mode": "l2",
-          "mtu": 9000,
-          "capabilities": { "ips": true },
-          "ipam": { "type": "static" }
-        }
-    ```
-
-The network is declared with an `addressPool` in the storage subnet, outside the range of the hosts' own storage
+For `ipvlan`, the type is `ipvlan` and the mode `l2`. The network is declared with an `addressPool` in the storage subnet, outside the range of the hosts' own storage
 addresses, as in [Configuration in Simplyblock](#configuration-in-simplyblock).
 
 With the host's address moved from the parent to the sibling, the parent carries no address. Discovery then finds no
@@ -446,10 +409,6 @@ spec:
 
 The network is declared with an `addressPool` in the storage subnet, for example, `10.10.200.0/24`.
 
-Options 5 and 6 use the same NIC, the same plugin, and the same sibling, and they perform alike. Option 5 isolates the
-storage traffic at layer 2. Option 6 needs no switch configuration, but any system on the node segment can reach the
-storage subnet by adding an address.
-
 ## Option 7: SR-IOV Virtual Functions
 
 The SR-IOV Network Device Plugin advertises the VFs of the nodes as an extended resource. A definition annotated with
@@ -469,60 +428,34 @@ On OpenShift, the SR-IOV Network Operator provides the VFs, the device plugin, a
 definition from a `SriovNetwork` resource. The `SriovNetwork` sets `ipam` to `'{"type": "static"}'` and `capabilities`
 to `'{"ips": true}'`, so that the generated definition meets the requirements above.
 
-```json title="Example of a device plugin pool that selects the VFs of a physical function"
-{
-  "resourceList": [
-    {
-      "resourceName": "storage_vf",
-      "resourcePrefix": "simplyblock.io",
-      "selectors": { "pfNames": ["ens4f0"] }
-    }
-  ]
-}
-```
-
 The definition carries the resource in the `k8s.v1.cni.cncf.io/resourceName` annotation and names no device:
 
-=== "sriov"
-    ```yaml title="Example of an sriov definition (storage-sriov)"
-    apiVersion: k8s.cni.cncf.io/v1
-    kind: NetworkAttachmentDefinition
-    metadata:
-      name: storage-sriov
-      namespace: simplyblock
-      annotations:
-        k8s.v1.cni.cncf.io/resourceName: simplyblock.io/storage_vf
-    spec:
-      config: |
-        {
-          "cniVersion": "0.3.1",
-          "name": "storage-sriov",
-          "type": "sriov",
-          "vlan": 100,
-          "spoofchk": "on",
-          "trust": "off",
-          "capabilities": { "ips": true },
-          "ipam": { "type": "static" }
-        }
-    ```
+```yaml title="Example of an sriov definition (storage-sriov)"
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: storage-sriov
+  namespace: simplyblock
+  annotations:
+    k8s.v1.cni.cncf.io/resourceName: simplyblock.io/storage_vf
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "storage-sriov",
+      "type": "sriov",
+      "vlan": 100,
+      "spoofchk": "on",
+      "trust": "off",
+      "capabilities": { "ips": true },
+      "ipam": { "type": "static" }
+    }
+```
 
-    `vlan`, `spoofchk`, and `trust` are optional. The `sriov` plugin sets them on the VF through the physical function.
+`vlan`, `spoofchk`, and `trust` are optional. The `sriov` plugin sets them on the VF through the physical function.
 
-=== "host-device with a device plugin"
-    ```yaml title="Example of a host-device definition for an allocated VF (storage-vfdp)"
-    apiVersion: k8s.cni.cncf.io/v1
-    kind: NetworkAttachmentDefinition
-    metadata:
-      name: storage-vfdp
-      namespace: simplyblock
-      annotations:
-        k8s.v1.cni.cncf.io/resourceName: simplyblock.io/storage_vf
-    spec:
-      config: '{"cniVersion":"0.3.1","name":"storage-vfdp","type":"host-device","capabilities":{"deviceID":true,"ips":true},"ipam":{"type":"static"}}'
-    ```
-
-    This variant serves where the `sriov` plugin is not available, or where the nodes see only VFs, for example,
-    virtual machines with VFs passed through.
+Where the `sriov` plugin is not available, or the nodes see only VFs, a `host-device` definition with
+`"capabilities":{"deviceID":true,"ips":true}` and the same annotation attaches the allocated VF.
 
 The network is declared with an `addressPool`. The VF is unknown until the device plugin allocates it, so no address
 can be read from it beforehand, and the operator holds a node with an event that says so when the pool is missing. The
@@ -574,10 +507,6 @@ differs per node.
     nmcli con up eth1
     ```
 
-    kubernetes-nmstate applies the same configuration declaratively, with one `NodeNetworkConfigurationPolicy` per
-    node that removes the address from `eth1` and creates `shim0` of type `mac-vlan` on `eth1` in bridge mode. Deleting
-    a policy does not undo what it applied, so a policy is deleted only after one that undoes it has been applied.
-
 === "iproute2 (macvlan or ipvlan)"
     The `ip` commands take effect at once but do not survive a reboot. A reboot, or `nmcli con up eth1`, puts the
     address back on `eth1`, where it clashes with the sibling. A persistent setup runs them from a systemd unit or a
@@ -597,47 +526,6 @@ differs per node.
     ip addr flush dev eth1
     nmcli con up eth1
     ```
-
-=== "DaemonSet"
-    Where the distribution's network configuration does not manage the interface type, a privileged DaemonSet on the
-    host network creates the sibling and keeps it. The image, the interface names, and the address scheme are examples.
-
-    ```yaml title="Example of a DaemonSet that keeps a host-side macvlan sibling"
-    apiVersion: apps/v1
-    kind: DaemonSet
-    metadata:
-      name: sb-host-macvlan
-      namespace: kube-system
-    spec:
-      selector:
-        matchLabels: {app: sb-host-macvlan}
-      template:
-        metadata:
-          labels: {app: sb-host-macvlan}
-        spec:
-          hostNetwork: true
-          tolerations: [{operator: Exists}]
-          containers:
-            - name: link
-              image: nicolaka/netshoot:v0.13
-              env:
-                - name: HOST_IP
-                  valueFrom: {fieldRef: {fieldPath: status.hostIP}}
-              command: ["/bin/sh", "-c"]
-              args:
-                - |
-                  IP=10.10.200.${HOST_IP##*.}
-                  trap "ip link del sbhost0 2>/dev/null; exit 0" TERM
-                  while true; do
-                    ip link show sbhost0 >/dev/null 2>&1 || ip link add sbhost0 link ens18 type macvlan mode bridge
-                    ip link set sbhost0 up
-                    ip -4 addr show dev sbhost0 | grep -q "$IP/24" || ip addr add $IP/24 dev sbhost0
-                    sleep 10 & wait $!
-                  done
-              securityContext: {privileged: true}
-    ```
-
-    For option 5, the parent is the VLAN interface, for example, `ens18.100`, and the address is in the VLAN's subnet.
 
 ```bash title="Checking the parent and the sibling on a node"
 ip -br addr show eth1
@@ -668,18 +556,6 @@ nvme list-subsys
 
 Each volume has one `live` path per storage node that serves it, and the path to the storage node on the same worker
 is present and `live`.
-
-For option 7, the SPDK pod requests the device plugin's resource and carries the allocated VF:
-
-```bash title="Showing the resource request and the allocated device of an SPDK pod"
-kubectl -n simplyblock get pod <SPDK_POD> \
-    -o jsonpath='{.spec.containers[0].resources.limits}'
-kubectl -n simplyblock get pod <SPDK_POD> \
-    -o jsonpath='{.metadata.annotations.k8s\.v1\.cni\.cncf\.io/network-status}'
-```
-
-The limits include the resource, and the network status shows the data interface with a `device-info` entry that names
-the VF's PCI address.
 
 ## Troubleshooting
 
