@@ -83,6 +83,9 @@ For detailed CRD documentation, see [Simplyblock Operator](../../reference/opera
 - [Create a Storage Cluster](k8s-storage-plane.md): Discovery, review, approval, and the first volume.
 - [Connecting to an External Control Plane](install-csi.md): The managed profile for clusters without a local control
   plane.
+- [Storage Network Options](storage-network-options.md): Every way to carry the storage traffic, from the host and pod
+  networks to Multus attachments with host-device, macvlan, VLANs, and SR-IOV virtual functions, with the requirements of
+  each.
 - [Storage Network on Amazon EKS](eks-storage-network.md): A dedicated data ENI with Cilium in ENI mode and Multus, in the
   same subnet or a dedicated subnet.
 - [OpenShift](openshift.md): Security context constraints and TLS on OpenShift.
