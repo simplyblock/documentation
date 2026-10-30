@@ -27,6 +27,9 @@ storage node is required.
     Any gateway, firewall, or proxy above layer 2 on the storage network path should be avoided for performance
     reasons.
 
+On Kubernetes, the network the SPDK pods serve on is declared per storage cluster. The options and how they meet these
+requirements are described in [Storage Network](../kubernetes/installation/storage-network.md).
+
 ## Fabrics
 
 Simplyblock implements NVMe over Fabrics, either NVMe/TCP or NVMe/RoCE (RoCEv2), over any Ethernet interconnect. The
