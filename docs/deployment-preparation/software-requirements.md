@@ -47,8 +47,6 @@ and [Linux Kernel Versions](../reference/supported-linux-kernels.md).
 
 These requirements apply only when [pNFS volumes](../kubernetes/usage/pnfs.md) (`ReadWriteMany`,
 [distributed file storage](../architecture/concepts/distributed-file-storage.md)) are used.
-The metadata server's proxy runs on the host network. See
-[Host Network and Privileged Workloads](../kubernetes/installation/security.md#host-network-and-privileged-workloads).
 
 **Metadata server node:**
 
