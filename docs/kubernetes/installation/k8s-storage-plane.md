@@ -227,7 +227,7 @@ and which of them can change later are explained in [Cluster Deployment Options]
 | `stripe`                                                      | `dataChunks` and `parityChunks`     | The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md). Allowed: 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, 4+2.      |
 | `fabricType`                                                  | For example, `tcp`                  | The NVMe-oF transport.                                                                                                               |
 | `enableDriveFormat`                                           | Off                                 | Formats every listed device. **Destructive.**                                                                                        |
-| `enableJournalDevice`                                         | Off                                 | Dedicates each worker's smallest NVMe device to the journal manager.                                                                 |
+| `enableJournalDevice`                                         | Off                                 | Dedicates each storage node's smallest device to the journal manager.                                                                |
 | `socketsToUse`, `nodesPerSocket`                              | Up to 16 sockets, 1 to 8 nodes each | How many storage nodes run per worker. Empty `socketsToUse` means socket 0 only.                                                     |
 | `nodeProvisioningBudget`                                      | At least 1                          | How many workers are provisioned in parallel, see [Parallel Storage Node Addition](../operations/scaling/parallel-node-addition.md). |
 | `enableChecksumValidation`, `enableAtomicity4K`               | Off                                 | Data integrity. `enableAtomicity4K` requires checksum validation.                                                                    |
@@ -274,9 +274,10 @@ set above the limit is refused with `MemberTooLarge`.
 ### Storage Array LUNs
 
 On a [storage array](../../architecture/concepts/storage-arrays.md), the devices are the LUNs of each worker, listed
-under `devices.block`. Block devices require `enableJournalDevice`, which dedicates the smallest LUN of each worker
-to the journal. A discovery run with `enableLogicalBlockDevices` and `forceJournalDevice` drafts the document, or it
-is written by hand.
+under `devices.block`. By default, the configure of each storage node partitions the node's smallest LUN into a
+journal partition and a data partition, so a single LUN per worker is enough and every LUN carries data. With
+`enableJournalDevice`, the smallest LUN of each storage node is dedicated to the journal instead. A discovery run
+with `enableLogicalBlockDevices` drafts the document, or it is written by hand.
 
 Every worker has its own LUNs with their own WWNs, so the persistent device paths differ per worker. Each worker
 then gets a group of its own:
@@ -291,7 +292,6 @@ spec:
   approved: false
   cluster:
     name: array-cluster
-    enableJournalDevice: true
     vcpuCount: 8
     minHugePagesSize: 8G
     stripe:
@@ -304,14 +304,12 @@ spec:
           workers: [worker-01]
           devices:
             block:
-              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a01   # journal LUN, the smallest
-              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a02   # data LUN
+              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a01   # journal and data partitions
         - name: worker-02
           workers: [worker-02]
           devices:
             block:
               - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a11
-              - /dev/disk/by-id/wwn-0x600a098038304331395d4f4a2d2f4a12
         # ... one group per worker, at least six workers for 4+1
 ```
 
