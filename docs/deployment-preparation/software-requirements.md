@@ -88,6 +88,8 @@ reference.
 These requirements apply only when [pNFS volumes](../kubernetes/usage/pnfs.md) (`ReadWriteMany`,
 [distributed file storage](../architecture/concepts/distributed-file-storage.md)) are used. pNFS is available on
 Kubernetes only, not on a legacy Docker-based deployment.
+The metadata server's proxy runs on the host network. See
+[Host Network and Privileged Workloads](../kubernetes/installation/security.md#host-network-and-privileged-workloads).
 
 **Metadata server node:**
 
