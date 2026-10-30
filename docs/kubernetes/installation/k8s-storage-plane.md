@@ -61,6 +61,11 @@ pool, as shown in the [EKS](eks.md) guide. The node pools are prepared as descri
 Multiple ports must be open on storage node hosts. The VLAN layout and the ports are listed in
 [Network](../../deployment-preparation/network.md#ports).
 
+How the SPDK pods reach the network is chosen when the cluster is created, in `spec.cluster.network` of the
+`ClusterDeploymentConfig`. [Storage Network Configuration](storage-network.md) describes the options, which are the
+host network, the pod network, and a NetworkAttachmentDefinition with `host-device`, `ipvlan`, or `macvlan`, and the
+host setup each needs.
+
 ## Discover Workers and Devices
 
 A discovery run inspects the workers, starts one probe job per worker, and writes the result as a draft
