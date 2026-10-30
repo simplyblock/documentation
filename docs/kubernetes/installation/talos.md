@@ -38,8 +38,8 @@ the `StorageCluster`) and the number of devices each storage node uses:
 {{ cliname }} storage-node configure \
   --calculate-hp-only \
   --number-of-devices <NUMBER_OF_DEVICES> \
-  --hp-max-subsys <MAX_SUBSYSTEM_COUNT> \
-  --hp-vcpu-count <VCPU_COUNT>
+  --max-subsys <MAX_SUBSYSTEM_COUNT> \
+  --vcpu-count <VCPU_COUNT>
 ```
 
 The following flags also affect the huge page calculation:
@@ -47,12 +47,12 @@ The following flags also affect the huge page calculation:
 - `--nodes-per-socket (default: 1)`
 - `--sockets-to-use (default: 0)`
 
-Without `--hp-max-subsys` and `--hp-vcpu-count`, the calculator sizes for the default of 75 subsystems and the
+Without `--max-subsys` and `--vcpu-count`, the calculator sizes for the default of 75 subsystems and the
 host's default core layout.
 
 ```plain title="Example output of huge pages calculator"
 [demo@demo ~]# {{ cliname }} storage-node configure \
-  --calculate-hp-only --number-of-devices 2 --hp-max-subsys 30 --hp-vcpu-count 4
+  --calculate-hp-only --number-of-devices 2 --max-subsys 30 --vcpu-count 4
 INFO: The required number of huge pages on this host is: <NUMBER_OF_PAGES> (<SIZE> MB)
 True
 ```
