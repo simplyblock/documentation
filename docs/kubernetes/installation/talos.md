@@ -30,15 +30,16 @@ machine:
 Simplyblock requires huge pages memory to operate. The storage engine expects to find huge pages of 2 MiB page size. The
 required amount of huge pages depends on a number of factors.
 
-After [installing the Simplyblock Operator](k8s-control-plane.md) and waiting for the control plane to become
-`Available`, the required huge pages can be calculated from the `simplyblock-admin-control` pod of the control plane.
-
-Run the following command on the admin control pod to calculate the huge pages required on the host:
+The calculator sizes the host it runs on: it reads that host's CPU layout. Run it in a pod on the storage worker
+itself, or on a worker with the same CPU layout. Pass the cluster's sizing (`maxSubsystemCount` and `vcpuCount` of
+the `StorageCluster`) and the number of devices each storage node uses:
 
 ```bash title="Run the huge memory calculator"
 {{ cliname }} storage-node configure \
   --calculate-hp-only \
-  --number-of-devices <NUMBER_OF_DEVICES>
+  --number-of-devices <NUMBER_OF_DEVICES> \
+  --max-subsys <MAX_SUBSYSTEM_COUNT> \
+  --vcpu-count <VCPU_COUNT>
 ```
 
 The following flags also affect the huge page calculation:
@@ -46,17 +47,26 @@ The following flags also affect the huge page calculation:
 - `--nodes-per-socket (default: 1)`
 - `--sockets-to-use (default: 0)`
 
-The maximum number of subsystems and the vCPU count are cluster-level settings (`maxSubsystemCount` and `vcpuCount`
-of the `StorageCluster`), which the host does not know before it joins the cluster. The calculator therefore sizes
-the host for the default of 75 subsystems and its default core layout. For a `maxSubsystemCount` above 75, add 20
-pages (40 MiB) for every additional subsystem, up to the maximum of 500.
+Without `--max-subsys` and `--vcpu-count`, the calculator sizes for the default of 75 subsystems and the
+host's default core layout.
 
 ```plain title="Example output of huge pages calculator"
 [demo@demo ~]# {{ cliname }} storage-node configure \
-  --calculate-hp-only --number-of-devices 4
+  --calculate-hp-only --number-of-devices 2 --max-subsys 30 --vcpu-count 4
 INFO: The required number of huge pages on this host is: <NUMBER_OF_PAGES> (<SIZE> MB)
 True
 ```
+
+If a storage node was already refused for lack of memory, the error states the cluster's exact requirement:
+
+```plain
+Not enough memory on <node> for max_lvol=30, 4 SPDK vCPU(s): need 5.5 GiB huge-page + 2.4 GiB system memory, ...
+```
+
+!!! note
+    Huge pages are not the only memory a storage node needs. It also needs free system memory beyond the reserved
+    huge pages (2.4 GiB in the example above). Reserving huge pages takes them out of free memory, so the worker
+    needs both amounts available in total.
 
 To apply the change to Talos' worker nodes, a YAML configuration file with the following content is required. The number
 of pages is to be replaced with the number calculated above.
