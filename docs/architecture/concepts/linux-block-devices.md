@@ -58,9 +58,10 @@ A partition can be used when the rest of its disk belongs to the operating syste
   configuration, by a persistent name such as `/dev/disk/by-partuuid/<PARTUUID>` or by serial
   (`sn configure --lblk --blk-names` or `--blk-serials`). A selection must not contain both a whole disk and one of
   its own partitions.
-- **Journal:** When the selection contains partitions, the smallest selected partition is split into a journal
-  partition and a data partition at configuration time. The journal is sized as a share of the node's selected
-  capacity, 3 percent by default (`--jm-percent`).
+- **Journal:** The smallest selected partition of each storage node is split into a journal partition and a data
+  partition at configuration time. The journal is sized as a share of the node's selected capacity, 3 percent by
+  default (`--jm-percent`). The journal partition keeps the number and the PARTUUID of the original partition, so
+  the name it was selected by stays valid.
 - **Minimum:** A storage node needs at least two selected units, whole disks or partitions.
 
 The automatic discovery of the Simplyblock Operator (`enableLogicalBlockDevices`) proposes whole disks only. Its
@@ -105,8 +106,9 @@ well before it fires.
 
 The device mode is cluster-global and deploy-time only: `nvme` and `lblk` devices cannot be mixed
 within one cluster, and the mode cannot be changed after cluster creation. In `lblk` mode,
-the journal needs a dedicated device, or a journal partition split from the smallest selected partition. Growing a
-node's device set at restart time is not supported.
+the journal is carved from each storage node's smallest device, a whole disk or a partition, unless a dedicated
+journal device is requested (`--lblk-journal-device`, or `enableJournalDevice` in Kubernetes). A disk that already
+carries simplyblock data is never partitioned. Growing a node's device set at restart time is not supported.
 
 SMART health telemetry is not available for AIO-backed devices. Device-level performance depends on
 the underlying block device and the kernel block layer, so higher latency than with SPDK-native NVMe
