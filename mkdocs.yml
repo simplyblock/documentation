@@ -27,6 +27,9 @@ extra:
   cliname: sbctl
   experimental: "**Experimental**{.chip-experimental}"
 hooks:
+  # Video gallery and pick of the day from docs/tutorials/videos.yml. Must run
+  # before md_mirror.py so the mirrors contain the rendered gallery.
+  - scripts/hooks/videos.py
   # Writes a Markdown twin of every page into the built site, plus llms.txt
   # and llms-full.txt. See scripts/hooks/README.md.
   - scripts/hooks/md_mirror.py
@@ -125,9 +128,11 @@ theme:
 extra_css:
   - assets/stylesheets/extra.css
   - assets/stylesheets/swagger-theme.css
+  - assets/stylesheets/videos.css
 extra_javascript:
   - assets/javascripts/cpumask-calculator.js
   - assets/javascripts/version-selector.js
+  - assets/javascripts/videos.js
 validation:
   links:
     not_found: warn
