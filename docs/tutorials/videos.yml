@@ -67,6 +67,30 @@ videos:
     category: core
     title: "Instant volume migration"
     drive_id: 1i0KpuVWWiBvVcmWqGer2359OQQPh4xsF
+  - id: core-06
+    category: core
+    title: "Low-latency SPDK"
+    drive_id: 1O0olXVB09n9GRq0vY6hS763Bm_S9uU9W
+  - id: core-07
+    category: core
+    title: "Distributed placement"
+    drive_id: 1y-sUsXXn1gEazvmQSqZIjFoEkrIykphA
+  - id: core-08
+    category: core
+    title: "Cluster lifecycle"
+    drive_id: 1VMYsgAVX6-ruPrD6D9nARXxuG1McVhcc
+  - id: core-09
+    category: core
+    title: "Failure domains"
+    drive_id: 1dblr3ejqEWb3iWPnG0PL9cmVT_CcS9AA
+  - id: core-10
+    category: core
+    title: "Placement groups"
+    drive_id: 1ou0AJ8tXWBg_Kxpok1U4nuBDk62n7r4V
+  - id: core-11
+    category: core
+    title: "Distributed erasure coding"
+    drive_id: 1CsZnt8XJM6j5VdDFkzMXQ_yT491wwsyY
   - id: file-object-01
     category: file-object
     title: "pNFS high-performance file storage"
