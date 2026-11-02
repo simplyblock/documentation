@@ -31,7 +31,16 @@ class Settings:
     rate_limit: int = field(default_factory=lambda: int(_env("ASSISTANT_RATE_LIMIT", "8")))  # questions ...
     rate_window: int = field(default_factory=lambda: int(_env("ASSISTANT_RATE_WINDOW", "600")))  # ... per seconds, per IP
     max_question_chars: int = field(default_factory=lambda: int(_env("ASSISTANT_MAX_QUESTION_CHARS", "400")))
-    cache_ttl: int = field(default_factory=lambda: int(_env("ASSISTANT_CACHE_TTL", "86400")))
+    # Cached answers stay valid while their pages are unchanged, up to this age (seconds).
+    cache_ttl: int = field(default_factory=lambda: int(_env("ASSISTANT_CACHE_TTL", "1209600")))
+    # Where the answer cache is kept across restarts (memory only when empty).
+    cache_file: str = field(default_factory=lambda: _env("ASSISTANT_CACHE_FILE", ""))
+    # Pre-answering: after each docs change, the most asked questions are answered ahead.
+    prewarm_versions: tuple[str, ...] = field(
+        default_factory=lambda: tuple(v.strip() for v in _env("ASSISTANT_PREWARM_VERSIONS", "").split(",") if v.strip())
+    )
+    prewarm_count: int = field(default_factory=lambda: int(_env("ASSISTANT_PREWARM_COUNT", "25")))
+    prewarm_daily_usd: float = field(default_factory=lambda: float(_env("ASSISTANT_PREWARM_DAILY_USD", "6")))
     trust_forwarded_for: bool = field(default_factory=lambda: _env("ASSISTANT_TRUST_FORWARDED_FOR", "1") == "1")
     turnstile_secret: str = field(default_factory=lambda: _env("TURNSTILE_SECRET", ""))
     # Browser origins allowed to call the API (comma separated). Same-origin needs none.

@@ -1,4 +1,4 @@
-"""Abuse and cost protection: per-IP rate limit, answer cache, daily budget, Turnstile."""
+"""Abuse and cost protection: per-IP rate limit, daily budget, Turnstile."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import re
 import time
 import urllib.parse
 import urllib.request
-from collections import OrderedDict, deque
+from collections import deque
 
 from .config import settings
 
@@ -32,51 +32,31 @@ class RateLimiter:
         return True
 
 
-class AnswerCache:
-    """Identical questions (per docs version) are answered once per TTL."""
-
-    def __init__(self, size: int = 1000) -> None:
-        self._items: OrderedDict[tuple[str, str], tuple[float, dict]] = OrderedDict()
-        self._size = size
-
-    @staticmethod
-    def key(version: str, question: str) -> tuple[str, str]:
-        q = re.sub(r"[^\w\s-]", " ", question.lower())
-        return version, " ".join(q.split())
-
-    def get(self, version: str, question: str) -> dict | None:
-        k = self.key(version, question)
-        item = self._items.get(k)
-        if not item or time.time() - item[0] > settings.cache_ttl:
-            return None
-        self._items.move_to_end(k)
-        return item[1]
-
-    def put(self, version: str, question: str, answer: dict) -> None:
-        k = self.key(version, question)
-        self._items[k] = (time.time(), answer)
-        self._items.move_to_end(k)
-        while len(self._items) > self._size:
-            self._items.popitem(last=False)
-
-
 class Budget:
+    """Daily spend. Pre-answering has its own, smaller cap inside the total."""
+
     def __init__(self) -> None:
         self.day = dt.date.today()
         self.spent = 0.0
+        self.prewarm_spent = 0.0
 
     def _roll(self) -> None:
         today = dt.date.today()
         if today != self.day:
-            self.day, self.spent = today, 0.0
+            self.day, self.spent, self.prewarm_spent = today, 0.0, 0.0
 
     def available(self) -> bool:
         self._roll()
         return self.spent < settings.daily_budget_usd
 
-    def add(self, usd: float) -> None:
+    def prewarm_available(self) -> bool:
+        return self.available() and self.prewarm_spent < settings.prewarm_daily_usd
+
+    def add(self, usd: float, prewarm: bool = False) -> None:
         self._roll()
         self.spent += usd
+        if prewarm:
+            self.prewarm_spent += usd
 
 
 def _verify_turnstile(token: str, ip: str) -> bool:
@@ -98,5 +78,4 @@ async def human(token: str, ip: str) -> bool:
 
 
 limiter = RateLimiter()
-cache = AnswerCache()
 budget = Budget()

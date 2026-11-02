@@ -22,10 +22,11 @@ umask 077
 { echo "ANTHROPIC_API_KEY=$KEY"; cat "$DIR/config.env"; } > "$DIR/env"
 umask 022
 
+mkdir -p /var/lib/docs-assistant && chown 10001 /var/lib/docs-assistant
 docker network inspect docs-assistant >/dev/null 2>&1 || docker network create docs-assistant
 docker rm -f docs-assistant >/dev/null 2>&1 || true
 docker run -d --name docs-assistant --restart unless-stopped --network docs-assistant \
-  --env-file "$DIR/env" -v /var/log/docs-assistant:/var/log/docs-assistant docs-assistant
+  --env-file "$DIR/env" -v /var/log/docs-assistant:/var/log/docs-assistant   -v /var/lib/docs-assistant:/data docs-assistant
 
 cp assistant/deploy/Caddyfile "$DIR/Caddyfile"
 if docker inspect caddy >/dev/null 2>&1; then

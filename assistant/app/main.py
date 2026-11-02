@@ -9,21 +9,32 @@ Run: uvicorn app.main:app --host 0.0.0.0 --port 8080   (from assistant/)
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import agent
+from . import agent, prewarm
+from .cache import cache
 from .config import settings
 from .docs import library
-from .guard import budget, cache, human, limiter
+from .guard import budget, human, limiter
 
-app = FastAPI(title="simplyblock docs assistant", docs_url=None, redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(_app):
+    task = asyncio.create_task(prewarm.loop(log))
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="simplyblock docs assistant", docs_url=None, redoc_url=None, lifespan=lifespan)
 if settings.cors_origins:
     app.add_middleware(
         CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["POST", "GET"],
@@ -65,13 +76,12 @@ def sse(event: dict) -> str:
     return f"event: {event['type']}\ndata: {json.dumps(event, ensure_ascii=False)}\n\n"
 
 
-def _public(event: dict) -> dict:
-    return {k: v for k, v in event.items() if k not in ("cost",)}
+_public = prewarm.public
 
 
 @app.get("/api/assistant/health")
 async def health() -> dict:
-    return {"ok": True, "model": settings.model, "budget_left": budget.available()}
+    return {"ok": True, "model": settings.model, "budget_left": budget.available(), "cached_answers": len(cache.items)}
 
 
 @app.post("/api/assistant/ask")
@@ -81,13 +91,18 @@ async def ask(body: Ask, request: Request):
         return JSONResponse({"error": f"Please keep the request under {settings.max_question_chars} characters."}, 400)
     version = await library.resolve(body.version)
     ip = client_ip(request)
+    try:
+        corpus = await library.corpus(version)
+    except LookupError:
+        return JSONResponse({"error": f"The assistant does not support documentation version {version}."}, 404)
+    fp = agent.fingerprint()
 
-    cached = cache.get(version, question)
+    cached = cache.get(corpus, question, fp)
     if cached:
         log("ask", version=version, question=question, cached=True)
 
         async def replay():
-            yield sse({"type": "answer", **cached, "cached": True})
+            yield sse({**cached, "type": "answer", "cached": True})
 
         return StreamingResponse(replay(), media_type="text/event-stream", headers={"Cache-Control": "no-store"})
 
@@ -98,11 +113,6 @@ async def ask(body: Ask, request: Request):
         return JSONResponse({"error": "The assistant is resting for today. Please use the search or try again tomorrow."}, 503)
     if not await human(body.turnstile, ip):
         return JSONResponse({"error": "The browser check failed. Please reload the page and try again."}, 403)
-
-    try:
-        corpus = await library.corpus(version)
-    except LookupError:
-        return JSONResponse({"error": f"The assistant does not support documentation version {version}."}, 404)
 
     async def events():
         yield sse({"type": "status", "text": f"Reading the {version} documentation"})
@@ -118,8 +128,8 @@ async def ask(body: Ask, request: Request):
             yield sse({"type": "error", "message": "The assistant is not available right now. Please try again later."})
         cost = float(final.get("cost", 0.0))
         budget.add(cost)
-        if final.get("type") == "answer":
-            cache.put(version, question, _public(final))
+        if final.get("type") == "answer" and final.get("pages"):
+            cache.put(corpus, question, fp, _public(final), final["pages"])
         log(
             "ask", version=version, question=question, outcome=final.get("type"),
             status=(final.get("answer") or {}).get("status"), cost=round(cost, 4),
