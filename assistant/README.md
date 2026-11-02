@@ -87,7 +87,7 @@ calls it cross-origin (`extra.assistant.api` in `mkdocs.yml`, allowed by `ASSIST
 Redeploy after a change is merged:
 
 ```bash
-aws ssm send-command --region eu-central-1 --document-name AWS-RunShellScript   --targets Key=tag:Name,Values=docs-assistant   --parameters 'commands=["BRANCH=main /opt/docs-assistant/src/assistant/deploy/deploy.sh"]'
+aws ssm send-command --region eu-central-1 --document-name AWS-RunShellScript   --targets Key=tag:Name,Values=docs-assistant   --parameters 'commands=["BRANCH=main bash /opt/docs-assistant/src/assistant/deploy/deploy.sh"]'
 ```
 
 Rotate the key: put the new value into the SSM parameter, then redeploy.

@@ -2,7 +2,7 @@
 # (Re)deploys the Command Assistant API on its EC2 host: pulls the branch,
 # builds the image, reads the Anthropic key from SSM Parameter Store, and
 # (re)starts the API and Caddy. Run as root on the host:
-#   sudo /opt/docs-assistant/src/assistant/deploy/deploy.sh
+#   sudo bash /opt/docs-assistant/src/assistant/deploy/deploy.sh
 set -euo pipefail
 
 BRANCH="${BRANCH:-$(cat /opt/docs-assistant/branch 2>/dev/null || echo main)}"
