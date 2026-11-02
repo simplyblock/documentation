@@ -1,0 +1,12 @@
+# TLS termination (Let's Encrypt) in front of the assistant API.
+{$ASSISTANT_HOST} {
+	encode gzip
+	handle /api/assistant/* {
+		reverse_proxy docs-assistant:8080 {
+			flush_interval -1
+		}
+	}
+	handle {
+		respond "Not found" 404
+	}
+}
