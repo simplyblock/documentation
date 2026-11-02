@@ -26,9 +26,9 @@ extra:
       link: https://mastodon.social/deck/@simplyblock
   cliname: sbctl
   # Command Assistant (docs/assistant/index.md). The API is the service in
-  # assistant/, served under the same domain; see assistant/README.md.
+  # assistant/, running on its own host (assistant/deploy/); see assistant/README.md.
   assistant:
-    api: /api/assistant
+    api: https://docs-assistant.simplyblock.io/api/assistant
     turnstile_sitekey: ""
   experimental: "**Experimental**{.chip-experimental}"
 hooks:

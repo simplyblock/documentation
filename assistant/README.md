@@ -65,25 +65,29 @@ Review answer quality before changing the prompt or the model (every run costs m
 ANTHROPIC_API_KEY=... python -m eval.run_eval --version dev
 ```
 
-## Deploying on the docs server
+## Deployment
+
+The docs web server only serves static files, so the API runs on its own host,
+`docs-assistant.simplyblock.io`: an EC2 instance (`t4g.small`, eu-central-1, tag `Name=docs-assistant`) with Docker.
+Caddy terminates TLS with a Let's Encrypt certificate and proxies `/api/assistant/*` to the API container. The docs page
+calls it cross-origin (`extra.assistant.api` in `mkdocs.yml`, allowed by `ASSISTANT_CORS_ORIGINS`).
+
+| File                     | Role                                                                      |
+|--------------------------|---------------------------------------------------------------------------|
+| `deploy/user-data.sh`    | First boot: Docker, clone of the repository, settings, first deploy        |
+| `deploy/deploy.sh`       | Pull, build, read the key, (re)start the API and Caddy                     |
+| `deploy/Caddyfile`       | TLS and routing                                                            |
+
+* The Anthropic key is stored in SSM Parameter Store as the SecureString `/docs-assistant/anthropic-api-key`. The
+  instance role `docs-assistant-ec2` may read only that parameter (plus SSM Session Manager access, no SSH).
+* Settings are in `/opt/docs-assistant/config.env` on the host; questions and feedback are logged to
+  `/var/log/docs-assistant/assistant.jsonl`.
+* DNS: `docs-assistant.simplyblock.io` is an A record (DNS only, not proxied) to the instance's Elastic IP.
+
+Redeploy after a change is merged:
 
 ```bash
-docker build -t simplyblock-docs-assistant assistant/
-docker run -d --name docs-assistant --restart unless-stopped -p 127.0.0.1:8080:8080 \
-  --env-file /etc/docs-assistant.env simplyblock-docs-assistant
+aws ssm send-command --region eu-central-1 --document-name AWS-RunShellScript   --targets Key=tag:Name,Values=docs-assistant   --parameters 'commands=["BRANCH=main /opt/docs-assistant/src/assistant/deploy/deploy.sh"]'
 ```
 
-`/etc/docs-assistant.env` holds `ANTHROPIC_API_KEY=...` (mode 600, never in the repository). Then route the path
-on the docs web server, for example with nginx:
-
-```nginx
-location /api/assistant/ {
-    proxy_pass http://127.0.0.1:8080;
-    proxy_set_header X-Forwarded-For $remote_addr;
-    proxy_buffering off;          # stream progress events
-    proxy_read_timeout 300s;
-}
-```
-
-The service is stateless apart from in-memory caches; a restart only clears the answer cache and the day's budget
-counter.
+Rotate the key: put the new value into the SSM parameter, then redeploy.
