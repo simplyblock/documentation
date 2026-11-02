@@ -25,11 +25,18 @@ extra:
     - icon: fontawesome/brands/mastodon
       link: https://mastodon.social/deck/@simplyblock
   cliname: sbctl
+  # Command Assistant (docs/assistant/index.md). The API is the service in
+  # assistant/, served under the same domain; see assistant/README.md.
+  assistant:
+    api: /api/assistant
+    turnstile_sitekey: ""
   experimental: "**Experimental**{.chip-experimental}"
 hooks:
   # Video gallery and pick of the day from docs/tutorials/videos.yml. Must run
   # before md_mirror.py so the mirrors contain the rendered gallery.
   - scripts/hooks/videos.py
+  # Command Assistant widget (docs/assistant/index.md); API in assistant/.
+  - scripts/hooks/assistant.py
   # Writes a Markdown twin of every page into the built site, plus llms.txt
   # and llms-full.txt. See scripts/hooks/README.md.
   - scripts/hooks/md_mirror.py
@@ -132,10 +139,12 @@ extra_css:
   - assets/stylesheets/extra.css
   - assets/stylesheets/swagger-theme.css
   - assets/stylesheets/videos.css
+  - assets/stylesheets/assistant.css
 extra_javascript:
   - assets/javascripts/cpumask-calculator.js
   - assets/javascripts/version-selector.js
   - assets/javascripts/videos.js
+  - assets/javascripts/assistant.js
 validation:
   links:
     not_found: warn
