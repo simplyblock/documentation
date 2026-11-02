@@ -21,27 +21,22 @@ TLS and mutual TLS are **enabled by default**. The settings are made with the `t
 chart copies them into the `tls` block of the `ControlPlane` resource (`spec.source.local.tls`) and of the
 `SimplyblockDriver` resource (`spec.tls`):
 
-| Helm value                                | Default        | Resource field                             |
-|-------------------------------------------|----------------|--------------------------------------------|
-| `tls.enabled`                             | `true`         | `enableTLS`                                |
-| `tls.mutual_enabled`                      | `true`         | `enableMutualTLS`                          |
-| `tls.provider`                            | `cert-manager` | `provider` (`cert-manager` or `OpenShift`) |
-| `tls.cert-manager.cluster-issuer`         | `selfsigned`   |                                            |
-| `tls.cert-manager.createSelfSignedIssuer` | `true`         |                                            |
-| `tls.cert-manager.namespace`              | `cert-manager` |                                            |
+| Helm value                                | Default        | Resource field              |
+|-------------------------------------------|----------------|-----------------------------|
+| `tls.enabled`                             | `true`         | `enableTLS`                 |
+| `tls.mutual_enabled`                      | `true`         | `enableMutualTLS`           |
+| `tls.provider`                            | `cert-manager` | `provider` (`cert-manager`) |
+| `tls.cert-manager.cluster-issuer`         | `selfsigned`   |                             |
+| `tls.cert-manager.createSelfSignedIssuer` | `true`         |                             |
+| `tls.cert-manager.namespace`              | `cert-manager` |                             |
 
 The chart refuses to render if TLS is enabled but the provider is not available: `tls.provider=cert-manager`
-requires that the cluster serves `cert-manager.io/v1`, and `tls.provider=openshift` requires an OpenShift cluster. A
-cluster that has neither must set `tls.enabled=false`.
+requires that the cluster serves `cert-manager.io/v1`. A cluster without cert-manager must set `tls.enabled=false`.
 
-!!! important "Mutual TLS on OpenShift"
-    **mTLS is only supported with the cert-manager certificate provider.**
-
-    On OpenShift, the built-in service CA provides one-way TLS (server certificates) but does not issue the client
-    certificates required for mutual authentication. With `tls.provider=openshift`, the value `tls.mutual_enabled`
-    must be set to `false`. To enable mTLS on OpenShift,
-    [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} must be installed and the certificate
-    provider must be switched to `cert-manager`.
+!!! important "TLS on OpenShift"
+    The OpenShift service CA (`tls.provider=openshift`) does not work as a certificate provider. On OpenShift,
+    [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} is installed and the default provider,
+    `cert-manager`, is used, which also supports mutual TLS. See [OpenShift](openshift.md#tls-on-openshift).
 
 ### Prerequisites
 

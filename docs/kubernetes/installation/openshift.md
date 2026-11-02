@@ -1,13 +1,13 @@
 ---
 title: "OpenShift"
-description: "Install simplyblock on OpenShift: grant the privileged SCC, choose the TLS provider, and set the OpenShift environment of the deployment config."
+description: "Install simplyblock on OpenShift: remove leftovers of earlier installations, grant the privileged SCC, install cert-manager for TLS, and set the OpenShift environment."
 weight: 40100
 ---
 
 When installing simplyblock on OpenShift, the process is very similar to Kubernetes, with a few key differences.
 OpenShift requires explicitly granting the privileged Security Context Constraint (SCC) to service accounts to enable
-storage and SPDK operations, it provides its own certificate service for TLS, and the storage nodes apply their host
-configuration through OpenShift MachineConfig objects.
+storage and SPDK operations, TLS requires cert-manager, and the storage nodes apply their host configuration through
+OpenShift MachineConfig objects.
 
 !!! info
     In OpenShift deployments, not all worker nodes must host storage components.
@@ -17,6 +17,15 @@ configuration through OpenShift MachineConfig objects.
 ## Prerequisites
 
 Ensure the OpenShift cluster is operational and that administrator privileges are available.
+
+### Removing Leftovers of a Previous Installation
+
+An installation only succeeds on a cluster without remains of an earlier simplyblock installation. On a cluster that
+had simplyblock installed before, they are removed first with the cleanup script, as described in
+[Removing a Previous Installation](k8s-control-plane.md#removing-a-previous-installation). For an OperatorHub install,
+the namespace passed to the script is `openshift-operators`.
+
+### Security Context Constraints
 
 Before deploying simplyblock components, grant the required SCC permissions:
 
@@ -37,21 +46,18 @@ access.
 
 ## TLS on OpenShift
 
-TLS is enabled by default. On OpenShift, two certificate providers are available:
+TLS is enabled by default and requires [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} on
+OpenShift as well. The OpenShift service CA (`tls.provider=openshift`) does not work as a certificate provider; the
+installation fails with it. cert-manager is installed before the Simplyblock Operator:
 
-- **OpenShift service CA (`tls.provider=openshift`):** Uses the certificates OpenShift issues for services. It
-  provides one-way TLS only, so `tls.mutual_enabled` must be set to `false`.
-- **Cert-manager (`tls.provider=cert-manager`):** Required for mutual TLS and for an external KMS.
-  [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} must be installed first.
-
-```bash title="Install the operator with the OpenShift service CA"
-helm install simplyblock-operator simplyblock/simplyblock-operator \
-    --namespace simplyblock \
-    --set tls.provider=openshift \
-    --set tls.mutual_enabled=false
+```bash title="Installing cert-manager"
+helm repo add jetstack https://charts.jetstack.io
+helm install cert-manager jetstack/cert-manager     -n cert-manager --create-namespace --set crds.enabled=true
 ```
 
-For details, see [Securing the Control Plane](security.md).
+Alternatively, cert-manager can be installed through the cert-manager Operator for Red Hat OpenShift from OperatorHub.
+The Simplyblock Operator is then installed with the default provider, `tls.provider=cert-manager`, which also enables
+mutual TLS. For details, see [Securing the Control Plane](security.md).
 
 ## OpenShift Environment
 

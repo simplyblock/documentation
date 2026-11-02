@@ -16,10 +16,11 @@ and the management API) and the CSI driver. Storage clusters are created afterwa
 - **Tools:** Helm 3 and `kubectl` configured with cluster-admin access.
 - **Storage for FoundationDB:** A StorageClass for the FoundationDB persistent volumes of the control plane. It should not
   be a simplyblock StorageClass, because the control plane has to start before any simplyblock volume can be served.
-- **Certificate issuer:** TLS is enabled by default and requires either
-  [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} or, on OpenShift, the OpenShift service CA.
-  Without either of them, TLS must be disabled explicitly with `tls.enabled=false`. See
-  [Securing the Control Plane](security.md).
+- **Certificate issuer:** TLS is enabled by default and requires
+  [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"}, on OpenShift as well. Without it, TLS must
+  be disabled explicitly with `tls.enabled=false`. See [Securing the Control Plane](security.md).
+- **Clean cluster:** Remains of an earlier simplyblock installation make the installation fail. They are removed with
+  the cleanup script, see [Removing a Previous Installation](#removing-a-previous-installation).
 
 When deploying onto an OpenShift cluster, the environment-specific instructions in the [OpenShift](openshift.md) guide
 must be followed first.
@@ -36,8 +37,8 @@ helm install simplyblock-operator simplyblock/simplyblock-operator \
     --create-namespace
 ```
 
-The chart refuses to render if TLS is enabled but no issuer is available. On a cluster with neither cert-manager nor
-OpenShift, add `--set tls.enabled=false`.
+The chart refuses to render if TLS is enabled but no issuer is available. On a cluster without cert-manager, add
+`--set tls.enabled=false`.
 
 The chart's values schema rejects unknown keys in several places, so a misspelled value fails the installation
 instead of being ignored.
@@ -58,7 +59,7 @@ instead of being ignored.
 | `controlplane.tolerations.create`, `.list`                   | `false`                                       | Tolerations for the control plane workloads.                                                                                                                                                                                                           |
 | `controlplane.observability.enabled`                         | `false`                                       | Installs the optional logging and dashboard stack. `standalone` profile only.                                                                                                                                                                          |
 | `tls.enabled`                                                | `true`                                        | Encrypts control plane traffic with TLS.                                                                                                                                                                                                               |
-| `tls.provider`                                               | `cert-manager`                                | `cert-manager` or `openshift`.                                                                                                                                                                                                                         |
+| `tls.provider`                                               | `cert-manager`                                | `cert-manager`. `openshift` (the OpenShift service CA) does not work; use cert-manager on OpenShift as well.                                                                                                                                           |
 | `tls.mutual_enabled`                                         | `true`                                        | Requires client certificates (mutual TLS). Only allowed with `tls.provider=cert-manager`.                                                                                                                                                              |
 | `tls.cert-manager.createSelfSignedIssuer`, `.cluster-issuer` | `true`, `selfsigned`                          | The cert-manager `ClusterIssuer` the chart mints its CA from.                                                                                                                                                                                          |
 | `driver.*`                                                   |                                               | Copied into the `SimplyblockDriver` resource: `driverName`, `image.*`, `controllerReplicas`, `nodeSelector`, `tolerations`, `controllerNodeSelector`, `controllerTolerations`, `enableVolumeSnapshots`, `enableServiceAccountAuth`, `sidecarImages.*`. |
@@ -129,6 +130,26 @@ so that the operator can release their finalizers.
     Deleting a local `ControlPlane` deletes the FoundationDB database that holds every cluster definition, node
     registration, and volume record. Deleting the `SimplyblockDriver` removes the CSI driver, and attached volumes
     can no longer be detached.
+
+## Removing a Previous Installation
+
+An installation only succeeds on a cluster without remains of an earlier simplyblock installation. Custom resources,
+custom resource definitions, finalizers, node labels, and persistent volumes left behind by a previous attempt make the
+new installation fail. On a cluster that had simplyblock installed before, they are removed with the cleanup script of
+the Simplyblock Operator. It takes the namespace the operator was installed into (`simplyblock` for a Helm install,
+`openshift-operators` for an OperatorHub install on OpenShift):
+
+```bash title="Removing a previous installation"
+curl -sO https://raw.githubusercontent.com/simplyblock/simplyblock-operator/main/helm-charts/scripts/cleanup-simplyblock.sh
+chmod +x cleanup-simplyblock.sh
+
+export KUBECONFIG=/path/to/kubeconfig
+./cleanup-simplyblock.sh simplyblock
+```
+
+The script shows the cluster, namespace, and Helm release it is about to clean and asks for confirmation. It
+permanently deletes all simplyblock resources in that namespace, including volumes and their data, so the
+`KUBECONFIG` must point to the right cluster.
 
 ## Next Steps
 
