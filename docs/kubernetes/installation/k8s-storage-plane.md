@@ -106,7 +106,6 @@ spec:
       pcieDenyList:
         - "0000:00:1f.0"
       driveSizeRange: 1T-4T
-      enablePartitionedDevices: true
 ```
 
 ```bash title="Run the discovery"
@@ -144,7 +143,12 @@ narrowed run is never silently un-narrowed.
 | `enableLogicalBlockDevices`       | Block | Scans Linux block devices instead of NVMe.                  |
 | `blockAllowList`, `blockDenyList` | Block | Select or exclude devices by path, for example, `/dev/sdb`. |
 | `driveSizeRange`                  | Both  | For example, `1T-4T`.                                       |
-| `enablePartitionedDevices`        | Both  | Includes devices that already carry a partition table.      |
+| `enablePartitionedDevices`        | Block | Includes devices that already carry a partition table.      |
+
+`enablePartitionedDevices` works with Linux block devices only, not in an NVMe setup. The Helm value
+`discovery.enablePartitionedDevices` therefore only takes effect together with `discovery.enableLogicalBlockDevices`.
+All settings that depend on the device class are listed in
+[Settings by Device Class](../../architecture/concepts/linux-block-devices.md#settings-by-device-class).
 
 On a fleet that is uniform about which slot holds the boot device, one deny list keeps that device out of every
 group of every draft, which is the difference between correcting one document and correcting each of twenty groups.
