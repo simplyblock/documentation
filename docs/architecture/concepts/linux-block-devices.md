@@ -101,6 +101,27 @@ the same recovery machinery. The watchdog is the safety net for devices that han
 because device stalls are typically converted into I/O errors by kernel-level SCSI and NVMe timeouts
 well before it fires.
 
+## Settings by Device Class
+
+Some settings apply to one device class only. A cluster uses either NVMe devices or Linux block devices, so a
+setting of the other class has no use in it.
+
+| Setting                                                                | NVMe | Linux block devices |
+|------------------------------------------------------------------------|------|---------------------|
+| Discovery: `pcieAllowList`, `pcieDenyList`, `pcieModel`                | Yes  | No                  |
+| Discovery: `enableLogicalBlockDevices` (selects the Linux block class) | No   | Yes                 |
+| Discovery: `blockAllowList`, `blockDenyList`                           | No   | Yes                 |
+| Discovery: `enablePartitionedDevices`                                  | No   | Yes                 |
+| Discovery: `driveSizeRange`                                            | Yes  | Yes                 |
+| Device group: `devices.nvme` (PCI addresses)                           | Yes  | No                  |
+| Device group: `devices.block` (device paths)                           | No   | Yes                 |
+| Migration: `newSsdPcie`                                                | Yes  | No                  |
+| CLI: `sn configure --lblk`, `--blk-names`, `--blk-serials`             | No   | Yes                 |
+| SMART health telemetry                                                 | Yes  | No                  |
+
+The discovery settings are the `spec.discover.deviceFilter` fields of an `OperatorOps` run and the `discovery.*`
+Helm values, see [Create a Storage Cluster](../../kubernetes/installation/k8s-storage-plane.md#device-filters).
+
 ## Restrictions
 
 The device mode is cluster-global and deploy-time only: `nvme` and `lblk` devices cannot be mixed
