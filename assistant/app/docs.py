@@ -9,6 +9,7 @@ which is split into pages and sections and searched with BM25.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import math
 import re
@@ -74,6 +75,7 @@ class Page:
     text: str
     headings: dict[str, str]  # anchor -> heading
     lines: frozenset = frozenset()
+    digest: str = ""  # changes when the page text changes; cached answers depend on it
 
 
 class Corpus:
@@ -179,7 +181,8 @@ def _parse(text: str, version: str) -> Corpus:
                 current_lines.append(line)
         chunks.append((current_heading, "\n".join(current_lines)))
         page = Page(path=path, title=title, text=body, headings=headings,
-                    lines=frozenset(command_lines(body)))
+                    lines=frozenset(command_lines(body)),
+                    digest=hashlib.sha256(body.encode()).hexdigest()[:16])
         pages[path] = page
         for heading, chunk in chunks:
             if not chunk.strip():

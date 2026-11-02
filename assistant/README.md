@@ -15,7 +15,9 @@ browser (docs page)  --POST /api/assistant/ask-->  this service  --Messages API-
 | `app/main.py`        | HTTP API: `/ask` (SSE), `/feedback`, `/health`                          |
 | `app/agent.py`       | System prompt, tools, answer schema, agent loop, command verification   |
 | `app/docs.py`        | Loads `llms-full.txt` per docs version, BM25 search, page reader        |
-| `app/guard.py`       | Per-IP rate limit, answer cache, daily budget, Cloudflare Turnstile     |
+| `app/guard.py`       | Per-IP rate limit, daily budget, Cloudflare Turnstile                   |
+| `app/cache.py`       | Answer cache: similar questions, on disk, tied to the pages it used     |
+| `app/prewarm.py`     | Answers the most asked questions ahead, after each docs change          |
 | `app/config.py`      | Settings from environment variables                                     |
 | `eval/run_eval.py`   | Sample questions → review report                                        |
 
@@ -28,6 +30,20 @@ browser (docs page)  --POST /api/assistant/ask-->  this service  --Messages API-
   shown as **from the docs**; otherwise as **adapted**, so the reader knows to check it.
 * Unclear requests get one clarifying question; requests the docs do not cover get `not_covered` and the closest pages.
 
+## Caching
+
+* **The docs:** each version's `llms-full.txt` is downloaded once and kept in memory, refreshed every
+  `DOCS_REFRESH_SECONDS`. Search runs locally.
+* **Within one answer:** Claude's prompt cache serves the pages already read in earlier rounds.
+* **Answers:** similar questions share one answer. The question is reduced to its meaningful words (filler such as
+  "a", "my", "please", "running", "new" removed, plural and verb endings and a few synonyms like DR, OCP, k8s merged);
+  numbers and all other words stay, so "3 node" and "5 node", or "add" and "remove", never share an answer.
+  Each answer records the pages it was built from with a digest of their text. It is served only while all of them
+  are unchanged, so a docs publish retires exactly the answers it affects. A change of prompt, answer format, or model
+  retires all answers.
+* **Pre-answering:** every refresh period, the most asked questions of the last 30 days (from the log) and a few
+  seed questions are answered ahead where no valid cached answer exists, within `ASSISTANT_PREWARM_DAILY_USD`.
+
 ## Configuration
 
 | Variable                        | Default                        | Meaning                                              |
@@ -38,7 +54,11 @@ browser (docs page)  --POST /api/assistant/ask-->  this service  --Messages API-
 | `ASSISTANT_PRICE_*`             | Opus 5.5 prices                | USD per million tokens, for the budget; set with the model |
 | `ASSISTANT_DAILY_BUDGET_USD`    | `25`                           | Stops answering (503) for the rest of the UTC day    |
 | `ASSISTANT_RATE_LIMIT` / `_WINDOW` | `8` / `600`                 | Questions per IP per window (seconds)                |
-| `ASSISTANT_CACHE_TTL`           | `86400`                        | Same question + version is answered from cache       |
+| `ASSISTANT_CACHE_TTL`           | `1209600` (14 days)            | Maximum age of a cached answer                       |
+| `ASSISTANT_CACHE_FILE`          | empty (memory); `/data/answer-cache.json` in the image | Keeps cached answers across restarts |
+| `ASSISTANT_PREWARM_VERSIONS`    | empty (off); `latest,dev` in the image | Versions whose top questions are answered ahead |
+| `ASSISTANT_PREWARM_COUNT`       | `25`                           | How many top questions per version                   |
+| `ASSISTANT_PREWARM_DAILY_USD`   | `6`                            | Spend cap for pre-answering, part of the daily budget |
 | `ASSISTANT_TRUST_FORWARDED_FOR` | `1`                            | Take the client IP from `X-Forwarded-For` (behind a proxy) |
 | `TURNSTILE_SECRET`              | empty (off)                    | Cloudflare Turnstile secret; set `extra.assistant.turnstile_sitekey` in `mkdocs.yml` to match |
 | `ASSISTANT_CORS_ORIGINS`        | empty                          | Only needed when the API is on another origin        |

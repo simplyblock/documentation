@@ -176,13 +176,15 @@ def _cost(usage) -> float:
     )
 
 
-def _run_tool(corpus: Corpus, name: str, args: dict) -> tuple[str, str]:
-    """Returns (result JSON for Claude, status line for the reader)."""
+def _run_tool(corpus: Corpus, name: str, args: dict, read: set[str]) -> tuple[str, str]:
+    """Returns (result JSON for Claude, status line for the reader). Adds read pages to `read`."""
     if name == "search_docs":
         q = str(args.get("query", ""))[:200]
         return json.dumps(corpus.search(q)), f"Searching the docs for “{q}”"
     if name == "read_page":
         res = corpus.read(str(args.get("page", "")), max(0, int(args.get("offset", 0) or 0)))
+        if res.get("page"):
+            read.add(res["page"])
         label = res.get("title") or args.get("page")
         return json.dumps(res), f"Reading “{label}”"
     if name == "list_pages":
@@ -224,6 +226,39 @@ def finish(corpus: Corpus, answer: dict) -> dict:
     return answer
 
 
+def depends_on(corpus: Corpus, answer: dict, read: set[str]) -> dict[str, str]:
+    """Pages an answer was built from (read or cited), with their digests.
+
+    A cached answer stays valid exactly as long as none of these pages changes.
+    """
+    paths = set(read)
+    for item in answer.get("steps", []) + answer.get("prerequisites", []):
+        paths.add(item.get("source", {}).get("page", ""))
+    for rel in answer.get("related", []):
+        paths.add(rel.get("page", ""))
+    out = {}
+    for path in paths:
+        page = corpus.find(path) if path else None
+        if page:
+            out[page.path] = page.digest
+    return out
+
+
+# Changes whenever the prompt, the answer format, or the model changes; cached
+# answers made under another fingerprint are not served.
+FINGERPRINT = ""
+
+
+def fingerprint() -> str:
+    global FINGERPRINT
+    if not FINGERPRINT:
+        import hashlib
+
+        blob = json.dumps([SYSTEM, TOOLS, ANSWER_SCHEMA, settings.model, settings.effort], sort_keys=True)
+        FINGERPRINT = hashlib.sha256(blob.encode()).hexdigest()[:16]
+    return FINGERPRINT
+
+
 async def _mock(corpus: Corpus, question: str) -> AsyncIterator[dict]:
     """ASSISTANT_MOCK=1: a canned answer built from real search hits, no API call.
 
@@ -257,7 +292,9 @@ async def _mock(corpus: Corpus, question: str) -> AsyncIterator[dict]:
         "question": "", "assumptions": ["Mock mode"], "prerequisites": [], "steps": steps,
         "related": [{"title": h["page_title"], "page": h["page"]} for h in hits],
     }
-    yield {"type": "answer", "answer": finish(corpus, answer), "cost": 0.0, "tool_calls": 0, "seconds": 0, "model": "mock"}
+    answer = finish(corpus, answer)
+    yield {"type": "answer", "answer": answer, "pages": depends_on(corpus, answer, set()),
+           "cost": 0.0, "tool_calls": 0, "seconds": 0, "model": "mock"}
 
 
 async def run(corpus: Corpus, question: str) -> AsyncIterator[dict]:
@@ -277,6 +314,7 @@ async def run(corpus: Corpus, question: str) -> AsyncIterator[dict]:
     started = time.time()
     cost = 0.0
     tool_calls = 0
+    read_pages: set[str] = set()
     if settings.mock:
         async for event in _mock(corpus, question):
             yield event
@@ -314,9 +352,11 @@ async def run(corpus: Corpus, question: str) -> AsyncIterator[dict]:
             except json.JSONDecodeError:
                 yield {"type": "error", "message": "The assistant returned no usable answer.", "cost": cost}
                 return
+            answer = finish(corpus, answer)
             yield {
                 "type": "answer",
-                "answer": finish(corpus, answer),
+                "answer": answer,
+                "pages": depends_on(corpus, answer, read_pages),
                 "cost": cost,
                 "tool_calls": tool_calls,
                 "seconds": round(time.time() - started, 1),
@@ -328,7 +368,7 @@ async def run(corpus: Corpus, question: str) -> AsyncIterator[dict]:
         results = []
         for block in tool_uses:
             tool_calls += 1
-            result, status = _run_tool(corpus, block.name, block.input or {})
+            result, status = _run_tool(corpus, block.name, block.input or {}, read_pages)
             if status:
                 yield {"type": "status", "text": status}
             results.append({"type": "tool_result", "tool_use_id": block.id, "content": result})
