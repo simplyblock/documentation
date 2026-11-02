@@ -7,6 +7,8 @@
 # Entries with a `drive_id` are kept in sync with the Google Drive folder below
 # by scripts/videos/sync-drive.py. The sync only touches `drive_id`; the title,
 # teaser, and description of an entry are curated here and never overwritten.
+# Tiles are drawn from the category (color, icon), the number of the id, and
+# the title, so every tile looks alike regardless of the video's first frame.
 #
 # Fields of a video:
 #   id           stable identifier, used in deep links (tutorials/#video=<id>)
@@ -17,33 +19,34 @@
 #   one source:  drive_id (Google Drive file, shared "anyone with the link")
 #                youtube  (YouTube video id)
 #                src      (MP4 below docs/, for example assets/videos/x.mp4)
-#   poster       optional thumbnail, a URL or a path below docs/
+#   poster       optional, poster frame of a local `src` video in the player
 #   page         optional docs page with more on the video (path below docs/)
 #   pick         optional, false keeps the video out of the pick of the day
 
 drive:
   folder: 1J0fuJrTZMu-HWLxYIfRN2ttCAE2zZp8G
 
+# A category's `icon` is a Material icon shown on its tiles; its color is set
+# in docs/assets/stylesheets/videos.css (--sb-cat-<id>).
 categories:
   - id: core
     label: Core Storage
+    icon: material/server
     drive_folder: Core
   - id: file-object
     label: File and Object Storage
+    icon: material/folder-network
     drive_folder: File and Object
   - id: dr
     label: Disaster Recovery
+    icon: material/shield-sync
     drive_folder: DR
   - id: edge
     label: Edge
+    icon: material/access-point-network
     drive_folder: Edge Clusters
 
 videos:
-  - id: core-00
-    category: core
-    title: "Introduction to simplyblock"
-    youtube: nirVcevVW0U
-    page: tutorials/simplyblock-intro.md
   - id: core-01
     category: core
     title: "Basic architecture"
@@ -68,12 +71,6 @@ videos:
     category: file-object
     title: "pNFS high-performance file storage"
     drive_id: 1WprwsqIl-wdGF0FcU0IxKtTs_H6xz-vE
-  - id: dr-00
-    category: dr
-    title: "Ransomware recovery across three sites"
-    src: assets/videos/ransomware-recovery-three-sites.mp4
-    poster: assets/videos/ransomware-recovery-three-sites.jpg
-    page: tutorials/ransomware-recovery.md
   - id: dr-01
     category: dr
     title: "Policy-based backup"

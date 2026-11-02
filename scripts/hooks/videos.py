@@ -30,12 +30,12 @@ from mkdocs.utils import get_relative_url
 log = logging.getLogger("mkdocs.hooks.videos")
 
 CATALOG = "tutorials/videos.yml"
-THUMBS = "assets/videos/thumbs"
 GALLERY_MARKER = "<!-- sb:video-gallery -->"
 SOURCES = ("drive_id", "youtube", "src")
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 _categories: list[dict] = []
+_icons: dict[str, str] = {}
 _videos: list[dict] = []
 
 
@@ -43,7 +43,21 @@ def _is_url(value: str) -> bool:
     return value.startswith(("http://", "https://"))
 
 
-def _normalize(raw: dict, labels: dict[str, str], seen: set[str], docs_dir: Path) -> dict | None:
+def _icon_svg(name: str) -> str:
+    """Inline SVG of a theme icon such as material/server, or "" if unknown."""
+    if not name:
+        return ""
+    try:
+        import material
+
+        path = Path(material.__file__).parent / "templates" / ".icons" / f"{name}.svg"
+        return path.read_text(encoding="utf-8").strip()
+    except Exception:  # noqa: BLE001
+        log.warning("%s: icon %r not found", CATALOG, name)
+        return ""
+
+
+def _normalize(raw: dict, labels: dict[str, str], seen: set[str]) -> dict | None:
     vid = str(raw.get("id", ""))
     problem = None
     if not ID_RE.match(vid):
@@ -80,16 +94,11 @@ def _normalize(raw: dict, labels: dict[str, str], seen: set[str], docs_dir: Path
         video["kind"] = "drive"
         video["embed"] = f"https://drive.google.com/file/d/{did}/preview"
         video["watch"] = f"https://drive.google.com/file/d/{did}/view"
-        # Thumbnails are stored by scripts/videos/sync-drive.py: Google
-        # answers hot-linked Drive thumbnails with HTTP 429.
-        if not video["poster"] and (docs_dir / THUMBS / f"{vid}.jpg").exists():
-            video["poster"] = f"{THUMBS}/{vid}.jpg"
     elif raw.get("youtube"):
         yid = str(raw["youtube"])
         video["kind"] = "youtube"
         video["embed"] = f"https://www.youtube-nocookie.com/embed/{yid}?autoplay=1&rel=0"
         video["watch"] = f"https://www.youtube.com/watch?v={yid}"
-        video["poster"] = video["poster"] or f"https://i.ytimg.com/vi/{yid}/hqdefault.jpg"
     else:
         video["kind"] = "file"
         video["src"] = str(raw["src"])
@@ -99,8 +108,8 @@ def _normalize(raw: dict, labels: dict[str, str], seen: set[str], docs_dir: Path
 
 
 def on_config(config, **kwargs):
-    global _categories, _videos
-    _categories, _videos = [], []
+    global _categories, _videos, _icons
+    _categories, _videos, _icons = [], [], {}
     path = Path(config["docs_dir"]) / CATALOG
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -117,9 +126,12 @@ def on_config(config, **kwargs):
         if c.get("id") and c.get("label")
     ]
     labels = {c["id"]: c["label"] for c in _categories}
+    for c in data.get("categories") or []:
+        if c.get("id"):
+            _icons[str(c["id"])] = _icon_svg(str(c.get("icon") or ""))
     seen: set[str] = set()
     for raw in data.get("videos") or []:
-        video = _normalize(raw or {}, labels, seen, Path(config["docs_dir"]))
+        video = _normalize(raw or {}, labels, seen)
         if video:
             _videos.append(video)
 
@@ -157,20 +169,24 @@ def _tile(video: dict, page_url: str) -> str:
         "data-sb-page": _site_path(video["page"], page_url),
     }
     attr_html = " ".join(f'{k}="{e(v)}"' for k, v in attrs.items() if v)
+    # Every tile is drawn from the same parts (category color and icon, the
+    # number of the id, the title), not from a frame of the video.
+    number = re.search(r"(\d+)$", video["id"])
+    icon = _icons.get(video["category"], "")
     parts = [
         f'<li class="sb-video" id="video-{e(video["id"])}" data-sb-video="{e(video["id"])}" '
         f'data-sb-category="{e(video["category"])}">',
         f"<a {attr_html}>",
-        '<span class="sb-video__thumb">',
-        f'<img class="off-glb" src="{e(poster)}" alt="" loading="lazy" decoding="async" '
-        'onerror="this.remove()">' if poster else "",
+        '<span class="sb-video__art">',
+        f'<span class="sb-video__icon" aria-hidden="true">{icon}</span>' if icon else "",
+        '<span class="sb-video__meta">',
+        f'<span class="sb-video__category">{e(video["category_label"])}</span>',
+        f'<span class="sb-video__number">{int(number.group(1)):02d}</span>' if number else "",
+        "</span>",
+        f'<span class="sb-video__title">{e(video["title"])}</span>',
         '<span class="sb-video__play" aria-hidden="true"></span>',
         "</span>",
-        '<span class="sb-video__body">',
-        f'<span class="sb-video__category">{e(video["category_label"])}</span>',
-        f'<span class="sb-video__title">{e(video["title"])}</span>',
         f'<span class="sb-video__description">{e(video["description"])}</span>' if video["description"] else "",
-        "</span>",
         "</a>",
         "</li>",
     ]

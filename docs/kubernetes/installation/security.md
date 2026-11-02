@@ -108,7 +108,7 @@ either of them.
 - **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the control
   plane authenticates to the KMS with a certificate issued by the `simplyblock-certificate-authority-issuer`.
 - **A prepared instance:** A Vault or OpenBao instance reachable from the simplyblock namespace, initialized,
-  unsealed, and configured as described in [Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md).
+  unsealed, and configured as described in [Deploying OpenBao as a KMS](openbao-kms.md).
 - **Storage for that instance that is not simplyblock:** A KMS holding its own state on the cluster it serves
   deadlocks on a cold start, as described in
   [Where the KMS Runs](../../architecture/concepts/external-key-management.md#where-the-kms-runs).
@@ -117,7 +117,7 @@ either of them.
 
 The instance is deployed from the upstream Helm chart, initialized, unsealed, and configured with the policy, the
 certificate authentication, and the secret engines simplyblock expects. Every step of that is described in
-[Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md), for OpenBao as well as for Vault.
+[Deploying OpenBao as a KMS](openbao-kms.md), for OpenBao as well as for Vault.
 
 The configuration is not free-form. The control plane expects the transit engine at `simplyblock/transit`, the
 key-value engine at `simplyblock/kv`, and a certificate role named `simplyblock-webappapi` that accepts a client whose

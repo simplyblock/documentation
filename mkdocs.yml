@@ -55,6 +55,9 @@ plugins:
         deployment-preparation/numa-considerations.md: deployment-preparation/sizing.md
         deployment-preparation/dr-requirements.md: disaster-recovery/install/requirements.md
         deployment-preparation/air-gap/index.md: kubernetes/installation/air-gap.md
+        tutorials/openbao-kms.md: kubernetes/installation/openbao-kms.md
+        tutorials/simplyblock-intro.md: tutorials/index.md
+        tutorials/ransomware-recovery.md: tutorials/index.md
   - mkdocs-nav-weight:
       section_renamed: true
   - git-revision-date-localized:

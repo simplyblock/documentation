@@ -3,8 +3,8 @@
  *
  * - category filter buttons, mirrored into the URL as #category=<id>
  * - player dialog for Google Drive, YouTube, and local MP4 videos,
- *   mirrored into the URL as #video=<id> (the link target of the pick bar)
- * - "pick of the day" hero, using window.sbVideoPick from templates/main.html
+ *   mirrored into the URL as #video=<id> (the link target of the pick bar
+ *   in templates/main.html)
  */
 (function () {
   "use strict";
@@ -144,44 +144,6 @@
     function byId(id) {
       for (var i = 0; i < tiles.length; i++) if (tiles[i].dataset.sbVideo === id) return tiles[i];
       return null;
-    }
-
-    /* Pick of the day hero */
-    var hero = document.querySelector("[data-sb-video-hero]");
-    if (hero && typeof window.sbVideoPick === "function") {
-      var pick = window.sbVideoPick();
-      var tile = pick && byId(pick.id);
-      if (tile) {
-        var a = tile.querySelector("a");
-        var poster = a.dataset.sbPoster;
-        var card = el("a", "sb-hero");
-        card.href = a.getAttribute("href");
-        card.dataset.sbCategory = tile.dataset.sbCategory;
-        var thumb = el("span", "sb-hero__thumb");
-        if (poster) {
-          var big = el("img", "off-glb");
-          big.alt = "";
-          big.src = poster;
-          big.addEventListener("error", function () { big.remove(); });
-          thumb.appendChild(big);
-        }
-        thumb.appendChild(el("span", "sb-video__play"));
-        var body = el("span", "sb-hero__body");
-        body.appendChild(el("span", "sb-hero__label", "Video pick of the day"));
-        body.appendChild(el("span", "sb-hero__title", pick.title));
-        if (pick.teaser) body.appendChild(el("span", "sb-hero__teaser", pick.teaser));
-        body.appendChild(el("span", "sb-hero__category", pick.category_label));
-        body.appendChild(el("span", "sb-hero__cta md-button md-button--primary", "Watch now"));
-        card.appendChild(thumb);
-        card.appendChild(body);
-        card.addEventListener("click", function (e) {
-          if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
-          e.preventDefault();
-          open(tile);
-        });
-        hero.appendChild(card);
-        hero.hidden = false;
-      }
     }
 
     /* Deep links */

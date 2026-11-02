@@ -1,6 +1,6 @@
 name: Sync Tutorial Videos
 # Pulls new or re-cut videos from the shared Google Drive folder into
-# docs/tutorials/videos.yml (plus thumbnails) and opens a pull request.
+# docs/tutorials/videos.yml and opens a pull request.
 # See scripts/videos/README.md.
 on:
   workflow_dispatch:
@@ -31,7 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -z "$(git status --porcelain docs/tutorials/videos.yml docs/assets/videos/thumbs)" ]; then
+          if [ -z "$(git status --porcelain docs/tutorials/videos.yml)" ]; then
             echo "Catalog already in sync."
             exit 0
           fi
@@ -39,7 +39,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "${branch}"
-          git add docs/tutorials/videos.yml docs/assets/videos/thumbs
+          git add docs/tutorials/videos.yml
           git commit -m "tutorials: sync videos from Google Drive"
           git push origin "${branch}"
           {
