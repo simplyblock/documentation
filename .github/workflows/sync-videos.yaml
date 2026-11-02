@@ -1,0 +1,54 @@
+name: Sync Tutorial Videos
+# Pulls new or re-cut videos from the shared Google Drive folder into
+# docs/tutorials/videos.yml and opens a pull request.
+# See scripts/videos/README.md.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: "sync-videos"
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+      - name: "Set Up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: "Sync Video Catalog"
+        run: |
+          pip install pyyaml
+          python3 scripts/videos/sync-drive.py | tee sync.log
+      - name: "Open Pull Request"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain docs/tutorials/videos.yml)" ]; then
+            echo "Catalog already in sync."
+            exit 0
+          fi
+          branch="videos/sync-$(date -u +%Y%m%d-%H%M%S)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${branch}"
+          git add docs/tutorials/videos.yml
+          git commit -m "tutorials: sync videos from Google Drive"
+          git push origin "${branch}"
+          {
+            echo "Video catalog synced from the Google Drive folder."
+            echo
+            echo '```'
+            grep -v '^note:' sync.log || true
+            echo '```'
+            echo
+            echo "Titles of new videos are taken from the file names and can be polished in docs/tutorials/videos.yml before merging."
+          } > body.md
+          gh pr create --base main --head "${branch}" --title "tutorials: sync videos from Google Drive" --body-file body.md

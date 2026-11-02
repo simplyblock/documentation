@@ -1,10 +1,10 @@
 ---
 title: "Deploying OpenBao as a KMS"
-description: "Step-by-step tutorial that deploys OpenBao on Kubernetes and wires it into a simplyblock cluster as the external key management system for volume encryption."
-weight: 20100
+description: "Step-by-step guide that deploys OpenBao on Kubernetes and wires it into a simplyblock cluster as the external key management system for volume encryption."
+weight: 30060
 ---
 
-This tutorial deploys [OpenBao](https://openbao.org/){:target="_blank" rel="noopener"} into a Kubernetes cluster and
+This guide deploys [OpenBao](https://openbao.org/){:target="_blank" rel="noopener"} into a Kubernetes cluster and
 wires it into simplyblock as the external key management system for volume encryption. It starts from an installed
 Simplyblock Operator with mutual TLS enabled, before the storage cluster is created, and ends with an encrypted volume
 whose key material is stored in OpenBao rather than in the cluster. Plan for about 30 minutes.
@@ -29,7 +29,7 @@ Five things have to be in place. The commands confirm each of them.
 
 **Mutual TLS on the simplyblock cluster.** The control plane authenticates to OpenBao with a certificate from the
 operator's certificate authority, so the authority has to exist. See
-[Securing the Control Plane](../kubernetes/installation/security.md#transport-layer-security-mutual-tls-mtls) to
+[Securing the Control Plane](security.md#transport-layer-security-mutual-tls-mtls) to
 enable it.
 
 ```bash title="Confirming the simplyblock certificate authority is present"
@@ -59,7 +59,7 @@ helm version --short
 **A storage cluster that has not been created yet.** The operator hands the KMS endpoint to the control plane only
 when it creates the storage cluster, so the endpoint has to be part of the `ClusterDeploymentConfig` before it is
 approved. An existing storage cluster cannot be moved to an external KMS. See
-[Create a Storage Cluster](../kubernetes/installation/k8s-storage-plane.md) for the discovery that produces the draft.
+[Create a Storage Cluster](k8s-storage-plane.md) for the discovery that produces the draft.
 
 ```bash title="Confirming the deployment config is still a draft"
 kubectl -n simplyblock get clusterdeploymentconfig
@@ -292,7 +292,7 @@ Leave the shell with `exit` once both engines appear.
 The storage cluster learns about the instance through `kms.vault.endpoint` in the cluster template of the
 `ClusterDeploymentConfig`. The expansion copies the block to `StorageCluster.spec.kms`, and the operator sends the
 endpoint to the control plane when it creates the cluster. The examples use the draft
-`discovered-initial-discovery` from [Create a Storage Cluster](../kubernetes/installation/k8s-storage-plane.md), whose
+`discovered-initial-discovery` from [Create a Storage Cluster](k8s-storage-plane.md), whose
 cluster template names the cluster `production`.
 
 ```bash title="Adding the OpenBao endpoint to the draft deployment config"
@@ -422,8 +422,8 @@ helm install vault hashicorp/vault \
 
 ## Where to Go Next
 
-- [External Key Management](../architecture/concepts/external-key-management.md) explains the two key layers and what
+- [External Key Management](../../architecture/concepts/external-key-management.md) explains the two key layers and what
   separation of duty the setup buys.
-- [Securing the Control Plane](../kubernetes/installation/security.md#external-key-management-kms) is the reference
+- [Securing the Control Plane](security.md#external-key-management-kms) is the reference
   for the `kms` block and its immutability.
-- [Volume Encryption](../kubernetes/usage/volume-encryption.md) covers encrypting volumes through a `StorageClass`.
+- [Volume Encryption](../usage/volume-encryption.md) covers encrypting volumes through a `StorageClass`.

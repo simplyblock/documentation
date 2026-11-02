@@ -50,4 +50,4 @@ The state cannot be recovered from inside the cluster, so the KMS is placed on s
 simplyblock is.
 
 For the setup steps, see [Securing the Control Plane: External KMS](../../kubernetes/installation/security.md#external-key-management-kms).
-A worked deployment of an instance is in [Deploying OpenBao as a KMS](../../tutorials/openbao-kms.md).
+A worked deployment of an instance is in [Deploying OpenBao as a KMS](../../kubernetes/installation/openbao-kms.md).

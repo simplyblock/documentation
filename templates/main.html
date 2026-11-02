@@ -16,3 +16,54 @@
   {% endif %}
   <link rel="describedby" href="{{ 'llms.txt' | url }}">
 {% endblock %}
+
+{#-
+  "Video pick of the day": one video of docs/tutorials/videos.yml per calendar
+  day, linked to the player on the Tutorials page. The catalog is rendered
+  into the page by scripts/hooks/videos.py (config.extra.sb_videos); the pick
+  itself happens in the browser, so it changes daily without a rebuild. The
+  same pick function is used by docs/assets/javascripts/videos.js.
+  Dismissing the bar hides it until the next day's pick.
+-#}
+{% block announce %}
+  {% set videos = config.extra.sb_videos | d([]) | selectattr("pick") | list %}
+  {% if videos %}
+    <div class="sb-pick" data-sb-pick hidden>
+      <span class="sb-pick__label">Did you know?</span>
+      <a class="sb-pick__link" data-sb-pick-link href="{{ 'tutorials/' | url }}">
+        <span class="sb-pick__text" data-sb-pick-text></span>
+        <span class="sb-pick__cta">Watch the video&nbsp;&rarr;</span>
+      </a>
+      <span class="sb-pick__category" data-sb-pick-category></span>
+      <button type="button" class="sb-pick__close md-icon" data-sb-pick-close aria-label="Hide the video pick until tomorrow">
+        {% include ".icons/material/close.svg" %}
+      </button>
+    </div>
+    <script>
+      (function () {
+        var videos = {{ videos | tojson }};
+        var now = new Date();
+        var day = Math.floor((now.getTime() - now.getTimezoneOffset() * 60000) / 86400000);
+        // A prime stride walks through every video once per cycle and mixes the categories.
+        window.sbVideoPick = function () { return videos[(day * 7919) % videos.length]; };
+        var bar = document.currentScript.previousElementSibling;
+        var banner = bar.closest(".md-banner");
+        var key = "sb-video-pick-hidden";
+        try {
+          if (localStorage.getItem(key) === String(day)) { banner.hidden = true; return; }
+        } catch (e) {}
+        var v = window.sbVideoPick();
+        bar.querySelector("[data-sb-pick-text]").textContent = v.teaser || v.title;
+        bar.querySelector("[data-sb-pick-category]").textContent = v.category_label;
+        var link = bar.querySelector("[data-sb-pick-link]");
+        link.href += "#video=" + encodeURIComponent(v.id);
+        link.title = v.title;
+        bar.querySelector("[data-sb-pick-close]").addEventListener("click", function () {
+          try { localStorage.setItem(key, String(day)); } catch (e) {}
+          banner.hidden = true;
+        });
+        bar.hidden = false;
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

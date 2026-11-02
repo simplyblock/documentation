@@ -1,8 +1,10 @@
 ---
 title: Tutorials
-description: "The tutorial section provides a collection of tutorials, introduction videos, and step-by-step guides to help users get started with simplyblock."
+description: "Short explainer videos on simplyblock: core storage, file and object storage, disaster recovery (DR), and edge clusters."
 weight: 10600
+hide:
+    - navigation
+    - toc
 ---
 
-The tutorial section provides a collection of tutorials, introduction videos, and step-by-step guides to help
-users get started with simplyblock.
+<!-- sb:video-gallery -->

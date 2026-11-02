@@ -1,0 +1,157 @@
+# Video catalog of the Tutorials section.
+#
+# Rendered by scripts/hooks/videos.py into the tile gallery of
+# docs/tutorials/index.md and into the "Video pick of the day" bar on top of
+# every page. See scripts/videos/README.md for how videos are added.
+#
+# Entries with a `drive_id` are kept in sync with the Google Drive folder below
+# by scripts/videos/sync-drive.py. The sync only touches `drive_id`; the title,
+# teaser, and description of an entry are curated here and never overwritten.
+# Tiles are drawn from the category (color, icon), the number of the id, and
+# the title, so every tile looks alike regardless of the video's first frame.
+#
+# Fields of a video:
+#   id           stable identifier, used in deep links (tutorials/#video=<id>)
+#   category     one of the category ids below
+#   title        tile and headline title
+#   teaser       optional one-liner, shown after "Did you know?" in the headline
+#   description  optional, shown on the tile
+#   one source:  drive_id (Google Drive file, shared "anyone with the link")
+#                youtube  (YouTube video id)
+#                src      (MP4 below docs/, for example assets/videos/x.mp4)
+#   poster       optional, poster frame of a local `src` video in the player
+#   page         optional docs page with more on the video (path below docs/)
+#   pick         optional, false keeps the video out of the pick of the day
+
+drive:
+  folder: 1J0fuJrTZMu-HWLxYIfRN2ttCAE2zZp8G
+
+# A category's `icon` is a Material icon shown on its tiles; its color is set
+# in docs/assets/stylesheets/videos.css (--sb-cat-<id>).
+categories:
+  - id: core
+    label: Core Storage
+    icon: material/server
+    drive_folder: Core
+  - id: file-object
+    label: File and Object Storage
+    icon: material/folder-network
+    drive_folder: File and Object
+  - id: dr
+    label: Disaster Recovery
+    icon: material/shield-sync
+    drive_folder: DR
+  - id: edge
+    label: Edge
+    icon: material/access-point-network
+    drive_folder: Edge Clusters
+
+videos:
+  - id: core-01
+    category: core
+    title: "Basic architecture"
+    drive_id: 1SY0FHtBdR8bHYAhK8voXzdz8n4iBqxIp
+  - id: core-02
+    category: core
+    title: "Deployment topologies"
+    drive_id: 11vJNaoVEeOt8EgEmsGImmlnKJ9JFARAK
+  - id: core-03
+    category: core
+    title: "Storage live migration"
+    drive_id: 1VrECCspG2lccflFbkQBI3-qgN1bcukC3
+  - id: core-04
+    category: core
+    title: "Ultra-fast copy-on-write"
+    drive_id: 1i_cfnd200As_EkZku60qOkX79-9bo0Ap
+  - id: core-05
+    category: core
+    title: "Instant volume migration"
+    drive_id: 1i0KpuVWWiBvVcmWqGer2359OQQPh4xsF
+  - id: core-06
+    category: core
+    title: "Low-latency SPDK"
+    drive_id: 1O0olXVB09n9GRq0vY6hS763Bm_S9uU9W
+  - id: core-07
+    category: core
+    title: "Distributed placement"
+    drive_id: 1y-sUsXXn1gEazvmQSqZIjFoEkrIykphA
+  - id: core-08
+    category: core
+    title: "Cluster lifecycle"
+    drive_id: 1VMYsgAVX6-ruPrD6D9nARXxuG1McVhcc
+  - id: core-09
+    category: core
+    title: "Failure domains"
+    drive_id: 1dblr3ejqEWb3iWPnG0PL9cmVT_CcS9AA
+  - id: core-10
+    category: core
+    title: "Placement groups"
+    drive_id: 1ou0AJ8tXWBg_Kxpok1U4nuBDk62n7r4V
+  - id: core-11
+    category: core
+    title: "Distributed erasure coding"
+    drive_id: 1CsZnt8XJM6j5VdDFkzMXQ_yT491wwsyY
+  - id: file-object-01
+    category: file-object
+    title: "pNFS high-performance file storage"
+    drive_id: 1WprwsqIl-wdGF0FcU0IxKtTs_H6xz-vE
+  - id: dr-01
+    category: dr
+    title: "Policy-based backup"
+    drive_id: 1JOoSPlxGShjnMFmJM7ThjszY5ZCluN_e
+  - id: dr-02
+    category: dr
+    title: "Async replication"
+    drive_id: 1XqtAQZMN7TVoDpaoJ4TRyEuJrWcVsRaS
+  - id: dr-03
+    category: dr
+    title: "Sync replication (preview)"
+    drive_id: 1eGBpF09UbIxojBmVCX89US-oG0DSB8ev
+  - id: dr-04
+    category: dr
+    title: "Architecture and topologies"
+    drive_id: 1w-7GovesrytYhar_jX_u5KWHud5h1w4T
+  - id: dr-05
+    category: dr
+    title: "Protecting applications"
+    drive_id: 1zwMGgprGOSAvMAF_B4k4fdtvri8iBx5F
+  - id: dr-06
+    category: dr
+    title: "Rule-based discovery"
+    drive_id: 1z_VxEBFOV7Q6sXS7lQeO3ZFdv_uHt71i
+  - id: dr-07
+    category: dr
+    title: "AI-assisted discovery"
+    drive_id: 1QB3ed8Otg-8NQXdsT7ZT9Tm7nhCV_lij
+  - id: dr-08
+    category: dr
+    title: "GitOps blueprints"
+    drive_id: 1yk-uMZXAUPz0tpNqw4fEjyXqqzjgxrV8
+  - id: edge-01
+    category: edge
+    title: "Edge architecture"
+    drive_id: 1PjzU-wiTueKu77JQC9k7UhKiVHCNQJ7M
+  - id: edge-02
+    category: edge
+    title: "Central hub"
+    drive_id: 1acbBq_4xSZTPgRLYitCU-oyRGCbxVits
+  - id: edge-03
+    category: edge
+    title: "Failure handling"
+    drive_id: 1_nAKzB0pBxxPDkv3OY_IkkQngWeJDf85
+  - id: edge-04
+    category: edge
+    title: "Node migration"
+    drive_id: 1W45dk5r7COYddvjSGaASCQeHVtA3UEjo
+  - id: edge-05
+    category: edge
+    title: "Site migration"
+    drive_id: 1irZ2-HEkEBiLXZtdXHCpIZeoVBGavoPi
+  - id: edge-06
+    category: edge
+    title: "DC to edge"
+    drive_id: 1wn_VY5rmPzzUmM5IlcdYs9B5gwYaS6_c
+  - id: edge-07
+    category: edge
+    title: "Backup to S3"
+    drive_id: 1kiOuhxcV5YGQUvbJy_J0Xl6-15_jcd7c
