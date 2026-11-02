@@ -197,6 +197,118 @@ Host-local storage, such as a hostPath StorageClass, is not suitable for the con
 managed node group replaces its nodes with new instances, and data on the replaced instance is lost. An EBS volume is
 attached to the replacement node in the same availability zone.
 
+## Keyless S3 Backup Credentials (IRSA)
+
+Backups can reach their S3 bucket with no access key stored in Kubernetes at all, through IAM Roles for Service
+Accounts (IRSA): an IAM role is attached to the `simplyblock-storage-node-sa` and `simplyblock-sa` ServiceAccounts, and
+EKS's pod-identity webhook injects the credentials every pod running as one of them needs. This replaces the
+`credentialsSecretRef` Secret described in
+[Backup Credentials Secret](../operations/data-protection/backup-recovery.md#backup-credentials-secret).
+
+### Associating an OIDC Provider
+
+IRSA requires an IAM OIDC provider associated with the cluster. Most clusters created with `eksctl` already have one.
+
+```bash title="Checking for, and associating, an OIDC provider"
+aws eks describe-cluster --name <CLUSTER_NAME> --query "cluster.identity.oidc.issuer" --output text
+
+eksctl utils associate-iam-oidc-provider --cluster <CLUSTER_NAME> --approve
+```
+
+### Creating the IAM Role
+
+The trust policy scopes the role to this namespace's two accounts specifically, through the OIDC provider's `sub`
+claim. Replace `<ACCOUNT_ID>`, `<OIDC_PROVIDER>` (the issuer URL from the previous step, without the `https://`
+prefix), and `<NAMESPACE>` (`simplyblock` in the examples throughout these docs).
+
+```json title="Trust policy for the backup role (trust-policy.json)"
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/<OIDC_PROVIDER>"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "<OIDC_PROVIDER>:aud": "sts.amazonaws.com"
+        },
+        "StringLike": {
+          "<OIDC_PROVIDER>:sub": [
+            "system:serviceaccount:<NAMESPACE>:simplyblock-storage-node-sa",
+            "system:serviceaccount:<NAMESPACE>:simplyblock-sa"
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+The permissions policy grants only what the backup bucket needs.
+
+```json title="Permissions policy for the backup role (backup-policy.json)"
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::<BUCKET_NAME>"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::<BUCKET_NAME>/*"
+    }
+  ]
+}
+```
+
+```bash title="Creating the role and attaching the policy"
+aws iam create-role \
+  --role-name simplyblock-backup \
+  --assume-role-policy-document file://trust-policy.json
+
+aws iam put-role-policy \
+  --role-name simplyblock-backup \
+  --policy-name simplyblock-backup-s3 \
+  --policy-document file://backup-policy.json
+```
+
+### Configuring the Operator
+
+The role's ARN goes on the `ControlPlane` singleton, which annotates both ServiceAccounts with it. The Helm chart
+exposes this as `controlplane.local.eksRoleARN`:
+
+```bash title="Setting the role on install or upgrade"
+helm upgrade --install simplyblock-operator simplyblock/simplyblock-operator \
+  -n simplyblock --create-namespace \
+  --set controlplane.local.eksRoleARN=arn:aws:iam::<ACCOUNT_ID>:role/simplyblock-backup \
+  # ... the rest of the usual values ...
+```
+
+A cluster deployed before the role was set picks it up on the next `helm upgrade`: the operator keeps the annotation
+in sync with the value on every reconcile, so no manual annotation is needed. A pod already running when the
+annotation changes keeps the credentials it started with, though, since EKS's pod-identity webhook injects them only
+when a pod is admitted. Existing control plane and storage node pods are restarted, for example, with
+`kubectl rollout restart`, to pick up the role. Then the `StorageCluster`'s backup store names `ProviderChain` instead
+of a Secret:
+
+```yaml title="Backup store authenticating through the EKS role"
+spec:
+  backup:
+    endpoint: https://s3.<REGION>.amazonaws.com
+    bucket: <BUCKET_NAME>
+    region: <REGION>
+    credentials:
+      source: ProviderChain
+```
+
+No `credentialsSecretRef`, and no Secret, is needed anywhere in the namespace.
+
 ## TLS Prerequisite
 
 TLS is enabled by default and requires cert-manager, unless TLS is explicitly turned off. cert-manager is installed into

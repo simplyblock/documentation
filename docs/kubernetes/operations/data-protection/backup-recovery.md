@@ -50,8 +50,8 @@ kubectl -n minio set env deploy/minio \
 
 ### Backup Credentials Secret
 
-The S3 credentials are stored in a Secret in the namespace of the `StorageCluster`, under the keys `access_key_id` and
-`secret_access_key`:
+For `credentials.source: Secret` (the default), the S3 access key is stored in a Secret in the namespace of the
+`StorageCluster`, under the keys `access_key_id` and `secret_access_key`:
 
 ```yaml title="Example of a backup credentials Secret (backup-credentials.yaml)"
 apiVersion: v1
@@ -64,6 +64,9 @@ stringData:
   access_key_id: <ACCESS_KEY>
   secret_access_key: <SECRET_KEY>
 ```
+
+A deployment on Amazon EKS can skip this Secret entirely and authenticate through the cluster's own IAM role instead.
+See [Keyless S3 Backup Credentials on Amazon EKS](../../installation/eks.md#keyless-s3-backup-credentials-irsa) below.
 
 ### Backup Store of the StorageCluster
 
@@ -81,18 +84,22 @@ spec:
   backup:
     endpoint: http://minio.minio.svc.cluster.local:9000
     bucket: simplyblock-backups
-    prefix: production/
-    credentialsSecretRef:
-      name: production-backup
+    region: us-east-1
+    credentials:
+      source: Secret
+      secretRef:
+        name: production-backup
 ```
 
-| Field                       | Required | Description                                                                                            |
-|-----------------------------|----------|--------------------------------------------------------------------------------------------------------|
-| `endpoint`                  | yes      | S3 endpoint URL, for example, `https://s3.example.com`. Loopback and link-local addresses are refused. |
-| `bucket`                    | yes      | Bucket the backups are written to and read from.                                                       |
-| `prefix`                    | no       | Key prefix inside the bucket, so that several clusters can share a bucket.                             |
-| `region`                    | no       | Region of the bucket, for endpoints that do not imply one.                                             |
-| `credentialsSecretRef.name` | yes      | Secret in the same namespace with the keys `access_key_id` and `secret_access_key`.                    |
+| Field                                    | Required                                                              | Description                                                                                                                                                                                                                                                                                                                                                     |
+|------------------------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `endpoint`                               | yes                                                                   | S3 endpoint URL, for example, `https://s3.example.com`. Loopback and link-local addresses are refused.                                                                                                                                                                                                                                                          |
+| `bucket`                                 | yes                                                                   | Bucket the backups are written to and read from.                                                                                                                                                                                                                                                                                                                |
+| `prefix`                                 | no                                                                    | Key prefix inside the bucket, so that several clusters can share a bucket.                                                                                                                                                                                                                                                                                      |
+| `region`                                 | no                                                                    | Region of the bucket, for endpoints that do not imply one.                                                                                                                                                                                                                                                                                                      |
+| `credentials.source`                     | yes, unless the deprecated `credentialsSecretRef` is set instead      | `Secret` (the default) reads a static key from `secretRef`. `ProviderChain` takes no static key at all and authenticates through the AWS SDK's default credential provider chain, which on Amazon EKS resolves through the cluster's IAM role. See [Keyless S3 Backup Credentials on Amazon EKS](../../installation/eks.md#keyless-s3-backup-credentials-irsa). |
+| `credentials.secretRef.name`             | required with `source: Secret`, rejected with `source: ProviderChain` | Secret in the same namespace with the keys `access_key_id` and `secret_access_key`.                                                                                                                                                                                                                                                                             |
+| `credentialsSecretRef.name` (deprecated) | yes, unless `credentials` is set instead                              | The pre-`credentials` way to name the same Secret. Still accepted, but set `credentials` instead: this spelling cannot express `ProviderChain`.                                                                                                                                                                                                                 |
 
 The store is both the target copies are written to and the inventory the operator reads. Setting it makes every backup
 already under that bucket and prefix visible as a `StorageBackup` object, including backups written by another
