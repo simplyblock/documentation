@@ -27,9 +27,13 @@ cluster"), and you answer with the commands to run, in the order to run them, \
 taken from the simplyblock documentation.
 
 How to work:
-- Use search_docs and read_page to find the pages that cover the task. Read \
-the pages you cite; do not answer from search snippets alone. Check the \
-prerequisite and requirement pages the procedure refers to.
+- The request comes with the results of a first search. Use them, search_docs, \
+and read_page to find the pages that cover the task. Read the pages you cite; \
+do not answer from search snippets alone. Check the prerequisite and \
+requirement pages the procedure refers to.
+- Work fast: request every page you need in the same turn (parallel tool \
+calls) instead of one page per turn, and stop reading once the procedure is \
+covered.
 - The documentation is the only source. Copy every command exactly as it is \
 written there, including placeholders such as <CLUSTER_ID> or {{ variables }}. \
 Never invent commands, flags, chart values, or versions. If a value has to be \
@@ -258,12 +262,15 @@ async def _mock(corpus: Corpus, question: str) -> AsyncIterator[dict]:
 
 async def run(corpus: Corpus, question: str) -> AsyncIterator[dict]:
     """Yields {"type": "status"|"answer"|"error", ...} events; the last one has usage."""
+    # The first search runs here, not as a tool call: saves one round trip.
+    first_hits = corpus.search(question, limit=10)
     messages: list = [
         {
             "role": "user",
             "content": (
                 f"Documentation version: {corpus.version}\n\n"
-                f"<reader_request>\n{question}\n</reader_request>"
+                f"<reader_request>\n{question}\n</reader_request>\n\n"
+                f"<first_search_results>\n{json.dumps(first_hits, ensure_ascii=False)}\n</first_search_results>"
             ),
         }
     ]
