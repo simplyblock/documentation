@@ -36,11 +36,11 @@ Notes on what counts against the limits:
 
 Independent of the per-node limits, single objects are bounded in size and in how many dependants they may have:
 
-| Limit                | Value  | Applies to                                            |
-|----------------------|-------:|-------------------------------------------------------|
-| Volume size          | 70 TiB | Volume creation, resize, and clone with `--size`      |
-| Snapshots per volume | 100    | Active (non-deleted) snapshots taken from one volume  |
-| Clones per snapshot  | 500    | Active (non-deleted) clones created from one snapshot |
+| Limit                | Value  | Applies to                                                     |
+|----------------------|-------:|----------------------------------------------------------------|
+| Volume size          | 70 TiB | Volume creation and resize (`size`), and clone with `--resize` |
+| Snapshots per volume | 100    | Active (non-deleted) snapshots taken from one volume           |
+| Clones per snapshot  | 500    | Active (non-deleted) clones created from one snapshot          |
 
 A volume and its snapshots form one blob chain, and every snapshot deepens the chain that reads of that volume
 and of its clones must walk. The snapshot and clone limits bound that chain.
