@@ -11,6 +11,11 @@
     <!-- ahrefs web analytics -->
     <script src="https://analytics.ahrefs.com/analytics.js" data-key="Sho6863poYf6PBczqURNfg" async></script>
 
+    <!-- HubSpot tracking + live chat (EU1 portal 145570463), same as on www.simplyblock.io.
+         Must run before GTM: a second HubSpot loader injected by a tag would otherwise win
+         and skip the chat module. -->
+    <script type="text/javascript" id="hs-script-loader" async src="https://js-eu1.hs-scripts.com/145570463.js"></script>
+
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
