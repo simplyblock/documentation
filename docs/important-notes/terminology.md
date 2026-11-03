@@ -38,7 +38,7 @@ storage nodes. Therefore, storage pools implement a tenant concept.
 
 ### Storage Device
 
-A storage device is the unit of raw capacity a storage node claims. By default it is a physical or virtualized NVMe
+A storage device is the unit of raw capacity a storage node claims. By default, it is a physical or virtualized NVMe
 drive, identified by its PCIe address and serial number. In Linux block device mode (`lblk`), it is instead any
 Linux disk-type block device, such as a SAS or SATA SSD, a cloud volume, or a partition, identified by its block
 device name or serial number. See [Linux Block Devices](../architecture/concepts/linux-block-devices.md).
