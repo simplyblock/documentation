@@ -26,5 +26,6 @@ The operation runs the steps `Requesting` and `Awaiting`. A resume of a node tha
 without a call to the control plane. The control plane resumes only a `suspended` node, and it takes no force flag for
 a resume.
 
-A node that was left suspended by a failed removal, reported with a `NodeResumeFailed` event, is brought back the same
-way. How an operation is tracked and cleaned up is described in [Storage Node Actions](storage-node-actions.md).
+A node left offline by a failed or interrupted [removal](removing-a-storage-node.md) is not resumed this way; it is
+brought back with [Restart](restarting-a-storage-node.md). How an operation is tracked and cleaned up is described in
+[Storage Node Actions](storage-node-actions.md).
