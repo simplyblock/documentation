@@ -70,27 +70,27 @@ videos:
   - id: core-06
     category: core
     title: "Low-latency SPDK"
-    drive_id: 1O0olXVB09n9GRq0vY6hS763Bm_S9uU9W
+    drive_id: 1y5QSe7toa7ypH1naq9UNnGeHhqf2BFte
   - id: core-07
     category: core
     title: "Distributed placement"
-    drive_id: 1y-sUsXXn1gEazvmQSqZIjFoEkrIykphA
+    drive_id: 1A6AI4ymNSlazgvzfOkDTJbXpeh4jXK-t
   - id: core-08
     category: core
     title: "Cluster lifecycle"
-    drive_id: 1VMYsgAVX6-ruPrD6D9nARXxuG1McVhcc
+    drive_id: 1mgIe3chvIuCKsUf_C7Loy-6QAeBTJ8Hr
   - id: core-09
     category: core
     title: "Failure domains"
-    drive_id: 1dblr3ejqEWb3iWPnG0PL9cmVT_CcS9AA
+    drive_id: 1hdv6wY7jKJGPWzz46uUL1d4QF9VqSQi2
   - id: core-10
     category: core
     title: "Placement groups"
-    drive_id: 1ou0AJ8tXWBg_Kxpok1U4nuBDk62n7r4V
+    drive_id: 1v_eKj5XpoRD0ufXvPPoxYoWmSaSKAlJI
   - id: core-11
     category: core
     title: "Distributed erasure coding"
-    drive_id: 1CsZnt8XJM6j5VdDFkzMXQ_yT491wwsyY
+    drive_id: 1zjPZlAeG7XRlwtvQCr7xbf6b59UyqTHj
   - id: file-object-01
     category: file-object
     title: "pNFS high-performance file storage"
@@ -98,15 +98,15 @@ videos:
   - id: dr-01
     category: dr
     title: "Policy-based backup"
-    drive_id: 1JOoSPlxGShjnMFmJM7ThjszY5ZCluN_e
+    drive_id: 1BLoYHm8VDepi3mrpuywVpF89QVpsprTI
   - id: dr-02
     category: dr
     title: "Async replication"
-    drive_id: 1XqtAQZMN7TVoDpaoJ4TRyEuJrWcVsRaS
+    drive_id: 1zjA44-21XdhHwiPJ2IygmOgJv9xJPi9S
   - id: dr-03
     category: dr
     title: "Sync replication (preview)"
-    drive_id: 1eGBpF09UbIxojBmVCX89US-oG0DSB8ev
+    drive_id: 15vhaH0oK2bcwMaij9e7UXwWMbxeDfmcP
   - id: dr-04
     category: dr
     title: "Architecture and topologies"
