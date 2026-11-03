@@ -211,7 +211,7 @@ class Library:
     async def versions(self) -> dict[str, str]:
         """Name or alias -> version directory, from versions.json."""
         stamp, known = self._versions
-        if time.time() - stamp < settings.refresh_seconds and known:
+        if time.time() - stamp < settings.versions_refresh_seconds and known:
             return known
         try:
             data = json.loads(await asyncio.to_thread(_get, f"{settings.docs_base}/versions.json"))

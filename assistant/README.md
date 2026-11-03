@@ -33,7 +33,9 @@ browser (docs page)  --POST /api/assistant/ask-->  this service  --Messages API-
 ## Caching
 
 * **The docs:** each version's `llms-full.txt` is downloaded once and kept in memory, refreshed every
-  `DOCS_REFRESH_SECONDS`. Search runs locally.
+  `DOCS_REFRESH_SECONDS`. Search runs locally. `versions.json` is checked every minute
+  (`DOCS_VERSIONS_REFRESH_SECONDS`), so a new release becomes `latest` within a minute of publishing, and its top
+  questions are pre-answered right away.
 * **Within one answer:** Claude's prompt cache serves the pages already read in earlier rounds.
 * **Answers:** similar questions share one answer. The question is reduced to its meaningful words (filler such as
   "a", "my", "please", "running", "new" removed, plural and verb endings and a few synonyms like DR, OCP, k8s merged);
@@ -63,6 +65,8 @@ browser (docs page)  --POST /api/assistant/ask-->  this service  --Messages API-
 | `TURNSTILE_SECRET`              | empty (off)                    | Cloudflare Turnstile secret; set `extra.assistant.turnstile_sitekey` in `mkdocs.yml` to match |
 | `ASSISTANT_CORS_ORIGINS`        | empty                          | Only needed when the API is on another origin        |
 | `DOCS_BASE`                     | `https://docs.simplyblock.io`  | Where `versions.json` and `<version>/llms-full.txt` are read |
+| `DOCS_REFRESH_SECONDS`          | `1800`                         | Reload of a version's `llms-full.txt`; pre-answer run |
+| `DOCS_VERSIONS_REFRESH_SECONDS` | `60`                           | Check of `versions.json` (new release becomes `latest`) |
 | `ASSISTANT_LOG_FILE`            | stdout                         | JSON lines: questions, outcome, cost, feedback       |
 | `ASSISTANT_MOCK`                | `0`                            | `1`: canned answers, no Claude call                  |
 | `ASSISTANT_STATIC_SITE`         | empty                          | Serve a built site next to the API (local testing)   |
