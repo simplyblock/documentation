@@ -1,0 +1,251 @@
+/* Video gallery, pick-of-the-day bar, player dialog.
+   Markup: scripts/hooks/videos.py, templates/main.html, assets/javascripts/videos.js */
+
+:root {
+  --sb-cat-core: #1b53a4;
+  --sb-cat-file-object: #0e7c86;
+  --sb-cat-dr: #b4471b;
+  --sb-cat-edge: #6b3fa0;
+}
+[data-md-color-scheme="slate"] {
+  --sb-cat-core: #7dadf2;
+  --sb-cat-file-object: #4fc3cc;
+  --sb-cat-dr: #f0956b;
+  --sb-cat-edge: #b896e6;
+}
+[data-sb-category="core"]        { --sb-cat: var(--sb-cat-core); }
+[data-sb-category="file-object"] { --sb-cat: var(--sb-cat-file-object); }
+[data-sb-category="dr"]          { --sb-cat: var(--sb-cat-dr); }
+[data-sb-category="edge"]        { --sb-cat: var(--sb-cat-edge); }
+
+/* ---- Pick of the day bar (announce block) ---- */
+.md-banner:has(.sb-pick) {
+  background: linear-gradient(90deg, #0f2f5e 0%, #1b53a4 60%, #2a6fd1 100%);
+  color: #fff;
+}
+.md-banner__inner:has(.sb-pick) { margin-top: 0.4rem; margin-bottom: 0.4rem; }
+.sb-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+.sb-pick[hidden] { display: none; }
+.sb-pick__label {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.62rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.18);
+}
+.md-typeset .sb-pick__link,
+.md-typeset .sb-pick__link:hover {
+  color: #fff;
+  display: inline-flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.sb-pick__text { font-weight: 700; font-size: 0.85rem; }
+.sb-pick__cta { text-decoration: underline; text-underline-offset: 0.2em; opacity: 0.9; }
+.sb-pick__link:hover .sb-pick__cta { opacity: 1; }
+.sb-pick__category { opacity: 0.75; font-size: 0.65rem; }
+.sb-pick__close {
+  margin-left: auto;
+  color: #fff;
+  opacity: 0.7;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+.sb-pick__close:hover { opacity: 1; }
+.sb-pick__close svg { fill: currentColor; width: 1rem; height: 1rem; }
+
+/* ---- Filters ---- */
+.sb-videos__filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 1rem 0 1.2rem; }
+.sb-videos__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  background: transparent;
+  color: var(--md-default-fg-color);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.sb-videos__filter:hover { border-color: var(--md-accent-fg-color); }
+.sb-videos__filter[aria-pressed="true"] {
+  background: var(--md-primary-fg-color);
+  border-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+}
+.sb-videos__count {
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 1rem;
+  text-align: center;
+  background: var(--md-default-fg-color--lightest);
+}
+.sb-videos__filter[aria-pressed="true"] .sb-videos__count { background: rgba(255, 255, 255, 0.25); }
+
+/* ---- Tiles ----
+   Every tile has the same design: category color and icon, number, title. */
+.md-typeset ul.sb-videos__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+.md-typeset ul.sb-videos__grid > li.sb-video { margin: 0; padding: 0; }
+.sb-video[hidden] { display: none; }
+.md-typeset a.sb-video__link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  color: #fff;
+  background: var(--md-default-bg-color);
+  box-shadow: var(--md-shadow-z1);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.md-typeset a.sb-video__link:hover,
+.md-typeset a.sb-video__link:focus-visible {
+  color: #fff;
+  transform: translateY(-3px);
+  box-shadow: var(--md-shadow-z3);
+}
+.sb-video__art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.6rem;
+  aspect-ratio: 16 / 9;
+  padding: 0.8rem 0.9rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 110% -10%, rgba(255, 255, 255, 0.22) 0, transparent 55%),
+    linear-gradient(140deg, var(--sb-cat) 0%, color-mix(in srgb, var(--sb-cat) 45%, #07162e) 100%);
+}
+.sb-video__icon {
+  position: absolute;
+  right: -1.2rem;
+  top: 50%;
+  width: 6rem;
+  height: 6rem;
+  margin-top: -3.6rem;
+  opacity: 0.14;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.sb-video__icon svg { width: 100%; height: 100%; fill: #fff; }
+.sb-video__link:hover .sb-video__icon { opacity: 0.24; transform: rotate(-6deg) scale(1.05); }
+.sb-video__meta {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.sb-video__category {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.sb-video__number {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+}
+.sb-video__title {
+  position: relative;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  padding-right: 2.6rem;
+  text-wrap: balance;
+}
+.sb-video__play {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.8rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.15s, transform 0.15s;
+}
+.sb-video__play::after {
+  content: "";
+  position: absolute;
+  left: 0.78rem;
+  top: 0.58rem;
+  border-style: solid;
+  border-width: 0.42rem 0 0.42rem 0.68rem;
+  border-color: transparent transparent transparent #fff;
+}
+.sb-video__link:hover .sb-video__play { background: rgba(255, 255, 255, 0.35); transform: scale(1.1); }
+.md-typeset .sb-video__description {
+  display: block;
+  padding: 0.6rem 0.9rem 0.8rem;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--md-default-fg-color--light);
+}
+/* link-marker adds an external-link icon; not wanted on tiles */
+.sb-video__link .link-marker { display: none; }
+
+/* ---- Player ---- */
+.sb-player {
+  width: min(64rem, 94vw);
+  padding: 0;
+  border: 0;
+  border-radius: 0.6rem;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color);
+  box-shadow: var(--md-shadow-z3);
+}
+.sb-player::backdrop { background: rgba(0, 0, 0, 0.75); }
+.sb-player__head { display: flex; align-items: center; gap: 1rem; padding: 0.6rem 0.8rem; }
+.sb-player__title { margin: 0; font-size: 0.9rem; font-weight: 700; flex: 1; }
+.sb-player__close {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+}
+.sb-player__close svg { fill: currentColor; width: 1.4rem; height: 1.4rem; }
+.sb-player__frame { aspect-ratio: 16 / 9; background: #000; }
+.sb-player__frame iframe,
+.sb-player__frame video { width: 100%; height: 100%; border: 0; display: block; }
+.sb-player__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.7rem;
+}
+.sb-player__category { color: var(--sb-cat, inherit); font-weight: 700; margin-right: auto; }
+.sb-player__foot a { color: var(--md-typeset-a-color); }

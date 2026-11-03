@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">Single Kubernetes cluster, single storage cluster</title>
+<defs>
+<marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="499" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">Single Kubernetes cluster, single storage cluster</text>
+<rect x="479" y="22" width="55" height="22" rx="11" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/><text x="506" y="37.5" font-size="13" font-weight="600" fill="#0969da" text-anchor="middle">no DR</text>
+
+<rect x="24" y="72" width="912" height="380" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="38" y="94" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Kubernetes cluster</text>
+<rect x="96" y="108" width="200" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="196" y="137.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
+<rect x="370" y="108" width="220" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="480" y="130" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Control plane</text>
+<text x="480" y="147" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">mgmt pods + FoundationDB</text>
+<path d="M296,133 L370,133" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="295.8" y="123" width="74.4" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="333" y="137.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">reconcile</text>
+<rect x="48" y="210" width="864" height="136" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="62" y="232" font-size="14" font-weight="600" fill="#283593" text-anchor="start">Simplyblock storage cluster</text>
+<rect x="72" y="244" width="256" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="200" y="266.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage node 1</text>
+<rect x="352" y="244" width="256" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="480" y="266.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage node 2</text>
+<rect x="632" y="244" width="256" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="760" y="266.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage node 3</text>
+<rect x="72" y="294" width="816" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="480" y="316.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Storage pool  →  StorageClass</text>
+<path d="M480,158 L480,210" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="500.0" y="174" width="60.1" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="530" y="188.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">manages</text>
+<rect x="150" y="390" width="140" height="36" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="220" y="412.5" font-size="13" font-weight="600" fill="#1b5e20" text-anchor="middle">Application pods</text>
+<rect x="410" y="390" width="140" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="480" y="412.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<path d="M290,408 L410,408" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="334.3" y="398" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="350" y="412.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">PVC</text>
+<path d="M480,390 L480,346" fill="none" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+<rect x="504.4" y="358" width="67.2" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="538" y="372.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">NVMe/TCP</text>
+<line x1="24" y1="462" x2="936" y2="462" stroke="#d0d7de" stroke-width="1"/>
+<rect x="24" y="473" width="20" height="14" rx="3" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.25"/>
+<text x="52" y="484.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">Kubernetes cluster</text>
+<rect x="198.70000000000002" y="473" width="20" height="14" rx="3" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="226.7" y="484.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">simplyblock</text>
+<rect x="323.35" y="473" width="20" height="14" rx="3" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="351.35" y="484.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">apps</text>
+<path d="M397.95000000000005,480 L423.95000000000005,480" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)" fill="none"/>
+<text x="431.95" y="484.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">control</text>
+<path d="M500.00000000000006,480 L526.0,480" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)" fill="none"/>
+<text x="534" y="484.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">NVMe/TCP</text>
+</svg>

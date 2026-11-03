@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">Lifecycle of a page copy on one device: the snapshot and the volume share a physical page, new writes go to a new physical page, and after the snapshot is deleted a merge folds the volume's data back into one physical page</title>
+<defs>
+<marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+<marker id="arr-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1a7f37"/></marker>
+<marker id="arr-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9a6700"/></marker>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="499" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">One column of a page on one device: copy, snapshot delete, merge</text>
+
+<!-- panel 1 -->
+<rect x="24" y="58" width="290" height="330" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="40" y="82" font-size="14" font-weight="600" fill="#1d4f91">1. After the page copy</text>
+<rect x="44" y="96" width="110" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab"/>
+<text x="99" y="114" font-size="12" font-weight="600" fill="#1a237e" text-anchor="middle">Snapshot</text><text x="99" y="129" font-size="11" fill="#1a237e" text-anchor="middle">page (frozen)</text>
+<rect x="184" y="96" width="110" height="40" rx="6" fill="#ddf4ff" stroke="#54aeff"/>
+<text x="239" y="114" font-size="12" font-weight="600" fill="#0969da" text-anchor="middle">Volume</text><text x="239" y="129" font-size="11" fill="#0969da" text-anchor="middle">page (writable)</text>
+<line x1="99" y1="136" x2="99" y2="222" stroke="#9a6700" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+<line x1="220" y1="136" x2="124" y2="222" stroke="#9a6700" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-amber)"/>
+<line x1="250" y1="136" x2="250" y2="222" stroke="#1a7f37" stroke-width="2" marker-end="url(#arr-green)"/>
+<text x="134" y="164" font-size="10" fill="#7d4e00" text-anchor="middle">unchanged</text><text x="134" y="176" font-size="10" fill="#7d4e00" text-anchor="middle">chunks</text>
+<text x="276" y="176" font-size="10" fill="#116329" text-anchor="middle">rewritten</text><text x="276" y="188" font-size="10" fill="#116329" text-anchor="middle">chunks</text>
+<rect x="44" y="224" width="120" height="58" rx="6" fill="#fff8c5" stroke="#d4a72c"/>
+<text x="104" y="246" font-size="12" font-weight="600" fill="#7d4e00" text-anchor="middle">Physical page 1</text><text x="104" y="264" font-size="11" fill="#7d4e00" text-anchor="middle">shared, read-only</text>
+<rect x="184" y="224" width="120" height="58" rx="6" fill="#dafbe1" stroke="#2da44e"/>
+<text x="244" y="246" font-size="12" font-weight="600" fill="#116329" text-anchor="middle">Physical page 2</text><text x="244" y="264" font-size="11" fill="#116329" text-anchor="middle">volume's new data</text>
+<text x="40" y="314" font-size="12" fill="#24292f">A read of the volume takes each chunk</text>
+<text x="40" y="330" font-size="12" fill="#24292f">from its latest location: rewritten chunks</text>
+<text x="40" y="346" font-size="12" fill="#24292f">from page 2, all others from page 1.</text>
+<text x="40" y="370" font-size="12" fill="#57606a">Both physical pages are on the same device.</text>
+
+<line x1="314" y1="223" x2="334" y2="223" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+
+<!-- panel 2 -->
+<rect x="335" y="58" width="290" height="330" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="351" y="82" font-size="14" font-weight="600" fill="#1d4f91">2. Snapshot deleted</text>
+<rect x="355" y="96" width="110" height="40" rx="6" fill="#f6f8fa" stroke="#8c959f" stroke-dasharray="5 4"/>
+<text x="410" y="114" font-size="12" font-weight="600" fill="#8c959f" text-anchor="middle">Snapshot</text><text x="410" y="129" font-size="11" fill="#8c959f" text-anchor="middle">cluster freed</text>
+<rect x="495" y="96" width="110" height="40" rx="6" fill="#ddf4ff" stroke="#54aeff"/>
+<text x="550" y="114" font-size="12" font-weight="600" fill="#0969da" text-anchor="middle">Volume</text><text x="550" y="129" font-size="11" fill="#0969da" text-anchor="middle">page</text>
+<line x1="531" y1="136" x2="435" y2="222" stroke="#9a6700" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr-amber)"/>
+<line x1="561" y1="136" x2="561" y2="222" stroke="#1a7f37" stroke-width="2" marker-end="url(#arr-green)"/>
+<rect x="355" y="224" width="120" height="58" rx="6" fill="#fff8c5" stroke="#d4a72c" stroke-width="2"/>
+<text x="415" y="246" font-size="12" font-weight="600" fill="#7d4e00" text-anchor="middle">Physical page 1</text><text x="415" y="264" font-size="11" fill="#7d4e00" text-anchor="middle">retired</text>
+<rect x="495" y="224" width="120" height="58" rx="6" fill="#dafbe1" stroke="#2da44e"/>
+<text x="555" y="246" font-size="12" font-weight="600" fill="#116329" text-anchor="middle">Physical page 2</text><text x="555" y="264" font-size="11" fill="#116329" text-anchor="middle">volume's new data</text>
+<text x="351" y="314" font-size="12" fill="#24292f">The free of the snapshot's cluster is a</text>
+<text x="351" y="330" font-size="12" fill="#24292f">journal record only. Physical page 1 still</text>
+<text x="351" y="346" font-size="12" fill="#24292f">holds live data of the volume and becomes</text>
+<text x="351" y="362" font-size="12" fill="#24292f">a merge candidate on the HA leader.</text>
+
+<line x1="625" y1="223" x2="645" y2="223" stroke="#3949ab" stroke-width="2" marker-end="url(#arr-sb)"/>
+
+<!-- panel 3 -->
+<rect x="646" y="58" width="290" height="330" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="662" y="82" font-size="14" font-weight="600" fill="#1d4f91">3. Merged</text>
+<rect x="806" y="96" width="110" height="40" rx="6" fill="#ddf4ff" stroke="#54aeff"/>
+<text x="861" y="114" font-size="12" font-weight="600" fill="#0969da" text-anchor="middle">Volume</text><text x="861" y="129" font-size="11" fill="#0969da" text-anchor="middle">page</text>
+<line x1="861" y1="136" x2="861" y2="222" stroke="#1a7f37" stroke-width="2" marker-end="url(#arr-green)"/>
+<rect x="666" y="224" width="120" height="58" rx="6" fill="#f6f8fa" stroke="#8c959f" stroke-dasharray="5 4"/>
+<text x="726" y="246" font-size="12" font-weight="600" fill="#8c959f" text-anchor="middle">Physical page 1</text><text x="726" y="264" font-size="11" fill="#8c959f" text-anchor="middle">unmapped, freed</text>
+<rect x="806" y="224" width="120" height="58" rx="6" fill="#dafbe1" stroke="#2da44e" stroke-width="2"/>
+<text x="866" y="246" font-size="12" font-weight="600" fill="#116329" text-anchor="middle">Physical page 2</text><text x="866" y="264" font-size="11" fill="#116329" text-anchor="middle">all volume data</text>
+<path d="M786,253 L804,253" stroke="#1a7f37" stroke-width="2" marker-end="url(#arr-green)"/>
+<text x="662" y="314" font-size="12" fill="#24292f">The live chunks are copied on the device</text>
+<text x="662" y="330" font-size="12" fill="#24292f">into one physical page (the direction that</text>
+<text x="662" y="346" font-size="12" fill="#24292f">moves less data), then one journal record</text>
+<text x="662" y="362" font-size="12" fill="#24292f">switches the volume page to it.</text>
+
+<!-- footer -->
+<rect x="24" y="404" width="912" height="80" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="40" y="428" font-size="12" fill="#24292f">Merges run in the background on the HA leader of the back storage volume, under the normal page locks and concurrently with</text>
+<text x="40" y="446" font-size="12" fill="#24292f">client I/O. Each step is journaled, so after a crash or failover the next leader continues from the maps. A copy chain is limited</text>
+<text x="40" y="464" font-size="12" fill="#24292f">to 10 physical pages per column; a copy from a deeper chain is declined, and the volume store copies the cluster in full.</text>
+</svg>
