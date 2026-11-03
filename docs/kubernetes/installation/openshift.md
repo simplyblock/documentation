@@ -147,7 +147,8 @@ oc -n simplyblock get storagecluster,storagenode,storagepool
 
 The storage cluster moves through `Creating`, `Provisioning`, and `Activating` to `Online`. Each storage node goes
 from `Provisioning` to `Online`. The nodes come up one after another, so several minutes are to be expected. The
-expansion creates a storage pool and a StorageClass for it, named `simplyblock-<namespace>-<cluster>`, from which volumes are provisioned.
+expansion creates a storage pool and a StorageClass for it, named `simplyblock-<namespace>-<cluster>`, from which
+volumes are provisioned.
 
 **6. Create the CSI driver**
 
