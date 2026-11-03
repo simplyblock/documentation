@@ -1,13 +1,17 @@
 ---
 title: "OpenShift"
-description: "Install simplyblock on OpenShift: remove leftovers of earlier installations, grant the privileged SCC, install cert-manager for TLS, and set the OpenShift environment."
+description: "Install simplyblock on OpenShift through OperatorHub: SCC grants, the subscription, the control plane, the storage cluster, and the CSI driver."
 weight: 40100
 ---
 
-When installing simplyblock on OpenShift, the process is very similar to Kubernetes, with a few key differences.
-OpenShift requires explicitly granting the privileged Security Context Constraint (SCC) to service accounts to enable
-storage and SPDK operations, TLS requires cert-manager, and the storage nodes apply their host configuration through
-OpenShift MachineConfig objects.
+On OpenShift, simplyblock is installed through OperatorHub. The operator is subscribed to once, and everything else
+is created from custom resources: the `ControlPlane`, the `SimplyblockDriver`, a discovery run, and the
+`ClusterDeploymentConfig` it drafts. The cluster add-ons the control plane depends on are detected and, where
+missing, installed by the operator itself.
+
+OpenShift differs from other Kubernetes distributions in three ways that matter here: the privileged Security Context
+Constraint (SCC) has to be granted to the namespace explicitly, it ships its own snapshot controller, and the storage
+nodes apply their host configuration through MachineConfig objects.
 
 !!! info
     In OpenShift deployments, not all worker nodes must host storage components.
@@ -16,18 +20,10 @@ OpenShift MachineConfig objects.
 
 ## Prerequisites
 
-Ensure the OpenShift cluster is operational and that administrator privileges are available.
+The OpenShift cluster has to be operational, and administrator privileges are required.
 
-### Removing Leftovers of a Previous Installation
-
-An installation only succeeds on a cluster without remains of an earlier simplyblock installation. On a cluster that
-had simplyblock installed before, they are removed first with the cleanup script, as described in
-[Removing a Previous Installation](k8s-control-plane.md#removing-a-previous-installation). For an OperatorHub install,
-the namespace passed to the script is `openshift-operators`.
-
-### Security Context Constraints
-
-Before deploying simplyblock components, grant the required SCC permissions:
+The operator and every simplyblock workload run in the `simplyblock` namespace. The namespace is created and granted
+the required SCC permissions before the operator is installed:
 
 ```bash title="Grant SCC permissions"
 oc create namespace simplyblock
@@ -41,23 +37,243 @@ oc label namespace simplyblock \
   pod-security.kubernetes.io/warn=privileged
 ```
 
-This step is mandatory to allow SPDK and storage-related containers to run with the privileges required for NVMe device
-access.
+This step is mandatory. SPDK and the storage containers need the privileges for NVMe device access, and the
+local-path provisioner the operator installs for the control plane's volumes runs in the same namespace and needs
+them for its host directories.
+
+## Installation of Simplyblock
+
+**1. Install the operator**
+
+The operator is published in Red Hat's certified-operators catalog. It supports the `AllNamespaces` install mode
+only, and it reads its custom resources from the namespace it runs in, so it is installed into `simplyblock` with an
+`OperatorGroup` of its own:
+
+```yaml title="Subscription for the Simplyblock Operator (simplyblock-subscription.yaml)"
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: simplyblock
+  namespace: simplyblock
+spec: {}
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: simplyblock-operator
+  namespace: simplyblock
+spec:
+  channel: alpha
+  name: simplyblock-operator
+  source: certified-operators
+  sourceNamespace: openshift-marketplace
+```
+
+```bash title="Subscribing to the operator"
+oc apply -f simplyblock-subscription.yaml
+oc -n simplyblock get csv -w
+```
+
+The operator runs once the ClusterServiceVersion reports `Succeeded`. The container images the bundle references are
+pulled from `quay.io/simplyblock-io`, so no Red Hat entitlement or pull secret is required.
+
+**2. Create the control plane**
+
+```yaml title="controlplane.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ControlPlane
+metadata:
+  name: simplyblock
+  namespace: simplyblock
+spec:
+  source:
+    local:
+      image: quay.io/simplyblock-io/simplyblock:26.4.0-beta1
+```
+
+```bash title="Creating the control plane"
+oc apply -f controlplane.yaml
+oc -n simplyblock get controlplane simplyblock -w
+```
+
+The name has to be `simplyblock`, because the operator ignores any other. Before the first installation step, the
+operator installs the add-ons described in [Prerequisite Add-ons](#prerequisite-add-ons) that the cluster lacks. The
+FoundationDB pods start next, then the management API, the task runner, and monitoring, which takes several minutes.
+Mutual TLS through cert-manager is on by default, as described in [TLS on OpenShift](#tls-on-openshift).
+
+**3. Create the CSI driver**
+
+```yaml title="driver.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: SimplyblockDriver
+metadata:
+  name: simplyblock
+  namespace: simplyblock
+spec:
+  driverName: csi.simplyblock.io
+  enableVolumeSnapshots: true
+```
+
+```bash title="Creating the CSI driver"
+oc apply -f driver.yaml
+```
+
+The driver's TLS follows the control plane's unless `spec.tls` sets it. With the default mutual TLS through
+cert-manager, the driver issues the client certificates its plugins present to the control plane. Until the storage
+cluster exists, the driver reports `Unavailable`, because its plugins wait for a Secret that only exists once the
+storage cluster in step 5 is created.
+
+**4. Discover the workers and devices**
+
+```yaml title="discover.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: OperatorOps
+metadata:
+  name: discover-now
+  namespace: simplyblock
+spec:
+  action: Discover
+```
+
+```bash title="Running the discovery"
+oc apply -f discover.yaml
+oc -n simplyblock get operatorops discover-now -w
+```
+
+The run probes every schedulable worker and ends `Succeeded`. It writes a draft `ClusterDeploymentConfig` named
+`discovered-discover-now`. Nothing is deployed from a draft. To limit the run to labeled workers or to certain
+devices, see [Create a Storage Cluster](k8s-storage-plane.md).
+
+Devices that carry a partition table are not reported. A device whose table is stale, such as one left by an earlier
+simplyblock cluster, is reported once `spec.discover.enablePartitionedDevices` is set to `true`.
+
+**5. Review and approve the draft**
+
+```bash title="Reviewing the draft"
+oc -n simplyblock get clusterdeploymentconfig discovered-discover-now -o yaml
+```
+
+The workers in `nodeSets[].groups[].workers`, the `devices`, and the data and management interfaces have to name
+the machines and disks that simplyblock may take. Devices listed here are formatted. Approving the draft deploys it:
+
+```bash title="Approving the draft"
+oc -n simplyblock patch clusterdeploymentconfig discovered-discover-now \
+  --type=merge -p '{"spec":{"approved":true}}'
+```
+
+**6. Check that the storage nodes come up**
+
+```bash title="Watching the storage nodes"
+oc -n simplyblock get storagecluster,storagenode,storagepool
+oc -n simplyblock get simplyblockdriver
+```
+
+The storage cluster moves through `Creating`, `Provisioning`, and `Activating` to `Online`. Each storage node goes
+from `Provisioning` to `Online`, and the driver becomes `Ready` once its node and controller plugins run. The nodes
+come up one after another, so several minutes are to be expected. The expansion creates a storage pool and a
+StorageClass for it, named `simplyblock-<namespace>-<cluster>`, from which volumes are provisioned.
+
+## Prerequisite Add-ons
+
+The control plane depends on four cluster add-ons. Each is detected before the installation starts, and installed
+from manifests built into the operator only when it is missing:
+
+| Add-on                           | Detected by                                                 | Required when                                              |
+|----------------------------------|-------------------------------------------------------------|------------------------------------------------------------|
+| FoundationDB CRDs (v2.13.0)      | `apps.foundationdb.org/v1beta2` is served                   | always                                                     |
+| cert-manager (v1.16.2)           | `cert-manager.io/v1` is served                              | TLS is on and issued by cert-manager                       |
+| local-path-provisioner (v0.0.30) | a StorageClass uses the `rancher.io/local-path` provisioner | `spec.source.local.foundationDB.storageClassName` is empty |
+| CSI snapshot controller (v8.2.0) | `snapshot.storage.k8s.io/v1` is served                      | always, without holding the control plane                  |
+
+OpenShift ships its own snapshot controller, so the operator does not install one there.
+
+An add-on that is already present is left as it is. Every object the operator installs carries the label
+`storage.simplyblock.io/installed-prerequisite`, and no owner reference: add-ons are cluster-wide, other workloads
+come to depend on them, and they are not removed with the `ControlPlane`. After an operator upgrade, an add-on the
+operator installed is re-applied from the newer manifest, except cert-manager, whose upgrades go one minor version
+at a time. An outdated cert-manager is reported with a `PrerequisiteOutdated` event instead.
+
+local-path-provisioner is installed into the `simplyblock` namespace, where the SCC and Pod Security grants from
+[Prerequisites](#prerequisites) cover its privileged helper pods. Its StorageClass becomes the default only when the
+cluster has no default class. A local-path volume lives on one node's disk without a quota, so production clusters
+set `spec.source.local.foundationDB.storageClassName` to a class of their own, which also skips the local-path
+install.
+
+Each install can be turned off. An add-on whose flag is `false` is only checked, and the installation holds with a
+message naming it until it is installed separately:
+
+```yaml title="ControlPlane with the add-ons installed separately (excerpt)"
+spec:
+  source:
+    local:
+      prerequisites:
+        installFoundationDBCRDs: false
+        installCertManager: false
+        installLocalPathProvisioner: false
+        installSnapshotController: false
+```
 
 ## TLS on OpenShift
 
-TLS is enabled by default and requires [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} on
-OpenShift as well. The OpenShift service CA (`tls.provider=openshift`) does not work as a certificate provider; the
-installation fails with it. cert-manager is installed before the Simplyblock Operator:
+TLS and mutual TLS are on by default, and cert-manager issues the certificates. When cert-manager is missing, the
+operator installs it and creates the issuer chain the control plane's certificates are signed from: a self-signed
+root, the certificate authority, the `simplyblock-certificate-authority-issuer` ClusterIssuer, and the client
+certificate the operator itself presents. An existing `simplyblock-certificate-authority-issuer` is left as it is.
 
-```bash title="Installing cert-manager"
-helm repo add jetstack https://charts.jetstack.io
-helm install cert-manager jetstack/cert-manager     -n cert-manager --create-namespace --set crds.enabled=true
+cert-manager is the provider for an OperatorHub installation. The OpenShift service CA (`provider: OpenShift`)
+provides one-way TLS only, and it relies on objects that only the Helm chart creates.
+
+TLS cannot be changed once the `ControlPlane` exists. For details, see [Securing the Control Plane](security.md).
+
+## Air-Gapped Installation
+
+The add-on manifests are built into the operator, so no manifest is downloaded at install time. The images are not:
+`oc-mirror` copies the images the bundle lists (the operator, the control plane, the storage node, and the
+rebalancer) but not the images the operator deploys for the NUMA resource plugin, the control plane, and the
+add-ons. Those are added to the ImageSetConfiguration as additional images:
+
+```yaml title="Additional images for an air-gapped installation (ImageSetConfiguration excerpt)"
+mirror:
+  additionalImages:
+    - name: quay.io/simplyblock-io/fdb-kubernetes-operator:v2.13.0
+    - name: quay.io/simplyblock-io/fdb-kubernetes-monitor:7.3.63
+    - name: quay.io/simplyblock-io/minio:RELEASE.2024-01-16T16-07-38Z
+    - name: quay.io/simplyblock-io/minio-client:RELEASE.2024-01-16T16-06-34Z
+    - name: quay.io/simplyblock-io/snapshot-controller:v8.2.0
+    - name: quay.io/jetstack/cert-manager-controller:v1.16.2
+    - name: quay.io/jetstack/cert-manager-cainjector:v1.16.2
+    - name: quay.io/jetstack/cert-manager-webhook:v1.16.2
+    - name: quay.io/jetstack/cert-manager-acmesolver:v1.16.2
+    - name: docker.io/rancher/local-path-provisioner:v0.0.30
+    - name: docker.io/library/busybox:1.37.0
 ```
 
-Alternatively, cert-manager can be installed through the cert-manager Operator for Red Hat OpenShift from OperatorHub.
-The Simplyblock Operator is then installed with the default provider, `tls.provider=cert-manager`, which also enables
-mutual TLS. For details, see [Securing the Control Plane](security.md).
+The NUMA resource plugin image is set per release. The exact reference is the value of `SB_NUMA_PLUGIN_IMAGE` in
+the operator's ClusterServiceVersion, and it is added to `additionalImages` as well:
+
+```bash title="Reading the NUMA resource plugin image"
+oc get csv -n simplyblock -l operators.coreos.com/simplyblock-operator.simplyblock \
+  -o jsonpath='{.items[0].spec.install.spec.deployments[0].spec.template.spec.containers[0].env[?(@.name=="SB_NUMA_PLUGIN_IMAGE")].value}'
+```
+
+The add-on images are needed only for the add-ons the operator installs. The snapshot controller is never
+installed on OpenShift, and cert-manager is installed only where the cluster runs none.
+
+The operator pulls every one of these images by digest, except the FoundationDB monitor image: the FoundationDB
+operator appends the version tag to it. On OpenShift, the ImageDigestMirrorSet generated by `oc-mirror` therefore
+covers all of them once they are mirrored, and the monitor image needs an ImageTagMirrorSet entry for
+`quay.io/simplyblock-io/fdb-kubernetes-monitor`.
+
+Without mirror sets, the operator rewrites the registry of every image it deploys, keeping each image's path, tag,
+and digest, when `SB_IMAGE_MIRROR_REGISTRY` is set in its environment:
+
+```yaml title="Subscription with a mirror registry (excerpt)"
+spec:
+  config:
+    env:
+      - name: SB_IMAGE_MIRROR_REGISTRY
+        value: registry.example.com:5000
+```
 
 ## OpenShift Environment
 
@@ -100,171 +316,34 @@ pool, so whatever machine configuration its previous pool carried is lost unless
 `spec.storageNodes.openshift.machineConfigPool` for the new one to select as well. It defaults to `worker`, the role
 every pool already selects, which makes it a no-op for a fleet whose workers are ordinary workers.
 
-## Installation of Simplyblock
+## Uninstallation
 
-The Simplyblock Operator is installed with the Helm chart or through the OpenShift OperatorHub, since
-simplyblock-operator is published in Red Hat's certified-operators catalog. Storage nodes, storage pools, and the CSI
-driver are deployed the same way regardless of which install method is used.
+Uninstalling the operator through OperatorHub removes the operator and its RBAC, but neither the simplyblock custom
+resources nor the add-ons it installed. The storage clusters, the `SimplyblockDriver`, and the `ControlPlane` are
+deleted first, while the operator still runs to clear their finalizers. After the operator is uninstalled, the
+add-ons it installed are found by their label:
 
-=== "Helm"
-    To install the simplyblock components on OpenShift, follow the instructions to
-    [install the Simplyblock Operator](k8s-control-plane.md) and to [create a storage
-    cluster](k8s-storage-plane.md).
+```bash title="Listing the add-ons the operator installed"
+oc get crd,clusterrole,clusterrolebinding,storageclass,clusterissuer \
+  -l storage.simplyblock.io/installed-prerequisite
+oc get deployment,serviceaccount,role,rolebinding,certificate -A \
+  -l storage.simplyblock.io/installed-prerequisite
+```
 
-=== "OperatorHub"
-    {{ experimental }}
+Deleting local-path-provisioner stops new local-path volumes for every workload that uses its StorageClass, and
+deleting cert-manager breaks every other certificate it issues, so both are removed only when nothing else depends
+on them.
 
-    The operator is installed from OperatorHub in the OpenShift web console. Only the `AllNamespaces` install mode
-    is supported, so the operator is installed into the `openshift-operators` namespace and reconciles resources
-    across the whole cluster. The container images referenced by the bundle are pulled from
-    `quay.io/simplyblock-io`, so no Red Hat entitlement or pull secret is required.
+## Installation with Helm
 
-    The same subscription is created directly with the following manifest:
+The operator can also be installed with the Helm chart. With Helm, the SCC commands in
+[Prerequisites](#prerequisites) apply unchanged, and the instructions to [install the
+operator](k8s-control-plane.md) and to [create a storage cluster](k8s-storage-plane.md) are followed as on any other
+Kubernetes distribution. The chart supports the OpenShift service CA as a TLS provider:
 
-    ```yaml title="Example of a Subscription for the Simplyblock Operator (simplyblock-subscription.yaml)"
-    apiVersion: operators.coreos.com/v1alpha1
-    kind: Subscription
-    metadata:
-      name: simplyblock-operator
-      namespace: openshift-operators
-    spec:
-      channel: alpha
-      name: simplyblock-operator
-      source: certified-operators
-      sourceNamespace: openshift-marketplace
-    ```
-
-    ```bash title="Creating the subscription"
-    oc apply -f simplyblock-subscription.yaml
-    ```
-
-    Wait until the ClusterServiceVersion reports `Succeeded`:
-
-    ```bash title="Waiting for the operator"
-    oc -n openshift-operators get csv -w
-    ```
-
-    The operator is running now, but it has no control plane, no CSI driver, and no storage nodes yet. The steps
-    below create them. Every resource goes into the namespace the operator was installed into, which is
-    `openshift-operators` for an OperatorHub install, because the operator only reads its own namespace.
-
-    !!! warning
-        The SCC and Pod Security commands in [Prerequisites](#prerequisites) name the namespace `simplyblock`.
-        For an OperatorHub install, run them for `openshift-operators` instead, or the storage and discovery pods
-        are rejected.
-
-    **1. Install the FoundationDB custom resource definitions**
-
-    The operator starts the FoundationDB operator itself, but the FoundationDB custom resource definitions (CRDs)
-    are not part of the OperatorHub bundle. A Helm install ships them. Without them, the control plane never
-    progresses and the operator log repeats `apply FoundationDBCluster ... the server could not find the requested
-    resource`. Apply them once per cluster, before the `ControlPlane`:
-
-    ```bash title="Installing the FoundationDB CRDs"
-    FDB=v2.13.0
-    BASE=https://raw.githubusercontent.com/FoundationDB/fdb-kubernetes-operator/$FDB/config/crd/bases
-    oc apply --server-side \
-      -f $BASE/apps.foundationdb.org_foundationdbclusters.yaml \
-      -f $BASE/apps.foundationdb.org_foundationdbbackups.yaml \
-      -f $BASE/apps.foundationdb.org_foundationdbrestores.yaml
-    ```
-
-    `--server-side` is required: the `FoundationDBCluster` definition is larger than the annotation limit of a
-    client-side apply. Use the same release the operator deploys (`v2.13.0`). If the cluster already runs its own
-    FoundationDB operator, skip this step.
-
-    **2. Create the control plane**
-
-    ```yaml title="controlplane.yaml"
-    apiVersion: storage.simplyblock.io/v1alpha2
-    kind: ControlPlane
-    metadata:
-      name: simplyblock
-      namespace: openshift-operators
-    spec:
-      source:
-        local:
-          image: quay.io/simplyblock-io/simplyblock:26.4.0-beta1
-          foundationDB:
-            replicas: 3
-          tls:
-            enableTLS: false
-            enableMutualTLS: false
-    ```
-
-    The name has to be `simplyblock`, because the operator ignores any other. `replicas: 3` is the `double` redundancy
-    mode. Use `5` for `triple`. To serve the management API over TLS, see [Security](security.md).
-
-    ```bash title="Creating the control plane"
-    oc apply -f controlplane.yaml
-    oc -n openshift-operators get controlplane simplyblock -w
-    ```
-
-    The control plane takes several minutes: the FoundationDB pods start first, then the management API, task
-    runner, and monitoring. Continue when the phase is `Available` and every pod in the namespace is `Running`.
-
-    **3. Create the CSI driver**
-
-    ```yaml title="driver.yaml"
-    apiVersion: storage.simplyblock.io/v1alpha2
-    kind: SimplyblockDriver
-    metadata:
-      name: simplyblock
-      namespace: openshift-operators
-    spec:
-      driverName: csi.simplyblock.io
-    ```
-
-    ```bash title="Creating the CSI driver"
-    oc apply -f driver.yaml
-    ```
-
-    The driver pods wait for a secret that only exists once the storage cluster in step 5 is created, so the driver
-    shows `Unavailable` until then.
-
-    **4. Discover the workers and devices**
-
-    ```yaml title="discover.yaml"
-    apiVersion: storage.simplyblock.io/v1alpha2
-    kind: OperatorOps
-    metadata:
-      name: discover-now
-      namespace: openshift-operators
-    spec:
-      action: Discover
-    ```
-
-    ```bash title="Running the discovery"
-    oc apply -f discover.yaml
-    oc -n openshift-operators get operatorops discover-now -w
-    ```
-
-    The run probes every schedulable worker and ends `Succeeded`. It writes a draft `ClusterDeploymentConfig` named
-    `discovered-discover-now`. Nothing is deployed from a draft. To limit the run to labeled workers or to certain
-    devices, see [Create a Storage Cluster](k8s-storage-plane.md).
-
-    **5. Review and approve the draft**
-
-    ```bash title="Reviewing the draft"
-    oc -n openshift-operators get clusterdeploymentconfig discovered-discover-now -o yaml
-    ```
-
-    Check that `nodeSets[].groups[].workers`, `devices`, and the data and management interfaces name the machines
-    and disks that simplyblock may take. Devices listed here are formatted. Approving the draft deploys it:
-
-    ```bash title="Approving the draft"
-    oc -n openshift-operators patch clusterdeploymentconfig discovered-discover-now \
-      --type=merge -p '{"spec":{"approved":true}}'
-    ```
-
-    **6. Check that the storage nodes come up**
-
-    ```bash title="Watching the storage nodes"
-    oc -n openshift-operators get storagecluster,storagenode
-    oc -n openshift-operators get simplyblockdriver
-    ```
-
-    The storage cluster moves through `Creating` and `Provisioning`. Each storage node goes from `Provisioning` to
-    `Online`, and the driver becomes `Ready` once the cluster exists. The nodes come up one after another, so allow
-    several minutes. When every node is `Online`, continue with [Create a Storage
-    Cluster](k8s-storage-plane.md) to create a storage pool and a first volume.
+```bash title="Installing the operator with Helm and the OpenShift service CA"
+helm install simplyblock-operator simplyblock/simplyblock-operator \
+    --namespace simplyblock \
+    --set tls.provider=openshift \
+    --set tls.mutual_enabled=false
+```
