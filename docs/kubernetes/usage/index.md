@@ -22,3 +22,4 @@ additional pools. This section covers the full lifecycle of simplyblock-backed v
 - [Expanding](expanding.md)
 - [Removing](removing.md)
 - [Defining Quality of Service](quality-of-service.md)
+- [S3 Object Storage](object-storage.md)
