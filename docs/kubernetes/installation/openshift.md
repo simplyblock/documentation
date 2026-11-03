@@ -88,7 +88,7 @@ metadata:
 spec:
   source:
     local:
-      image: quay.io/simplyblock-io/simplyblock:26.4.0-beta1
+      image: quay.io/simplyblock-io/simplyblock:26.4.0-beta4@sha256:99bca46b70ec738496b773a21ea413ca07ffbdef2ca758d9b067b6e03e6678bd
 ```
 
 ```bash title="Creating the control plane"
