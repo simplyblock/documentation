@@ -171,7 +171,7 @@ The endpoint writes `ALERT_RAISED` and `ALERT_RESOLVED` into the cluster event l
 that log through a REST data source. Enable the event log rules once, from any management node:
 
 ```bash title="Enable the event log alert rules"
-{{ cliname }} cluster event-alerts <CLUSTER_UUID> --enable
+{{ cliname }} cluster event-alerts <CLUSTER_UUID>
 ```
 
 Alerts then reach the same Slack channel as every other Grafana alert, and no additional component is needed.
