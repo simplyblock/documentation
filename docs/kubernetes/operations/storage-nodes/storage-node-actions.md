@@ -103,12 +103,12 @@ since removing a node is sometimes what makes an unready cluster ready again.
 Once it holds the lock, the operation walks the steps of its action. Every call to the control plane is skipped when
 the node is already where the call would put it, which makes a resumed operation safe after a restart of the operator.
 
-| Action                                     | Steps                                                                                |
-|--------------------------------------------|--------------------------------------------------------------------------------------|
-| `Shutdown`, `Restart`, `Suspend`, `Resume` | `Requesting` → `Awaiting`                                                            |
-| `Remove`                                   | `Validating` → `Suspending` → `MigratingVolumes` → `Verifying` → `Removing`          |
-| `Migrate`                                  | `Preparing` → `Relocating` → `AwaitingNode` → `Promoting`                            |
-| `HostMaintenance`                          | `Holding` → `ShuttingDown` → `Releasing` → `AwaitingHost` → `Restarting` → `Cleanup` |
+| Action                                     | Steps                                                                                                                  |
+|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `Shutdown`, `Restart`, `Suspend`, `Resume` | `Requesting` → `Awaiting`                                                                                              |
+| `Remove`                                   | `Validating` → `ShuttingDown` → `MigratingDevices` → `MigratingVolumes` → `Verifying` → `Removing` → `AwaitingRemoval` |
+| `Migrate`                                  | `Preparing` → `Relocating` → `AwaitingNode` → `Promoting`                                                              |
+| `HostMaintenance`                          | `Holding` → `ShuttingDown` → `Releasing` → `AwaitingHost` → `Restarting` → `Cleanup`                                   |
 
 Every step has a deadline, and an operation whose step outlives it fails with `StepDeadlineExceeded`. For the four
 single-call actions, `Requesting` has two minutes and `Awaiting` 30 minutes. The deadlines of the multi-step actions
@@ -149,12 +149,12 @@ kubectl describe storagenode simplyblock-cluster-worker-1-0 -n simplyblock
 
 An abort is honored only in a step that can be stopped cleanly.
 
-| Action                                     | Abortable steps                                                                   |
-|--------------------------------------------|-----------------------------------------------------------------------------------|
-| `Shutdown`, `Restart`, `Suspend`, `Resume` | `Requesting`                                                                      |
-| `Remove`                                   | `Validating`, `Suspending`, `MigratingVolumes`, `Verifying`. The node is resumed. |
-| `Migrate`                                  | `Preparing`                                                                       |
-| `HostMaintenance`                          | `Holding`                                                                         |
+| Action                                     | Abortable steps                                                                        |
+|--------------------------------------------|----------------------------------------------------------------------------------------|
+| `Shutdown`, `Restart`, `Suspend`, `Resume` | `Requesting`                                                                           |
+| `Remove`                                   | `Validating` only. The node is not resumed afterward; it is left as that step left it. |
+| `Migrate`                                  | `Preparing`                                                                            |
+| `HostMaintenance`                          | `Holding`                                                                              |
 
 ```bash title="Aborting a node operation"
 kubectl patch storagenodeops restart-worker-1 -n simplyblock \
@@ -162,24 +162,26 @@ kubectl patch storagenodeops restart-worker-1 -n simplyblock \
 ```
 
 In any other step, the operation carries on, and `status.message` states that the abort arrived too late. A running
-operation cannot be deleted while it is in `Awaiting`, `Removing`, `Relocating`, `AwaitingNode`, `Promoting`,
-`ShuttingDown`, `Releasing`, `AwaitingHost`, `Restarting`, or `Cleanup`, since the node is part-way through a change
-that only the operation drives to an end.
+operation cannot be deleted while it is in `Departing`, `Awaiting`, `MigratingDevices`, `MigratingVolumes`,
+`Verifying`, `Removing`, `AwaitingRemoval`, `Relocating`, `AwaitingNode`, `Promoting`, `ShuttingDown`, `Releasing`,
+`AwaitingHost`, `Restarting`, or `Cleanup`, since the node is part-way through a change that only the operation
+drives to an end.
 
 ## Events
 
 In addition to the common operation events, a node operation emits the following reasons. The events of a removal and a
 maintenance window are described on their pages.
 
-| Reason              | Meaning                                                                       |
-|---------------------|-------------------------------------------------------------------------------|
-| `ClusterNotReady`   | The cluster is not `active` or is rebalancing, and the operation holds.       |
-| `DrainBlocked`      | A removal is blocked by a pinned or an unmanaged volume.                      |
-| `NoMigrationTarget` | A removal has no online peer to move the volumes to.                          |
-| `MigrationRetried`  | A volume migration of a removal failed and is retried against another peer.   |
-| `DrainCompleted`    | Every volume of a removal has been migrated off the node.                     |
-| `NodeResumeFailed`  | A failed or aborted removal could not resume the node, which stays suspended. |
-| `MaintenanceQueued` | A maintenance window waits for a slot, because other workers are in one.      |
+| Reason               | Meaning                                                                                              |
+|----------------------|------------------------------------------------------------------------------------------------------|
+| `ClusterNotReady`    | The cluster is not `active` or is rebalancing, and the operation holds.                              |
+| `DrainBlocked`       | A removal is blocked by an unmanaged volume, or by a volume still on the node.                       |
+| `NoMigrationTarget`  | A removal has no online peer to move the volumes to.                                                 |
+| `MigrationRetried`   | A volume migration of a removal failed and is retried against another peer.                          |
+| `DrainCompleted`     | Every volume of a removal has been migrated off the node.                                            |
+| `RemovalNotAdmitted` | A removal's admission refused the node while it is still fully in service.                           |
+| `RemovalDeferred`    | A removal's shutdown or node removal was deferred by a passing cluster condition and is asked again. |
+| `MaintenanceQueued`  | A maintenance window waits for a slot, because other workers are in one.                             |
 
 ## Cleaning Up
 
