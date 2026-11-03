@@ -5,9 +5,9 @@ weight: 40100
 ---
 
 On OpenShift, simplyblock is installed through OperatorHub. The operator is subscribed to once, and everything else
-is created from custom resources: the `ControlPlane`, the `SimplyblockDriver`, a discovery run, and the
-`ClusterDeploymentConfig` it drafts. The cluster add-ons the control plane depends on are detected and, where
-missing, installed by the operator itself.
+is created from custom resources: the `ControlPlane`, a discovery run, the `ClusterDeploymentConfig` it drafts, and
+the `SimplyblockDriver`. The cluster add-ons the control plane depends on are detected and, where missing, installed
+by the operator itself.
 
 OpenShift differs from other Kubernetes distributions in three ways that matter here: the privileged Security Context
 Constraint (SCC) has to be granted to the namespace explicitly, it ships its own snapshot controller, and the storage
@@ -101,29 +101,7 @@ operator installs the add-ons described in [Prerequisite Add-ons](#prerequisite-
 FoundationDB pods start next, then the management API, the task runner, and monitoring, which takes several minutes.
 Mutual TLS through cert-manager is on by default, as described in [TLS on OpenShift](#tls-on-openshift).
 
-**3. Create the CSI driver**
-
-```yaml title="driver.yaml"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: SimplyblockDriver
-metadata:
-  name: simplyblock
-  namespace: simplyblock
-spec:
-  driverName: csi.simplyblock.io
-  enableVolumeSnapshots: true
-```
-
-```bash title="Creating the CSI driver"
-oc apply -f driver.yaml
-```
-
-The driver's TLS follows the control plane's unless `spec.tls` sets it. With the default mutual TLS through
-cert-manager, the driver issues the client certificates its plugins present to the control plane. Until the storage
-cluster exists, the driver reports `Unavailable`, because its plugins wait for a Secret that only exists once the
-storage cluster in step 5 is created.
-
-**4. Discover the workers and devices**
+**3. Discover the workers and devices**
 
 ```yaml title="discover.yaml"
 apiVersion: storage.simplyblock.io/v1alpha2
@@ -147,7 +125,7 @@ devices, see [Create a Storage Cluster](k8s-storage-plane.md).
 Devices that carry a partition table are not reported. A device whose table is stale, such as one left by an earlier
 simplyblock cluster, is reported once `spec.discover.enablePartitionedDevices` is set to `true`.
 
-**5. Review and approve the draft**
+**4. Review and approve the draft**
 
 ```bash title="Reviewing the draft"
 oc -n simplyblock get clusterdeploymentconfig discovered-discover-now -o yaml
@@ -161,17 +139,43 @@ oc -n simplyblock patch clusterdeploymentconfig discovered-discover-now \
   --type=merge -p '{"spec":{"approved":true}}'
 ```
 
-**6. Check that the storage nodes come up**
+**5. Check that the storage nodes come up**
 
 ```bash title="Watching the storage nodes"
 oc -n simplyblock get storagecluster,storagenode,storagepool
-oc -n simplyblock get simplyblockdriver
 ```
 
 The storage cluster moves through `Creating`, `Provisioning`, and `Activating` to `Online`. Each storage node goes
-from `Provisioning` to `Online`, and the driver becomes `Ready` once its node and controller plugins run. The nodes
-come up one after another, so several minutes are to be expected. The expansion creates a storage pool and a
-StorageClass for it, named `simplyblock-<namespace>-<cluster>`, from which volumes are provisioned.
+from `Provisioning` to `Online`. The nodes come up one after another, so several minutes are to be expected. The
+expansion creates a storage pool and a StorageClass for it, named `simplyblock-<namespace>-<cluster>`, from which volumes are provisioned.
+
+**6. Create the CSI driver**
+
+```yaml title="driver.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: SimplyblockDriver
+metadata:
+  name: simplyblock
+  namespace: simplyblock
+spec:
+  driverName: csi.simplyblock.io
+  enableVolumeSnapshots: true
+```
+
+```bash title="Creating the CSI driver"
+oc apply -f driver.yaml
+```
+
+The driver is created once the storage cluster is `Online`, because its plugins mount the
+`simplyblock-csi-secret-v2` Secret that the storage cluster writes. The driver's TLS follows the control plane's
+unless `spec.tls` sets it. With the default mutual TLS through cert-manager, the driver issues the client
+certificates its plugins present to the control plane.
+
+```bash title="Watching the CSI driver"
+oc -n simplyblock get simplyblockdriver
+```
+
+The driver becomes `Ready` once its node and controller plugins run.
 
 ## Prerequisite Add-ons
 
