@@ -36,16 +36,17 @@ Before starting an upgrade:
 
 | Requested Version | Installed Version (Directly Supported) | Intermediate Step Required |
 |-------------------|----------------------------------------|----------------------------|
-| 25.5.x            | 25.5.x, 25.3-PRE                       | No                         |
-| 25.7.7            | 25.7.5                                 | No                         |
-| 25.10.1           | 25.7.5, 25.7.7                         | No                         |
-| 25.10.4.2         | 25.10.5                                | No                         |
+| 25.10.2           | 25.7.6, 25.7.7                         | No                         |
+| 25.10.3           | 25.7.6, 25.7.7                         | No                         |
+| 25.10.4           | 25.10.3                                | No                         |
+| 25.10.5           | 25.10.4, 25.10.4.2                     | No                         |
+| 26.2              | 26.1, 25.10.5                          | No                         |
 
 ## Examples
 
-- Installed `25.7.5` -> target `25.10.1`: direct upgrade is supported.
-- Installed `25.7.5` -> target `25.10.4.2`: direct upgrade is not listed. Upgrade first to a supported
-  intermediate version in this matrix, then continue.
+- Installed `25.10.4` -> target `25.10.5`: direct upgrade is supported.
+- Installed `25.7.6` -> target `25.10.5`: direct upgrade is not listed. Upgrade first to `25.10.2` or `25.10.3`,
+  then continue through `25.10.4` to `25.10.5`.
 - Installed version is not present in any row: move first to the nearest listed supported source version before
   targeting later releases.
 
