@@ -64,8 +64,10 @@ The journal has its own protection, which depends on where it is placed:
   the failure of any one device. Two devices failing at the same time are only survived if both are in the same
   group, so a one-node cluster with 1+2, 2+2, or 4+2 is guaranteed to survive one device failure at a time, not
   two at once.
-- **Dedicated journal device (`enableJournalDevice`, always used with Linux block devices):** The journal is on one
-  device and is not mirrored. A failure of that device stops the node, whatever the erasure-coding scheme.
+- **Journal on one device (Linux block devices, or `enableJournalDevice`):** With Linux block devices, the journal
+  is a partition carved from the node's smallest device by default. With `enableJournalDevice`, it is a dedicated
+  device. Either way, the journal is on one device and is not mirrored. A failure of that device stops the node,
+  whatever the erasure-coding scheme.
 
 After a device failure, the data of the failed device is rebuilt onto the remaining devices of the node. This data
 migration runs in relaxed placement, which places chunks without the anti-affinity a larger cluster enforces, so it

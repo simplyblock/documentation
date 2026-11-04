@@ -28,13 +28,22 @@ Capacity is added with new LUNs, not by growing existing ones:
 
 - **Within the existing LUNs:** Thin LUNs that were created large from the start only need more physical capacity in
   the array's pool. Simplyblock is not involved.
-- **With new storage nodes:** New workers with their own journal and data LUNs are added to the cluster with a
-  growth deployment document (see [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md)). The data
-  is rebalanced onto the new LUNs.
+- **With new storage nodes:** New workers with their own LUNs are added to the cluster with a growth deployment
+  document (see [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md)). The data is rebalanced onto
+  the new LUNs.
 
 !!! warning
     Adding a LUN to a running storage node is not supported yet, and a LUN must not be resized while a storage node
     uses it. A resized LUN is not picked up, and shrinking a LUN destroys data.
+
+## The Journal
+
+The journal of a storage node lives on a partition of the LUN it was carved from when the node was configured, or on
+the dedicated journal LUN. It stays there for the life of the node: LUNs that reach the node later, for example,
+when the node is added again with more LUNs, store data but receive no share of the journal.
+
+On a storage array, this is acceptable. The array's RAID protects the journal LUN like every other LUN, and every
+write is journaled on other storage nodes as well, so the loss of a host or of its LUN does not lose the journal.
 
 ## Snapshots, Clones, and Disaster Recovery
 

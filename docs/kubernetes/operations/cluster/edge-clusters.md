@@ -29,12 +29,13 @@ kubectl -n simplyblock get controlplane,storagecluster,storagenode,storagepool
 | One device fails         | With any scheme except 1+0, I/O continues and the data is rebuilt on the other devices. |
 | One device fails, 1+0    | The data on the device is lost.                                                         |
 | Two devices fail         | With 1+2, 2+2, or 4+2, the data survives. The journal survives as described below.      |
-| Journal device fails     | With a dedicated journal device, the node stops, whatever the scheme.                   |
+| Journal device fails     | With the journal on one device, the node stops, whatever the scheme.                    |
 
 The journal limits what the node survives. With journal partitions (NVMe devices, the default), the journal is
 mirrored across the devices: RAID 1 for two devices, RAID 0+1 for more. It survives any one device failure. Two
-devices failing at the same time are survived only if both are in the same striped group of the journal. With a
-dedicated journal device, which Linux block devices always use, the journal is not mirrored.
+devices failing at the same time are survived only if both are in the same striped group of the journal. With
+Linux block devices (a journal partition on the smallest device) or a dedicated journal device, the journal is on
+one device and is not mirrored.
 
 After a device failure, the data of the failed device is rebuilt onto the remaining devices of the node in relaxed
 placement, so no second node is needed. The remaining devices need enough free capacity for the rebuilt data.
