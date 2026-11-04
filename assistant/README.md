@@ -12,9 +12,11 @@ browser (docs page)  --POST /api/assistant/ask-->  this service  --Messages API-
 
 | File                 | Role                                                                    |
 |----------------------|-------------------------------------------------------------------------|
-| `app/main.py`        | HTTP API: `/ask` (SSE), `/feedback`, `/health`                          |
+| `app/main.py`        | HTTP API: `/ask` (SSE), `/feedback`, `/health`, and the `/mcp` route    |
+| `app/mcp_server.py`  | MCP endpoint: the docs tools for Claude Code, Cursor, Claude.ai, ...    |
 | `app/agent.py`       | System prompt, tools, answer schema, agent loop, command verification   |
 | `app/docs.py`        | Loads `llms-full.txt` per docs version, BM25 search, page reader        |
+| `app/events.py`      | JSON-lines log shared by the API, the MCP endpoint, and pre-answering   |
 | `app/guard.py`       | Per-IP rate limit, daily budget, Cloudflare Turnstile                   |
 | `app/cache.py`       | Answer cache: similar questions, on disk, tied to the pages it used     |
 | `app/prewarm.py`     | Answers the most asked questions ahead, after each docs change          |
@@ -29,6 +31,27 @@ browser (docs page)  --POST /api/assistant/ask-->  this service  --Messages API-
 * After the answer, every command is checked: when each of its lines appears as a whole line in the docs, it is
   shown as **from the docs**; otherwise as **adapted**, so the reader knows to check it.
 * Unclear requests get one clarifying question; requests the docs do not cover get `not_covered` and the closest pages.
+
+## MCP endpoint
+
+The same corpus and tools are exposed over the [Model Context Protocol](https://modelcontextprotocol.io/) at
+`/mcp` (Streamable HTTP, stateless, JSON responses, no authentication), so a reader's own agent can search and
+read the documentation instead of guessing. Documented for readers in [docs/assistant/mcp.md](../docs/assistant/mcp.md).
+
+| Tool            | Arguments                       | Returns                                                     |
+|-----------------|---------------------------------|-------------------------------------------------------------|
+| `search_docs`   | `query`, `version`, `limit`     | Matching sections: page, title, section, snippet, URL       |
+| `read_page`     | `page`, `version`, `offset`     | The page as Markdown, in chunks of 30,000 characters        |
+| `list_pages`    | `prefix`, `version`             | Pages below a path prefix                                   |
+| `list_versions` |                                 | Published versions and aliases from `versions.json`         |
+
+`version` defaults to `latest` and accepts any version or alias from `versions.json`; the corpus is refreshed every
+`DOCS_REFRESH_SECONDS`, so a docs publish reaches MCP clients without a redeploy. No Claude call is made, so the
+budget and the rate limit of `/ask` do not apply; searches are logged as `mcp_search` events.
+
+```bash
+claude mcp add --transport http simplyblock-docs https://docs-assistant.simplyblock.io/mcp
+```
 
 ## Caching
 
