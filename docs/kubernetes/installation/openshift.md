@@ -143,6 +143,8 @@ oc -n simplyblock get operatorops discover-now -w
 The run probes every schedulable worker and ends `Succeeded`. It writes a draft `ClusterDeploymentConfig` named
 `discovered-discover-now`. Nothing is deployed from a draft. To limit the run to labeled workers or to certain
 devices, see [Create a Storage Cluster](k8s-storage-plane.md).
+Control-plane nodes are left out unless the run is set up for them, as described in
+[Storage Nodes on Control-Plane Nodes](#storage-nodes-on-control-plane-nodes).
 
 Devices that carry a partition table are not reported. A device whose table is stale, such as one left by an earlier
 simplyblock cluster, is reported once `spec.discover.enablePartitionedDevices` is set to `true`.
@@ -344,6 +346,117 @@ oc delete kubeletconfig storage-kubelet-${POOL#storage-}
 oc delete machineconfig storage-mc-${POOL#storage-}
 oc delete mcp $POOL
 ```
+
+## Storage Nodes on Control-Plane Nodes
+
+Discovery leaves control-plane nodes out by default, because they run the API server and etcd. On a compact
+cluster, or where the control-plane nodes carry the NVMe devices, they can host storage nodes as well. Four things
+are needed for that.
+
+**1. Discovery must tolerate the control-plane taints.** Control-plane nodes carry the taint
+`node-role.kubernetes.io/master:NoSchedule`. A probe is not run on a node whose taint the run does not tolerate, and
+the node is reported with a `WorkerDeclined` event. The tolerations of the run are also written into the draft, as
+`spec.cluster.tolerations`, so that the storage node DaemonSet can schedule onto the same nodes.
+
+**2. Discovery must be told to include control-plane nodes.** Even when their taints are tolerated, control-plane
+nodes are declined until `spec.discover.enableControlPlaneNodes` is set. An included node is reported with a
+`ControlPlaneNodeIncluded` event.
+
+```yaml title="discover-control-plane.yaml"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: OperatorOps
+metadata:
+  name: discover-now
+  namespace: simplyblock
+spec:
+  action: Discover
+  discover:
+    enableControlPlaneNodes: true
+    tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+```
+
+When the operator is installed with Helm, the discovery run the chart creates takes the same settings as values:
+
+```bash title="Helm values for a discovery that includes control-plane nodes"
+--set discovery.enableControlPlaneNodes=true \
+--set-json 'discovery.tolerations=[{"key":"node-role.kubernetes.io/master","operator":"Exists","effect":"NoSchedule"},{"key":"node-role.kubernetes.io/control-plane","operator":"Exists","effect":"NoSchedule"}]'
+```
+
+A run does not overwrite a draft that already exists. To repeat a run under the same name, the `OperatorOps` and its
+draft `discovered-<name>` are deleted first.
+
+**3. Every node needs the same data interface.** Discovery determines the data networks of the fleet and declines a
+node that holds no interface on them, with a `DeviceDeclined` event such as `declined by data network because it
+holds no data interface on 10.10.10.0/24`. A draft is also rejected when its groups name different data interfaces,
+because one DaemonSet serves every storage node of a cluster. Control-plane nodes often lack the dedicated storage
+NIC the workers have. There are two ways to resolve this:
+
+- Give each control-plane node an address on the data network, on an interface with the same name as on the
+  workers. Discovery then includes the nodes on its own.
+- Carry the data traffic over the OpenShift node network instead. Every group of the draft then names `br-ex` as
+  its data interface, the workers included. Storage traffic then shares the network of the cluster's management and
+  pod traffic.
+
+For the second way, the draft is edited before it is approved. The workers' group is switched to `br-ex`, and a
+group is added for the control-plane nodes with the devices discovery reported for them:
+
+```bash title="Adding the control-plane nodes to a draft with br-ex as data interface"
+oc -n simplyblock patch clusterdeploymentconfig discovered-discover-now --type=json -p '[
+  {"op":"replace","path":"/spec/nodeSets/0/groups/0/dataInterfaces","value":["br-ex"]},
+  {"op":"add","path":"/spec/nodeSets/0/groups/-","value":{
+    "name":"control-plane",
+    "failureDomain":"default",
+    "mgmtInterface":"br-ex",
+    "dataInterfaces":["br-ex"],
+    "devices":{"nvme":["0000:00:02.0","0000:00:03.0","0000:00:04.0","0000:00:05.0"]},
+    "workers":["master-1","master-2","master-3"]}}]'
+
+oc -n simplyblock get clusterdeploymentconfig discovered-discover-now -o jsonpath='{.status.message}'
+```
+
+The draft is ready to approve when its status reports that the document is valid and waiting for `spec.approved`.
+The devices of every node are listed in the probe report that discovery stores in the ConfigMap
+`sb-nodeprobe-<run>-<node>-<hash>`. If the draft comes from a run without the control-plane tolerations, they are
+added to `spec.cluster.tolerations` by hand.
+
+**4. A dedicated journal device is chosen at the cluster level.** Discovery proposes a dedicated journal device
+only when every node hands over exactly one device smaller than its others. Otherwise, each device carries a journal
+partition. A dedicated journal device is requested in the draft:
+
+```yaml title="Dedicating the smallest device of each node to the journal"
+spec:
+  cluster:
+    enableJournalDevice: true
+```
+
+`enableJournalDevice` dedicates the smallest NVMe device of every storage node in the cluster to the journal. It
+applies to all nodes, workers and control-plane nodes alike, costs one device of capacity per node, and cannot be
+changed once the cluster exists. The journal device is listed in the group's `devices` with the other devices. In
+discovery, `spec.discover.forceJournalDevice` (Helm value `discovery.forceJournalDevice`) asks for the same where
+the smallest device is not unique. It only acts on the nodes the run includes.
+
+### Machine Configuration of Control-Plane Nodes
+
+Control-plane nodes cannot leave the `master` MachineConfigPool, so they are not moved into `storage-<cluster>`.
+The operator instead creates the KubeletConfig `storage-kubelet-<cluster>-master`, which selects the `master` pool.
+It applies to every node of that pool, including control-plane nodes that host no storage node. The
+MachineConfig Operator applies it by draining and rebooting the control-plane nodes one at a time, so the API server
+is briefly less redundant while the pool updates:
+
+```bash title="Watching the control-plane pool update"
+oc get mcp master -w
+```
+
+The per-group `reservedSystemCPU` of the draft is the CPU set held back from SPDK for the system, as a core list such
+as `0,1`. On OpenShift it reaches the kubelet through the KubeletConfig of the pool, so all groups whose nodes share
+the `master` pool state the same value. It is set before the draft is approved, because changing it later rolls the
+`master` pool again.
 
 ## Uninstallation
 
