@@ -1,21 +1,30 @@
 ---
-title: "Storage Network on Amazon EKS"
+title: "Amazon EKS"
 description: "Attach a dedicated data ENI to simplyblock storage nodes on Amazon EKS with Cilium ENI mode and Multus, in the node subnet or a dedicated subnet."
 weight: 40060
 ---
 
 On Amazon EKS, the storage traffic can run on a second elastic network interface (ENI) of each storage node, which
 Multus moves into the SPDK pod. The storage traffic then has an interface, an address, and a security group of its own.
-This is option 3 of [Storage Network](storage-network.md), which also compares it with the other options.
+This is option 3 of [Storage Network](index.md), which also compares it with the other options.
 
-The data ENI can sit in the node subnet (layout A) or in a subnet of its own (layout B). This page describes layout A,
-which needs no address planning, and the changes for layout B.
+The data ENI sits either in the node subnet (layout A) or in a subnet of its own (layout B). The layout decides which
+routing workarounds are needed, so it is chosen first (see [Choosing a Layout](#choosing-a-layout)).
+
+## Choosing a Layout
+
+| Layout                                            | Data ENI subnet                                            | Workaround in the SPDK pod                                                  | Workaround on the host                                                                            | Trade-off                                                               |
+|---------------------------------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [A: Node subnet](#layout-a-node-subnet)           | The node subnet, shared with the primary ENI               | [`sbr`](#fix-in-the-spdk-pod-source-based-routing)                          | [Pin the node subnet to the primary ENI](#fix-on-the-host-pin-the-node-subnet-to-the-primary-eni) | No address planning, no network-level isolation                         |
+| [B: Dedicated subnet](#layout-b-dedicated-subnet) | A subnet holding only data ENIs, one per availability zone | [`sbr`, with a route to the initiators' subnet](#layout-b-dedicated-subnet) | None                                                                                              | A CIDR per availability zone, storage traffic isolated at network level |
+
+Everything except the routing is the same in both layouts. The [Routing](#routing) section describes each layout.
 
 ## Overview
 
 1. [Install Cilium in ENI mode](#cilium-in-eni-mode), without the AWS VPC CNI and kube-proxy add-ons.
 2. Install Multus and the `host-device`, `static`, and `sbr` CNI plugins, as listed in
-   [Requirements of Every Attached Network](storage-network.md#requirements-of-every-attached-network). The EKS Amazon
+   [Requirements of Every Attached Network](index.md#requirements-of-every-attached-network). The EKS Amazon
    Linux 2023 image ships none of the plugins.
 3. [Create the data ENI](#the-data-eni) on every storage node at boot.
 4. [Set up the security groups](#security-groups) of the data ENI.
@@ -101,7 +110,7 @@ aws ec2 modify-network-interface-attribute --network-interface-id "$eni_id" \
     addresses it assigned to an ENI, so these plugins need extra steps on AWS (secondary addresses registered on the
     ENI, and, for `macvlan`, MAC addresses the VPC does not know). They are not verified on EKS.
 
-Storage nodes may run Amazon Linux 2023 (see [Amazon EKS](eks.md#node-images)). An example instance type is
+Storage nodes may run Amazon Linux 2023 (see [Amazon EKS](../eks.md#node-images)). An example instance type is
 `i3en.2xlarge`, with local NVMe instance storage and 8 vCPUs. The storage node needs at least 6 vCPUs.
 
 ## Security Groups
@@ -116,6 +125,10 @@ The storage nodes also talk to each other on the data network.
 | Egress, all traffic             | Anywhere                | Replies and outgoing connections between storage nodes. |
 
 ## Routing
+
+The routing workarounds depend on the layout.
+
+### Layout A: Node Subnet
 
 In layout A, the host and the SPDK pod each have two interfaces in the node subnet. Two fixes keep every packet on the
 interface that owns its source address: one in the definition and one in the user data of the node.
@@ -139,10 +152,11 @@ VPC 10.10.0.0/16, node subnet 10.10.0.0/20
                            pod: data0 = 10.10.15.99, eth0 = pod address
 ```
 
-### Fix in the SPDK Pod: Source-Based Routing
+#### Fix in the SPDK Pod: Source-Based Routing
 
 The `sbr` plugin follows `host-device` in the definition. It moves the data interface's routes into a table of their
-own, which is selected only for packets whose source is the data address.
+own, which is selected only for packets whose source is the data address. The workaround is described in general in
+[Source-Based Routing](index.md#source-based-routing).
 
 ```yaml title="NetworkAttachmentDefinition for layout A (fabric-data)"
 apiVersion: k8s.cni.cncf.io/v1
@@ -193,7 +207,7 @@ the interface, so `device` is found in a chained definition.
     table 100:   10.10.0.0/20 dev data0
     ```
 
-### Fix on the Host: Pin the Node Subnet to the Primary ENI
+#### Fix on the Host: Pin the Node Subnet to the Primary ENI
 
 The host keeps a route for the node subnet through the primary interface, with a lower metric than any route of the
 data ENI. A drop-in for `systemd-networkd` in the user data, next to the step that creates the data ENI, makes the route
@@ -232,19 +246,51 @@ The step has to run before the node joins the cluster, because the first address
 
 ### Layout B: Dedicated Subnet
 
-!!! note "Data ENI in a subnet of its own"
-    The data ENI can instead sit in a subnet that holds only data ENIs, one per availability zone, with a route table,
-    network ACL, and security group of its own. The host fix is then not needed. In return, the SPDK pod needs a route
-    to the initiators in the node subnet, through the gateway of the data subnet, in the definition's static IPAM block
-    (`"routes": [{"dst": "<NODE_SUBNET>", "gw": "<FIRST_ADDRESS_OF_DATA_SUBNET>"}]`), chained before `sbr`. Layout B
-    costs a CIDR per availability zone and isolates the storage traffic at the network level.
+In layout B, the data ENI sits in a subnet that holds only data ENIs, one per availability zone, with a route table,
+network ACL, and security group of its own. The host has no second interface in the node subnet, so the host fix of
+layout A is not needed.
+
+The SPDK pod's data interface is the only one in the data subnet, but the initiators sit in the node subnet. Without a
+route, the SPDK pod answers them through `eth0`. The definition therefore carries a route to the node subnet through
+the gateway of the data subnet, which is the first address of that subnet in a VPC. The `sbr` plugin then places the
+route in the data interface's own table.
+
+```yaml title="NetworkAttachmentDefinition for layout B (fabric-data)"
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: fabric-data
+  namespace: simplyblock
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "fabric-data",
+      "plugins": [
+        {
+          "type": "host-device",
+          "device": "ens6",
+          "capabilities": { "ips": true },
+          "ipam": {
+            "type": "static",
+            "routes": [ { "dst": "10.10.0.0/20", "gw": "10.10.16.1" } ]
+          }
+        },
+        { "type": "sbr" }
+      ]
+    }
+```
+
+In the example, the node subnet is `10.10.0.0/20` and the data subnet `10.10.16.0/24`. Each availability zone has a
+data subnet and a gateway of its own, so a definition per zone, or a route per node subnet, is needed where the zones
+differ.
 
 Neither layout adds bandwidth: the network bandwidth of an EC2 instance is a limit of the instance as a whole, and a
 single TCP flow is limited by AWS as well, so the number of NVMe/TCP connections matters more than the choice of ENI.
 
 ## Deploying the Storage Cluster
 
-1. Install cert-manager and the Simplyblock Operator (see [Install Simplyblock Operator](k8s-control-plane.md)). The
+1. Install cert-manager and the Simplyblock Operator (see [Install Simplyblock Operator](../k8s-control-plane.md)). The
    chart enables the CSI link between the operator and the CSI node plugins by default. The address read and the
    reachability check run over it, so the CSI node plugin has to run on every storage worker.
 2. Create the definition `fabric-data` in the namespace of the operator.
