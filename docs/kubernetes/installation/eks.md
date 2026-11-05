@@ -113,6 +113,22 @@ nvme-subsys1 - NQN=nqn.2023-02.io.simplyblock:<CLUSTER_UUID>:lvol:<VOLUME_UUID>
  +- nvme1 tcp traddr=192.168.20.206,trsvcid=4426 live
 ```
 
+The NVMe/TCP initiator, the `nvme-tcp` kernel module, is not part of the Ubuntu EKS images. The Ubuntu AWS kernel
+ships it in the package `linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without it, the CSI
+driver cannot load the module, and attaching a volume fails with
+`Failed to open /dev/nvme-fabrics: No such file or directory`. The package is installed, and the module loaded, before
+the node joins the cluster:
+
+```bash title="Installing the NVMe/TCP initiator on an Ubuntu EKS node"
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y linux-modules-extra-$(uname -r)
+echo nvme-tcp > /etc/modules-load.d/nvme-tcp.conf
+modprobe nvme-tcp
+```
+
+`/dev/nvme-fabrics` exists once the module is loaded, and the `nvme-tcp.conf` entry loads it again after a reboot.
+
 A node group with a custom image needs an explicit bootstrap command in `eksctl`. The Ubuntu EKS images provide
 `/etc/eks/bootstrap.sh`. Labels and taints are passed to the kubelet, and the API server endpoint and the cluster CA
 are stated explicitly, because the node role is usually not allowed to read them from the EKS API.
@@ -134,6 +150,11 @@ managedNodeGroups:
     taints: [{key: simplyblock.io/role, value: client, effect: NoSchedule}]
     overrideBootstrapCommand: |
       #!/bin/bash
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y linux-modules-extra-$(uname -r)
+      echo nvme-tcp > /etc/modules-load.d/nvme-tcp.conf
+      modprobe nvme-tcp
       /etc/eks/bootstrap.sh <CLUSTER_NAME> \
         --apiserver-endpoint '<API_SERVER_ENDPOINT>' \
         --b64-cluster-ca '<BASE64_CLUSTER_CA>' \
