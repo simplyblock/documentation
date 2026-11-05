@@ -5187,9 +5187,9 @@
       }
     },
     "/api/v2/clusters/{cluster_id}/storage-pools/{pool_id}/volumes/{volume_id}/suspend": {
-      "get": {
+      "post": {
         "summary": "Clusters:Storage-Pools:Volumes:Suspend",
-        "operationId": "clusters_storage_pools_volumes_suspend_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__suspend_get",
+        "operationId": "clusters_storage_pools_volumes_suspend_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__suspend_post",
         "security": [
           {
             "HTTPBearer": []
@@ -5234,7 +5234,7 @@
               "application/json": {
                 "schema": {
                   "type": "boolean",
-                  "title": "Response Clusters Storage Pools Volumes Suspend Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Suspend Get"
+                  "title": "Response Clusters Storage Pools Volumes Suspend Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Suspend Post"
                 }
               }
             }
@@ -5251,9 +5251,9 @@
           }
         }
       },
-      "post": {
+      "get": {
         "summary": "Clusters:Storage-Pools:Volumes:Suspend",
-        "operationId": "clusters_storage_pools_volumes_suspend_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__suspend_get",
+        "operationId": "clusters_storage_pools_volumes_suspend_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__suspend_post",
         "security": [
           {
             "HTTPBearer": []
@@ -5298,7 +5298,7 @@
               "application/json": {
                 "schema": {
                   "type": "boolean",
-                  "title": "Response Clusters Storage Pools Volumes Suspend Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Suspend Get"
+                  "title": "Response Clusters Storage Pools Volumes Suspend Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Suspend Post"
                 }
               }
             }
@@ -5317,9 +5317,9 @@
       }
     },
     "/api/v2/clusters/{cluster_id}/storage-pools/{pool_id}/volumes/{volume_id}/resume": {
-      "get": {
+      "post": {
         "summary": "Clusters:Storage-Pools:Volumes:Resume",
-        "operationId": "clusters_storage_pools_volumes_resume_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__resume_get",
+        "operationId": "clusters_storage_pools_volumes_resume_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__resume_post",
         "security": [
           {
             "HTTPBearer": []
@@ -5364,7 +5364,7 @@
               "application/json": {
                 "schema": {
                   "type": "boolean",
-                  "title": "Response Clusters Storage Pools Volumes Resume Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Resume Get"
+                  "title": "Response Clusters Storage Pools Volumes Resume Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Resume Post"
                 }
               }
             }
@@ -5381,9 +5381,9 @@
           }
         }
       },
-      "post": {
+      "get": {
         "summary": "Clusters:Storage-Pools:Volumes:Resume",
-        "operationId": "clusters_storage_pools_volumes_resume_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__resume_get",
+        "operationId": "clusters_storage_pools_volumes_resume_api_v2_clusters__cluster_id__storage_pools__pool_id__volumes__volume_id__resume_post",
         "security": [
           {
             "HTTPBearer": []
@@ -5428,7 +5428,7 @@
               "application/json": {
                 "schema": {
                   "type": "boolean",
-                  "title": "Response Clusters Storage Pools Volumes Resume Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Resume Get"
+                  "title": "Response Clusters Storage Pools Volumes Resume Api V2 Clusters  Cluster Id  Storage Pools  Pool Id  Volumes  Volume Id  Resume Post"
                 }
               }
             }

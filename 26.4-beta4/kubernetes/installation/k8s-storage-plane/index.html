@@ -2339,6 +2339,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vcpu-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      vCPU Count
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#node-groups-and-devices" class="md-nav__link">
     <span class="md-ellipsis">
       Node Groups and Devices
@@ -2427,6 +2436,39 @@
       Verify the Cluster
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleaning-up-a-failed-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cleaning Up a Failed Deployment
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cleaning Up a Failed Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-cleanup-for-rerunning-discovery-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource Cleanup for Rerunning Discovery and Deployment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-cleanup-for-redeployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full Cleanup for Redeployment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -7271,6 +7313,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#vcpu-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      vCPU Count
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#node-groups-and-devices" class="md-nav__link">
     <span class="md-ellipsis">
       Node Groups and Devices
@@ -7359,6 +7410,39 @@
       Verify the Cluster
     </span>
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleaning-up-a-failed-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cleaning Up a Failed Deployment
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cleaning Up a Failed Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resource-cleanup-for-rerunning-discovery-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resource Cleanup for Rerunning Discovery and Deployment
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-cleanup-for-redeployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full Cleanup for Redeployment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -7745,7 +7829,7 @@ approval is a deliberate step rather than a formality.</p>
 <tr>
 <td><code>vcpuCount</code></td>
 <td>Required, at least 4</td>
-<td>vCPUs per storage node.</td>
+<td>vCPUs per storage node. Discovery proposes 15% of a socket, at least 5, see <a href="#vcpu-count">vCPU Count</a>.</td>
 </tr>
 <tr>
 <td><code>minHugePagesSize</code></td>
@@ -7819,6 +7903,34 @@ approval is a deliberate step rather than a formality.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="vcpu-count">vCPU Count</h3>
+<p><code>vcpuCount</code> is the number of vCPUs every storage node of the cluster dedicates to the data plane. The value is the same
+for all storage nodes of a cluster, and it is fixed when the cluster is created.</p>
+<p>When the deployment document states no <code>vcpuCount</code>, discovery proposes one from the smallest worker it found:</p>
+<ul>
+<li>15% of the logical CPUs (vCPUs) of the socket the storage node runs on, rounded down.</li>
+<li>At least 5 vCPUs.</li>
+<li>With several storage nodes per socket (<code>nodesPerSocket</code>), the 15% are shared among them.</li>
+<li>Never more than the socket provides beyond the two vCPUs reserved for the kubelet and the operating system, and never
+  less than 4.</li>
+</ul>
+<p>For example, a socket with 64 vCPUs gets 9, and a socket with 320 vCPUs gets 48. The proposal suits hyper-converged
+workers, which share their CPUs with applications. Dedicated storage workers and I/O-intensive workloads benefit from a
+higher count; see <a href="../../../deployment-preparation/sizing/#storage-node-cpu">Storage Node CPU</a> for the guidance. The
+note in <code>status.message</code> of the draft states how the value was derived.</p>
+<div class="admonition warning">
+<p class="admonition-title">Operator images released before this fix</p>
+<p>The operator images first released as 26.4.0-beta4, and earlier versions, propose all logical CPUs of the socket
+except two, for example, 318 on a socket with 320 vCPUs. On large workers, such a storage node cannot be scheduled
+and its addition to the cluster fails. With these images, the value must be checked and lowered in the draft before
+approval.</p>
+</div>
+<p>The proposal is changed in the draft before approval:</p>
+<div class="highlight"><span class="filename">Setting the vCPU count of the draft</span><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>patch<span class="w"> </span>cdc<span class="w"> </span>discovered-initial-discovery<span class="w">     </span>--type<span class="o">=</span>merge<span class="w"> </span>-p<span class="w"> </span><span class="s1">'{"spec":{"cluster":{"vcpuCount":16}}}'</span>
+</code></pre></div>
+<p>After approval, the vCPU count can no longer be changed. A cluster created with a wrong value, which holds no volumes
+yet, is removed as described in <a href="#cleaning-up-a-failed-deployment">Cleaning Up a Failed Deployment</a>. The new discovery
+run writes a new draft, whose <code>vcpuCount</code> is corrected before approval.</p>
 <h3 id="node-groups-and-devices">Node Groups and Devices</h3>
 <p><code>spec.nodeSets</code> is how the workers are grouped. A node set becomes one storage cluster, and a group within it is the
 set of workers that share one configuration. Workers whose hardware differs go in their own group rather than being
@@ -8080,6 +8192,59 @@ production   Online   Standalone          active   2x1   bfa260ce-06a7-4bcb-a843
 and <code>status.message</code> explains them. The storage nodes report <code>Online</code> in their phase column.</p>
 <p>The operator also writes the cluster credentials for the CSI driver into the Secret <code>simplyblock-csi-secret-v2</code> in the
 operator's namespace. The Secret is maintained by the operator and does not need to be managed manually.</p>
+<h2 id="cleaning-up-a-failed-deployment">Cleaning Up a Failed Deployment</h2>
+<p>A deployment that never reached <code>Online</code> (for example, because a storage node could not be added) is cleaned up in
+one of two ways:</p>
+<ul>
+<li><strong>Resource cleanup</strong> removes only the storage cluster and its documents. The operator, the control plane,
+  FoundationDB, the CSI driver, and the certificates stay in place, and discovery and deployment are run again. It
+  is the faster way and is tried first.</li>
+<li><strong>Full cleanup</strong> removes the whole installation, including the operator, and is followed by a new installation. It
+  is used when the resource cleanup does not complete, or when the installation itself is broken.</li>
+</ul>
+<p>Both apply only to a cluster that holds no volumes yet.</p>
+<p>The reason of the failure is found and fixed first, otherwise the next attempt fails the same way. Typical signs are a
+<code>StorageCluster</code> that stays in the phase <code>Provisioning</code>, a <code>node_add</code> task with the status <code>suspended</code>, and
+<code>NodeAddFailing</code> events on the storage nodes:</p>
+<div class="highlight"><span class="filename">Finding the reason of a failed deployment</span><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>get<span class="w"> </span>storagecluster<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-A12<span class="w"> </span><span class="s2">"^  status:"</span>
+kubectl<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>get<span class="w"> </span>events<span class="w"> </span>--field-selector<span class="w"> </span><span class="nv">reason</span><span class="o">=</span>NodeAddFailing
+kubectl<span class="w"> </span>-n<span class="w"> </span>simplyblock<span class="w"> </span>get<span class="w"> </span>events<span class="w"> </span>--field-selector<span class="w"> </span><span class="nv">reason</span><span class="o">=</span>FailedScheduling
+</code></pre></div>
+<h3 id="resource-cleanup-for-rerunning-discovery-and-deployment">Resource Cleanup for Rerunning Discovery and Deployment</h3>
+<p>The resources are removed in order, each one after the previous is gone. Deleting the <code>StorageCluster</code> also deletes
+the cluster in the control plane:</p>
+<div class="highlight"><span class="filename">Removing the resources of a failed deployment</span><pre><span></span><code><span class="nv">NS</span><span class="o">=</span>simplyblock
+
+kubectl<span class="w"> </span>-n<span class="w"> </span><span class="nv">$NS</span><span class="w"> </span>delete<span class="w"> </span>storagenodes<span class="w"> </span>--all<span class="w"> </span>--wait<span class="o">=</span><span class="nb">true</span><span class="w"> </span>--timeout<span class="o">=</span>10m
+kubectl<span class="w"> </span>-n<span class="w"> </span><span class="nv">$NS</span><span class="w"> </span>delete<span class="w"> </span>storagenodesets<span class="w"> </span>--all<span class="w"> </span>--wait<span class="o">=</span><span class="nb">true</span><span class="w"> </span>--timeout<span class="o">=</span>10m
+kubectl<span class="w"> </span>-n<span class="w"> </span><span class="nv">$NS</span><span class="w"> </span>delete<span class="w"> </span>storagecluster<span class="w"> </span>--all<span class="w"> </span>--wait<span class="o">=</span><span class="nb">true</span><span class="w"> </span>--timeout<span class="o">=</span>10m
+kubectl<span class="w"> </span>-n<span class="w"> </span><span class="nv">$NS</span><span class="w"> </span>delete<span class="w"> </span>clusterdeploymentconfigs<span class="w"> </span>--all<span class="w"> </span>--wait<span class="o">=</span><span class="nb">true</span>
+kubectl<span class="w"> </span>-n<span class="w"> </span><span class="nv">$NS</span><span class="w"> </span>delete<span class="w"> </span>operatorops<span class="w"> </span>--all<span class="w"> </span>--wait<span class="o">=</span><span class="nb">true</span>
+
+kubectl<span class="w"> </span>-n<span class="w"> </span><span class="nv">$NS</span><span class="w"> </span>get<span class="w"> </span>storagecluster,storagenodes,storagenodesets,clusterdeploymentconfigs,operatorops
+</code></pre></div>
+<p>On OpenShift, the machine configuration of the failed storage nodes is removed as well (see
+<a href="../openshift/#machine-configuration-of-a-failed-deployment">Machine Configuration of a Failed Deployment</a>).</p>
+<p>With no <code>StorageCluster</code>, <code>ClusterDeploymentConfig</code>, or <code>OperatorOps</code> left, the operator starts the
+<a href="#automatic-initial-discovery">initial discovery</a> again and writes a new draft. The draft is corrected (for example,
+its <a href="#vcpu-count">vCPU count</a>) and approved as described above.</p>
+<p>A resource that stays in <code>Terminating</code> after the timeout has a finalizer the operator cannot clear, typically because
+the control plane refused to delete the cluster or a half-added storage node. The operator log names the reason. If it
+cannot be resolved, the full cleanup is used instead.</p>
+<h3 id="full-cleanup-for-redeployment">Full Cleanup for Redeployment</h3>
+<p>The whole installation is removed with the cleanup script of the Simplyblock Operator (see
+<a href="../k8s-control-plane/#removing-a-previous-installation">Removing a Previous Installation</a>), which deletes the custom
+resources, their finalizers, the operator, node labels, and persistent volumes:</p>
+<div class="highlight"><span class="filename">Removing the whole installation</span><pre><span></span><code>curl<span class="w"> </span>-sO<span class="w"> </span>https://raw.githubusercontent.com/simplyblock/simplyblock-operator/main/helm-charts/scripts/cleanup-simplyblock.sh
+chmod<span class="w"> </span>+x<span class="w"> </span>cleanup-simplyblock.sh
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">KUBECONFIG</span><span class="o">=</span>/path/to/kubeconfig
+./cleanup-simplyblock.sh<span class="w"> </span>simplyblock
+</code></pre></div>
+<p>The script does not remove machine configuration on OpenShift, which is removed as described in
+<a href="../openshift/#machine-configuration-of-a-failed-deployment">Machine Configuration of a Failed Deployment</a>.</p>
+<p>The operator is then installed again (see <a href="../k8s-control-plane/#installing-the-operator">Installing the Operator</a>).
+The initial discovery runs as on a new installation and writes a new draft, which is corrected and approved.</p>
 <h2 id="create-a-storage-pool">Create a Storage Pool</h2>
 <p>Volumes can be provisioned from the default pool right away. Additional pools divide the cluster into tenancy units
 with their own capacity and QoS limits. A <code>StoragePool</code> references its cluster with <code>clusterRef</code>.</p>
@@ -8261,7 +8426,7 @@ provisioning volumes from it.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 3, 2026 23:54:15 UTC">2026-11-03</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 5, 2026 13:17:37 UTC">2026-11-05</span>
   </span>
 
     
