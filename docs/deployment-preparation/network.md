@@ -28,7 +28,7 @@ storage node is required.
     reasons.
 
 On Kubernetes, the network the SPDK pods serve on is declared per storage cluster. The options and how they meet these
-requirements are described in [Storage Network](../kubernetes/installation/storage-network.md).
+requirements are described in [Storage Network](../kubernetes/installation/storage-network/index.md).
 
 ## Fabrics
 

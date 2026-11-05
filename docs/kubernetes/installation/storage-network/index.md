@@ -6,36 +6,73 @@ weight: 30110
 
 A simplyblock storage node serves its volumes over NVMe/TCP from its SPDK pod. Where that traffic flows is decided once
 per storage cluster: on the host's own interfaces, on the pod network of the cluster's CNI, or on dedicated interfaces
-that Multus attaches to the SPDK pod. This page describes every supported option, what each one requires from the
-nodes and the network, how it is declared, and how its result is verified.
+that Multus attaches to the SPDK pod.
 
 The storage network is part of the cluster declaration: `spec.cluster.network` in the `ClusterDeploymentConfig`, which
 becomes `spec.storageNodes.network` in the `StorageCluster`. It is fixed when the cluster is created. Changing it later
 means deleting the storage cluster and creating it again, so the choice is made during planning, together with the
-[Network](../../deployment-preparation/network.md) requirements.
+[Network](../../../deployment-preparation/network.md) requirements.
 
 !!! info "Availability"
     The `spdkOnHostNetwork`, `podNetwork`, and `data` fields need a Simplyblock Operator and control plane release
     that includes them. A cluster that declares no network keeps the host-network behavior of earlier releases.
 
-## Components and Their Networks
+The page follows the order of the decision:
 
-The storage network decides the network of the SPDK pod only. The other components of a storage node run on the same
-network in every option, and the reason for each placement is part of the security model of the deployment.
+- **[Overview](#overview):** The three network topologies of the SPDK pod and the reason for each, the five options
+  they lead to, how to choose one, and what production requires.
+- **[Configuration in Simplyblock](#configuration-in-simplyblock):** How the chosen option is declared.
+- **[Option 1: Host Network](#option-1-host-network) and [Option 2: Pod Network](#option-2-pod-network):** The two
+  options that work without Multus.
+- **[Attached Networks](#attached-networks-options-3-to-5):** The Multus options 3 to 5 and their shared requirements.
+- **[Workarounds for Attached Networks](#workarounds-for-attached-networks):** Every host and routing workaround that
+  options 3 to 5 need, in one place.
+- **[Verification](#verification) and [Troubleshooting](#troubleshooting):** Checking the result of every option.
 
-| Component             | Network                                  | Reason                                                                                                                                                                                 |
-|-----------------------|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Control plane         | Pod network                              | It talks to the storage nodes through their agents and SPDK RPC, which the pod network reaches in every option.                                                                        |
-| Storage node agent    | Pod network, with the host PID namespace | It reads the host's interfaces and opens host connections by entering the network namespace of the host's PID 1. That needs the host PID namespace, but no listener on a host port.    |
-| CSI node plugin       | Host network                             | The NVMe/TCP initiator runs in the host's network namespace, and the kernel reconnects from it after every path loss. A pod-network connect would move to the host on the first reset. |
-| Node preparation Jobs | Host network                             | They configure the host (huge pages, kernel modules, devices) and call the agent at its pod address.                                                                                   |
-| SPDK pod              | Depends on the option                    | Described on this page.                                                                                                                                                                |
+The data ENI on Amazon EKS has a page of its own, [Amazon EKS](amazon-eks.md).
 
-The initiator is always the host. Every option therefore has to give every worker that mounts volumes a path to every
-storage address, including the storage node on the same worker. The operator checks that path before it reports a node
-online.
+## Overview
 
-## The Options at a Glance
+### Network Topologies
+
+The SPDK pod sits in one of three network topologies. Each of them exists for a different reason, and the reason
+decides which one fits a deployment.
+
+**SPDK on the host network.** The SPDK pod runs in the host's network namespace, and SPDK binds the storage interface
+directly. The pod is placed on the host network for one reason only: to take hold of a specific high-speed interface.
+This fits storage nodes with several interfaces of different speeds, where the fastest one is reserved for storage
+traffic. No CNI, Service, or virtual interface sits between SPDK and the NIC, so this path performs best. This topology
+is [option 1](#option-1-host-network).
+
+**SPDK on the pod network.** The SPDK pod runs on the pod network of the cluster's CNI, like any other pod. A Kubernetes
+Service is placed in front of every SPDK pod, and the IP address of that Service is the static storage address of the
+node. Nothing has to be prepared on the hosts, and no second interface is needed. This fits wherever the bandwidth is
+not tied to a particular interface. On Amazon EC2, for example, the network bandwidth is set by the instance type and
+not by the ENI, so a dedicated interface adds no bandwidth. This topology is [option 2](#option-2-pod-network).
+
+**SPDK on the pod network with Multus.** The SPDK pod keeps its pod-network interface, and Multus attaches a second
+interface for the storage traffic. This is the topology for allocating a storage interface to the SPDK pod the
+Kubernetes-native way, instead of placing the pod in the host's namespace. It requires a secondary interface on every
+storage node, which on Amazon EKS is a secondary ENI. How the interface reaches the pod depends on the CNI plugin of the
+`NetworkAttachmentDefinition`, here called a _definition_:
+
+- **The `host-device` plugin ([option 3](#option-3-dedicated-interface-host-device)):** The entire interface is moved
+  into the SPDK pod. It disappears from the host, so `ip addr` on the host no longer lists it. The result matches the
+  host network topology, a dedicated high-speed interface for SPDK, allocated the Kubernetes-native way.
+- **The `macvlan` plugin ([option 4](#option-4-macvlan-or-ipvlan-on-a-host-interface)):** A virtual interface on a host
+  interface, with its own routable IP address and its own MAC address.
+- **The `ipvlan` plugin ([option 4](#option-4-macvlan-or-ipvlan-on-a-host-interface)):** A virtual interface on a host
+  interface, with its own routable IP address and the MAC address of its parent.
+- **SR-IOV ([option 5](#option-5-sr-iov-virtual-functions)):** A virtual function of an SR-IOV NIC, allocated to the
+  SPDK pod by a device plugin and switched in the NIC's hardware.
+
+!!! warning "Workarounds required"
+    The Multus topology does not work out of the box. The host has to be given a path to the storage addresses, and the
+    routing has to keep every packet on the interface that owns its source address. All of these workarounds are
+    collected in
+    [Workarounds for Attached Networks](#workarounds-for-attached-networks).
+
+### The Options at a Glance
 
 | Option                                                                  | Declared as                | Multus | Storage traffic flows over                                                   | Typical use                                           |
 |-------------------------------------------------------------------------|----------------------------|--------|------------------------------------------------------------------------------|-------------------------------------------------------|
@@ -45,10 +82,8 @@ online.
 | [4. macvlan or ipvlan](#option-4-macvlan-or-ipvlan-on-a-host-interface) | `podNetwork: true`, `data` | Yes    | A `macvlan` or `ipvlan` interface on a storage NIC, a VLAN, or the CNI's NIC | A storage NIC, or one NIC shared with the CNI         |
 | [5. SR-IOV virtual functions](#option-5-sr-iov-virtual-functions)       | `podNetwork: true`, `data` | Yes    | A VF allocated to the SPDK pod by a device plugin                            | SR-IOV NICs, the SR-IOV Network Operator on OpenShift |
 
-Options 3 to 5 attach the network through a `NetworkAttachmentDefinition`, here called a _definition_. They share the
-requirements in [Requirements of Every Attached Network](#requirements-of-every-attached-network).
 
-## Choosing an Option
+### Choosing an Option
 
 The decision follows from three questions: whether SPDK may share the host's network namespace, how many NICs the
 storage nodes have, and what the network accepts.
@@ -65,7 +100,7 @@ storage nodes have, and what the network accepts.
    NIC when the switches can trunk a VLAN to the nodes, on the CNI's NIC itself otherwise.
 6. **Nothing can be prepared on the hosts, or the bandwidth is capped by the infrastructure anyway:** option 2.
 7. **The cluster runs on Amazon EKS with a second ENI:** option 3, as described in
-   [Storage Network on Amazon EKS](eks-storage-network.md).
+   [Amazon EKS](amazon-eks.md).
 
 Options 3 to 5 need the network to be prepared before the storage cluster is created (see
 [Requirements of Every Attached Network](#requirements-of-every-attached-network)).
@@ -73,9 +108,9 @@ Options 3 to 5 need the network to be prepared before the storage cluster is cre
 None of the options adds bandwidth. On a virtual machine whose network bandwidth is set by its instance type, that
 limit applies to the instance as a whole, whichever option carries the traffic.
 
-## Production Recommendations
+### Production Recommendations
 
-The [Network](../../deployment-preparation/network.md#storage-traffic) page sets the requirements of a production
+The [Network](../../../deployment-preparation/network.md#storage-traffic) page sets the requirements of a production
 storage network: a redundant network or two VLANs with NVMe multipathing, at least 10 GBit/s per storage node, no
 software-defined switch, and no gateway, firewall, or proxy above layer 2 on the storage path. Applied to the options,
 they lead to these recommendations:
@@ -96,6 +131,23 @@ they lead to these recommendations:
   suitable where the infrastructure caps the bandwidth below what the CNI carries, and for test and edge deployments.
 - **MTU:** jumbo frames (MTU 9000) end to end on the storage network, on the parent interfaces, the siblings, the
   definitions, and the switches alike. A mismatch anywhere on the path shows up as stalled connections, not as errors.
+
+### Components and Their Networks
+
+The storage network decides the network of the SPDK pod only. The other components of a storage node run on the same
+network in every option, and the reason for each placement is part of the security model of the deployment.
+
+| Component             | Network                                  | Reason                                                                                                                                                                                 |
+|-----------------------|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Control plane         | Pod network                              | It talks to the storage nodes through their agents and SPDK RPC, which the pod network reaches in every option.                                                                        |
+| Storage node agent    | Pod network, with the host PID namespace | It reads the host's interfaces and opens host connections by entering the network namespace of the host's PID 1. That needs the host PID namespace, but no listener on a host port.    |
+| CSI node plugin       | Host network                             | The NVMe/TCP initiator runs in the host's network namespace, and the kernel reconnects from it after every path loss. A pod-network connect would move to the host on the first reset. |
+| Node preparation Jobs | Host network                             | They configure the host (huge pages, kernel modules, devices) and call the agent at its pod address.                                                                                   |
+| SPDK pod              | Depends on the option                    | Described on this page.                                                                                                                                                                |
+
+The initiator is always the host. Every option therefore has to give every worker that mounts volumes a path to every
+storage address, including the storage node on the same worker. The operator checks that path before it reports a node
+online.
 
 ## Configuration in Simplyblock
 
@@ -168,99 +220,17 @@ kubectl -n simplyblock get clusterdeploymentconfig <DRAFT> \
     -o jsonpath='{.spec.cluster.network}{"\n"}'
 ```
 
-## Requirements of Every Attached Network
-
-Options 3 to 5 share these requirements.
-
-!!! note "Preparing the network"
-    Simplyblock does not set up the storage network of options 3 to 5. Installing Multus and the CNI plugins, creating
-    the secondary interfaces, VLANs, VFs, and host-side siblings on every node, creating the
-    `NetworkAttachmentDefinition`, and configuring the switches are part of preparing the infrastructure. The same
-    applies to making every storage address reachable from every worker that mounts volumes. The operator only uses the
-    definition and checks reachability. A node whose storage address is not reachable stays in `Provisioning`.
-
-| Requirement                                                                            | Reason                                                                                                                                                                                                                                                                                     |
-|----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Multus, in thick-plugin mode                                                           | Multus attaches the definition's interface to the SPDK pod.                                                                                                                                                                                                                                |
-| The CNI plugins the definition uses, in the CNI binary directory of every storage node | Multus runs these binaries. `host-device`, `macvlan`, `ipvlan`, `static`, and `sbr` are part of the reference CNI plugins. `sriov` is a separate project.                                                                                                                                  |
-| The definition in the namespace of the storage cluster                                 | Multus refuses a reference to another namespace.                                                                                                                                                                                                                                           |
-| `static` IPAM, and the `ips` capability declared                                       | The operator chooses each node's address and passes it to the pod. An IPAM plugin that allocates at attach time (DHCP, `host-local`, Whereabouts) returns an address nothing recorded, and it can change on a restart while every client still holds the old one.                          |
-| No default route in the definition                                                     | The pod's default route stays on `eth0`, which carries the RPC and the reach to the cluster.                                                                                                                                                                                               |
-| Every worker that mounts volumes reaches every storage address                         | The initiator runs in the host's network namespace. The host needs an address in the storage subnet, or a route to it. The operator checks the path from every worker and holds a node that a worker cannot reach (see [Reaching the Storage Addresses](#reaching-the-storage-addresses)). |
-| The CSI node plugin on every worker, linked to the operator                            | The operator reads interface addresses and checks the reachability through the CSI node plugins.                                                                                                                                                                                           |
-| No two interfaces of a pod in one subnet                                               | Two routes for one subnet send replies out of the wrong interface. A definition that has to share a subnet chains the `sbr` plugin (see [Storage Network on Amazon EKS](eks-storage-network.md#fix-in-the-spdk-pod-source-based-routing)).                                                 |
-
-The CNI binary directory is `/opt/cni/bin` on most distributions. K3s and RKE2 use their own directory below
-`/var/lib/rancher`, and Multus has to be installed with that directory and the directory its entries point to mounted.
-
-**The reachability check.** Once the control plane reports a node online, the operator asks the CSI node plugin of
-every worker to open a TCP connection to the node's SPDK listener on each data network. The network is recorded as
-`Attached`, with `hostReachable: true`, and the node as `Online`, only when every worker reaches it. A node that fails
-the check stays in `Provisioning`, its network is `Unavailable`, and the event `DataNetworkHostUnreachable` names the
-address and the worker that cannot reach it.
-
-## Reaching the Storage Addresses
-
-The initiator of every worker connects from the host's network namespace, so every host needs a path to every storage
-address, the SPDK pod on its own worker included. The path is one of these:
-
-| Path                                    | How the host reaches the storage subnet                                               | Used with                               |
-|-----------------------------------------|---------------------------------------------------------------------------------------|-----------------------------------------|
-| [On-link](#on-link)                     | An address of its own in the storage subnet, on an interface that stays on the host   | Options 3 and 5                         |
-| [Host-side sibling](#host-side-sibling) | An address on a `macvlan` or `ipvlan` interface next to the SPDK pod's, on one parent | Option 4                                |
-| [Routed](#routed)                       | A route to the storage subnet through a router, and a route back in the definition    | Option 3, where nothing on-link is left |
-| [Cloud interface](#cloud-interface)     | A second cloud interface with routing rules of its own                                | Option 3 on Amazon EKS                  |
-
-Without a path, the reachability check fails on the workers that have none, and the nodes stay in `Provisioning`.
-
-### On-Link
-
-The host keeps an interface in the storage subnet: a second port, the physical function or another VF, or a VLAN
-interface. Its address lies outside the `addressPool`. No route is needed, and the traffic stays on layer 2, as the
-[Production Recommendations](#production-recommendations) require.
-
-### Host-Side Sibling
-
-A host cannot reach the `macvlan` or `ipvlan` interfaces of its own parent. The host's storage address therefore moves
-from the parent to a sibling interface on the same parent, as described in
-[The Host-Side Sibling Interface](#the-host-side-sibling-interface).
-
-### Routed
-
-Where the hosts reach the storage subnet only through a router, the SPDK pod needs a route back to the hosts' subnet,
-because its default route is `eth0`. The route goes into the static IPAM block of the definition, and every worker gets
-a route to the storage subnet:
-
-```json title="Example of a route back to the hosts' subnet in the definition's IPAM block"
-"ipam": {
-  "type": "static",
-  "routes": [ { "dst": "192.168.10.0/24", "gw": "10.10.10.1" } ]
-}
-```
-
-```bash title="Adding a route to the storage subnet on each worker"
-ip route add 10.10.10.0/24 via 192.168.10.1 dev eth0
-```
-
-A router on the storage path is acceptable only where the
-[Production Recommendations](#production-recommendations) allow it.
-
-### Cloud Interface
-
-On Amazon EKS, the dedicated interface is a second ENI with routing rules of its own, described in
-[Storage Network on Amazon EKS](eks-storage-network.md).
-
 ## Option 1: Host Network
 
 The SPDK pod runs in the host's network namespace and serves on the host's NICs. No CNI, Service, or virtual interface
 lies between SPDK and the NIC. This is the only option that supports RDMA, and the behavior of a cluster that declares
 no network.
 
-| Requirement                                                              | Reason                                                                                               |
-|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
-| A management NIC and one or more data NICs on every storage node         | SPDK binds the data NICs named for the node. The management NIC carries the control traffic.         |
-| For RDMA: RDMA-capable NICs and the RDMA kernel modules                  | The NVMe/RDMA transport needs them on the storage nodes and on the clients.                          |
-| Host ports free for the SPDK listeners and the RPC on every storage node | The listeners bind the host's addresses. See [Ports](../../deployment-preparation/network.md#ports). |
+| Requirement                                                              | Reason                                                                                                  |
+|--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| A management NIC and one or more data NICs on every storage node         | SPDK binds the data NICs named for the node. The management NIC carries the control traffic.            |
+| For RDMA: RDMA-capable NICs and the RDMA kernel modules                  | The NVMe/RDMA transport needs them on the storage nodes and on the clients.                             |
+| Host ports free for the SPDK listeners and the RPC on every storage node | The listeners bind the host's addresses. See [Ports](../../../deployment-preparation/network.md#ports). |
 
 ```yaml title="Example of the host network with interfaces named per group"
 spec:
@@ -303,7 +273,42 @@ avoids the encapsulation and the smaller MTU.
 The status of each storage node reports the network `pod`, the interface `eth0`, and the Service address, with the
 phase `Attached` once the pod runs behind its Service.
 
-## Option 3: Dedicated Interface (host-device)
+## Attached Networks (Options 3 to 5)
+
+Options 3 to 5 attach the storage interface to the SPDK pod through a definition. They share the requirements below,
+and each of them needs one or more of the
+[Workarounds for Attached Networks](#workarounds-for-attached-networks).
+
+### Requirements of Every Attached Network
+
+!!! note "Preparing the network"
+    Simplyblock does not set up the storage network of options 3 to 5. Installing Multus and the CNI plugins, creating
+    the secondary interfaces, VLANs, VFs, and host-side siblings on every node, creating the
+    `NetworkAttachmentDefinition`, and configuring the switches are part of preparing the infrastructure. The same
+    applies to making every storage address reachable from every worker that mounts volumes. The operator only uses the
+    definition and checks reachability. A node whose storage address is not reachable stays in `Provisioning`.
+
+| Requirement                                                                            | Reason                                                                                                                                                                                                                                                                                     |
+|----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Multus, in thick-plugin mode                                                           | Multus attaches the definition's interface to the SPDK pod.                                                                                                                                                                                                                                |
+| The CNI plugins the definition uses, in the CNI binary directory of every storage node | Multus runs these binaries. `host-device`, `macvlan`, `ipvlan`, `static`, and `sbr` are part of the reference CNI plugins. `sriov` is a separate project.                                                                                                                                  |
+| The definition in the namespace of the storage cluster                                 | Multus refuses a reference to another namespace.                                                                                                                                                                                                                                           |
+| `static` IPAM, and the `ips` capability declared                                       | The operator chooses each node's address and passes it to the pod. An IPAM plugin that allocates at attach time (DHCP, `host-local`, Whereabouts) returns an address nothing recorded, and it can change on a restart while every client still holds the old one.                          |
+| No default route in the definition                                                     | The pod's default route stays on `eth0`, which carries the RPC and the reach to the cluster.                                                                                                                                                                                               |
+| Every worker that mounts volumes reaches every storage address                         | The initiator runs in the host's network namespace. The host needs an address in the storage subnet, or a route to it. The operator checks the path from every worker and holds a node that a worker cannot reach (see [Reaching the Storage Addresses](#reaching-the-storage-addresses)). |
+| The CSI node plugin on every worker, linked to the operator                            | The operator reads interface addresses and checks the reachability through the CSI node plugins.                                                                                                                                                                                           |
+| No two interfaces of a pod in one subnet                                               | Two routes for one subnet send replies out of the wrong interface. A definition that has to share a subnet chains the `sbr` plugin (see [Source-Based Routing](#source-based-routing)).                                                                                                    |
+
+The CNI binary directory is `/opt/cni/bin` on most distributions. K3s and RKE2 use their own directory below
+`/var/lib/rancher`, and Multus has to be installed with that directory and the directory its entries point to mounted.
+
+**The reachability check.** Once the control plane reports a node online, the operator asks the CSI node plugin of
+every worker to open a TCP connection to the node's SPDK listener on each data network. The network is recorded as
+`Attached`, with `hostReachable: true`, and the node as `Online`, only when every worker reaches it. A node that fails
+the check stays in `Provisioning`, its network is `Unavailable`, and the event `DataNetworkHostUnreachable` names the
+address and the worker that cannot reach it.
+
+### Option 3: Dedicated Interface (host-device)
 
 The `host-device` plugin moves a whole interface into the SPDK pod, and returns it to the host when the pod ends. The
 interface can be a physical port, a NIC, a VF named in the definition, or a second cloud interface. SPDK then has an
@@ -340,7 +345,7 @@ spec:
 removed, holds the next node on that worker until the address is restored. With an `addressPool`, the interface needs no
 address on the host.
 
-## Option 4: macvlan or ipvlan on a Host Interface
+### Option 4: macvlan or ipvlan on a Host Interface
 
 The `macvlan` and `ipvlan` plugins create a virtual interface for the SPDK pod on a parent interface that stays on the
 host. The host and several SPDK pods share the parent. `macvlan` gives each interface a MAC address of its own, and
@@ -382,6 +387,143 @@ above before the draft is approved.
 
 **Caveats.** All `ipvlan` interfaces share the MAC address of the parent. A duplicate-address check that relies on one
 reply per MAC address cannot tell them apart.
+
+#### Without a Second NIC
+
+**On a VLAN of the CNI's NIC.** The switches trunk the VLAN to every node, the clients' nodes included. The VLAN
+interface is created on every node, without an address, by the network configuration of the distribution: netplan,
+NetworkManager, or `systemd-networkd`. On Talos Linux, a machine configuration patch creates it without a reboot:
+
+```yaml title="Example of a Talos machine configuration patch for VLAN 100"
+machine:
+  network:
+    interfaces:
+      - interface: ens18
+        vlans:
+          - vlanId: 100
+```
+
+With Cilium, the VLAN is added to `bpf.vlanBypass`. Cilium's programs on the NIC drop tagged frames of VLANs they do not
+know, and an agent that started before the VLAN interface existed drops its frames until it restarts, even with the
+bypass set:
+
+```bash title="Allowing VLAN 100 through Cilium"
+helm upgrade cilium cilium/cilium \
+    --namespace kube-system \
+    --reuse-values \
+    --set "bpf.vlanBypass={100}"
+kubectl -n kube-system rollout restart ds/cilium
+```
+
+The MTU of the VLAN is bounded by the NIC's MTU. Cloud networks do not carry customer VLAN tags, so a VLAN is limited to
+networks under the operator's control.
+
+**On the CNI's NIC, untagged.** No switch configuration and no Cilium setting are needed. The storage subnet is one that
+no other system on the segment uses, or a range of the node subnet reserved from DHCP. Storage shares the broadcast
+domain of the node network and is separated from it only by its subnet.
+
+### Option 5: SR-IOV Virtual Functions
+
+The SR-IOV Network Device Plugin advertises the VFs of the nodes as an extended resource. A definition annotated with
+that resource takes the VF the plugin allocates to the SPDK pod, and the SPDK pod requests one of it. The host keeps the
+physical function or another VF for its own storage address. The NIC's embedded switch carries the traffic between the
+host and the SPDK pod, on the same node as well, so no host-side sibling is needed.
+
+| Requirement                                                                          | Reason                                                                 |
+|--------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| VFs created on the physical function of every storage node (`sriov_numvfs`)          | The device plugin advertises existing VFs. It creates none.            |
+| The SR-IOV Network Device Plugin, with a pool that selects the storage VFs           | The plugin allocates a VF to each SPDK pod and tells Multus which one. |
+| For the `sriov` type: the `sriov` CNI plugin in the CNI binary directory             | Neither Multus nor the reference CNI plugins include it.               |
+| An address of the host in the storage subnet, on the physical function or another VF | The initiator on every node reaches the storage addresses.             |
+| VFs in kernel mode, not bound to `vfio-pci`                                          | The SPDK pod uses the VF as a kernel interface for NVMe/TCP.           |
+
+On OpenShift, the SR-IOV Network Operator provides the VFs, the device plugin, and the `sriov` plugin, and generates the
+definition from a `SriovNetwork` resource. The `SriovNetwork` sets `ipam` to `'{"type": "static"}'` and `capabilities`
+to `'{"ips": true}'`, so that the generated definition meets the requirements above.
+
+The definition carries the resource in the `k8s.v1.cni.cncf.io/resourceName` annotation and names no device:
+
+```yaml title="Example of an sriov definition (storage-sriov)"
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: storage-sriov
+  namespace: simplyblock
+  annotations:
+    k8s.v1.cni.cncf.io/resourceName: simplyblock.io/storage_vf
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "storage-sriov",
+      "type": "sriov",
+      "vlan": 100,
+      "spoofchk": "on",
+      "trust": "off",
+      "capabilities": { "ips": true },
+      "ipam": { "type": "static" }
+    }
+```
+
+`vlan`, `spoofchk`, and `trust` are optional. The `sriov` plugin sets them on the VF through the physical function.
+
+Where the `sriov` plugin is not available, or the nodes see only VFs, a `host-device` definition with
+`"capabilities":{"deviceID":true,"ips":true}` and the same annotation attaches the allocated VF.
+
+The network is declared with an `addressPool`. The VF is unknown until the device plugin allocates it, so no address
+can be read from it beforehand, and the operator holds a node with an event that says so when the pool is missing. The
+operator reads the annotation when it checks the definition, records the resource on the node as
+`status.network[].resource` beside the assigned address, and passes it to the control plane with the network, which
+requests one of it for the SPDK container. Nothing else is configured for the resource.
+
+## Workarounds for Attached Networks
+
+A storage interface inside the SPDK pod is not visible to the host the way the host network topology is, and the Linux
+kernel and the cloud networks add constraints of their own. Options 3 to 5 therefore need one or more of the
+workarounds below. All of them are part of preparing the infrastructure and are not applied by simplyblock.
+
+| Workaround                                                      | Problem it solves                                                                                    | Needed with                                         |
+|-----------------------------------------------------------------|------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| [On-link host address](#on-link-host-address)                   | The host has no path to the storage subnet once the interface is in the SPDK pod                     | Options 3 and 5                                     |
+| [Host-side sibling interface](#the-host-side-sibling-interface) | A host cannot reach the `macvlan` or `ipvlan` interface of its own parent                            | Option 4                                            |
+| [Routed path](#routed-path)                                     | The hosts reach the storage subnet only through a router, and the SPDK pod's default route is `eth0` | Option 3, where nothing on-link is left             |
+| [Source-based routing](#source-based-routing)                   | Two interfaces of the SPDK pod in one subnet send replies out of the wrong interface                 | Any option whose data interface shares a pod subnet |
+
+On Amazon EKS, the routing depends on whether the data ENI sits in the node subnet or in a subnet of its own. Both
+layouts are described in [Amazon EKS](amazon-eks.md#choosing-a-layout).
+
+### Reaching the Storage Addresses
+
+The initiator of every worker connects from the host's network namespace, so every host needs a path to every storage
+address, the SPDK pod on its own worker included. Without a path, the reachability check fails on the workers that have
+none, and the nodes stay in `Provisioning`. The path is an on-link host address, a host-side sibling interface, or a
+routed path.
+
+#### On-Link Host Address
+
+The host keeps an interface in the storage subnet: a second port, the physical function or another VF, or a VLAN
+interface. Its address lies outside the `addressPool`. No route is needed, and the traffic stays on layer 2, as the
+[Production Recommendations](#production-recommendations) require.
+
+#### Routed Path
+
+Where the hosts reach the storage subnet only through a router, the SPDK pod needs a route back to the hosts' subnet,
+because its default route is `eth0`. The route goes into the static IPAM block of the definition, and every worker gets
+a route to the storage subnet:
+
+```json title="Example of a route back to the hosts' subnet in the definition's IPAM block"
+"ipam": {
+  "type": "static",
+  "routes": [ { "dst": "192.168.10.0/24", "gw": "10.10.10.1" } ]
+}
+```
+
+```bash title="Adding a route to the storage subnet on each worker"
+ip route add 10.10.10.0/24 via 192.168.10.1 dev eth0
+```
+
+A router on the storage path is acceptable only where the
+[Production Recommendations](#production-recommendations) allow it.
 
 ### The Host-Side Sibling Interface
 
@@ -455,93 +597,17 @@ ip -br addr show shim0
 
 The parent shows no IPv4 address, and the sibling shows the node's storage address.
 
-### Without a Second NIC
+### Source-Based Routing
 
-**On a VLAN of the CNI's NIC.** The switches trunk the VLAN to every node, the clients' nodes included. The VLAN
-interface is created on every node, without an address, by the network configuration of the distribution: netplan,
-NetworkManager, or `systemd-networkd`. On Talos Linux, a machine configuration patch creates it without a reboot:
+A pod with two interfaces in one subnet has two routes for that subnet. The kernel picks one route per destination
+and sends the packet out of that interface, whatever interface the request arrived on. A switch usually passes such a
+packet on anyway. A cloud network drops it, because an interface may only send packets whose source is one of its own
+addresses.
 
-```yaml title="Example of a Talos machine configuration patch for VLAN 100"
-machine:
-  network:
-    interfaces:
-      - interface: ens18
-        vlans:
-          - vlanId: 100
-```
-
-With Cilium, the VLAN is added to `bpf.vlanBypass`. Cilium's programs on the NIC drop tagged frames of VLANs they do not
-know, and an agent that started before the VLAN interface existed drops its frames until it restarts, even with the
-bypass set:
-
-```bash title="Allowing VLAN 100 through Cilium"
-helm upgrade cilium cilium/cilium \
-    --namespace kube-system \
-    --reuse-values \
-    --set "bpf.vlanBypass={100}"
-kubectl -n kube-system rollout restart ds/cilium
-```
-
-The MTU of the VLAN is bounded by the NIC's MTU. Cloud networks do not carry customer VLAN tags, so a VLAN is limited to
-networks under the operator's control.
-
-**On the CNI's NIC, untagged.** No switch configuration and no Cilium setting are needed. The storage subnet is one that
-no other system on the segment uses, or a range of the node subnet reserved from DHCP. Storage shares the broadcast
-domain of the node network and is separated from it only by its subnet.
-
-## Option 5: SR-IOV Virtual Functions
-
-The SR-IOV Network Device Plugin advertises the VFs of the nodes as an extended resource. A definition annotated with
-that resource takes the VF the plugin allocates to the SPDK pod, and the SPDK pod requests one of it. The host keeps the
-physical function or another VF for its own storage address. The NIC's embedded switch carries the traffic between the
-host and the SPDK pod, on the same node as well, so no host-side sibling is needed.
-
-| Requirement                                                                          | Reason                                                                 |
-|--------------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| VFs created on the physical function of every storage node (`sriov_numvfs`)          | The device plugin advertises existing VFs. It creates none.            |
-| The SR-IOV Network Device Plugin, with a pool that selects the storage VFs           | The plugin allocates a VF to each SPDK pod and tells Multus which one. |
-| For the `sriov` type: the `sriov` CNI plugin in the CNI binary directory             | Neither Multus nor the reference CNI plugins include it.               |
-| An address of the host in the storage subnet, on the physical function or another VF | The initiator on every node reaches the storage addresses.             |
-| VFs in kernel mode, not bound to `vfio-pci`                                          | The SPDK pod uses the VF as a kernel interface for NVMe/TCP.           |
-
-On OpenShift, the SR-IOV Network Operator provides the VFs, the device plugin, and the `sriov` plugin, and generates the
-definition from a `SriovNetwork` resource. The `SriovNetwork` sets `ipam` to `'{"type": "static"}'` and `capabilities`
-to `'{"ips": true}'`, so that the generated definition meets the requirements above.
-
-The definition carries the resource in the `k8s.v1.cni.cncf.io/resourceName` annotation and names no device:
-
-```yaml title="Example of an sriov definition (storage-sriov)"
-apiVersion: k8s.cni.cncf.io/v1
-kind: NetworkAttachmentDefinition
-metadata:
-  name: storage-sriov
-  namespace: simplyblock
-  annotations:
-    k8s.v1.cni.cncf.io/resourceName: simplyblock.io/storage_vf
-spec:
-  config: |
-    {
-      "cniVersion": "0.3.1",
-      "name": "storage-sriov",
-      "type": "sriov",
-      "vlan": 100,
-      "spoofchk": "on",
-      "trust": "off",
-      "capabilities": { "ips": true },
-      "ipam": { "type": "static" }
-    }
-```
-
-`vlan`, `spoofchk`, and `trust` are optional. The `sriov` plugin sets them on the VF through the physical function.
-
-Where the `sriov` plugin is not available, or the nodes see only VFs, a `host-device` definition with
-`"capabilities":{"deviceID":true,"ips":true}` and the same annotation attaches the allocated VF.
-
-The network is declared with an `addressPool`. The VF is unknown until the device plugin allocates it, so no address
-can be read from it beforehand, and the operator holds a node with an event that says so when the pool is missing. The
-operator reads the annotation when it checks the definition, records the resource on the node as
-`status.network[].resource` beside the assigned address, and passes it to the control plane with the network, which
-requests one of it for the SPDK container. Nothing else is configured for the resource.
+The `sbr` plugin, chained behind the plugin that creates the data interface, moves the data interface's routes into a
+table of their own. That table is selected only for packets whose source is the data address. Every other packet uses
+the main table and leaves through `eth0`. The definition and the failure it prevents on Amazon EKS are shown in
+[Fix in the SPDK Pod: Source-Based Routing](amazon-eks.md#fix-in-the-spdk-pod-source-based-routing).
 
 ## Verification
 
