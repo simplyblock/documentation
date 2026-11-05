@@ -64,7 +64,7 @@ Multiple ports must be open on storage node hosts. The VLAN layout and the ports
 The SPDK pods serve the volumes on the host network, on the pod network, or on dedicated interfaces that Multus
 attaches. The choice is declared in `spec.cluster.network` of the `ClusterDeploymentConfig` and cannot be changed after
 the cluster is created. The options, their requirements, and the production recommendations are described in
-[Storage Network](storage-network.md).
+[Storage Network](storage-network/index.md).
 
 ## Discover Workers and Devices
 
