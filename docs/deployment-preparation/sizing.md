@@ -17,6 +17,9 @@ of Linux.
 The vCPUs of a storage node are set as an absolute number per storage node, which applies to every node of the cluster:
 `vcpuCount` in the deployment document (see [Cluster Deployment Options](../kubernetes/installation/cluster-deployment-options.md#sizing-options)).
 A worker with fewer than the configured count plus one vCPU for the system is refused as a storage node.
+Unless the deployment document states a count, discovery proposes 15% of the vCPUs of a socket, at least 5 (see
+[vCPU Count](../kubernetes/installation/k8s-storage-plane.md#vcpu-count)). The proposal is reviewed against the
+guidance below before the deployment is approved.
 
 If 32 or more physical cores are available per storage node, it is recommended to turn off hyperthreading in the
 BIOS or UEFI setup.

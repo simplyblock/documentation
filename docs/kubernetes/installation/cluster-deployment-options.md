@@ -31,7 +31,7 @@ cluster.
 
 | Option                   | Description                                                                                                                                                                                                        |
 |--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `vcpuCount`              | Required. The vCPUs each storage node dedicates to the data plane, at least 4.                                                                                                                                     |
+| `vcpuCount`              | Required. The vCPUs each storage node dedicates to the data plane, at least 4. Discovery proposes 15% of a socket, at least 5 (see [vCPU Count](k8s-storage-plane.md#vcpu-count)).                                 |
 | `minHugePagesSize`       | The minimum huge page memory of each storage node, for example, `16G`. The effective allocation is the larger of this value and the computed minimum.                                                              |
 | `maxSubsystemCount`      | Required. The maximum number of NVMe-oF subsystems per storage node, which sizes the huge page memory. It can be raised later and reaches each node at its next restart (see [Limits](../../reference/limits.md)). |
 | `nodeProvisioningBudget` | How many workers are added to the cluster in parallel.                                                                                                                                                             |

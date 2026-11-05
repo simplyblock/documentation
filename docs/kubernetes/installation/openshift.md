@@ -316,6 +316,35 @@ pool, so whatever machine configuration its previous pool carried is lost unless
 `spec.storageNodes.openshift.machineConfigPool` for the new one to select as well. It defaults to `worker`, the role
 every pool already selects, which makes it a no-op for a fleet whose workers are ordinary workers.
 
+### Machine Configuration of a Failed Deployment
+
+The pool `storage-<cluster>` is named after the first six characters of the cluster's UUID. It comes with the
+MachineConfig `storage-mc-<cluster>` and the KubeletConfig `storage-kubelet-<cluster>`. When a deployment is removed
+(see [Cleaning Up a Failed Deployment](k8s-storage-plane.md#cleaning-up-a-failed-deployment)), with either the
+resource cleanup or the full cleanup, these stay behind. A
+node still selected by an old pool cannot join the pool of the next deployment, because a node belongs to at most one
+custom pool.
+
+```bash title="Finding the machine configuration of earlier deployments"
+oc get mcp | grep storage-
+oc get machineconfig | grep storage-
+oc get kubeletconfig | grep storage-
+```
+
+A pool is first emptied, so that its nodes return to their original pool, and then deleted together with its
+MachineConfig and KubeletConfig. Nodes that return to their original pool reboot once:
+
+```bash title="Removing the machine configuration of a failed deployment"
+POOL=storage-36beed    # as listed above
+
+oc patch mcp $POOL --type=merge -p '{"spec":{"nodeSelector":{"matchExpressions":[{"key":"kubernetes.io/hostname","operator":"In","values":["retired-empty-storage-pool"]}]}}}'
+oc get mcp -w          # wait until the original pools report UPDATED=True
+
+oc delete kubeletconfig storage-kubelet-${POOL#storage-}
+oc delete machineconfig storage-mc-${POOL#storage-}
+oc delete mcp $POOL
+```
+
 ## Uninstallation
 
 Uninstalling the operator through OperatorHub removes the operator and its RBAC, but neither the simplyblock custom
