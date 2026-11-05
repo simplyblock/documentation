@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="452" viewBox="0 0 960 452" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">Control plane and operator per cluster</title>
+<defs>
+<marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="451" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">Control plane and operator per cluster</text>
+<rect x="24" y="68" width="296" height="308" rx="14" fill="none" stroke="#8c959f" stroke-width="1.25" stroke-dasharray="4 4"/>
+<rect x="32" y="76" width="280" height="292" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="46" y="98" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Kubernetes cluster A</text>
+<rect x="48" y="116" width="248" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="172" y="138.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
+<rect x="48" y="176" width="248" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="172" y="198" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Control plane</text>
+<text x="172" y="215" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">mgmt pods + FoundationDB</text>
+<rect x="48" y="284" width="90" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="93" y="306.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="150" y="252" width="146" height="100" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="164" y="274" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage nodes</text>
+<rect x="160" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="179" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<rect x="204" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="223" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<rect x="248" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="267" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<path d="M172,152 L172,176" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<path d="M93,284 L93,226" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<path d="M223,226 L223,252" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="172" y="398" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle" font-style="italic">blast radius: this cluster only</text>
+<rect x="328" y="68" width="296" height="308" rx="14" fill="none" stroke="#8c959f" stroke-width="1.25" stroke-dasharray="4 4"/>
+<rect x="336" y="76" width="280" height="292" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="350" y="98" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Kubernetes cluster B</text>
+<rect x="352" y="116" width="248" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="476" y="138.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
+<rect x="352" y="176" width="248" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="476" y="198" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Control plane</text>
+<text x="476" y="215" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">mgmt pods + FoundationDB</text>
+<rect x="352" y="284" width="90" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="397" y="306.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="454" y="252" width="146" height="100" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="468" y="274" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage nodes</text>
+<rect x="464" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="483" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<rect x="508" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="527" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<rect x="552" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="571" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<path d="M476,152 L476,176" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<path d="M397,284 L397,226" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<path d="M527,226 L527,252" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="476" y="398" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle" font-style="italic">blast radius: this cluster only</text>
+<rect x="632" y="68" width="296" height="308" rx="14" fill="none" stroke="#8c959f" stroke-width="1.25" stroke-dasharray="4 4"/>
+<rect x="640" y="76" width="280" height="292" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="654" y="98" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Kubernetes cluster C</text>
+<rect x="656" y="116" width="248" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="780" y="138.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Simplyblock Operator</text>
+<rect x="656" y="176" width="248" height="50" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="780" y="198" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Control plane</text>
+<text x="780" y="215" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">mgmt pods + FoundationDB</text>
+<rect x="656" y="284" width="90" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="701" y="306.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="758" y="252" width="146" height="100" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="772" y="274" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage nodes</text>
+<rect x="768" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="787" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<rect x="812" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="831" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<rect x="856" y="294" width="38" height="40" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="875" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN</text>
+<path d="M780,152 L780,176" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<path d="M701,284 L701,226" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<path d="M831,226 L831,252" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<text x="780" y="398" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle" font-style="italic">blast radius: this cluster only</text>
+<line x1="24" y1="412" x2="936" y2="412" stroke="#d0d7de" stroke-width="1"/>
+<rect x="24" y="423" width="20" height="14" rx="3" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.25"/>
+<text x="52" y="434.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">Kubernetes cluster</text>
+<rect x="198.70000000000002" y="423" width="20" height="14" rx="3" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="226.7" y="434.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">simplyblock</text>
+<path d="M323.35,430 L349.35,430" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)" fill="none"/>
+<text x="357.35" y="434.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">control</text>
+<rect x="425.40000000000003" y="423" width="20" height="14" rx="3" fill="none" stroke="#8c959f" stroke-dasharray="4 3"/>
+<text x="453.4" y="434.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">blast radius</text>
+</svg>
