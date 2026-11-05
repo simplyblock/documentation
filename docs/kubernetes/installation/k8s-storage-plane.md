@@ -231,7 +231,7 @@ and which of them can change later are explained in [Cluster Deployment Options]
 |---------------------------------------------------------------|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `name`                                                        | Required, at most 63 characters     | Name of the `StorageCluster`. Discovery proposes `<draft name>-cluster`.                                                             |
 | `maxSubsystemCount`                                           | Required, 10 to 500                 | NVMe subsystems the cluster serves.                                                                                                  |
-| `vcpuCount`                                                   | Required, at least 4                | vCPUs per storage node.                                                                                                              |
+| `vcpuCount`                                                   | Required, at least 4                | vCPUs per storage node. Discovery proposes 15% of a socket, at least 5, see [vCPU Count](#vcpu-count).                               |
 | `minHugePagesSize`                                            | For example, `16G`                  | Minimum huge page memory per storage node.                                                                                           |
 | `stripe`                                                      | `dataChunks` and `parityChunks`     | The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md). Allowed: 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, 4+2.      |
 | `fabricType`                                                  | For example, `tcp`                  | The NVMe-oF transport.                                                                                                               |
@@ -246,6 +246,40 @@ and which of them can change later are explained in [Cluster Deployment Options]
 | `backup`                                                      | —                                   | The S3 store backups go to, see [Backup and Recovery](../operations/data-protection/backup-recovery.md).                             |
 | `ports`                                                       | —                                   | Overrides the NVMe-oF, RPC, and node-agent ports.                                                                                    |
 | `tolerations`, `containerResources`, `initContainerResources` | —                                   | Placement and sizing of the storage node workload.                                                                                   |
+
+### vCPU Count
+
+`vcpuCount` is the number of vCPUs every storage node of the cluster dedicates to the data plane. The value is the same
+for all storage nodes of a cluster, and it is fixed when the cluster is created.
+
+When the deployment document states no `vcpuCount`, discovery proposes one from the smallest worker it found:
+
+- 15% of the logical CPUs (vCPUs) of the socket the storage node runs on, rounded down.
+- At least 5 vCPUs.
+- With several storage nodes per socket (`nodesPerSocket`), the 15% are shared among them.
+- Never more than the socket provides beyond the two vCPUs reserved for the kubelet and the operating system, and never
+  less than 4.
+
+For example, a socket with 64 vCPUs gets 9, and a socket with 320 vCPUs gets 48. The proposal suits hyper-converged
+workers, which share their CPUs with applications. Dedicated storage workers and I/O-intensive workloads benefit from a
+higher count; see [Storage Node CPU](../../deployment-preparation/sizing.md#storage-node-cpu) for the guidance. The
+note in `status.message` of the draft states how the value was derived.
+
+!!! warning "Operator images released before this fix"
+    The operator images first released as 26.4.0-beta4, and earlier versions, propose all logical CPUs of the socket
+    except two, for example, 318 on a socket with 320 vCPUs. On large workers, such a storage node cannot be scheduled
+    and its addition to the cluster fails. With these images, the value must be checked and lowered in the draft before
+    approval.
+
+The proposal is changed in the draft before approval:
+
+```bash title="Setting the vCPU count of the draft"
+kubectl -n simplyblock patch cdc discovered-initial-discovery     --type=merge -p '{"spec":{"cluster":{"vcpuCount":16}}}'
+```
+
+After approval, the vCPU count can no longer be changed. A cluster created with a wrong value, which holds no volumes
+yet, is removed as described in [Cleaning Up a Failed Deployment](#cleaning-up-a-failed-deployment). The new discovery
+run writes a new draft, whose `vcpuCount` is corrected before approval.
 
 ### Node Groups and Devices
 
@@ -483,6 +517,77 @@ and `status.message` explains them. The storage nodes report `Online` in their p
 
 The operator also writes the cluster credentials for the CSI driver into the Secret `simplyblock-csi-secret-v2` in the
 operator's namespace. The Secret is maintained by the operator and does not need to be managed manually.
+
+## Cleaning Up a Failed Deployment
+
+A deployment that never reached `Online` (for example, because a storage node could not be added) is cleaned up in
+one of two ways:
+
+- **Resource cleanup** removes only the storage cluster and its documents. The operator, the control plane,
+  FoundationDB, the CSI driver, and the certificates stay in place, and discovery and deployment are run again. It
+  is the faster way and is tried first.
+- **Full cleanup** removes the whole installation, including the operator, and is followed by a new installation. It
+  is used when the resource cleanup does not complete, or when the installation itself is broken.
+
+Both apply only to a cluster that holds no volumes yet.
+
+The reason of the failure is found and fixed first, otherwise the next attempt fails the same way. Typical signs are a
+`StorageCluster` that stays in the phase `Provisioning`, a `node_add` task with the status `suspended`, and
+`NodeAddFailing` events on the storage nodes:
+
+```bash title="Finding the reason of a failed deployment"
+kubectl -n simplyblock get storagecluster -o yaml | grep -A12 "^  status:"
+kubectl -n simplyblock get events --field-selector reason=NodeAddFailing
+kubectl -n simplyblock get events --field-selector reason=FailedScheduling
+```
+
+### Resource Cleanup for Rerunning Discovery and Deployment
+
+The resources are removed in order, each one after the previous is gone. Deleting the `StorageCluster` also deletes
+the cluster in the control plane:
+
+```bash title="Removing the resources of a failed deployment"
+NS=simplyblock
+
+kubectl -n $NS delete storagenodes --all --wait=true --timeout=10m
+kubectl -n $NS delete storagenodesets --all --wait=true --timeout=10m
+kubectl -n $NS delete storagecluster --all --wait=true --timeout=10m
+kubectl -n $NS delete clusterdeploymentconfigs --all --wait=true
+kubectl -n $NS delete operatorops --all --wait=true
+
+kubectl -n $NS get storagecluster,storagenodes,storagenodesets,clusterdeploymentconfigs,operatorops
+```
+
+On OpenShift, the machine configuration of the failed storage nodes is removed as well (see
+[Machine Configuration of a Failed Deployment](openshift.md#machine-configuration-of-a-failed-deployment)).
+
+With no `StorageCluster`, `ClusterDeploymentConfig`, or `OperatorOps` left, the operator starts the
+[initial discovery](#automatic-initial-discovery) again and writes a new draft. The draft is corrected (for example,
+its [vCPU count](#vcpu-count)) and approved as described above.
+
+A resource that stays in `Terminating` after the timeout has a finalizer the operator cannot clear, typically because
+the control plane refused to delete the cluster or a half-added storage node. The operator log names the reason. If it
+cannot be resolved, the full cleanup is used instead.
+
+### Full Cleanup for Redeployment
+
+The whole installation is removed with the cleanup script of the Simplyblock Operator (see
+[Removing a Previous Installation](k8s-control-plane.md#removing-a-previous-installation)), which deletes the custom
+resources, their finalizers, the operator, node labels, and persistent volumes:
+
+```bash title="Removing the whole installation"
+curl -sO https://raw.githubusercontent.com/simplyblock/simplyblock-operator/main/helm-charts/scripts/cleanup-simplyblock.sh
+chmod +x cleanup-simplyblock.sh
+
+export KUBECONFIG=/path/to/kubeconfig
+./cleanup-simplyblock.sh simplyblock
+```
+
+The script does not remove machine configuration on OpenShift, which is removed as described in
+[Machine Configuration of a Failed Deployment](openshift.md#machine-configuration-of-a-failed-deployment).
+
+The operator is then installed again (see [Installing the Operator](k8s-control-plane.md#installing-the-operator)).
+The initial discovery runs as on a new installation and writes a new draft, which is corrected and approved.
 
 ## Create a Storage Pool
 
