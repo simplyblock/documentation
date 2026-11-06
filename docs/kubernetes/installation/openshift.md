@@ -249,7 +249,7 @@ mirror:
     - name: quay.io/simplyblock-io/snapshot-controller:v8.2.0
     - name: quay.io/simplyblock-io/cert-manager-controller:v1.16.2
     - name: quay.io/simplyblock-io/cert-manager-cainjector:v1.16.2
-    - name: quay.io/jetstack/cert-manager-webhook:v1.16.2
+    - name: quay.io/simplyblock-io/cert-manager-webhook:v1.16.2
     - name: quay.io/simplyblock-io/cert-manager-acmesolver:v1.16.2
     - name: quay.io/simplyblock-io/local-path-provisioner:v0.0.30
     - name: quay.io/simplyblock-io/busybox:1.37.0
