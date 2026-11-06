@@ -143,8 +143,8 @@ oc -n simplyblock get operatorops discover-now -w
 The run probes every schedulable worker and ends `Succeeded`. It writes a draft `ClusterDeploymentConfig` named
 `discovered-discover-now`. Nothing is deployed from a draft. To limit the run to labeled workers or to certain
 devices, see [Create a Storage Cluster](k8s-storage-plane.md).
-Control-plane nodes are left out unless the run is set up for them, as described in
-[Storage Nodes on Control-Plane Nodes](#storage-nodes-on-control-plane-nodes).
+Control-plane nodes are left out unless `spec.discover.enableControlPlaneNodes` is set to `true` and their taints
+are tolerated, as described in [Storage Nodes on Control-Plane Nodes](#storage-nodes-on-control-plane-nodes).
 
 Devices that carry a partition table are not reported. A device whose table is stale, such as one left by an earlier
 simplyblock cluster, is reported once `spec.discover.enablePartitionedDevices` is set to `true`.
@@ -232,22 +232,27 @@ TLS cannot be changed once the `ControlPlane` exists. For details, see [Securing
 The add-on manifests are built into the operator, so no manifest is downloaded at install time. The images are not:
 `oc-mirror` copies the images the bundle lists (the operator, the control plane, the storage node, and the
 rebalancer) but not the images the operator deploys for the NUMA resource plugin, the control plane, and the
-add-ons. Those are added to the ImageSetConfiguration as additional images:
+add-ons. Those are added to the ImageSetConfiguration as additional images. The release images of the operator,
+the control plane (sbcli), and the storage plane (Ultra) are listed as well, so that every image is synchronized in one
+run. Their tags follow the installed release:
 
 ```yaml title="Additional images for an air-gapped installation (ImageSetConfiguration excerpt)"
 mirror:
   additionalImages:
+    - name: quay.io/simplyblock-io/simplyblock-operator:v26.4.0-beta5
+    - name: quay.io/simplyblock-io/simplyblock:26.4.0-beta5
+    - name: quay.io/simplyblock-io/ultra:26.4.0-beta5
     - name: quay.io/simplyblock-io/fdb-kubernetes-operator:v2.13.0
     - name: quay.io/simplyblock-io/fdb-kubernetes-monitor:7.3.63
     - name: quay.io/simplyblock-io/minio:RELEASE.2024-01-16T16-07-38Z
     - name: quay.io/simplyblock-io/minio-client:RELEASE.2024-01-16T16-06-34Z
     - name: quay.io/simplyblock-io/snapshot-controller:v8.2.0
-    - name: quay.io/jetstack/cert-manager-controller:v1.16.2
-    - name: quay.io/jetstack/cert-manager-cainjector:v1.16.2
-    - name: quay.io/jetstack/cert-manager-webhook:v1.16.2
-    - name: quay.io/jetstack/cert-manager-acmesolver:v1.16.2
-    - name: docker.io/rancher/local-path-provisioner:v0.0.30
-    - name: docker.io/library/busybox:1.37.0
+    - name: quay.io/simplyblock-io/cert-manager-controller:v1.16.2
+    - name: quay.io/simplyblock-io/cert-manager-cainjector:v1.16.2
+    - name: quay.io/simplyblock-io/cert-manager-webhook:v1.16.2
+    - name: quay.io/simplyblock-io/cert-manager-acmesolver:v1.16.2
+    - name: quay.io/simplyblock-io/local-path-provisioner:v0.0.30
+    - name: quay.io/simplyblock-io/busybox:1.37.0
 ```
 
 The NUMA resource plugin image is set per release. The exact reference is the value of `SB_NUMA_PLUGIN_IMAGE` in
