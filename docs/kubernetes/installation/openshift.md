@@ -143,8 +143,8 @@ oc -n simplyblock get operatorops discover-now -w
 The run probes every schedulable worker and ends `Succeeded`. It writes a draft `ClusterDeploymentConfig` named
 `discovered-discover-now`. Nothing is deployed from a draft. To limit the run to labeled workers or to certain
 devices, see [Create a Storage Cluster](k8s-storage-plane.md).
-Control-plane nodes are left out unless the run is set up for them, as described in
-[Storage Nodes on Control-Plane Nodes](#storage-nodes-on-control-plane-nodes).
+Control-plane nodes are left out unless `spec.discover.enableControlPlaneNodes` is set to `true` and their taints
+are tolerated, as described in [Storage Nodes on Control-Plane Nodes](#storage-nodes-on-control-plane-nodes).
 
 Devices that carry a partition table are not reported. A device whose table is stale, such as one left by an earlier
 simplyblock cluster, is reported once `spec.discover.enablePartitionedDevices` is set to `true`.
