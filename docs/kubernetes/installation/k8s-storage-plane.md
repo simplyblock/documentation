@@ -123,6 +123,7 @@ kubectl -n simplyblock get operatorops discover-rack-b -w
 | `tolerations`             | Up to 32             | What the probe pods tolerate. They reach the draft as well, because the taints a run probed through are the taints the cluster has to live with. |
 | `enableControlPlaneNodes` | Off                  | Also considers nodes running the API server and etcd.                                                                                            |
 | `deviceFilter`            | —                    | Narrows the devices that reach the draft, see below.                                                                                             |
+| `network`                 | Network mode         | Overrides the network discovery would draft, for example, `spdkOnHostNetwork: true` on workers without a data NIC.                               |
 | `clusterRef`              | —                    | Writes a growth draft for an existing cluster instead of a new one.                                                                              |
 
 `workers` and `nodeSelector` are mutually exclusive; a run that carries both is refused.
