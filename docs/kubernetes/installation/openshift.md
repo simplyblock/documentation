@@ -242,12 +242,12 @@ mirror:
     - name: quay.io/simplyblock-io/minio:RELEASE.2024-01-16T16-07-38Z
     - name: quay.io/simplyblock-io/minio-client:RELEASE.2024-01-16T16-06-34Z
     - name: quay.io/simplyblock-io/snapshot-controller:v8.2.0
-    - name: quay.io/jetstack/cert-manager-controller:v1.16.2
-    - name: quay.io/jetstack/cert-manager-cainjector:v1.16.2
+    - name: quay.io/simplyblock-io/cert-manager-controller:v1.16.2
+    - name: quay.io/simplyblock-io/cert-manager-cainjector:v1.16.2
     - name: quay.io/jetstack/cert-manager-webhook:v1.16.2
-    - name: quay.io/jetstack/cert-manager-acmesolver:v1.16.2
-    - name: docker.io/rancher/local-path-provisioner:v0.0.30
-    - name: docker.io/library/busybox:1.37.0
+    - name: quay.io/simplyblock-io/cert-manager-acmesolver:v1.16.2
+    - name: quay.io/simplyblock-io/local-path-provisioner:v0.0.30
+    - name: quay.io/simplyblock-io/busybox:1.37.0
 ```
 
 The NUMA resource plugin image is set per release. The exact reference is the value of `SB_NUMA_PLUGIN_IMAGE` in
