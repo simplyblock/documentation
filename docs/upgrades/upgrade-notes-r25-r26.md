@@ -365,7 +365,7 @@ helm upgrade --install simplyblock-operator simplyblock/simplyblock-operator \
     --set controlplane.foundationdb.enabled=false \
     --set image.simplyblock.repository=<TARGET_REPO> \
     --set image.simplyblock.tag=<TARGET_TAG> \
-    --set image.operator.repository=simplyblock/simplyblock-operator \
+    --set image.operator.repository=quay.io/simplyblock-io/simplyblock-operator \
     --set image.operator.tag=<OPERATOR_TAG> \
     --set controlplane.csiHostpathDriver.enabled=true \
     --set controlplane.storageclass.name=local-hostpath \
