@@ -6,8 +6,8 @@ weight: 20000
 
 Simplyblock is a high-performance, distributed storage platform for cloud-native environments. It pools the
 storage devices of many servers into one storage cluster and serves logical volumes over NVMe over Fabrics
-(NVMe/TCP or NVMe/RoCE). On the same clusters, it also provides shared file storage through pNFS and, soon as a
-beta, S3-compatible object storage. On Kubernetes, the Simplyblock Operator deploys and manages the platform, and
+(NVMe/TCP or NVMe/RoCE). On the same clusters, it also provides shared file storage through pNFS and, as a beta,
+S3-compatible object storage. On Kubernetes, the Simplyblock Operator deploys and manages the platform, and
 workloads consume storage through the simplyblock CSI driver. Integrations for Proxmox and OpenStack are available as
 well.
 
@@ -25,7 +25,7 @@ well.
 - **High availability:** Distributed erasure coding, NVMe multipathing with automatic failover, and failure domains
   keep volumes available through device, node, and rack failures.
 - **Block, file, and object:** Block volumes, shared file storage (`ReadWriteMany`) through pNFS, and S3-compatible
-  object storage (coming soon as a beta) run on the same NVMe-oF infrastructure and share all data services.
+  object storage (beta) run on the same NVMe-oF infrastructure and share all data services.
 - **Data services:** Thin provisioning, instant snapshots and clones, compression and deduplication, encryption with
   end-to-end key management through an external KMS, policy-based backups to S3, live migration between clusters,
   and policy-based replication between clusters.
