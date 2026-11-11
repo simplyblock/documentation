@@ -88,7 +88,7 @@ For detailed CRD documentation, see [Simplyblock Operator](../../reference/opera
 - [Connecting to an External Control Plane](install-csi.md): The managed profile for clusters without a local control
   plane.
 - [Air Gap Installation](air-gap.md): Mirroring the images into a local container registry.
-- [Argo CD](argocd.md): The operator chart and the storage plane as two Argo CD Applications.
+- [Argo CD](argocd.md): The operator chart as an Argo CD Application, and the storage plane approved in the cluster.
 - [EKS](eks.md): Instance types, node groups, node images, EBS storage, and the Helm values on EKS.
 - [Storage Network on Amazon EKS](storage-network/amazon-eks.md): A dedicated data ENI with Cilium in ENI mode and Multus, in
   the same subnet or a dedicated subnet.

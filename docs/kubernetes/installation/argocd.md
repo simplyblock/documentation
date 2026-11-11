@@ -1,21 +1,20 @@
 ---
 title: "Argo CD"
-description: "Deploy simplyblock with Argo CD: one Application for the operator chart and the control plane, a second one for the storage plane, and the values that differ from a Helm install."
+description: "Deploy simplyblock with Argo CD: the Application for the operator chart, the approved storage plane, and the values that differ from Helm."
 weight: 30350
 ---
 
-Simplyblock is deployed with Argo CD from two `Application` resources. The first one installs the Helm chart, which
-brings up the operator, the control plane, and the CSI driver. The second one syncs the storage plane: an approved
-`ClusterDeploymentConfig` kept in a Git repository. Everything else is created by the operator, and Argo CD does not
-track it.
+Simplyblock is deployed with Argo CD from one `Application` that installs the Helm chart, which brings up the
+operator, the control plane, and the CSI driver. The storage plane is not synced from Git: a discovery run writes it
+as a draft `ClusterDeploymentConfig`, which is reviewed and approved in the cluster. Everything the operator creates
+is outside the `Application`, and Argo CD does not track it.
 
 On OpenShift, the operator is installed through OperatorHub instead, as described in [OpenShift](openshift.md). The
 `OperatorGroup` and the `Subscription` shown there are synced by an `Application` like any other manifest.
 
 ## Prerequisites
 
-- **Argo CD:** Tested with version 3.5, with access to `https://install.simplyblock.io/helm` and to the Git repository
-  that holds the storage plane.
+- **Argo CD:** Tested with version 3.5, with access to `https://install.simplyblock.io/helm`.
 - **Kubernetes:** A cluster that meets the [Software Requirements](../../deployment-preparation/software-requirements.md).
 
 cert-manager, the FoundationDB CRDs, the CSI snapshot controller, and a local-path provisioner do not have to be
@@ -38,9 +37,6 @@ spec:
     targetRevision: <chart-version>
     helm:
       releaseName: simplyblock-operator
-      valuesObject:
-        discovery:
-          enabled: false
   destination:
     server: https://kubernetes.default.svc
     namespace: simplyblock
@@ -56,10 +52,6 @@ spec:
 kubectl apply -f simplyblock-application.yaml
 kubectl -n simplyblock get controlplane -w
 ```
-
-`discovery.enabled: false` keeps the chart from raising the discovery run. The storage plane is declared in Git, so a
-draft waiting in the cluster has no reader. A cluster whose workers and devices are not known yet keeps the default
-for its first sync and copies the draft into Git, as described below.
 
 ### TLS on a Cluster Without cert-manager
 
@@ -94,96 +86,26 @@ driver:
 
 ## Storage Plane
 
-The storage plane is one approved `ClusterDeploymentConfig` per cluster. Its workers, interfaces, and device
-addresses come from a discovery run. On a first installation, the discovery run is raised by the chart (with
-`discovery.enabled` left at its default) or written by hand as an `OperatorOps` (see
-[Create a Storage Cluster](k8s-storage-plane.md#discover-workers-and-devices)). The draft it produces is reviewed,
-committed to Git under a name of its own with `approved: true`, and the draft in the cluster is deleted:
+On a fresh installation, the chart raises the discovery run `initial-discovery`, and the operator writes its result as
+the draft `ClusterDeploymentConfig` `discovered-initial-discovery`. Further runs are requested with an `OperatorOps`
+resource and the action `Discover` (see [Create a Storage Cluster](k8s-storage-plane.md#discover-workers-and-devices)).
 
-```bash title="Copying the draft"
+The draft is inert until it is approved. It is reviewed and approved with `kubectl`:
+
+```bash title="Reviewing and approving the draft"
 kubectl -n simplyblock get clusterdeploymentconfig discovered-initial-discovery -o yaml
-kubectl -n simplyblock delete clusterdeploymentconfig discovered-initial-discovery
+kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery \
+    --type merge -p '{"spec":{"approved":true}}'
 ```
 
-```yaml title="Storage plane in Git (storage/clusterdeploymentconfig.yaml)"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: ClusterDeploymentConfig
-metadata:
-  name: simplyblock-storage
-  namespace: simplyblock
-spec:
-  approved: true
-  environment: K3s
-  hostOS:
-    distro: rocky
-    family: RedHat
-  cluster:
-    name: simplyblock-cluster
-    clusterMode: Standard
-    enableDriveFormat: true
-    maxSubsystemCount: 30
-    vcpuCount: 5
-    network:
-      spdkOnHostNetwork: true
-    stripe:
-      dataChunks: 1
-      parityChunks: 1
-  nodeSets:
-    - name: storage
-      groups:
-        - name: nvme
-          mgmtInterface: eth0
-          dataInterfaces:
-            - eth1
-          devices:
-            nvme:
-              - "0000:00:02.0"
-              - "0000:00:03.0"
-          workers:
-            - worker-1
-            - worker-2
-            - worker-3
-```
-
-```yaml title="Application for the storage plane (storage-application.yaml)"
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: simplyblock-storage
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://git.example.com/platform/gitops.git
-    targetRevision: main
-    path: simplyblock/storage
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: simplyblock
-  syncPolicy:
-    automated:
-      prune: false
-      selfHeal: true
-    syncOptions:
-      - SkipDryRunOnMissingResource=true
-    retry:
-      limit: 10
-      backoff:
-        duration: 30s
-        maxDuration: 5m
-```
-
-`prune: false` keeps a `ClusterDeploymentConfig` that was removed from Git in the cluster. Deleting the storage plane
-stays a deliberate `kubectl delete`. `SkipDryRunOnMissingResource` and the retry cover a storage `Application` that
-syncs before the operator chart has installed the CRDs.
-
-The operator expands the document into a `StorageCluster` and its `StorageNodeSet`. Approval cannot be withdrawn, and
-the cluster template is spent on that first expansion. Workers are added to an existing cluster with a further
-`ClusterDeploymentConfig` that names it in `spec.clusterRef`, committed to the same path.
+The operator expands the approved document into a `StorageCluster` and its `StorageNodeSet`. Neither the draft nor
+the objects it expands into belong to the `Application`, so `selfHeal` and `prune` do not touch them. Approval
+cannot be withdrawn.
 
 ## Operations
 
-`StorageClusterOps`, `StorageNodeSetOps`, `ReplicationOps`, and the other `*Ops` resources are imperative requests.
+`OperatorOps`, `StorageClusterOps`, `StorageNodeSetOps`, `ReplicationOps`, and the other `*Ops` resources are
+imperative requests.
 They are applied with `kubectl` and not committed to a path that an `Application` syncs with `selfHeal`, since a
 completed request that Argo CD re-creates is a new request.
 
@@ -197,5 +119,5 @@ kubectl -n argocd get applications
 kubectl -n simplyblock get controlplane,clusterdeploymentconfig,storagecluster
 ```
 
-Both `Application` resources report `Synced` and `Healthy`, the `ControlPlane` reports `Available`, and the
-`StorageCluster` reports `Online`.
+The `Application` reports `Synced` and `Healthy`, the `ControlPlane` reports `Available`, and the `StorageCluster`
+reports `Online`.
