@@ -183,10 +183,6 @@ spec:
 
 The claim reaches `Bound`, and `kubectl logs simplyblock-test` prints `hello`.
 
-!!! note
-    A consumer cluster supports `ReadWriteOnce` volumes, both with a filesystem and with `volumeMode: Block`.
-    `ReadWriteMany` volumes are not yet supported on a consumer cluster.
-
 ## Configuring the CSI Driver
 
 The Helm values under `driver.*` are copied into the `SimplyblockDriver` resource. The most important fields are:
