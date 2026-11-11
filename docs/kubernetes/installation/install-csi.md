@@ -26,6 +26,43 @@ The workers that run the node plugin must satisfy the following requirements:
 
 - [Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
 - [Linux Kernel Versions](../../reference/supported-linux-kernels.md)
+- The NVMe/TCP initiator, described below.
+
+### NVMe/TCP Initiator on Client Nodes
+
+A node that runs application pods using simplyblock storage attaches its volumes over NVMe/TCP. Its kernel needs the
+`nvme-tcp` module and native [NVMe over Fabrics multipathing](../../important-notes/terminology.md#multipathing)
+(`CONFIG_NVME_MULTIPATH`). A node image that provides both, for example, Ubuntu, meets the requirement. The
+platform guides ([Amazon EKS](eks.md#node-images), [GKE](gke.md#node-images)) give the node-image form for each.
+
+!!! note "Storage and control plane nodes are not affected"
+    This applies only to client nodes, the nodes that mount volumes. Storage nodes and control plane nodes do not need
+    the host `nvme-tcp` module: the storage engine runs in user space, and the connections between storage nodes do not
+    use the NVMe initiator of the host kernel.
+
+Native multipathing is a property of the kernel build, and is checked on the host:
+
+```bash title="Checking for native NVMe multipathing"
+cat /sys/module/nvme_core/parameters/multipath
+```
+
+The answer must be `Y`. The tested kernels are listed in
+[Supported Linux Kernels](../../reference/supported-linux-kernels.md).
+
+The `nvme-tcp` module is often absent from a default cloud image. The Ubuntu AWS kernel ships it in the package
+`linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without the module the CSI node plugin cannot
+open `/dev/nvme-fabrics`, and attaching a volume fails with
+`Failed to open /dev/nvme-fabrics: No such file or directory`. The package is installed, the module loaded, and the
+load persisted across reboots, before the node joins the cluster:
+
+```bash title="Installing the NVMe/TCP initiator"
+apt-get install -y linux-modules-extra-$(uname -r)   # Ubuntu
+echo nvme-tcp > /etc/modules-load.d/nvme-tcp.conf
+modprobe nvme-tcp
+```
+
+On RHEL and its derivatives the package is `kernel-modules-extra`. Baking these steps into the node image or the node
+group's bootstrap configuration gives every new node the module before it joins the cluster.
 
 ## Preparing the Credentials
 

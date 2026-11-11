@@ -96,6 +96,10 @@ cat /sys/module/nvme_core/parameters/multipath
 The answer must be `Y`. Storage nodes and control plane nodes are not affected, since the storage engine runs in user
 space and the connections between storage nodes do not use the NVMe initiator of the host kernel.
 
+An Ubuntu node image provides native multipathing but does not load the `nvme-tcp` module by default. Installing and
+persisting it is the same as on any client node, described under
+[NVMe/TCP Initiator on Client Nodes](install-csi.md#nvmetcp-initiator-on-client-nodes).
+
 ## Storage for the Control Plane
 
 FoundationDB and Prometheus of the control plane store their data on persistent volumes. GKE provides the Compute

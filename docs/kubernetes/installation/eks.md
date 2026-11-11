@@ -83,6 +83,9 @@ _Spread_, so that no two storage nodes share the same hardware.
 
 ## Node Images
 
+This section is the EKS-specific form of the general
+[NVMe/TCP initiator requirement for client nodes](install-csi.md#nvmetcp-initiator-on-client-nodes).
+
 !!! warning "Amazon Linux 2023 is not suitable for client nodes"
     Nodes that mount simplyblock volumes require a Linux kernel with native
     [NVMe over Fabrics multipathing](../../important-notes/terminology.md#multipathing) (`CONFIG_NVME_MULTIPATH`).
