@@ -25,81 +25,147 @@ machine:
       - name: vfio_iommu_type1
 ```
 
-## Huge Pages Reservations
+## Huge Pages and the Kubelet: Two Modes
 
-Simplyblock requires huge pages memory to operate. The storage engine expects to find huge pages of 2 MiB page size. The
-required amount of huge pages depends on a number of factors.
+Simplyblock requires huge pages memory to operate (2 MiB pages) and, for the highest performance, a kubelet that runs
+the static CPU manager with a single-NUMA-node topology manager. On other distributions the storage node prepares its
+worker itself. The Talos host is immutable and has no shell, so both settings live in the **machine config**, and
+there are two ways to get them there. The deployment document picks one with `spec.cluster.talosMachineConfig`:
 
-After [installing the Simplyblock Operator](k8s-control-plane.md) and waiting for the control plane to become
-`Available`, the required huge pages can be calculated from the `simplyblock-admin-control` pod of the control plane.
+| Mode | `talosMachineConfig` | Who writes the machine config | Talos API access from the cluster |
+|------|----------------------|-------------------------------|-----------------------------------|
+| Pre-provisioned (**default**) | `Preprovisioned` or unset | You, before the storage nodes are added | Not needed |
+| Managed | `Managed` | The storage node, through the Talos API, while it is added | Required (see below) |
 
-Run the following command on the admin control pod to calculate the huge pages required on the host:
-
-```bash title="Run the huge memory calculator"
-{{ cliname }} storage-node configure \
-  --calculate-hp-only \
-  --number-of-devices <NUMBER_OF_DEVICES>
+```yaml title="Choosing the mode in the ClusterDeploymentConfig"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
+spec:
+  environment: Talos
+  cluster:
+    name: mycluster
+    talosMachineConfig: Preprovisioned   # Preprovisioned (default) | Managed
+    enableCpuTopology: true              # default true on Talos
+    enableKubeletConfiguration: true     # default true on Talos
 ```
 
-The following flags also affect the huge page calculation:
+The field is accepted only when `spec.environment` is `Talos`. A document written by the operator's discovery run
+states none of the three fields, which gives a pre-provisioned cluster with the kubelet included. The mode can be
+changed on a running cluster by patching the StorageCluster (`spec.storageNodes.talosMachineConfig`); the storage
+nodes pick the new value up on their next add or restart.
 
-- `--nodes-per-socket (default: 1)`
-- `--sockets-to-use (default: 0)`
+In both modes a storage node first reads what its worker already has: the host's huge-page pool, the capacity the
+kubelet advertises, and the kubelet's live configuration. A worker that already carries everything is left alone.
+The modes differ only in what happens when something is missing. The huge pages are always part of this; the
+kubelet's CPU topology is part of it only when `enableCpuTopology` and `enableKubeletConfiguration` are both on, which
+a Talos document turns on by default.
 
-The maximum number of subsystems and the vCPU count are cluster-level settings (`maxSubsystemCount` and `vcpuCount`
-of the `StorageCluster`), which the host does not know before it joins the cluster. The calculator therefore sizes
-the host for the default of 75 subsystems and its default core layout. For a `maxSubsystemCount` above 75, add 20
-pages (40 MiB) for every additional subsystem, up to the maximum of 500.
+### Pre-provisioned (default)
 
-```plain title="Example output of huge pages calculator"
-[demo@demo ~]# {{ cliname }} storage-node configure \
-  --calculate-hp-only --number-of-devices 4
-INFO: The required number of huge pages on this host is: <NUMBER_OF_PAGES> (<SIZE> MB)
-True
-```
+The storage node applies nothing. If the pool or the kubelet settings are short, adding the node fails and the storage
+node's log carries the exact machine-config patch to apply, sized for that worker. The operator retries the add on its
+own once the patch is in.
 
-To apply the change to Talos' worker nodes, a YAML configuration file with the following content is required. The number
-of pages is to be replaced with the number calculated above.
-
-```yaml title="Content of huge-pages-config.yaml"
+```plain title="A refusal in the storage node's log"
+Talos node 'worker-3': host provides 4000 MiB of huge pages but the SPDK pod requests 6088 MiB (hugepages-2Mi),
+i.e. at least 3044 2 MiB pages, and the machine config is pre-provisioned (TALOS_MACHINE_CONFIG=preprovisioned).
+Save the YAML below as patch.yaml and apply it to the worker with 'talosctl -n <node ip> patch mc -p @patch.yaml',
+then restart its kubelet with 'talosctl -n <node ip> service kubelet restart' so it advertises the pool, or set
+storageNodes.talosMachineConfig: Managed on the StorageCluster to let the node apply it through the Talos API:
 machine:
-  sysctls:
-     vm.nr_hugepages: "<number-of-pages>"
+  sysfs:
+    devices.system.node.node0.hugepages.hugepages-2048kB.nr_hugepages: '3423'
 ```
 
-To activate the huge pages, the `talosctl` command should be used.
+The file is the lines from `machine:` to the end, nothing else:
 
-```bash title="Enable Huge Pages in Talos"
-[demo@demo ~]# talosctl patch mc --nodes <WORKER_NODE_IP> \
-    --path @huge-pages-config.yaml
-[demo@demo ~]# talosctl reboot --nodes <WORKER_NODE_IP>
+```yaml title="Content of patch.yaml"
+machine:
+  sysfs:
+    devices.system.node.node0.hugepages.hugepages-2048kB.nr_hugepages: '3423'
 ```
 
-## Configuring CPU Topology
+```bash title="Apply the patch and restart the kubelet"
+[demo@demo ~]# talosctl patch mc --nodes <WORKER_NODE_IP> --mode=no-reboot --patch @patch.yaml
+[demo@demo ~]# talosctl service kubelet restart --nodes <WORKER_NODE_IP>
+```
 
-To ensure highest performance, simplyblock requires the Kubernetes kubelet on Talos to be configured to use a static
-CPU manager and to use a single NUMA node topology manager.
+No reboot is needed: the pool is applied live, and the kubelet restart makes it advertise the new capacity. The
+count is simplyblock's own sizing for that worker and replaces the key's value; a pool the worker keeps for another
+consumer has to be added to it by hand, since the node only verifies that the total covers its request.
 
-Because Talos has no writable kubelet configuration, the storage nodes do not configure the kubelet themselves on
-Talos, and the configuration has to be applied through the Talos machine configuration.
+To put the whole fleet in place before adding any node, use the same `machine.sysfs` key with one entry per NUMA
+node that will host a storage node, and the kubelet settings below, in each worker's machine config at install
+time. One way to size a fleet of identical workers is to add the first worker without the patch and read the numbers
+off the refusal. A pool reserved through `machine.sysctls` `vm.nr_hugepages` is honoured as well, as long as it
+covers the request; do not set both.
 
 ```yaml title="Content of enable-cpu-topology.yaml"
 machine:
   kubelet:
-    extraArgs:
-      cpu-manager-policy: static
-      cpu-manager-reconcile-period: "5s"
-      topology-manager-policy: "single-numa-node"
-      topology-manager-scope: "pod"
+    extraConfig:
+      cpuManagerPolicy: static
+      reservedSystemCPUs: "0,1"
+      topologyManagerPolicy: single-numa-node
+      topologyManagerScope: pod
 ```
 
-To activate the CPU topology configuration, the `talosctl` command should be used.
+`reservedSystemCPUs` must match the cluster's `reservedSystemCPU` (default `0,1`): the storage node compares the
+kubelet's live configuration against it. Talos restarts the kubelet itself when `extraConfig` changes. A kubelet that
+previously ran under another CPU-manager policy refuses to start over its checkpoint; put the `extraConfig` block in
+the machine config before the worker's first boot, or remove `/var/lib/kubelet/cpu_manager_state` on the worker first
+(a privileged pod with that path mounted, since the host has no shell).
 
-```bash title="Enable CPU Topology Manager"
-[demo@demo ~]# talosctl patch mc --nodes <WORKER_NODE_IP> \
-    --path @enable-cpu-topology.yaml
-[demo@demo ~]# talosctl reboot --nodes <WORKER_NODE_IP>
+### Managed
+
+With `talosMachineConfig: Managed` the storage node writes the same two settings itself, through the Talos API, and
+only when they are missing: it reserves the huge pages, restarts the kubelet so it advertises them, and patches the
+kubelet's CPU topology. It adds its own pages on top of whatever pool the worker already carries, records that
+baseline on the worker, and never shrinks the pool. A worker whose pool was set by hand and is then switched to
+Managed should have that pool set to `"0"` first, or the node sizes a second allocation on top of the first.
+
+Managed mode needs the Talos API to be reachable from the simplyblock namespace with the `os:admin` role. This is a
+control-plane machine-config change only the cluster's administrator can make:
+
+```yaml title="Talos 1.14 and later: KubeTalosAPIAccessConfig on the control plane nodes"
+apiVersion: v1alpha1
+kind: KubeTalosAPIAccessConfig
+allowedRoles:
+  - os:admin
+allowedKubernetesNamespaces:
+  - simplyblock
 ```
+
+```yaml title="Earlier Talos: machine.features on the control plane nodes"
+machine:
+  features:
+    kubernetesTalosAPIAccess:
+      enabled: true
+      allowedRoles:
+        - os:admin
+      allowedKubernetesNamespaces:
+        - simplyblock
+```
+
+Then create the ServiceAccount that Talos issues the credentials for, in the simplyblock namespace, before the
+storage nodes are added. Talos writes a Secret of the same name next to it:
+
+```yaml title="Content of talos-api-access.yaml"
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: talos-api-access-talos-secrets
+  namespace: simplyblock
+spec:
+  roles:
+    - os:admin
+```
+
+```bash title="Grant the storage nodes Talos API access"
+[demo@demo ~]# kubectl apply -f talos-api-access.yaml
+```
+
+Without it, adding a node in Managed mode fails with a message naming the missing Secret.
 
 ## Required Talos Permissions
 
@@ -152,6 +218,7 @@ spec:
     name: simplyblock-cluster
     maxSubsystemCount: 50
     vcpuCount: 8
+    talosMachineConfig: Preprovisioned   # or Managed, see above
   nodeSets:
     - name: storage
       groups:
@@ -161,8 +228,10 @@ spec:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
 ```
 
-With `environment: Talos`, the expansion sets `enableKubeletConfiguration: false` on
-`StorageCluster.spec.storageNodes`, so the storage nodes rely on the kubelet configuration applied above.
+With `environment: Talos`, the expansion turns `enableCpuTopology` and `enableKubeletConfiguration` on in
+`StorageCluster.spec.storageNodes` unless the document states them off, and copies `talosMachineConfig` there
+(`Preprovisioned` when unset). The storage nodes then verify or apply the huge pages and the kubelet settings as
+described above.
 
 ## Installation of Simplyblock
 
