@@ -27,41 +27,132 @@ The workers that run the node plugin must satisfy the following requirements:
 - [Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
 - [Linux Kernel Versions](../../reference/supported-linux-kernels.md)
 
-## Preparing the Credentials
+## Exposing the Management API of the Storage Cluster
 
-The managed profile needs the base URL of the remote Management API. The endpoint must not be a loopback or link-local
-address. Two optional Secrets in the operator's namespace complete the connection:
+The consumer cluster reaches the storage cluster's Management API over the network. By default, the Management API
+serves a certificate issued only for its in-cluster Service names and requires mutual TLS: it accepts only clients
+that present a certificate signed by the storage cluster's own CA. A consumer cluster has no such certificate.
 
-- **Credentials Secret:** Holds the bearer token for the Management API under the key `token` or `secret`. Without
-  it, no token is sent.
-- **CA bundle Secret:** Holds the CA certificate the endpoint is verified against under the key `ca.crt` or `tls.crt`.
-  Without it, the system trust store is used.
+The Management API is therefore exposed through an ingress controller that terminates TLS with a publicly trusted
+certificate and connects to the Management API with a client certificate issued by the storage cluster's CA. The
+storage cluster's TLS settings stay unchanged. The example uses Traefik. It runs in the storage cluster, with the
+hostname and the TLS section replaced by real values:
 
-```bash title="Create the Secrets for the managed control plane"
-kubectl create namespace simplyblock
-
-kubectl -n simplyblock create secret generic cp-token \
-    --from-literal=token='<MANAGEMENT-API-TOKEN>'
-
-kubectl -n simplyblock create secret generic cp-ca \
-    --from-file=ca.crt=./control-plane-ca.crt
+```yaml title="Expose the Management API through Traefik (storage cluster)"
+# Client certificate that Traefik presents to the Management API.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefik-webappapi-client
+  namespace: simplyblock
+spec:
+  commonName: traefik-webappapi-client
+  secretName: traefik-webappapi-client-tls
+  usages: [digital signature, key encipherment, client auth]
+  issuerRef:
+    kind: ClusterIssuer
+    name: simplyblock-certificate-authority-issuer
+---
+# How Traefik connects to the Management API.
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: webappapi-mtls
+  namespace: simplyblock
+spec:
+  serverName: simplyblock-webappapi.simplyblock.svc
+  rootCAs:
+    - secret: simplyblock-ca-bundle-tls
+  certificatesSecrets:
+    - traefik-webappapi-client-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: webappapi
+  namespace: simplyblock
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`storage-api.example.com`)
+      kind: Rule
+      services:
+        - name: simplyblock-webappapi
+          port: 5000
+          scheme: https
+          serversTransport: webappapi-mtls
+  tls: {}   # a publicly trusted certificate for the hostname above
 ```
 
-A named Secret that does not exist or cannot be used is reported as an error.
+!!! warning
+    The certificate the ingress serves must be publicly trusted, such as one issued by a public ACME certificate authority. The CSI
+    driver of the consumer cluster verifies it against the system trust store of its image, which does not contain
+    a private or corporate CA.
+
+The endpoint answers with `204` once it is reachable:
+
+```bash title="Check the exposed Management API"
+curl -sS -o /dev/null -w '%{http_code}\n' https://storage-api.example.com/api/v2/_meta/ready
+```
+
+## Collecting the Storage Cluster Details
+
+The consumer cluster needs the storage cluster's ID, its cluster secret, and the name of a storage pool. All three
+are read in the storage cluster:
+
+```bash title="Read the cluster ID, the cluster secret, and the pool name (storage cluster)"
+kubectl -n simplyblock get secret simplyblock-csi-secret-v2 \
+    -o jsonpath='{.data.secret\.json}' | base64 -d
+
+kubectl -n simplyblock get storagepool
+```
+
+The first command prints `cluster_id` and `cluster_secret`. The cluster secret is a credential and is best kept in a
+secret store, such as Sealed Secrets or External Secrets, rather than in a Git repository.
+
+Every worker of the consumer cluster that runs pods with simplyblock volumes must reach the storage nodes'
+data-network addresses on the NVMe/TCP ports (4420 and up):
+
+```bash title="Check NVMe/TCP access from a consumer worker"
+nvme discover -t tcp -a <STORAGE-NODE-DATA-IP> -s <PORT>
+```
 
 ## Installing With the Managed Profile
 
-```bash title="Install the operator and CSI driver with the managed profile"
+```bash title="Install the operator and CSI driver with the managed profile (consumer cluster)"
 helm repo add simplyblock https://install.simplyblock.io/helm
 helm repo update
 
 helm install simplyblock-operator simplyblock/simplyblock-operator \
-    --namespace simplyblock \
+    --namespace simplyblock --create-namespace \
     --set deployment.profile=managed \
-    --set controlplane.managed.endpoint=https://cp.example.com \
-    --set controlplane.managed.credentialsSecretRef=cp-token \
-    --set controlplane.managed.caBundleSecretRef=cp-ca
+    --set controlplane.managed.endpoint=https://storage-api.example.com \
+    --set tls.enabled=false \
+    --set tls.mutual_enabled=false \
+    --set externallyManagedSecret.create=true \
+    --set csiConfig.simplybk.uuid=<CLUSTER-ID> \
+    --set csiConfig.simplybk.ip=https://storage-api.example.com \
+    --set csiSecret.simplybk.secret=<CLUSTER-SECRET>
 ```
+
+| Helm value                                         | Purpose                                                                                                       |
+|----------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `deployment.profile=managed`                       | Installs the operator and the CSI driver, and no control plane.                                               |
+| `controlplane.managed.endpoint`                    | The Management API of the storage cluster, as exposed by the ingress.                                         |
+| `tls.enabled`, `tls.mutual_enabled`                | The CSI driver verifies the ingress certificate against the system trust store instead of a cluster-local CA. |
+| `externallyManagedSecret.create`                   | Writes the Secret `simplyblock-csi-secret-v2`, from which the CSI driver reads the storage cluster.           |
+| `csiConfig.simplybk.uuid`, `csiConfig.simplybk.ip` | The storage cluster's ID and the endpoint of its Management API.                                              |
+| `csiSecret.simplybk.secret`                        | The storage cluster's cluster secret.                                                                         |
+
+If cert-manager runs in a namespace other than `cert-manager`, `tls.cert-manager.namespace` names it.
+
+Two optional Secrets in the operator's namespace can be named for the `ControlPlane` connection:
+
+- **Credentials Secret** (`controlplane.managed.credentialsSecretRef`): holds the bearer token for the Management
+  API under the key `token` or `secret`. Without it, no token is sent.
+- **CA bundle Secret** (`controlplane.managed.caBundleSecretRef`): holds the CA certificate the endpoint is
+  verified against under the key `ca.crt` or `tls.crt`. Without it, the system trust store is used, which is the
+  right choice for a publicly trusted ingress certificate.
 
 The chart renders the `ControlPlane` resource with a `managed` source:
 
@@ -74,11 +165,7 @@ metadata:
 spec:
   source:
     managed:
-      endpoint: "https://cp.example.com"
-      credentialsSecretRef:
-        name: cp-token
-      caBundleSecretRef:
-        name: cp-ca
+      endpoint: "https://storage-api.example.com"
 ```
 
 The operator installs nothing for the control plane. It resolves and probes the endpoint and reports the result:
@@ -88,12 +175,65 @@ kubectl -n simplyblock get controlplane simplyblock
 kubectl -n simplyblock get simplyblockdriver simplyblock
 ```
 
-The `ControlPlane` reaches the phase `Available` once the endpoint answers. An unreachable endpoint is reported with
-the event `EndpointUnreachable`. `ControlPlaneOps` actions are rejected for a managed control plane, because the
-operator owns none of its workloads. The source (`local` or `managed`) cannot be changed after installation.
+The `ControlPlane` reaches the phase `Available` once the endpoint answers, and the `SimplyblockDriver` reaches
+`Ready` once every node plugin runs. An unreachable endpoint is reported with the event `EndpointUnreachable`.
+`ControlPlaneOps` actions are rejected for a managed control plane, because the operator owns none of its workloads.
+The source (`local` or `managed`) cannot be changed after installation.
 
-The TLS settings of the CSI driver come from the `tls.*` Helm values, see [Securing the Control Plane](security.md). The
-`prometheus.enabled` value can be set to `false` if the remote control plane collects the metrics itself.
+The `prometheus.enabled` value can be set to `false` if the remote control plane collects the metrics itself.
+
+## Creating a Storage Class and a Test Volume
+
+```yaml title="StorageClass for the remote storage cluster"
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: simplyblock
+provisioner: csi.simplyblock.io
+parameters:
+  cluster_id: "<CLUSTER-ID>"
+  pool_name: "<POOL-NAME>"
+  csi.storage.k8s.io/fstype: xfs
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+```
+
+```yaml title="Test volume and pod"
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simplyblock-test
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: simplyblock
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simplyblock-test
+spec:
+  containers:
+    - name: test
+      image: busybox:1.36
+      command: [sh, -c, "echo hello > /data/f && cat /data/f && sleep 3600"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: simplyblock-test
+```
+
+The claim reaches `Bound`, and `kubectl logs simplyblock-test` prints `hello`.
+
+!!! note
+    A consumer cluster supports `ReadWriteOnce` volumes, both with a filesystem and with `volumeMode: Block`.
+    `ReadWriteMany` volumes are not yet supported on a consumer cluster.
 
 ## Configuring the CSI Driver
 
@@ -117,8 +257,9 @@ control plane runs. A storage cluster whose storage nodes run in this Kubernetes
 `ClusterDeploymentConfig`, exactly as described in [Create a Storage Cluster](k8s-storage-plane.md).
 
 For every `StorageCluster`, the operator writes the cluster ID, the endpoint, and the cluster secret into the Secret
-`simplyblock-csi-secret-v2`, which the CSI driver reads. The Secret is maintained by the operator and does not need to
-be edited manually.
+`simplyblock-csi-secret-v2`, which the CSI driver reads. A consumer cluster that only uses a remote storage cluster
+has no `StorageCluster`, and the Secret is written from the Helm values described in
+[Installing With the Managed Profile](#installing-with-the-managed-profile).
 
 ## Multi-Cluster Storage Classes
 
