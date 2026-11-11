@@ -29,65 +29,17 @@ The workers that run the node plugin must satisfy the following requirements:
 
 ## Exposing the Management API of the Storage Cluster
 
-The consumer cluster reaches the storage cluster's Management API over the network. By default, the Management API
-serves a certificate issued only for its in-cluster Service names and requires mutual TLS: it accepts only clients
-that present a certificate signed by the storage cluster's own CA. A consumer cluster has no such certificate.
+The consumer cluster reaches the storage cluster's Management API over the network, so the Management API has to be
+exposed outside the storage cluster, such as through an ingress controller or a load balancer. The exposed
+endpoint must meet two conditions:
 
-The Management API is therefore exposed through an ingress controller that terminates TLS with a publicly trusted
-certificate and connects to the Management API with a client certificate issued by the storage cluster's CA. The
-storage cluster's TLS settings stay unchanged. The example uses Traefik. It runs in the storage cluster, with the
-hostname and the TLS section replaced by real values:
-
-```yaml title="Expose the Management API through Traefik (storage cluster)"
-# Client certificate that Traefik presents to the Management API.
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: traefik-webappapi-client
-  namespace: simplyblock
-spec:
-  commonName: traefik-webappapi-client
-  secretName: traefik-webappapi-client-tls
-  usages: [digital signature, key encipherment, client auth]
-  issuerRef:
-    kind: ClusterIssuer
-    name: simplyblock-certificate-authority-issuer
----
-# How Traefik connects to the Management API.
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: webappapi-mtls
-  namespace: simplyblock
-spec:
-  serverName: simplyblock-webappapi.simplyblock.svc
-  rootCAs:
-    - secret: simplyblock-ca-bundle-tls
-  certificatesSecrets:
-    - traefik-webappapi-client-tls
----
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: webappapi
-  namespace: simplyblock
-spec:
-  entryPoints: [websecure]
-  routes:
-    - match: Host(`storage-api.example.com`)
-      kind: Rule
-      services:
-        - name: simplyblock-webappapi
-          port: 5000
-          scheme: https
-          serversTransport: webappapi-mtls
-  tls: {}   # a publicly trusted certificate for the hostname above
-```
-
-!!! warning
-    The certificate the ingress serves must be publicly trusted, such as one issued by a public ACME certificate authority. The CSI
-    driver of the consumer cluster verifies it against the system trust store of its image, which does not contain
-    a private or corporate CA.
+- **Its certificate is trusted by the consumer cluster.** The Management API's own certificate names only its
+  in-cluster Service, so the exposed endpoint serves a certificate for its external hostname. With the installation
+  below, the CSI driver verifies that certificate against the system trust store of its image, so a publicly
+  trusted certificate is required.
+- **It satisfies the Management API's mutual TLS.** By default, the Management API accepts only clients that present
+  a certificate issued by the storage cluster's CA. The exposing component connects to it with such a client
+  certificate, which cert-manager issues from the ClusterIssuer `simplyblock-certificate-authority-issuer`.
 
 The endpoint answers with `204` once it is reachable:
 
