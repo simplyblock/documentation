@@ -55,6 +55,29 @@ cluster's TLS connection and opens its own HTTPS connection to the Management AP
 certificate issued by the storage cluster's CA. TLS passthrough does not work here, because the consumer cluster has
 no certificate from that CA.
 
+```plain title="The two TLS connections"
+consumer cluster                          storage cluster
+┌────────────────────┐   hop 1   ┌──────────────────────────┐   hop 2   ┌─────────────────────────┐
+│ CSI driver,        │ ───────▶  │ ingress (Traefik, nginx) │ ───────▶  │ simplyblock-webappapi   │
+│ operator           │  HTTPS    │                          │  HTTPS +  │ :5000 (mutual TLS)      │
+└────────────────────┘           └──────────────────────────┘  client   └─────────────────────────┘
+                                                               cert
+```
+
+- **Hop 1, from the consumer cluster to the ingress:** ordinary HTTPS. The ingress presents its publicly trusted
+  certificate, and the consumer cluster presents none. The consumer cluster authenticates to the Management API with
+  the storage cluster's cluster secret, which the CSI driver sends with every request and the ingress passes on.
+- **Hop 2, from the ingress to the Management API:** HTTPS with mutual TLS. The ingress presents the client
+  certificate below, and verifies the Management API against the storage cluster's CA.
+
+The client certificate stays in the storage cluster: only the ingress reads it, and the consumer cluster never needs
+it.
+
+!!! warning
+    Behind the ingress, mutual TLS no longer identifies the remote caller. Any client that reaches the exposed
+    endpoint is passed on with the ingress's certificate, and access to the Management API rests on the cluster
+    secret. Where possible, restrict the exposed endpoint to the networks of the consumer clusters.
+
 The client certificate is issued in the storage cluster by cert-manager, which also renews it:
 
 ```yaml title="Client certificate for the exposing component (storage cluster)"
