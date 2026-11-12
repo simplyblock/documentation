@@ -50,10 +50,17 @@ The answer must be `Y`. The tested kernels are listed in
 [Supported Linux Kernels](../../reference/supported-linux-kernels.md).
 
 The `nvme-tcp` module is often absent from a default cloud image. The Ubuntu AWS kernel ships it in the package
-`linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without the module the CSI node plugin cannot
-open `/dev/nvme-fabrics`, and attaching a volume fails with
-`Failed to open /dev/nvme-fabrics: No such file or directory`. The package is installed, the module loaded, and the
-load persisted across reboots, before the node joins the cluster:
+`linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without the module the CSI node plugin on that
+node is not ready, the `SimplyblockDriver` reports `Degraded`, and attaching a volume is refused with a
+`FailedPrecondition` error. The events of the node plugin pod and the mount error both name the package to install.
+The plugin keeps running, and becomes ready by itself shortly after the module is loaded.
+
+```bash title="Finding the node plugin pods that are not ready"
+kubectl get pods -n <NAMESPACE> -o wide | grep csi-node
+kubectl describe pod -n <NAMESPACE> <CSI_NODE_POD>
+```
+
+The package is installed, the module loaded, and the load persisted across reboots, before the node joins the cluster:
 
 ```bash title="Installing the NVMe/TCP initiator"
 apt-get install -y linux-modules-extra-$(uname -r)   # Ubuntu
