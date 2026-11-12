@@ -122,6 +122,8 @@ kubectl -n simplyblock get operatorops discover-rack-b -w
 | `nodeSelector`            | Labels               | The workers to inspect, by label instead of by name.                                                                                             |
 | `tolerations`             | Up to 32             | What the probe pods tolerate. They reach the draft as well, because the taints a run probed through are the taints the cluster has to live with. |
 | `enableControlPlaneNodes` | Off                  | Also considers nodes running the API server and etcd.                                                                                            |
+| `failureDomainLabel`      | Node label           | The label whose value becomes each worker's failure domain. Defaults to `topology.kubernetes.io/zone`, see [Failure Domains](#failure-domains).  |
+| `enableFailureDomains`    | On / off / unset     | Overrides whether the draft proposes failure-domain mode, see [Failure Domains](#failure-domains). Unset lets the run decide from the topology.  |
 | `deviceFilter`            | —                    | Narrows the devices that reach the draft, see below.                                                                                             |
 | `clusterRef`              | —                    | Writes a growth draft for an existing cluster instead of a new one.                                                                              |
 
@@ -361,6 +363,35 @@ The LUN layout, the erasure coding scheme, and the multipathing requirements are
 [Storage Arrays](../../deployment-preparation/storage-arrays.md).
 
 ### Failure Domains
+
+Discovery decides failure-domain mode from the workers' topology: it proposes the mode on when every worker carries a
+failure-domain label in a layout the control plane accepts, and off otherwise. By default, the label is the zone
+(`topology.kubernetes.io/zone`), so a fleet spread over availability zones is drafted with failure domains on, one
+group per zone.
+
+A run overrides that decision with `spec.discover.enableFailureDomains`:
+
+| Value   | Effect                                                                                                                                                                                                        |
+|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| unset   | The run decides from the topology, as above.                                                                                                                                                                  |
+| `false` | No topology is read. The fleet is grouped by hardware alone into one cluster, and the draft states `enableFailureDomains: false`, whatever zones the workers are in.                                          |
+| `true`  | The mode is proposed on. The layout must still pass the activation rules below; a run that forces it onto too few domains gets the mode and a note that the cluster will not activate until there are enough. |
+
+To use failure domains that are not zones, for example, racks within one zone, label the nodes with the boundary and
+name that label in `failureDomainLabel`. Discovery reads those values into one group per domain; it never splits a
+fleet along a boundary the nodes do not carry.
+
+```bash title="Failure domains by rack within one zone"
+kubectl label node worker-1 worker-2 storage.simplyblock.io/rack=rack-a
+kubectl label node worker-3 worker-4 storage.simplyblock.io/rack=rack-b
+kubectl label node worker-5 worker-6 storage.simplyblock.io/rack=rack-c
+```
+```yaml title="A run that reads racks as failure domains"
+spec:
+  action: Discover
+  discover:
+    failureDomainLabel: storage.simplyblock.io/rack
+```
 
 With `spec.cluster.enableFailureDomains: true`, every group must carry a `failureDomain` label, for example, a rack
 name. The label is copied to each generated `StorageNode` and cannot be changed afterward.
