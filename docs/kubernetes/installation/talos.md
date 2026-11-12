@@ -13,7 +13,9 @@ changes to make Talos compliant.
 
 ## Required Kernel Modules (Worker Node)
 
-On Kubernetes worker nodes, simplyblock requires a few kernel modules to be loaded.
+On Kubernetes worker nodes, simplyblock requires a few kernel modules to be loaded. The `nvme_tcp` and
+`nvme_fabrics` modules are required on every worker node that mounts simplyblock volumes, including nodes that do not
+run a storage node.
 
 ```yaml title="Content of kernel-module-config.yaml"
 machine:
@@ -23,6 +25,8 @@ machine:
       - name: uio_pci_generic
       - name: vfio_pci
       - name: vfio_iommu_type1
+      - name: nvme_tcp
+      - name: nvme_fabrics
 ```
 
 ## Huge Pages Reservations
