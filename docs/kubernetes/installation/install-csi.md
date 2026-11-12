@@ -37,15 +37,54 @@ endpoint must meet two conditions:
   in-cluster Service, so the exposed endpoint serves a certificate for its external hostname. With the installation
   below, the CSI driver verifies that certificate against the system trust store of its image, so a publicly
   trusted certificate is required.
-- **It satisfies the Management API's mutual TLS.** By default, the Management API accepts only clients that present
-  a certificate issued by the storage cluster's CA. The exposing component connects to it with such a client
-  certificate, which cert-manager issues from the ClusterIssuer `simplyblock-certificate-authority-issuer`.
+- **It satisfies the Management API's mutual TLS, when that is on.** With `tls.mutual_enabled` set on the storage
+  cluster, which is the default, the Management API accepts only clients that present a certificate issued by the
+  storage cluster's CA. The exposing component then connects to it with such a client certificate, as described below.
+  With mutual TLS off, the exposing component connects without a client certificate.
 
 The endpoint answers with `204` once it is reachable:
 
 ```bash title="Check the exposed Management API"
 curl -sS -o /dev/null -w '%{http_code}\n' https://storage-api.example.com/api/v2/_meta/ready
 ```
+
+### Presenting a Client Certificate to the Management API
+
+This applies only while mutual TLS is on in the storage cluster. The exposing component terminates the consumer
+cluster's TLS connection and opens its own HTTPS connection to the Management API, on which it presents a client
+certificate issued by the storage cluster's CA. TLS passthrough does not work here, because the consumer cluster has
+no certificate from that CA.
+
+The client certificate is issued in the storage cluster by cert-manager, which also renews it:
+
+```yaml title="Client certificate for the exposing component (storage cluster)"
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: webappapi-ingress-client
+  namespace: simplyblock
+spec:
+  commonName: webappapi-ingress-client
+  secretName: webappapi-ingress-client-tls
+  usages: [digital signature, key encipherment, client auth]
+  issuerRef:
+    kind: ClusterIssuer
+    name: simplyblock-certificate-authority-issuer
+```
+
+The exposing component is then configured to connect to the Service `simplyblock-webappapi` on port 5000 over HTTPS,
+with these settings for its connection to the backend:
+
+| Setting            | Value                                                               |
+|--------------------|---------------------------------------------------------------------|
+| Client certificate | The Secret `webappapi-ingress-client-tls` (`tls.crt` and `tls.key`) |
+| Trusted CA         | The Secret `simplyblock-ca-bundle-tls` (`ca.crt`)                   |
+| Server name        | `simplyblock-webappapi.simplyblock.svc`                             |
+
+Where these settings are made depends on the ingress controller. Traefik takes them in a `ServersTransport`
+(`certificatesSecrets`, `rootCAs`, and `serverName`) referenced by the route's service. ingress-nginx takes them in
+the annotations `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`, `proxy-ssl-secret`, `proxy-ssl-verify`, and
+`proxy-ssl-name`. Other proxies and load balancers configure them as upstream or backend TLS.
 
 ## Collecting the Storage Cluster Details
 
