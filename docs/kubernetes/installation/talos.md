@@ -11,20 +11,43 @@ Simplyblock requires a set of additional Linux kernel modules, as well as tools 
 That means that a custom Talos image has to be built to run simplyblock. The following section explains the required
 changes to make Talos compliant.
 
-## Required Kernel Modules (Worker Node)
+## Required Kernel Modules
 
-On Kubernetes worker nodes, simplyblock requires a few kernel modules to be loaded. The `nvme_tcp` and
-`nvme_fabrics` modules are required on every worker node that mounts simplyblock volumes, including nodes that do not
-run a storage node.
+Which kernel modules a worker node needs depends on its role. Load only the modules for the roles a node actually has.
+A node that runs a storage node and also mounts simplyblock volumes needs both sets.
 
-```yaml title="Content of kernel-module-config.yaml"
+### Storage Nodes
+
+Worker nodes that run a simplyblock storage node need a driver that hands the NVMe devices to the storage engine. Either
+`vfio_pci` or `uio_pci_generic` is sufficient; both are not needed. Use `vfio_pci` when the node has an IOMMU enabled,
+and `uio_pci_generic` otherwise.
+
+```yaml title="Content of storage-node-modules.yaml (with IOMMU)"
+machine:
+  kernel:
+    modules:
+      - name: nbd
+      - name: vfio_pci
+      - name: vfio_iommu_type1
+```
+
+```yaml title="Content of storage-node-modules.yaml (without IOMMU)"
 machine:
   kernel:
     modules:
       - name: nbd
       - name: uio_pci_generic
-      - name: vfio_pci
-      - name: vfio_iommu_type1
+```
+
+### Volume Consumers
+
+Worker nodes that mount simplyblock volumes connect to the storage nodes over NVMe/TCP and need the NVMe/TCP host
+modules.
+
+```yaml title="Content of consumer-node-modules.yaml"
+machine:
+  kernel:
+    modules:
       - name: nvme_tcp
       - name: nvme_fabrics
 ```
