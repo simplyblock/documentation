@@ -50,12 +50,13 @@ The answer must be `Y`. The tested kernels are listed in
 [Supported Linux Kernels](../../reference/supported-linux-kernels.md).
 
 The `nvme-tcp` module is often absent from a default cloud image. The Ubuntu AWS kernel ships it in the package
-`linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without the module the CSI node plugin on that
-node is not ready, the `SimplyblockDriver` reports `Degraded`, and attaching a volume is refused with a
-`FailedPrecondition` error. The events of the node plugin pod and the mount error both name the package to install.
-The plugin keeps running, and becomes ready by itself shortly after the module is loaded.
+`linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without the module the CSI node plugin does not
+start on that node: its pod is in `CrashLoopBackOff`, the `SimplyblockDriver` reports `Degraded`, and a pod that mounts
+a simplyblock volume on that node stays in `ContainerCreating`. A `Warning` event with the reason
+`NVMeTCPInitiatorMissing` on the node plugin pod names the package to install. After the module is loaded, the plugin
+starts on its next restart, and deleting the node plugin pod starts it at once.
 
-```bash title="Finding the node plugin pods that are not ready"
+```bash title="Finding the node plugin pods that do not start"
 kubectl get pods -n <NAMESPACE> -o wide | grep csi-node
 kubectl describe pod -n <NAMESPACE> <CSI_NODE_POD>
 ```
@@ -68,7 +69,8 @@ echo nvme-tcp > /etc/modules-load.d/nvme-tcp.conf
 modprobe nvme-tcp
 ```
 
-On RHEL and its derivatives the package is `kernel-modules-extra`. Baking these steps into the node image or the node
+RHEL 9 and its derivatives ship the module in `kernel-modules-core`, which is always installed, so only the load is
+persisted there. Baking these steps into the node image or the node
 group's bootstrap configuration gives every new node the module before it joins the cluster.
 
 ## Preparing the Credentials

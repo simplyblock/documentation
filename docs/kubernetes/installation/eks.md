@@ -118,8 +118,8 @@ nvme-subsys1 - NQN=nqn.2023-02.io.simplyblock:<CLUSTER_UUID>:lvol:<VOLUME_UUID>
 
 The NVMe/TCP initiator, the `nvme-tcp` kernel module, is not part of the Ubuntu EKS images. The Ubuntu AWS kernel
 ships it in the package `linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without it, the CSI
-node plugin on that node is not ready, and attaching a volume is refused with an error that names the package. The
-package is installed, and the module loaded, before the node joins the cluster:
+node plugin does not start on that node, and its pod is in `CrashLoopBackOff` with a termination message that names the
+package. The package is installed, and the module loaded, before the node joins the cluster:
 
 ```bash title="Installing the NVMe/TCP initiator on an Ubuntu EKS node"
 export DEBIAN_FRONTEND=noninteractive
