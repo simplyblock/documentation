@@ -29,6 +29,20 @@ if ! [[ "${GIT}" ]]; then
   exit 1
 fi
 
+GH=$(command -v gh)
+if ! [[ "${GH}" ]]; then
+  echo "Command gh not found. Please install the GitHub CLI."
+  exit 1
+fi
+
+UNZIP=$(command -v unzip)
+if ! [[ "${UNZIP}" ]]; then
+  echo "Command unzip not found. Please install unzip."
+  exit 1
+fi
+
+SBCLI_REPO="simplyblock/sbcli"
+
 function ensure_docker_image() {
   echo -n "Checking docker build image... "
   local image=$(${DOCKER} image ls | ${GREP} ${IMAGE_NAME})
@@ -106,8 +120,26 @@ function gen_sbcli_ref() {
   echo "Generating sbcli reference pages..."
   ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/cli-reference-gen.py /docs
 
-  echo "Generating openapi.json specification..."
-  ${DOCKER} run --rm ${terminal} -v "${PWD}":/docs --entrypoint="/usr/local/bin/python" ${IMAGE_NAME} /docs/scripts/openapi-json-gen.py
+  echo "Fetching openapi.json from sbcli's build artifacts..."
+  local sha
+  sha="$(git -C ./scripts/sbcli-repo rev-parse HEAD)"
+  local artifact_id
+  artifact_id="$(${GH} api "repos/${SBCLI_REPO}/actions/artifacts?name=openapi-${sha}" --jq '.artifacts[0].id')"
+  if [[ "${artifact_id}" == "" || "${artifact_id}" == "null" ]]; then
+    echo "No openapi.json artifact found for ${SBCLI_REPO}@${sha}."
+    echo "Either its 'OpenAPI schema' workflow run hasn't finished yet, the commit predates that workflow, or the artifact's 90-day retention has expired."
+    exit 1
+  fi
+
+  local artifact_zip
+  artifact_zip="$(mktemp)"
+  ${GH} api "repos/${SBCLI_REPO}/actions/artifacts/${artifact_id}/zip" > "${artifact_zip}"
+  # Keeps only the v2 paths, same filter openapi-json-gen.py used to apply,
+  # regardless of whether the sbcli-side export already restricts to v2.
+  ${UNZIP} -p "${artifact_zip}" openapi.json \
+    | ${JQ} '.paths |= with_entries(select(.key | startswith("/api/v2")))' \
+    > ./docs/reference/api/openapi.json
+  rm "${artifact_zip}"
 }
 
 function gen_operator_ref() {
@@ -283,6 +315,12 @@ function run_help() {
     "gen-sbcli-ref")
       echo "Generates the sbcli / sbctl reference documentation"
       echo "./doc-builder gen-sbcli-ref"
+      echo
+      echo "openapi.json is fetched from the 'OpenAPI schema' workflow artifact that"
+      echo "sbcli's own CI publishes for the exact commit checked out at"
+      echo "./scripts/sbcli-repo (see ./doc-builder update-repositories). Requires the"
+      echo "gh CLI to be authenticated with read access to simplyblock/sbcli's Actions"
+      echo "artifacts (GH_TOKEN or 'gh auth login')."
     ;;
     "gen-operator-ref")
       echo "Generates the simplyblock-operator API reference documentation"
