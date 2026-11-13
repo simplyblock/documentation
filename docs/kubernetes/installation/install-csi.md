@@ -53,8 +53,9 @@ The `nvme-tcp` module is often absent from a default cloud image. The Ubuntu AWS
 `linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without the module the CSI node plugin does not
 start on that node: its pod is in `CrashLoopBackOff`, the `SimplyblockDriver` reports `Degraded`, and a pod that mounts
 a simplyblock volume on that node stays in `ContainerCreating`. A `Warning` event with the reason
-`NVMeTCPInitiatorMissing` on the node plugin pod names the package to install. After the module is loaded, the plugin
-starts on its next restart, and deleting the node plugin pod starts it at once.
+`NVMeTCPInitiatorMissing` on the node plugin pod names the missing module and, on an Ubuntu kernel, the package to
+install. After the module is loaded, the plugin starts on its next restart, and deleting the node plugin pod starts it
+at once.
 
 ```bash title="Finding the node plugin pods that do not start"
 kubectl get pods -n <NAMESPACE> -o wide | grep csi-node
