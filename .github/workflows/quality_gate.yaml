@@ -49,3 +49,29 @@ jobs:
       - name: "Run Quality Gates"
         run: |
           ./scripts/quality-gate.sh
+
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: "Determine Changed Documentation Files"
+        id: changed
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          files: |
+            docs/**/*.md
+            snippets/**/*.md
+      - name: "Check Links In Changed Files"
+        if: steps.changed.outputs.any_changed == 'true'
+        uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          args: >-
+            --config lychee.toml
+            --no-progress
+            ${{ steps.changed.outputs.all_changed_files }}
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
