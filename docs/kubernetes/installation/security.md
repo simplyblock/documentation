@@ -94,37 +94,53 @@ the cluster can be configured to keep the key-encryption material in an external
 environments with strict separation of duty between storage administrators and key custodians, regular rotation, or
 audit trails.
 
-As of now, [HashiCorp Vault](https://www.vaultproject.io/){:target="_blank" rel="noopener"} and
-[OpenBao](https://openbao.org/){:target="_blank" rel="noopener"} are supported. The configuration is identical for
-either of them.
+As of now, [HashiCorp Vault](https://www.vaultproject.io/){:target="_blank" rel="noopener"},
+[OpenBao](https://openbao.org/){:target="_blank" rel="noopener"}, and
+[KMIP](https://docs.oasis-open.org/kmip/spec/v1.4/os/kmip-spec-v1.4-os.html){:target="_blank" rel="noopener"}-speaking
+appliances are supported. The configuration is identical for Vault and OpenBao, and differs for KMIP where noted
+below.
 
 ### Prerequisites
 
 - **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the control
-  plane authenticates to the KMS with a certificate issued by the `simplyblock-certificate-authority-issuer`.
-- **A prepared instance:** A Vault or OpenBao instance reachable from the simplyblock namespace, initialized,
-  unsealed, and configured as described in [Deploying OpenBao as a KMS](openbao-kms.md).
+  plane authenticates to the KMS with a certificate issued by the `simplyblock-certificate-authority-issuer`. The
+  serving certificate of the KMS itself has to chain to the same certificate authority.
+- **A prepared instance:**
+    === "Vault / OpenBao"
+        A Vault or OpenBao instance reachable from the simplyblock namespace, initialized, unsealed, and configured
+        as described in [Deploying OpenBao as a KMS](openbao-kms.md).
+    === "KMIP"
+        A KMIP 1.0 or later appliance reachable from the simplyblock namespace, as described in
+        [Deploying a KMIP Key Management Appliance](kmip-kms.md).
 - **Storage for that instance that is not simplyblock:** A KMS holding its own state on the cluster it serves
   deadlocks on a cold start, as described in
   [Where the KMS Runs](../../architecture/concepts/external-key-management.md#where-the-kms-runs).
 
 ### Deploying the Instance
 
-The instance is deployed from the upstream Helm chart, initialized, unsealed, and configured with the policy, the
-certificate authentication, and the secret engines simplyblock expects. Every step of that is described in
-[Deploying OpenBao as a KMS](openbao-kms.md), for OpenBao as well as for Vault.
+=== "Vault / OpenBao"
+    The instance is deployed from the upstream Helm chart, initialized, unsealed, and configured with the policy, the
+    certificate authentication, and the secret engines simplyblock expects. Every step of that is described in
+    [Deploying OpenBao as a KMS](openbao-kms.md), for OpenBao as well as for Vault.
 
-The configuration is not free-form. The control plane expects the transit engine at `simplyblock/transit`, the
-key-value engine at `simplyblock/kv`, and a certificate role named `simplyblock-webappapi` that accepts a client whose
-certificate chains to the simplyblock certificate authority and whose DNS SAN is `simplyblock-webappapi`. None of the
-three is configurable through the operator, which exposes the endpoint URL alone.
+    The configuration is not free-form. The control plane expects the transit engine at `simplyblock/transit`, the
+    key-value engine at `simplyblock/kv`, and a certificate role named `simplyblock-webappapi` that accepts a client
+    whose certificate chains to the simplyblock certificate authority and whose DNS SAN is `simplyblock-webappapi`.
+    None of the three is configurable through the operator, which exposes the endpoint URL alone.
+
+=== "KMIP"
+    The appliance is configured and operated independently of simplyblock, following its vendor's own documentation.
+    The only requirements the control plane places on it are a serving certificate that chains to the simplyblock
+    certificate authority and a `Create`/`Activate`/`Revoke`/`Destroy`/`Encrypt`/`Decrypt` operation set, which every
+    KMIP-conformant appliance implements. See
+    [Deploying a KMIP Key Management Appliance](kmip-kms.md) for a reference instance suitable for testing.
 
 ### Point the Storage Cluster to the KMS
 
-The KMS is configured with `kms.vault.endpoint`. It is set in the cluster template of the
+The KMS is configured with `kms.vault.endpoint` or `kms.kmip.endpoint`. It is set in the cluster template of the
 `ClusterDeploymentConfig` before approving it (see [Create a Storage Cluster](k8s-storage-plane.md)):
 
-```yaml title="ClusterDeploymentConfig with an external KMS"
+```yaml title="ClusterDeploymentConfig with an external KMS (HashiCorp Vault or OpenBao)"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: ClusterDeploymentConfig
 metadata:
@@ -148,11 +164,36 @@ spec:
             nvme: ["0000:01:00.0"]
 ```
 
+```yaml title="ClusterDeploymentConfig with an external KMS (KMIP)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ClusterDeploymentConfig
+metadata:
+  name: production-deployment
+  namespace: simplyblock
+spec:
+  approved: false
+  cluster:
+    name: production
+    maxSubsystemCount: 50
+    vcpuCount: 8
+    kms:
+      kmip:
+        endpoint: "kmip.vault.svc:5696"
+  nodeSets:
+    - name: rack-a
+      groups:
+        - name: default
+          workers: [worker-1, worker-2, worker-3]
+          devices:
+            nvme: ["0000:01:00.0"]
+```
+
 The expansion copies the block to `StorageCluster.spec.kms`. The operator hands the KMS endpoint to the control
 plane when it creates the storage cluster, so the KMS has to be configured before the cluster is created.
 
-The endpoint must be an `http` or `https` URL whose host name resolves. Loopback and link-local addresses are
-rejected.
+The Vault or OpenBao endpoint must be an `http` or `https` URL whose host name resolves. The KMIP endpoint must be a
+`host:port` pair whose host name resolves instead, carrying no URL scheme, because KMIP is a binary protocol over TLS
+rather than an HTTP API. Either form rejects a loopback or a link-local address.
 
 !!! warning "The KMS setting is immutable"
     Once `spec.kms` is set on a `StorageCluster`, it cannot be changed or removed. An approved

@@ -17,6 +17,7 @@ Simplyblock supports storing keys in external KMS solutions. Currently supported
 
 - [HashiCorp Vault](https://www.vaultproject.io/){:target="_blank" rel="noopener"}
 - [OpenBao](https://openbao.org/){:target="_blank" rel="noopener"}
+- Any appliance that speaks [KMIP](https://docs.oasis-open.org/kmip/spec/v1.4/os/kmip-spec-v1.4-os.html){:target="_blank" rel="noopener"} 1.0 or later
 
 ## Two-Layer Key Model
 
@@ -36,10 +37,15 @@ When an external KMS is configured, simplyblock applies a two-layer key model:
 The KMS authenticates simplyblock components using a client certificate issued by the
 `simplyblock-certificate-authority-issuer` ClusterIssuer, which the operator creates as part of its mTLS setup.
 Because the KMS depends on this CA, [mTLS](../../kubernetes/installation/security.md#transport-layer-security-mutual-tls-mtls)
-must be configured on the control plane before an external KMS can be wired up.
+must be configured on the control plane before an external KMS can be wired up. The same certificate authority has
+to sign the serving certificate of the KMS itself, so that the control plane trusts it in turn.
 
 Operationally, this means the KMS team and the storage team share only the CA bundle and an agreed-upon DNS-name for
 the simplyblock client. No static passwords or long-lived tokens must be exchanged.
+
+A KMIP appliance is authenticated the same way. The control plane presents its client certificate during the TLS
+handshake and sends no separate KMIP credential, so the appliance has to derive the caller's identity from the
+certificate rather than from a username, a password, or a KMIP `Credential` object in the request.
 
 ## Where the KMS Runs
 
@@ -50,4 +56,5 @@ The state cannot be recovered from inside the cluster, so the KMS is placed on s
 simplyblock is.
 
 For the setup steps, see [Securing the Control Plane: External KMS](../../kubernetes/installation/security.md#external-key-management-kms).
-A worked deployment of an instance is in [Deploying OpenBao as a KMS](../../kubernetes/installation/openbao-kms.md).
+A worked deployment of an instance is in [Deploying OpenBao as a KMS](../../kubernetes/installation/openbao-kms.md) and
+[Deploying a KMIP Key Management Appliance](../../kubernetes/installation/kmip-kms.md).
