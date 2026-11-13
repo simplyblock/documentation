@@ -18,6 +18,53 @@ The following kernels are known to be compatible and tested. Additional kernel v
 | Amazon Linux 2           | Kernel 5.10 AMI 2.0.20230822.0          | modprobe nvme-tcp |
 | Amazon Linux 2023        | 2023.1.20230825.0 x86_64 HVM kernel-6.1 | modprobe nvme-tcp |
 
+## Package Providing the NVMe/TCP Module
+
+Most distributions ship `nvme-tcp` in the package that is installed with the kernel. Ubuntu is the exception: on many
+Ubuntu kernels, `nvme-tcp` is in `linux-modules-extra-<kernel release>`, which minimal and cloud images do not
+install. Without it, `modprobe nvme-tcp` fails with `Module nvme-tcp not found`, and the simplyblock CSI node plugin
+does not start on that node.
+
+The package is the same on x86-64 and ARM64.
+
+| Distribution                             | Kernel                            | Package with `nvme-tcp`                    | Extra package needed |
+|------------------------------------------|-----------------------------------|--------------------------------------------|----------------------|
+| Red Hat Enterprise Linux, Rocky, Alma 8  | 4.18                              | `kernel-core`                              | No                   |
+| Red Hat Enterprise Linux, Rocky, Alma 9  | 5.14                              | `kernel-modules-core`                      | No                   |
+| Red Hat Enterprise Linux, Rocky, Alma 10 | 6.12                              | `kernel-modules-core`                      | No                   |
+| Amazon Linux 2                           | 5.10                              | `kernel`                                   | No                   |
+| Amazon Linux 2023                        | 6.1, 6.12, 6.18                   | `kernel`, `kernel6.12`, `kernel6.18`       | No                   |
+| Debian 12                                | 6.1 (`amd64` and `cloud-amd64`)   | `linux-image-<release>`                    | No                   |
+| Debian 13                                | 6.12 (`amd64` and `cloud-amd64`)  | `linux-image-<release>`                    | No                   |
+| SUSE Linux Enterprise 15 SP7             | 6.4                               | `kernel-default`                           | No<sup>1</sup>       |
+| SUSE Linux Micro 6.1                     | 6.4                               | `kernel-default`                           | No                   |
+| Ubuntu 22.04                             | 5.15 and 6.8 (all cloud flavors)  | `linux-modules-extra-<release>`            | **Yes**              |
+| Ubuntu 22.04                             | 5.15 `lowlatency`                 | `linux-modules-<release>`                  | No                   |
+| Ubuntu 24.04                             | 6.8 `generic`                     | `linux-modules-extra-<release>`            | **Yes**              |
+| Ubuntu 24.04                             | 6.8 `lowlatency`                  | `linux-modules-<release>`                  | No                   |
+| Ubuntu 24.04                             | 7.0 (HWE and all cloud flavors)   | `linux-modules-<release>`                  | No                   |
+| Talos                                    | -                                 | Custom image (see [Talos](../kubernetes/installation/talos.md)) | No |
+
+<span markdown style="font-size: small;"><sup>1</sup> The `kernel-default-base` package, which some minimal images
+use instead of `kernel-default`, does not contain `nvme-tcp`. Install `kernel-default` on those nodes.</span>
+
+The Ubuntu cloud flavors are `aws`, `azure`, `gcp`, and `oracle`. The Ubuntu `kvm` kernel flavor is built without
+NVMe/TCP (`CONFIG_NVME_TCP` is not set) and cannot be used for simplyblock nodes.
+
+On Ubuntu, install the package for the running kernel and load the module:
+
+```bash
+sudo apt-get install -y linux-modules-extra-$(uname -r)
+sudo modprobe nvme-tcp
+```
+
+The package is versioned with the kernel, so the package for a new kernel must be installed after each kernel update.
+For the `aws`, `azure`, and `gcp` flavors, the `linux-modules-extra-<flavor>` meta-package does this automatically:
+
+```bash
+sudo apt-get install -y linux-modules-extra-aws
+```
+
 ## Kernel Requirements for pNFS Clients
 
 Nodes that mount [pNFS volumes](../kubernetes/usage/pnfs.md) need the pNFS block layout driver, built with

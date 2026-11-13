@@ -34,7 +34,9 @@ reference.
 A client node (initiator) is a worker to which simplyblock volumes are attached over NVMe/TCP or NVMe/RoCE. Client
 nodes require:
 
-- The `nvme-tcp` kernel module, or `nvme-rdma` for NVMe/RoCE.
+- The `nvme-tcp` kernel module, or `nvme-rdma` for NVMe/RoCE. On Ubuntu 22.04, and on the 6.8 kernel of Ubuntu
+  24.04, the module is in `linux-modules-extra-<kernel release>`, which is not installed by default. See
+  [Package Providing the NVMe/TCP Module](../reference/supported-linux-kernels.md#package-providing-the-nvmetcp-module).
 - Native NVMe multipathing (`CONFIG_NVME_MULTIPATH`), so that a volume with several paths appears as one device and
   fails over between them. Some cloud node images lack it, for example, the default Amazon Linux 2023 image on EKS (see
   [EKS](../kubernetes/installation/eks.md#node-images) and [GKE](../kubernetes/installation/gke.md#node-images)).
