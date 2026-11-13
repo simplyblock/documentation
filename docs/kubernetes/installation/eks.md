@@ -191,6 +191,107 @@ managedNodeGroups:
 `updateConfig.maxUnavailable: 1` makes an upgrade of the control plane node group replace one node at a time (see
 [Upgrading EKS](../operations/cluster/eks-upgrade.md)).
 
+## Dedicated CPUs for Storage Nodes
+
+By default, a storage node on EKS runs without the kubelet CPU topology configuration. The storage engine pins its
+threads to CPUs, but the kubelet keeps those CPUs available to other pods, and enforces the CPU limit of the storage
+node pod as a quota.
+
+To give the storage engine CPUs of its own, the kubelet of the storage node group is configured for static CPU
+management, and the storage cluster is deployed with `enableCpuTopology`. Simplyblock does not change the kubelet
+configuration on EKS, because a managed node group builds it again for every node it replaces. The settings therefore
+belong to the node group, where every new node receives them.
+
+| Kubelet Setting             | Value              | Purpose                                                                                  |
+|-----------------------------|--------------------|------------------------------------------------------------------------------------------|
+| `cpuManagerPolicy`          | `static`           | Assigns exclusive CPUs to the storage node pod                                           |
+| `cpuManagerReconcilePeriod` | `5s`               | Interval at which the kubelet reapplies the CPU assignment                               |
+| `topologyManagerPolicy`     | `single-numa-node` | Keeps the CPUs of the pod on one NUMA node                                               |
+| `topologyManagerScope`      | `pod`              | Aligns the containers of the pod together                                                |
+| `reservedSystemCPUs`        | For example, `0,8` | CPUs kept for the host and the kubelet, and never assigned to the storage engine         |
+| `cpuCFSQuota`               | `false`            | Optional. Stops the kubelet from enforcing CPU limits as a quota for any pod on the node |
+
+`reservedSystemCPUs` names both hardware threads of each reserved core. Otherwise, the storage engine receives the
+sibling thread and shares a physical core with the host. The siblings of a CPU are read on the host:
+
+```bash title="Reading the sibling threads of CPU 0"
+cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list
+```
+
+With `cpuCFSQuota: false`, the polling threads of the storage engine are not throttled at the CPU limit of the pod.
+The setting applies to every pod on the node, so it suits a node group that is dedicated to storage nodes.
+
+The Ubuntu EKS images keep the kubelet configuration in a file that is edited before the node starts its kubelet.
+
+```yaml title="Storage node group with dedicated CPUs, Ubuntu (eksctl)"
+managedNodeGroups:
+  - name: storage-a
+    instanceType: m6id.4xlarge
+    amiFamily: Ubuntu2204
+    desiredCapacity: 3
+    availabilityZones: ["<AVAILABILITY_ZONE>"]
+    labels: {sb-role: storage-a}
+    taints: [{key: storage.simplyblock.io/dedicated, value: "true", effect: NoSchedule}]
+    preBootstrapCommands:
+      - |
+        CFG=/etc/kubernetes/kubelet/kubelet-config.json
+        jq '.cpuManagerPolicy="static" | .cpuManagerReconcilePeriod="5s"
+            | .topologyManagerPolicy="single-numa-node" | .topologyManagerScope="pod"
+            | .reservedSystemCPUs="0,8" | .cpuCFSQuota=false' "$CFG" > "$CFG.new" && mv "$CFG.new" "$CFG"
+```
+
+Amazon Linux 2023 takes the settings as a `NodeConfig`. Its image assigns cgroups to the reserved resources, and the
+kubelet refuses `reservedSystemCPUs` together with them, so the two cgroup settings are cleared.
+
+```yaml title="Storage node group with dedicated CPUs, Amazon Linux 2023 (eksctl)"
+managedNodeGroups:
+  - name: storage-a
+    instanceType: m6id.4xlarge
+    amiFamily: AmazonLinux2023
+    desiredCapacity: 3
+    availabilityZones: ["<AVAILABILITY_ZONE>"]
+    labels: {sb-role: storage-a}
+    taints: [{key: storage.simplyblock.io/dedicated, value: "true", effect: NoSchedule}]
+    overrideBootstrapCommand: |
+      apiVersion: node.eks.aws/v1alpha1
+      kind: NodeConfig
+      spec:
+        kubelet:
+          config:
+            cpuManagerPolicy: static
+            cpuManagerReconcilePeriod: 5s
+            topologyManagerPolicy: single-numa-node
+            topologyManagerScope: pod
+            reservedSystemCPUs: "0,8"
+            cpuCFSQuota: false
+            kubeReservedCgroup: ""
+            systemReservedCgroup: ""
+```
+
+The storage cluster is then deployed with the CPU topology enabled. The discovery writes a draft with
+`environment: EKS`, which leaves the CPU topology off. Only a `Vanilla` draft states the two settings itself, so the
+environment is changed before the draft is approved. `enableKubeletConfiguration: false` keeps the storage nodes from
+changing the kubelet configuration that the node group already provides.
+
+```bash title="Enabling the CPU topology in the draft"
+kubectl -n simplyblock patch clusterdeploymentconfig discovered-cluster-a --type=merge -p '{
+  "spec": {
+    "environment": "Vanilla",
+    "cluster": {"enableCpuTopology": true, "enableKubeletConfiguration": false}
+  }
+}'
+```
+
+After the storage cluster is active, the storage node pods belong to the `Guaranteed` class, which is what the kubelet
+assigns exclusive CPUs to.
+
+```bash title="Checking the class of the storage node pods"
+kubectl -n simplyblock get pods -o custom-columns=NAME:.metadata.name,QOS:.status.qosClass | grep snode-spdk-pod
+```
+
+A node group that was created without these settings keeps its kubelet configuration. The settings reach its nodes
+when the node group is replaced by one that carries them.
+
 ## Storage for the Control Plane
 
 FoundationDB and Prometheus of the control plane store their data on persistent volumes. An EKS cluster has no default
