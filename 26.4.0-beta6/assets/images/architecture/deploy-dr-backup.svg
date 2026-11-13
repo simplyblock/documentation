@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="592" viewBox="0 0 960 592" font-family="Inter, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t">
+<title id="t">DR: backup to S3 and restore</title>
+<defs>
+<marker id="arr-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#57606a"/></marker>
+<marker id="arr-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3949ab"/></marker>
+</defs>
+<rect x="0.5" y="0.5" width="959" height="591" rx="14" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+<text x="24" y="38" font-size="18" font-weight="600" fill="#24292f">DR: backup to S3 and restore</text>
+<rect x="24" y="72" width="912" height="100" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="38" y="94" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">DR hub cluster</text>
+<rect x="185.5" y="114" width="133" height="40" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="252" y="138.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">dr-simplyblock</text>
+<rect x="342.5" y="114" width="141" height="40" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="413" y="138.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">DR console (UI)</text>
+<rect x="507.5" y="114" width="79" height="40" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="547" y="138.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">OCM hub</text>
+<rect x="610.5" y="114" width="164" height="40" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="692.5" y="138.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">Ramen hub operator</text>
+<rect x="24" y="212" width="310" height="318" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="38" y="234" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Site A cluster</text>
+<rect x="40" y="248" width="102" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="91" y="270.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<rect x="154" y="248" width="86" height="36" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="197" y="270.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">dr-agent</text>
+<rect x="40" y="296" width="149" height="36" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="114.5" y="318.5" font-size="13" font-weight="600" fill="#1b5e20" text-anchor="middle">Application pods</text>
+<rect x="201" y="296" width="102" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="252" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="40" y="344" width="211" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="145.5" y="366.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Operator + control plane</text>
+<rect x="40" y="396" width="278" height="118" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="54" y="418" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage cluster</text>
+<rect x="52" y="428" width="76" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="90" y="450.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 1</text>
+<rect x="140" y="428" width="76" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="178" y="450.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 2</text>
+<rect x="228" y="428" width="76" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="266" y="450.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 3</text>
+<rect x="52" y="474" width="252" height="30" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="178" y="493.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Volume snapshots</text>
+<rect x="626" y="212" width="310" height="318" rx="10" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.5"/>
+<text x="640" y="234" font-size="14" font-weight="600" fill="#1d4f91" text-anchor="start">Site B cluster (restore target)</text>
+<rect x="642" y="248" width="102" height="36" rx="6" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="693" y="270.5" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">klusterlet</text>
+<rect x="756" y="248" width="86" height="36" rx="6" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="799" y="270.5" font-size="13" font-weight="600" fill="#7a4800" text-anchor="middle">dr-agent</text>
+<rect x="642" y="296" width="149" height="36" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="716.5" y="318.5" font-size="13" font-weight="600" fill="#1b5e20" text-anchor="middle">Application pods</text>
+<rect x="803" y="296" width="102" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="854" y="318.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">CSI driver</text>
+<rect x="642" y="344" width="211" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="747.5" y="366.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Operator + control plane</text>
+<rect x="642" y="396" width="278" height="118" rx="10" fill="#f3f4fb" stroke="#9fa8da" stroke-width="1.5"/>
+<text x="656" y="418" font-size="13" font-weight="600" fill="#283593" text-anchor="start">Storage cluster</text>
+<rect x="654" y="428" width="76" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="692" y="450.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 1</text>
+<rect x="742" y="428" width="76" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="780" y="450.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 2</text>
+<rect x="830" y="428" width="76" height="36" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="868" y="450.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">SN 3</text>
+<rect x="654" y="474" width="252" height="30" rx="6" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="780" y="493.5" font-size="13" font-weight="600" fill="#1a237e" text-anchor="middle">Restored volumes</text>
+<path d="M179.0,172 L179.0,212" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="163.3" y="182" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="179" y="196.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<path d="M781.0,172 L781.0,212" fill="none" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)"/>
+<rect x="765.3" y="182" width="31.5" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="781" y="196.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">OCM</text>
+<path d="M430,410.0 A50.0,10 0 0 1 530,410.0 V500.0 A50.0,10 0 0 1 430,500.0 Z" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<path d="M430,410.0 A50.0,10 0 0 0 530,410.0" fill="none" stroke="#57606a" stroke-width="1.25"/>
+<text x="480" y="455" font-size="13" font-weight="600" fill="#24292f" text-anchor="middle">S3 bucket</text>
+<text x="480" y="473" font-size="13" font-weight="400" fill="#57606a" text-anchor="middle">backups</text>
+<path d="M318,455.0 L430,455.0" fill="none" stroke="#3949ab" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr-sb)"/>
+<rect x="334.1" y="423.0" width="95.8" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="382" y="437.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">backup to S3</text>
+<path d="M530,455.0 L642,455.0" fill="none" stroke="#3949ab" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr-sb)"/>
+<rect x="548.0" y="423.0" width="60.1" height="19" rx="3" fill="#ffffff" fill-opacity="0.92"/>
+<text x="578" y="437.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="middle">restore</text>
+<line x1="24" y1="552" x2="936" y2="552" stroke="#d0d7de" stroke-width="1"/>
+<rect x="24" y="563" width="20" height="14" rx="3" fill="#f4f8fe" stroke="#7aa7e6" stroke-width="1.25"/>
+<text x="52" y="574.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">Kubernetes cluster</text>
+<rect x="198.70000000000002" y="563" width="20" height="14" rx="3" fill="#e8eaf6" stroke="#3949ab" stroke-width="1.25"/>
+<text x="226.7" y="574.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">simplyblock</text>
+<rect x="323.35" y="563" width="20" height="14" rx="3" fill="#fff4e0" stroke="#b26a00" stroke-width="1.25"/>
+<text x="351.35" y="574.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">DR</text>
+<rect x="383.65000000000003" y="563" width="20" height="14" rx="3" fill="#f6f8fa" stroke="#57606a" stroke-width="1.25"/>
+<text x="411.65" y="574.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">third-party</text>
+<rect x="508.30000000000007" y="563" width="20" height="14" rx="3" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.25"/>
+<text x="536.3" y="574.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">apps</text>
+<path d="M582.9000000000001,570 L608.9000000000001,570" stroke="#57606a" stroke-width="1.25" marker-end="url(#arr-gray)" fill="none"/>
+<text x="616.9" y="574.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">control</text>
+<path d="M684.95,570 L710.95,570" stroke="#3949ab" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#arr-sb)" fill="none"/>
+<text x="718.95" y="574.5" font-size="13" font-weight="400" fill="#424a53" text-anchor="start">replication</text>
+</svg>

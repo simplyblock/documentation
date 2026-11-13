@@ -1,0 +1,248 @@
+[data-md-color-scheme="default"] .swagger-ui {
+  --sb-sw-bg: #ffffff;
+  --sb-sw-surface: #f6f8fc;
+  --sb-sw-surface-alt: #eef2f8;
+  --sb-sw-border: #d8deea;
+  --sb-sw-text: #111827;
+  --sb-sw-text-muted: #475569;
+  --sb-sw-link: #0f5db8;
+  --sb-sw-input-bg: #ffffff;
+  --sb-sw-input-text: #111827;
+  --sb-sw-code-bg: #eef2f8;
+}
+
+[data-md-color-scheme="slate"] .swagger-ui {
+  --sb-sw-bg: #0f131b;
+  --sb-sw-surface: #171c26;
+  --sb-sw-surface-alt: #1f2633;
+  --sb-sw-border: #2c3444;
+  --sb-sw-text: #e5e9f0;
+  --sb-sw-text-muted: #9aa6ba;
+  --sb-sw-link: #7ab0ff;
+  --sb-sw-input-bg: #1f2633;
+  --sb-sw-input-text: #e5e9f0;
+  --sb-sw-code-bg: #1f2633;
+}
+
+.swagger-ui {
+  color: var(--sb-sw-text) !important;
+}
+
+.swagger-ui .info h1,
+.swagger-ui .info h2,
+.swagger-ui .info h3,
+.swagger-ui .info h4,
+.swagger-ui .info h5,
+.swagger-ui .info p,
+.swagger-ui .info li,
+.swagger-ui .info table,
+.swagger-ui .scheme-container,
+.swagger-ui .opblock-tag,
+.swagger-ui .tab li,
+.swagger-ui .parameter__name,
+.swagger-ui .response-col_status,
+.swagger-ui table thead tr th,
+.swagger-ui table thead tr td,
+.swagger-ui table.headers td,
+.swagger-ui .model-title,
+.swagger-ui .prop-name,
+.swagger-ui .opblock .opblock-summary-description,
+.swagger-ui .opblock .opblock-summary-operation-id,
+.swagger-ui .opblock .opblock-summary-path,
+.swagger-ui .opblock .opblock-summary-path__deprecated {
+  color: var(--sb-sw-text) !important;
+}
+
+.swagger-ui .opblock .opblock-summary-path__deprecated {
+  opacity: 0.8;
+}
+
+.swagger-ui .markdown code,
+.swagger-ui .renderedMarkdown code,
+.swagger-ui .model-box,
+.swagger-ui .json-schema-2020-12,
+.swagger-ui .opblock,
+.swagger-ui .opblock-body,
+.swagger-ui section.models,
+.swagger-ui section.models .model-container {
+  background: var(--sb-sw-surface) !important;
+}
+
+.swagger-ui .scheme-container {
+  background: transparent !important;
+}
+
+.swagger-ui .opblock .opblock-section-header {
+  background: var(--sb-sw-surface-alt) !important;
+}
+
+.swagger-ui .json-schema-2020-12-keyword__name--primary,
+.swagger-ui .json-schema-2020-12-keyword__value--primary,
+.swagger-ui .json-schema-2020-12-json-viewer__name--primary,
+.swagger-ui .json-schema-2020-12-json-viewer__value--primary,
+.swagger-ui .json-schema-2020-12-property .json-schema-2020-12__title,
+.swagger-ui .json-schema-2020-12__attribute,
+.swagger-ui .json-schema-2020-12-keyword--default .json-schema-2020-12-json-viewer__name,
+.swagger-ui .json-schema-2020-12-keyword--default .json-schema-2020-12-json-viewer__value {
+  color: var(--sb-sw-text) !important;
+}
+
+.swagger-ui .json-schema-2020-12-keyword__name--secondary,
+.swagger-ui .json-schema-2020-12-keyword__value--secondary,
+.swagger-ui .json-schema-2020-12-keyword__value,
+.swagger-ui .json-schema-2020-12-keyword--description,
+.swagger-ui .parameter__extension,
+.swagger-ui .parameter__in,
+.swagger-ui .response__extension,
+.swagger-ui .prop-format {
+  color: var(--sb-sw-text-muted) !important;
+}
+
+.swagger-ui a {
+  color: var(--sb-sw-link) !important;
+}
+
+.swagger-ui .opblock,
+.swagger-ui .scheme-container,
+.swagger-ui table thead tr th,
+.swagger-ui table thead tr td,
+.swagger-ui table thead tr,
+.swagger-ui section.models,
+.swagger-ui .model-box,
+.swagger-ui .json-schema-2020-12 {
+  border-color: var(--sb-sw-border) !important;
+}
+
+.swagger-ui input[type="text"],
+.swagger-ui input[type="password"],
+.swagger-ui input[type="search"],
+.swagger-ui textarea,
+.swagger-ui select {
+  background: var(--sb-sw-input-bg) !important;
+  color: var(--sb-sw-input-text) !important;
+  border-color: var(--sb-sw-border) !important;
+}
+
+.swagger-ui .parameters-col_description input,
+.swagger-ui .servers > label select {
+  background-color: var(--sb-sw-input-bg) !important;
+  color: var(--sb-sw-input-text) !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-get .opblock-summary-method {
+  color: #0a2b4d !important;
+  text-shadow: none !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-post .opblock-summary-method {
+  color: #0b2d1d !important;
+  text-shadow: none !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-put .opblock-summary-method {
+  color: #3f2800 !important;
+  text-shadow: none !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  color: #043229 !important;
+  text-shadow: none !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-delete .opblock-summary-method,
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-head .opblock-summary-method,
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-options .opblock-summary-method {
+  color: #ffffff !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .opblock.opblock-deprecated .opblock-summary-method {
+  color: #1f2937 !important;
+  text-shadow: none !important;
+}
+
+/* Light scheme: force readable text for opblock internals that are hardcoded to white */
+[data-md-color-scheme="default"] .swagger-ui .opblock .opblock-section-header > label,
+[data-md-color-scheme="default"] .swagger-ui .opblock .opblock-section-header h4,
+[data-md-color-scheme="default"] .swagger-ui .tab li,
+[data-md-color-scheme="default"] .swagger-ui .parameter__name,
+[data-md-color-scheme="default"] .swagger-ui .parameter__type,
+[data-md-color-scheme="default"] .swagger-ui .parameter__in,
+[data-md-color-scheme="default"] .swagger-ui .parameter__extension,
+[data-md-color-scheme="default"] .swagger-ui .opblock-description-wrapper,
+[data-md-color-scheme="default"] .swagger-ui .opblock-description-wrapper h4,
+[data-md-color-scheme="default"] .swagger-ui .opblock-description-wrapper p,
+[data-md-color-scheme="default"] .swagger-ui .opblock-external-docs-wrapper,
+[data-md-color-scheme="default"] .swagger-ui .opblock-external-docs-wrapper h4,
+[data-md-color-scheme="default"] .swagger-ui .opblock-external-docs-wrapper p,
+[data-md-color-scheme="default"] .swagger-ui .opblock-title_normal,
+[data-md-color-scheme="default"] .swagger-ui .opblock-title_normal h4,
+[data-md-color-scheme="default"] .swagger-ui .opblock-title_normal p,
+[data-md-color-scheme="default"] .swagger-ui .responses-inner h4,
+[data-md-color-scheme="default"] .swagger-ui .responses-inner h5,
+[data-md-color-scheme="default"] .swagger-ui .response-col_status,
+[data-md-color-scheme="default"] .swagger-ui .response-col_links,
+[data-md-color-scheme="default"] .swagger-ui .response-col_description,
+[data-md-color-scheme="default"] .swagger-ui .response-control-media-type__accept-message,
+[data-md-color-scheme="default"] .swagger-ui label,
+[data-md-color-scheme="default"] .swagger-ui table tbody tr td,
+[data-md-color-scheme="default"] .swagger-ui .model,
+[data-md-color-scheme="default"] .swagger-ui .servers-title,
+[data-md-color-scheme="default"] .swagger-ui section h3 {
+  color: var(--sb-sw-text) !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .response-col_status .response-undocumented,
+[data-md-color-scheme="default"] .swagger-ui .response-col_links .response-undocumented,
+[data-md-color-scheme="default"] .swagger-ui .parameter__deprecated,
+[data-md-color-scheme="default"] .swagger-ui .prop-format {
+  color: var(--sb-sw-text-muted) !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .opblock-body pre.microlight,
+[data-md-color-scheme="default"] .swagger-ui .highlight-code > .microlight,
+[data-md-color-scheme="default"] .swagger-ui textarea.curl {
+  background: var(--sb-sw-code-bg) !important;
+  color: #0f172a !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui input::placeholder,
+[data-md-color-scheme="default"] .swagger-ui textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1;
+}
+
+/* Light scheme: auth/authorize modal */
+[data-md-color-scheme="default"] .swagger-ui .dialog-ux .modal-ux {
+  background: #ffffff !important;
+  border-color: var(--sb-sw-border) !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .dialog-ux .modal-ux-header,
+[data-md-color-scheme="default"] .swagger-ui .dialog-ux .modal-ux-content {
+  background: #ffffff !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .dialog-ux .modal-ux-header h3,
+[data-md-color-scheme="default"] .swagger-ui .dialog-ux .modal-ux-content h4,
+[data-md-color-scheme="default"] .swagger-ui .dialog-ux .modal-ux-content p,
+[data-md-color-scheme="default"] .swagger-ui .auth-container h4,
+[data-md-color-scheme="default"] .swagger-ui .auth-container .scope-def,
+[data-md-color-scheme="default"] .swagger-ui .scopes h2 {
+  color: var(--sb-sw-text) !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .auth-container {
+  border-color: var(--sb-sw-border) !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .auth-container input[type="text"],
+[data-md-color-scheme="default"] .swagger-ui .auth-container input[type="password"] {
+  background: var(--sb-sw-input-bg) !important;
+  color: var(--sb-sw-input-text) !important;
+  border: 1px solid var(--sb-sw-border) !important;
+}
+
+[data-md-color-scheme="default"] .swagger-ui .dialog-ux .btn {
+  color: var(--sb-sw-text) !important;
+  border-color: #64748b !important;
+}
