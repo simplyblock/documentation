@@ -8,7 +8,7 @@ RUN pip install mkdocs-git-revision-date-localized-plugin "mkdocs-material[imagi
     markdown-captions jinja2 mkdocs-link-marker mkdocs-markdownextradata-plugin \
     mkdocs-render-swagger-plugin mkdocs-macros-plugin fastapi uvicorn flask fdb \
     docker kubernetes prettytable "boto3>=1.40" jsonschema psutil prometheus_api_client \
-    jc flask_swagger_ui prometheus_client pydantic_settings starlette hvac tenacity \
+    jc flask_swagger_ui prometheus_client pydantic_settings starlette hvac "pykmip>=0.11" tenacity \
     prometheus_fastapi_instrumentator py-cpuinfo ec2-metadata flask-openapi3 graypy \
     sse-starlette "sentry-sdk[flask]" paramiko
 RUN apk add --no-cache nodejs npm bash
