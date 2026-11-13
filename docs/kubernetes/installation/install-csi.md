@@ -26,6 +26,53 @@ The workers that run the node plugin must satisfy the following requirements:
 
 - [Linux Distributions and Versions](../../reference/supported-linux-distributions.md)
 - [Linux Kernel Versions](../../reference/supported-linux-kernels.md)
+- The NVMe/TCP initiator, described below.
+
+### NVMe/TCP Initiator on Client Nodes
+
+A node that runs application pods using simplyblock storage attaches its volumes over NVMe/TCP. Its kernel needs the
+`nvme-tcp` module and native [NVMe over Fabrics multipathing](../../important-notes/terminology.md#multipathing)
+(`CONFIG_NVME_MULTIPATH`). A node image that provides both, for example, Ubuntu, meets the requirement. The
+platform guides ([Amazon EKS](eks.md#node-images), [GKE](gke.md#node-images)) give the node-image form for each.
+
+!!! note "Storage and control plane nodes are not affected"
+    This applies only to client nodes, the nodes that mount volumes. Storage nodes and control plane nodes do not need
+    the host `nvme-tcp` module: the storage engine runs in user space, and the connections between storage nodes do not
+    use the NVMe initiator of the host kernel.
+
+Native multipathing is a property of the kernel build, and is checked on the host:
+
+```bash title="Checking for native NVMe multipathing"
+cat /sys/module/nvme_core/parameters/multipath
+```
+
+The answer must be `Y`. The tested kernels are listed in
+[Supported Linux Kernels](../../reference/supported-linux-kernels.md).
+
+The `nvme-tcp` module is often absent from a default cloud image. The Ubuntu AWS kernel ships it in the package
+`linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without the module the CSI node plugin does not
+start on that node: its pod is in `CrashLoopBackOff`, the `SimplyblockDriver` reports `Degraded`, and a pod that mounts
+a simplyblock volume on that node stays in `ContainerCreating`. A `Warning` event with the reason
+`NVMeTCPInitiatorMissing` on the node plugin pod names the missing module and, on an Ubuntu kernel, the package to
+install. After the module is loaded, the plugin starts on its next restart, and deleting the node plugin pod starts it
+at once.
+
+```bash title="Finding the node plugin pods that do not start"
+kubectl get pods -n <NAMESPACE> -o wide | grep csi-node
+kubectl describe pod -n <NAMESPACE> <CSI_NODE_POD>
+```
+
+The package is installed, the module loaded, and the load persisted across reboots, before the node joins the cluster:
+
+```bash title="Installing the NVMe/TCP initiator"
+apt-get install -y linux-modules-extra-$(uname -r)   # Ubuntu
+echo nvme-tcp > /etc/modules-load.d/nvme-tcp.conf
+modprobe nvme-tcp
+```
+
+RHEL 9 and its derivatives ship the module in `kernel-modules-core`, which is always installed, so only the load is
+persisted there. Baking these steps into the node image or the node
+group's bootstrap configuration gives every new node the module before it joins the cluster.
 
 ## Exposing the Management API of the Storage Cluster
 
