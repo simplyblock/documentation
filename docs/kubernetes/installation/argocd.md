@@ -16,10 +16,14 @@ On OpenShift, the operator is installed through OperatorHub instead, as describe
 
 - **Argo CD:** Tested with version 3.5, with access to `https://install.simplyblock.io/helm`.
 - **Kubernetes:** A cluster that meets the [Software Requirements](../../deployment-preparation/software-requirements.md).
+- **Certificate issuer:** TLS is enabled by default and requires
+  [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} to be installed before the `Application`
+  is synced. Without it, the chart refuses to render, and TLS must be disabled explicitly with `tls.enabled=false`.
+  See [Securing the Control Plane](security.md).
 
-cert-manager, the FoundationDB CRDs, the CSI snapshot controller, and a local-path provisioner do not have to be
-installed first. The `ControlPlane` installs the ones the cluster lacks, as set by
-`controlplane.local.prerequisites` (see [Install the Control Plane](k8s-control-plane.md#key-helm-values)).
+The FoundationDB CRDs, the CSI snapshot controller, and a local-path provisioner do not have to be installed first.
+The `ControlPlane` installs the ones the cluster lacks, as set by `controlplane.local.prerequisites` (see
+[Install the Control Plane](k8s-control-plane.md#key-helm-values)).
 
 ## Operator and Control Plane
 
@@ -52,17 +56,6 @@ spec:
 kubectl apply -f simplyblock-application.yaml
 kubectl -n simplyblock get controlplane -w
 ```
-
-### TLS on a Cluster Without cert-manager
-
-TLS is enabled by default and issued by cert-manager. On a cluster that does not serve `cert-manager.io/v1` yet, the
-chart renders without its cert-manager objects, and the operator issues its webhook certificate itself. Once the
-`ControlPlane` has installed cert-manager, the next Argo CD refresh renders the chart's `Certificate` resources and
-the operator's webhook configuration, and the automated sync applies them. The `Application` reports `OutOfSync` in
-between, for up to one refresh interval (three minutes by default).
-
-With `controlplane.local.prerequisites.installCertManager: false`, or with the `managed` profile, nothing installs
-cert-manager, and the chart refuses to render until it is served.
 
 ### Development Images
 
