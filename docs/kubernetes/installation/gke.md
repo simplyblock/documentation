@@ -148,14 +148,13 @@ system configuration has no setting for reserved CPUs. One CPU is kept for the h
 GKE sets.
 
 The storage cluster is then deployed with the CPU topology enabled. The discovery writes a draft with
-`environment: GKE`, which leaves the CPU topology off. Only a `Vanilla` draft states the two settings itself, so the
-environment is changed before the draft is approved. `enableKubeletConfiguration: false` keeps the storage nodes from
-changing the kubelet configuration that the node pool already provides.
+`environment: GKE`, which leaves the CPU topology off and the kubelet configuration unchanged. The CPU topology is
+stated in `spec.cluster` before the draft is approved. `enableKubeletConfiguration: false` is what the environment
+decides already, and it keeps the storage nodes from changing the kubelet configuration that the node pool provides.
 
 ```bash title="Enabling the CPU topology on a node pool with a node system configuration"
 kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery --type=merge -p '{
   "spec": {
-    "environment": "Vanilla",
     "cluster": {"enableCpuTopology": true, "enableKubeletConfiguration": false}
   }
 }'
@@ -165,12 +164,12 @@ kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discover
 
 On a node pool without a node system configuration, the kubelet configuration of the Ubuntu node image is written by
 simplyblock when a storage node is added, and the kubelet is restarted once. Running pods are not stopped by that
-restart.
+restart. Both settings are stated in `spec.cluster`, because the `GKE` environment leaves the kubelet configuration
+unchanged unless the draft says otherwise.
 
 ```bash title="Enabling the CPU topology and the kubelet configuration by simplyblock"
 kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery --type=merge -p '{
   "spec": {
-    "environment": "Vanilla",
     "cluster": {"enableCpuTopology": true, "enableKubeletConfiguration": true}
   }
 }'

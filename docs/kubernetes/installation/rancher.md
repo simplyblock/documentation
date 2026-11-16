@@ -106,13 +106,13 @@ and the storage node is not added.
 
 ### Enabling the CPU Topology
 
-The discovery writes a draft whose environment leaves the CPU topology off. Only a `Vanilla` draft states the two
-settings itself, so the environment is changed before the draft is approved.
+The discovery writes a draft whose environment leaves the CPU topology off. The two settings are stated in
+`spec.cluster` before the draft is approved. A stated setting replaces what the environment decides, and the
+environment itself stays as the discovery wrote it.
 
 ```bash title="Enabling the CPU topology in the draft"
 kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery --type=merge -p '{
   "spec": {
-    "environment": "Vanilla",
     "cluster": {"enableCpuTopology": true, "enableKubeletConfiguration": true}
   }
 }'
