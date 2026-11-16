@@ -269,14 +269,14 @@ managedNodeGroups:
 ```
 
 The storage cluster is then deployed with the CPU topology enabled. The discovery writes a draft with
-`environment: EKS`, which leaves the CPU topology off. Only a `Vanilla` draft states the two settings itself, so the
-environment is changed before the draft is approved. `enableKubeletConfiguration: false` keeps the storage nodes from
-changing the kubelet configuration that the node group already provides.
+`environment: EKS`, which leaves the CPU topology off and the kubelet configuration unchanged. The CPU topology is
+stated in `spec.cluster` before the draft is approved, and the environment stays as the discovery wrote it.
+`enableKubeletConfiguration: false` is what the environment decides already, and it keeps the storage nodes from
+changing the kubelet configuration that the node group provides.
 
 ```bash title="Enabling the CPU topology in the draft"
 kubectl -n simplyblock patch clusterdeploymentconfig discovered-cluster-a --type=merge -p '{
   "spec": {
-    "environment": "Vanilla",
     "cluster": {"enableCpuTopology": true, "enableKubeletConfiguration": false}
   }
 }'
