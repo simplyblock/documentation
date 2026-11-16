@@ -111,8 +111,9 @@ management, and the storage cluster is deployed with `enableCpuTopology`. The ku
 places:
 
 - **Node system configuration:** The settings are part of the node pool and reach every node GKE creates for it.
-- **Simplyblock:** The settings are written by simplyblock when a storage node is added. This requires the Ubuntu
-  node image.
+- **Simplyblock:** The settings are written by simplyblock when a storage node is added.
+
+Both work with the Container-Optimized OS node image and with the Ubuntu node image.
 
 A node pool rebuilds the boot disk of a node whenever the node is recreated, for example, during an upgrade or a
 repair. Settings written by simplyblock are lost with the disk, and the node system configuration is not. The node
@@ -136,7 +137,6 @@ gcloud container node-pools create storage-a \
     --cluster <CLUSTER_NAME> --zone <ZONE> \
     --machine-type n2-standard-16 --num-nodes 3 \
     --local-nvme-ssd-block count=2 \
-    --image-type UBUNTU_CONTAINERD \
     --system-config-from-file storage-system-config.yaml \
     --node-labels sb-role=storage-a \
     --node-taints storage.simplyblock.io/dedicated=true:NoSchedule
@@ -162,8 +162,8 @@ kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discover
 
 ### Kubelet Configuration by Simplyblock
 
-On a node pool without a node system configuration, the kubelet configuration of the Ubuntu node image is written by
-simplyblock when a storage node is added, and the kubelet is restarted once. Running pods are not stopped by that
+On a node pool without a node system configuration, the kubelet configuration of the node is written by simplyblock
+when a storage node is added, and the kubelet is restarted once. Running pods are not stopped by that
 restart. Both settings are stated in `spec.cluster`, because the `GKE` environment leaves the kubelet configuration
 unchanged unless the draft says otherwise.
 
