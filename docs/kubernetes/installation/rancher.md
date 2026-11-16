@@ -64,42 +64,79 @@ kubectl apply -f simplyblock-namespace.yaml
 The namespace is created before the operator is installed. Otherwise, the Helm chart creates an unlabeled namespace of
 its own, and the exemptions never take effect.
 
-## CPU Topology and Kubelet Configuration
+## Dedicated CPUs for Storage Nodes
 
-The kubelet CPU topology of the storage nodes is configured by simplyblock itself. The cluster definition of RKE2 or
-K3s stays untouched. The settings are part of the storage cluster, not of the Helm chart:
+By default, a storage node on RKE2 or K3s runs without the kubelet CPU topology configuration. The storage engine
+pins its threads to CPUs, but those CPUs stay available to other pods. With `enableCpuTopology`, the kubelet of each
+storage worker is configured for static CPU management, and the storage node pod receives CPUs of its own.
 
-- **`spec.environment` of the `ClusterDeploymentConfig`:** `Rancher` for RKE2 clusters and `K3s` for K3s clusters.
-  Both let the storage nodes apply the kubelet configuration they need (`enableKubeletConfiguration: true`).
-- **`StorageCluster.spec.storageNodes`:** Holds the resulting storage node settings. `enableCpuTopology` and
-  `reservedSystemCPU` are not derived from the environment and are set on the `StorageCluster` directly.
+The kubelet configuration is applied by simplyblock itself when a storage node is added. The cluster definition of
+RKE2 or K3s stays untouched.
 
-| Field on `spec.storageNodes` | Purpose                                                                                                         |
+| Kubelet Setting             | Value              | Purpose                                                                          |
+|-----------------------------|--------------------|----------------------------------------------------------------------------------|
+| `cpuManagerPolicy`          | `static`           | Assigns exclusive CPUs to the storage node pod                                   |
+| `cpuManagerReconcilePeriod` | `5s`               | Interval at which the kubelet reapplies the CPU assignment                       |
+| `topologyManagerPolicy`     | `single-numa-node` | Keeps the CPUs of the pod on one NUMA node                                       |
+| `topologyManagerScope`      | `pod`              | Aligns the containers of the pod together                                        |
+| `reservedSystemCPUs`        | `0,1` by default   | CPUs kept for the host and the kubelet, and never assigned to the storage engine |
+
+### How the Kubelet Is Configured
+
+RKE2 and K3s write the kubelet configuration themselves, as a drop-in file in a directory below their data directory,
+and write it again at every start. The settings of simplyblock are therefore stored in a second drop-in file,
+`99-simplyblock-cpu-topology.conf`, which is left in place by RKE2 and K3s.
+
+| Distribution | Drop-In Directory                                | Restarted Service                          |
+|--------------|--------------------------------------------------|--------------------------------------------|
+| RKE2         | `/var/lib/rancher/rke2/agent/etc/kubelet.conf.d` | `rke2-agent`, or `rke2-server` on a server |
+| K3s          | `/var/lib/rancher/k3s/agent/etc/kubelet.conf.d`  | `k3s-agent`, or `k3s` on a server          |
+
+A data directory that was moved with `--data-dir` is followed. After the file is written, the service that runs the
+kubelet is restarted once, by which the kubelet is restarted as well. Running pods are not stopped by that restart. On
+a server node, the same service also runs the API server, so storage nodes are best placed on agent nodes.
+
+If the kubelet does not come back with the new settings, the drop-in file is removed, the service is restarted again,
+and the storage node is not added.
+
+!!! warning
+    A K3s release that keeps no drop-in directory takes kubelet settings only as `kubelet-arg` entries of its own
+    configuration. The storage node is then refused with a message that names the arguments to set. They are set in
+    the K3s configuration, and the storage cluster is deployed with `enableKubeletConfiguration: false`.
+
+### Enabling the CPU Topology
+
+The discovery writes a draft whose environment leaves the CPU topology off. Only a `Vanilla` draft states the two
+settings itself, so the environment is changed before the draft is approved.
+
+```bash title="Enabling the CPU topology in the draft"
+kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery --type=merge -p '{
+  "spec": {
+    "environment": "Vanilla",
+    "cluster": {"enableCpuTopology": true, "enableKubeletConfiguration": true}
+  }
+}'
+```
+
+| Field on `spec.cluster`      | Purpose                                                                                                         |
 |------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `enableCpuTopology`          | Enables topology-aware CPU assignment on storage nodes                                                          |
 | `enableKubeletConfiguration` | Lets the storage nodes apply the kubelet CPU topology configuration. Set to `false` if it is already configured |
-| `reservedSystemCPU`          | Reserves CPU cores for the host and system workloads                                                            |
 
-```yaml title="ClusterDeploymentConfig for an RKE2 cluster (excerpt)"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: ClusterDeploymentConfig
-metadata:
-  name: simplyblock-deployment
-  namespace: simplyblock
-spec:
-  approved: false
-  environment: Rancher
-  cluster:
-    name: simplyblock-cluster
-    maxSubsystemCount: 50
-    vcpuCount: 8
-  nodeSets:
-    - name: storage
-      groups:
-        - name: default
-          workers: [worker-1, worker-2, worker-3]
-          devices:
-            nvme: ["0000:01:00.0", "0000:02:00.0"]
+`reservedSystemCPU` is set per group of a node set, as described under
+[Create a Storage Cluster](k8s-storage-plane.md). It names both hardware threads of each reserved core. Otherwise, the
+storage engine receives the sibling thread and shares a physical core with the host. The siblings of a CPU are read on
+the host:
+
+```bash title="Reading the sibling threads of CPU 0"
+cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list
+```
+
+After the storage cluster is active, the storage node pods belong to the `Guaranteed` class, which is what the kubelet
+assigns exclusive CPUs to.
+
+```bash title="Checking the class of the storage node pods"
+kubectl -n simplyblock get pods -o custom-columns=NAME:.metadata.name,QOS:.status.qosClass | grep snode-spdk-pod
 ```
 
 The Helm values `storagenode.enableCpuTopology`, `storagenode.isolateCores`, `storagenode.skipKubeletConfiguration`,

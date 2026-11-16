@@ -218,6 +218,11 @@ reads it again.
 | `Talos`                     | Disables `enableKubeletConfiguration`, as Talos has no writable kubelet config |
 | `Vanilla`, `Rancher`, `K3s` | `enableKubeletConfiguration`                                                   |
 
+`enableCpuTopology` and `enableKubeletConfiguration` are stated in `spec.cluster` only by a `Vanilla` document. For
+every other value, both are decided by the environment, and a document that states them is refused. A deployment on
+RKE2, K3s, or a managed service that requires the CPU topology is therefore deployed as `Vanilla`, as described for
+[RKE2 and K3s](rancher.md#dedicated-cpus-for-storage-nodes) and for [GKE](gke.md#dedicated-cpus-for-storage-nodes).
+
 ### Cluster Template
 
 `spec.cluster` is the template of the storage cluster to create. It is ignored when `spec.clusterRef` names an
