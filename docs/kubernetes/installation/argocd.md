@@ -57,26 +57,6 @@ kubectl apply -f simplyblock-application.yaml
 kubectl -n simplyblock get controlplane -w
 ```
 
-### Development Images
-
-The chart in the `main` branch of the operator repository references images that are not published to `quay.io`. An
-`Application` that syncs the chart from Git instead of from the Helm repository sets the development images
-explicitly:
-
-```yaml title="Values for the chart from the main branch"
-image:
-  operator:
-    repository: docker.io/simplyblock/simplyblock-operator
-    tag: main
-  simplyblock:
-    repository: docker.io/simplyblock/simplyblock
-    tag: main
-driver:
-  image:
-    repository: docker.io/simplyblock/spdkcsi
-    tag: main
-```
-
 ## Storage Plane
 
 On a fresh installation, the chart raises the discovery run `initial-discovery`, and the operator writes its result as
