@@ -94,15 +94,40 @@ and write it again at every start. The settings of simplyblock are therefore sto
 
 A data directory that was moved with `--data-dir` is followed. After the file is written, the service that runs the
 kubelet is restarted once, by which the kubelet is restarted as well. Running pods are not stopped by that restart. On
-a server node, the same service also runs the API server, so storage nodes are best placed on agent nodes.
+a server node, the same service also runs the API server, which is unavailable on that node for a few seconds during
+the restart. Storage nodes are therefore best placed on agent nodes, or on the servers of a cluster with at least
+three of them.
 
 If the kubelet does not come back with the new settings, the drop-in file is removed, the service is restarted again,
 and the storage node is not added.
 
-!!! warning
-    A K3s release that keeps no drop-in directory takes kubelet settings only as `kubelet-arg` entries of its own
-    configuration. The storage node is then refused with a message that names the arguments to set. They are set in
-    the K3s configuration, and the storage cluster is deployed with `enableKubeletConfiguration: false`.
+### K3s 1.31 and Earlier
+
+K3s keeps the kubelet drop-in directory from release 1.32 on. An earlier release takes kubelet settings only as
+`kubelet-arg` entries of its own configuration, which simplyblock does not edit. A storage node on such a release is
+refused with a message that names the arguments to set, and the node is left unchanged.
+
+The arguments are set on every storage worker, in a file of the K3s configuration directory.
+
+```yaml title="Example of the kubelet arguments for dedicated CPUs (/etc/rancher/k3s/config.yaml.d/90-simplyblock-cpu-topology.yaml)"
+kubelet-arg:
+  - cpu-manager-policy=static
+  - cpu-manager-reconcile-period=5s
+  - topology-manager-policy=single-numa-node
+  - topology-manager-scope=pod
+  - reserved-cpus=0,1
+```
+
+The kubelet refuses to start with the state it kept for the previous policy, so that state is removed before the
+service is restarted. The workers are restarted one at a time. On a server node, the service is `k3s` instead of
+`k3s-agent`.
+
+```bash title="Applying the kubelet arguments on a storage worker"
+rm -f /var/lib/kubelet/cpu_manager_state
+systemctl restart k3s-agent
+```
+
+The storage cluster is then deployed with `enableCpuTopology: true` and `enableKubeletConfiguration: false`.
 
 ### Enabling the CPU Topology
 
