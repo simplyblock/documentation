@@ -86,6 +86,9 @@ ceiling, because the control plane enforces one combined IOPS limit.
     Annotation values override StorageClass values per parameter. Use annotations only for the values to be
     overridden.
 
+The ceilings hold for the volume as a whole. For a [striped volume](striped-volumes.md), each ceiling is divided evenly
+across the members, rounded up.
+
 ## Legacy Keys
 
 StorageClasses and claims written for earlier versions keep working. The older keys are still read, and when an
