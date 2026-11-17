@@ -90,15 +90,26 @@ done | sort
 
 ## Storage Node Memory
 
-The memory of a storage node depends on the maximum number of NVMe-oF subsystems per node (`maxSubsystemCount`).
-For each 10 GBit/s of dedicated network bandwidth, at least 3 subsystems are recommended, and for each vCPU above 8, one
-additional subsystem. Use the lower of both values. The hard limits are listed in [Limits](../reference/limits.md).
+A storage node needs a fixed amount of huge page memory plus system memory that grows with the raw storage capacity
+of the node. Both are reserved for the storage node and enforced as hard limits of its container.
 
-| Unit                                     | Memory Requirement |
-|------------------------------------------|--------------------|
-| Fixed amount                             | 3 GiB              |
-| Per subsystem (cluster average per node) | 35 MiB             |
-| Per TiB of storage capacity on the host  | 0.5 GiB            |
+| Unit                                            | Memory Requirement | Type             |
+|-------------------------------------------------|--------------------|------------------|
+| Fixed amount                                    | 6.5 GiB            | Huge pages       |
+| Fixed amount                                    | 2 GiB              | System memory    |
+| Per TiB of raw storage capacity on the node     | 1.3 GiB            | System memory    |
+
+The per-TiB amount covers the placement metadata of the node's logical volume stores at full utilization, in the
+worst case (random writes, snapshots, and outages leave pages partially written). It is independent of the erasure
+coding scheme.
+
+For example, a cluster of 3 storage nodes with 250 TiB of raw capacity in total needs per node:
+6.5 GiB + 2 GiB + 1.3 GiB × 250 / 3 ≈ 117 GiB.
+
+The huge page amount is the same for all nodes up to 32 vCPUs and 250 NVMe-oF subsystems per node
+(`maxSubsystemCount`). Larger nodes need more, for example, 9.2 GiB for 64 vCPUs and 500 subsystems. For each
+10 GBit/s of dedicated network bandwidth, at least 3 subsystems are recommended, and for each vCPU above 8, one
+additional subsystem. Use the lower of both values. The hard limits are listed in [Limits](../reference/limits.md).
 
 !!! note "Edge clusters"
     The memory formula applies to edge clusters as well, with a minimum of 3 GB of RAM per storage node.
