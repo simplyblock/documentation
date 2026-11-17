@@ -93,11 +93,11 @@ done | sort
 A storage node needs a fixed amount of huge page memory plus system memory that grows with the raw storage capacity
 of the node. Both are reserved for the storage node and enforced as hard limits of its container.
 
-| Unit                                            | Memory Requirement | Type             |
-|-------------------------------------------------|--------------------|------------------|
-| Fixed amount                                    | 6.5 GiB            | Huge pages       |
-| Fixed amount                                    | 2 GiB              | System memory    |
-| Per TiB of raw storage capacity on the node     | 1.3 GiB            | System memory    |
+| Unit                                        | Memory Requirement | Type          |
+|---------------------------------------------|--------------------|---------------|
+| Fixed amount                                | 6.5 GiB            | Huge pages    |
+| Fixed amount                                | 2 GiB              | System memory |
+| Per TiB of raw storage capacity on the node | 1.3 GiB            | System memory |
 
 The per-TiB amount covers the placement metadata of the node's logical volume stores at full utilization, in the
 worst case (random writes, snapshots, and outages leave pages partially written). It is independent of the erasure
