@@ -111,9 +111,6 @@ The huge page amount is the same for all nodes up to 32 vCPUs and 250 NVMe-oF su
 10 GBit/s of dedicated network bandwidth, at least 3 subsystems are recommended, and for each vCPU above 8, one
 additional subsystem. Use the lower of both values. The hard limits are listed in [Limits](../reference/limits.md).
 
-!!! note "Edge clusters"
-    The memory formula applies to edge clusters as well, with a minimum of 3 GB of RAM per storage node.
-
 ## Control Plane
 
 The minimum requirements of the simplyblock control plane are 4 vCPUs, 8 GiB of RAM, and about 25 GiB of disk space

@@ -27,8 +27,8 @@ devices and storage array LUNs can be used instead of NVMe devices (see below).<
 </span>
 
 !!! note "Edge clusters"
-    A storage node of an [edge cluster](../architecture/deployment-topologies/edge-clusters.md) needs at least
-    3 vCPUs and 3 GB of RAM. An edge cluster has one storage node (cluster mode `Single`, any erasure-coding
+    A storage node of an [edge cluster](../architecture/deployment-topologies/edge-clusters.md) has the same
+    requirements as any other storage node. An edge cluster has one storage node (cluster mode `Single`, any erasure-coding
     scheme with one data device per chunk, for example, 2+1 on three devices) or two storage nodes (cluster mode
     `Dual`, erasure coding 1+1).
 
