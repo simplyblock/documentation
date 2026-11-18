@@ -13,20 +13,22 @@ vCPUs and how much memory a node needs beyond the minimum is described in [Sizin
 The following resources must be exclusive to simplyblock and are not available to the host operating system or other
 processes:
 
-| Node Type    | vCPU(s) | RAM (GB) | Storage Devices                  | Network Performance | Free Boot Disk | Number of Nodes  |
-|--------------|---------|----------|----------------------------------|---------------------|----------------|------------------|
-| Storage Node | 8+      | 6+ DDR4  | 2x dedicated NVMe <sup>(1)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(2)</sup> |
+| Node Type    | vCPU(s) | RAM (GiB)         | Storage Devices                  | Network Performance | Free Boot Disk | Number of Nodes  |
+|--------------|---------|-------------------|----------------------------------|---------------------|----------------|------------------|
+| Storage Node | 8+      | 9+ <sup>(3)</sup> | 2x dedicated NVMe <sup>(1)</sup> | 10 GBit/s           | 10 GB          | 3 <sup>(2)</sup> |
 
 <span style="font-size: 0.8em;">
 <sup>1</sup> One NVMe device is sufficient for a test setup, but it is not approved for production. Linux block
 devices and storage array LUNs can be used instead of NVMe devices (see below).<br>
 <sup>2</sup> The required number of nodes is only valid for erasure coding scheme 1+1. See
-[Fault Tolerance and Erasure Coding](erasure-coding-scheme.md).
+[Fault Tolerance and Erasure Coding](erasure-coding-scheme.md).<br>
+<sup>3</sup> Plus 0.7 GiB per TiB of raw storage capacity on the node. See
+[Storage Node Memory](sizing.md#storage-node-memory).
 </span>
 
 !!! note "Edge clusters"
-    A storage node of an [edge cluster](../architecture/deployment-topologies/edge-clusters.md) needs at least
-    3 vCPUs and 3 GB of RAM. An edge cluster has one storage node (cluster mode `Single`, any erasure-coding
+    A storage node of an [edge cluster](../architecture/deployment-topologies/edge-clusters.md) has the same
+    requirements as any other storage node. An edge cluster has one storage node (cluster mode `Single`, any erasure-coding
     scheme with one data device per chunk, for example, 2+1 on three devices) or two storage nodes (cluster mode
     `Dual`, erasure coding 1+1).
 
