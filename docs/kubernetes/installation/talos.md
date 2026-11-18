@@ -32,10 +32,10 @@ the static CPU manager with a single-NUMA-node topology manager. On other distri
 worker itself. The Talos host is immutable and has no shell, so both settings live in the **machine config**, and
 there are two ways to get them there. The deployment document picks one with `spec.cluster.talosMachineConfig`:
 
-| Mode | `talosMachineConfig` | Who writes the machine config | Talos API access from the cluster |
-|------|----------------------|-------------------------------|-----------------------------------|
-| Pre-provisioned (**default**) | `Preprovisioned` or unset | The cluster administrator, before the storage nodes are added | Not needed |
-| Managed | `Managed` | The storage node, through the Talos API, while it is added | Required (see below) |
+| Mode                          | `talosMachineConfig`      | Who writes the machine config                                 | Talos API access from the cluster |
+|-------------------------------|---------------------------|---------------------------------------------------------------|-----------------------------------|
+| Pre-provisioned (**default**) | `Preprovisioned` or unset | The cluster administrator, before the storage nodes are added | Not needed                        |
+| Managed                       | `Managed`                 | The storage node, through the Talos API, while it is added    | Required (see below)              |
 
 ```yaml title="Choosing the mode in the ClusterDeploymentConfig"
 apiVersion: storage.simplyblock.io/v1alpha2
