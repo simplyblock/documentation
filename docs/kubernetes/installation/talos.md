@@ -34,7 +34,7 @@ there are two ways to get them there. The deployment document picks one with `sp
 
 | Mode | `talosMachineConfig` | Who writes the machine config | Talos API access from the cluster |
 |------|----------------------|-------------------------------|-----------------------------------|
-| Pre-provisioned (**default**) | `Preprovisioned` or unset | You, before the storage nodes are added | Not needed |
+| Pre-provisioned (**default**) | `Preprovisioned` or unset | The cluster administrator, before the storage nodes are added | Not needed |
 | Managed | `Managed` | The storage node, through the Talos API, while it is added | Required (see below) |
 
 ```yaml title="Choosing the mode in the ClusterDeploymentConfig"
@@ -97,7 +97,7 @@ consumer has to be added to it by hand, since the node only verifies that the to
 To put the whole fleet in place before adding any node, use the same `machine.sysfs` key with one entry per NUMA
 node that will host a storage node, and the kubelet settings below, in each worker's machine config at install
 time. One way to size a fleet of identical workers is to add the first worker without the patch and read the numbers
-off the refusal. A pool reserved through `machine.sysctls` `vm.nr_hugepages` is honoured as well, as long as it
+off the refusal. A pool reserved through `machine.sysctls` `vm.nr_hugepages` is honored as well, as long as it
 covers the request; do not set both.
 
 ```yaml title="Content of enable-cpu-topology.yaml"
