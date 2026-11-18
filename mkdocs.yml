@@ -29,6 +29,8 @@ extra:
   # assistant/, running on its own host (assistant/deploy/); see assistant/README.md.
   assistant:
     api: https://docs-assistant.simplyblock.io/api/assistant
+    # MCP endpoint of the same service (docs/assistant/mcp.md).
+    mcp: https://docs-assistant.simplyblock.io/mcp
     turnstile_sitekey: ""
   experimental: "**Experimental**{.chip-experimental}"
 hooks:

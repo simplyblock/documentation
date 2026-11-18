@@ -3,6 +3,7 @@
 POST /api/assistant/ask       {"question", "version", "turnstile"} -> Server-Sent Events
 POST /api/assistant/feedback  {"question", "version", "helpful", "comment"}
 GET  /api/assistant/health
+POST /mcp                     MCP endpoint (Streamable HTTP), see mcp_server.py
 
 Run: uvicorn app.main:app --host 0.0.0.0 --port 8080   (from assistant/)
 """
@@ -11,8 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import sys
-import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -20,18 +19,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import agent, prewarm
+from . import agent, mcp_server, prewarm
 from .cache import cache
 from .config import settings
 from .docs import library
+from .events import log
 from .guard import budget, human, limiter
+
+mcp_routes = mcp_server.routes()
 
 
 @asynccontextmanager
 async def lifespan(_app):
-    task = asyncio.create_task(prewarm.loop(log))
-    yield
-    task.cancel()
+    # The MCP routes live in this app, so their session manager is run here.
+    async with mcp_server.server.session_manager.run():
+        task = asyncio.create_task(prewarm.loop(log))
+        yield
+        task.cancel()
 
 
 app = FastAPI(title="simplyblock docs assistant", docs_url=None, redoc_url=None, lifespan=lifespan)
@@ -40,15 +44,6 @@ if settings.cors_origins:
         CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["POST", "GET"],
         allow_headers=["content-type"],
     )
-
-
-def log(event: str, **fields) -> None:
-    line = json.dumps({"ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "event": event, **fields})
-    if settings.log_file:
-        with open(settings.log_file, "a", encoding="utf-8") as f:
-            f.write(line + "\n")
-    else:
-        print(line, file=sys.stdout, flush=True)
 
 
 def client_ip(request: Request) -> str:
@@ -147,6 +142,8 @@ async def feedback(body: Feedback) -> dict:
     log("feedback", version=body.version, question=body.question, helpful=body.helpful, comment=body.comment)
     return {"ok": True}
 
+
+app.router.routes.extend(mcp_routes)
 
 if settings.static_site:
     from fastapi.staticfiles import StaticFiles

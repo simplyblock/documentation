@@ -6,6 +6,10 @@
 			flush_interval -1
 		}
 	}
+	# MCP endpoint (assistant/app/mcp_server.py); same container, no streaming.
+	handle /mcp {
+		reverse_proxy docs-assistant:8080
+	}
 	handle {
 		respond "Not found" 404
 	}

@@ -206,6 +206,7 @@ class Library:
     def __init__(self) -> None:
         self._corpora: dict[str, Corpus] = {}
         self._versions: tuple[float, dict[str, str]] = (0.0, {})
+        self._catalog: list[dict] = []
         self._lock = asyncio.Lock()
 
     async def versions(self) -> dict[str, str]:
@@ -216,6 +217,10 @@ class Library:
         try:
             data = json.loads(await asyncio.to_thread(_get, f"{settings.docs_base}/versions.json"))
             known = {}
+            self._catalog = [
+                {"version": v["version"], "title": v.get("title", v["version"]), "aliases": list(v.get("aliases", []))}
+                for v in data
+            ]
             for v in data:
                 known[v["version"]] = v["version"]
                 for alias in v.get("aliases", []):
@@ -226,6 +231,11 @@ class Library:
             if not known:
                 known = {"latest": "latest", "dev": "dev"}
         return known
+
+    async def catalog(self) -> list[dict]:
+        """Published versions as in versions.json: version, title, aliases."""
+        await self.versions()
+        return self._catalog or [{"version": "latest", "title": "latest", "aliases": []}]
 
     async def resolve(self, version: str | None) -> str:
         known = await self.versions()
