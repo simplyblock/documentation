@@ -103,8 +103,8 @@ The per-TiB amount covers the placement metadata of the node's logical volume st
 worst case (random writes, snapshots, and outages leave pages partially written). It is independent of the erasure
 coding scheme.
 
-For example, a cluster of 3 storage nodes with 250 TiB of raw capacity in total needs per node:
-6.5 GiB + 2 GiB + 1.3 GiB × 250 / 3 ≈ 117 GiB.
+The capacity is that of the node's own local NVMe devices. For example, a storage node with 10 NVMe devices of
+8 TiB each (80 TiB of raw capacity) needs 6.5 GiB + 2 GiB + 1.3 GiB × 80 = 112.5 GiB.
 
 The huge page amount is the same for all nodes up to 32 vCPUs and 250 NVMe-oF subsystems per node
 (`maxSubsystemCount`). Larger nodes need more, for example, 9.2 GiB for 64 vCPUs and 500 subsystems. For each
