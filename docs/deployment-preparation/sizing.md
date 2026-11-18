@@ -97,14 +97,14 @@ of the node. Both are reserved for the storage node and enforced as hard limits 
 |---------------------------------------------|--------------------|---------------|
 | Fixed amount                                | 6.5 GiB            | Huge pages    |
 | Fixed amount                                | 2 GiB              | System memory |
-| Per TiB of raw storage capacity on the node | 1.3 GiB            | System memory |
+| Per TiB of raw storage capacity on the node | 0.7 GiB            | System memory |
 
-The per-TiB amount covers the placement metadata of the node's logical volume stores at full utilization, in the
-worst case (random writes, snapshots, and outages leave pages partially written). It is independent of the erasure
-coding scheme.
+The per-TiB amount covers the placement metadata of the node's logical volume stores at full utilization. It is the
+maximum consumption in typical scenarios: most pages are fully written, and up to 20% of the pages are fragmented by
+copy-on-write after snapshots or by writes during outages. It is independent of the erasure coding scheme.
 
 The capacity is that of the node's own local NVMe devices. For example, a storage node with 10 NVMe devices of
-8 TiB each (80 TiB of raw capacity) needs 6.5 GiB + 2 GiB + 1.3 GiB × 80 = 112.5 GiB.
+8 TiB each (80 TiB of raw capacity) needs 6.5 GiB + 2 GiB + 0.7 GiB × 80 = 64.5 GiB.
 
 The huge page amount is the same for all nodes up to 32 vCPUs and 250 NVMe-oF subsystems per node
 (`maxSubsystemCount`). Larger nodes need more, for example, 9.2 GiB for 64 vCPUs and 500 subsystems. For each

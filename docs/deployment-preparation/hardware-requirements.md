@@ -22,7 +22,7 @@ processes:
 devices and storage array LUNs can be used instead of NVMe devices (see below).<br>
 <sup>2</sup> The required number of nodes is only valid for erasure coding scheme 1+1. See
 [Fault Tolerance and Erasure Coding](erasure-coding-scheme.md).<br>
-<sup>3</sup> Plus 1.3 GiB per TiB of raw storage capacity on the node. See
+<sup>3</sup> Plus 0.7 GiB per TiB of raw storage capacity on the node. See
 [Storage Node Memory](sizing.md#storage-node-memory).
 </span>
 
