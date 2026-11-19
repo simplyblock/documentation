@@ -25,13 +25,13 @@ a kernel with the pNFS block layout driver (`CONFIG_PNFS_BLOCK`), including its 
 driver finds the device a layout names through a `/dev/disk/by-id/nvme-eui.` link, which the CSI node plugin creates. This
 is a property of the kernel build, not of its version number. Upstream Linux added it in 6.11.
 
-| Client kernel                              | Direct data path              |
-|--------------------------------------------|-------------------------------|
-| Linux 6.11 and later                       | Supported                     |
-| Red Hat Enterprise Linux 9.8 (5.14.0-687)  | Supported, validated          |
-| Red Hat Enterprise Linux 9.5 (5.14.0-503)  | Not supported, validated      |
-| Red Hat Enterprise Linux 9.6 and 9.7       | Not validated yet             |
-| Debian and Ubuntu                          | Not validated yet             |
+| Client kernel                             | Direct data path         |
+|-------------------------------------------|--------------------------|
+| Linux 6.11 and later                      | Supported                |
+| Red Hat Enterprise Linux 9.8 (5.14.0-687) | Supported, validated     |
+| Red Hat Enterprise Linux 9.5 (5.14.0-503) | Not supported, validated |
+| Red Hat Enterprise Linux 9.6 and 9.7      | Not validated yet        |
+| Debian and Ubuntu                         | Not validated yet        |
 
 The following command run on a worker node shows whether its kernel has the support. It prints `nvme-eui.` when the
 driver can find NVMe devices, and nothing when it cannot.
