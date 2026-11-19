@@ -101,6 +101,10 @@ three of them.
 If the kubelet does not come back with the new settings, the drop-in file is removed, the service is restarted again,
 and the storage node is not added.
 
+The drop-in file is compared with the settings before it is written. A storage node whose drop-in file already holds
+them is added without a restart of the service, and a changed `reservedSystemCPU` of the storage cluster is applied
+at the next add or restart of its storage nodes.
+
 ### K3s 1.31 and Earlier
 
 K3s keeps the kubelet drop-in directory from release 1.32 on. An earlier release takes kubelet settings only as

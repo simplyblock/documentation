@@ -164,7 +164,14 @@ kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discover
 
 On a node pool without a node system configuration, the kubelet configuration of the node is written by simplyblock
 when a storage node is added, and the kubelet is restarted once. Running pods are not stopped by that
-restart. Both settings are stated in `spec.cluster`, because the `GKE` environment leaves the kubelet configuration
+restart. If the kubelet does not come back with the new settings, the original configuration is put back, the kubelet
+is restarted again, and the storage node is not added.
+
+The settings are compared with the kubelet configuration before anything is written. A node whose configuration
+already holds them is added without a restart of the kubelet, and a changed `reservedSystemCPU` of the storage
+cluster is applied at the next add or restart of its storage nodes.
+
+Both settings are stated in `spec.cluster`, because the `GKE` environment leaves the kubelet configuration
 unchanged unless the draft says otherwise.
 
 ```bash title="Enabling the CPU topology and the kubelet configuration by simplyblock"
