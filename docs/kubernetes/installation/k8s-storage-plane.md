@@ -218,6 +218,13 @@ reads it again.
 | `Talos`                     | Disables `enableKubeletConfiguration`, as Talos has no writable kubelet config |
 | `Vanilla`, `Rancher`, `K3s` | `enableKubeletConfiguration`                                                   |
 
+The table lists what the environment decides when the document states nothing. `enableCpuTopology` and
+`enableKubeletConfiguration` can also be stated in `spec.cluster` on every environment, and a stated value replaces
+the decision of the environment. This is how the CPU topology is enabled outside of OpenShift, as described for
+[RKE2 and K3s](rancher.md#dedicated-cpus-for-storage-nodes) and for [GKE](gke.md#dedicated-cpus-for-storage-nodes).
+With `enableKubeletConfiguration: true` on an environment whose kubelet configuration is not writable, the storage
+nodes fail to configure it.
+
 ### Cluster Template
 
 `spec.cluster` is the template of the storage cluster to create. It is ignored when `spec.clusterRef` names an
