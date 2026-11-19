@@ -200,9 +200,15 @@ threads to CPUs, but the kubelet keeps those CPUs available to other pods, and e
 node pod as a quota.
 
 To give the storage engine CPUs of its own, the kubelet of the storage node group is configured for static CPU
-management, and the storage cluster is deployed with `enableCpuTopology`. Simplyblock does not change the kubelet
-configuration on EKS, because a managed node group builds it again for every node it replaces. The settings therefore
-belong to the node group, where every new node receives them.
+management, and the storage cluster is deployed with `enableCpuTopology`. The kubelet settings come from one of two
+places:
+
+- **Node group:** The settings are part of the node group and reach every node it creates.
+- **Simplyblock:** The settings are written by simplyblock when a storage node is added.
+
+A managed node group builds the kubelet configuration again for every node it replaces. The settings of the node
+group are in place before the kubelet of the new node starts, and the settings written by simplyblock reach the new
+node once its storage node is added, with one more restart of the kubelet. The node group is therefore recommended.
 
 | Kubelet Setting             | Value              | Purpose                                                                                  |
 |-----------------------------|--------------------|------------------------------------------------------------------------------------------|
@@ -222,6 +228,8 @@ cat /sys/devices/system/cpu/cpu0/topology/thread_siblings_list
 
 With `cpuCFSQuota: false`, the polling threads of the storage engine are not throttled at the CPU limit of the pod.
 The setting applies to every pod on the node, so it suits a node group that is dedicated to storage nodes.
+
+### Node Group Configuration
 
 The Ubuntu EKS images keep the kubelet configuration in a file that is edited before the node starts its kubelet.
 
@@ -284,6 +292,35 @@ kubectl -n simplyblock patch clusterdeploymentconfig discovered-cluster-a --type
 }'
 ```
 
+### Kubelet Configuration by Simplyblock
+
+On a node group without the settings, the kubelet configuration of the node is written by simplyblock when a storage
+node is added. The file that the kubelet names with `--config` is edited, `/etc/kubernetes/kubelet/kubelet-config.json`
+on the EKS images, and a copy of the original file is kept beside it. On Amazon Linux 2023, the two cgroup settings are
+cleared, as in the node group above. The kubelet is then restarted once, through `snap.kubelet-eks.daemon` on the
+Ubuntu image and through `kubelet` on Amazon Linux 2023. Running pods are not stopped by that restart. If the kubelet
+does not come back with the new settings, the original file is put back, the kubelet is restarted again, and the
+storage node is not added.
+
+The settings are compared with the file before anything is written. A node whose kubelet configuration already holds
+them is added without a restart of the kubelet, and a changed `reservedSystemCPU` of the storage cluster is applied
+at the next add or restart of its storage nodes. `cpuCFSQuota` is not written by simplyblock.
+
+Both settings are stated in `spec.cluster`, because the `EKS` environment leaves the kubelet configuration unchanged
+unless the draft says otherwise.
+
+```bash title="Enabling the CPU topology and the kubelet configuration by simplyblock"
+kubectl -n simplyblock patch clusterdeploymentconfig discovered-cluster-a --type=merge -p '{
+  "spec": {
+    "cluster": {"enableCpuTopology": true, "enableKubeletConfiguration": true}
+  }
+}'
+```
+
+`reservedSystemCPU`, set per group of a node set, names the CPUs kept for the host and defaults to `0,1`.
+
+### Verification
+
 After the storage cluster is active, the storage node pods belong to the `Guaranteed` class, which is what the kubelet
 assigns exclusive CPUs to.
 
@@ -292,7 +329,7 @@ kubectl -n simplyblock get pods -o custom-columns=NAME:.metadata.name,QOS:.statu
 ```
 
 A node group that was created without these settings keeps its kubelet configuration. The settings reach its nodes
-when the node group is replaced by one that carries them.
+when the node group is replaced by one that carries them, or from simplyblock, as described above.
 
 ## Storage for the Control Plane
 
