@@ -107,10 +107,26 @@ async def loop(log) -> None:
     if not settings.prewarm_versions or settings.mock:
         return
     await asyncio.sleep(30)
+    resolved: dict[str, str] = {}
+    last_run = 0.0
     while True:
+        # Run every refresh period, and at once when an alias moves to another
+        # version (a new release becomes "latest").
+        current = {}
         for name in settings.prewarm_versions:
             try:
-                await warm_version(name, log)
-            except Exception as exc:
-                log("prewarm_error", version=name, error=f"{type(exc).__name__}: {exc}")
-        await asyncio.sleep(settings.refresh_seconds)
+                current[name] = await library.resolve(name)
+            except Exception:
+                current[name] = resolved.get(name, "")
+        moved = [n for n in current if resolved and current[n] != resolved.get(n)]
+        for n in moved:
+            log("version_changed", alias=n, old=resolved.get(n), new=current[n])
+        if moved or time.time() - last_run >= settings.refresh_seconds:
+            for name in settings.prewarm_versions:
+                try:
+                    await warm_version(name, log)
+                except Exception as exc:
+                    log("prewarm_error", version=name, error=f"{type(exc).__name__}: {exc}")
+            last_run = time.time()
+        resolved = current
+        await asyncio.sleep(settings.versions_refresh_seconds)
