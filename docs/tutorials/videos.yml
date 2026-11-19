@@ -91,6 +91,10 @@ videos:
     category: core
     title: "Distributed erasure coding"
     drive_id: 1zjPZlAeG7XRlwtvQCr7xbf6b59UyqTHj
+  - id: core-12
+    category: core
+    title: "One storage layer, everywhere"
+    drive_id: 1g82DhbJOesJVnPjUcIgECXZeXlmwqP1k
   - id: file-object-01
     category: file-object
     title: "pNFS high-performance file storage"
