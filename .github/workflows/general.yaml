@@ -28,6 +28,8 @@ jobs:
       - name: "Prepare Documentation Builder"
         uses: ./.github/actions/prepare-builder
       - name: "Build Documentation Test"
+        env:
+          GH_TOKEN: ${{ secrets.SBCLI_ARTIFACTS_TOKEN }}
         run: |
           ./doc-builder update-repositories
           ./doc-builder gen-operator-ref
@@ -45,6 +47,8 @@ jobs:
       - name: "Prepare Documentation Builder"
         uses: ./.github/actions/prepare-builder
       - name: "Prepare Documentation Dev Deployment"
+        env:
+          GH_TOKEN: ${{ secrets.SBCLI_ARTIFACTS_TOKEN }}
         run: |
           sed -i -r "s|(site_url: .*)|\1dev/|g" ./mkdocs.yml
           cat ./mkdocs.yml

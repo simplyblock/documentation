@@ -38,6 +38,8 @@ jobs:
       - name: "Prepare Documentation Builder"
         uses: ./.github/actions/prepare-builder
       - name: "Build Documentation Test"
+        env:
+          GH_TOKEN: ${{ secrets.SBCLI_ARTIFACTS_TOKEN }}
         run: |
           ./doc-builder update-repositories
           ./doc-builder gen-operator-ref
@@ -60,6 +62,8 @@ jobs:
       - name: "Prepare Documentation Builder"
         uses: ./.github/actions/prepare-builder
       - name: "Build Documentation"
+        env:
+          GH_TOKEN: ${{ secrets.SBCLI_ARTIFACTS_TOKEN }}
         run: |
           ./doc-builder update-repositories
           ./doc-builder gen-operator-ref

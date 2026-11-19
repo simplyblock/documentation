@@ -52,6 +52,8 @@ jobs:
         run: |
           ./scripts/operator-lock.sh "${{ env.RELEASE_NAME }}"
       - name: "Prepare Documentation Deployment: ${{ env.RELEASE_NAME }}"
+        env:
+          GH_TOKEN: ${{ secrets.SBCLI_ARTIFACTS_TOKEN }}
         run: |
           ./doc-builder update-repositories
           ./doc-builder gen-operator-ref

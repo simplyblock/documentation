@@ -10,6 +10,10 @@ As a general rule, every Linux kernel 5.19 or later is expected to work, as long
 NVMe over Fabrics (`nvme-fabrics`), and NVMe over TCP (`nvme-tcp`) are available. In most cases, the latter two kernel
 modules need to be loaded manually or persisted.
 
+!!! note
+    How to install and persist the `nvme-tcp` module on the client nodes that mount simplyblock volumes is described
+    under [NVMe/TCP Initiator on Client Nodes](../kubernetes/installation/install-csi.md#nvmetcp-initiator-on-client-nodes).
+
 The following kernels are known to be compatible and tested. Additional kernel versions may work, but are untested.
 
 | OS                       | Linux Kernel                            | Prerequisite      |

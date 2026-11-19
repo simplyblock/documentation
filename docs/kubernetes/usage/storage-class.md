@@ -112,12 +112,17 @@ keys:
 | `fabric`                    | `fabric`                    |
 | `tune2fsReservedBlocks`     | `tune2fs_reserved_blocks`   |
 | `enableDHCHAP`              | `dhchap_node_selector`      |
+| `stripeWidth`               | `stripe_width`              |
+| `stripeSize`                | `stripe_size`               |
 
 `filesystem` defaults to `xfs`. For `enableDHCHAP`, the parameter value is the node label key of the pool's allowed
 nodes, `storage.simplyblock.io/storage-pool.<POOL_UUID>`, and it is only written when `allowedNodes` is non-empty (see
 [Host Authentication and Encryption](../operations/security/authentication-encryption.md)).
 
 `priority_class` names the [service class](service-classes.md) the pool's volumes run in.
+
+`stripe_width` and `stripe_size` are only written when `stripeWidth` is `2` or more (see
+[Striped Volumes](striped-volumes.md)).
 
 !!! note
     `compression` and `replicate` are written into the class for completeness. The CSI driver does not forward them
@@ -172,6 +177,8 @@ for example, the cluster's fabric or no QoS ceiling.
 | max_namespace_per_subsys  | int        | Number of namespaces per NVMe subsystem. Defaults to `1`.                                                                                           |
 | tune2fs_reserved_blocks   | int        | Reserved-blocks percentage applied through `tune2fs -m` when an ext4 volume is staged. Left unset, tune2fs is skipped entirely.                     |
 | dhchap_node_selector      | string     | Node label key of the allowed nodes of a DHCHAP pool. The PersistentVolume's node affinity is restricted to nodes with that label set to `allowed`. |
+| stripe_width              | int        | Number of storage nodes each volume is striped across, `2` to `128`. See [Striped Volumes](striped-volumes.md).                                     |
+| stripe_size               | string     | Chunk size of a striped volume, a power of two from `4Ki` to `1Mi`. Defaults to `64Ki`.                                                             |
 
 ### Legacy Parameter Keys
 

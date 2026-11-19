@@ -32,6 +32,9 @@ spec:
     persistentVolumeClaimName: my-persistent-volume-claim # <- refers to the PVC to snapshot
 ```
 
+A snapshot of a [striped volume](striped-volumes.md#snapshots-and-clones) briefly suspends I/O on the volume while its
+members are snapshotted, so that the member snapshots form one crash-consistent image.
+
 ## Restore a Volume from a Snapshot
 
 After a snapshot was created, it can be used as a source (_dataSource_) of a new persistent volume. In this case, the

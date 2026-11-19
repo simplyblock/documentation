@@ -90,18 +90,26 @@ done | sort
 
 ## Storage Node Memory
 
-The memory of a storage node depends on the maximum number of NVMe-oF subsystems per node (`maxSubsystemCount`).
-For each 10 GBit/s of dedicated network bandwidth, at least 3 subsystems are recommended, and for each vCPU above 8, one
+A storage node needs a fixed amount of huge page memory plus system memory that grows with the raw storage capacity
+of the node. Both are reserved for the storage node and enforced as hard limits of its container.
+
+| Unit                                        | Memory Requirement | Type          |
+|---------------------------------------------|--------------------|---------------|
+| Fixed amount                                | 6.5 GiB            | Huge pages    |
+| Fixed amount                                | 2 GiB              | System memory |
+| Per TiB of raw storage capacity on the node | 0.7 GiB            | System memory |
+
+The per-TiB amount covers the placement metadata of the node's logical volume stores at full utilization. It is the
+maximum consumption in typical scenarios: most pages are fully written, and up to 20% of the pages are fragmented by
+copy-on-write after snapshots or by writes during outages. It is independent of the erasure coding scheme.
+
+The capacity is that of the node's own local NVMe devices. For example, a storage node with 10 NVMe devices of
+8 TiB each (80 TiB of raw capacity) needs 6.5 GiB + 2 GiB + 0.7 GiB × 80 = 64.5 GiB.
+
+The huge page amount is the same for all nodes up to 32 vCPUs and 250 NVMe-oF subsystems per node
+(`maxSubsystemCount`). Larger nodes need more, for example, 9.2 GiB for 64 vCPUs and 500 subsystems. For each
+10 GBit/s of dedicated network bandwidth, at least 3 subsystems are recommended, and for each vCPU above 8, one
 additional subsystem. Use the lower of both values. The hard limits are listed in [Limits](../reference/limits.md).
-
-| Unit                                     | Memory Requirement |
-|------------------------------------------|--------------------|
-| Fixed amount                             | 3 GiB              |
-| Per subsystem (cluster average per node) | 35 MiB             |
-| Per TiB of storage capacity on the host  | 0.5 GiB            |
-
-!!! note "Edge clusters"
-    The memory formula applies to edge clusters as well, with a minimum of 3 GB of RAM per storage node.
 
 ## Control Plane
 

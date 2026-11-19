@@ -83,6 +83,9 @@ _Spread_, so that no two storage nodes share the same hardware.
 
 ## Node Images
 
+This section is the EKS-specific form of the general
+[NVMe/TCP initiator requirement for client nodes](install-csi.md#nvmetcp-initiator-on-client-nodes).
+
 !!! warning "Amazon Linux 2023 is not suitable for client nodes"
     Nodes that mount simplyblock volumes require a Linux kernel with native
     [NVMe over Fabrics multipathing](../../important-notes/terminology.md#multipathing) (`CONFIG_NVME_MULTIPATH`).
@@ -115,9 +118,8 @@ nvme-subsys1 - NQN=nqn.2023-02.io.simplyblock:<CLUSTER_UUID>:lvol:<VOLUME_UUID>
 
 The NVMe/TCP initiator, the `nvme-tcp` kernel module, is not part of the Ubuntu EKS images. The Ubuntu AWS kernel
 ships it in the package `linux-modules-extra-<KERNEL_VERSION>`, which the images do not install. Without it, the CSI
-driver cannot load the module, and attaching a volume fails with
-`Failed to open /dev/nvme-fabrics: No such file or directory`. The package is installed, and the module loaded, before
-the node joins the cluster:
+node plugin does not start on that node, and its pod is in `CrashLoopBackOff` with a termination message that names the
+package. The package is installed, and the module loaded, before the node joins the cluster:
 
 ```bash title="Installing the NVMe/TCP initiator on an Ubuntu EKS node"
 export DEBIAN_FRONTEND=noninteractive

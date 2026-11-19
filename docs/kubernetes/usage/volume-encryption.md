@@ -89,10 +89,10 @@ annotations are required to encrypt a volume.
 
 For environments that require stricter handling of key material (separation of duty between storage and key
 custodians, regular rotation, or audit trails), the cluster can be configured to keep encryption keys in an external
-HashiCorp Vault or OpenBao instance. The key store is set once per `StorageCluster`, in `spec.kms`, and applies to
-every encrypted volume in that cluster.
+HashiCorp Vault or OpenBao instance, or in a KMIP-speaking key management appliance. The key store is set once per
+`StorageCluster`, in `spec.kms`, and applies to every encrypted volume in that cluster.
 
-```yaml title="Example of an external key store on a StorageCluster"
+```yaml title="Example of an external key store on a StorageCluster (HashiCorp Vault or OpenBao)"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageCluster
 metadata:
@@ -105,8 +105,25 @@ spec:
       endpoint: https://vault.example.com:8200
 ```
 
+```yaml title="Example of an external key store on a StorageCluster (KMIP)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageCluster
+metadata:
+  name: production
+  namespace: simplyblock
+spec:
+  # ... other fields ...
+  kms:
+    kmip:
+      endpoint: kmip.example.com:5696
+```
+
 The whole `kms` block is immutable, because switching the key store of a cluster that holds encrypted volumes is not
-supported. The endpoint is refused when it resolves to a loopback or a link-local address.
+supported. The Vault and OpenBao endpoint is refused when it resolves to a loopback or a link-local address, and the
+KMIP endpoint is refused unless it is a `host:port` pair that resolves to an external address. See
+[External Key Management](../../architecture/concepts/external-key-management.md) for the key model shared by both
+backends, and [Deploying OpenBao as a KMS](../installation/openbao-kms.md) or
+[Deploying a KMIP Key Management Appliance](../installation/kmip-kms.md) for the setup steps.
 
 See [Securing the Control Plane](../installation/security.md) for the full setup, or
 [External Key Management](../../architecture/concepts/external-key-management.md) for the architectural background.

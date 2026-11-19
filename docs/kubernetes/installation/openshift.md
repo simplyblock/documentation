@@ -88,7 +88,7 @@ metadata:
 spec:
   source:
     local:
-      image: quay.io/simplyblock-io/simplyblock:26.4.0-beta1
+      image: quay.io/simplyblock-io/simplyblock:26.4.0-beta6
 ```
 
 ```bash title="Creating the control plane"
@@ -239,9 +239,9 @@ run. Their tags follow the installed release:
 ```yaml title="Additional images for an air-gapped installation (ImageSetConfiguration excerpt)"
 mirror:
   additionalImages:
-    - name: quay.io/simplyblock-io/simplyblock-operator:v26.4.0-beta5
-    - name: quay.io/simplyblock-io/simplyblock:26.4.0-beta5
-    - name: quay.io/simplyblock-io/ultra:26.4.0-beta5
+    - name: quay.io/simplyblock-io/simplyblock-operator:v26.4.0-beta6
+    - name: quay.io/simplyblock-io/simplyblock:26.4.0-beta6
+    - name: quay.io/simplyblock-io/ultra:26.4.0-beta6
     - name: quay.io/simplyblock-io/fdb-kubernetes-operator:v2.13.0
     - name: quay.io/simplyblock-io/fdb-kubernetes-monitor:7.3.63
     - name: quay.io/simplyblock-io/minio:RELEASE.2024-01-16T16-07-38Z
