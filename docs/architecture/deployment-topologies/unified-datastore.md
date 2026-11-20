@@ -20,7 +20,7 @@ seconds. The architecture is described in [Unified DataStore](../concepts/unifie
  │                                                          │
  │  Worker A          Worker B          Worker C            │
  │  storage node      storage node      storage node        │
- │  local journal     local journal     local journal       │
+ │  journal LUN A     journal LUN B     journal LUN C       │
  │   │ LUN A (serves)  │ LUN B (serves)  │ LUN C (serves)   │
  │   │ LUN C (standby) │ LUN A (standby) │ LUN B (standby)  │
  └───┼─────────────────┼─────────────────┼──────────────────┘
@@ -28,7 +28,8 @@ seconds. The architecture is described in [Unified DataStore](../concepts/unifie
 ```
 
 Every worker that runs a storage node is connected to the array over the SAN. Each storage node owns one data LUN and
-keeps its journal on a local disk of its worker. The LUN is also presented to the node's standby nodes: one with a
+keeps its journal on a journal LUN mapped to it alone, which can be placed in a faster pool, or on a local disk or
+partition of its worker. The LUN is also presented to the node's standby nodes: one with a
 fault tolerance of `1`, two with a fault tolerance of `2`. The control plane reaches the array's management API over
 HTTPS to create, map, grow, unmap, and delete LUNs.
 

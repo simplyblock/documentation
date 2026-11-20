@@ -106,10 +106,62 @@ overrides {
 Settings in `overrides` take precedence over the built-in defaults of the array's device entry, some of which queue
 I/O for longer.
 
-### Journal Device
+### Journal
 
-Every storage node keeps its journal on a local disk of its host, which is used whole and is not shared. One local
-disk per storage node is set aside for it. Its size is about 3% of the node's LUN capacity, at least 2 GiB.
+Every storage node keeps a journal of its own, which is written before its data and is never shared with another
+node. Its placement is chosen per cluster in `spec.multiAttach.array.journal`:
+
+| Placement       | Where the journal is kept                                                                                         | Host requirement                                  |
+|-----------------|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| `LUN` (default) | A LUN of its own, created on the array when the node is added, next to its data LUN, and mapped to that node only | None: no local device is used                     |
+| `Local`         | A local disk or partition of the worker, used whole                                                               | One free local disk or partition per storage node |
+
+With `LUN`, the journal LUNs can be created in a pool of their own. Every write of a volume passes through the journal
+first, so a pool of higher performance or priority than the data pool shortens the write latency. A dedicated pool
+is set up on the array beforehand, or an existing pool is named. It is given in `journal.options` with the plug-in
+option that places the data LUNs in `options`. Options not named in `journal.options` are taken from `options`.
+Without such an option, a journal LUN is created where the data LUNs are.
+
+| Plug-in                                  | Option placing the journal LUNs                                  |
+|------------------------------------------|------------------------------------------------------------------|
+| `netapp-ontap`                           | `aggregates`                                                     |
+| `dell-powerstore`                        | `appliance_id`                                                   |
+| `dell-powermax`                          | `srp`                                                            |
+| `dell-powerflex`                         | `storage_pool_id` (and `protection_domain_id`)                   |
+| `hpe-wsapi`                              | `cpg`                                                            |
+| `hpe-nimble`                             | `pool`, and `performance_policy` for a policy of higher priority |
+| `ibm-flashsystem`, `infinidat-infinibox` | `pool`                                                           |
+| `hitachi-vsp`                            | `pool_id`                                                        |
+| `huawei-dorado`                          | `storage_pool`                                                   |
+| `aws-ebs`                                | `volume_type` and `iops`, for journal volumes with more IOPS     |
+| `pure-flasharray`                        | None: the array has one pool, and journal LUNs are created in it |
+
+The plug-in options are described in the [array plug-in reference](../reference/array-plugins.md).
+
+```yaml title="Example of journal LUNs in a pool of their own on IBM FlashSystem"
+spec:
+  multiAttach:
+    array:
+      plugin: ibm-flashsystem
+      options:
+        pool: capacity
+      journal:
+        placement: LUN
+        size: 64Gi
+        options:
+          pool: latency
+```
+
+A journal LUN is never presented to standby nodes and is not fenced: when a node fails, its journal is not needed for
+the takeover of its data LUN. Its size defaults to 3% of `lunSize`, at least 2 GiB, rounded up to whole GiB.
+
+With `Local`, a fast local NVMe disk or a partition of one is preferred. Its size is about 3% of the node's LUN size,
+at least 2 GiB.
+
+A journal on a partition of the node's data LUN is not offered. The data LUN is presented to standby nodes and taken
+over by them as a whole, and it is grown as a whole, neither of which a partition of it allows.
+
+A placement chosen later applies to storage nodes added afterward. Existing nodes keep their journals.
 
 ## Credentials
 
@@ -128,14 +180,14 @@ with the reference's `field`. The key management service itself is set up as des
 
 ## Sizing
 
-| Item                  | Rule                                                                                                      |
-|-----------------------|-----------------------------------------------------------------------------------------------------------|
-| Storage nodes         | At least the fault tolerance plus one, on as many workers: 2 for a fault tolerance of `1`, 3 for `2`      |
-| LUNs                  | One data LUN per storage node, all of the same size                                                       |
-| LUN size              | Large thin LUNs sized for the expected growth. All LUNs are grown together later.                         |
-| Presentations per LUN | The fault tolerance plus one hosts. The array must allow that many hosts per LUN (`aws-ebs`: at most 16). |
-| Array pool            | The full capacity of all LUNs, or an alert on the pool's usage                                            |
-| Journal               | One local disk per storage node, about 3% of the LUN size, at least 2 GiB                                 |
+| Item                  | Rule                                                                                                                                                                      |
+|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Storage nodes         | At least the fault tolerance plus one, on as many workers: 2 for a fault tolerance of `1`, 3 for `2`                                                                      |
+| LUNs                  | One data LUN per storage node, all of the same size                                                                                                                       |
+| LUN size              | Large thin LUNs sized for the expected growth. All LUNs are grown together later.                                                                                         |
+| Presentations per LUN | The fault tolerance plus one hosts. The array must allow that many hosts per LUN (`aws-ebs`: at most 16).                                                                 |
+| Array pool            | The full capacity of all LUNs, or an alert on the pool's usage                                                                                                            |
+| Journal               | `LUN`: one LUN per storage node, 3% of the LUN size, at least 2 GiB, optionally in a faster pool. `Local`: one local disk or partition per storage node of the same size. |
 
 ## Checklist
 
@@ -143,5 +195,6 @@ with the reference's `field`. The key management service itself is set up as des
 - A pool and a dedicated array account with the permissions above exist.
 - The management endpoint is reachable from the control plane, and its CA bundle is at hand if needed.
 - Every host has a unique initiator for the chosen protocol and a working connection to the array.
-- Every host has one free local disk for the journal.
+- The journal placement is chosen: with `LUN`, the pool for the journal LUNs exists; with `Local`, every host has one
+  free local disk or partition per storage node.
 - The key management service and the credential source are chosen, and the login is stored there.

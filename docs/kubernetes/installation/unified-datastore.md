@@ -62,12 +62,14 @@ A Kubernetes Secret lives in the namespace of the storage cluster, and its keys 
     value such as an API token. Its unique identifier is used in the deployment.
 
 Without an external key management service, a `Secret` login is refused unless the cluster opts in to storing it in
-the local key store, where it is effectively unencrypted. The opt-in is meant for test environments and is given once
-the cluster exists. The refused registration is then retried automatically:
+the local key store, where it is effectively unencrypted. The opt-in is meant for test environments only:
 
-```bash title="Allowing the local key store to hold array credentials (test environments only)"
-kubectl -n simplyblock exec -it deploy/simplyblock-admin-control -- \
-    {{ cliname }} cluster set <CLUSTER_ID> allow_local_kms_credentials true
+```yaml title="Allowing the local key store to hold the array login (test environments only)"
+credentials:
+  source: Secret
+  secretRef:
+    name: pure01-login
+  allowLocalKeyStore: true
 ```
 
 ## Discovery with the Storage Array
@@ -102,6 +104,8 @@ spec:
           -----END CERTIFICATE-----
         options:
           eradicate: "true"
+        journal:
+          placement: LUN
         credentials:
           source: Secret
           secretRef:
@@ -115,19 +119,23 @@ kubectl -n simplyblock get operatorops discover-san -w
 
 The `multiAttach` block has the same fields as the one of the `StorageCluster`:
 
-| Field                          | Meaning                                                                                    |
-|--------------------------------|--------------------------------------------------------------------------------------------|
-| `faultTolerance`               | Storage-node failures the cluster survives: `1` or `2`. Fixed when the cluster is created. |
-| `array.plugin`                 | The [array plug-in](../../reference/array-plugins.md) key                                  |
-| `array.endpoint`               | The array's management URL. Omitted for `aws-ebs`.                                         |
-| `array.protocol`               | `iscsi`, `fc`, `nvme-tcp`, `nvme-rdma`, `nvme-fc`, or `sdc`. Omitted for `aws-ebs`.        |
-| `array.lunSize`                | The size of every storage node's LUN                                                       |
-| `array.caBundle`               | The PEM certificate the management endpoint is verified against                            |
-| `array.options`                | The plug-in's own options, as strings                                                      |
-| `array.credentials.source`     | `Secret`, `VaultKV`, `KMIPSecret`, or `None` (`aws-ebs` on the instance role)              |
-| `array.credentials.secretRef`  | The Secret with the login, for `Secret`                                                    |
-| `array.credentials.vaultKV`    | `mount`, `path`, and optionally `version` of the Vault KV v2 secret, for `VaultKV`         |
-| `array.credentials.kmipSecret` | `uid`, and optionally `field`, of the KMIP object, for `KMIPSecret`                        |
+| Field                                  | Meaning                                                                                                                 |
+|----------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `faultTolerance`                       | Storage-node failures the cluster survives: `1` or `2`. Fixed when the cluster is created.                              |
+| `array.plugin`                         | The [array plug-in](../../reference/array-plugins.md) key                                                               |
+| `array.endpoint`                       | The array's management URL. Omitted for `aws-ebs`.                                                                      |
+| `array.protocol`                       | `iscsi`, `fc`, `nvme-tcp`, `nvme-rdma`, `nvme-fc`, or `sdc`. Omitted for `aws-ebs`.                                     |
+| `array.lunSize`                        | The size of every storage node's LUN                                                                                    |
+| `array.caBundle`                       | The PEM certificate the management endpoint is verified against                                                         |
+| `array.options`                        | The plug-in's own options, as strings                                                                                   |
+| `array.journal.placement`              | `LUN` (default): a journal LUN per node. `Local`: a local disk or partition per node.                                   |
+| `array.journal.size`                   | The size of a journal LUN. Default: 3% of `lunSize`, at least 2 GiB.                                                    |
+| `array.journal.options`                | Plug-in options for the journal LUNs, over `array.options`, such as a faster pool                                       |
+| `array.credentials.source`             | `Secret`, `VaultKV`, `KMIPSecret`, or `None` (`aws-ebs` on the instance role)                                           |
+| `array.credentials.secretRef`          | The Secret with the login, for `Secret`                                                                                 |
+| `array.credentials.vaultKV`            | `mount`, `path`, and optionally `version` of the Vault KV v2 secret, for `VaultKV`                                      |
+| `array.credentials.kmipSecret`         | `uid`, and optionally `field`, of the KMIP object, for `KMIPSecret`                                                     |
+| `array.credentials.allowLocalKeyStore` | For `Secret` without an external key management service: keep the login in the local key store (test environments only) |
 
 ```yaml title="Example of a login kept in Vault instead of a Secret"
 credentials:
@@ -143,8 +151,10 @@ The draft differs from a regular one in three places:
 
 - **The array:** `spec.cluster.multiAttach` carries the array as stated in the run, and `spec.cluster.raidDevices` is
   set, because the array protects every LUN.
-- **One device per node:** Every group names one local device per storage node, the smallest disk of the worker. It
-  becomes the node's journal. The node's data device is its LUN.
+- **Local devices:** With the journal placement `LUN`, the groups name no local device, and workers without any
+  local disk are drafted as well. The node's journal and data device are LUNs. With `Local`, every group names one
+  local device per storage node, the smallest disk of the worker, which becomes the node's journal. Another disk or
+  a partition is named instead where it should carry the journal.
 - **The stripe:** A stated stripe has no effect. The cluster runs `1+0`.
 
 The run's findings are reported as events on the `OperatorOps` resource and are cleared before approval:
@@ -163,11 +173,11 @@ The document is validated against the needs of a Unified DataStore as well. Thes
 `ClusterDeploymentConfig` while it is a draft. A document approved with any of them is not expanded but fails, and
 an approved document can no longer be edited, so they are cleared before approval:
 
-| Finding                     | Meaning                                                                  |
-|-----------------------------|--------------------------------------------------------------------------|
-| `StripeBelowMinimumNodes`   | Fewer storage nodes than the fault tolerance plus one                    |
-| `StripeBelowMinimumWorkers` | The storage nodes sit on fewer workers than the fault tolerance plus one |
-| `MultiAttachJournalDevice`  | A group names more or fewer local devices than one per storage node      |
+| Finding                     | Meaning                                                                                                                             |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `StripeBelowMinimumNodes`   | Fewer storage nodes than the fault tolerance plus one                                                                               |
+| `StripeBelowMinimumWorkers` | The storage nodes sit on fewer workers than the fault tolerance plus one                                                            |
+| `MultiAttachJournalDevice`  | With the journal placement `LUN`, a group names local devices. With `Local`, a group names more or fewer than one per storage node. |
 
 The document's schema also refuses a Unified DataStore without `raidDevices`, on NVMe devices, in the `Single` cluster
 mode, or with `enableJournalDevice`.
@@ -193,14 +203,16 @@ and no node is added until the array is registered. A corrected `StorageCluster`
 automatically.
 
 Once the array is registered, the storage nodes are added one by one. For every node, the host is registered on the
-array with its initiator, the node's LUN is created and mapped to it, and the host is rescanned until the LUN appears.
+array with its initiator, the node's journal LUN (with the placement `LUN`) and data LUN are created and mapped to it,
+and the host is rescanned until the LUNs appear.
 The LUN is then presented to the node's standby nodes as their roles are assigned. Activation follows as for any
 other cluster.
 
 ## Deployment without Discovery
 
-A Unified DataStore can be declared directly in a `StorageCluster` as well. The `StorageNode` resources then name one local
-device per node, the journal disk.
+A Unified DataStore can be declared directly in a `StorageCluster` as well. With the journal placement `LUN`, the
+`StorageNode` resources name no device. With `Local`, they name one local device per node, the journal disk or
+partition.
 
 ```yaml title="Example of a StorageCluster for a Unified DataStore on NetApp ONTAP (storage-cluster-san.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha2
@@ -223,6 +235,10 @@ spec:
       options:
         svm: svm_simplyblock
         aggregates: aggr1,aggr2
+      journal:
+        placement: LUN
+        options:
+          aggregates: aggr_ssd1
       credentials:
         source: VaultKV
         vaultKV:

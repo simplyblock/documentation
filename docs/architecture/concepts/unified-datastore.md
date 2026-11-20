@@ -31,7 +31,9 @@ Simplyblock control plane  (array plug-in: create, map, grow, fence, delete)
 
 The cluster is created in multi-attach mode and runs `1+0`: every volume is spread across the data LUNs of all
 storage nodes, and no parity is kept, because every LUN is already protected by the RAID of the array. Each storage
-node owns exactly one data LUN. Its journal is kept on a local disk of the host, which is not shared.
+node owns exactly one data LUN. Its journal is kept on a LUN of its own, which can be placed in a faster pool of the
+array and is mapped to that node only, or on a local disk or partition of the host (see
+[Journal](../../deployment-preparation/unified-datastore.md#journal)).
 
 Every host reaches its LUNs over several paths. SCSI LUNs over FC or iSCSI are used through device-mapper multipath
 maps, and NVMe-oF LUNs through the native NVMe multipathing of the Linux kernel. The loss of a path is handled below

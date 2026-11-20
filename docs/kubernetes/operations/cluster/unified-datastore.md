@@ -8,13 +8,8 @@ weight: 10165
 
 A [Unified DataStore](../../../architecture/concepts/unified-datastore.md) is operated like any other simplyblock cluster.
 This page covers what is different: the registration of the storage array, the LUNs simplyblock manages on it, and
-the takeover of a failed node's LUN.
-
-The `{{ cliname }}` commands below are run in the `simplyblock-admin-control` pod of the control plane:
-
-```bash title="Opening a shell for the simplyblock CLI"
-kubectl -n simplyblock exec -it deploy/simplyblock-admin-control -- bash
-```
+the takeover of a failed node's LUN. Everything below is done on the `StorageCluster`: the operator carries every
+change to the control plane and the array.
 
 ## Array Registration
 
@@ -23,25 +18,31 @@ The array's registration is reported in `status.array` of the `StorageCluster`:
 | Field                | Meaning                                                                                |
 |----------------------|----------------------------------------------------------------------------------------|
 | `id`                 | The control plane's id of the registered array                                         |
+| `lunSize`            | The size all LUNs of the cluster have been grown to                                    |
 | `registered`         | `true` once the control plane connected with the current spec and login and saved them |
 | `protocols`          | The protocols the array plug-in reported it can serve                                  |
 | `observedGeneration` | The `StorageCluster` generation last registered                                        |
 | `credentialsVersion` | The resource version of the login Secret last registered                               |
-| `message`            | The reason the last registration was refused, empty while the array is registered      |
+| `message`            | The reason the last registration or LUN growth failed, empty otherwise                 |
 
 The registration is repeated automatically whenever `spec.multiAttach.array` changes or the login Secret is updated.
 The control plane connects to the array with the new settings before it saves them, so a refused change leaves the
 previous registration in force.
 
-```bash title="Showing the registered array, without its login"
-{{ cliname }} cluster get-array <CLUSTER_ID>
+```bash title="Showing the registered array"
+kubectl -n simplyblock get storagecluster <CLUSTER_NAME> -o jsonpath='{.status.array}'
 ```
+
+The array's settings are the ones in `spec.multiAttach.array`. The login is never shown: the control plane only
+reports whether it holds one.
 
 | Event                      | Object           | Meaning                                                                     |
 |----------------------------|------------------|-----------------------------------------------------------------------------|
 | `ArrayRegistered`          | `StorageCluster` | The array was registered with the current spec and login                    |
 | `ArrayRegistrationRefused` | `StorageCluster` | The login could not be read, or the control plane could not connect with it |
 | `AwaitingArray`            | `StorageNode`    | The node's addition waits for the array registration                        |
+| `ArrayLUNsGrown`           | `StorageCluster` | Every LUN was grown to `lunSize`, and the cluster's devices with them       |
+| `ArrayLUNGrowthFailed`     | `StorageCluster` | Not every LUN could be grown to `lunSize`. The growth is repeated.          |
 
 ## Rotating the Array Login
 
@@ -57,35 +58,39 @@ How a login is rotated depends on where it is kept:
 - **KMIP secret:** A new object is created and the reference's `uid` is changed in the `StorageCluster`, which
   registers the array again.
 
-Without Kubernetes, the registration is changed with the CLI. The login file holds the login fields as a JSON object
-of strings.
-
-```bash title="Registering the array again with a new login"
-{{ cliname }} cluster set-array <CLUSTER_ID> \
-    --plugin pure-flasharray \
-    --endpoint https://pure01.example.com \
-    --options '{"protocol": "iscsi"}' \
-    --credentials-file pure01-login.json \
-    --lun-size 4T
-```
+Other settings of the array, such as its endpoint, options, CA bundle, or journal placement, are changed in
+`spec.multiAttach.array` the same way. The cluster registers the array again with them, and the control plane connects
+to the array before it saves anything. A changed journal placement applies to storage nodes added afterward.
 
 ## Growing Capacity
 
-The capacity of all LUNs is grown together, by one factor. A single LUN is never grown alone, because the data is
-placed evenly across all of them.
+The capacity of all LUNs is grown together, by raising `lunSize`. A single LUN is never grown alone, because the data
+is placed evenly across all of them, and a LUN is never shrunk.
 
-```bash title="Growing every LUN by half, then every device of the cluster"
-{{ cliname }} cluster grow-devices <CLUSTER_ID> --lun-factor 1.5
+```bash title="Growing every LUN of the cluster to 6 TiB"
+kubectl -n simplyblock patch storagecluster <CLUSTER_NAME> --type merge \
+    -p '{"spec":{"multiAttach":{"array":{"lunSize":"6Ti"}}}}'
 ```
 
-Every LUN is grown on the array first, and every host it is presented to is rescanned until it sees the new size.
-The devices are then grown online by the same factor. All storage nodes and their devices must be online. A LUN that
-could not be grown leaves every device at its size, and the command is repeated after the cause is removed. The
-array's pool must hold the grown capacity.
+Every LUN is grown on the array to the new size first, and every host it is presented to is rescanned until it sees
+it. The cluster's devices are then grown onto it online. Storage nodes added later get LUNs of the new size.
+`status.array.lunSize` follows once all of it succeeded, and the event `ArrayLUNsGrown` is raised.
+
+All storage nodes and their devices must be online, and the array's pool must hold the grown capacity. When a LUN
+cannot be grown, no device of the cluster is grown, `status.array.message` names the cause, and the growth is
+repeated until it succeeds. A LUN that already has the new size is left alone, so no LUN is grown twice. A lower
+`lunSize` is refused in `status.array.message`.
+
+```bash title="Following the growth"
+kubectl -n simplyblock get storagecluster <CLUSTER_NAME> \
+    -o jsonpath='{.status.array.lunSize} {.status.array.message}'
+```
+
+Journal LUNs are not grown with the data LUNs: a journal's size does not depend on the data it protects.
 
 Capacity is also added with new storage nodes. A growth document (see
-[Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md)) names one local journal device per new node,
-and each node's LUN is created when it is added.
+[Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md)) names no local device per new node with the
+journal placement `LUN`, and one per new node, its journal, with `Local`. Each node's LUNs are created when it is added.
 
 ## Node Failures and LUN Takeover
 
@@ -107,23 +112,19 @@ node that took it over keeps serving it.
 
 ## Removing a Storage Node
 
-When a storage node is removed, its LUN is unmapped from every host, and the LUNs of other nodes are unmapped from
-the removed node's host unless it serves them. The LUN itself is kept on the array. It is deleted together with the
-cluster.
+When a storage node is removed, its LUN and its journal LUN are unmapped from every host, and the LUNs of other nodes
+are unmapped from the removed node's host unless it serves them. The LUNs themselves are kept on the array. They are
+deleted together with the cluster.
 
 ## Deleting the Cluster
 
-Deleting the `StorageCluster` deletes every LUN created for it on the array, after unmapping each from all hosts. LUNs
-that were not created by the cluster are never touched. The operator deletes a cluster with force, so a LUN that
-cannot be deleted does not stop the deletion. It is named in the control plane's log and removed on the array by hand.
-A deletion with the CLI stops at such a LUN instead.
+Deleting the `StorageCluster` deletes every LUN created for it on the array, data and journal LUNs alike, after
+unmapping each from all hosts, and then the array registration with its stored login. LUNs that were not created by
+the cluster are never touched. A LUN that cannot be deleted does not stop the deletion. It is named in the control
+plane's log and removed on the array by hand.
 
-The array registration itself is removed with the CLI. This is refused while LUNs created through the array exist,
-because a takeover could no longer fence a failed node.
-
-```bash title="Removing the array registration of a cluster"
-{{ cliname }} cluster remove-array <CLUSTER_ID> <ARRAY_ID>
-```
+The array registration cannot be removed from a running cluster: without it, a failed node could no longer be fenced
+and its LUN not taken over. `spec.multiAttach.array` is therefore kept for the lifetime of the cluster.
 
 ## Array Maintenance
 
@@ -148,13 +149,14 @@ the array's pool must fire well before it is full: a full pool fails the writes 
 
 ## Troubleshooting
 
-| Symptom                                                   | Cause and remedy                                                                                                                                                                  |
-|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `registered` stays unset, `message` names a TLS error     | The array's certificate is not trusted. `spec.multiAttach.array.caBundle` is set to the array's CA.                                                                               |
-| `registered` stays unset, `message` names a login failure | The login is wrong or lacks permissions. The Secret, Vault secret, or KMIP object is corrected.                                                                                   |
-| `message` says the local key store refuses credentials    | The cluster has no external key management service. One is configured, or the login is kept in Vault or KMIP.                                                                     |
-| Storage nodes wait with `AwaitingArray`                   | The array is not registered yet. `status.array.message` names the reason.                                                                                                         |
-| A node addition fails: the LUN did not appear             | The host has no working connection to the array (iSCSI session, zoning, or NVMe connection).                                                                                      |
-| A SCSI LUN with several paths is not found                | `multipathd` built no map for it: it is not running, or the array's LUNs are blacklisted (see [Multipathing](../../../deployment-preparation/unified-datastore.md#multipathing)). |
-| A node addition fails: no initiator for the protocol      | The host has no iSCSI initiator name, FC port, or NVMe host NQN. It is configured on the host.                                                                                    |
-| An array operation fails with a name collision            | A volume or host object of the same name exists on the array and was not created by this cluster. It is renamed or removed on the array.                                          |
+| Symptom                                                   | Cause and remedy                                                                                                                                                                    |
+|-----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `registered` stays unset, `message` names a TLS error     | The array's certificate is not trusted. `spec.multiAttach.array.caBundle` is set to the array's CA.                                                                                 |
+| `registered` stays unset, `message` names a login failure | The login is wrong or lacks permissions. The Secret, Vault secret, or KMIP object is corrected.                                                                                     |
+| `message` names a failed LUN growth                       | A node or device is offline, or the array's pool is full. The cause is removed; the growth is repeated automatically.                                                               |
+| `message` says the local key store refuses credentials    | The cluster has no external key management service. One is configured, the login is kept in Vault or KMIP, or, in a test environment only, `credentials.allowLocalKeyStore` is set. |
+| Storage nodes wait with `AwaitingArray`                   | The array is not registered yet. `status.array.message` names the reason.                                                                                                           |
+| A node addition fails: the LUN did not appear             | The host has no working connection to the array (iSCSI session, zoning, or NVMe connection).                                                                                        |
+| A SCSI LUN with several paths is not found                | `multipathd` built no map for it: it is not running, or the array's LUNs are blacklisted (see [Multipathing](../../../deployment-preparation/unified-datastore.md#multipathing)).   |
+| A node addition fails: no initiator for the protocol      | The host has no iSCSI initiator name, FC port, or NVMe host NQN. It is configured on the host.                                                                                      |
+| An array operation fails with a name collision            | A volume or host object of the same name exists on the array and was not created by this cluster. It is renamed or removed on the array.                                            |
