@@ -1,0 +1,34 @@
+name: Link Check
+on:
+  schedule:
+    # Every Monday at 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "link-check-${{ github.ref }}"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+      - name: "Check Links In Full Documentation Tree"
+        uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          args: >-
+            --config lychee.toml
+            --no-progress
+            'docs/**/*.md' 'snippets/**/*.md'
+          fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

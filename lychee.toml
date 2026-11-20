@@ -1,0 +1,29 @@
+# Configuration for the lychee link checker (.github/workflows/link-check.yaml).
+#
+# Internal links and anchors are already validated by "mkdocs build --strict"
+# (mkdocs.yml validation.links) and scripts/check-mkdocs-syntax.py, so this
+# config restricts lychee to external http(s) URLs.
+
+# Only check http(s) URLs: relative links, anchors and mailto addresses are
+# skipped, since lychee's regex engine has no look-around to exclude them by
+# pattern instead.
+scheme = ["https", "http"]
+
+exclude = [
+  # Our own domains: the canonical site mirrors what strict mkdocs already
+  # validates, and the PR-preview domain is torn down once a PR closes, so a
+  # stale link there is expected, not a finding.
+  '^https?://(docs|docstest)\.simplyblock\.io',
+  # Social profile links that routinely block automated requests (403/999)
+  # regardless of whether the profile is live.
+  '^https?://(www\.)?linkedin\.com',
+  '^https?://(www\.)?(x|twitter)\.com',
+]
+
+# Social/video platforms are slow and occasionally rate-limit; a generous
+# timeout and a couple of retries avoid flagging a slow response as dead.
+timeout = 20
+retry_wait_time = 2
+max_retries = 3
+
+accept = [100, 200, 203, 429]
