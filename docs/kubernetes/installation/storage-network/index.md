@@ -209,9 +209,26 @@ named differently go into separate groups of the same cluster.
 **What discovery drafts.** Discovery drafts `spdkOnHostNetwork: true` when most workers have a data NIC besides the
 management NIC, and `podNetwork: true` when none does. It adds a note to the draft for either choice, because the
 network is fixed at creation. It never drafts a data network: options 3 to 5 are an edit of the draft before approval.
+`spec.discover.network` on the `OperatorOps` overrides that choice. The stated network is copied into the draft
+unchanged, and the note says that the run stated it. With `spdkOnHostNetwork: true`, the SPDK pods stay on the host
+network even on workers without a data NIC, where they serve on the host's primary NIC. `spdkOnHostNetwork` cannot be
+combined with `spec.discover.networkAttachment`.
 A group's own `networkAttachment` field, which discovery drafts when it finds definitions in the namespace, is not
 deployed. The operator holds such a `ClusterDeploymentConfig` with the event `NetworkAttachmentNotDeployable` until the
 network is declared in `spec.cluster.network` and the field is removed from the groups.
+
+```yaml title="Example of a discovery run that drafts the host network (discover-host-network.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: OperatorOps
+metadata:
+  name: discover-host-network
+  namespace: simplyblock
+spec:
+  action: Discover
+  discover:
+    network:
+      spdkOnHostNetwork: true
+```
 
 The draft's `network` is checked before the draft is approved:
 

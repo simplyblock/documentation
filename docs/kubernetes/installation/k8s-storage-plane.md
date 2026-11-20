@@ -125,6 +125,7 @@ kubectl -n simplyblock get operatorops discover-rack-b -w
 | `failureDomainLabel`      | Node label           | The label whose value becomes each worker's failure domain. Defaults to `topology.kubernetes.io/zone`, see [Failure Domains](#failure-domains).  |
 | `enableFailureDomains`    | On / off / unset     | Overrides whether the draft proposes failure-domain mode, see [Failure Domains](#failure-domains). Unset lets the run decide from the topology.  |
 | `deviceFilter`            | —                    | Narrows the devices that reach the draft, see below.                                                                                             |
+| `network`                 | Network mode         | Overrides the network discovery would draft, for example, `spdkOnHostNetwork: true` on workers without a data NIC.                               |
 | `clusterRef`              | —                    | Writes a growth draft for an existing cluster instead of a new one.                                                                              |
 
 `workers` and `nodeSelector` are mutually exclusive; a run that carries both is refused.
