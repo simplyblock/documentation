@@ -33,6 +33,10 @@ The cluster is created in multi-attach mode and runs `1+0`: every volume is spre
 storage nodes, and no parity is kept, because every LUN is already protected by the RAID of the array. Each storage
 node owns exactly one data LUN. Its journal is kept on a local disk of the host, which is not shared.
 
+Every host reaches its LUNs over several paths. SCSI LUNs over FC or iSCSI are used through device-mapper multipath
+maps, and NVMe-oF LUNs through the native NVMe multipathing of the Linux kernel. The loss of a path is handled below
+simplyblock, and the loss of all paths of a host like the failure of its storage node.
+
 The fault tolerance (`1` or `2`) states how many storage-node failures the cluster survives. A node's LUN is presented
 to the node itself and to as many standby nodes as the fault tolerance: its secondary, and with a fault tolerance of
 `2` also its tertiary. Only one of them serves the LUN at a time. All other nodes reach it over NVMe-oF, through a
@@ -149,8 +153,9 @@ not consistent across the LUNs of all nodes and cannot be used to restore a clus
 
 ## Limitations
 
-- **Multipathing:** NVMe-oF LUNs are used with the native NVMe multipathing of the Linux kernel. Device-mapper
-  multipath devices are not accepted yet, so a SCSI LUN is used over a single path per host.
+- **Path failover:** A multipath map of a SCSI LUN completes a path failover, or fails its I/O, within 60 seconds,
+  because a storage node gives up on a LUN I/O after 60 seconds (see
+  [Multipathing](../../deployment-preparation/unified-datastore.md#multipathing)).
 - **Protocols:** The protocols a plug-in supports are listed in the [array plug-in reference](../../reference/array-plugins.md).
   Several plug-ins support FC and iSCSI only.
 - **Capacity:** Capacity is added by growing all LUNs together or by adding storage nodes. A single LUN is never grown

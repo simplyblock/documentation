@@ -65,21 +65,46 @@ Every host that runs a storage node needs a working storage connection to the ar
 because the LUNs are presented to it while nodes are added. The LUNs are mapped and the host is rescanned by
 simplyblock. Logging in to the array's targets and configuring the zoning are not.
 
-| Protocol                     | Host preparation                                                                                                                                |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| iSCSI                        | A unique initiator name in `/etc/iscsi/initiatorname.iscsi`, and sessions logged in to the array's portals, set to log in automatically at boot |
-| FC                           | HBA ports zoned to the array's target ports                                                                                                     |
-| NVMe/TCP, NVMe/RoCE, NVMe/FC | A unique host NQN in `/etc/nvme/hostnqn`, and connections to the array's NVMe subsystems or discovery controller that are restored at boot      |
-| PowerFlex SDC                | The PowerFlex SDC installed and connected to the PowerFlex system                                                                               |
+| Protocol                     | Host preparation                                                                                                                                               |
+|------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| iSCSI                        | A unique initiator name in `/etc/iscsi/initiatorname.iscsi`, and sessions logged in to the array's portals (one per path), set to log in automatically at boot |
+| FC                           | HBA ports zoned to the array's target ports                                                                                                                    |
+| NVMe/TCP, NVMe/RoCE, NVMe/FC | A unique host NQN in `/etc/nvme/hostnqn`, and connections to the array's NVMe subsystems or discovery controller that are restored at boot                     |
+| PowerFlex SDC                | The PowerFlex SDC installed and connected to the PowerFlex system                                                                                              |
 
 Host NQNs and iSCSI initiator names must be unique per host. Hosts cloned from one image often share them, and the
 array then cannot tell the hosts apart.
 
 ### Multipathing
 
-NVMe-oF LUNs are used with the native NVMe multipathing of the Linux kernel. Device-mapper multipath devices are not
-accepted as storage devices yet. A SCSI LUN is therefore used over a single path per host, and `multipathd` must not
-claim the cluster's LUNs, for example, through a blacklist entry for the array's vendor and product.
+Every host reaches its LUNs over several paths. NVMe-oF LUNs are used with the native NVMe multipathing of the Linux
+kernel. SCSI LUNs over FC or iSCSI are used through device-mapper multipath: every path of a LUN is a SCSI disk of the
+host, and the map `multipathd` builds over them is the device the storage node uses. The paths below a map are never
+used on their own, and a LUN reached over a single path is used as that path's disk. A multipath map is served by the
+io_uring I/O engine of the storage node, because the Linux AIO interface cannot submit I/O to device-mapper multipath
+devices.
+
+`multipathd` is configured for the array as its vendor recommends, with two requirements:
+
+- **Maps for the cluster's LUNs:** `multipathd` builds a map for every LUN of the cluster, for example, with
+  `find_multipaths yes`. The array's LUNs are not blacklisted.
+- **Failing within 60 seconds:** A map whose paths are all gone fails its I/O within 60 seconds rather than queueing
+  it without limit. A storage node gives up on a LUN I/O after 60 seconds, so a map that queues longer stalls the node
+  instead of failing over. The product of `polling_interval` and `no_path_retry` is kept below 60 seconds, and
+  `no_path_retry queue` is not used.
+
+```plain title="Example of the multipath settings for the cluster's LUNs in /etc/multipath.conf"
+defaults {
+    find_multipaths yes
+    polling_interval 5
+}
+overrides {
+    no_path_retry 6
+}
+```
+
+Settings in `overrides` take precedence over the built-in defaults of the array's device entry, some of which queue
+I/O for longer.
 
 ### Journal Device
 

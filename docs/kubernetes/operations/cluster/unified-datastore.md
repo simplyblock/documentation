@@ -148,12 +148,13 @@ the array's pool must fire well before it is full: a full pool fails the writes 
 
 ## Troubleshooting
 
-| Symptom                                                   | Cause and remedy                                                                                                                         |
-|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `registered` stays unset, `message` names a TLS error     | The array's certificate is not trusted. `spec.multiAttach.array.caBundle` is set to the array's CA.                                      |
-| `registered` stays unset, `message` names a login failure | The login is wrong or lacks permissions. The Secret, Vault secret, or KMIP object is corrected.                                          |
-| `message` says the local key store refuses credentials    | The cluster has no external key management service. One is configured, or the login is kept in Vault or KMIP.                            |
-| Storage nodes wait with `AwaitingArray`                   | The array is not registered yet. `status.array.message` names the reason.                                                                |
-| A node addition fails: the LUN did not appear             | The host has no working connection to the array (iSCSI session, zoning, or NVMe connection), or `multipathd` claimed the LUN.            |
-| A node addition fails: no initiator for the protocol      | The host has no iSCSI initiator name, FC port, or NVMe host NQN. It is configured on the host.                                           |
-| An array operation fails with a name collision            | A volume or host object of the same name exists on the array and was not created by this cluster. It is renamed or removed on the array. |
+| Symptom                                                   | Cause and remedy                                                                                                                                                                  |
+|-----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `registered` stays unset, `message` names a TLS error     | The array's certificate is not trusted. `spec.multiAttach.array.caBundle` is set to the array's CA.                                                                               |
+| `registered` stays unset, `message` names a login failure | The login is wrong or lacks permissions. The Secret, Vault secret, or KMIP object is corrected.                                                                                   |
+| `message` says the local key store refuses credentials    | The cluster has no external key management service. One is configured, or the login is kept in Vault or KMIP.                                                                     |
+| Storage nodes wait with `AwaitingArray`                   | The array is not registered yet. `status.array.message` names the reason.                                                                                                         |
+| A node addition fails: the LUN did not appear             | The host has no working connection to the array (iSCSI session, zoning, or NVMe connection).                                                                                      |
+| A SCSI LUN with several paths is not found                | `multipathd` built no map for it: it is not running, or the array's LUNs are blacklisted (see [Multipathing](../../../deployment-preparation/unified-datastore.md#multipathing)). |
+| A node addition fails: no initiator for the protocol      | The host has no iSCSI initiator name, FC port, or NVMe host NQN. It is configured on the host.                                                                                    |
+| An array operation fails with a name collision            | A volume or host object of the same name exists on the array and was not created by this cluster. It is renamed or removed on the array.                                          |
