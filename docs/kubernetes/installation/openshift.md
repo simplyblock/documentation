@@ -247,6 +247,8 @@ mirror:
     - name: quay.io/simplyblock-io/foundationdb-exporter:3.1.0
     - name: quay.io/simplyblock-io/minio:RELEASE.2024-01-16T16-07-38Z
     - name: quay.io/simplyblock-io/minio-client:RELEASE.2024-01-16T16-06-34Z
+    - name: quay.io/simplyblock-io/prometheus:v2.51.0
+    - name: quay.io/simplyblock-io/thanos:v0.31.0
     - name: quay.io/simplyblock-io/snapshot-controller:v8.2.0
     - name: quay.io/simplyblock-io/cert-manager-controller:v1.16.2
     - name: quay.io/simplyblock-io/cert-manager-cainjector:v1.16.2

@@ -31,6 +31,8 @@ quay.io/simplyblock-io/fdb-kubernetes-monitor:7.3.63
 quay.io/simplyblock-io/foundationdb-exporter:3.1.0
 quay.io/simplyblock-io/minio:RELEASE.2024-01-16T16-07-38Z
 quay.io/simplyblock-io/minio-client:RELEASE.2024-01-16T16-06-34Z
+quay.io/simplyblock-io/prometheus:v2.51.0
+quay.io/simplyblock-io/thanos:v0.31.0
 quay.io/simplyblock-io/snapshot-controller:v8.2.0
 quay.io/simplyblock-io/cert-manager-controller:v1.16.2
 quay.io/simplyblock-io/cert-manager-cainjector:v1.16.2
