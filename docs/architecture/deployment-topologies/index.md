@@ -39,6 +39,9 @@ The details and a comparison are in [Control Plane and Operator](control-plane-a
 - **Hybrid:** Some workers host both storage and applications, while others are storage-only or compute-only. The
   hybrid model is a matter of node selection and does not require a different installation.
 
+Each placement can run on local devices or, as a Unified DataStore, on LUNs of an external storage array that
+simplyblock provisions and fails over itself. See [Unified DataStore](unified-datastore.md).
+
 ## Relation to Disaster Recovery
 
 Disaster recovery adds a hub cluster that coordinates several site clusters. The DR hub is independent of the
@@ -53,3 +56,4 @@ plane. The supported combinations are shown in
 - [Disaggregated](disaggregated.md)
 - [Edge Clusters](edge-clusters.md)
 - [Superclusters](superclusters.md)
+- [Unified DataStore](unified-datastore.md)

@@ -22,7 +22,7 @@ specific platforms such as EKS, GKE, OpenShift, Rancher, or Talos, is described 
 | Page                                                     | Covers                                                                                     |
 |----------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | [Hardware and Storage Devices](hardware-requirements.md) | Minimum hardware, CPU architectures, virtualization, NVMe devices, and Linux block devices |
-| [Storage Arrays](storage-arrays.md)                      | Running on FC, iSCSI, or NVMe-oF array LUNs                                                |
+| [Unified DataStore](unified-datastore.md)                | Running on LUNs of an FC, iSCSI, or NVMe-oF array that simplyblock provisions              |
 | [Network](network.md)                                    | Storage and management networks, fabrics, ports, and edge sites                            |
 | [Software Requirements](software-requirements.md)        | Kubernetes distributions, client node kernels, NVMe multipathing, and pNFS                 |
 
