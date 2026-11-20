@@ -1,0 +1,122 @@
+---
+title: "SAN Datastore"
+description: "Prepare a storage array and its hosts for a simplyblock SAN datastore: supported arrays, array account, host connectivity, credentials, and sizing."
+weight: 29991
+---
+
+{{experimental}}
+
+A SAN datastore runs a simplyblock cluster on LUNs that simplyblock creates on an external storage array (see
+[SAN Datastore](../architecture/concepts/san-datastore.md) for the architecture). The array, its management access,
+and the hosts' storage connectivity are prepared before the deployment. This page lists what has to be in place.
+
+## Supported Storage Arrays
+
+Each array family is driven by its own array plug-in. The plug-in key is what a deployment names.
+
+| Plug-in key           | Arrays                                        | Protocols                               |
+|-----------------------|-----------------------------------------------|-----------------------------------------|
+| `pure-flasharray`     | Pure Storage FlashArray //X, //C, //XL, //E   | FC, iSCSI, NVMe/TCP, NVMe/RoCE, NVMe/FC |
+| `netapp-ontap`        | NetApp AFF, FAS, and ASA (not ASA r2)         | FC, iSCSI, NVMe/TCP, NVMe/FC            |
+| `dell-powerstore`     | Dell PowerStore                               | FC, iSCSI, NVMe/TCP, NVMe/FC            |
+| `dell-powermax`       | Dell PowerMax                                 | FC, iSCSI, NVMe/TCP                     |
+| `dell-powerflex`      | Dell PowerFlex 3.6 and 4.x                    | PowerFlex SDC                           |
+| `hpe-wsapi`           | HPE Alletra Storage MP B10000, Primera, 3PAR  | FC, iSCSI                               |
+| `hpe-nimble`          | HPE Alletra 5000 and 6000, Nimble             | FC, iSCSI                               |
+| `ibm-flashsystem`     | IBM FlashSystem, Storage Virtualize, SVC      | FC, iSCSI, NVMe/TCP, NVMe/RoCE          |
+| `hitachi-vsp`         | Hitachi VSP One Block, VSP E series, VSP 5000 | FC, iSCSI                               |
+| `huawei-dorado`       | Huawei OceanStor Dorado                       | FC, iSCSI                               |
+| `infinidat-infinibox` | Infinidat InfiniBox                           | FC, iSCSI                               |
+| `aws-ebs`             | Amazon EBS io2 and io1 with Multi-Attach      | NVMe (Nitro instances)                  |
+
+The options and the login fields of every plug-in are listed in the
+[array plug-in reference](../reference/san-array-plugins.md).
+
+## Array Preparation
+
+- **Storage pool:** A pool (or the array's equivalent, such as an SVM, a CPG, or a storage resource pool) is set
+  aside for the cluster's LUNs. Its name or id is given to the plug-in as an option.
+- **RAID and thin provisioning:** The pool is RAID-protected, since the cluster keeps no parity of its own. Thin LUNs
+  are recommended. The pool must be sized for the full capacity of all LUNs, or be monitored with an alert well before
+  it fills up, because a full pool fails the writes of all LUNs at once.
+- **Data services:** Array snapshots, array replication, and array-side deduplication are not used for the cluster's
+  LUNs. Volumes encrypted by simplyblock do not deduplicate or compress on the array.
+- **Ports:** For FC and iSCSI, the target ports the hosts reach are known. Where a plug-in maps through named port
+  groups or host groups (`dell-powermax`, `hitachi-vsp`), they are given as options.
+
+### Array Account
+
+A dedicated account on the array is used by simplyblock. It needs permission to create, grow, and delete volumes in
+the pool, to create and modify host objects, and to map and unmap volumes. Where the array scopes accounts, the
+account is limited to the pool or the storage virtual machine of the cluster, for example, an SVM-scoped account with
+the `vsadmin` role on NetApp ONTAP, or a user with the `storage_admin` role and its API token on Pure Storage
+FlashArray.
+
+### Management Access
+
+The control plane reaches the array's management API over HTTPS. Its endpoint, for example,
+`https://pure01.example.com`, must be reachable from the control-plane hosts. An array certificate that no public
+certificate authority signed is given as a CA bundle at registration. TLS verification stays on outside of test
+environments.
+
+## Host Preparation
+
+Every host that runs a storage node needs a working storage connection to the array before the cluster is deployed,
+because the LUNs are presented to it while nodes are added. The LUNs are mapped and the host is rescanned by
+simplyblock. Logging in to the array's targets and configuring the zoning are not.
+
+| Protocol                     | Host preparation                                                                                                                                |
+|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| iSCSI                        | A unique initiator name in `/etc/iscsi/initiatorname.iscsi`, and sessions logged in to the array's portals, set to log in automatically at boot |
+| FC                           | HBA ports zoned to the array's target ports                                                                                                     |
+| NVMe/TCP, NVMe/RoCE, NVMe/FC | A unique host NQN in `/etc/nvme/hostnqn`, and connections to the array's NVMe subsystems or discovery controller that are restored at boot      |
+| PowerFlex SDC                | The PowerFlex SDC installed and connected to the PowerFlex system                                                                               |
+
+Host NQNs and iSCSI initiator names must be unique per host. Hosts cloned from one image often share them, and the
+array then cannot tell the hosts apart.
+
+### Multipathing
+
+NVMe-oF LUNs are used with the native NVMe multipathing of the Linux kernel. Device-mapper multipath devices are not
+accepted as storage devices yet. A SCSI LUN is therefore used over a single path per host, and `multipathd` must not
+claim the cluster's LUNs, for example, through a blacklist entry for the array's vendor and product.
+
+### Journal Device
+
+Every storage node keeps its journal on a local disk of its host, which is used whole and is not shared. One local
+disk per storage node is set aside for it. Its size is about 3% of the node's LUN capacity, at least 2 GiB.
+
+## Credentials
+
+The array login is kept in one of three places, chosen per cluster:
+
+| Source       | Where the login is kept                                                                      | Requirement                                                      |
+|--------------|----------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| `Secret`     | A Kubernetes Secret, encrypted by the cluster's key management service once it is registered | An external key management service, or the explicit local opt-in |
+| `VaultKV`    | A HashiCorp Vault or OpenBao KV v2 secret, read when the control plane connects to the array | The cluster's key management service is Vault or OpenBao         |
+| `KMIPSecret` | A secret-data object of a KMIP server, read when the control plane connects to the array     | The cluster's key management service is KMIP                     |
+
+`VaultKV` and `KMIPSecret` keep the login out of Kubernetes entirely. A Vault KV secret holds one key per login field.
+A KMIP object holds the login fields as a JSON object, or a single value such as an API token, which is then named
+with the reference's `field`. The key management service itself is set up as described in
+[OpenBao KMS](../kubernetes/installation/openbao-kms.md) or [KMIP KMS](../kubernetes/installation/kmip-kms.md).
+
+## Sizing
+
+| Item                  | Rule                                                                                                      |
+|-----------------------|-----------------------------------------------------------------------------------------------------------|
+| Storage nodes         | At least the fault tolerance plus one, on as many workers: 2 for a fault tolerance of `1`, 3 for `2`      |
+| LUNs                  | One data LUN per storage node, all of the same size                                                       |
+| LUN size              | Large thin LUNs sized for the expected growth. All LUNs are grown together later.                         |
+| Presentations per LUN | The fault tolerance plus one hosts. The array must allow that many hosts per LUN (`aws-ebs`: at most 16). |
+| Array pool            | The full capacity of all LUNs, or an alert on the pool's usage                                            |
+| Journal               | One local disk per storage node, about 3% of the LUN size, at least 2 GiB                                 |
+
+## Checklist
+
+- The array plug-in for the array is listed in [Supported Storage Arrays](#supported-storage-arrays).
+- A pool and a dedicated array account with the permissions above exist.
+- The management endpoint is reachable from the control plane, and its CA bundle is at hand if needed.
+- Every host has a unique initiator for the chosen protocol and a working connection to the array.
+- Every host has one free local disk for the journal.
+- The key management service and the credential source are chosen, and the login is stored there.

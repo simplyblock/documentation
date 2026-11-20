@@ -9,6 +9,10 @@ host is given LUNs over Fibre Channel, iSCSI (also iSER), or NVMe over Fabrics (
 simplyblock uses them as [Linux block devices](linux-block-devices.md). On top of them, it provides its full feature
 set: Kubernetes-native volumes, snapshots and clones, QoS, encryption, replication, and disaster recovery.
 
+On this page, the LUNs are created and presented to the hosts by the storage administrator. Where the LUNs are to be
+created, presented, and taken over by simplyblock itself, the array is integrated as a
+[SAN datastore](san-datastore.md).
+
 ## How It Works
 
 ```plain title="Storage stack on a storage array"
