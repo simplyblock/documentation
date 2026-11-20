@@ -9,7 +9,7 @@ local NVMe devices. The architecture and the division of tasks between the array
 [Storage Arrays](../architecture/concepts/storage-arrays.md). This page lists what has to be prepared.
 
 A deployment in which simplyblock creates and presents the LUNs itself is prepared as described in
-[SAN Datastore](san-datastore.md) instead.
+[Unified DataStore](../unified-datastore/deployment-preparation.md) instead.
 
 ## Recommended Array Configuration
 

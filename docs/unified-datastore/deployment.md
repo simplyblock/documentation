@@ -1,23 +1,23 @@
 ---
-title: "Deploying a SAN Datastore"
-description: "Deploy a simplyblock SAN datastore on Kubernetes: state the storage array before discovery, review the draft, and let the operator provision the LUNs."
-weight: 30110
+title: "Deployment on Kubernetes"
+description: "Deploy a simplyblock Unified DataStore on Kubernetes: state the storage array before discovery, review the draft, and let the operator provision the LUNs."
+weight: 10400
 ---
 
 {{experimental}}
 
-A SAN datastore is deployed with the same discovery and approval flow as any other storage plane (see
-[Install Simplyblock Storage Plane on Kubernetes](k8s-storage-plane.md)). The difference is the order of knowledge.
+A Unified DataStore is deployed with the same discovery and approval flow as any other storage plane (see
+[Install Simplyblock Storage Plane on Kubernetes](../kubernetes/installation/k8s-storage-plane.md)). The difference is the order of knowledge.
 The cluster's data LUNs do not exist before the deployment, so they cannot be discovered. They are created on the
 array when each storage node is added. The array is therefore stated before discovery, and the discovery run drafts
 the deployment around it.
 
 The array, the hosts, and the credentials are prepared as described in
-[SAN Datastore](../../deployment-preparation/san-datastore.md) first.
+[Unified DataStore](deployment-preparation.md) first.
 
 ## Deployment Flow
 
-```plain title="Deployment flow of a SAN datastore"
+```plain title="Deployment flow of a Unified DataStore"
 Secret / Vault KV / KMIP secret  ──► the array login, stored before anything else
 OperatorOps (Discover, multiAttach) ──► probes the workers, reads their initiators,
                                          writes a draft that carries the array
@@ -33,9 +33,9 @@ registers it, after approval.
 
 ## Storing the Array Login
 
-The login is stored in one of the three [credential sources](../../deployment-preparation/san-datastore.md#credentials).
+The login is stored in one of the three [credential sources](deployment-preparation.md#credentials).
 A Kubernetes Secret lives in the namespace of the storage cluster, and its keys are the login fields of the plug-in
-(see the [array plug-in reference](../../reference/san-array-plugins.md)).
+(see the [array plug-in reference](array-plugins.md)).
 
 === "Secret"
     ```yaml title="Example of the array login as a Secret (pure01-login.yaml)"
@@ -72,11 +72,11 @@ kubectl -n simplyblock exec -it deploy/simplyblock-admin-control -- \
 
 ## Discovery with the Storage Array
 
-The initial discovery of a fresh installation drafts a regular storage plane and is not used for a SAN datastore. A
+The initial discovery of a fresh installation drafts a regular storage plane and is not used for a Unified DataStore. A
 discovery run is requested with the array stated under `spec.discover.multiAttach`. It requires logical block
 devices.
 
-```yaml title="Example of a discovery run for a SAN datastore on Pure Storage FlashArray (discover-san.yaml)"
+```yaml title="Example of a discovery run for a Unified DataStore on Pure Storage FlashArray (discover-san.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: OperatorOps
 metadata:
@@ -118,7 +118,7 @@ The `multiAttach` block has the same fields as the one of the `StorageCluster`:
 | Field                          | Meaning                                                                                    |
 |--------------------------------|--------------------------------------------------------------------------------------------|
 | `faultTolerance`               | Storage-node failures the cluster survives: `1` or `2`. Fixed when the cluster is created. |
-| `array.plugin`                 | The [array plug-in](../../reference/san-array-plugins.md) key                              |
+| `array.plugin`                 | The [array plug-in](array-plugins.md) key                                                  |
 | `array.endpoint`               | The array's management URL. Omitted for `aws-ebs`.                                         |
 | `array.protocol`               | `iscsi`, `fc`, `nvme-tcp`, `nvme-rdma`, `nvme-fc`, or `sdc`. Omitted for `aws-ebs`.        |
 | `array.lunSize`                | The size of every storage node's LUN                                                       |
@@ -159,7 +159,7 @@ kubectl -n simplyblock get events \
     --field-selector involvedObject.name=discover-san
 ```
 
-The document is validated against the needs of a SAN datastore as well. These findings are reported on the
+The document is validated against the needs of a Unified DataStore as well. These findings are reported on the
 `ClusterDeploymentConfig` while it is a draft. A document approved with any of them is not expanded but fails, and
 an approved document can no longer be edited, so they are cleared before approval:
 
@@ -169,7 +169,7 @@ an approved document can no longer be edited, so they are cleared before approva
 | `StripeBelowMinimumWorkers` | The storage nodes sit on fewer workers than the fault tolerance plus one |
 | `MultiAttachJournalDevice`  | A group names more or fewer local devices than one per storage node      |
 
-The document's schema also refuses a SAN datastore without `raidDevices`, on NVMe devices, in the `Single` cluster
+The document's schema also refuses a Unified DataStore without `raidDevices`, on NVMe devices, in the `Single` cluster
 mode, or with `enableJournalDevice`.
 
 ## Approval and Provisioning
@@ -199,10 +199,10 @@ other cluster.
 
 ## Deployment without Discovery
 
-A SAN datastore can be declared directly in a `StorageCluster` as well. The `StorageNode` resources then name one local
+A Unified DataStore can be declared directly in a `StorageCluster` as well. The `StorageNode` resources then name one local
 device per node, the journal disk.
 
-```yaml title="Example of a StorageCluster for a SAN datastore on NetApp ONTAP (storage-cluster-san.yaml)"
+```yaml title="Example of a StorageCluster for a Unified DataStore on NetApp ONTAP (storage-cluster-san.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageCluster
 metadata:

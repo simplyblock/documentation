@@ -1,12 +1,12 @@
 ---
-title: "SAN Array Plug-ins"
-description: "Reference of the simplyblock array plug-ins for SAN datastores: supported arrays, protocols, LUN sizes, login fields, and plug-in options."
-weight: 20170
+title: "Array Plug-ins"
+description: "Reference of the simplyblock array plug-ins for Unified DataStores: supported arrays, protocols, LUN sizes, login fields, and plug-in options."
+weight: 10600
 ---
 
 {{experimental}}
 
-An array plug-in connects a [SAN datastore](../architecture/concepts/san-datastore.md) to one family of storage
+An array plug-in connects a [Unified DataStore](architecture.md) to one family of storage
 arrays. It is chosen by its key when the array is registered, and its options and login fields are given with it.
 This page lists the plug-ins, what they need, and what they create on the array.
 

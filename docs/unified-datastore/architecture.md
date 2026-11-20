@@ -1,23 +1,23 @@
 ---
-title: "SAN Datastore (Multi-Attach Array LUNs)"
+title: "Architecture"
 description: "How simplyblock creates, presents, fences, and takes over the LUNs of an FC, iSCSI, or NVMe-oF storage array through array plug-ins."
-weight: 30657
+weight: 10200
 ---
 
 {{experimental}}
 
-A SAN datastore is a simplyblock cluster whose data lives on LUNs of an external storage array, with the array
+A Unified DataStore is a simplyblock cluster whose data lives on LUNs of an external storage array, with the array
 integrated into the control plane. The LUNs are created, presented to the hosts, grown, cut off, and deleted by
 simplyblock itself, through an array plug-in. Every LUN is presented to more than one host. When the storage node
 serving a LUN fails, the LUN is taken over by a standby node within seconds, and no data has to be rebuilt.
 
-This differs from a cluster on [pre-provisioned storage array LUNs](storage-arrays.md). There, the LUNs are created
+This differs from a cluster on [pre-provisioned storage array LUNs](../architecture/concepts/storage-arrays.md). There, the LUNs are created
 and presented by the storage administrator, every host uses only its own LUNs, and a lost host is compensated by
-erasure coding. In a SAN datastore, the array protects the data and simplyblock protects the access to it.
+erasure coding. In a Unified DataStore, the array protects the data and simplyblock protects the access to it.
 
 ## How It Works
 
-```plain title="Storage stack of a SAN datastore"
+```plain title="Storage stack of a Unified DataStore"
 Kubernetes workloads
         │  NVMe/TCP or NVMe/RoCE
 Simplyblock storage nodes  (1+0, thin provisioning, snapshots, replication)
@@ -51,7 +51,7 @@ controller that does not depend on which host currently exports the LUN.
 
 ## LUN Lifecycle
 
-Every LUN of a SAN datastore is created by simplyblock. LUNs created by anybody else are never touched.
+Every LUN of a Unified DataStore is created by simplyblock. LUNs created by anybody else are never touched.
 
 | Event                    | What happens on the array                                                                                                                                         |
 |--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -107,7 +107,7 @@ node that took it over.
 The array login is never stored in the clear in the cluster database. Three sources are accepted:
 
 - **Managed:** The login is given once, at registration. It is encrypted with the cluster's credentials key in the
-  [key management service](external-key-management.md) (HashiCorp Vault Transit, OpenBao, or KMIP) and bound to the
+  [key management service](../architecture/concepts/external-key-management.md) (HashiCorp Vault Transit, OpenBao, or KMIP) and bound to the
   array and its endpoint. A login encrypted for one endpoint is refused for any other, so an endpoint changed in the
   database cannot redirect it.
 - **Vault KV:** The login stays in a HashiCorp Vault or OpenBao KV v2 secret. Only its location is stored, and it is
@@ -137,7 +137,7 @@ not consistent across the LUNs of all nodes and cannot be used to restore a clus
 
 - **Multipathing:** NVMe-oF LUNs are used with the native NVMe multipathing of the Linux kernel. Device-mapper
   multipath devices are not accepted yet, so a SCSI LUN is used over a single path per host.
-- **Protocols:** The protocols a plug-in supports are listed in the [array plug-in reference](../../reference/san-array-plugins.md).
+- **Protocols:** The protocols a plug-in supports are listed in the [array plug-in reference](array-plugins.md).
   Several plug-ins support FC and iSCSI only.
 - **Capacity:** Capacity is added by growing all LUNs together or by adding storage nodes. A single LUN is never grown
   alone.

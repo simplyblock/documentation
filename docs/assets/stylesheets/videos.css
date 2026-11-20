@@ -6,17 +6,20 @@
   --sb-cat-file-object: #0e7c86;
   --sb-cat-dr: #b4471b;
   --sb-cat-edge: #6b3fa0;
+  --sb-cat-unified-datastore: #2e7d32;
 }
 [data-md-color-scheme="slate"] {
   --sb-cat-core: #7dadf2;
   --sb-cat-file-object: #4fc3cc;
   --sb-cat-dr: #f0956b;
   --sb-cat-edge: #b896e6;
+  --sb-cat-unified-datastore: #81c784;
 }
 [data-sb-category="core"]        { --sb-cat: var(--sb-cat-core); }
 [data-sb-category="file-object"] { --sb-cat: var(--sb-cat-file-object); }
 [data-sb-category="dr"]          { --sb-cat: var(--sb-cat-dr); }
 [data-sb-category="edge"]        { --sb-cat: var(--sb-cat-edge); }
+[data-sb-category="unified-datastore"] { --sb-cat: var(--sb-cat-unified-datastore); }
 
 /* ---- Pick of the day bar (announce block) ---- */
 .md-banner:has(.sb-pick) {

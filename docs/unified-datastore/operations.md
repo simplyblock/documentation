@@ -1,12 +1,12 @@
 ---
-title: "Operating a SAN Datastore"
-description: "Operate a simplyblock SAN datastore: the array registration, login rotation, capacity growth, LUN takeover after node failures, and teardown."
-weight: 10166
+title: "Operations"
+description: "Operate a simplyblock Unified DataStore: the array registration, login rotation, capacity growth, LUN takeover after node failures, and teardown."
+weight: 10500
 ---
 
 {{experimental}}
 
-A [SAN datastore](../../../architecture/concepts/san-datastore.md) is operated like any other simplyblock cluster.
+A [Unified DataStore](architecture.md) is operated like any other simplyblock cluster.
 This page covers what is different: the registration of the storage array, the LUNs simplyblock manages on it, and
 the takeover of a failed node's LUN.
 
@@ -84,14 +84,14 @@ could not be grown leaves every device at its size, and the command is repeated 
 array's pool must hold the grown capacity.
 
 Capacity is also added with new storage nodes. A growth document (see
-[Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md)) names one local journal device per new node,
+[Expanding a Storage Cluster](../kubernetes/operations/scaling/expanding-storage-cluster.md)) names one local journal device per new node,
 and each node's LUN is created when it is added.
 
 ## Node Failures and LUN Takeover
 
 A lost storage node is detected within seconds, its LUN is fenced on the array and taken over by a standby node, and
 the I/O of the cluster's volumes resumes (see
-[Node Failure and LUN Takeover](../../../architecture/concepts/san-datastore.md#node-failure-and-lun-takeover)). No
+[Node Failure and LUN Takeover](architecture.md#node-failure-and-lun-takeover)). No
 data is rebuilt, and no operator action is needed.
 
 While a takeover runs, every volume of the cluster pauses its I/O, because every volume has data on every LUN. The
@@ -129,19 +129,19 @@ because a takeover could no longer fence a failed node.
 
 Non-disruptive array maintenance, such as a controller failover of the array, needs no action in simplyblock. Array
 maintenance that interrupts the I/O of all LUNs, such as a disruptive firmware update, requires the storage cluster to
-be shut down first (see [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)). The array's management API
+be shut down first (see [Shutting Down a Storage Cluster](../kubernetes/operations/cluster/shutting-down-a-cluster.md)). The array's management API
 must be reachable whenever a node is added or removed, the capacity is grown, or a node fails, since all of them change
 the array's configuration.
 
 ## Monitoring
 
-| What                       | Where                                                                                                           |
-|----------------------------|-----------------------------------------------------------------------------------------------------------------|
-| Array registration         | `status.array` and the events of the `StorageCluster`                                                           |
-| LUN takeovers and fences   | The cluster events (see [Cluster Health](../monitoring/cluster-health.md))                                      |
-| Capacity of the cluster    | [Cluster Health](../monitoring/cluster-health.md) and [Prometheus Metrics](../monitoring/prometheus-metrics.md) |
-| Capacity of the array pool | The monitoring of the array                                                                                     |
-| Drive health               | The monitoring of the array. SMART data is not available for LUNs.                                              |
+| What                       | Where                                                                                                                                                       |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Array registration         | `status.array` and the events of the `StorageCluster`                                                                                                       |
+| LUN takeovers and fences   | The cluster events (see [Cluster Health](../kubernetes/operations/monitoring/cluster-health.md))                                                            |
+| Capacity of the cluster    | [Cluster Health](../kubernetes/operations/monitoring/cluster-health.md) and [Prometheus Metrics](../kubernetes/operations/monitoring/prometheus-metrics.md) |
+| Capacity of the array pool | The monitoring of the array                                                                                                                                 |
+| Drive health               | The monitoring of the array. SMART data is not available for LUNs.                                                                                          |
 
 Simplyblock does not return freed capacity to the array, so the array's allocation of the LUNs only grows. An alert on
 the array's pool must fire well before it is full: a full pool fails the writes of all LUNs at once.

@@ -11,7 +11,7 @@ set: Kubernetes-native volumes, snapshots and clones, QoS, encryption, replicati
 
 On this page, the LUNs are created and presented to the hosts by the storage administrator. Where the LUNs are to be
 created, presented, and taken over by simplyblock itself, the array is integrated as a
-[SAN datastore](san-datastore.md).
+[Unified DataStore](../../unified-datastore/architecture.md).
 
 ## How It Works
 

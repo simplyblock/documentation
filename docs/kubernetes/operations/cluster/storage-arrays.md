@@ -8,8 +8,8 @@ A storage cluster on the LUNs of a [storage array](../../../architecture/concept
 any other simplyblock cluster. This page covers what is different: capacity on two levels, the growth of the
 cluster, and the tasks that stay with simplyblock instead of the array.
 
-A [SAN datastore](san-datastore.md), whose LUNs simplyblock manages on the array itself, is covered in
-[Operating a SAN Datastore](san-datastore.md).
+A [Unified DataStore](../../../unified-datastore/operations.md), whose LUNs simplyblock manages on the array itself, is covered in
+[Operating a Unified DataStore](../../../unified-datastore/operations.md).
 
 ## Monitoring Capacity
 
