@@ -55,6 +55,9 @@ plugins:
       css: ../../../assets/stylesheets/swagger-ui.css
   - redirects:
       redirect_maps:
+        architecture/concepts/storage-arrays.md: architecture/concepts/unified-datastore.md
+        deployment-preparation/storage-arrays.md: deployment-preparation/unified-datastore.md
+        kubernetes/operations/cluster/storage-arrays.md: kubernetes/operations/cluster/unified-datastore.md
         deployment-preparation/amazon-eks.md: kubernetes/installation/eks.md
         deployment-preparation/eks.md: kubernetes/installation/eks.md
         deployment-preparation/cloud-instance-recommendations.md: kubernetes/installation/eks.md

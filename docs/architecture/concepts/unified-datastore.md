@@ -1,7 +1,7 @@
 ---
-title: "Architecture"
+title: "Unified DataStore"
 description: "How simplyblock creates, presents, fences, and takes over the LUNs of an FC, iSCSI, or NVMe-oF storage array through array plug-ins."
-weight: 10200
+weight: 30655
 ---
 
 {{experimental}}
@@ -11,9 +11,10 @@ integrated into the control plane. The LUNs are created, presented to the hosts,
 simplyblock itself, through an array plug-in. Every LUN is presented to more than one host. When the storage node
 serving a LUN fails, the LUN is taken over by a standby node within seconds, and no data has to be rebuilt.
 
-This differs from a cluster on [pre-provisioned storage array LUNs](../architecture/concepts/storage-arrays.md). There, the LUNs are created
-and presented by the storage administrator, every host uses only its own LUNs, and a lost host is compensated by
-erasure coding. In a Unified DataStore, the array protects the data and simplyblock protects the access to it.
+Arrays of Pure Storage, NetApp, Dell, HPE, IBM, Hitachi, Huawei, and Infinidat are supported, as well as Amazon EBS
+volumes with Multi-Attach (see [Array Plug-ins](../../reference/array-plugins.md)). On top of the LUNs, the full
+simplyblock feature set is available: Kubernetes-native volumes, snapshots and clones, QoS, encryption,
+replication, and disaster recovery. The array protects the data, and simplyblock protects the access to it.
 
 ## How It Works
 
@@ -107,7 +108,7 @@ node that took it over.
 The array login is never stored in the clear in the cluster database. Three sources are accepted:
 
 - **Managed:** The login is given once, at registration. It is encrypted with the cluster's credentials key in the
-  [key management service](../architecture/concepts/external-key-management.md) (HashiCorp Vault Transit, OpenBao, or KMIP) and bound to the
+  [key management service](external-key-management.md) (HashiCorp Vault Transit, OpenBao, or KMIP) and bound to the
   array and its endpoint. A login encrypted for one endpoint is refused for any other, so an endpoint changed in the
   database cannot redirect it.
 - **Vault KV:** The login stays in a HashiCorp Vault or OpenBao KV v2 secret. Only its location is stored, and it is
@@ -116,6 +117,19 @@ The array login is never stored in the clear in the cluster database. Three sour
 
 A cluster without an external key management service can only use managed credentials after an explicit opt-in,
 because its local key store keeps them effectively unencrypted.
+
+## Thin Provisioning on Two Levels
+
+Thin provisioning applies twice: simplyblock allocates volume capacity only when it is written, and the array
+allocates LUN capacity only when simplyblock writes to it. This allows large LUNs at no upfront cost. Two effects
+are considered:
+
+- **Space is not returned to the array:** Simplyblock reuses capacity freed by deleted volumes and snapshots for new
+  data, but it does not release it to the array. The array's allocation of a LUN grows up to the highest capacity
+  simplyblock has used on it.
+- **The array pool can run out first:** Simplyblock sees the full size of the LUNs. If the array's thin pool is
+  smaller, it can fill up while simplyblock still reports free capacity. Writes then fail on all LUNs at once, which
+  takes the cluster offline. The pool of the array is therefore monitored, or sized for the full LUN capacity.
 
 ## Division of Responsibilities
 
@@ -137,7 +151,7 @@ not consistent across the LUNs of all nodes and cannot be used to restore a clus
 
 - **Multipathing:** NVMe-oF LUNs are used with the native NVMe multipathing of the Linux kernel. Device-mapper
   multipath devices are not accepted yet, so a SCSI LUN is used over a single path per host.
-- **Protocols:** The protocols a plug-in supports are listed in the [array plug-in reference](array-plugins.md).
+- **Protocols:** The protocols a plug-in supports are listed in the [array plug-in reference](../../reference/array-plugins.md).
   Several plug-ins support FC and iSCSI only.
 - **Capacity:** Capacity is added by growing all LUNs together or by adding storage nodes. A single LUN is never grown
   alone.

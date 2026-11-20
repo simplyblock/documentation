@@ -1,19 +1,19 @@
 ---
-title: "Deployment on Kubernetes"
+title: "Deploying a Unified DataStore"
 description: "Deploy a simplyblock Unified DataStore on Kubernetes: state the storage array before discovery, review the draft, and let the operator provision the LUNs."
-weight: 10400
+weight: 30110
 ---
 
 {{experimental}}
 
 A Unified DataStore is deployed with the same discovery and approval flow as any other storage plane (see
-[Install Simplyblock Storage Plane on Kubernetes](../kubernetes/installation/k8s-storage-plane.md)). The difference is the order of knowledge.
+[Install Simplyblock Storage Plane on Kubernetes](k8s-storage-plane.md)). The difference is the order of knowledge.
 The cluster's data LUNs do not exist before the deployment, so they cannot be discovered. They are created on the
 array when each storage node is added. The array is therefore stated before discovery, and the discovery run drafts
 the deployment around it.
 
 The array, the hosts, and the credentials are prepared as described in
-[Unified DataStore](deployment-preparation.md) first.
+[Unified DataStore](../../deployment-preparation/unified-datastore.md) first.
 
 ## Deployment Flow
 
@@ -33,9 +33,9 @@ registers it, after approval.
 
 ## Storing the Array Login
 
-The login is stored in one of the three [credential sources](deployment-preparation.md#credentials).
+The login is stored in one of the three [credential sources](../../deployment-preparation/unified-datastore.md#credentials).
 A Kubernetes Secret lives in the namespace of the storage cluster, and its keys are the login fields of the plug-in
-(see the [array plug-in reference](array-plugins.md)).
+(see the [array plug-in reference](../../reference/array-plugins.md)).
 
 === "Secret"
     ```yaml title="Example of the array login as a Secret (pure01-login.yaml)"
@@ -118,7 +118,7 @@ The `multiAttach` block has the same fields as the one of the `StorageCluster`:
 | Field                          | Meaning                                                                                    |
 |--------------------------------|--------------------------------------------------------------------------------------------|
 | `faultTolerance`               | Storage-node failures the cluster survives: `1` or `2`. Fixed when the cluster is created. |
-| `array.plugin`                 | The [array plug-in](array-plugins.md) key                                                  |
+| `array.plugin`                 | The [array plug-in](../../reference/array-plugins.md) key                                  |
 | `array.endpoint`               | The array's management URL. Omitted for `aws-ebs`.                                         |
 | `array.protocol`               | `iscsi`, `fc`, `nvme-tcp`, `nvme-rdma`, `nvme-fc`, or `sdc`. Omitted for `aws-ebs`.        |
 | `array.lunSize`                | The size of every storage node's LUN                                                       |

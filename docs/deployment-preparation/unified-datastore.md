@@ -1,13 +1,13 @@
 ---
-title: "Deployment Preparation"
+title: "Unified DataStore"
 description: "Prepare a storage array and its hosts for a simplyblock Unified DataStore: supported arrays, array account, host connectivity, credentials, and sizing."
-weight: 10300
+weight: 29990
 ---
 
 {{experimental}}
 
 A Unified DataStore runs a simplyblock cluster on LUNs that simplyblock creates on an external storage array (see
-[Unified DataStore](architecture.md) for the architecture). The array, its management access,
+[Unified DataStore](../architecture/concepts/unified-datastore.md) for the architecture). The array, its management access,
 and the hosts' storage connectivity are prepared before the deployment. This page lists what has to be in place.
 
 ## Supported Storage Arrays
@@ -30,7 +30,7 @@ Each array family is driven by its own array plug-in. The plug-in key is what a 
 | `aws-ebs`             | Amazon EBS io2 and io1 with Multi-Attach      | NVMe (Nitro instances)                  |
 
 The options and the login fields of every plug-in are listed in the
-[array plug-in reference](array-plugins.md).
+[array plug-in reference](../reference/array-plugins.md).
 
 ## Array Preparation
 

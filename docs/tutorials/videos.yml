@@ -163,4 +163,4 @@ videos:
     category: unified-datastore
     title: "One storage layer, everywhere"
     drive_id: 1g82DhbJOesJVnPjUcIgECXZeXlmwqP1k
-    page: unified-datastore/index.md
+    page: architecture/concepts/unified-datastore.md
