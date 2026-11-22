@@ -69,8 +69,12 @@ simplyblock. Logging in to the array's targets and configuring the zoning are no
 |------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | iSCSI                        | A unique initiator name in `/etc/iscsi/initiatorname.iscsi`, and sessions logged in to the array's portals (one per path), set to log in automatically at boot |
 | FC                           | HBA ports zoned to the array's target ports                                                                                                                    |
-| NVMe/TCP, NVMe/RoCE, NVMe/FC | A unique host NQN in `/etc/nvme/hostnqn`, and connections to the array's NVMe subsystems or discovery controller that are restored at boot                     |
+| NVMe/TCP, NVMe/RoCE, NVMe/FC | A unique host NQN in `/etc/nvme/hostnqn`, and one line per discovery address of the array in `/etc/nvme/discovery.conf` (such as `-t tcp -a 10.0.0.5 -s 8009`) |
 | PowerFlex SDC                | The PowerFlex SDC installed and connected to the PowerFlex system                                                                                              |
+
+Simplyblock connects the NVMe subsystems listed by the discovery addresses in `/etc/nvme/discovery.conf` whenever it
+looks for a new LUN. Some arrays present every LUN in an NVMe subsystem of its own (NetApp ONTAP), so a connection
+made in advance does not reach the LUNs created later.
 
 Host NQNs and iSCSI initiator names must be unique per host. Hosts cloned from one image often share them, and the
 array then cannot tell the hosts apart.
