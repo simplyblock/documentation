@@ -30,14 +30,14 @@ not.
 | Client                                    | Kernel                 | Direct data path         |
 |-------------------------------------------|------------------------|--------------------------|
 | Linux                                     | 6.11 and later         | Supported                |
-| Red Hat Enterprise Linux 9.8              | 5.14.0-687.13.1.el9_8  | Supported, validated     |
-| Red Hat Enterprise Linux 9.7              | 5.14.0-611.13.1.el9_7  | Supported, validated     |
-| Red Hat Enterprise Linux 9.6              | 5.14.0-570.21.1.el9_6  | Supported, validated     |
-| Red Hat Enterprise Linux 9.5              | 5.14.0-503.22.1.el9_5  | Not supported, validated |
-| Debian 13                                 | 6.12.117+deb13-cloud   | Supported, validated     |
-| Debian 12                                 | 6.1.0-56-cloud         | Not supported, validated |
-| Ubuntu 26.04 and 24.04                    | 7.0.0-1017-gcp         | Supported, validated     |
-| Ubuntu 22.04                              | 6.8.0-1073-gcp         | Not supported, validated |
+| Red Hat Enterprise Linux 9.8              | 5.14.0-687.13.1.el9_8  | Supported                |
+| Red Hat Enterprise Linux 9.7              | 5.14.0-611.13.1.el9_7  | Supported                |
+| Red Hat Enterprise Linux 9.6              | 5.14.0-570.21.1.el9_6  | Supported                |
+| Red Hat Enterprise Linux 9.5              | 5.14.0-503.22.1.el9_5  | Not supported            |
+| Debian 13                                 | 6.12.117+deb13-cloud   | Supported                |
+| Debian 12                                 | 6.1.0-56-cloud         | Not supported            |
+| Ubuntu 26.04 and 24.04                    | 7.0.0-1017-gcp         | Supported                |
+| Ubuntu 22.04                              | 6.8.0-1073-gcp         | Not supported            |
 
 The following command, run as root on a worker node, shows whether its kernel has the support. It prints `nvme-eui.`
 when the driver can find NVMe devices, and nothing when it cannot. The module is decompressed first, because
