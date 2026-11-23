@@ -33,8 +33,13 @@ metadata server (see [Verifying the Direct Data Path](#verifying-the-direct-data
 
 ## Enabling pNFS
 
-pNFS is enabled by default. The metadata server is configured in `spec.pnfs.mds` of the `SimplyblockDriver` resource,
-or at installation time through the `driver.pnfs.mds` [Helm values](../../reference/kubernetes/helm-values.md).
+pNFS is enabled by default when the `SimplyblockDriver` is created by the Helm chart. The metadata server is configured
+in `spec.pnfs.mds` of the `SimplyblockDriver` resource, or at installation time through the `driver.pnfs.mds`
+[Helm values](../../reference/kubernetes/helm-values.md).
+
+A `SimplyblockDriver` created manually, as in an [OperatorHub installation](../installation/openshift.md) or with the
+[`empty` profile](../../reference/kubernetes/index.md#operator-only), has to set `spec.pnfs.mds`. An empty object
+enables the metadata server with its defaults. Without it, every pNFS volume stays `Pending`.
 
 ```yaml title="Example of a SimplyblockDriver with metadata server settings"
 apiVersion: storage.simplyblock.io/v1alpha2
