@@ -10,8 +10,9 @@ server, while the data is read and written directly over NVMe-oF on every node t
 [client requirements](#requirements). This keeps a shared volume close to the performance of a block volume. The architecture is described in
 [ReadWriteMany (pNFS)](../../architecture/concepts/pnfs.md).
 
-`ReadWriteMany` is served only by pNFS volumes. A `ReadWriteMany` claim on any other StorageClass is refused,
-including a claim with `volumeMode: Block`.
+A `ReadWriteMany` filesystem is served only by pNFS volumes. A `ReadWriteMany` claim with `volumeMode: Filesystem` on
+any other StorageClass is refused. A `ReadWriteMany` claim with `volumeMode: Block` is accepted, and its writers are
+coordinated by the application.
 
 ## Requirements
 
@@ -55,14 +56,16 @@ spec:
 One metadata server is started per storage cluster, when the first pNFS volume of that cluster is provisioned. Its
 pod runs in the operator's namespace and must be allowed to run privileged.
 
-| Field                   | Description                                                                                                                                                   | Default                                                    |
-|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
-| `image`                 | Metadata server image.                                                                                                                                        | The image matching the operator release.                   |
-| `resources`             | Requests and limits of the metadata server pod. The virtual machine gets the whole CPU cores of the CPU limit (at least one) and the memory limit less 256Mi. | CPU limit `2`, memory limit `2Gi`, memory request `512Mi`. |
-| `nodeSelector`          | Additional node labels the pod is scheduled by, added to `storage.simplyblock.io/kvm-capable=true`.                                                           | -                                                          |
-| `tolerations`           | Tolerations for tainted nodes.                                                                                                                                | -                                                          |
-| `stateSize`             | Size of the state disk holding the NFS client-recovery database.                                                                                              | `1Gi`                                                      |
-| `stateStorageClassName` | StorageClass of the state disk. It must be a simplyblock StorageClass and must not be a pNFS class. Only read when the metadata server is first created.      | A class created per storage cluster.                       |
+| Field                   | Description                                                                                                                                                                                        | Default                                                    |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| `image`                 | Metadata server image.                                                                                                                                                                             | The image matching the operator release.                   |
+| `resources`             | Requests and limits of the metadata server pod. The virtual machine gets the whole CPU cores of the CPU limit (at least one) and the memory limit less 256Mi.                                      | CPU limit `2`, memory limit `2Gi`, memory request `512Mi`. |
+| `nodeSelector`          | Additional node labels the pod is scheduled by, added to `storage.simplyblock.io/kvm-capable=true`.                                                                                                | -                                                          |
+| `tolerations`           | Tolerations for tainted nodes.                                                                                                                                                                     | -                                                          |
+| `stateSize`             | Size of the state disk holding the NFS client-recovery database.                                                                                                                                   | `1Gi`                                                      |
+| `stateStorageClassName` | StorageClass of the state disk. It must be a simplyblock StorageClass and must not be a pNFS class. Only read when the metadata server is first created.                                           | A class created per storage cluster.                       |
+| `dataNetwork`           | Storage data network the metadata server is attached to, set as `subnet`, `rangeStart`, and `rangeEnd`. Requires Multus and the whereabouts IPAM plugin. Changing it restarts the metadata server. | The pod network.                                           |
+| `unhealthyDeadline`     | Time the metadata server may stay unhealthy before it is restarted. A restart pauses all pNFS volumes of the storage cluster. `0s` disables the restart.                                           | `90s`                                                      |
 
 A memory limit below `512Mi` is refused.
 
@@ -131,8 +134,8 @@ kubectl get nfsexports -n team-a
 ```
 
 ```plain title="Example output of the export list"
-NAME                                          VOLUME                                                                                        MDS                                                      MDSPOD                                                   PHASE   AGE
-nfsexp-3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13   0f2ac1d3-7a51-4c8e-b2e9-6d1f0a3b9c47:production-default:3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13   simplyblock-pnfs-mds-0f2ac1d3-7a51-4c8e-b2e-8d3b9c10-0   simplyblock-pnfs-mds-0f2ac1d3-7a51-4c8e-b2e-8d3b9c10-0   Ready   12m
+NAME                                          VOLUME                                                                                        MDS                                                      MDSPOD                                                   PHASE   MDSREADY   AGE
+nfsexp-3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13   0f2ac1d3-7a51-4c8e-b2e9-6d1f0a3b9c47:production-default:3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13   simplyblock-pnfs-mds-0f2ac1d3-7a51-4c8e-b2e-8d3b9c10-0   simplyblock-pnfs-mds-0f2ac1d3-7a51-4c8e-b2e-8d3b9c10-0   Ready   True       12m
 ```
 
 | Phase        | Meaning                                                                                                   |
@@ -141,6 +144,9 @@ nfsexp-3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13   0f2ac1d3-7a51-4c8e-b2e9-6d1f0a3b9c
 | `Assembling` | The metadata server is attaching, formatting, and exporting the volume.                                   |
 | `Ready`      | The volume can be mounted.                                                                                |
 | `Degraded`   | Exporting the volume did not finish within five minutes. The operator takes no further action on its own. |
+
+`MDSREADY` shows whether the metadata server currently serves the volume. It is `False` while clients cannot be
+served, and the condition message names the failure. The phase stays `Ready` meanwhile.
 
 The events on the `NFSExport` resource explain a volume that does not become `Ready`:
 
@@ -154,6 +160,9 @@ kubectl describe nfsexport nfsexp-3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13 -n team-a
 | `NoKVMCapableNode`    | No node with `storage.simplyblock.io/kvm-capable=true` (and the configured node selector) can take the pod. |
 | `MDSStateUnavailable` | No StorageClass qualifies for the state disk, or the state disk did not bind.                               |
 | `MDSResourcesInvalid` | The memory limit of the metadata server is below `512Mi`.                                                   |
+| `MDSUnavailable`      | The metadata server cannot be started. The event message names the cause.                                   |
+| `NoAllowedClients`    | No Kubernetes node publishes an internal address, so the volume cannot be exported to any client.           |
+| `MDSUnhealthy`        | The volume failed the health check of the metadata server. `MDSREADY` turns `False`.                        |
 | `AssembleTimeout`     | The metadata server did not finish exporting the volume in time. The export turns `Degraded`.               |
 | `ExportReady`         | The volume is exported and can be mounted.                                                                  |
 | `MDSResynced`         | The metadata server restarted and the volume was exported again.                                            |
@@ -168,8 +177,9 @@ kubectl get pods -n simplyblock | grep pnfs-mds
 ## Verifying the Direct Data Path
 
 A client that cannot use the direct NVMe-oF path still reads and writes correctly, but through the metadata server,
-with much lower throughput. Nothing in Kubernetes reports this. It is visible in the NFS mount statistics of the
-worker node, `/proc/self/mountstats`, in two places.
+with much lower throughput. A mount whose data keeps going through the metadata server for five minutes is reported
+by a `PNFSDataThroughMDS` warning event on its PersistentVolumeClaim, or on its PersistentVolume when it has no claim.
+The data path is also visible in the NFS mount statistics of the worker node, `/proc/self/mountstats`, in two places.
 
 The `nfsv4:` line of a mount shows the layout type the node negotiated. A mount that can use the direct path reports
 `pnfs=LAYOUT_SCSI`, and `pnfs=not configured` means that the node's kernel lacks the pNFS block layout driver.
