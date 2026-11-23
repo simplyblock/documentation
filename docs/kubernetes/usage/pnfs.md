@@ -23,8 +23,9 @@ The CSI node plugin checks `/dev/kvm` on every node and labels the nodes that pa
 **Client nodes:** Every worker node that runs a pod using a pNFS volume needs
 a kernel with the pNFS block layout driver (`CONFIG_PNFS_BLOCK`), including its support for NVMe devices: the
 driver finds the device a layout names through a `/dev/disk/by-id/nvme-eui.` link, which the CSI node plugin creates. This
-is a property of the kernel build, not of its version number. Upstream Linux added it in 6.11, and Red Hat
-Enterprise Linux 9 has it from 9.6 on, as a backport into its 5.14.0 kernel.
+is a property of the kernel build, not of its version number. Upstream Linux added it in 6.11. Red Hat Enterprise
+Linux 9 backported it into its 5.14.0 kernel: the 9.6, 9.7, and 9.8 kernels below have it, and the 9.5 kernel does
+not.
 
 | Client                                    | Kernel                 | Direct data path         |
 |-------------------------------------------|------------------------|--------------------------|
@@ -40,8 +41,8 @@ Enterprise Linux 9 has it from 9.6 on, as a backport into its 5.14.0 kernel.
 
 The following command, run as root on a worker node, shows whether its kernel has the support. It prints `nvme-eui.`
 when the driver can find NVMe devices, and nothing when it cannot. The module is decompressed first, because
-distributions ship it compressed (`.ko.xz` or `.ko.zst`), and a search of the compressed file finds nothing on any
-kernel.
+Red Hat Enterprise Linux and Debian 13 ship it as `.ko.xz` and Ubuntu 24.04 and later as `.ko.zst`, and a search of
+the compressed file finds nothing even on a kernel that has the support.
 
 ```bash title="Checking a client node's pNFS block layout driver for NVMe support"
 f=$(modinfo -n blocklayoutdriver)
