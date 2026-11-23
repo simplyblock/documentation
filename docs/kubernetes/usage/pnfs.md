@@ -23,12 +23,39 @@ The CSI node plugin checks `/dev/kvm` on every node and labels the nodes that pa
 **Client nodes:** Every worker node that runs a pod using a pNFS volume needs
 a kernel with the pNFS block layout driver (`CONFIG_PNFS_BLOCK`), including its support for NVMe devices: the
 driver finds the device a layout names through a `/dev/disk/by-id/nvme-eui.` link, which the CSI node plugin creates. This
-is a property of the kernel build, not of its version number. Red Hat Enterprise Linux 9.8 (kernel 5.14.0-687) is
-validated. Debian and Ubuntu are not validated yet. No NFS packages are required on the host, because the NFS
-client tools ship with the CSI node plugin.
+is a property of the kernel build, not of its version number. Upstream Linux added it in 6.11. Red Hat Enterprise
+Linux 9 backported it into its 5.14.0 kernel: the 9.6, 9.7, and 9.8 kernels below have it, and the 9.5 kernel does
+not.
+
+| Client                                    | Kernel                 | Direct data path         |
+|-------------------------------------------|------------------------|--------------------------|
+| Linux                                     | 6.11 and later         | Supported                |
+| Red Hat Enterprise Linux 9.8              | 5.14.0-687.13.1.el9_8  | Supported                |
+| Red Hat Enterprise Linux 9.7              | 5.14.0-611.13.1.el9_7  | Supported                |
+| Red Hat Enterprise Linux 9.6              | 5.14.0-570.21.1.el9_6  | Supported                |
+| Red Hat Enterprise Linux 9.5              | 5.14.0-503.22.1.el9_5  | Not supported            |
+| Debian 13                                 | 6.12.117+deb13-cloud   | Supported                |
+| Debian 12                                 | 6.1.0-56-cloud         | Not supported            |
+| Ubuntu 26.04 and 24.04                    | 7.0.0-1017-gcp         | Supported                |
+| Ubuntu 22.04                              | 6.8.0-1073-gcp         | Not supported            |
+
+The following command, run as root on a worker node, shows whether its kernel has the support. It prints `nvme-eui.`
+when the driver can find NVMe devices, and nothing when it cannot. The module is decompressed first, because
+Red Hat Enterprise Linux and Debian 13 ship it as `.ko.xz` and Ubuntu 24.04 and later as `.ko.zst`, and a search of
+the compressed file finds nothing even on a kernel that has the support.
+
+```bash title="Checking a client node's pNFS block layout driver for NVMe support"
+f=$(modinfo -n blocklayoutdriver)
+case "$f" in *.xz) xz -dc "$f" ;; *.zst) zstd -dc "$f" ;; *) cat "$f" ;; esac | grep -ao 'nvme-eui\.' | head -1
+```
+
+No NFS packages are required on the host, because the NFS client tools ship with the CSI node plugin. The host
+kernel must provide the `nvme-tcp` module, without which the CSI node plugin does not start. On Ubuntu 22.04 with
+the `6.8.0-1073-gcp` kernel, the module is in the `linux-modules-extra-$(uname -r)` package.
 
 A client node that does not meet the requirements still mounts the volume, but all data is routed through the
-metadata server (see [Verifying the Direct Data Path](#verifying-the-direct-data-path)).
+metadata server (see [Verifying the Direct Data Path](#verifying-the-direct-data-path)). Throughput is then
+limited to what the single metadata server can carry, shared by every client of every pNFS volume it serves.
 
 ## Enabling pNFS
 
@@ -174,8 +201,18 @@ kubectl get pods -n simplyblock | grep pnfs-mds
 ## Verifying the Direct Data Path
 
 A client that cannot use the direct NVMe-oF path still reads and writes correctly, but through the metadata server,
-with much lower throughput. Nothing in Kubernetes reports this. It is visible in the NFS mount statistics of the
-worker node, `/proc/self/mountstats`, in two places.
+with much lower throughput. When a volume's data has gone through the metadata server for five minutes, the CSI node
+plugin records a `PNFSDataThroughMDS` warning event on its PersistentVolumeClaim. A pause of 30 seconds or more in
+that traffic starts the five minutes again, so a client whose I/O through the metadata server is slow or intermittent
+may never be reported. Events also expire, by default after one hour. A missing event therefore does not prove that
+a client uses the direct path. A client kernel without NVMe support also logs the failed device
+lookup in the kernel log of the worker node about every two minutes:
+
+```plain title="Example kernel log of a client that cannot open the device"
+pNFS: failed to open device /dev/disk/by-id/wwn-0x664878626336536637346445674b6e4f (-2)
+```
+
+The fallback is also visible in the NFS mount statistics of the worker node, `/proc/self/mountstats`, in two places.
 
 The `nfsv4:` line of a mount shows the layout type the node negotiated. A mount that can use the direct path reports
 `pnfs=LAYOUT_SCSI`, and `pnfs=not configured` means that the node's kernel lacks the pNFS block layout driver.
