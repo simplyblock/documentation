@@ -15,6 +15,9 @@ class Settings:
     # Where the published docs live; llms-full.txt and versions.json are read from here.
     docs_base: str = field(default_factory=lambda: _env("DOCS_BASE", "https://docs.simplyblock.io").rstrip("/"))
     refresh_seconds: int = field(default_factory=lambda: int(_env("DOCS_REFRESH_SECONDS", "1800")))
+    # versions.json is tiny; checking it often makes a new release (the "latest"
+    # alias moving) take effect within a minute.
+    versions_refresh_seconds: int = field(default_factory=lambda: int(_env("DOCS_VERSIONS_REFRESH_SECONDS", "60")))
 
     # Claude. The API key comes from ANTHROPIC_API_KEY (read by the SDK).
     model: str = field(default_factory=lambda: _env("ASSISTANT_MODEL", "claude-opus-5-5"))
