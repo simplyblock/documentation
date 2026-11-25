@@ -186,9 +186,9 @@ installation in [Connecting to an External Control Plane](../kubernetes/installa
 pNFS) is not a separate architecture. It is added to any of the architectures above that run simplyblock on
 Kubernetes, and it is not available on a legacy Docker-based deployment.
 
-It adds one component: a metadata server per storage cluster. The metadata server runs as a StatefulSet of one replica
-in the operator's namespace, on a worker node with a usable `/dev/kvm`. The CSI node plugin labels such nodes with
-`storage.simplyblock.io/kvm-capable=true`. The metadata server is created when the first pNFS volume of a storage
+It adds one component: a metadata server per storage cluster. The metadata server runs as a StatefulSet in the
+operator's namespace: an active pod and, by default, one standby, each on its own worker node with a usable
+`/dev/kvm`. The CSI node plugin labels such nodes with `storage.simplyblock.io/kvm-capable=true`. The metadata server is created when the first pNFS volume of a storage
 cluster is provisioned, after pNFS has been enabled on the `SimplyblockDriver` resource
 ([Enabling pNFS](../kubernetes/usage/pnfs.md#enabling-pnfs)).
 
@@ -207,13 +207,14 @@ How it fits each architecture:
 
 Placement considerations:
 
-- At least two KVM-capable worker nodes are recommended, so that the metadata server can be rescheduled when its node
-  is drained. The metadata server is a single instance. While it restarts, metadata operations on its volumes stall,
-  and clients resume without remounting.
-- The metadata server pod must be allowed to run privileged in the operator's namespace (it uses `/dev/kvm` and
+- At least one KVM-capable worker node per metadata server pod is needed, that is, one plus the number of standbys.
+  One more is recommended, so that a replacement pod can start while a node is down. When the active pod is deleted
+  or its node is lost, a standby takes over. During the takeover, metadata operations on its volumes stall, and
+  clients resume without remounting.
+- The metadata server pods must be allowed to run privileged in the operator's namespace (it uses `/dev/kvm` and
   `/dev/net/tun`), but it uses neither the host network nor the host PID namespace.
-- Network access to the metadata server pods (NFS over TCP port 2049, through a Service ClusterIP per export) and to
-  the storage cluster's NVMe/TCP targets should be limited to the cluster's nodes.
+- Network access to the metadata server pods (NFS over TCP port 2049, through one Service ClusterIP per metadata
+  server) and to the storage cluster's NVMe/TCP targets should be limited to the cluster's nodes.
 
 The node requirements are listed in
 [Hardware Requirements](hardware-requirements.md#virtualization-support-for-pnfs) and

@@ -24,8 +24,9 @@ well.
   the cluster's performance.
 - **High availability:** Distributed erasure coding, NVMe multipathing with automatic failover, and failure domains
   keep volumes available through device, node, and rack failures.
-- **Block, file, and object:** Block volumes, shared file storage (`ReadWriteMany`) through pNFS, and S3-compatible
-  object storage (beta) run on the same NVMe-oF infrastructure and share all data services.
+- **Block, file, and object:** Block volumes, shared file storage (`ReadWriteMany`) through pNFS, and
+  [S3-compatible object storage](../kubernetes/usage/object-storage.md) (beta) run on the same NVMe-oF infrastructure
+  and share all data services.
 - **Data services:** Thin provisioning, instant snapshots and clones, compression and deduplication, encryption with
   end-to-end key management through an external KMS, policy-based backups to S3, live migration between clusters,
   and policy-based replication between clusters.

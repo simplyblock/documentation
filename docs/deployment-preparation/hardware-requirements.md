@@ -50,13 +50,14 @@ network interfaces, and dedicated cores must be assigned exclusively to the virt
 
 This requirement applies only when [pNFS volumes](../kubernetes/usage/pnfs.md) are used.
 
-The pNFS metadata server runs in a micro virtual machine, so at least one Kubernetes worker node must expose a usable
-`/dev/kvm`. On bare metal, this requires the CPU virtualization extensions (Intel VT-x or AMD-V) to be enabled in the
-firmware. On a virtual machine, including a cloud instance, it requires nested virtualization. QEMU's software
-emulation is not used as a fallback.
+The pNFS metadata server runs in a micro virtual machine, so every one of its pods needs a Kubernetes worker node of
+its own that exposes a usable `/dev/kvm`. On bare metal, this requires the CPU virtualization extensions (Intel VT-x or
+AMD-V) to be enabled in the firmware. On a virtual machine, including a cloud instance, it requires nested
+virtualization. QEMU's software emulation is not used as a fallback.
 
-Qualifying nodes are detected by the CSI node plugin and labeled with `storage.simplyblock.io/kvm-capable=true`. At
-least two such nodes are recommended so that the metadata server can be rescheduled when its node is drained.
+Qualifying nodes are detected by the CSI node plugin and labeled with `storage.simplyblock.io/kvm-capable=true`. With
+the default of one standby, two such nodes are needed, and a third is recommended, so that a replacement pod can start
+while one of them is down. A standby without a node stays `Pending` while the active pod serves.
 
 ## Storage Devices
 

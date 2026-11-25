@@ -48,13 +48,13 @@ and [Linux Kernel Versions](../reference/supported-linux-kernels.md).
 These requirements apply only when [pNFS volumes](../kubernetes/usage/pnfs.md) (`ReadWriteMany`,
 [distributed file storage](../architecture/concepts/distributed-file-storage.md)) are used.
 
-**Metadata server node:**
+**Metadata server nodes:**
 
-- At least one worker node with a usable `/dev/kvm` (see
-  [Virtualization Support for pNFS](hardware-requirements.md#virtualization-support-for-pnfs)). At least two such nodes
-  are recommended, so that the metadata server can be rescheduled.
+- One worker node with a usable `/dev/kvm` per metadata server pod, two with the default of one standby (see
+  [Virtualization Support for pNFS](hardware-requirements.md#virtualization-support-for-pnfs)). A third such node is
+  recommended, so that a replacement pod can start while one of them is down.
 - The operator's namespace must admit privileged pods (for example, the `privileged` Pod Security Standard), because
-  the metadata server pod uses the host devices `/dev/kvm` and `/dev/net/tun`.
+  the metadata server pods use the host devices `/dev/kvm` and `/dev/net/tun`.
 
 **Client nodes** (every worker node that runs a pod using a pNFS volume):
 
@@ -71,17 +71,17 @@ These requirements apply only when [pNFS volumes](../kubernetes/usage/pnfs.md) (
 
 **Network:**
 
-- NFSv4.1 or NFSv4.2 over TCP port 2049 from every client node to the metadata server pod. Clients mount a Kubernetes
-  Service ClusterIP per export, so the CNI must route a kernel NFS mount to a ClusterIP. No portmapper (port 111) and no
-  `rpc.statd` are used.
-- NVMe/TCP from every client node and from the metadata server pod to the storage nodes, as for block volumes.
+- NFSv4.1 or NFSv4.2 over TCP port 2049 from every client node to the metadata server pods. Clients mount the
+  Kubernetes Service ClusterIP of the metadata server, one per storage cluster, so the CNI must route a kernel NFS mount
+  to a ClusterIP. No portmapper (port 111) and no `rpc.statd` are used.
+- NVMe/TCP from every client node and from the metadata server pods to the storage nodes, as for block volumes.
 
 **Configuration:**
 
 - pNFS is enabled on the `SimplyblockDriver` resource through `spec.pnfs.mds`. Without it, pNFS volumes stay
   `Pending`. The metadata server's memory limit must be at least `512Mi` (default `2Gi`).
-- A StorageClass with `csi.storage.k8s.io/fstype: pnfs`, and a simplyblock StorageClass for the metadata server's
-  state disk (`1Gi` by default, created per storage cluster when none is given).
+- A StorageClass with `csi.storage.k8s.io/fstype: pnfs`. The metadata server's state volume (1 GiB) is created
+  through the control plane and needs no StorageClass.
 
 ## Edge Clusters
 

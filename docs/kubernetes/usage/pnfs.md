@@ -16,8 +16,9 @@ coordinated by the application.
 
 ## Requirements
 
-**Metadata server nodes:** At least one worker node must expose a usable `/dev/kvm`, because the metadata server runs
-in a small virtual machine. On a virtualized cloud instance, this requires nested virtualization to be enabled on the instance.
+**Metadata server nodes:** Every metadata server pod needs a worker node of its own that exposes a usable `/dev/kvm`,
+because the metadata server runs in a small virtual machine. With the default of one standby, that is two nodes. On a
+virtualized cloud instance, this requires nested virtualization to be enabled on the instance.
 The CSI node plugin checks `/dev/kvm` on every node and labels the nodes that pass with
 `storage.simplyblock.io/kvm-capable=true`. A label set by hand is left untouched.
 
@@ -55,28 +56,32 @@ spec:
         limits:
           cpu: "2"
           memory: 2Gi
-      stateSize: 1Gi
+      standbys: 1
 ```
 
-One metadata server is started per storage cluster, when the first pNFS volume of that cluster is provisioned. Its
-pod runs in the operator's namespace and must be allowed to run privileged.
+One metadata server is started per storage cluster, when the first pNFS volume of that cluster is provisioned. It
+consists of an active pod and its standby pods, each on a KVM-capable node of its own. The pods run in the operator's
+namespace and must be allowed to run privileged.
 
-| Field                   | Description                                                                                                                                                                                        | Default                                                    |
-|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
-| `image`                 | Metadata server image.                                                                                                                                                                             | The image matching the operator release.                   |
-| `resources`             | Requests and limits of the metadata server pod. The virtual machine gets the whole CPU cores of the CPU limit (at least one) and the memory limit less 256Mi.                                      | CPU limit `2`, memory limit `2Gi`, memory request `512Mi`. |
-| `nodeSelector`          | Additional node labels the pod is scheduled by, added to `storage.simplyblock.io/kvm-capable=true`.                                                                                                | -                                                          |
-| `tolerations`           | Tolerations for tainted nodes.                                                                                                                                                                     | -                                                          |
-| `stateSize`             | Size of the state disk holding the NFS client-recovery database.                                                                                                                                   | `1Gi`                                                      |
-| `stateStorageClassName` | StorageClass of the state disk. It must be a simplyblock StorageClass and must not be a pNFS class. Only read when the metadata server is first created.                                           | A class created per storage cluster.                       |
-| `dataNetwork`           | Storage data network the metadata server is attached to, set as `subnet`, `rangeStart`, and `rangeEnd`. Requires Multus and the whereabouts IPAM plugin. Changing it restarts the metadata server. | The pod network.                                           |
-| `unhealthyDeadline`     | Time the metadata server may stay unhealthy before it is restarted. A restart pauses all pNFS volumes of the storage cluster. `0s` disables the restart.                                           | `90s`                                                      |
+| Field               | Description                                                                                                                                                                                                                                                 | Default                                                    |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| `image`             | Metadata server image.                                                                                                                                                                                                                                      | The image matching the operator release.                   |
+| `resources`         | Requests and limits of each metadata server pod, so every standby adds one pod's worth. The virtual machine gets the whole CPU cores of the CPU limit (at least one) and the memory limit less 256Mi.                                                       | CPU limit `2`, memory limit `2Gi`, memory request `512Mi`. |
+| `nodeSelector`      | Additional node labels the pods are scheduled by, added to `storage.simplyblock.io/kvm-capable=true`.                                                                                                                                                       | -                                                          |
+| `tolerations`       | Tolerations for tainted nodes.                                                                                                                                                                                                                              | -                                                          |
+| `standbys`          | Number of standby pods beside the active one, from 0 to 4. Each standby needs another KVM-capable node, and a standby without one stays `Pending` while the active serves. With `0`, no takeover is possible.                                               | `1`                                                        |
+| `dataNetwork`       | Storage data network the metadata server is attached to, set as `subnet`, `rangeStart`, and `rangeEnd`. Requires Multus and the whereabouts IPAM plugin. A change rolls the pods one at a time, the standbys first and the active last, through a takeover. | The pod network.                                           |
+| `unhealthyDeadline` | Time the metadata server may stay unhealthy before it is restarted. A restart pauses all pNFS volumes of the storage cluster. `0s` disables the restart.                                                                                                    | `90s`                                                      |
 
 A memory limit below `512Mi` is refused.
 
-Without `stateStorageClassName`, a StorageClass named `simplyblock-<CLUSTER_UUID>-pnfs-mds-state` is created for each
-storage cluster. It is derived from an existing simplyblock StorageClass of that cluster without its QoS limits, and
-it is reserved for the metadata server: a PersistentVolumeClaim using it in any other namespace is refused.
+Without `dataNetwork`, the metadata server reaches the storage nodes through the pod network. This works only when the
+nodes forward traffic arriving on their data interfaces, as Talos and K3s do, and OpenShift's OVN-Kubernetes does not
+by default. A `dataNetwork` that cannot be attached falls back to the pod network as well: without Multus, the
+`MDSDataNetworkUnavailable` event is reported, and without a node on the subnet, the `NoDataNetworkNode` event.
+
+The state volume of each metadata server, which holds the NFS client-recovery database, has a fixed size of 1 GiB. It
+is created through the control plane in the storage pool of the first pNFS volume and needs no StorageClass.
 
 ## Creating a pNFS StorageClass
 
@@ -163,7 +168,7 @@ kubectl describe nfsexport nfsexp-3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13 -n team-a
 |-----------------------|-------------------------------------------------------------------------------------------------------------|
 | `NoMetadataServer`    | `spec.pnfs.mds` is not set on the `SimplyblockDriver`.                                                      |
 | `NoKVMCapableNode`    | No node with `storage.simplyblock.io/kvm-capable=true` (and the configured node selector) can take the pod. |
-| `MDSStateUnavailable` | No StorageClass qualifies for the state disk, or the state disk did not bind.                               |
+| `MDSStateUnavailable` | The state volume of the metadata server could not be created, found, or recorded.                           |
 | `MDSResourcesInvalid` | The memory limit of the metadata server is below `512Mi`.                                                   |
 | `MDSUnavailable`      | The metadata server cannot be started. The event message names the cause.                                   |
 | `NoAllowedClients`    | No Kubernetes node publishes an internal address, so the volume cannot be exported to any client.           |
@@ -173,7 +178,8 @@ kubectl describe nfsexport nfsexp-3c81a0f4-1d2b-4e77-9a01-5f6c8b2d0e13 -n team-a
 | `MDSResynced`         | The metadata server restarted and the volume was exported again.                                            |
 
 The metadata server pods run in the operator's namespace. Each one is named `simplyblock-pnfs-mds-` followed by a
-shortened form of its storage cluster's UUID:
+shortened form of its storage cluster's UUID and the pod's ordinal. The pod serving a volume is shown in the `MDSPOD`
+column of the export list:
 
 ```bash title="Listing the metadata server pods"
 kubectl get pods -n simplyblock | grep pnfs-mds
@@ -217,15 +223,16 @@ NFSv4 byte-range locking, so applications that share files must use file locks a
 - **Encryption:** Supported, through the `encryption` parameter of the StorageClass. See
   [Volume Encryption](volume-encryption.md).
 
-When the metadata server restarts, for example, during a node drain, file operations on every client pause until it
-serves again. Mounts and pods are kept, and applications continue afterward. A metadata server that stays unavailable
-for an extended period makes file operations fail with an I/O error.
+When a standby takes over, for example, during a drain of the active's node, file operations on every client pause
+until the new active serves. Mounts and pods are kept, and applications continue afterward. The takeover is described
+in [Metadata Server Takeover](../../architecture/concepts/pnfs.md#metadata-server-takeover). A metadata server that
+stays unavailable for an extended period makes file operations fail with an I/O error.
 
 ## Limitations
 
 - A pNFS volume cannot be created from a snapshot or cloned from another volume yet.
 - A pNFS volume cannot be moved to another storage node with a volume migration.
-- Each storage cluster has a single metadata server. While the node hosting it is lost and the pod is stuck in
-  `Terminating`, the pNFS volumes of that storage cluster cannot be accessed.
+- With `standbys: 0`, or while no standby is running, the loss of the node hosting the active metadata server makes
+  the pNFS volumes of that storage cluster inaccessible until its pod, stuck in `Terminating`, is removed.
 - A container running as root writes as root on the shared filesystem (`no_root_squash`). Access to a shared volume
   is controlled by file ownership and permissions only.

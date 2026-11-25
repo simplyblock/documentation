@@ -17,6 +17,7 @@ additional pools. This section covers the full lifecycle of simplyblock-backed v
 - [Volume Encryption](volume-encryption.md)
 - [Automatic Volume Placement](volume-placement.md)
 - [pNFS Volumes](pnfs.md)
+- [S3 Object Storage](object-storage.md)
 - [Striped Volumes](striped-volumes.md)
 - [Snapshotting](snapshotting.md)
 - [Cloning](cloning.md)
