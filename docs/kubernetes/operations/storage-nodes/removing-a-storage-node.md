@@ -40,16 +40,17 @@ kubectl apply -f remove-node.yaml
 
 Deleting a `StorageNode` that is registered with the control plane does not delete the backend node directly. The
 operator raises a `StorageNodeOps` named `<storage-node>-remove` with the action `Remove`, owned by the node, and holds
-the finalizer of the `StorageNode` until that operation has reached a terminal phase. A `StorageNode` that never
-received a backend UUID is deleted at once.
+the finalizer of the `StorageNode` until that operation has succeeded. A `StorageNode` that never received a backend
+UUID is deleted at once.
 
 ```bash title="Removing a storage node by deleting it"
 kubectl delete storagenode simplyblock-cluster-worker-1-0 -n simplyblock --wait=false
 kubectl get storagenodeops simplyblock-cluster-worker-1-0-remove -n simplyblock -w
 ```
 
-A removal that fails leaves the operation as the record of why, and the `StorageNode` is released anyway, so the object
-is not held by a drain nobody retries.
+If the removal fails or is aborted, the `StorageNode` stays, and an `OperationFailed` event with the reason is repeated
+on it. Once the cause is fixed, deleting the finished `<storage-node>-remove` record makes the operator raise a new
+removal.
 
 ## Steps
 
@@ -92,10 +93,10 @@ A pinned volume is resolved by removing the annotation, or by changing it to the
 moves the volume there, and the node is removed again with a new `StorageNodeOps`. An unmanaged volume has to be
 removed by hand. See [Automatic Volume Placement](../../usage/volume-placement.md) for pinning.
 
-Once no volume blocks, the step also asks whether the removal is admitted: the failure-domain balance it would leave,
-and the control plane's own admission (fault-tolerance headroom, replica relocation, active tasks). A refusal holds
-the step with a `RemovalNotAdmitted` event, because this is the last point before the node goes offline that the
-admission can still be asked safely.
+Once no volume blocks, the step checks the failure-domain balance the removal would leave. A refusal holds the step
+with a `RemovalNotAdmitted` event while the node still serves. The control plane's own admission (fault-tolerance
+headroom, failure-domain balance, replica relocation, and active tasks) is not checked here. It runs in
+`MigratingDevices`, when the node is already offline.
 
 At the end of the step, the number of managed volumes is written to `status.drain.volumesTotal`.
 
@@ -108,9 +109,12 @@ until it clears. Any other refusal fails the operation with the node still servi
 
 ### MigratingDevices
 
-Once the node is down, the control plane rebuilds its devices onto its peers. The step sends the request again on
-every pass while the rebuild runs, which the control plane treats as a no-op or as a restart of a rebuild that
-stopped. A node still stuck short of being shut down is retried up to three times before the operation fails.
+Once the node is down, the control plane rebuilds its devices onto its peers. The first request is where the control
+plane admits the removal. A refusal for a passing condition, such as rebalancing or an active task, holds the step
+with a `RemovalDeferred` event. Any other refusal fails the operation and leaves the node offline, and a
+[Restart](restarting-a-storage-node.md) operation brings it back. The step sends the request again on every pass while
+the rebuild runs, which the control plane treats as a no-op or as a restart of a rebuild that stopped. A node still
+stuck short of being shut down is retried up to three times before the operation fails.
 
 ### MigratingVolumes
 
@@ -129,8 +133,9 @@ kubectl get storagenodeops remove-worker-1 -n simplyblock \
     -o jsonpath='{.status.step.state}{" migrated="}{.status.drain.volumesMigrated}{" total="}{.status.drain.volumesTotal}{"\n"}'
 ```
 
-A migration that fails is deleted and created again against another peer, and a `MigrationRetried` event records it.
-Completed migrations are deleted once all of them have finished, and `status.drain.volumesMigrated` keeps the count.
+A migration that fails is kept until the step ends, as the record of the peer the subsystem could not move to. A new
+migration to another peer is created beside it, and a `MigrationRetried` event records it. Completed migrations are
+deleted once all of them have finished, and `status.drain.volumesMigrated` keeps the count.
 While no online peer is available, the step holds with a `NoMigrationTarget` event, and it continues once one returns.
 A `DrainCompleted` event is emitted when every volume has been moved. The individual migrations are described in
 [Volume Migration](../volumes/volume-migration.md).
@@ -151,9 +156,12 @@ refusal caused by a passing cluster condition, such as rebalancing or an active 
 
 ### AwaitingRemoval
 
-The control plane finishes taking the node apart in the background: moving its devices and volumes onto its peers
-and tearing it down. The step closes once the control plane reports the node removed. If the control plane gives up
-and reports the removal failed, the operation fails with that outcome rather than waiting out its deadline.
+The control plane finishes taking the node apart in the background. Its devices and volumes have already moved by
+then. The control plane tears down the standby copies of the node's own logical volume store on its peers, replaces
+the node's journal in the journal groups of the other nodes, relocates the standby roles the node held for other
+primaries, verifies them, and marks the node removed. The step closes once the control plane reports the node
+removed. If the control plane gives up and reports the removal failed, the operation fails with that outcome rather
+than waiting out its deadline.
 
 ## Failure and Abort Handling
 
@@ -165,6 +173,22 @@ record cannot be deleted, and `spec.abort` is not honored. A removal that fails 
 exactly where the failing step left it — shut down, mid rebuild, or partway through the volume migration — for an
 operator to diagnose and recover by hand, typically with a [Restart](restarting-a-storage-node.md). Transient errors
 of the control plane do not fail the operation; they are retried.
+
+### Cleaning Up After a Removal
+
+A `StorageNodeOps` with the action `Remove` leaves the `StorageNode` in place in the phase `Removed`, and a growth
+document still counts it toward the limit of 32 storage nodes per cluster. Once the operation has `Succeeded`, the
+`StorageNode` is deleted. When the removal was named `<storage-node>-remove`, the deletion finds its record and
+releases the object at once. Under any other name, the deletion raises a second removal of its own.
+
+```bash title="Deleting the StorageNode of a removed node"
+kubectl delete storagenode simplyblock-cluster-worker-1-0 -n simplyblock
+```
+
+The worker keeps its storage-plane labels, `io.simplyblock.storagenodeset` and
+`simplyblock.io/storage-node-uuid.<cluster-uuid>.<slot>`, so the storage-node pod stays on it until they are removed by
+hand. The worker is cordoned and drained only after the `StorageNode` is deleted. A cordon before that raises a
+`<storage-node>-maintenance` window for the removed node.
 
 ## Checking a Stalled Removal
 

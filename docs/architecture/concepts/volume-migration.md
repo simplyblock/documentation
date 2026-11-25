@@ -9,8 +9,8 @@ to volumes remotely via NVMe-oF (TCP, RoCEv2), and the back storage, which serve
 The front storage accesses back storage both locally and remotely. Remote access itself uses NVMe-oF.
 
 Volume migration in simplyblock enables the online relocation of logical volumes (front storage or "docking points")
-between storage nodes without service interruption and almost instantly. This is possible because front storage has
-remote access to all devices in the cluster and thus exists essentially "in memory" only.
+between storage nodes while the volume keeps serving I/O, with a short pause at the cutover. This is possible because
+front storage has remote access to all devices in the cluster and thus exists essentially "in memory" only.
 
 Volume migrations are performed automatically based on operator decisions to either pre-serve data locality of workloads or
 to balance I/O performance across cluster nodes. This is required since the front storage does the "heavy-lifting" in I/O processing
@@ -63,18 +63,23 @@ If migration fails at any point, the target-side artifacts are cleaned up and th
 
 ## Migration Constraints
 
-!!! note "A volume migration is an instant or very fast operation"
+!!! note "A volume migration is a live migration with a short pause at the cutover"
     No back storage is copied during a volume migration. The data of the volume and its snapshots remains in place,
-    distributed across the devices of the cluster, and only the front storage moves to the target node. A migration
-    therefore completes instantly or within a very short time, independent of the size of the volume, and it does
-    not load the cluster with data transfers. If node affinity is turned on, the back storage is realigned to the
-    new node asynchronously afterward, as part of the background rebalancing (see
+    distributed across the devices of the cluster, and only the front storage moves to the target node, so a
+    migration does not load the cluster with data transfers. The front storage moves while the volume runs: its
+    snapshots are copied first, followed by up to three catch-up snapshots until less than 500 MiB has changed. The
+    cutover then pauses the I/O of the volume for at most 12 seconds. For a volume that shares its NVMe-oF subsystem
+    with others, all paths of the subsystem are made inaccessible first, which adds 2 seconds. The I/O is held during
+    the pause, so it waits rather than fails. If node affinity is turned on, the back storage is realigned to the new
+    node asynchronously afterward, as part of the background rebalancing (see
     [Data Locality](../storage-performance-and-qos.md#data-locality)).
 
-- **One migration per source node:** Only one volume migration can run on a given source node at a time. This is
-  required to maintain snapshot consistency during the transfer.
+- **One migration per cluster on Kubernetes:** The Simplyblock Operator runs one volume migration per storage cluster
+  at a time. Further migrations wait in `Pending` with an `OperationQueued` event until it has finished.
 - **Protection guards:** Volumes undergoing migration are protected from deletion, resizing, and snapshot deletion
   until the migration completes or is canceled.
+- **No new snapshots on the source node:** While a migration from a storage node runs, no new snapshot of any volume
+  on that node is created. Scheduled snapshots and backups of those volumes are refused until the migration ends.
 - **Automatic retry:** Transient failures during migration (such as temporary network issues) are automatically retried.
   The migration resumes from the last successful checkpoint.
 

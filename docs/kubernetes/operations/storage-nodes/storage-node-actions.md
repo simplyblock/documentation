@@ -67,16 +67,17 @@ kubectl apply -f restart-node.yaml
 | Field                            | Type     | Applies to                              | Description                                                                                                    |
 |----------------------------------|----------|-----------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | `force`                          | bool     | `Restart`, `Migrate`, `HostMaintenance` | Sends the restart with the force flag of the control plane. `Migrate` defaults it to `true`.                   |
-| `reattachVolume`                 | bool     | `Restart`, `Migrate`, `HostMaintenance` | Reattaches the node's volumes as part of the restart.                                                          |
+| `reattachVolume`                 | bool     | `Migrate`                               | Moves the node's EBS volumes to the target EC2 instance. AWS only, and left unset elsewhere.                   |
 | `migrate.targetWorkerNode`       | string   | `Migrate`                               | The Kubernetes worker to relocate the node onto. Required for `Migrate`, and immutable.                        |
 | `migrate.newSsdPcie`             | []string | `Migrate`                               | Additional NVMe PCIe addresses to bind on the target worker.                                                   |
 | `remove.systemVolumeFilterRegex` | string   | `Remove`                                | Matches the names of system volumes, which are deleted instead of migrated. Defaults to `^sb-fio-baseline-.*`. |
 | `abort`                          | bool     | All actions                             | Asks the running operation to stop at its current step.                                                        |
 
-Every field is ignored by the actions it does not apply to. Where `force` and `reattachVolume` are left out, the
-control plane applies its own defaults.
+Every field is ignored by the actions it does not apply to. `reattachVolume` is read only when a restart moves the node
+to another host, so it has no effect on `Restart` and `HostMaintenance`. Where `force` and `reattachVolume` are left
+out, the control plane applies its own defaults.
 
-```yaml title="Example of a forced restart that reattaches the volumes"
+```yaml title="Example of a forced restart"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
@@ -86,7 +87,6 @@ spec:
   nodeRef: simplyblock-cluster-worker-1-0
   action: Restart
   force: true
-  reattachVolume: true
 ```
 
 ## Execution and Mutual Exclusion

@@ -34,8 +34,11 @@ A storage node needs at least two LUNs: the journal LUN and one data LUN. The sm
 the journal.
 
 !!! important
-    LUNs cannot be resized after a storage node uses them, and a LUN cannot be added to a running storage node yet.
-    Capacity is added with new storage nodes and their LUNs (see
+    A LUN cannot be added to a running storage node yet. LUNs that were grown on the array are taken into use online
+    by the cluster action `GrowDevices` (see
+    [Cluster Actions](../kubernetes/operations/cluster/cluster-actions.md#requesting-an-action)), which grows every
+    LUN of the cluster by the smallest growth among them. Otherwise, capacity is added with new storage nodes and their
+    LUNs (see
     [Operating on Storage Arrays](../kubernetes/operations/cluster/storage-arrays.md#adding-capacity)). Large thin
     LUNs avoid the need for either.
 

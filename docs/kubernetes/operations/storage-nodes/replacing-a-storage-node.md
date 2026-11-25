@@ -21,9 +21,10 @@ putting a new one in its place does not.
 | The node is being retired, and its capacity is replaced by a new node. | [Retire and replace](#retiring-and-replacing)                             |
 | The worker is only down for maintenance and comes back.                | Neither. See [Coordinated Worker Node Drain](node-drain-coordination.md). |
 
-Relocating is the cheaper of the two by a wide margin. The node keeps its backend identity, its devices, and its
-logical volume assignments, so no volume data is copied between nodes. Retiring moves every volume off the node first,
-which is a data movement across the cluster.
+Relocating is the cheaper of the two by a wide margin. The node keeps its backend identity and its logical volume
+assignments, so no volume is moved between nodes. The drives of the old host are retired, and their data is rebuilt
+from parity across the cluster after the promotion, which the cluster reports as rebalancing. Retiring moves every
+volume off the node first, which is a data movement across the cluster.
 
 ## Relocating the Node
 
@@ -81,8 +82,9 @@ spec:
   action: Remove
 ```
 
-A removal is blocked while any volume on the node is pinned to it, or while any volume has no `PersistentVolume`. Both
-are reported with `DrainBlocked` events, and both have to be resolved before the drain proceeds.
+A pinned volume on the node fails the removal in `Validating`, before anything is changed, and the removal is
+requested again once the pin is removed. A volume without a `PersistentVolume` holds the removal with a `DrainBlocked`
+event until it is removed by hand.
 
 ## Failure-Domain Clusters
 
