@@ -12,6 +12,15 @@ for edge clusters. The architecture is described in
 
 The control plane on the hub monitors every edge cluster. Alerts, events, and capacity are read on the hub, see
 [Monitoring](../monitoring/index.md). The observability stack (`controlplane.observability`) runs on the hub only.
+Every series of the control plane exporter carries the labels `cluster` (the UUID) and `cluster_name`, as listed in
+[Prometheus Metrics](../monitoring/prometheus-metrics.md#labels), so the metrics of one edge cluster are selected by
+its name:
+
+```plain title="Used capacity of every edge cluster, and of the storage nodes of one edge cluster"
+sum by (cluster_name) (simplyblock_cluster_size_used_bytes)
+simplyblock_snode_size_used_bytes{cluster_name="edge-site-a"}
+```
+
 At the edge, the state is visible in the custom resources:
 
 ```bash title="Check an edge cluster"
@@ -97,8 +106,7 @@ continues and takes over the volumes.
 
 After a partition or a node failure in a two-node edge cluster, the hub waits until both nodes see each other again
 for a stable period (30 seconds by default). The returning node catches up with the journal and the data it missed,
-then rejoins as secondary. The `storage.simplyblock.io/fenced` taint is removed once the cluster is back to normal.
-Moving leadership back to the returning node is an optional, planned step.
+then rejoins as secondary. Moving leadership back to the returning node is an optional, planned step.
 
 With host fencing, the returning node gets its host access back in a fixed order: the storage has healed, the node is
 `Ready`, and no pod from before the fence is left on it (the out-of-service taint has removed them). Then the
@@ -125,8 +133,9 @@ placement, so a one-node or two-node cluster needs no additional node for it.
 
 | Symptom                                        | Check                                                                                                              |
 |------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `ControlPlane` is not `Available` at the edge  | The endpoint, the token Secret, and the CA Secret. The event `EndpointUnreachable` names the failing check.        |
+| `ControlPlane` is not `Available` at the edge  | The endpoint and the token Secret. The event `EndpointUnreachable` names the failing check.                        |
 | Storage nodes stay offline in the hub          | The ports 5000 and 8080-9044 from the hub to the edge workers.                                                     |
+| Storage nodes stay offline, ports are open     | The hub has `tls.enabled=false`, and the edge endpoint is `http://`. Otherwise, the hub cannot call the nodes.     |
 | Discovery reports no devices                   | `enableControlPlaneNodes`, the device mode (`enableLogicalBlockDevices`), and the device filters.                  |
 | Activation of a 1+1 cluster on two nodes waits | `clusterMode: Dual` in the deployment document or the `StorageCluster`.                                            |
 | Activation of a one-node cluster waits         | `clusterMode: Single`, exactly one storage node, and one data device per chunk of the stripe.                      |
@@ -140,7 +149,7 @@ For a two-node edge cluster, the arbitration state is read from the Management A
 
 ```bash title="Read the arbitration state of a two-node edge cluster"
 curl -s -H "Authorization: Bearer <ADMIN-TOKEN>" \
-    https://<HUB-MANAGEMENT-API>/api/v2/clusters/<CLUSTER-ID>/arbitration
+    http://<HUB-MANAGEMENT-API>/api/v2/clusters/<CLUSTER-ID>/arbitration
 ```
 
 Logs of the control plane are on the hub. Logs of the operator and the storage nodes are in the `simplyblock`

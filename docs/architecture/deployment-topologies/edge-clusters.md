@@ -26,10 +26,12 @@ can be the same cluster that runs the simplyblock Disaster Recovery hub.
 
 ## Control and Data Flow
 
-- **Edge to hub:** The operator at the edge reaches the Management API of the hub over HTTPS. It registers the storage
-  cluster, creates its storage nodes and pools, and reads their state. It authenticates with a bearer token.
+- **Edge to hub:** The operator at the edge reaches the Management API of the hub over HTTP, through a VPN or a private
+  link. It registers the storage cluster, creates its storage nodes and pools, and reads their state. It
+  authenticates with a bearer token.
 - **Hub to edge:** The control plane reaches every storage node of every edge on the storage node API and the storage
-  node RPC ports. It configures and monitors the storage nodes and runs restarts and recovery.
+  node RPC ports, over plain HTTP. It configures and monitors the storage nodes and runs restarts and recovery. A hub
+  with TLS on cannot call remote storage nodes, because it verifies their certificates against its own CA.
 - **Data path:** Volume I/O stays at the edge. Workloads reach the storage nodes of their own site over NVMe-oF.
   Volume data never crosses the WAN.
 
@@ -89,7 +91,7 @@ With only two nodes, a broken link between the nodes looks the same to each node
 nodes from writing on their own (split brain), the control plane on the hub acts as the third vote:
 
 - **Hold:** A node that loses the connection to the journal of its peer holds its write I/O for a short time
-  (2.5 seconds by default, below the host keep-alive timeout) and reports the event to the hub.
+  (2.5 seconds, below the host keep-alive timeout) and reports the event to the hub.
 - **Decision:** When one node is lost, the hub grants the surviving node solo operation. When both nodes are
   reachable but cannot reach each other (a broken link between them), the hub fences both nodes by default. With
   host fencing (see [Coordination with Kubernetes](#coordination-with-kubernetes)), it keeps one node instead: the
@@ -100,10 +102,8 @@ nodes from writing on their own (split brain), the control plane on the hub acts
 - **No grant, no solo operation:** A node that has no grant from the hub when the hold time ends fences itself. If
   neither node reaches the hub nor the other node, both nodes fence themselves, and I/O resumes once the hub is
   reachable again.
-- **Workload restart:** The Kubernetes node of a fenced storage node is tainted with `storage.simplyblock.io/fenced`
-  (effect `NoExecute`) by the operator, so that its pods are evicted. The taint is removed once the cluster is back
-  to normal. With host fencing, the workloads of the losing node also restart on the surviving node within seconds,
-  as described in the next section.
+- **Workload restart:** Without host fencing, Kubernetes is not told about a fence. With host fencing, the workloads
+  of the losing node restart on the surviving node within seconds, as described in the next section.
 
 #### Availability of the Hub
 
@@ -170,8 +170,8 @@ hub cannot fence. The remediation therefore refuses to taint a node with a volum
 unless the remediation template allows it.
 
 Host fencing is off by default and turned on per cluster, see
-[Deploying Edge Clusters](../../kubernetes/installation/edge-clusters.md#host-fencing). Without it, a fenced node only
-carries the `storage.simplyblock.io/fenced` taint. Pods on an unreachable node then wait for Kubernetes' own handling
+[Deploying Edge Clusters](../../kubernetes/installation/edge-clusters.md#host-fencing). Without it, Kubernetes is not
+told about a fence. Pods on an unreachable node then wait for Kubernetes' own handling
 of an unreachable node, and a broken link between the nodes fences both nodes.
 
 ### Host Connection Settings

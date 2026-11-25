@@ -88,12 +88,14 @@ These requirements apply only when [pNFS volumes](../kubernetes/usage/pnfs.md) (
 An [edge cluster](../architecture/deployment-topologies/edge-clusters.md) runs the Simplyblock Operator in the managed
 profile and connects to the control plane on a hub cluster:
 
-- **Hub:** The control plane runs with the standalone profile. Its Management API is reachable from every edge site,
-  for example, through a LoadBalancer Service, an OpenShift Route, or an Ingress. Loopback and link-local endpoints are
-  rejected. A Secret with a static admin token, referenced by `controlplane.local.adminTokenSecretRef`, lets edge
-  operators authenticate, because the hub cannot verify a service account token of another cluster.
-- **Credentials at the edge:** The Management API endpoint, the admin token, the CA certificate of the Management API
-  if it is not in the system trust store, and the storage node image of the release.
+- **Hub:** The control plane runs with the standalone profile and with TLS off (`tls.enabled=false` and
+  `tls.mutual_enabled=false`), because a hub with TLS on cannot call the storage nodes of an edge cluster. Its
+  Management API is reachable from every edge site over a VPN or a private link, for example, through a LoadBalancer
+  Service, an OpenShift Route, or an Ingress on that network. Loopback and link-local endpoints are rejected. A Secret with static admin tokens, referenced by
+  `controlplane.local.adminTokenSecretRef`, lets edge operators authenticate, because the hub cannot verify a service
+  account token of another cluster.
+- **Credentials at the edge:** The `http://` endpoint of the Management API, an admin token, and the storage node image
+  of the release.
 - **Control plane nodes:** Small edge clusters often run storage on Kubernetes control plane nodes. The discovery must
   then be allowed to use them (`enableControlPlaneNodes`).
 - **Two-node OpenShift:** A two-node OpenShift cluster needs a tie-breaker for its own etcd, either OpenShift with an

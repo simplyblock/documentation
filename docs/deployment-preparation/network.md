@@ -58,7 +58,10 @@ firewall rules, but ports between the control plane and storage networks typical
 ## Edge Sites
 
 The management traffic of an [edge cluster](../architecture/deployment-topologies/edge-clusters.md) crosses the WAN
-to the hub. The following ports must be open between the hub and every edge worker that runs a storage node:
+to the hub. The hub runs without TLS, so this traffic, including the admin tokens, is unencrypted and crosses a VPN or
+a private link between the hub and the edge sites, not the public internet. See
+[Edge Clusters](../kubernetes/installation/edge-clusters.md#preparing-the-hub). The following ports must be open
+between the hub and every edge worker that runs a storage node:
 
 | Direction   | From          | To               | Port(s)                            | Protocol |
 |-------------|---------------|------------------|------------------------------------|----------|
