@@ -1,6 +1,6 @@
 ---
 title: "ReadWriteMany (pNFS)"
-description: "How simplyblock serves ReadWriteMany volumes through pNFS: a metadata server per storage cluster, direct NVMe-oF data paths, layouts, and restarts."
+description: "How simplyblock serves ReadWriteMany volumes through pNFS: a metadata server per storage cluster, direct NVMe-oF data paths, layouts, and takeover."
 weight: 30250
 ---
 
@@ -27,7 +27,8 @@ A pNFS volume consists of four parts:
 
 - **Logical volumes:** The ordinary simplyblock logical volumes that carry the XFS filesystem. Erasure coding,
   replication, encryption, and QoS apply to them as to any other volume.
-- **Metadata server:** One pod per storage cluster, serving every pNFS volume of that cluster.
+- **Metadata server:** One active pod and its standbys per storage cluster. The active pod serves every pNFS volume
+  of that cluster.
 - **`NFSExport` resource:** One per volume, in the namespace of its PersistentVolumeClaim. It records which metadata
   server serves the volume and the address clients mount.
 - **Clients:** The worker nodes that run pods using the volume. Each one attaches the logical volume over NVMe-oF and
@@ -35,27 +36,32 @@ A pNFS volume consists of four parts:
 
 ### Metadata Server
 
-The metadata server runs in the operator's namespace as a StatefulSet of one replica. Its pod starts a micro virtual
-machine under QEMU and KVM, with its own Linux kernel, its own NFS server, and a read-only root filesystem. The guest
-attaches the logical volumes over NVMe/TCP itself, creates the XFS filesystem on first use, mounts it, and exports it.
+The metadata server runs in the operator's namespace as a StatefulSet. One of its pods is the active guest, which
+serves the exports. The others are standbys, one by default (`spec.pnfs.mds.standbys`), which are booted and ready to
+take over (see [Metadata Server Takeover](#metadata-server-takeover)). No two of the pods run on the same node.
+
+Each pod starts a micro virtual machine under QEMU and KVM, with its own Linux kernel, its own NFS server, and a
+read-only root filesystem. The active guest attaches the logical volumes over NVMe/TCP itself, creates the XFS
+filesystem on first use, mounts it, and exports it.
 
 Because the NFS server runs inside the guest, no Kubernetes node runs an NFS server, mounts an exported filesystem, or
-needs `nfs-utils`. The only requirement on the node hosting the metadata server is a usable `/dev/kvm`. The pod is
+needs `nfs-utils`. The only requirement on a node hosting a metadata server pod is a usable `/dev/kvm`. The pod is
 privileged for that reason, since `/dev/kvm` and `/dev/net/tun` are host device nodes. It uses neither the host
 network nor the host PID namespace and mounts no host directory.
 
 The metadata server is created by the operator when the first pNFS volume of a storage cluster is provisioned. It is
 not removed when the last pNFS volume of the cluster is deleted.
 
-Each metadata server keeps a small state disk, itself a simplyblock volume, holding the NFS client-recovery database.
-That database is what allows NFS clients to reclaim their open files and locks after the metadata server restarts, on
-the same worker node or on any other.
+Each metadata server keeps a state volume of 1 GiB holding the NFS client-recovery database. It is a simplyblock
+volume, created through the control plane in the storage pool of the first pNFS volume, not a PersistentVolumeClaim.
+Only the active guest connects it, over NVMe/TCP. The database is what allows NFS clients to reclaim their open files
+and locks after a takeover or a restart.
 
 ### Export Address
 
-Every export is fronted by a Kubernetes Service of its own, whose ClusterIP is the address clients mount. The
-Service's single endpoint is the metadata server pod's IP. When the pod restarts and receives a new IP, the endpoint
-is repointed by the operator. The ClusterIP stays the same, so no client remounts.
+All exports of a metadata server share one Kubernetes Service, whose ClusterIP is the address clients mount. The
+Service's single endpoint is the active guest's pod IP. When a standby takes over, or the active pod restarts with a
+new IP, the endpoint is repointed by the operator. The ClusterIP stays the same, so no client remounts.
 
 Only NFSv4.1 and NFSv4.2 are served, on TCP port 2049. No portmapper and no `rpc.statd` are involved.
 
@@ -117,20 +123,47 @@ logical volume directly:
 A pNFS volume cannot be created from a data source (a snapshot or another volume) yet, and it cannot be moved with a
 volume migration.
 
-## Metadata Server Restarts
+## Metadata Server Takeover
 
-A filesystem may be mounted by exactly one host, so a pNFS volume has exactly one metadata server and no standby. When
-the metadata server pod is deleted, evicted, or fails, the StatefulSet starts it again, on the same node or on another
-node with KVM. The new guest boots, the operator assembles every export of the storage cluster again with unchanged
-paths and file handles, and the Service endpoints are repointed to the new pod.
+A filesystem may be mounted by exactly one host, so only the active guest mounts and serves the exports. A takeover
+moves the active role to a standby. The operator starts one in three cases:
 
-During that time, metadata operations stall on every client. Once the metadata server serves again, clients reconnect
-to the unchanged ClusterIP and reclaim their state in the NFS grace period. Pods are not restarted and volumes are not
+- **Deleted pod:** The active pod is deleted, for example, by a node drain or a rollout. The takeover starts at once.
+- **Restarted guest:** The active guest restarted and came back as a standby. The takeover starts at once.
+- **Lost active:** The operator has no link session with the active guest, or the guest does not answer. At the same
+  time, its pod or its node is not `Ready`, and a standby is up. All of this has to hold for more than 20 seconds
+  without interruption. On a lost node, the pod turns not `Ready` only once the node controller marks the node
+  `NotReady`, so the takeover starts about the node controller's grace period plus 20 seconds after the node is lost.
+
+The standby with the lowest ordinal that is `Ready` is promoted under a new epoch, which is recorded on the
+StatefulSet. The Service endpoint is emptied first. The standby then connects the state volume and every export over
+NVMe/TCP and fences each of them with an NVMe persistent reservation: it registers the key of the new epoch, acquires
+the reservation as Exclusive Access, Registrants Only, and preempts and aborts the key of every earlier metadata
+server. A former active that is partitioned but still running can no longer write to any of the devices. When a fence
+fails on any device, nothing is mounted, and the promotion is retried with a backoff.
+
+Once every device is fenced, the guest mounts the state volume and starts its NFS server. The operator points the
+Service endpoint at the new active pod and hands the exports over to it, eight at a time. Because the guest connects
+the state volume itself, a pod stuck in `Terminating` on a lost node holds nothing the standby needs.
+
+The takeover is reported by events on the `SimplyblockDriver` resource:
+
+| Event               | Cause                                                                                                                |
+|---------------------|----------------------------------------------------------------------------------------------------------------------|
+| `MDSFailoverHeld`   | The active looks lost, and the takeover waits out the 20-second detection window.                                    |
+| `MDSFenced`         | The new active has fenced the state volume and every export.                                                         |
+| `MDSPromoted`       | The new active serves every export. A warning when the active was lost. Also emitted on every `NFSExport`.           |
+| `MDSFenceFailed`    | A fence failed or was refused, and nothing was mounted. The promotion is retried. Also emitted on every `NFSExport`. |
+| `MDSStandbyMissing` | The active looks lost, and no standby is ready to take over.                                                         |
+| `MDSDemoted`        | A guest reported the active role under an earlier epoch. Its pod was deleted and restarts as a standby.              |
+
+During a takeover, metadata operations stall on every client. Once the new active serves, clients reconnect to the
+unchanged ClusterIP and reclaim their state in the NFS grace period. Pods are not restarted and volumes are not
 remounted. The guest's NFS server holds back a client's layouts until its node plugin has taken the first one again.
 
-Before a metadata server is stopped on purpose, new requests to it are dropped for a few seconds while the requests
-already accepted are answered. A request is thus never executed by the old metadata server and then repeated on the
-new one.
+Before a metadata server pod is stopped on purpose, new requests to its guest are dropped for a few seconds while the
+requests already accepted are answered. A request is thus never executed by the old metadata server and then repeated
+on the new one.
 
 Clients mount with `soft`, `timeo=100`, and `retrans=2`. The NFS connection carries metadata only, so a metadata
 request that is never answered returns an error instead of blocking the calling process indefinitely. An application
@@ -138,10 +171,9 @@ can therefore receive `EIO` for a metadata operation when the metadata server st
 retries cover.
 
 !!! warning
-    The metadata server is a single instance per storage cluster. Fencing a metadata server whose node is partitioned
-    but still running is not implemented. While a node hosting the metadata server is lost and its pod stays
-    `Terminating`, no replacement is started, and the exports of that storage cluster are unserved until the pod is
-    removed.
+    Without a standby (`standbys: 0`), or while no standby is running, no takeover can start. A restarted guest is
+    then promoted again in place. After the loss of the active's node, the exports of that storage cluster stay
+    unserved until the pod stuck in `Terminating` is removed and started again on another node with KVM.
 
 ## Security
 

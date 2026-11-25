@@ -11,7 +11,8 @@ NVMe-oF infrastructure and the same storage clusters:
 - **Block storage:** Logical volumes over NVMe/TCP and NVMe/RoCE.
 - **Shared file storage:** `ReadWriteMany` volumes through [parallel NFS (pNFS)](concepts/pnfs.md), whose clients
   read and write the data directly over NVMe-oF.
-- **Object storage:** An S3-compatible interface (beta).
+- **Object storage:** An S3-compatible interface (beta), whose buckets are pNFS volumes (see
+  [S3 Object Storage](../kubernetes/usage/object-storage.md)).
 
 File and object storage are built on top of the block layer, so all three share the benefits of the storage
 architecture:
