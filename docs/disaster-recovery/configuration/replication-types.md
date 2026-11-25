@@ -118,6 +118,12 @@ its original volume handle through every move, and the CSI driver resolves the c
 that currently serves the data. Each move appends a member to that chain, and a fail-back re-aims the replication at
 the previous member, so only the delta since the move is transferred back.
 
+After a planned move, the control plane deletes the demoted predecessor and attaches the new primary to the
+replication policy of its storage cluster, but only when that cluster has exactly one active replication policy. With
+several active policies, for example, for several asynchronous methods, the new primary stays unreplicated until the
+VolumeReplication on the new site enables replication for it. After an unplanned failover, the new primary replicates
+nowhere until the old site is back and the volume has been resynced toward it.
+
 The chain is never compacted, so a volume that moved ten times sits ten members out from its handle. The CSI driver
 follows the chain to its end however long it is and stops only on a loop. It acts on the member the operation
 belongs to:
@@ -130,11 +136,9 @@ belongs to:
 Because a moved volume's handle names the storage cluster it was created on, the CSI driver of every site must
 reach every storage cluster of the plan. Each site's driver configuration (the secret
 `simplyblock-csi-secret-v2` in the operator's namespace) lists both clusters, and the site's own cluster is marked
-`local: true`.
-
-!!! info "Coming soon"
-    - **Automatic cross-registration:** The Simplyblock Operator registers every storage cluster of its control
-      plane in the driver configuration itself and marks its own cluster as local.
+`local: true`. The Simplyblock Operator keeps this secret up to date on every sync of its `StorageCluster`: it writes
+its own cluster as local, adds one entry for every other cluster of the control plane, and drops the entries of
+clusters the control plane no longer lists. The secret is not edited by hand.
 
 ## Backups to S3
 

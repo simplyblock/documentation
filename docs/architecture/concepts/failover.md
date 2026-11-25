@@ -61,6 +61,11 @@ failover, so that it can no longer write to the volumes.
     fencing. Until then, the source site has to be isolated from the storage by other means, for example, by
     shutting it down, before an unplanned failover with synchronous replication.
 
+With asynchronous replication, the storage fences the source copy of every volume it fails over, on a best-effort
+basis. When the source storage node is reachable, the listeners of the volume are suspended and its namespace is
+removed. A source site that recovers later therefore cannot serve stale data for that volume. The site as a whole is
+not fenced, so its other workloads keep running.
+
 ## Failback
 
 Failback returns an application to its original site. It is always a relocation along the reverse DR path, so it

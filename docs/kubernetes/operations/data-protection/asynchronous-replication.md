@@ -124,12 +124,12 @@ dr-policy   site-a-to-site-b   failover   5m         true    4       2m
 
 ### Policy Fields
 
-| Field               | Type     | Default    | Description                                                                                            |
-|---------------------|----------|------------|--------------------------------------------------------------------------------------------------------|
-| `pairRef`           | string   | -          | Name of the `ReplicationPair` in the same namespace. Required.                                         |
-| `mode`              | string   | `failover` | `failover` keeps the target a read-only standby. `migration` prepares a planned cutover to the target. |
-| `interval`          | duration | `5m`       | How often a replication snapshot is taken. Rounded to whole minutes, with one minute as the minimum.   |
-| `snapshotRetention` | int      | `3`        | Minimum number of snapshots retained on the target. The lowest accepted value is `2`.                  |
+| Field               | Type     | Default    | Description                                                                                                                                          |
+|---------------------|----------|------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `pairRef`           | string   | -          | Name of the `ReplicationPair` in the same namespace. Required.                                                                                       |
+| `mode`              | string   | `failover` | `failover` keeps replicated snapshots on the target, from which a failover creates the volume. `migration` prepares a planned cutover to the target. |
+| `interval`          | duration | `5m`       | How often a replication snapshot is taken. Rounded to whole minutes, with one minute as the minimum.                                                 |
+| `snapshotRetention` | int      | `3`        | Minimum number of snapshots retained on the target. The lowest accepted value is `2`.                                                                |
 
 An interval that cannot be parsed as a duration falls back to five minutes.
 
@@ -213,15 +213,19 @@ intermediate state.
 
 ## Monitoring Replication
 
-While a slot is replicating, the operator polls the backend every 60 seconds and records the timestamp of the last
-successful snapshot in `status.lastReplicatedAt`. After a failed backend call, the poll backs off to 30 seconds.
+While a slot is replicating, the operator polls the backend every 15 seconds. After a failed backend call, the poll
+backs off to 30 seconds.
+
+`status.lastReplicatedAt` is set to the time the volume was attached. The backend reports a newer timestamp only once
+a replication relationship exists for the volume, which is the case after a cutover or a failover. During ordinary
+replication, the field therefore keeps the attach time and does not show the replication lag.
 
 ```bash title="Reading the replication state of a single volume"
 kubectl get replicationslot dr-policy-my-pvc -n simplyblock \
     -o jsonpath='{.status}' | jq .
 ```
 
-```bash title="Watching the replication lag across all volumes of a namespace"
+```bash title="Listing the replication state of every volume of a namespace"
 kubectl get replicationslot -n simplyblock \
     -o custom-columns=NAME:.metadata.name,STATE:.status.state,LAST:.status.lastReplicatedAt
 ```
@@ -254,7 +258,17 @@ cluster is recorded per volume in `status.results`.
 
 !!! warning
     Data written on the source after the last successful replication snapshot is not present on the target. The data
-    gap is at least the configured replication interval, plus any replication lag.
+    gap is up to the configured replication interval, plus any replication lag.
+
+For each volume, the control plane clones the newest fully replicated snapshot on the target cluster into a new volume
+with the same NQN and stops replication from the source volume. When the source storage node is reachable, the source
+volume is fenced: its listeners are suspended and its namespace is removed. A source cluster that comes back later
+therefore does not expose the volume again. A volume that has already failed over is skipped, so a repeated failover
+is safe.
+
+When the failover of one volume fails, the operation ends in `Failed` and updates no slot. The volumes that did fail
+over are reported by their slots on the next poll. The remaining volumes are failed over by a new `ReplicationOps`,
+which skips the volumes already failed over.
 
 ### Failover Scopes
 
@@ -273,6 +287,22 @@ or a correction, requires a new `ReplicationOps` resource.
 Only one operation may run against a policy at a time, tracked in `ReplicationPolicy.status.activeOpsRef`. A
 `target`-scoped operation locks its pair instead, tracked in `ReplicationPair.status.activeOpsRef`. A second
 operation waits for the lock rather than failing.
+
+### Failover Without the Kubernetes Cluster
+
+A `ReplicationOps` can only be created in the Kubernetes cluster that holds the `ReplicationPair` and the
+`ReplicationPolicy`. When that Kubernetes cluster is lost together with the source site, the failover is triggered
+through the CLI of the control plane instead. The commands take the backend IDs that the operator records in
+`status.backendPolicyID` of the policy and `status.backendTargetID` of the pair. The control plane also lists them with
+`{{ cliname }} cluster replication-policy-list` and `{{ cliname }} cluster replication-target-list`.
+
+```bash title="Failing over every volume of a policy through the control plane"
+{{ cliname }} cluster replication-policy-failover <POLICY_ID>
+```
+
+```bash title="Failing over every volume that replicates to a target through the control plane"
+{{ cliname }} cluster replication-target-failover <TARGET_ID>
+```
 
 ## Failback
 
@@ -304,8 +334,20 @@ operation fails, so a pair-wide failback is performed one policy at a time.
     Failback holds a short freeze while the final delta is transferred and the volume is cut back. For production
     workloads, a maintenance window should be planned.
 
-Unlike a failover, a failback reports per-volume outcomes independently. A volume that fails is recorded as `failed`
-in `status.results` while the remaining volumes continue, and the operation as a whole ends in `Failed`.
+A failback is driven volume by volume. When one volume fails, the remaining volumes are still failed back, and the
+operation ends in `Failed` with the message `Failback failed for one or more volumes; see results for details`.
+`status.results` stays empty for a failed failback, so the reason for each volume is found only in the operator log.
+A slot that is still `failed_over` shows a volume that was not failed back. The volumes whose commit was accepted are
+in `cutover_pending` and complete their failback on their own.
+
+!!! warning
+    A failback reaches only the slots in the namespace of the `ReplicationOps`, which has to be the namespace of the
+    policy. A slot lives in the namespace of its PVC. A failback over a policy whose PVCs are in other namespaces
+    therefore finds no slot and ends in `Succeeded` without failing back any volume. The `volume` scope does not help
+    either: the slot has to be in the namespace of the operation, and the policy is then looked up in that namespace
+    as well. Where a failback is needed, the pair and the policy are kept in the namespace of the PVCs they protect.
+    A failover at the `policy` or `target` scope is not affected in the same way: it is one control-plane call for the
+    whole policy or pair, and the slots in other namespaces report it on their next poll.
 
 ### Tracking an Operation
 
@@ -319,9 +361,10 @@ failover-dr-policy   failover   policy   dr-policy   Succeeded                  
 failback-dr-policy   failback   policy   dr-policy   Running     CommittingFailback     8s
 ```
 
-`status.phase` moves from `Pending` through `Running` to `Succeeded` or `Failed`, and `status.subphase` names the
-step within `Running`: `TriggeringFailover`, `TriggeringTargetFailover`, `UpdatingSlotStatuses`, `StartingFailback`,
-or `CommittingFailback`. The subphases of a migration are listed in
+`status.phase` stays empty while the operation waits for another operation on the same policy or pair. It becomes
+`Running` once the operation holds the lock, and ends in `Succeeded` or `Failed`. `status.subphase` names the step
+within `Running`: `TriggeringFailover`, `TriggeringTargetFailover`, `UpdatingSlotStatuses`, `StartingFailback`,
+`CommittingFailback`, or `WaitingForSlots`. The subphases of a migration are listed in
 [Watching a Migration](online-cluster-migration.md#watching-a-migration). The per-volume outcome is held in
 `status.results`, where each entry carries the slot it belongs to, a status of `succeeded`, `skipped`, or `failed`, and
 a detail message.
@@ -345,16 +388,17 @@ deleted with the pair.
 
 The operator emits Kubernetes events on the affected resources. Useful reasons to filter on:
 
-| Reason              | Emitted on        | Meaning                                                  |
-|---------------------|-------------------|----------------------------------------------------------|
-| `Replicating`       | `ReplicationSlot` | The volume is attached and replicating.                  |
-| `CutoverPending`    | `ReplicationSlot` | A planned cutover is waiting for the preconnect.         |
-| `FailedOver`        | `ReplicationSlot` | The volume is now served by the target cluster.          |
-| `Detached`          | `ReplicationSlot` | Replication was stopped for the volume.                  |
-| `Error`             | `ReplicationSlot` | A backend call for the volume failed.                    |
-| `FailoverSucceeded` | `ReplicationOps`  | A failover completed for every affected volume.          |
-| `FailbackSucceeded` | `ReplicationOps`  | A failback completed for every affected volume.          |
-| `Failed`            | `ReplicationOps`  | The operation failed. `status.message` holds the reason. |
+| Reason                 | Emitted on                          | Meaning                                                                      |
+|------------------------|-------------------------------------|------------------------------------------------------------------------------|
+| `Replicating`          | `ReplicationSlot`                   | The volume is attached and replicating.                                      |
+| `CutoverPending`       | `ReplicationSlot`                   | A planned cutover is waiting for the preconnect.                             |
+| `FailedOver`           | `ReplicationSlot`                   | The volume is now served by the target cluster.                              |
+| `Detached`             | `ReplicationSlot`                   | Replication was stopped for the volume.                                      |
+| `Error`                | `ReplicationSlot`                   | A backend call for the volume failed.                                        |
+| `FailoverSucceeded`    | `ReplicationOps`                    | A failover completed for every affected volume.                              |
+| `FailbackCommitQueued` | `ReplicationOps`                    | The failback commit was queued for every affected volume.                    |
+| `FailbackComplete`     | `ReplicationOps`, `ReplicationSlot` | Every affected volume, or this volume, is replicating from the source again. |
+| `Failed`               | `ReplicationOps`                    | The operation failed. `status.message` holds the reason.                     |
 
 ```bash title="Streaming replication events of a namespace"
 kubectl get events -n simplyblock --watch \
