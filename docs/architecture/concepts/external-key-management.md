@@ -21,16 +21,19 @@ Simplyblock supports storing keys in external KMS solutions. Currently supported
 
 ## Two-Layer Key Model
 
-When an external KMS is configured, simplyblock applies a two-layer key model:
+When an external KMS is configured, simplyblock applies a two-layer key model of data-encryption keys and
+key-encryption keys. The unseal keys of a Vault or OpenBao instance belong to the KMS itself:
 
+- **Data Encryption Keys (DEKs)** are generated per volume and used to encrypt the at-rest data blocks of that volume.
+  These keys are short-lived in cluster memory and never stored in plaintext at rest. With Vault and OpenBao, the
+  wrapped DEKs are stored in the key-value engine of the KMS. With KMIP, they are stored in the control plane's
+  FoundationDB, together with the mapping of each KEK to its ID on the appliance, and the appliance holds only the
+  KEKs. Neither is usable without the other, so FoundationDB and the appliance are backed up together.
+- **Key Encryption Keys (KEKs)** live inside the KMS. The cluster asks the KMS to wrap each DEK on creation and to
+  unwrap it when the volume is brought online. The KEKs never leave the KMS.
 - **Unseal Keys** are generated once and presented at the time of the KMS setup (for example, HashiCorp Vault).
   Typically, a certain number of all the unseal keys are required to unseal the KMS (e.g., 3 of 5 keys). These keys
   should be stored in separate secure locations.
-- **Data Encryption Keys (DEKs)** are generated per volume and used to encrypt the at-rest data blocks of that volume.
-  These keys are short-lived in cluster memory and never stored in plaintext at rest. The wrapped DEKs are stored inside
-  the external KMS.
-- **Key Encryption Keys (KEKs)** live inside the KMS. The cluster asks the KMS to wrap each DEK on creation and to
-  unwrap it when the volume is brought online. The KEKs never leave the KMS.
 
 ## Authentication and Trust
 
@@ -54,6 +57,11 @@ path. The KMS must therefore not store its own state on the cluster it holds the
 deadlocks on a cold start: the KMS waits for its data volume, and that volume waits for the KMS to unwrap its key.
 The state cannot be recovered from inside the cluster, so the KMS is placed on storage that is available before
 simplyblock is.
+
+While the KMS is unreachable or sealed, every operation that creates or reads a key fails: pool creation, the creation
+of an encrypted volume, a clone of an encrypted snapshot, and a backup of an encrypted volume. A storage node cannot
+bring its encrypted volumes back online after a restart either. Encrypted volumes that are already online keep serving
+I/O, because their keys are held in memory by the storage node.
 
 For the setup steps, see [Securing the Control Plane: External KMS](../../kubernetes/installation/security.md#external-key-management-kms).
 A worked deployment of an instance is in [Deploying OpenBao as a KMS](../../kubernetes/installation/openbao-kms.md) and

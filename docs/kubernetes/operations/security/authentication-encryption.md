@@ -114,7 +114,8 @@ A name in `allowedNodes` that resolves to no Kubernetes node is ignored and kept
 StorageClass.
 
 A node removed from `allowedNodes` loses its label, and its NQN is removed from the allowed hosts of the pool. The node
-is rejected on its next connect attempt. A volume already connected on that node is not disconnected by the removal.
+is rejected on its next connect attempt. Its open connections to the pool's volumes are closed by the storage nodes
+when the host is removed.
 
 ## Worker Node Kernel Support
 

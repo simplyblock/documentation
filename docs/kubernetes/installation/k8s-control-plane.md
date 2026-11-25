@@ -16,9 +16,13 @@ and the management API) and the CSI driver. Storage clusters are created afterwa
 - **Tools:** Helm 3 and `kubectl` configured with cluster-admin access.
 - **Storage for FoundationDB:** A StorageClass for the FoundationDB persistent volumes of the control plane. It should not
   be a simplyblock StorageClass, because the control plane has to start before any simplyblock volume can be served.
-- **Certificate issuer:** TLS is enabled by default and requires
-  [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"}, on OpenShift as well. Without it, TLS must
-  be disabled explicitly with `tls.enabled=false`. See [Securing the Control Plane](security.md).
+- **Certificate issuer:** TLS is enabled by default. With the default provider, `cert-manager`, the chart refuses to
+  render until [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} is installed, so it is
+  installed before `helm install`. The operator's own installation of a missing cert-manager, described in
+  [Prerequisite Add-ons](openshift.md#prerequisite-add-ons), applies only to a `ControlPlane` created outside the
+  chart, as with OperatorHub. On OpenShift, `tls.provider=openshift` with `tls.mutual_enabled=false` uses the
+  OpenShift service CA instead and needs no cert-manager. Without an issuer, TLS is disabled with `tls.enabled=false`
+  and `tls.mutual_enabled=false`. See [Securing the Control Plane](security.md).
 - **Clean cluster:** Remains of an earlier simplyblock installation make the installation fail. They are removed with
   the cleanup script, see [Removing a Previous Installation](#removing-a-previous-installation).
 
@@ -38,7 +42,8 @@ helm install simplyblock-operator simplyblock/simplyblock-operator \
 ```
 
 The chart refuses to render if TLS is enabled but no issuer is available. On a cluster without cert-manager, add
-`--set tls.enabled=false`.
+`--set tls.enabled=false --set tls.mutual_enabled=false`. The chart's values schema refuses `tls.enabled=false` while
+`tls.mutual_enabled` keeps its default of `true`.
 
 The chart's values schema rejects unknown keys in several places, so a misspelled value fails the installation
 instead of being ignored.
@@ -59,8 +64,8 @@ instead of being ignored.
 | `controlplane.tolerations.create`, `.list`                   | `false`                                       | Tolerations for the control plane workloads.                                                                                                                                                                                                           |
 | `controlplane.observability.enabled`                         | `false`                                       | Installs the optional logging and dashboard stack. `standalone` profile only.                                                                                                                                                                          |
 | `tls.enabled`                                                | `true`                                        | Encrypts control plane traffic with TLS.                                                                                                                                                                                                               |
-| `tls.provider`                                               | `cert-manager`                                | `cert-manager`. `openshift` (the OpenShift service CA) does not work; use cert-manager on OpenShift as well.                                                                                                                                           |
-| `tls.mutual_enabled`                                         | `true`                                        | Requires client certificates (mutual TLS). Only allowed with `tls.provider=cert-manager`.                                                                                                                                                              |
+| `tls.provider`                                               | `cert-manager`                                | `cert-manager` or `openshift`. `openshift` uses the OpenShift service CA, needs no cert-manager, and requires `tls.mutual_enabled=false`. An OperatorHub installation uses cert-manager, because only the chart creates the service CA's bundle.       |
+| `tls.mutual_enabled`                                         | `true`                                        | Requires client certificates (mutual TLS). Only allowed with `tls.enabled=true` and `tls.provider=cert-manager`, and set to `false` otherwise.                                                                                                         |
 | `tls.cert-manager.createSelfSignedIssuer`, `.cluster-issuer` | `true`, `selfsigned`                          | The cert-manager `ClusterIssuer` the chart mints its CA from.                                                                                                                                                                                          |
 | `driver.*`                                                   |                                               | Copied into the `SimplyblockDriver` resource: `driverName`, `image.*`, `controllerReplicas`, `nodeSelector`, `tolerations`, `controllerNodeSelector`, `controllerTolerations`, `enableVolumeSnapshots`, `enableServiceAccountAuth`, `sidecarImages.*`. |
 | `controlplane.trustCSIServiceAccounts`                       | `false`                                       | Lets the control plane accept the CSI driver's service account tokens. Set together with `driver.enableServiceAccountAuth`.                                                                                                                            |
