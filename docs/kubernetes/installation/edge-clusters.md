@@ -70,7 +70,9 @@ spec:
     # forceJournalDevice: true
 ```
 
-With Linux block devices, `forceJournalDevice` lets the run dedicate one of several equal devices to the journal. The discovery proposes whole disks only. Partitions of a disk shared with the operating system are selected
+With Linux block devices, the journal is a partition carved from each node's smallest device by default, and
+`forceJournalDevice` lets the run dedicate the smallest device to the journal instead. The discovery proposes whole
+disks only. Partitions of a disk shared with the operating system are selected
 explicitly, as described in [Linux Block Devices](../../architecture/concepts/linux-block-devices.md#partitions).
 
 ## Draft for a One-Node Edge Cluster
