@@ -17,7 +17,9 @@ storage nodes are assigned to groups through the operator resources.
 
 Failure-domain mode is a cluster-level property. In a `ClusterDeploymentConfig`, it is set with
 `spec.cluster.enableFailureDomains`, which the operator copies into `StorageCluster.spec.enableFailureDomains` when it
-creates the cluster.
+creates the cluster. The domains of a cluster are the groups of one node set. A document with more than one node set
+creates a [supercluster](../scaling/superclusters.md), in which every node set becomes a separate cluster with its own
+domains.
 
 ```yaml title="Example of a deployment document with failure domains (cluster-config.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha2
@@ -36,33 +38,23 @@ spec:
       parityChunks: 1
     enableFailureDomains: true
   nodeSets:
-    - name: rack-a
+    - name: racks
       groups:
-        - name: default
+        - name: rack-a
           failureDomain: rack-a
           workers: [worker-1.example.com, worker-2.example.com]
           devices:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
-          journalManager:
-            count: 4
-    - name: rack-b
-      groups:
-        - name: default
+        - name: rack-b
           failureDomain: rack-b
           workers: [worker-3.example.com, worker-4.example.com]
           devices:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
-          journalManager:
-            count: 4
-    - name: rack-c
-      groups:
-        - name: default
+        - name: rack-c
           failureDomain: rack-c
           workers: [worker-5.example.com, worker-6.example.com]
           devices:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
-          journalManager:
-            count: 4
 ```
 
 !!! warning
@@ -81,8 +73,12 @@ one.
 | `ClusterDeploymentConfig` `nodeSets[].groups[].failureDomain` | Group | The domain of every worker in the group. Copied onto each `StorageNode` the group creates. |
 | `StorageNode.spec.config.failureDomain`                       | Node  | The domain of one storage node. Immutable once set.                                        |
 
-A discovery run seeds `failureDomain` of a draft from the `topology.kubernetes.io/zone` label of the workers, and it
-leaves it empty where the workers carry no topology label.
+A discovery run seeds `failureDomain` of a draft from a label of the workers' Node objects, and it leaves it empty
+where a worker does not carry the label. The label is `topology.kubernetes.io/zone` unless the run names another one,
+for example, a rack label, in `spec.discover.failureDomainLabel`. `spec.discover.enableFailureDomains` overrides
+whether the draft proposes failure-domain mode at all. Both fields are described in
+[Failure Domains](../../installation/k8s-storage-plane.md#failure-domains) of the storage plane installation. The
+initial discovery run of the Helm chart has no value for the label and always reads the zone label.
 
 Workers that share a domain are treated as failing together, so the label has to follow the physical layout. Two
 workers in the same rack belong in the same domain, and two workers in different racks belong in different ones.
@@ -97,8 +93,10 @@ domain.
 ## Journal Copies
 
 A failure-domain cluster needs at least four copies of the high-availability journal, even with a single parity chunk.
-The default is three, which would put two copies in one domain on a two-domain layout, so losing that domain would break
-the journal quorum. The copy count is raised with `journalManager.count` of each group, as in the example above.
+With three copies, a layout of two domains would put two copies in one domain, so losing that domain would break the
+journal quorum. When `journalManager.count` of a group is unset, the control plane uses four copies on a failure-domain
+cluster by itself. A count set below four is refused when the node is added, so the field is either left unset or set
+to four or more.
 
 ## A Missing Assignment Blocks the Node
 
@@ -127,6 +125,11 @@ rules of the control plane and holds the `Activate` operation, with a `FailureDo
 - the cluster has fewer distinct domains than the number of parity chunks plus two (a layout of two domains is not
   supported at any parity level), or
 - the domains do not all hold the same number of hosts.
+
+!!! warning
+    The control plane also needs at least `data chunks + parity chunks` domains at activation, which the operator
+    checks neither at approval nor before `Activate`. For `4+1` and `4+2`, this is the higher number: five and six
+    domains. A document with fewer domains passes approval, and its activation is then refused by the control plane.
 
 See [Activating a Storage Cluster](activating-a-cluster.md) for the activation itself.
 
