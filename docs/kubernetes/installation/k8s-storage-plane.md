@@ -145,10 +145,11 @@ narrowed run is never silently un-narrowed.
 | `enableLogicalBlockDevices`       | Block | Scans Linux block devices instead of NVMe.                  |
 | `blockAllowList`, `blockDenyList` | Block | Select or exclude devices by path, for example, `/dev/sdb`. |
 | `driveSizeRange`                  | Both  | For example, `1T-4T`.                                       |
-| `enablePartitionedDevices`        | Block | Includes devices that already carry a partition table.      |
+| `enablePartitionedDevices`        | Both  | Includes devices that already carry a partition table.      |
 
-`enablePartitionedDevices` works with Linux block devices only, not in an NVMe setup. The Helm value
-`discovery.enablePartitionedDevices` therefore only takes effect together with `discovery.enableLogicalBlockDevices`.
+`enablePartitionedDevices` reports devices that carry a partition table, for either device class. A device that is
+mounted, otherwise in use, or holds swap is never reported. The Helm value `discovery.enablePartitionedDevices` is
+`true` by default.
 All settings that depend on the device class are listed in
 [Settings by Device Class](../../architecture/concepts/linux-block-devices.md#settings-by-device-class).
 
@@ -173,7 +174,7 @@ spec:
   approved: false
   environment: K3s
   cluster:
-    name: discovered-initial-discovery-cluster
+    name: discovered-initial-discovery-1f3a9c2e-cluster
     enableDriveFormat: true
     maxSubsystemCount: 30
     minHugePagesSize: 16G
@@ -238,9 +239,9 @@ and which of them can change later are explained in [Cluster Deployment Options]
 
 | Field                                                         | Value                               | Purpose                                                                                                                              |
 |---------------------------------------------------------------|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `name`                                                        | Required, at most 63 characters     | Name of the `StorageCluster`. Discovery proposes `<draft name>-cluster`.                                                             |
-| `maxSubsystemCount`                                           | Required, 10 to 500                 | NVMe subsystems the cluster serves.                                                                                                  |
-| `vcpuCount`                                                   | Required, at least 4                | vCPUs per storage node. Discovery proposes 10% of a socket, at least 5, see [vCPU Count](#vcpu-count).                               |
+| `name`                                                        | Required, at most 63 characters     | Name of the `StorageCluster`. Discovery proposes `<draft name>-<id>-cluster`, see below.                                             |
+| `maxSubsystemCount`                                           | Required, 10 to 500                 | NVMe subsystems each storage node serves.                                                                                            |
+| `vcpuCount`                                                   | Required, at least 4                | vCPUs per worker, split across its storage nodes. Discovery proposes 10% of a socket, at least 5, see [vCPU Count](#vcpu-count).     |
 | `minHugePagesSize`                                            | For example, `16G`                  | Minimum huge page memory per storage node.                                                                                           |
 | `stripe`                                                      | `dataChunks` and `parityChunks`     | The [erasure coding scheme](../../deployment-preparation/erasure-coding-scheme.md). Allowed: 1+0, 1+1, 2+1, 4+1, 1+2, 2+2, 4+2.      |
 | `fabricType`                                                  | For example, `tcp`                  | The NVMe-oF transport.                                                                                                               |
@@ -256,10 +257,16 @@ and which of them can change later are explained in [Cluster Deployment Options]
 | `ports`                                                       | —                                   | Overrides the NVMe-oF, RPC, and node-agent ports.                                                                                    |
 | `tolerations`, `containerResources`, `initContainerResources` | —                                   | Placement and sizing of the storage node workload.                                                                                   |
 
+In the proposed name, `<id>` is the first eight hexadecimal characters of the UID of the `kube-system` namespace. It
+identifies the Kubernetes cluster, so two Kubernetes clusters that share a control plane never propose the same
+cluster name.
+
 ### vCPU Count
 
-`vcpuCount` is the number of vCPUs every storage node of the cluster dedicates to the data plane. The value is the same
-for all storage nodes of a cluster, and it is fixed when the cluster is created.
+`vcpuCount` is the number of vCPUs every worker of the cluster dedicates to the data plane. The count is split evenly
+across the sockets in `socketsToUse` and then across the storage nodes of each socket, so a worker with two sockets
+in use and a `vcpuCount` of 16 runs two storage nodes with 8 vCPUs each. The value is the same for all workers of a
+cluster, and it is fixed when the cluster is created.
 
 When the deployment document states no `vcpuCount`, discovery proposes one from the smallest worker it found:
 
@@ -312,9 +319,15 @@ Each group carries:
 | `mgmtInterface`, `dataInterfaces` | The management and data network interfaces, up to 32 data interfaces. `dataInterfaces` only with `spdkOnHostNetwork`.              |
 | `devices`                         | Either `nvme` (PCI addresses) or `block` (for example, `/dev/sdb`), up to 128 each. Every group of a node set uses the same class. |
 | `failureDomain`                   | The failure domain of all workers in the group, see [below](#failure-domains).                                                     |
-| `spdkSystemMemory`                | Huge page memory for the storage nodes of this group, for example, `8G`.                                                           |
+| `spdkSystemMemory`                | Ordinary (non-huge-page) memory of the SPDK container on this group's nodes, for example, `8G`, see below.                         |
 | `reservedSystemCPU`               | CPUs reserved for the host, for example, `0,1` or `0-3`.                                                                           |
 | `journalManager`                  | Journal copy count and per-device share.                                                                                           |
+
+`spdkSystemMemory` sets the SPDK container's memory request and limit, which is separate from its huge pages.
+Unset, the control plane computes 2 GiB plus 0.7 GiB per TiB of the node's raw device capacity. When the node is
+added, a stated value replaces the computed one rather than adding to it, so a value below it starves SPDK. A restart
+of the storage node computes the value again from the capacity. Huge pages are sized from
+`vcpuCount` and `maxSubsystemCount`, with `minHugePagesSize` as the lower bound.
 
 Workers or devices that should not become part of the cluster, for example, a boot disk, are removed from the draft
 before approving.
@@ -531,8 +544,9 @@ The expansion creates the following resources:
   DaemonSet, and its devices appear as `StorageDevice` resources.
 - **`StorageClusterOps` `<cluster>-activate`:** Raised once all storage nodes are `Online`.
 
-With a cluster named `production` in the namespace `simplyblock`, the default pool is `production-default` and the
-StorageClass is `simplyblock-simplyblock-production`.
+The StorageClass name does not repeat a leading `simplyblock` of the namespace or the cluster name. With a cluster named
+`production` in the namespace `simplyblock`, the default pool is `production-default` and the StorageClass is
+`simplyblock-production`.
 
 The `ClusterDeploymentConfig` is no longer needed after it reaches `Expanded` and can be deleted.
 
@@ -728,7 +742,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
 ```
 
 ```bash title="Create the PVC"
@@ -737,8 +751,8 @@ kubectl get pvc simplyblock-test-pvc
 ```
 
 ```plain title="Example output of PVC status"
-NAME                    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS                         AGE
-simplyblock-test-pvc    Pending                                       simplyblock-simplyblock-production   5s
+NAME                    STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS             AGE
+simplyblock-test-pvc    Pending                                       simplyblock-production   5s
 ```
 
 Since provisioning is asynchronous, the PVC status is initially `Pending`. The StorageClass uses
@@ -780,8 +794,8 @@ kubectl get pvc simplyblock-test-pvc
 ```
 
 ```plain title="Example output of PVC status"
-NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                         AGE
-simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-simplyblock-production   30s
+NAME                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS             AGE
+simplyblock-test-pvc    Bound    pvc-3f2a1c9e-84b1-4d2e-9f3a-1234abcd5678   10Gi       RWO            simplyblock-production   30s
 ```
 
 It is now possible to access the data written to the volume when the pod started up.

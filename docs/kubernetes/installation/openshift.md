@@ -11,7 +11,8 @@ missing, installed by the operator itself.
 
 OpenShift differs from other Kubernetes distributions in three ways that matter here: the privileged Security Context
 Constraint (SCC) has to be granted to the namespace explicitly, it ships its own snapshot controller, and the storage
-nodes apply their host configuration through MachineConfig objects.
+nodes receive their kubelet settings through a KubeletConfig that the Machine Config Operator rolls out, as described
+in [OpenShift Environment](#openshift-environment).
 
 !!! info
     In OpenShift deployments, not all worker nodes must host storage components.
@@ -173,7 +174,8 @@ oc -n simplyblock get simplyblockdriver
 The storage cluster moves through `Creating`, `Provisioning`, and `Activating` to `Online`. Each storage node goes
 from `Provisioning` to `Online`, and the driver becomes `Ready` once its node and controller plugins run. The nodes
 come up one after another, so several minutes are to be expected. The expansion creates a storage pool and a
-StorageClass for it, named `simplyblock-<namespace>-<cluster>`, from which volumes are provisioned.
+StorageClass for it, from which volumes are provisioned. The class is named `simplyblock-<namespace>-<cluster>`
+without repeating a leading `simplyblock`, so in the `simplyblock` namespace it is `simplyblock-<cluster>`.
 
 ## Prerequisite Add-ons
 
@@ -320,17 +322,41 @@ spec:
             nvme: ["0000:01:00.0", "0000:02:00.0"]
 ```
 
+The excerpt uses `br-ex`, the OVS bridge of the OpenShift node network, as management and data interface. This suits
+an evaluation. A production cluster names a dedicated storage NIC in `dataInterfaces`, because the
+[network requirements](../../deployment-preparation/network.md#storage-traffic) rule out a software-defined switch on
+the storage path.
+
 With `environment: OpenShift`, the expansion sets the `openshift` block, `enableCpuTopology`, and
-`enableKubeletConfiguration` on `StorageCluster.spec.storageNodes`. Adding a storage node creates a
-MachineConfigPool of its own, `storage-<cluster>`, and moves the node into it. A node belongs to exactly one custom
-pool, so whatever machine configuration its previous pool carried is lost unless that pool's role is named in
-`spec.storageNodes.openshift.machineConfigPool` for the new one to select as well. It defaults to `worker`, the role
-every pool already selects, which makes it a no-op for a fleet whose workers are ordinary workers.
+`enableKubeletConfiguration` on `StorageCluster.spec.storageNodes`. The first storage node that is added creates a
+MachineConfigPool for the cluster, `storage-<uuid6>`, and every added worker is moved into it. In these names,
+`<uuid6>` stands for the first six characters of the StorageCluster's `status.uuid`.
+
+The pool comes with the MachineConfig `storage-mc-<uuid6>` and the KubeletConfig `storage-kubelet-<uuid6>`. The
+MachineConfig is empty and only gives the pool a role of its own. The host change is the KubeletConfig, which sets
+`cpuManagerPolicy: static`, `topologyManagerPolicy: single-numa-node`, and `reservedSystemCPUs` from the group's
+`reservedSystemCPU` (default `0,1`). A worker reboots once, when the Machine Config Operator rolls it onto the pool's
+configuration. Huge pages are not part of that configuration: the node agent reserves them at runtime through sysfs
+and restarts the kubelet when its huge page capacity changed, without a reboot.
+
+A node belongs to exactly one custom pool, so whatever machine configuration its previous pool carried is lost unless
+that pool's role is named in `spec.storageNodes.openshift.machineConfigPool` for the new one to select as well. It
+defaults to `worker`, the role every pool already selects, which makes it a no-op for a fleet whose workers are
+ordinary workers. Naming the role carries over the MachineConfigs of that role, not the pool membership. The worker is
+removed only from other pools whose names start with `storage-`. A custom pool of another name that still selects the
+worker, for example, through a `node-role.kubernetes.io/<role>` label, has to stop selecting it, by a changed
+`nodeSelector` or a removed label. Otherwise, the worker is selected by two custom pools, and the Machine Config
+Operator stops updating it.
+
+The pool's `maxUnavailable` limits how many storage workers reboot at once. The pool is created with the cluster's
+node provisioning budget (`spec.storageNodes.nodeProvisioningBudget`), so that the first reboots of a cluster without
+data run in parallel. Activation narrows it to the cluster's fault tolerance, at least 1. A later KubeletConfig change
+therefore never reboots more storage workers at once than the cluster can lose.
 
 ### Machine Configuration of a Failed Deployment
 
-The pool `storage-<cluster>` is named after the first six characters of the cluster's UUID. It comes with the
-MachineConfig `storage-mc-<cluster>` and the KubeletConfig `storage-kubelet-<cluster>`. When a deployment is removed
+The pool `storage-<uuid6>`, the MachineConfig `storage-mc-<uuid6>`, and the KubeletConfig `storage-kubelet-<uuid6>`
+are named after the first six characters of the cluster's UUID. When a deployment is removed
 (see [Cleaning Up a Failed Deployment](k8s-storage-plane.md#cleaning-up-a-failed-deployment)), with either the
 resource cleanup or the full cleanup, these stay behind. A
 node still selected by an old pool cannot join the pool of the next deployment, because a node belongs to at most one
@@ -410,7 +436,7 @@ NIC the workers have. There are two ways to resolve this:
   workers. Discovery then includes the nodes on its own.
 - Carry the data traffic over the OpenShift node network instead. Every group of the draft then names `br-ex` as
   its data interface, the workers included. Storage traffic then shares the network of the cluster's management and
-  pod traffic.
+  pod traffic. `br-ex` is an OVS bridge, so this way is meant for evaluation and test clusters, not for production.
 
 For the second way, the draft is edited before it is approved. The workers' group is switched to `br-ex`, and a
 group is added for the control-plane nodes with the devices discovery reported for them:
@@ -452,8 +478,8 @@ the smallest device is not unique. It only acts on the nodes the run includes.
 
 ### Machine Configuration of Control-Plane Nodes
 
-Control-plane nodes cannot leave the `master` MachineConfigPool, so they are not moved into `storage-<cluster>`.
-The operator instead creates the KubeletConfig `storage-kubelet-<cluster>-master`, which selects the `master` pool.
+Control-plane nodes cannot leave the `master` MachineConfigPool, so they are not moved into `storage-<uuid6>`.
+The operator instead creates the KubeletConfig `storage-kubelet-<uuid6>-master`, which selects the `master` pool.
 It applies to every node of that pool, including control-plane nodes that host no storage node. The
 MachineConfig Operator applies it by draining and rebooting the control-plane nodes one at a time, so the API server
 is briefly less redundant while the pool updates:

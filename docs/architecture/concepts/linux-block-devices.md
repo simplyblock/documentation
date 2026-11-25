@@ -111,7 +111,7 @@ setting of the other class has no use in it.
 | Discovery: `pcieAllowList`, `pcieDenyList`, `pcieModel`                | Yes  | No                  |
 | Discovery: `enableLogicalBlockDevices` (selects the Linux block class) | No   | Yes                 |
 | Discovery: `blockAllowList`, `blockDenyList`                           | No   | Yes                 |
-| Discovery: `enablePartitionedDevices`                                  | No   | Yes                 |
+| Discovery: `enablePartitionedDevices`                                  | Yes  | Yes                 |
 | Discovery: `driveSizeRange`                                            | Yes  | Yes                 |
 | Device group: `devices.nvme` (PCI addresses)                           | Yes  | No                  |
 | Device group: `devices.block` (device paths)                           | No   | Yes                 |

@@ -159,11 +159,14 @@ An approved document with several node sets creates:
   three random lowercase letters, for example, `production-dense-kqv`. It names the supercluster in
   `spec.superclusterRef` and creates its storage nodes like any standalone cluster.
 - **The default pool and StorageClass of the supercluster:** The pool `<cluster>-default` and the StorageClass
-  `simplyblock-<namespace>-<cluster>`, whose volumes are placed across the placement groups.
+  `simplyblock-<namespace>-<cluster>`, whose volumes are placed across the placement groups. A leading `simplyblock-`
+  is not repeated, so the supercluster `prod` in the namespace `simplyblock` gets `simplyblock-prod`.
 
-The placement groups bring up their storage nodes one placement group at a time, and a placement group is activated as
-soon as its own storage nodes are `Online`. `status.clusterRef` of the document names the supercluster, and
-`status.members` lists the placement groups.
+The placement groups bring up their storage nodes one placement group at a time. The StorageNodes of the next
+placement group are created only once every storage node of the previous one is `Online`. While the rollout waits, the
+document carries an `AwaitingNodes` event that names the storage node it waits for. A placement group is activated by a
+`StorageClusterOps` named `<placement-group>-activate` as soon as its own storage nodes are `Online`.
+`status.clusterRef` of the document names the supercluster, and `status.members` lists the placement groups.
 
 ## Inspecting a Supercluster
 

@@ -92,7 +92,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
 ```
 
 A `WaitForFirstConsumer` StorageClass is required (see [Storage Class](storage-class.md)). The Pod's node is resolved

@@ -72,7 +72,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: simplyblock-simplyblock-simplyblock-cluster
+  storageClassName: simplyblock-cluster
 ```
 
 The StorageClass must use the `WaitForFirstConsumer` binding mode for the co-location to take effect, which the class

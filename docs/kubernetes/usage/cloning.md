@@ -19,7 +19,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: my-persistent-volume-clone
 spec:
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
   dataSource:
     name: original-persistent-volume-name # <- Name of the original volume
     kind: PersistentVolumeClaim
