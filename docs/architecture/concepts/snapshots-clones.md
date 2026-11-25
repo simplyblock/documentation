@@ -22,7 +22,9 @@ Key characteristics of volume snapshots include:
 - **Instant and space-efficient:** No data is copied when a snapshot is taken. Snapshots share their blocks with
   the volume and with each other.
 - **Basis for data protection:** Snapshots are what backups to S3 and replication to another cluster transfer,
-  incrementally from one snapshot to the next.
+  incrementally from one snapshot to the next. Every backup takes a snapshot of its own, which stays on the volume.
+  Backups of a volume stop once its line of snapshots reaches 40, before the limit of 100 snapshots below (see
+  [Backup Snapshots](../../kubernetes/operations/data-protection/backup-recovery.md#backup-snapshots)).
 - **Consistency groups:** The volumes of an application, for example, the data and log volumes of a database, can
   form a consistency group. A group snapshot captures all of them at the same instant (crash-consistent), and the
   group is replicated and failed over together.
