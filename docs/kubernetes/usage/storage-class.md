@@ -30,7 +30,9 @@ in `status.storageClassNames`.
 ## StorageClass Created by a Storage Pool
 
 The operator writes exactly one StorageClass itself: the class of a cluster's default pool `<cluster>-default`, named
-`simplyblock-<namespace>-<cluster>`. It carries the three labels and the label
+`simplyblock-<namespace>-<cluster>`, without repeating a leading `simplyblock-` of the namespace or the cluster name
+(`simplyblock-production` for the cluster `production` in the namespace `simplyblock`). It carries the three labels
+and the label
 `storage.simplyblock.io/managed-by=storagecluster`, uses `volumeBindingMode: WaitForFirstConsumer`,
 `reclaimPolicy: Delete`, and `allowVolumeExpansion: true`, and is not marked as the default class of the Kubernetes
 cluster. Its name is recorded in the pool's `status.defaultStorageClassName`.

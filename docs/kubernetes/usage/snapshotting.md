@@ -46,7 +46,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: my-restored-snapshot-volume
 spec:
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
   dataSource:
     name: my-volume-snapshot
     kind: VolumeSnapshot
@@ -97,7 +97,7 @@ metadata:
   labels:
     storage.simplyblock.io/consistency-group: db-group
 spec:
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
   accessModes:
     - ReadWriteOnce
   resources:

@@ -136,8 +136,8 @@ so that the operator can release their finalizers.
 An installation only succeeds on a cluster without remains of an earlier simplyblock installation. Custom resources,
 custom resource definitions, finalizers, node labels, and persistent volumes left behind by a previous attempt make the
 new installation fail. On a cluster that had simplyblock installed before, they are removed with the cleanup script of
-the Simplyblock Operator. It takes the namespace the operator was installed into (`simplyblock` for a Helm install,
-`openshift-operators` for an OperatorHub install on OpenShift):
+the Simplyblock Operator. It takes the namespace the operator was installed into, which is `simplyblock` for a Helm
+install and for an OperatorHub install on OpenShift alike:
 
 ```bash title="Removing a previous installation"
 curl -sO https://raw.githubusercontent.com/simplyblock/simplyblock-operator/main/helm-charts/scripts/cleanup-simplyblock.sh

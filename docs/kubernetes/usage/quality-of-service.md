@@ -67,7 +67,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
 ```
 
 ## QoS Parameters

@@ -13,8 +13,9 @@ pool's volume defaults.
 Two kinds of StorageClass provision simplyblock volumes:
 
 - **Default class:** for the default pool of a cluster (`<cluster>-default`), the operator creates the StorageClass
-  `simplyblock-<namespace>-<cluster>`, where the namespace is the one of the `StorageCluster`. For a cluster
-  `production` in the namespace `simplyblock`, the class is `simplyblock-simplyblock-production`. It uses
+  `simplyblock-<namespace>-<cluster>`, where the namespace is the one of the `StorageCluster`. A leading
+  `simplyblock-` in the namespace or the cluster name is not repeated, so for a cluster `production` in the namespace
+  `simplyblock`, the class is `simplyblock-production`. It uses
   `WaitForFirstConsumer`, the reclaim policy `Delete`, and allows volume expansion. It is not marked as the default
   StorageClass of the Kubernetes cluster.
 - **Authored class:** for every other pool, the StorageClass is written by an administrator and assigned to the pool by
@@ -27,8 +28,8 @@ kubectl get storagepools -n simplyblock
 ```
 
 ```plain title="Example output of the storage pool listing"
-NAME                 CLUSTER      PHASE   CAPACITY   CLASSES                                  AGE
-production-default   production   Ready              ["simplyblock-simplyblock-production"]   2d
+NAME                 CLUSTER      PHASE   CAPACITY   CLASSES                      AGE
+production-default   production   Ready              ["simplyblock-production"]   2d
 tenant-a             production   Ready   10T        ["tenant-a-fast"]                        1d
 ```
 
@@ -48,7 +49,7 @@ spec:
   resources:
     requests:
       storage: 256Mi
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
 ```
 
 !!! note
@@ -135,7 +136,7 @@ spec:
     # <clusterID>:<poolID>:<lvolID> of the existing logical volume
     volumeHandle: 8ffac363-0c46-4714-a71b-f9c0b58a1269:df34f16c-1d5c-4e39-9a1e-2b0c7f8d9e10:aa481c21-26f8-4056-87fa-cd306f69a71e
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
   volumeMode: Filesystem
 ```
 
@@ -167,7 +168,7 @@ spec:
       storage: 1Gi
   # As a functional test, volumeName is same as PV name
   volumeName: pv-static
-  storageClassName: simplyblock-simplyblock-production
+  storageClassName: simplyblock-production
 ```
 
 ```bash title="Creating the persistent volume claim"

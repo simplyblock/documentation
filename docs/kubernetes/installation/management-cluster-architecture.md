@@ -48,6 +48,14 @@ spec:
 The `local` member also accepts `replicas` for the management API (default 2), `resources`, `tolerations`,
 `nodeSelector`, and `foundationDB.storageClassName` and `foundationDB.resources`.
 
+`foundationDB.nodeSelector` and `foundationDB.tolerations` place the FoundationDB processes apart from the rest of the
+control plane and replace `nodeSelector` and `tolerations` for them. Adding a storage node reboots its worker, so two
+workers that run FoundationDB are never added as storage nodes at the same time. In large deployments, FoundationDB is
+therefore placed on nodes that are not storage workers, for example, infrastructure nodes, see
+[Parallel Storage Node Addition](../operations/scaling/parallel-node-addition.md#pinning-foundationdb-to-dedicated-workers).
+The selector has to match at least `foundationDB.replicas` nodes, because the node is the fault domain of the
+database.
+
 ## Architecture Diagram
 
 ![Control Plane Cluster Architecture](../../assets/images/simplyblock-controlplane-architecture-k8s.jpg)
