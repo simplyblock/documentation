@@ -24,17 +24,23 @@ offline.
 
 ## Adding Capacity
 
-Capacity is added with new LUNs, not by growing existing ones:
+Capacity is added in three ways:
 
 - **Within the existing LUNs:** Thin LUNs that were created large from the start only need more physical capacity in
   the array's pool. Simplyblock is not involved.
 - **With new storage nodes:** New workers with their own journal and data LUNs are added to the cluster with a
   growth deployment document (see [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md)). The data
   is rebalanced onto the new LUNs.
+- **By growing the LUNs:** After the LUNs were grown on the array, a `StorageClusterOps` with the action
+  `GrowDevices` (see [Cluster Actions](cluster-actions.md#requesting-an-action)) grows every Linux block device of
+  the cluster online by the same factor: the smallest growth of any of them. Device weights and data placement do not
+  change, so the part of a LUN that grew by more stays unused, as listed in `status.deviceGrowth`. If one block device
+  did not grow, nothing grows. A block device that shrank, or one that is not online, fails the operation without
+  growing anything.
 
 !!! warning
-    Adding a LUN to a running storage node is not supported yet, and a LUN must not be resized while a storage node
-    uses it. A resized LUN is not picked up, and shrinking a LUN destroys data.
+    Adding a LUN to a running storage node is not supported yet. A grown LUN is picked up only by `GrowDevices`, and
+    shrinking a LUN destroys data.
 
 ## Snapshots, Clones, and Disaster Recovery
 

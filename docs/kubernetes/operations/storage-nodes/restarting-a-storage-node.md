@@ -1,6 +1,6 @@
 ---
 title: "Restarting a Storage Node"
-description: "Restart a single simplyblock storage node with a Restart operation of a StorageNodeOps resource, optionally forced and reattaching its volumes."
+description: "Restart a single simplyblock storage node with a Restart operation of a StorageNodeOps resource, optionally with the force flag of the control plane."
 weight: 10214
 ---
 
@@ -23,11 +23,11 @@ spec:
 kubectl apply -f restart-node.yaml
 ```
 
-Two optional fields apply to a restart. With `force`, the request carries the force flag of the control plane, and
-with `reattachVolume`, the volumes of the node are reattached as part of the restart. A field that is left out is not
-sent, and the control plane applies its own default.
+With the optional field `force`, the request carries the force flag of the control plane. A field that is left out is
+not sent, and the control plane applies its own default. `reattachVolume` has no effect on a restart, since it is read
+only when a restart moves the node to another host, as in [Migrating a Storage Node](migrating-a-storage-node.md).
 
-```yaml title="Example of a forced restart that reattaches the volumes"
+```yaml title="Example of a forced restart"
 apiVersion: storage.simplyblock.io/v1alpha2
 kind: StorageNodeOps
 metadata:
@@ -37,7 +37,6 @@ spec:
   nodeRef: simplyblock-cluster-worker-1-0
   action: Restart
   force: true
-  reattachVolume: true
 ```
 
 The operation runs the steps `Requesting` and `Awaiting`, and it holds with a `ClusterNotReady` event while the

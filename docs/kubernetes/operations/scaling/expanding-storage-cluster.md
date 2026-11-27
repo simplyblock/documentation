@@ -149,31 +149,19 @@ The document then walks the steps below and reports the phase `Expanding`, then 
 
 ## Is an Expand Operation Needed?
 
-No, not for nodes added by a growth document. The operator does not raise an `Expand` operation after a growth
-document, and none is needed: the nodes carry the expansion flag, so the control plane integrates each of them on its
-own. In the `Activating` step, the document raises an `Activate` operation named `<cluster>-activate`, or reuses the
-one of the initial deployment if it still exists. An activation of a cluster that is already `active` succeeds without
-a call to the control plane.
+No. The operator does not raise an `Expand` operation after a growth document, and none is needed: the nodes carry the
+expansion flag, so the control plane integrates each of them on its own. In the `Activating` step, the document raises
+an `Activate` operation named `<cluster>-activate`, or reuses the one of the initial deployment if it still exists. An
+activation of a cluster that is already `active` succeeds without a call to the control plane.
 
-A `StorageClusterOps` with the action `Expand` is needed only for nodes that were added without the flag, for example,
-a hand-written `StorageNode` without `spec.config.expand`. Such a node follows the older path: the cluster is set to
-`in_expansion` when the node is registered, and the expansion is finalized with the operation once all new nodes are
-online.
+Every storage node added to a cluster that is active, or that was ever activated, needs `spec.config.expand: true`. The
+control plane refuses the addition of a node without the flag, so a hand-written `StorageNode` without it never
+receives a backend node. A growth document sets the flag on every node it creates.
 
-```yaml title="Example of finalizing an expansion of nodes added without the flag"
-apiVersion: storage.simplyblock.io/v1alpha2
-kind: StorageClusterOps
-metadata:
-  name: expand-simplyblock-cluster
-  namespace: simplyblock
-spec:
-  clusterRef: simplyblock-cluster
-  action: Expand
-```
-
-This path integrates all pending nodes at once, so it needs at least two new nodes, and at least three on a cluster
-with dual fault tolerance (FTT 2), to build the failover paths of every one of them. The operation runs the steps
-`Requesting` and `Awaiting`, and it succeeds once the cluster is `active`. The other actions are described in
+A `StorageClusterOps` with the action `Expand` builds a logical volume store for every online node that has none, and
+then sets the cluster `active`. A node added with the expansion flag already has its logical volume store once it is
+integrated, so a growth never needs the operation. The operation runs the steps `Requesting` and `Awaiting`, and it
+succeeds once the cluster is `active`. The other actions are described in
 [Storage Cluster Actions](../cluster/cluster-actions.md).
 
 ## Following the Expansion

@@ -325,9 +325,11 @@ set above the limit is refused with `MemberTooLarge`.
 ### Storage Array LUNs
 
 On a [storage array](../../architecture/concepts/storage-arrays.md), the devices are the LUNs of each worker, listed
-under `devices.block`. Block devices require `enableJournalDevice`, which dedicates the smallest LUN of each worker
-to the journal. A discovery run with `enableLogicalBlockDevices` and `forceJournalDevice` drafts the document, or it
-is written by hand.
+under `devices.block`. By default, the journal of each worker is a partition carved from its smallest LUN, and every
+LUN carries data. `enableJournalDevice`, as in the example below, dedicates the smallest LUN of each worker to the
+journal instead and needs at least two LUNs per worker. A discovery run with `enableLogicalBlockDevices` drafts the
+document with the journal split, and `forceJournalDevice` asks it for the dedicated LUN. The document can also be
+written by hand.
 
 Every worker has its own LUNs with their own WWNs, so the persistent device paths differ per worker. Each worker
 then gets a group of its own:

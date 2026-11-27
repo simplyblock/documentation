@@ -32,15 +32,16 @@ kubectl apply -f shutdown-cluster.yaml
 
 The operation lives in the namespace of its cluster. `spec.clusterRef` and `spec.action` are required and immutable.
 
-| Action           | Effect                                                                      | Completes when                     | Page                                                                   |
-|------------------|-----------------------------------------------------------------------------|------------------------------------|------------------------------------------------------------------------|
-| `Activate`       | Activates a cluster whose nodes have joined but which is not yet live.      | The cluster is `active`.           | [Activating a Storage Cluster](activating-a-cluster.md)                |
-| `Expand`         | Finalizes an expansion of nodes that were added without the expansion flag. | The cluster is `active`.           | [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md) |
-| `Shutdown`       | Shuts the whole cluster down.                                               | The cluster is no longer `active`. | [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)          |
-| `Start`          | Starts a previously shut down cluster.                                      | The cluster is `active`.           | [Starting a Storage Cluster](starting-a-cluster.md)                    |
-| `Restart`        | Runs a shutdown followed by a start.                                        | The cluster is `active`.           | [Restarting a Storage Cluster](restarting-a-cluster.md)                |
-| `RollingRestart` | Restarts every storage node of the cluster, one after another.              | Every node has been restarted.     | [Rolling Restart](rolling-restart.md)                                  |
-| `CancelTask`     | Cancels one task of the control plane.                                      | The task is no longer running.     | [Canceling a Task](#canceling-a-task)                                  |
+| Action           | Effect                                                                                                                   | Completes when                     | Page                                                                   |
+|------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------|------------------------------------------------------------------------|
+| `Activate`       | Activates a cluster whose nodes have joined but which is not yet live.                                                   | The cluster is `active`.           | [Activating a Storage Cluster](activating-a-cluster.md)                |
+| `Expand`         | Builds a logical volume store for every online node that has none. A growth never needs it.                              | The cluster is `active`.           | [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md) |
+| `Shutdown`       | Shuts the whole cluster down.                                                                                            | The cluster is no longer `active`. | [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)          |
+| `Start`          | Starts a previously shut down cluster.                                                                                   | The cluster is `active`.           | [Starting a Storage Cluster](starting-a-cluster.md)                    |
+| `Restart`        | Runs a shutdown followed by a start.                                                                                     | The cluster is `active`.           | [Restarting a Storage Cluster](restarting-a-cluster.md)                |
+| `RollingRestart` | Restarts every storage node of the cluster, one after another.                                                           | Every node has been restarted.     | [Rolling Restart](rolling-restart.md)                                  |
+| `CancelTask`     | Cancels one task of the control plane.                                                                                   | The task is no longer running.     | [Canceling a Task](#canceling-a-task)                                  |
+| `GrowDevices`    | Grows every Linux block device of the cluster by the smallest growth of its LUN, after the LUNs were grown on the array. | The cluster is `active`.           | -                                                                      |
 
 Any other value is rejected by the CRD schema.
 
@@ -65,11 +66,11 @@ cluster is already in the state the call would produce, for example, a `Start` o
 This makes an operation safe to resume after a restart of the operator, and it makes a request against a cluster that
 is already in the target state succeed at once.
 
-| Action                                                  | Steps                                                                                                                 |
-|---------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| `Activate`, `Expand`, `Shutdown`, `Start`, `CancelTask` | `Requesting` → `Awaiting`                                                                                             |
-| `Restart`                                               | `ShuttingDown` → `Starting`                                                                                           |
-| `RollingRestart`                                        | Per node: `CheckingPeers` → `ShuttingDownNode` → [`RefreshingPod` → `AwaitingPod`] → `RestartingNode` → `Rebalancing` |
+| Action                                                                 | Steps                                                                                                                 |
+|------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `Activate`, `Expand`, `Shutdown`, `Start`, `CancelTask`, `GrowDevices` | `Requesting` → `Awaiting`                                                                                             |
+| `Restart`                                                              | `ShuttingDown` → `Starting`                                                                                           |
+| `RollingRestart`                                                       | Per node: `CheckingPeers` → `ShuttingDownNode` → [`RefreshingPod` → `AwaitingPod`] → `RestartingNode` → `Rebalancing` |
 
 A request that the control plane refuses with a transient error is retried, and the reason is written to
 `status.message`. The operation fails when a step outlives its deadline.
@@ -77,6 +78,7 @@ A request that the control plane refuses with a transient error is retried, and 
 | Step                           | Deadline   |
 |--------------------------------|------------|
 | `Requesting`                   | 2 minutes  |
+| `Requesting` of `GrowDevices`  | 30 minutes |
 | `Awaiting`                     | 30 minutes |
 | `ShuttingDown`, `Starting`     | 30 minutes |
 | `CheckingPeers`                | 2 hours    |

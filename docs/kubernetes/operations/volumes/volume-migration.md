@@ -10,9 +10,15 @@ storage node itself. This is different from [Migrating a Storage Node](../storag
 which relocates an entire storage node identity to a new host.
 
 A volume migration moves only the logical volume itself, not the actual data. Since data remains distributed in the
-back storage, a volume migration is an online live migration and nearly instant. If node affinity is turned on for a
-cluster, the back storage data is realigned asynchronously after one or more volume migrations have finished (see
+back storage, a volume migration is an online live migration. If node affinity is turned on for a cluster, the back
+storage data is realigned asynchronously after one or more volume migrations have finished (see
 [Data Realignment](#data-realignment)).
+
+The volume keeps serving I/O while its snapshots and its recent changes are copied to the target. The cutover at the
+end pauses the I/O of the volume for at most 12 seconds. For a volume that shares its NVMe-oF subsystem with others,
+all paths of the subsystem are made inaccessible first, which adds 2 seconds. The I/O is held during the pause, so it
+waits rather than fails. A cutover that does not finish within 12 seconds is abandoned, the volume stays on the source
+node, and the migration retries the cutover.
 
 Every migration is carried out by a `PersistentVolumeOps` operation (short name `pvops`) with `action: Migrate`. Four
 sources create one:
@@ -55,6 +61,10 @@ kubectl apply -f migrate-pvc.yaml
 again, or to a different target, a new `PersistentVolumeOps` object is created. Only one operation acts on a volume at
 a time. The volume's lock is the annotation `storage.simplyblock.io/active-ops` on the `PersistentVolume`, and a second
 operation waits in `Pending` with an `OperationQueued` event until the first one has finished.
+
+Only one migration (`action: Migrate`) runs per storage cluster at a time. The running operation is named in the
+annotation `storage.simplyblock.io/active-volume-migration` on the `StorageCluster`, and every other migration of the
+cluster waits in `Pending` with an `OperationQueued` event until it has finished.
 
 The referenced `PersistentVolume` has to be provisioned by the simplyblock CSI driver. The cluster, pool, and volume
 UUIDs are read from its volume handle, so the operation names no cluster.
@@ -133,7 +143,6 @@ Auto-rebalancing is switched on by `StorageCluster.spec.enableVolumeAutoPlacemen
 spec:
   enableVolumeAutoPlacement: true
   volumeAutoPlacement:
-    metricsBackend: Prometheus
     prometheusURL: http://prometheus.simplyblock.svc:9090
     enableLatencyBenchmark: true
     evaluationInterval: 60s
@@ -152,10 +161,10 @@ spec:
 | `imbalanceThreshold`          | `80`            | Latency deviation from baseline (percent) a node has to exceed before it is considered a rebalancing source. |
 | `minHotColdDifferencePct`     | `20`            | How far below the source (percentage points of deviation) a target has to be before a volume is moved.       |
 | `maxVolumeMigrationsPerCycle` | `10`            | Maximum number of volumes moved per cycle.                                                                   |
-| `storageNodeCandidateCount`   | `3`             | Number of most loaded nodes evaluated each cycle to pick the migration source.                               |
+| `storageNodeCandidateCount`   | `3`             | Accepted, but has no effect.                                                                                 |
 | `defaultCoolDownSeconds`      | `600`           | Time a volume is left alone after it has been migrated.                                                      |
-| `metricsBackend`              | `Prometheus`    | Source of I/O metrics: `Prometheus`, `ControlPlane`, or `Uniform`. `Uniform` disables IOPS-based scoring.    |
-| `prometheusURL`               | none            | Required when `metricsBackend` is `Prometheus`.                                                              |
+| `metricsBackend`              | `Prometheus`    | Accepted, but has no effect.                                                                                 |
+| `prometheusURL`               | none            | Required whenever the `volumeAutoPlacement` block is set. Without it, every cycle is skipped.                |
 | `enableLatencyBenchmark`      | `false`         | Enables `fio`-based NVMe-oF latency measurement through Kubernetes Jobs.                                     |
 | `latencyBenchmarkInterval`    | `5m`            | How often the benchmark Jobs run against each storage node.                                                  |
 | `baselineStrategy`            | `RollingWindow` | How the per-node latency baseline is derived: `RollingWindow` or `Benchmark` (one-shot measurement).         |
@@ -165,6 +174,9 @@ spec:
 | `baselineOutlierK`            | `3.0`           | Outlier rejection threshold of the baseline estimator. A lower value rejects more samples.                   |
 | `iopsWeight`                  | `1.0`           | Weight of per-volume IOPS in the volume I/O score.                                                           |
 | `throughputWeight`            | `0.1`           | Weight of per-volume throughput (MB/s) in the volume I/O score.                                              |
+
+Only when the `volumeAutoPlacement` block is absent is `http://simplyblock-prometheus:9090` used as the Prometheus
+address.
 
 The results of every cycle are written to `StorageCluster.status.rebalancingMetrics`, including the hottest and the
 coolest node, the imbalance, and the per-node deviation.
@@ -236,10 +248,12 @@ System volumes are not migrated. They are matched by `spec.remove.systemVolumeFi
 ### Pinned Volumes
 
 A volume is *pinned* when its PVC carries the `storage.simplyblock.io/selected-storage-node` annotation. A pinned
-volume is never moved by auto-rebalancing, and a pinned volume on a node **blocks** the removal of that node. The
-operator does not remove the annotation on behalf of the user, because a pin is a deliberate placement decision.
+volume is never moved by auto-rebalancing, and a pinned volume on a node **fails** the removal of that node in its
+`Validating` step, before anything is changed. The operator does not remove the annotation on behalf of the user,
+because a pin is a deliberate placement decision.
 
-A blocked removal is resolved in one of two ways:
+A failed removal is resolved in one of two ways, and the removal is then requested again with a new
+`StorageNodeOps`:
 
 - **Re-pin the volume:** set the annotation to the UUID of another storage node. The volume is migrated there, as
   described in [Migrating by Pinning a PVC](#migrating-by-pinning-a-pvc), and no longer sits on the node being
@@ -247,8 +261,8 @@ A blocked removal is resolved in one of two ways:
 - **Unpin the volume:** remove the annotation. The drain then picks a target for it.
 
 Volumes whose backing logical volume has no corresponding PersistentVolume (for example, a volume created outside
-Kubernetes) also block the removal, until they are removed by hand. In both cases the `StorageNodeOps` stays in its
-`Validating` step, and a `DrainBlocked` event names the blocking volumes.
+Kubernetes) block the removal until they are removed by hand. The `StorageNodeOps` then stays in its `Validating`
+step, and a `DrainBlocked` event names the blocking volumes.
 
 ```bash title="Checking for blocking volumes during a stalled removal"
 kubectl get events -n simplyblock --field-selector reason=DrainBlocked
@@ -266,7 +280,8 @@ under `volumeMigrationSettings.dataRealignment` (see
 [Volume Migration Settings](#volume-migration-settings)).
 
 A realignment is requested once at least `minMoves` volumes have moved since the last successful realignment, at least
-`interval` has passed, and no volume is currently moving. Progress is visible in `StorageCluster.status`:
+`interval` has passed, and no legacy `VolumeMigration` accepted by the control plane is still running. A running
+`PersistentVolumeOps` does not hold a realignment back. Progress is visible in `StorageCluster.status`:
 `volumeMoveGeneration` counts the moves, `realignedGeneration` the moves covered by the last realignment, and
 `lastDataRealignmentAt` holds its time.
 
@@ -282,25 +297,25 @@ kubectl annotate storagecluster production -n simplyblock \
 
 The operator emits Kubernetes events on the affected objects throughout a migration. Useful reasons to filter on:
 
-| Reason                      | Emitted on              | Meaning                                                               |
-|-----------------------------|-------------------------|-----------------------------------------------------------------------|
-| `OperationQueued`           | `PersistentVolumeOps`   | The operation waits for another operation on the same volume.         |
-| `OperationStarted`          | `PersistentVolumeOps`   | The operation took the volume's lock and started.                     |
-| `MigrationCreated`          | `PersistentVolumeOps`   | The backend migration was created.                                    |
-| `MigrationStarted`          | `PersistentVolumeOps`   | The data copy was started.                                            |
-| `TargetNodeNotReady`        | `PersistentVolumeOps`   | The target storage node is not ready to receive the volume.           |
-| `TargetNodeIsSource`        | `PersistentVolumeOps`   | The target is the node the volume already lives on.                   |
-| `StepDeadlineExceeded`      | `PersistentVolumeOps`   | A step has not finished within its deadline.                          |
-| `OperationSucceeded`        | `PersistentVolumeOps`   | The volume now resides on the target node.                            |
-| `OperationFailed`           | `PersistentVolumeOps`   | The migration failed. See the event message and `status.message`.     |
-| `OperationAborted`          | `PersistentVolumeOps`   | The migration was stopped through `spec.abort`.                       |
-| `MigrationRequested`        | `PersistentVolumeClaim` | A pin change raised a migration.                                      |
-| `InvalidPinTarget`          | `PersistentVolumeClaim` | A pin annotation value is not a known storage node UUID.              |
-| `VolumeRebalancingStarted`  | `StorageCluster`        | Auto-rebalancing began moving a volume.                               |
-| `VolumeRebalancingComplete` | `StorageCluster`        | An auto-rebalancing migration finished.                               |
-| `VolumeRebalancingDeferred` | `StorageCluster`        | A rebalancing move was skipped this cycle, for example, by cool-down. |
-| `DataRealignmentTriggered`  | `StorageCluster`        | A post-migration data realignment was requested.                      |
-| `DrainBlocked`              | `StorageNodeOps`        | A pinned or an unmanaged volume is blocking a node removal.           |
+| Reason                      | Emitted on              | Meaning                                                                 |
+|-----------------------------|-------------------------|-------------------------------------------------------------------------|
+| `OperationQueued`           | `PersistentVolumeOps`   | The operation waits for another operation on the volume or the cluster. |
+| `OperationStarted`          | `PersistentVolumeOps`   | The operation took the volume's lock and started.                       |
+| `MigrationCreated`          | `PersistentVolumeOps`   | The backend migration was created.                                      |
+| `MigrationStarted`          | `PersistentVolumeOps`   | The data copy was started.                                              |
+| `TargetNodeNotReady`        | `PersistentVolumeOps`   | The target storage node is not ready to receive the volume.             |
+| `TargetNodeIsSource`        | `PersistentVolumeOps`   | The target is the node the volume already lives on.                     |
+| `StepDeadlineExceeded`      | `PersistentVolumeOps`   | A step has not finished within its deadline.                            |
+| `OperationSucceeded`        | `PersistentVolumeOps`   | The volume now resides on the target node.                              |
+| `OperationFailed`           | `PersistentVolumeOps`   | The migration failed. See the event message and `status.message`.       |
+| `OperationAborted`          | `PersistentVolumeOps`   | The migration was stopped through `spec.abort`.                         |
+| `MigrationRequested`        | `PersistentVolumeClaim` | A pin change raised a migration.                                        |
+| `InvalidPinTarget`          | `PersistentVolumeClaim` | A pin annotation value is not a known storage node UUID.                |
+| `VolumeRebalancingStarted`  | `StorageCluster`        | Auto-rebalancing began moving a volume.                                 |
+| `VolumeRebalancingComplete` | `StorageCluster`        | An auto-rebalancing migration finished.                                 |
+| `VolumeRebalancingDeferred` | `StorageCluster`        | A rebalancing move was skipped this cycle, for example, by cool-down.   |
+| `DataRealignmentTriggered`  | `StorageCluster`        | A post-migration data realignment was requested.                        |
+| `DrainBlocked`              | `StorageNodeOps`        | An unmanaged volume is blocking a node removal.                         |
 
 ```bash title="Streaming completed migrations"
 kubectl get events -A --watch --field-selector reason=OperationSucceeded,involvedObject.kind=PersistentVolumeOps

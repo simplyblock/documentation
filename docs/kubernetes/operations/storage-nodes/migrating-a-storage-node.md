@@ -1,12 +1,19 @@
 ---
 title: "Migrating a Storage Node"
-description: "Relocate a simplyblock storage node onto a different Kubernetes worker with a Migrate operation, keeping its backend identity, devices, and logical volumes."
+description: "Relocate a simplyblock storage node onto a different Kubernetes worker with a Migrate operation, keeping its backend identity and its logical volumes."
 weight: 10230
 ---
 
 The `Migrate` action of a `StorageNodeOps` resource moves a storage node onto a different Kubernetes worker without
-taking it out of the cluster. The node keeps its backend UUID, its devices, and its logical volume assignments, and no
-volume is moved between nodes, so no `PersistentVolumeOps` is created. What changes is the host the node runs on.
+taking it out of the cluster. The node keeps its backend UUID and its logical volume assignments, and no volume is
+moved between nodes, so no `PersistentVolumeOps` is created. What changes is the host the node runs on, and with it the
+drives. The drives are matched by serial number: a drive of the source host that the target does not have is retired,
+and its data is rebuilt from parity across the cluster. A drive of the target host that the node does not know is added
+to the node. Only with `spec.reattachVolume` on AWS do the drives move with the node.
+
+!!! warning
+    A drive of the target host that the node does not know is formatted when the node is promoted. Any data on it is
+    lost.
 
 This is the operation for replacing the hardware under a node, or for vacating a worker that has to be
 decommissioned. It is not the operation for moving individual volumes, which is
@@ -28,8 +35,9 @@ the storage plane and waits for its storage-node pod, but the machine itself has
 
 - **Ready:** The target is a Kubernetes node and is `Ready`. A target that is missing or not ready fails the operation
   immediately.
-- **Different:** The target is not the worker the storage node currently runs on. A migration whose node already runs
-  on the target succeeds at once, without doing anything.
+- **Different:** The target is not the worker the storage node currently runs on. A migration to the node's current
+  worker skips `Preparing` and still sends the restart, so the node restarts in place. A
+  [Restart](restarting-a-storage-node.md) operation is the tool for that.
 - **Devices:** The target has the devices the node expects, either because they carry the same PCIe addresses as on
   the source host, or because the additional addresses are declared in `spec.migrate.newSsdPcie`.
 
@@ -54,15 +62,22 @@ spec:
 kubectl apply -f migrate-node.yaml
 ```
 
-| Field                           | Type     | Description                                                                                        |
-|---------------------------------|----------|----------------------------------------------------------------------------------------------------|
-| `spec.migrate.targetWorkerNode` | string   | The Kubernetes worker to relocate the node onto. Required, and immutable.                          |
-| `spec.migrate.newSsdPcie`       | []string | Additional NVMe PCIe addresses to bind on the target host. Merged into the node's PCIe allow list. |
-| `spec.reattachVolume`           | bool     | Reattaches the node's volumes as part of the restart onto the target.                              |
-| `spec.force`                    | bool     | Forces the restart onto the target. Defaults to `true` for a migration.                            |
+| Field                           | Type     | Description                                                                                                            |
+|---------------------------------|----------|------------------------------------------------------------------------------------------------------------------------|
+| `spec.migrate.targetWorkerNode` | string   | The Kubernetes worker to relocate the node onto. Required, and immutable.                                              |
+| `spec.migrate.newSsdPcie`       | []string | Additional NVMe PCIe addresses to bind on the target host. Merged into the node's PCIe allow list. NVMe clusters only. |
+| `spec.reattachVolume`           | bool     | Moves the node's EBS volumes from the source EC2 instance to the target instance. AWS only.                            |
+| `spec.force`                    | bool     | Forces the restart onto the target. Defaults to `true` for a migration.                                                |
 
 A migration restart is forced unless `spec.force` is explicitly `false`, because the control plane rejects a non-forced
 restart of a node that is still `online`.
+
+On a cluster of Linux block devices (`deviceClass: LogicalBlock`), `spec.migrate.newSsdPcie` stays unset, because the
+control plane refuses a restart that carries it.
+
+With `spec.reattachVolume`, the EBS volumes tagged `simplyblock-storage` or `simplyblock-jm` are detached from the
+source EC2 instance and attached to the target instance. Outside AWS, and on a cluster of Linux block devices, the
+field makes the restart fail, so it is left unset there.
 
 ## Steps
 
@@ -105,6 +120,10 @@ the source host, starts a rebalance, and re-homes the logical volumes. It is onl
 
 The operation succeeds once the topology has been re-pointed. The rebalance the promotion started continues afterward
 and is tracked in `StorageCluster.status.rebalancing`.
+
+The control plane answers a promotion with `409` while a drive is still new or still removed. One cause is a volume
+migration running anywhere in the cluster, since a source drive cannot be failed while one runs. The operator sends
+the promotion again about once a minute, and `Promoting` fails only when its 30 minutes run out.
 
 ## Aborting a Migration
 

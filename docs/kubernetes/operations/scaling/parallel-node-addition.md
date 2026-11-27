@@ -79,6 +79,10 @@ A node that waits for a slot emits an `AwaitingSlot` event, which names how many
 workers hold them. Waiting workers go first in the order of their names, so a worker that is told to wait is not
 overtaken by one that arrived later. `AwaitingSlot` has a deadline of four hours.
 
+On a cluster with failure domains, a free slot goes first to a waiting worker of the domain with the fewest hosts. The
+control plane refuses a node addition that leaves the host counts of two domains more than one apart, and this order
+keeps every addition within that rule. Names decide only between workers of equally small domains.
+
 ```bash title="Checking which nodes wait for a slot"
 kubectl get events -n simplyblock \
     --field-selector reason=AwaitingSlot

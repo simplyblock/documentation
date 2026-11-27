@@ -25,17 +25,23 @@ local NVMe devices. The architecture and the division of tasks between the array
 
 Every host that runs a storage node gets its own LUNs, which are not shared with any other host:
 
-| LUN         | Count     | Size                                                                                                                  |
-|-------------|-----------|-----------------------------------------------------------------------------------------------------------------------|
-| Journal LUN | 1         | About 3% of the host's data LUN capacity, at least 2 GiB. It has to be the smallest LUN of the host.                  |
-| Data LUNs   | 1 or more | Large and equal in size, on all hosts. Thin LUNs are sized for the expected growth, so that they never need resizing. |
+| LUN         | Count               | Size                                                                                                                  |
+|-------------|---------------------|-----------------------------------------------------------------------------------------------------------------------|
+| Data LUNs   | 1 or more           | Large and equal in size, on all hosts. Thin LUNs are sized for the expected growth, so that they never need resizing. |
+| Journal LUN | 0, or 1 if selected | About 3% of the host's data LUN capacity, at least 2 GiB. It has to be the smallest LUN of the host.                  |
 
-A storage node needs at least two LUNs: the journal LUN and one data LUN. The smallest LUN of a host is dedicated to
-the journal.
+By default, the journal of a storage node is a partition carved from the host's smallest LUN when the node is
+configured (the journal split). Every LUN then carries data, and a single LUN per host is enough, for example, one
+large RAID-protected LUN. A dedicated journal LUN is used only with `enableJournalDevice` in the deployment document,
+or `spec.discover.forceJournalDevice` on a discovery run. The smallest LUN of every host is then dedicated to the
+journal, and every host needs at least two LUNs.
 
 !!! important
-    LUNs cannot be resized after a storage node uses them, and a LUN cannot be added to a running storage node yet.
-    Capacity is added with new storage nodes and their LUNs (see
+    A LUN cannot be added to a running storage node yet. LUNs that were grown on the array are taken into use online
+    by the cluster action `GrowDevices` (see
+    [Cluster Actions](../kubernetes/operations/cluster/cluster-actions.md#requesting-an-action)), which grows every
+    LUN of the cluster by the smallest growth among them. Otherwise, capacity is added with new storage nodes and their
+    LUNs (see
     [Operating on Storage Arrays](../kubernetes/operations/cluster/storage-arrays.md#adding-capacity)). Large thin
     LUNs avoid the need for either.
 

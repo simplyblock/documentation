@@ -30,14 +30,9 @@ kubectl get storagenodeops simplyblock-cluster-worker-1-0-maintenance -n simplyb
 A `HostMaintenance` operation can also be created by hand, and it then behaves identically, which is useful for
 testing the flow without cordoning anything.
 
-!!! warning
-    The operator raises the operation only if no object named `<storage-node>-maintenance` exists yet. A completed
-    maintenance record is therefore deleted before the next maintenance window of the same worker, otherwise that
-    window is not coordinated.
-
-    ```bash title="Deleting the record of a completed maintenance window"
-    kubectl delete storagenodeops simplyblock-cluster-worker-1-0-maintenance -n simplyblock
-    ```
+The operator raises the operation only if no object named `<storage-node>-maintenance` exists yet. Once the worker is
+schedulable again, the operator deletes a finished maintenance record, so the next cordon raises a new window. A window
+that is still waiting in `Holding` when the worker is uncordoned is called off and ends as `Aborted`.
 
 ## Steps
 
@@ -56,7 +51,8 @@ gracefully. Relaxing it in `Releasing` is what lets the drain proceed. On a hype
 protects its own pod in the same way until `Releasing`, so that the drain cannot evict the operator before the storage
 node is safely offline.
 
-`spec.force` and `spec.reattachVolume` of the operation apply to the restart in `Restarting`.
+`spec.force` of the operation applies to the restart in `Restarting`. `spec.reattachVolume` has no effect, since the
+node returns to the same host.
 
 !!! note
     If the worker does not come back within the four hours of `AwaitingHost`, the operation fails and the node stays

@@ -19,7 +19,7 @@ A single device of a node is restarted or failed with a `StorageDeviceOps` resou
 |-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
 | [Storage Node Actions](storage-node-actions.md)                 | The `StorageNodeOps` kind: the target node, the actions, the locking, the tracking.           |
 | [Shutting Down a Storage Node](shutting-down-a-storage-node.md) | Stopping one node while the rest of the cluster keeps serving I/O.                            |
-| [Restarting a Storage Node](restarting-a-storage-node.md)       | Stopping and starting one node, optionally forced and reattaching its volumes.                |
+| [Restarting a Storage Node](restarting-a-storage-node.md)       | Stopping and starting one node, optionally forced.                                            |
 | [Suspending a Storage Node](suspending-a-storage-node.md)       | Stopping new volumes from being placed on a node that keeps running.                          |
 | [Resuming a Storage Node](resuming-a-storage-node.md)           | Returning a suspended node to normal service.                                                 |
 | [Replacing a Storage Node](replacing-a-storage-node.md)         | Choosing between a migration and a removal when hardware is replaced.                         |
