@@ -43,8 +43,9 @@ A scheme `k+m` splits data into `k` data chunks and adds `m` parity chunks, each
 ## Failure Domains
 
 With [failure domains](../architecture/concepts/failure-domains.md), the chunks of a stripe are also spread across
-racks or zones. Activation then requires at least `parity chunks + 2` domains with an equal number of hosts each. How
-many whole domains a scheme survives depends on the number of domains, as shown in
+racks or zones. Activation then requires at least `parity chunks + 2` and at least `data chunks + parity chunks`
+domains, whichever is higher, with an equal number of hosts each. `4+1` therefore needs five domains and `4+2` six.
+How many whole domains a scheme survives depends on the number of domains, as shown in
 [Failure Domains and Erasure Coding Schemes](../architecture/concepts/failure-domains.md#failure-domains-and-erasure-coding-schemes).
 
 ## Small Clusters

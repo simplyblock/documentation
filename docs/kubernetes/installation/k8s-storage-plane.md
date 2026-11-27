@@ -434,7 +434,9 @@ spec:
 ```
 
 Failure-domain mode needs at least as many failure domains as parity chunks plus two, with the same number of
-workers in each. A document that does not meet this is refused with `FailureDomainLayout`.
+workers in each. A document that does not meet this is refused with `FailureDomainLayout`. Activation by the control
+plane also needs at least `data chunks + parity chunks` domains, which approval does not check: `4+1` needs five
+domains and `4+2` six.
 
 For details, see [Failure Domains](../operations/cluster/failure-domains.md).
 
