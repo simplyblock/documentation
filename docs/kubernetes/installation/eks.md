@@ -75,8 +75,10 @@ _Spread_, so that no two storage nodes share the same hardware.
 !!! important
     A storage cluster can span availability zones in two ways:
 
-    - Use failure domains and the zone name to label nodes with the failure domain. This works across two or four sites.
-      With 4 sites, two can be down concurrently. The protection overhead is x2 in both cases.
+    - Use failure domains and the zone name to label nodes with the failure domain. Activation needs at least
+      `parity chunks + 2` and at least `data chunks + parity chunks` zones, whichever is higher, with the same number
+      of storage nodes in each: three zones for `1+1` and four for `2+2`. Two zones are refused at activation.
+      With `2+2` across four zones, two zones can be down concurrently. The protection overhead is x2 in both cases.
     - Use synchronous replication on top of per-zone distributed erasure coding. This works across two sites
       and survives a site outage and a local node outage concurrently. The protection overhead is x2.5.
     - In both cases, still use a placement group of type _Spread_ for the nodes in the storage node pool per AZ.
@@ -130,6 +132,12 @@ modprobe nvme-tcp
 ```
 
 `/dev/nvme-fabrics` exists once the module is loaded, and the `nvme-tcp.conf` entry loads it again after a reboot.
+
+Instead of the bootstrap step, the CSI node plugin can load the module itself. With the Helm value
+`driver.enableNVMeTCPModuleInstall: true` (`spec.enableNVMeTCPModuleInstall` of the `SimplyblockDriver`), an init
+container of the node plugin loads `nvme-tcp` on Ubuntu hosts, installs `linux-modules-extra` for the running kernel
+when the module is missing, and adds the module to `/etc/modules-load.d`. The node has to reach its apt mirror for the
+install, which is needed again after a kernel upgrade. A failed install holds the node plugin in `Init`.
 
 A node group with a custom image needs an explicit bootstrap command in `eksctl`. The Ubuntu EKS images provide
 `/etc/eks/bootstrap.sh`. Labels and taints are passed to the kubelet, and the API server endpoint and the cluster CA
@@ -334,8 +342,17 @@ when the node group is replaced by one that carries them, or from simplyblock, a
 ## Storage for the Control Plane
 
 FoundationDB and Prometheus of the control plane store their data on persistent volumes. An EKS cluster has no default
-StorageClass, so the EBS CSI driver add-on and a gp3 StorageClass are created first. The node role (or an IAM
-role for the add-on's service account) needs the AWS managed policy `AmazonEBSCSIDriverPolicy`.
+StorageClass. When the Helm value `controlplane.storageclass.name` is empty, the operator detects EKS and provides the
+storage itself. It installs the AWS EBS CSI driver when the cluster has no CSIDriver `ebs.csi.aws.com`, and it creates
+the encrypted gp3 StorageClass `simplyblock-gp3` (`WaitForFirstConsumer`) when no gp3 class of that driver exists. Of
+several gp3 classes of the driver, the default class is used, or else the first by name. The chosen class is recorded
+in `status.storageClassName` of the `ControlPlane`. The node role, or the IAM role in `controlplane.local.eksRoleARN`
+(see [Keyless S3 Backup Credentials](#keyless-s3-backup-credentials-irsa)), needs the AWS managed policy
+`AmazonEBSCSIDriverPolicy`.
+
+On a cluster whose add-ons are managed outside the operator, the EBS CSI driver add-on and a gp3 StorageClass are
+created first, and the class is named in `controlplane.storageclass.name`. The operator then installs neither. The
+node role (or an IAM role for the add-on's service account) needs the same policy.
 
 ```bash title="Installing the EBS CSI driver add-on"
 aws eks create-addon --cluster-name <CLUSTER_NAME> --addon-name aws-ebs-csi-driver
@@ -362,9 +379,10 @@ attached to the replacement node in the same availability zone.
 
 Backups can reach their S3 bucket with no access key stored in Kubernetes at all, through IAM Roles for Service
 Accounts (IRSA): an IAM role is attached to the `simplyblock-storage-node-sa` and `simplyblock-sa` ServiceAccounts, and
-EKS's pod-identity webhook injects the credentials every pod running as one of them needs. This replaces the
-`credentialsSecretRef` Secret described in
+EKS's pod-identity webhook injects the credentials every pod running as one of them needs. The backup store then uses
+`credentials.source: ProviderChain` instead of `credentials.source: Secret` and the Secret described in
 [Backup Credentials Secret](../operations/data-protection/backup-recovery.md#backup-credentials-secret).
+`credentialsSecretRef` is the deprecated form of a Secret reference and cannot express `ProviderChain`.
 
 ### Associating an OIDC Provider
 
@@ -439,6 +457,20 @@ aws iam put-role-policy \
   --policy-document file://backup-policy.json
 ```
 
+!!! important
+    When the operator installs the EBS CSI driver (see
+    [Storage for the Control Plane](#storage-for-the-control-plane)), it annotates the driver's ServiceAccount
+    `kube-system/ebs-csi-controller-sa` with the same role. The EBS CSI controller then authenticates with this role.
+    The trust policy therefore also lists `system:serviceaccount:kube-system:ebs-csi-controller-sa`, and the role
+    carries the managed policy `AmazonEBSCSIDriverPolicy`. Neither is needed when the EBS CSI driver was installed
+    beforehand, or when `controlplane.storageclass.name` names a class.
+
+    ```bash title="Attaching the EBS CSI driver policy to the role"
+    aws iam attach-role-policy \
+        --role-name simplyblock-backup \
+        --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+    ```
+
 ### Configuring the Operator
 
 The role's ARN goes on the `ControlPlane` singleton, which annotates both ServiceAccounts with it. The Helm chart
@@ -468,7 +500,8 @@ spec:
       source: ProviderChain
 ```
 
-No `credentialsSecretRef`, and no Secret, is needed anywhere in the namespace.
+No `secretRef`, and no Secret, is needed anywhere in the namespace. `credentials` and the deprecated
+`credentialsSecretRef` cannot be set together.
 
 ## TLS Prerequisite
 
@@ -505,7 +538,8 @@ node group and need no placement.
 
 ```yaml title="Helm values for EKS (values-eks.yaml)"
 controlplane:
-  # StorageClass of the FoundationDB volumes; EKS has no default StorageClass.
+  # StorageClass of the control plane volumes, created as described above.
+  # Left empty, the operator installs the EBS CSI driver and simplyblock-gp3.
   storageclass:
     name: ebs-gp3
   nodeSelector:
@@ -515,18 +549,6 @@ controlplane:
   tolerations:
     create: true
     list:
-      - key: simplyblock.io/role
-        operator: Equal
-        value: controlplane
-        effect: NoSchedule
-
-prometheus:
-  server:
-    persistentVolume:
-      storageClass: ebs-gp3
-    nodeSelector:
-      sb-role: controlplane
-    tolerations:
       - key: simplyblock.io/role
         operator: Equal
         value: controlplane
@@ -556,12 +578,9 @@ helm install simplyblock-operator simplyblock/simplyblock-operator \
 ```
 
 `controlplane.nodeSelector` and `controlplane.tolerations` place every control plane workload, including the
-FoundationDB processes, onto the control plane node group. Prometheus is installed by its own subchart and is placed
-with its own values.
-
-The persistent volume claim template of Prometheus cannot be changed after the first installation. A release that was
-installed without `prometheus.server.persistentVolume.storageClass` keeps a pending claim, which only a deletion of
-the Prometheus StatefulSet and its claim clears.
+FoundationDB processes and Prometheus, onto the control plane node group. Prometheus is run by the operator as a
+component of the control plane, and its volume uses the StorageClass of `controlplane.storageclass.name`. The
+Prometheus subchart of the Helm chart stays off (`prometheus.enabled: false`).
 
 ## Referring to the Taint During the Storage Cluster Deployment
 
@@ -636,8 +655,13 @@ spec:
             - ip-192-168-8-222.ec2.internal
 ```
 
-The boot disk of an EKS node is an EBS volume and does not appear in the draft. After the review, the draft is
-approved, and the operator creates the storage cluster.
+The boot disk of an EKS node is a mounted EBS volume and does not appear in the draft. An additional EBS volume that is
+attached, unmounted, and blank is an NVMe controller like the instance storage, and it is proposed. Instance storage
+reports the model `Amazon EC2 NVMe Instance Storage` and an EBS volume `Amazon Elastic Block Store`. With
+`deviceFilter.pcieModel: Instance Storage` on the discovery run (`discovery.deviceFilter.pcieModel` in the Helm
+values), the draft is kept to instance storage, since the filter matches a case-insensitive substring of the model.
+
+After the review, the draft is approved, and the operator creates the storage cluster.
 
 ```bash title="Approving the draft"
 kubectl -n simplyblock patch clusterdeploymentconfig discovered-cluster-a \

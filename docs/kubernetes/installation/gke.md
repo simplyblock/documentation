@@ -59,7 +59,11 @@ At least 8 vCPUs are required for a storage node.
 
 !!! warning
     Local SSDs are added to a node pool when it is created and cannot be changed afterward. They have to be attached
-    with the NVMe interface as raw block devices. SCSI-attached local SSDs do not work.
+    with the NVMe interface as raw block devices (`--local-nvme-ssd-block`). SCSI-attached local SSDs do not work.
+    Neither do local SSDs attached as ephemeral storage (`--ephemeral-storage-local-ssd`): GKE assembles them into the
+    software RAID array `md0`, and discovery declines every SSD as `RAIDMember`. The discovery run then fails with
+    `no worker has a device this run would use`, followed by advice to use `local-nvme-ssd-block`. Such a node pool
+    has to be created again with `--local-nvme-ssd-block`.
 
 !!! note "pNFS volumes"
     The pNFS metadata server requires a worker node with a usable `/dev/kvm` (see
@@ -81,6 +85,10 @@ gcloud container node-pools create storage-a \
 
 The control plane and client node pools are created the same way, with their own labels and taints and without local
 SSDs.
+
+The node pools need no huge page configuration. The huge pages are reserved by simplyblock when a storage node starts,
+on the Container-Optimized OS and on the Ubuntu node image (see
+[Storage Node Memory](../../deployment-preparation/sizing.md#storage-node-memory)).
 
 ## Node Images
 
@@ -226,10 +234,13 @@ kubectl -n simplyblock get pods -o custom-columns=NAME:.metadata.name,QOS:.statu
 
 ## Journal Device
 
-The local NVMe SSDs of a GKE node have the same size, and by default a journal partition is carved out of each of
-them. On GKE, the journal is placed on a device of its own instead. `enableJournalDevice` dedicates one local SSD of
-each worker to the journal manager, so each storage node pool is created with one local SSD more than is needed for
-data.
+The local NVMe SSDs of a GKE node have the same size, and by default a journal partition is carved out of each
+device. `enableJournalDevice` dedicates the smallest NVMe device of each worker to the journal manager instead.
+Discovery and the storage nodes claim whole NVMe controllers, and on some machine types the local SSDs are
+namespaces of one controller (`nvme0n1`, `nvme0n2`, and so on, under one PCI address with the model
+`nvme_card`). The draft then lists one device per worker, and an additional local SSD adds a namespace rather than a
+device. `enableJournalDevice` needs at least two NVMe devices per worker in the draft. On a worker with one, it
+would take the only device and leave none for data, so the field stays unset and the journal partition is used.
 
 ```bash title="Enabling the journal device in the draft"
 kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discovery --type=merge -p '{
@@ -242,6 +253,25 @@ kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discover
 FoundationDB and Prometheus of the control plane store their data on persistent volumes. GKE provides the Compute
 Engine persistent disk CSI driver and the default StorageClass `standard-rwo`, which can be used for the control plane.
 Host-local storage is not suitable, because an upgrade of a node pool replaces its nodes.
+
+The class is set with the Helm value `controlplane.storageclass.name`. Left empty, the claims of the control plane
+carry no class and bind to the default class of the cluster, and the operator still installs local-path-provisioner,
+which the control plane then does not use.
+
+```yaml title="Helm values naming the StorageClass of the control plane on GKE"
+controlplane:
+  storageclass:
+    name: standard-rwo
+```
+
+## Upgrades and Repairs
+
+GKE recreates a node during a node pool upgrade, including an automatic one, and during an auto-repair. A recreated
+node starts with empty local SSDs, so the storage node on it loses its data. The control plane node pool is upgraded
+in place, since the control plane data is on persistent disks. Storage node pools are not upgraded in place. New
+storage capacity on a new version is added as a new node pool, and the volumes move to it with an online cluster
+migration, as described for EKS in
+[Upgrading EKS](../operations/cluster/eks-upgrade.md#storage-and-client-node-groups).
 
 ## TLS Prerequisite
 

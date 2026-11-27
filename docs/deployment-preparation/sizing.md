@@ -14,8 +14,10 @@ IOPS performance depends on the vCPUs of a storage node. The maximum performance
 per socket, of which 40 are dedicated (isolated) to the simplyblock data plane and the rest remain under the control
 of Linux.
 
-The vCPUs of a storage node are set as an absolute number per storage node, which applies to every node of the cluster:
-`vcpuCount` in the deployment document (see [Cluster Deployment Options](../kubernetes/installation/cluster-deployment-options.md#sizing-options)).
+The vCPUs of the data plane are set per worker, with the same value for every worker of the cluster: `vcpuCount` in
+the deployment document (see [Cluster Deployment Options](../kubernetes/installation/cluster-deployment-options.md#sizing-options)).
+The count is split evenly across the sockets in `socketsToUse` and then across the storage nodes of each socket. A
+worker with two sockets in use and a `vcpuCount` of 16 therefore runs two storage nodes with 8 vCPUs each.
 A worker with fewer than the configured count plus one vCPU for the system is refused as a storage node.
 Unless the deployment document states a count, discovery proposes 10% of the vCPUs of a socket, at least 5 (see
 [vCPU Count](../kubernetes/installation/k8s-storage-plane.md#vcpu-count)). The proposal is reviewed against the
@@ -38,8 +40,9 @@ Kubernetes worker itself and the operating system.
 !!! warning
     On storage nodes, the required vCPUs can be isolated from the operating system. No kernel-space process,
     user-space process, or interrupt handler is then scheduled on those vCPUs, which significantly improves tail
-    latency and performance consistency. In Kubernetes, the CPU Manager and the Topology Manager are used by default,
-    but the core isolation itself is opt-in and requires additional configuration on both the cluster and the host.
+    latency and performance consistency. On Kubernetes, the cores of the data plane are assigned exclusively by the CPU
+    Manager and the Topology Manager when the CPU topology is enabled (`enableCpuTopology`). Kernel-level isolation is
+    not configured by the Simplyblock Operator: no field of the StorageCluster or the deployment document turns it on.
 
 ## NUMA Placement
 
@@ -110,6 +113,15 @@ The huge page amount is the same for all nodes up to 32 vCPUs and 250 NVMe-oF su
 (`maxSubsystemCount`). Larger nodes need more, for example, 9.2 GiB for 64 vCPUs and 500 subsystems. For each
 10 GBit/s of dedicated network bandwidth, at least 3 subsystems are recommended, and for each vCPU above 8, one
 additional subsystem. Use the lower of both values. The hard limits are listed in [Limits](../reference/limits.md).
+
+On Kubernetes, the huge pages are reserved by simplyblock each time a storage node starts, on every distribution
+except Talos (see [Talos](../kubernetes/installation/talos.md#huge-pages-and-the-kubelet-two-modes)). A Job on the
+worker records the 2 MiB pages the host already holds as its own, raises `nr_hugepages` of each NUMA node by what the
+storage nodes on that NUMA node need, and restarts the kubelet once when it does not yet advertise the new
+`hugepages-2Mi` capacity. Running pods are not stopped by that restart. No node group setting and no kernel argument is
+needed, and the reservation does not depend on `enableKubeletConfiguration`. On a host whose memory is too fragmented,
+the kernel allocates fewer pages than requested. The storage node agent then logs both numbers, and the SPDK pod stays
+`Pending` with `Insufficient hugepages-2Mi`.
 
 ## Control Plane
 

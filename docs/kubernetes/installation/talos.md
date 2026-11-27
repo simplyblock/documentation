@@ -60,6 +60,10 @@ The modes differ only in what happens when something is missing. The huge pages 
 kubelet's CPU topology is part of it only when `enableCpuTopology` and `enableKubeletConfiguration` are both on, which
 a Talos document turns on by default.
 
+No kernel arguments are required on Talos, and simplyblock sets none. With the CPU topology on, the SPDK cores are
+assigned by the static CPU manager of the kubelet rather than isolated with `isolcpus`. Kernel arguments on Talos go
+into `machine.install.extraKernelArgs` and take effect only after an upgrade of the node with `talosctl upgrade`.
+
 ### Pre-provisioned (default)
 
 The storage node applies nothing. If the pool or the kubelet settings are short, adding the node fails and the storage
@@ -67,14 +71,14 @@ node's log carries the exact machine-config patch to apply, sized for that worke
 own once the patch is in.
 
 ```plain title="A refusal in the storage node's log"
-Talos node 'worker-3': host provides 4000 MiB of huge pages but the SPDK pod requests 6088 MiB (hugepages-2Mi),
-i.e. at least 3044 2 MiB pages, and the machine config is pre-provisioned (TALOS_MACHINE_CONFIG=preprovisioned).
+Talos node 'worker-3': host provides 4000 MiB of huge pages but the SPDK pod requests 7170 MiB (hugepages-2Mi),
+i.e. at least 3585 2 MiB pages, and the machine config is pre-provisioned (TALOS_MACHINE_CONFIG=preprovisioned).
 Save the YAML below as patch.yaml and apply it to the worker with 'talosctl -n <node ip> patch mc -p @patch.yaml',
 then restart its kubelet with 'talosctl -n <node ip> service kubelet restart' so it advertises the pool, or set
 storageNodes.talosMachineConfig: Managed on the StorageCluster to let the node apply it through the Talos API:
 machine:
   sysfs:
-    devices.system.node.node0.hugepages.hugepages-2048kB.nr_hugepages: '3423'
+    devices.system.node.node0.hugepages.hugepages-2048kB.nr_hugepages: '3990'
 ```
 
 The file is the lines from `machine:` to the end, nothing else:
@@ -82,7 +86,7 @@ The file is the lines from `machine:` to the end, nothing else:
 ```yaml title="Content of patch.yaml"
 machine:
   sysfs:
-    devices.system.node.node0.hugepages.hugepages-2048kB.nr_hugepages: '3423'
+    devices.system.node.node0.hugepages.hugepages-2048kB.nr_hugepages: '3990'
 ```
 
 ```bash title="Apply the patch and restart the kubelet"
@@ -94,11 +98,28 @@ No reboot is needed: the pool is applied live, and the kubelet restart makes it 
 count is simplyblock's own sizing for that worker and replaces the key's value; a pool the worker keeps for another
 consumer has to be added to it by hand, since the node only verifies that the total covers its request.
 
+Every NUMA node that runs a storage node needs its own key. Its page count is the sum, over the storage nodes on that
+NUMA node, of (H + 1,000,000,000) / 2,000,000, where H is the huge page memory of the storage node in bytes. H is at
+least 6,980,607,384 bytes (the 6.5 GiB of [Storage Node Memory](../../deployment-preparation/sizing.md#storage-node-memory)),
+more on larger nodes, and at least `minHugePagesSize` when it is set. A worker that runs one storage node on each of
+two NUMA nodes at that minimum needs 3990 pages on `node0` and 3990 on `node1`. The pool and the capacity the kubelet
+advertises are read as follows:
+
+```bash title="Checking the huge page pool of a Talos worker"
+[demo@demo ~]# talosctl -n <WORKER_NODE_IP> read /proc/meminfo | grep -i huge
+[demo@demo ~]# talosctl -n <WORKER_NODE_IP> read \
+    /sys/devices/system/node/node0/hugepages/hugepages-2048kB/nr_hugepages
+[demo@demo ~]# kubectl get node <WORKER_NODE_NAME> -o jsonpath='{.status.capacity.hugepages-2Mi}'
+```
+
 To put the whole fleet in place before adding any node, use the same `machine.sysfs` key with one entry per NUMA
 node that will host a storage node, and the kubelet settings below, in each worker's machine config at install
 time. One way to size a fleet of identical workers is to add the first worker without the patch and read the numbers
-off the refusal. A pool reserved through `machine.sysctls` `vm.nr_hugepages` is honored as well, as long as it
-covers the request; do not set both.
+off the refusal, whose patch covers every storage node of the worker. The check behind the refusal compares the
+host's whole pool with the request of one SPDK pod, though. A worker with two storage nodes and a pool that covers
+only one of them is therefore not refused, and the second SPDK pod stays `Pending` with `Insufficient hugepages-2Mi`.
+A pool reserved through `machine.sysctls` `vm.nr_hugepages` is honored as well, as long as it covers the request; do
+not set both.
 
 ```yaml title="Content of enable-cpu-topology.yaml"
 machine:
@@ -110,11 +131,15 @@ machine:
       topologyManagerScope: pod
 ```
 
-`reservedSystemCPUs` must match the cluster's `reservedSystemCPU` (default `0,1`): the storage node compares the
-kubelet's live configuration against it. Talos restarts the kubelet itself when `extraConfig` changes. A kubelet that
-previously ran under another CPU-manager policy refuses to start over its checkpoint; put the `extraConfig` block in
-the machine config before the worker's first boot, or remove `/var/lib/kubelet/cpu_manager_state` on the worker first
-(a privileged pod with that path mounted, since the host has no shell).
+`reservedSystemCPUs` must match the `reservedSystemCPU` that applies to the worker: the one of its group in the
+deployment document, or else `spec.storageNodes.reservedSystemCPU` of the StorageCluster (default `0,1`). The storage
+node compares the kubelet's live configuration against it as text, so both are written the same way: `0,1` and `0-1`
+do not match. The `strict-cpu-reservation` option of `cpuManagerPolicyOptions` must not be set, since a storage node
+refuses a kubelet that runs with it, in both modes. Talos restarts the kubelet itself when `extraConfig` changes. A
+kubelet that previously ran under another CPU-manager policy refuses to start over its checkpoint; put the
+`extraConfig` block in the machine config before the worker's first boot, or remove
+`/var/lib/kubelet/cpu_manager_state` on the worker first (a privileged pod with that path mounted, since the host has
+no shell).
 
 ### Managed
 
