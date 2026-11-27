@@ -1,12 +1,14 @@
 ---
-title: "Storage Arrays"
+title: "Storage Arrays: Pass-Through Mode"
 description: "Plan a simplyblock deployment on FC, iSCSI, or NVMe-oF storage array LUNs: LUN layout per host, RAID and erasure coding, thin pools, and multipathing."
 weight: 29990
 ---
 
 Simplyblock can be deployed on the LUNs of an existing Fibre Channel, iSCSI, or NVMe-oF storage array instead of
 local NVMe devices. The architecture and the division of tasks between the array and simplyblock are described in
-[Storage Arrays](../architecture/concepts/storage-arrays.md). This page lists what has to be prepared.
+[Storage Arrays: Pass-Through Mode](../architecture/concepts/storage-arrays.md). This page lists what has to be
+prepared when the array administrator presents each host its own LUNs. A cluster whose LUNs simplyblock creates
+through an array plug-in is prepared as described in [Unified DataStore](unified-datastore.md).
 
 ## Recommended Array Configuration
 

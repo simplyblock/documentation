@@ -107,8 +107,8 @@ move applications with their volumes between clusters.
 
 The storage plane consists of storage nodes. A storage node is a pod on a Kubernetes worker that takes over one or
 more block devices of that worker: local NVMe devices, other local SSDs and disks, or the LUNs of an FC, iSCSI, or
-NVMe-oF storage array (see [Linux Block Devices](concepts/linux-block-devices.md) and
-[Storage Arrays](concepts/storage-arrays.md)). By default, one storage node runs per worker, and larger workers can run one or
+NVMe-oF storage array (see [Linux Block Devices](concepts/linux-block-devices.md),
+[Storage Arrays](concepts/storage-arrays.md), and [Unified DataStore](concepts/unified-datastore.md)). By default, one storage node runs per worker, and larger workers can run one or
 more storage nodes per CPU socket. The storage nodes of a storage cluster together form one distributed system with
 two separately distributed layers: the front storage and the back storage.
 

@@ -369,6 +369,10 @@ spec:
 The LUN layout, the erasure coding scheme, and the multipathing requirements are described in
 [Storage Arrays](../../deployment-preparation/storage-arrays.md).
 
+In a [Unified DataStore](unified-datastore.md), the LUNs are created and presented by simplyblock itself while the
+storage nodes are added, so they are not listed in the deployment document. The array is stated in the discovery run
+instead, and every group names one local device per storage node as its journal.
+
 ### Failure Domains
 
 Discovery decides failure-domain mode from the workers' topology: it proposes the mode on when every worker carries a

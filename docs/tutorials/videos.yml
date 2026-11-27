@@ -45,6 +45,10 @@ categories:
     label: Edge
     icon: material/access-point-network
     drive_folder: Edge Clusters
+  - id: unified-datastore
+    label: Unified DataStore
+    icon: material/database-sync
+    drive_folder: Unified DataStore
 
 videos:
   - id: core-01
@@ -91,10 +95,6 @@ videos:
     category: core
     title: "Distributed erasure coding"
     drive_id: 1zjPZlAeG7XRlwtvQCr7xbf6b59UyqTHj
-  - id: core-12
-    category: core
-    title: "One storage layer, everywhere"
-    drive_id: 1g82DhbJOesJVnPjUcIgECXZeXlmwqP1k
   - id: file-object-01
     category: file-object
     title: "pNFS high-performance file storage"
@@ -159,3 +159,8 @@ videos:
     category: edge
     title: "Backup to S3"
     drive_id: 1kiOuhxcV5YGQUvbJy_J0Xl6-15_jcd7c
+  - id: core-12
+    category: unified-datastore
+    title: "One storage layer, everywhere"
+    drive_id: 1g82DhbJOesJVnPjUcIgECXZeXlmwqP1k
+    page: architecture/concepts/unified-datastore.md

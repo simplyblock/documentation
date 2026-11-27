@@ -32,7 +32,8 @@ with 50% overhead, while three full copies would need 200%. See [Erasure Coding]
 supported schemes.
 
 !!! info "Storage arrays and local RAID controllers"
-    When simplyblock runs on the LUNs of a [storage array](concepts/storage-arrays.md) (FC, iSCSI, or NVMe-oF) or
+    When simplyblock runs on the LUNs of a storage array (FC, iSCSI, or NVMe-oF), in
+    [pass-through mode](concepts/storage-arrays.md) or as a [Unified DataStore](concepts/unified-datastore.md), or
     on the volumes of a local hardware RAID controller, single drive failures are already handled below
     simplyblock by the RAID of the array or controller. Simplyblock then does not need to protect against them and
     focuses on the failures the RAID cannot cover: the loss of an entire storage node, or of an entire array or

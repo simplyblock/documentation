@@ -1,5 +1,5 @@
 ---
-title: "Storage Arrays (FC, iSCSI, NVMe-oF)"
+title: "Storage Arrays: Pass-Through Mode"
 description: "How simplyblock runs on LUNs of an existing FC, iSCSI, or NVMe-oF storage array, and which tasks stay with the array and which move to simplyblock."
 weight: 30655
 ---
@@ -8,6 +8,11 @@ Simplyblock can run on the LUNs of an existing storage array instead of local NV
 host is given LUNs over Fibre Channel, iSCSI (also iSER), or NVMe over Fabrics (NVMe/FC, NVMe/TCP, NVMe/RoCE), and
 simplyblock uses them as [Linux block devices](linux-block-devices.md). On top of them, it provides its full feature
 set: Kubernetes-native volumes, snapshots and clones, QoS, encryption, replication, and disaster recovery.
+
+This page describes the pass-through mode. The array administrator creates the LUNs and presents them to the hosts,
+each host gets LUNs of its own, and simplyblock has no access to the array. In a
+[Unified DataStore](unified-datastore.md), simplyblock instead creates and presents the LUNs itself through an array
+plug-in, presents every LUN to more than one host, and takes the LUNs of a failed storage node over.
 
 ## How It Works
 

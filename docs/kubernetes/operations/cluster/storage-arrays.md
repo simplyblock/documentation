@@ -6,7 +6,8 @@ weight: 10165
 
 A storage cluster on the LUNs of a [storage array](../../../architecture/concepts/storage-arrays.md) is operated like
 any other simplyblock cluster. This page covers what is different: capacity on two levels, the growth of the
-cluster, and the tasks that stay with simplyblock instead of the array.
+cluster, and the tasks that stay with simplyblock instead of the array. It covers the pass-through mode, in which
+each host has LUNs of its own. A [Unified DataStore](unified-datastore.md) is operated as described on its own page.
 
 ## Monitoring Capacity
 
