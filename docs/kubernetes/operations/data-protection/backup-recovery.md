@@ -7,18 +7,19 @@ weight: 10510
 Simplyblock backs up volumes to Amazon S3 or S3-compatible object storage as chains of incremental snapshots. On
 Kubernetes, the `StorageCluster` names the S3 location, a `StorageBackupPolicy` selects the claims to back up and sets
 the schedule and the retention, and the control plane takes the copies. A single backup of one claim can also be
-requested at any time by creating a `StorageBackup`, the way a `VolumeSnapshot` is created. Every copy found in the
-store appears as a `StorageBackup` object, and a copy is restored into a new claim with a `StorageBackupOps`
+requested at any time by creating a `StorageBackup`, the way a `VolumeSnapshot` is created. Every copy the control
+plane holds appears as a `StorageBackup` object, and a copy is restored into a new claim with a `StorageBackupOps`
 operation.
 
-| Kind                  | Short name | Written by            | Purpose                                                                        |
-|-----------------------|------------|-----------------------|--------------------------------------------------------------------------------|
-| `StorageCluster`      | `stc`      | Administrator         | `spec.backup` names the S3 location and its credentials.                       |
-| `StorageBackupPolicy` | `sbp`      | Administrator         | Schedule and retention for the claims its selector matches.                    |
-| `StorageBackup`       | `sb`       | Operator, or a user   | A record of one backup found in the store, or a user's request for one backup. |
-| `StorageBackupOps`    | `sbops`    | Administrator or user | Restores one backup into a new claim.                                          |
+| Kind                  | Short name | Written by            | Purpose                                                                                 |
+|-----------------------|------------|-----------------------|-----------------------------------------------------------------------------------------|
+| `StorageCluster`      | `stc`      | Administrator         | `spec.backup` names the S3 location and its credentials.                                |
+| `StorageBackupPolicy` | `sbp`      | Administrator         | Schedule and retention for the claims its selector matches, or for a consistency group. |
+| `StorageBackup`       | `sb`       | Operator, or a user   | A record of one backup the control plane holds, or a user's request for one backup.     |
+| `StorageGroupBackup`  | `sgb`      | Administrator or user | A request for one backup of a whole consistency group.                                  |
+| `StorageBackupOps`    | `sbops`    | Administrator or user | Restores one backup, or one group backup, into new claims.                              |
 
-All four use the API version `storage.simplyblock.io/v1alpha2`. The policy and the backup records live in the namespace
+All five use the API version `storage.simplyblock.io/v1alpha2`. The policy and the backup records live in the namespace
 of the `StorageCluster`. A backup request lives in the namespace of its claim, and so does a restore.
 
 !!! info "Backups and disaster recovery"
@@ -70,8 +71,10 @@ See [Keyless S3 Backup Credentials on Amazon EKS](../../installation/eks.md#keyl
 
 ### Backup Store of the StorageCluster
 
-The backup store is set in `StorageCluster.spec.backup`. The block is mutable, so a cluster created without a store can
-be given one later.
+The backup store is set in `StorageCluster.spec.backup`, and it has to be set when the cluster is created. The operator
+passes the store to the control plane only in the request that creates the cluster, and the control plane offers no
+call to change it afterward. The field can still be edited, but a store added or changed later is not applied. Backups
+of a cluster created without a store fail with `Cluster <UUID> has no backup configuration`.
 
 ```yaml title="Example of the backup store of a StorageCluster"
 apiVersion: storage.simplyblock.io/v1alpha2
@@ -95,15 +98,18 @@ spec:
 |------------------------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `endpoint`                               | yes                                                                   | S3 endpoint URL, for example, `https://s3.example.com`. Loopback and link-local addresses are refused.                                                                                                                                                                                                                                                          |
 | `bucket`                                 | yes                                                                   | Bucket the backups are written to and read from.                                                                                                                                                                                                                                                                                                                |
-| `prefix`                                 | no                                                                    | Key prefix inside the bucket, so that several clusters can share a bucket.                                                                                                                                                                                                                                                                                      |
 | `region`                                 | no                                                                    | Region of the bucket, for endpoints that do not imply one.                                                                                                                                                                                                                                                                                                      |
 | `credentials.source`                     | yes, unless the deprecated `credentialsSecretRef` is set instead      | `Secret` (the default) reads a static key from `secretRef`. `ProviderChain` takes no static key at all and authenticates through the AWS SDK's default credential provider chain, which on Amazon EKS resolves through the cluster's IAM role. See [Keyless S3 Backup Credentials on Amazon EKS](../../installation/eks.md#keyless-s3-backup-credentials-irsa). |
 | `credentials.secretRef.name`             | required with `source: Secret`, rejected with `source: ProviderChain` | Secret in the same namespace with the keys `access_key_id` and `secret_access_key`.                                                                                                                                                                                                                                                                             |
 | `credentialsSecretRef.name` (deprecated) | yes, unless `credentials` is set instead                              | The pre-`credentials` way to name the same Secret. Still accepted, but set `credentials` instead: this spelling cannot express `ProviderChain`.                                                                                                                                                                                                                 |
 
-The store is both the target copies are written to and the inventory the operator reads. Setting it makes every backup
-already under that bucket and prefix visible as a `StorageBackup` object, including backups written by another
-cluster that shares the bucket and prefix.
+The store has no key prefix, and the object keys inside the bucket are fixed (see
+[Contents of the Bucket](#contents-of-the-bucket)).
+
+The `StorageBackup` objects list the copies that the control plane of this cluster took or imported. Copies that
+another cluster wrote into the same bucket are listed only after they are imported into this cluster's control plane
+with `{{ cliname }} backup import --bucket`, run in the `simplyblock-admin-control` pod (see
+[Using the CLI](../monitoring/cluster-health.md#using-the-cli)).
 
 ## Backup Policies
 
@@ -121,9 +127,7 @@ spec:
   claimSelector:
     matchLabels:
       backup: nightly
-  schedule: "15m,4 60m,11 24h,7"
-  maxVersions: 22
-  maxAge: 30d
+  schedule: "24h,7"
 ```
 
 ```bash title="Creating the backup policy"
@@ -138,14 +142,46 @@ kubectl apply -f backup-policy.yaml
 | `maxVersions`   | immutable  | Number of backups kept per claim. `0` means no limit by count.                                              |
 | `maxAge`        | immutable  | Age after which a backup is no longer kept, for example, `30d` or `720h`. Empty means no limit by age.      |
 
-The schedule `15m,4 60m,11 24h,7` takes a backup every 15 minutes (keeping the 4 most recent), every 60 minutes (keeping
-11), and every 24 hours (keeping 7). The intervals have to be strictly increasing. Retention is enforced by the control
-plane: the oldest backup is merged into the next one, so the number of restore points shrinks while the backup chain
-stays complete.
+The schedule `24h,7` takes a backup every 24 hours and keeps the 7 most recent. The intervals have to be strictly
+increasing. Backups are taken at the shortest interval of the schedule only. A policy without a schedule takes no
+backups and only applies `maxVersions` and `maxAge`.
+
+Each tier limits the backups in an age band. The band of a tier starts at the interval of the tier before it (zero for
+the first tier) and ends at the interval of the tier after it (no end for the last tier), so neighboring bands overlap.
+When a band holds more backups than its count, its oldest backup is merged into the next newer one. The backups that
+remain are therefore always the newest ones, spaced at the shortest interval, and a tiered schedule does not keep
+hourly or daily backups further back:
+
+| Schedule             | Backups kept                 |
+|----------------------|------------------------------|
+| `24h,7`              | 7 daily backups              |
+| `60m,24`             | 24 hourly backups            |
+| `60m,24 24h,7`       | 8 hourly backups             |
+| `15m,4 60m,11 24h,7` | 11 backups, 15 minutes apart |
 
 !!! note
     `schedule`, `maxVersions`, and `maxAge` cannot be changed on an existing policy. A different schedule or retention
     requires a new policy, and the old one is deleted afterward.
+
+### How Retention Merges
+
+Retention is enforced by the control plane, which evaluates every attached volume once a minute. The oldest backup is
+merged into the next newer one, so the number of restore points shrinks while the backup chain stays complete. A pass
+merges at most one backup per volume under the schedule and one under `maxVersions` and `maxAge`, so a volume far over
+its limits is brought down over several minutes. A merge needs two completed backups, which is why `maxAge` never
+removes the last one.
+
+Backups taken by a [backup request](#requesting-a-backup) count toward the limits like scheduled ones, and the next
+scheduled backup is due one interval after the newest backup of either kind. A request whose backup is merged away
+turns `Failed` with the message `The backup left the store`.
+
+Only volumes that exist and are attached to a policy are evaluated. The backups of a detached claim, of a claim whose
+policy was deleted, and of a deleted volume are never merged or removed.
+
+A merge removes the `StorageBackup` of the merged backup and records a `BackupGone` event on the `StorageCluster`.
+`status.backup.previousBackupID` of the surviving backup then names the predecessor of the merged one.
+
+A policy that sets none of `schedule`, `maxVersions`, and `maxAge` is refused by the control plane.
 
 ### Selecting the Claims
 
@@ -171,8 +207,8 @@ kubectl get storagebackuppolicy -n simplyblock
 ```
 
 ```plain title="Example output of the backup policy listing"
-NAME      CLUSTER      PHASE    SCHEDULE             CLAIMS   LASTBACKUP   AGE
-nightly   production   Active   15m,4 60m,11 24h,7   3        4m           2d
+NAME      CLUSTER      PHASE    SCHEDULE   CLAIMS   LASTBACKUP   AGE
+nightly   production   Active   24h,7      3        5h           2d
 ```
 
 ## Requesting a Backup
@@ -207,8 +243,10 @@ has no `clusterRef`.
 A `StorageBackup` sets exactly one of `spec.source` (a request) and `spec.clusterRef` (a record written by the
 operator). The API server rejects an object that sets both or neither.
 
-The operator snapshots the claim's volume and asks the control plane to back the snapshot up. `status.backup.backupID`
-is filled in once the control plane assigns the ID. While the snapshot is being taken, `status.phase` stays empty.
+The operator makes a single call to the control plane, which takes a snapshot of the volume named
+`_backup_<volume>_<time>` and backs it up. The snapshot stays on the volume after the backup completes (see
+[Backup Snapshots](#backup-snapshots)). `status.backup.backupID` is filled in and `status.phase` is set to `Creating`
+once the control plane returns the ID. Until then, `status.phase` stays empty.
 
 ```bash title="Watching the request"
 kubectl get storagebackup my-pvc-before-upgrade -n app -w
@@ -245,10 +283,10 @@ Requests live in the namespaces of their claims, and the backups of every namesp
 
 ## Listing Backups
 
-Every backup in the store is mirrored as one `StorageBackup` object, named after its backup ID. Backups taken by a
-policy are always recorded in the namespace of the `StorageCluster`, whatever namespace the claim is in. A record is an
-observation, and `spec.clusterRef` names the cluster whose store holds the copy. A webhook refuses to create or delete a
-record for anyone but the operator, and deleting a record never deletes the copy in the bucket.
+Every backup the control plane holds is mirrored as one `StorageBackup` object, named after its backup ID. Backups
+taken by a policy are always recorded in the namespace of the `StorageCluster`, whatever namespace the claim is in. A
+record is an observation, and `spec.clusterRef` names the cluster whose store holds the copy. A webhook refuses to
+create or delete a record for anyone but the operator, and deleting a record never deletes the copy in the bucket.
 
 The webhook does not block backup requests. An object with `spec.source` is a request, not a record, and a user can
 create and delete it. See [Requesting a Backup](#requesting-a-backup).
@@ -265,8 +303,11 @@ NAME                                   CLAIM    PHASE       SIZE         COMPLET
 `status.phase` is one of `Pending`, `Creating`, `Available`, or `Failed`. The backup ID is in
 `status.backup.backupID`. `status.source` records where the copy came from (the claim, the PersistentVolume, the
 pool, the logical volume, the snapshot, and the filesystem type), and `status.backup` records the copy itself (its
-ID, size, the previous backup of the chain, and the timestamps). The objects carry the labels `storage.simplyblock.io/cluster`, `storage.simplyblock.io/claim`, and
-`storage.simplyblock.io/backup-policy`, which allows the backups of one claim to be selected:
+ID, size, the previous backup of the chain, and the timestamps). The objects carry the labels
+`storage.simplyblock.io/cluster` and `storage.simplyblock.io/claim`, which allows the backups of one claim to be
+selected. The member backups of a [consistency group](#consistency-groups) also carry
+`storage.simplyblock.io/group-backup-id`, and `storage.simplyblock.io/group-backup` when a `StorageGroupBackup` took
+them.
 
 ```bash title="Listing the backups of one claim"
 kubectl get sb -n simplyblock -l storage.simplyblock.io/claim=my-pvc
@@ -275,12 +316,65 @@ kubectl get sb -n simplyblock -l storage.simplyblock.io/claim=my-pvc
 !!! note
     The first backup of a claim may take longer to complete, as there is no prior incremental state.
 
+### Backup Snapshots
+
+Every backup is taken from a snapshot of its own: `auto_<volume>_<time>` for a scheduled backup and
+`_backup_<volume>_<time>` for a requested one. These snapshots are not `VolumeSnapshot` objects, and nothing deletes
+them, not even a merge that removes their backup.
+
+!!! warning "Backups stop at 40 snapshots"
+    Before a backup is taken, the control plane counts the snapshots in the line of the volume, including the snapshot
+    the volume was cloned from and the ancestors of that snapshot. Once that line holds 40 snapshots, no further backup
+    of the volume is taken, because 40 is the longest chain the storage plane backs up and restores. A scheduled backup
+    is then skipped with only a warning in the control-plane log. A request turns `Failed` with a message that the
+    chain accepts at most 40 backups. At a schedule of `15m`, a volume without other snapshots reaches this limit after
+    ten hours.
+
+Backup snapshots that are no longer needed are deleted with the CLI in the `simplyblock-admin-control` pod (see
+[Using the CLI](../monitoring/cluster-health.md#using-the-cli)). The ID of the logical volume is in
+`status.source.lvolID` of its `StorageBackup` objects. Deleting a snapshot leaves its backup in the store, and a
+snapshot whose backup is still being written cannot be deleted.
+
+```bash title="Listing the snapshots of a logical volume"
+kubectl -n simplyblock exec -it deploy/simplyblock-admin-control -- \
+    {{ cliname }} snapshot list --lvol-id <LVOL_ID>
+```
+
+```bash title="Deleting a backup snapshot"
+kubectl -n simplyblock exec -it deploy/simplyblock-admin-control -- \
+    {{ cliname }} snapshot delete <SNAPSHOT_ID>
+```
+
+A restore is refused for a chain of more than 40 backups as well, so a policy has to keep at most 40 backups per claim.
+
+### Contents of the Bucket
+
+A backup uploads the clusters its snapshot holds, which are the data written since the snapshot before it. The first
+backup of a volume is therefore a full backup, and every later one is incremental. Snapshots of the volume that have
+no backup yet are uploaded first, each as a backup of its own, so that the chain has no gap. A restore reads the chain
+newest first and takes each cluster from the newest backup that holds it.
+
+| Key                             | Content                                                                                    |
+|---------------------------------|--------------------------------------------------------------------------------------------|
+| `<s3_id>/0/<n>`                 | One data cluster of a backup, 2 to 8 MiB depending on the erasure coding scheme.           |
+| `<s3_id>/1/0`                   | The root record of a backup, written by the storage plane.                                 |
+| `<s3_id>/1/<n>`                 | The extent map of a backup.                                                                |
+| `manifests/<backup_id>.json`    | The manifest of a backup: its volume, size, encoding, and the backup it is incremental on. |
+| `groups/<group_backup_id>.json` | The manifest of a group backup, written after the manifests of all its members.            |
+
+`<s3_id>` is a number the control plane assigns to each backup, and `status.backup.s3ID` of the `StorageBackup` holds
+it.
+
+!!! warning
+    An expiration lifecycle rule must not be set on the bucket. A rule that deletes objects by age removes the data of
+    old backups that newer incremental backups still depend on, and those backups can then no longer be restored.
+
 ## Restoring a Backup
 
 A backup is restored into a new claim by a `StorageBackupOps` operation with `action: Restore`. The backup can be a
 record or a request. The claim named in `restore.claimName` must not exist yet, because a restore creates a claim and
-never replaces the data of an existing one. The target pool is required, since a backup found in a shared store may
-come from a pool this cluster does not have.
+never replaces the data of an existing one. The target pool is required, since an imported backup may come from a
+pool this cluster does not have.
 
 ```yaml title="Example of a restore into a new claim (restore.yaml)"
 apiVersion: storage.simplyblock.io/v1alpha2
@@ -305,20 +399,29 @@ spec:
 kubectl apply -f restore.yaml
 ```
 
-| Field                      | Description                                                                        |
-|----------------------------|------------------------------------------------------------------------------------|
-| `clusterRef.name`          | Name of the `StorageCluster`. Required.                                            |
-| `clusterRef.namespace`     | Namespace of the `StorageCluster`. Defaults to the namespace of the operation.     |
-| `backupRef.name`           | Name of the `StorageBackup` to restore, a record or a request. Required.           |
-| `backupRef.namespace`      | Namespace of the `StorageBackup`. Defaults to the namespace of the operation.      |
-| `action`                   | `Restore`, the only action. Required.                                              |
-| `abort`                    | Stops the restore, as long as no logical volume has been created yet.              |
-| `restore.claimName`        | Name of the claim to create. Required, and must not exist.                         |
-| `restore.targetPool`       | `StoragePool` to restore into, read from the namespace of the cluster. Required.   |
-| `restore.claimLabels`      | Labels applied to the created claim, for example, to attach it to a backup policy. |
-| `restore.claimAnnotations` | Annotations applied to the created claim.                                          |
+| Field                      | Description                                                                                                        |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------|
+| `clusterRef.name`          | Name of the `StorageCluster`. Required.                                                                            |
+| `clusterRef.namespace`     | Namespace of the `StorageCluster`. Defaults to the namespace of the operation.                                     |
+| `backupRef.name`           | Name of the `StorageBackup` to restore, a record or a request.                                                     |
+| `backupRef.namespace`      | Namespace of the `StorageBackup`. Defaults to the namespace of the operation.                                      |
+| `groupBackupRef.name`      | Name of a `StorageGroupBackup` whose group backup is restored. See [Consistency Groups](#consistency-groups).      |
+| `groupBackupRef.namespace` | Namespace of the `StorageGroupBackup`. Defaults to the namespace of the operation.                                 |
+| `groupBackupID`            | ID of a group backup no `StorageGroupBackup` stands for, such as one a policy took.                                |
+| `action`                   | `Restore`, the only action. Required.                                                                              |
+| `abort`                    | Stops the restore, as long as no logical volume has been created yet.                                              |
+| `restore.claimName`        | Name of the claim to create. Required, and must not exist.                                                         |
+| `restore.targetPool`       | `StoragePool` to restore into, read from the namespace of the cluster. Required.                                   |
+| `restore.claimLabels`      | Labels applied to the created claim, for example, to attach it to a backup policy.                                 |
+| `restore.claimAnnotations` | Annotations applied to the created claim.                                                                          |
+| `restore.volumeMode`       | `Filesystem` or `Block`. Defaults to the volume mode recorded in the backup, and to `Filesystem` without a record. |
 
-`clusterRef` and `backupRef` are objects. The API server rejects a string such as `backupRef: 7fab02f8-...`.
+Exactly one of `backupRef`, `groupBackupRef`, and `groupBackupID` is set. `clusterRef`, `backupRef`, and
+`groupBackupRef` are objects. The API server rejects a string such as `backupRef: 7fab02f8-...`.
+
+!!! warning
+    A backup of a `Block` volume that is restored with `volumeMode: Filesystem` is formatted on its first mount, which
+    overwrites the restored data.
 
 ### Restoring Across Namespaces
 
@@ -372,11 +475,67 @@ While the phase is `Running`, `status.step.state` moves through `Validating`, `R
 `Binding`. Once the phase is `Succeeded`, the claim is bound and can be attached to a pod. Two restores of the same
 backup run one after the other, including restores created in different namespaces.
 
-## Restoring a Volume Group
+## Consistency Groups
 
-Backups cover single claims. A crash-consistent restore of several claims from one `VolumeGroupSnapshot` is performed
-by a `VolumeGroupSnapshotOps` operation, see
-[Restoring a Volume Group Snapshot](../../usage/snapshotting.md#restoring-a-volume-group-snapshot).
+The claims of a consistency group (see
+[Snapshotting a Group of Volumes](../../usage/snapshotting.md#snapshotting-a-group-of-volumes)) are backed up as one
+unit. A group backup holds one backup per member, all taken from one crash-consistent generation of the group. A
+policy backs up a group when it names the group in `consistencyGroupName` instead of setting a `claimSelector`. It
+takes one generation per shortest interval of its schedule, and its retention removes whole generations.
+
+```yaml title="Example of a backup policy for a consistency group"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageBackupPolicy
+metadata:
+  name: db-group-daily
+  namespace: simplyblock
+spec:
+  clusterRef: production
+  consistencyGroupName: db-group
+  schedule: "24h,7"
+```
+
+A single group backup is requested by a `StorageGroupBackup` in the namespace of the group's claims. Its member
+backups are recorded as `StorageBackup` objects next to it, and deleting it deletes no backup. `status.phase` is
+`Pending`, `Creating`, `Available`, or `Failed`.
+
+```yaml title="Example of a group backup request"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageGroupBackup
+metadata:
+  name: db-group-before-upgrade
+  namespace: prod
+spec:
+  source:
+    consistencyGroupName: db-group
+```
+
+A group backup is restored by a `StorageBackupOps` that names the `StorageGroupBackup` in `groupBackupRef`. A group
+backup taken by a policy has no `StorageGroupBackup` and is named by `groupBackupID` instead, whose value is the
+`storage.simplyblock.io/group-backup-id` label of its member backups. One claim is created per member, named
+`<claimName>-<member volume>`, and the restored claims form a new consistency group.
+
+```yaml title="Example of a group restore"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageBackupOps
+metadata:
+  name: restore-db-group
+  namespace: prod
+spec:
+  clusterRef:
+    name: production
+    namespace: simplyblock
+  groupBackupRef:
+    name: db-group-before-upgrade
+  action: Restore
+  restore:
+    claimName: restored-db
+    targetPool: production-default
+```
+
+A crash-consistent copy of a group that stays inside the cluster is a `VolumeGroupSnapshot`, restored by a
+`VolumeGroupSnapshotOps` operation (see
+[Restoring a Volume Group Snapshot](../../usage/snapshotting.md#restoring-a-volume-group-snapshot)).
 
 ## Control-Plane Backups
 
