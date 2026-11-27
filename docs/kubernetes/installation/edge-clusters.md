@@ -12,21 +12,58 @@ differ for edge clusters. The edge-specific requirements are noted in
 ## Preparing the Hub
 
 The hub runs the control plane with the standalone profile, installed as described in
-[Install Simplyblock Operator](k8s-control-plane.md), with an admin token for the edge operators:
+[Install Simplyblock Operator](k8s-control-plane.md), with TLS off and with admin tokens for the edge operators.
 
-```bash title="Create the admin token and install the hub"
+The control plane of the hub calls the storage nodes of every edge directly. With TLS on, it calls them over HTTPS and
+verifies their certificates against the CA of the hub, which did not sign the certificates of an edge cluster. A hub
+with `tls.enabled=false` calls them over plain HTTP at the address of the worker, which is the only way it reaches
+remote storage nodes. The `tls` block cannot be changed once the control plane exists, so TLS is turned off at the
+first installation. Without TLS, the admin tokens and the management traffic of the storage nodes cross the network
+unencrypted. The hub and the edge sites are therefore connected through a VPN or a private link, and the Management API
+is exposed on that link only.
+
+The Secret holds the admin tokens under the key `token`, as a comma-separated list. One token per edge site allows a
+single site to be revoked. Every token is a full admin credential of the hub, and it can read the cluster secret of
+every edge cluster.
+
+Whether the control plane sets up monitoring is decided when the first edge cluster registers. Every later cluster
+takes that decision over, so the observability stack is enabled at the installation if it is wanted. Enabling it after
+the first edge cluster has registered leaves monitoring off for every edge cluster.
+
+```bash title="Creating the admin tokens of two edge sites and installing the hub"
 kubectl create namespace simplyblock
 kubectl -n simplyblock create secret generic sb-admin-token \
-    --from-literal=token="$(openssl rand -hex 32)"
+    --from-literal=token="$(openssl rand -hex 32),$(openssl rand -hex 32)"
 
 helm install simplyblock-operator simplyblock/simplyblock-operator \
     --namespace simplyblock \
     --set deployment.profile=standalone \
-    --set controlplane.local.adminTokenSecretRef=sb-admin-token
+    --set tls.enabled=false \
+    --set tls.mutual_enabled=false \
+    --set controlplane.local.adminTokenSecretRef=sb-admin-token \
+    --set controlplane.observability.enabled=true
 ```
 
-The Management API must be reachable from the edge sites, for example, through a LoadBalancer Service with the
-selector of the `simplyblock-webappapi` Service:
+The tokens are read when the Management API starts, and the Secret is not watched. A changed list takes effect after a
+restart of `simplyblock-webappapi`:
+
+```yaml title="Example of a restart of the Management API (restart-webappapi.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: ControlPlaneOps
+metadata:
+  name: restart-webappapi
+  namespace: simplyblock
+spec:
+  controlPlaneRef: simplyblock
+  action: Restart
+  restart:
+    components:
+      - simplyblock-webappapi
+```
+
+The Management API must be reachable from the edge sites over the private link, for example, through a LoadBalancer
+Service with the selector of the `simplyblock-webappapi` Service. The Service gets an address on the private network,
+or it is limited to that network with `spec.loadBalancerSourceRanges`:
 
 ```bash title="Expose the Management API to the edge sites"
 kubectl -n simplyblock expose service simplyblock-webappapi \
@@ -36,16 +73,20 @@ kubectl -n simplyblock expose service simplyblock-webappapi \
 ## Installing the Operator at the Edge
 
 At the edge site, the operator is installed in the managed profile as described in
-[Connecting to an External Control Plane](install-csi.md). The token Secret holds the admin token of the hub. An edge
-cluster also needs the default storage node image, because it has no local control plane that names it:
+[Connecting to an External Control Plane](install-csi.md). The endpoint is the `http://` address of the Management API
+on the private link. An `https://` endpoint makes the operator serve the storage nodes of the edge over TLS, which the
+hub cannot call. TLS is off at the edge as well: with `tls.enabled` on, the CSI driver rewrites the endpoint to
+`https://` and trusts only the CA of the edge cluster. The token Secret holds one of the admin tokens of the hub. An
+edge cluster also needs the default storage node image, because it has no local control plane that names it:
 
 ```bash title="Install the operator in the managed profile"
 helm install simplyblock-operator simplyblock/simplyblock-operator \
     --namespace simplyblock \
     --set deployment.profile=managed \
-    --set controlplane.managed.endpoint=https://<HUB-MANAGEMENT-API> \
+    --set tls.enabled=false \
+    --set tls.mutual_enabled=false \
+    --set controlplane.managed.endpoint=http://<HUB-MANAGEMENT-API> \
     --set controlplane.managed.credentialsSecretRef=cp-token \
-    --set controlplane.managed.caBundleSecretRef=cp-ca \
     --set controlplane.managed.storageNodeImage=<STORAGE-NODE-IMAGE>
 ```
 
@@ -120,8 +161,6 @@ kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p 
     "clusterMode": "Dual",
     "enableArbitration": true,
     "arbitration": {
-      "holdMs": 2500,
-      "leaseTtlMs": 1500,
       "hostFencing": true
     }
   }}}'
@@ -131,11 +170,13 @@ kubectl -n simplyblock patch clusterdeploymentconfig edge-draft --type merge -p 
 |---------------------------|------------|--------------------------------------------------------------------------------------------------------------|
 | `clusterMode`             | `Standard` | `Single` for one storage node, `Dual` for two, `Standard` for three or more.                                 |
 | `enableArbitration`       | Off        | Enables the arbitration of the hub between the two nodes.                                                    |
-| `arbitration.holdMs`      | `2500`     | How long a node holds write I/O after losing its peer. Must stay below 5 seconds.                            |
-| `arbitration.leaseTtlMs`  | `1500`     | Validity of the lease the hub grants each node. Must be shorter than the hold time.                          |
 | `arbitration.hostFencing` | Off        | Lets Kubernetes restart the workloads of a fenced node on the other node. See [Host Fencing](#host-fencing). |
 
 `enableArbitration` and `arbitration` are refused unless `clusterMode` is `Dual`.
+
+The fields `arbitration.holdMs` and `arbitration.leaseTtlMs` are accepted, but they are not passed to the control
+plane. Every two-node cluster runs with a hold time of 2500 ms, the time a node holds write I/O after losing its peer,
+and with leases from the hub that stay valid for 1500 ms.
 
 ## Host Fencing
 
@@ -235,3 +276,7 @@ loss timeouts for two-node edge clusters with arbitration, and the CSI driver ap
 The draft is approved and the cluster verified as described in
 [Create a Storage Cluster](k8s-storage-plane.md#approve-the-deployment). The operator creates the storage cluster in
 the control plane of the hub, then the storage nodes and the storage pool with its StorageClass.
+
+The name of the storage cluster has to be unique on the hub, for example, the name of the site. The control plane
+refuses a second cluster with the same name, and the operator of the second edge then adopts the existing cluster of
+that name. Two edge sites then drive one cluster.
