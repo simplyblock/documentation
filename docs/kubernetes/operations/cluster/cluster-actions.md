@@ -32,25 +32,27 @@ kubectl apply -f shutdown-cluster.yaml
 
 The operation lives in the namespace of its cluster. `spec.clusterRef` and `spec.action` are required and immutable.
 
-| Action           | Effect                                                                      | Completes when                     | Page                                                                   |
-|------------------|-----------------------------------------------------------------------------|------------------------------------|------------------------------------------------------------------------|
-| `Activate`       | Activates a cluster whose nodes have joined but which is not yet live.      | The cluster is `active`.           | [Activating a Storage Cluster](activating-a-cluster.md)                |
-| `Expand`         | Finalizes an expansion of nodes that were added without the expansion flag. | The cluster is `active`.           | [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md) |
-| `Shutdown`       | Shuts the whole cluster down.                                               | The cluster is no longer `active`. | [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)          |
-| `Start`          | Starts a previously shut down cluster.                                      | The cluster is `active`.           | [Starting a Storage Cluster](starting-a-cluster.md)                    |
-| `Restart`        | Runs a shutdown followed by a start.                                        | The cluster is `active`.           | [Restarting a Storage Cluster](restarting-a-cluster.md)                |
-| `RollingRestart` | Restarts every storage node of the cluster, one after another.              | Every node has been restarted.     | [Rolling Restart](rolling-restart.md)                                  |
-| `CancelTask`     | Cancels one task of the control plane.                                      | The task is no longer running.     | [Canceling a Task](#canceling-a-task)                                  |
+| Action                  | Effect                                                                      | Completes when                     | Page                                                                   |
+|-------------------------|-----------------------------------------------------------------------------|------------------------------------|------------------------------------------------------------------------|
+| `Activate`              | Activates a cluster whose nodes have joined but which is not yet live.      | The cluster is `active`.           | [Activating a Storage Cluster](activating-a-cluster.md)                |
+| `Expand`                | Finalizes an expansion of nodes that were added without the expansion flag. | The cluster is `active`.           | [Expanding a Storage Cluster](../scaling/expanding-storage-cluster.md) |
+| `Shutdown`              | Shuts the whole cluster down.                                               | The cluster is no longer `active`. | [Shutting Down a Storage Cluster](shutting-down-a-cluster.md)          |
+| `Start`                 | Starts a previously shut down cluster.                                      | The cluster is `active`.           | [Starting a Storage Cluster](starting-a-cluster.md)                    |
+| `Restart`               | Runs a shutdown followed by a start.                                        | The cluster is `active`.           | [Restarting a Storage Cluster](restarting-a-cluster.md)                |
+| `RollingRestart`        | Restarts every storage node of the cluster, one after another.              | Every node has been restarted.     | [Rolling Restart](rolling-restart.md)                                  |
+| `CancelTask`            | Cancels one task of the control plane.                                      | The task is no longer running.     | [Canceling a Task](#canceling-a-task)                                  |
+| `SwitchWriteProtection` | Moves an upgraded cluster from v1 to v2 distrib write protection.           | The cluster reports `V2`.          | [Switching Write Protection](#switching-write-protection)              |
 
 Any other value is rejected by the CRD schema.
 
 ### Parameters
 
-| Field                                 | Type   | Applies to       | Description                                                                               |
-|---------------------------------------|--------|------------------|-------------------------------------------------------------------------------------------|
-| `spec.rollingRestart.refreshSNodeAPI` | bool   | `RollingRestart` | Replaces the storage-node pod of every node between its shutdown and its restart.         |
-| `spec.cancelTask.taskID`              | string | `CancelTask`     | The control-plane ID of the task to cancel, from `StorageCluster.status.tasks`. Required. |
-| `spec.abort`                          | bool   | All actions      | Asks the running operation to stop at its current step.                                   |
+| Field                                 | Type                 | Applies to       | Description                                                                                                                   |
+|---------------------------------------|----------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| `spec.rollingRestart.refreshSNodeAPI` | bool                 | `RollingRestart` | Replaces the storage-node pod of every node between its shutdown and its restart.                                             |
+| `spec.rollingRestart.selection`       | `All` or `OutOfDate` | `RollingRestart` | Which nodes are restarted: every node (`All`, the default), or only the nodes not running their desired images (`OutOfDate`). |
+| `spec.cancelTask.taskID`              | string               | `CancelTask`     | The control-plane ID of the task to cancel, from `StorageCluster.status.tasks`. Required.                                     |
+| `spec.abort`                          | bool                 | All actions      | Asks the running operation to stop at its current step.                                                                       |
 
 A parameter block is ignored by every action it does not belong to.
 
@@ -70,6 +72,7 @@ is already in the target state succeed at once.
 | `Activate`, `Expand`, `Shutdown`, `Start`, `CancelTask` | `Requesting` → `Awaiting`                                                                                             |
 | `Restart`                                               | `ShuttingDown` → `Starting`                                                                                           |
 | `RollingRestart`                                        | Per node: `CheckingPeers` → `ShuttingDownNode` → [`RefreshingPod` → `AwaitingPod`] → `RestartingNode` → `Rebalancing` |
+| `SwitchWriteProtection`                                 | `CheckingPeers` → `Switching`                                                                                         |
 
 A request that the control plane refuses with a transient error is retried, and the reason is written to
 `status.message`. The operation fails when a step outlives its deadline.
@@ -84,6 +87,7 @@ A request that the control plane refuses with a transient error is retried, and 
 | `RefreshingPod`, `AwaitingPod` | 10 minutes |
 | `RestartingNode`               | 45 minutes |
 | `Rebalancing`                  | 4 hours    |
+| `Switching`                    | 30 minutes |
 
 ## Monitoring an Action
 
@@ -153,17 +157,46 @@ spec:
 The operation succeeds once the task is no longer running or pending, and a `TaskCanceled` event is emitted. A task
 that is already gone when the operation runs counts as success as well.
 
+## Switching Write Protection
+
+A cluster created on `26.4.0-beta6` or earlier runs v1 distrib write protection, and an upgrade leaves it there. Every
+cluster created by a later release starts on v2, which `StorageCluster.status.writeProtection` shows.
+`SwitchWriteProtection` moves an upgraded cluster to v2.
+
+```yaml title="Example of the write-protection switch (switch-write-protection.yaml)"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageClusterOps
+metadata:
+  name: switch-write-protection
+  namespace: simplyblock
+spec:
+  clusterRef: simplyblock-cluster
+  action: SwitchWriteProtection
+```
+
+The operation holds in `CheckingPeers` until every node of the cluster that is not being removed is online. It then
+asks the control plane for the switch once, and succeeds when the cluster reports `V2`. The switch restarts nothing:
+the control plane moves every online node at runtime and records v2 for the others, which pick it up at their next
+restart. A cluster already on `V2` succeeds without a call. When the control plane refuses the switch because a node
+rejected it, the cluster stays on v1, and the request is made again after a few minutes until the step's deadline. On
+a stretched cluster the operation runs on the leader site, like the other cluster-wide actions.
+
+The operation can be aborted in `CheckingPeers`. Once it is `Switching`, the switch may already have reached the
+nodes, and the webhook refuses deleting the operation.
+
 ## Events
 
 In addition to the common operation events, a cluster operation emits the following reasons.
 
-| Reason                  | Meaning                                                                                   |
-|-------------------------|-------------------------------------------------------------------------------------------|
-| `FailureDomainNotReady` | An activation waits because the failure domains do not hold an equal number of hosts yet. |
-| `StripeNodesNotReady`   | An activation waits because the cluster has fewer storage nodes than its stripe needs.    |
-| `PeerNodeNotOnline`     | A rolling restart holds, because a peer node is not online.                               |
-| `NodeRestarted`         | A rolling restart advanced to the next node.                                              |
-| `TaskCanceled`          | The task named by a `CancelTask` operation is no longer running.                          |
+| Reason                  | Meaning                                                                                             |
+|-------------------------|-----------------------------------------------------------------------------------------------------|
+| `FailureDomainNotReady` | An activation waits because the failure domains do not hold an equal number of hosts yet.           |
+| `StripeNodesNotReady`   | An activation waits because the cluster has fewer storage nodes than its stripe needs.              |
+| `PeerNodeNotOnline`     | A rolling restart holds, because a peer node is not online.                                         |
+| `NodeRestarted`         | A rolling restart advanced to the next node.                                                        |
+| `NodeCurrent`           | An `OutOfDate` rolling restart passed over a node that already runs its desired images.             |
+| `ImageMismatch`         | A node came back from a rolling restart on images other than its desired ones, so the walk stopped. |
+| `TaskCanceled`          | The task named by a `CancelTask` operation is no longer running.                                    |
 
 ## Cleaning Up
 

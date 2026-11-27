@@ -50,6 +50,44 @@ spec:
 
 This is the form used after a storage-node image change, as described in [Upgrading a Cluster](cluster-upgrade.md).
 
+## Moving Nodes to New Images
+
+Every restart of a rolling restart starts the node on its desired SPDK and SPDK proxy images. A node's desired image is
+its own `spec.config.spdkImage`, else its cluster's `spec.storageNodes.spdkImage`, else the control plane's default,
+and the SPDK proxy image resolves the same way. The `Images` column of `kubectl get storagenodes` shows whether a node
+runs its desired images. It is empty while the control plane does not report the images a node runs.
+
+`spec.rollingRestart.selection` decides which nodes are restarted:
+
+| Selection   | Restarts                                                                                         |
+|-------------|--------------------------------------------------------------------------------------------------|
+| `All`       | Every node that is not being removed. This is the default.                                       |
+| `OutOfDate` | Only the nodes not running their desired images, so a new operation continues where one stopped. |
+
+```yaml title="Example of a rolling restart of the out-of-date nodes"
+apiVersion: storage.simplyblock.io/v1alpha2
+kind: StorageClusterOps
+metadata:
+  name: roll-simplyblock-cluster-out-of-date
+  namespace: simplyblock
+spec:
+  clusterRef: simplyblock-cluster
+  action: RollingRestart
+  rollingRestart:
+    refreshSNodeAPI: true
+    selection: OutOfDate
+```
+
+An `OutOfDate` walk checks each node again when it reaches it. A node that runs its desired images by then, because
+another operation restarted it, is passed over, listed in `status.rollingRestart.current`, and announced with a
+`NodeCurrent` event. A cluster whose nodes all run their desired images succeeds at once. An `OutOfDate` walk fails
+when the control plane reports the images of no node, because no node can be found out of date then, and the message
+names `All` as the selection to use instead.
+
+Whatever the selection, a walk stops when a node comes back on images other than the ones its restart asked for: the
+operation fails with the image the node runs and the one expected, and an `ImageMismatch` warning is emitted. The nodes
+after it stay on the images they run until the cause is found.
+
 ## Steps
 
 When the operation starts, it lists the storage nodes of the cluster and writes their UUIDs, in the order they will be
