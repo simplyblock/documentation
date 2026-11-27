@@ -1,7 +1,7 @@
 ---
 title: "Operating a Unified DataStore"
 description: "Operate a simplyblock Unified DataStore: the array registration, login rotation, capacity growth, LUN takeover after node failures, and teardown."
-weight: 10165
+weight: 10166
 ---
 
 {{experimental}}

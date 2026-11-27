@@ -58,6 +58,6 @@ two-node cluster uses `1+1`.
 A [Unified DataStore](unified-datastore.md) on storage array LUNs runs `1+0`, whatever scheme is stated. The
 array's RAID protects the data, and the LUN of a failed storage node is taken over by a standby node.
 
-On volumes of a local RAID controller, the RAID below simplyblock already
-handles drive failures. An `n+1` scheme, preferably `4+1`, is then sufficient: on top of RAID 5, it tolerates two
+On [storage array](storage-arrays.md) LUNs in pass-through mode or volumes of a local RAID controller, the RAID
+below simplyblock already handles drive failures. An `n+1` scheme, preferably `4+1`, is then sufficient: on top of RAID 5, it tolerates two
 failures, similar to RAID 6, with as little as 25% additional overhead.

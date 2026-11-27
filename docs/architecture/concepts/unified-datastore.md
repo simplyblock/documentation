@@ -1,7 +1,7 @@
 ---
 title: "Unified DataStore"
 description: "How simplyblock creates, presents, fences, and takes over the LUNs of an FC, iSCSI, or NVMe-oF storage array through array plug-ins."
-weight: 30655
+weight: 30656
 ---
 
 {{experimental}}
@@ -10,6 +10,10 @@ A Unified DataStore is a simplyblock cluster whose data lives on LUNs of an exte
 integrated into the control plane. The LUNs are created, presented to the hosts, grown, cut off, and deleted by
 simplyblock itself, through an array plug-in. Every LUN is presented to more than one host. When the storage node
 serving a LUN fails, the LUN is taken over by a standby node within seconds, and no data has to be rebuilt.
+
+Without an array plug-in, the LUNs of an array are used in pass-through mode instead: the array administrator gives
+every host LUNs of its own, and simplyblock uses them as local block devices, see
+[Storage Arrays: Pass-Through Mode](storage-arrays.md).
 
 Arrays of Pure Storage, NetApp, Dell, HPE, IBM, Hitachi, Huawei, and Infinidat are supported, as well as Amazon EBS
 volumes with Multi-Attach (see [Array Plug-ins](../../reference/array-plugins.md)). On top of the LUNs, the full

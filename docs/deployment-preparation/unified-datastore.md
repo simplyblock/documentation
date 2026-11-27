@@ -1,7 +1,7 @@
 ---
 title: "Unified DataStore"
 description: "Prepare a storage array and its hosts for a simplyblock Unified DataStore: supported arrays, array account, host connectivity, credentials, and sizing."
-weight: 29990
+weight: 29991
 ---
 
 {{experimental}}
@@ -9,6 +9,8 @@ weight: 29990
 A Unified DataStore runs a simplyblock cluster on LUNs that simplyblock creates on an external storage array (see
 [Unified DataStore](../architecture/concepts/unified-datastore.md) for the architecture). The array, its management access,
 and the hosts' storage connectivity are prepared before the deployment. This page lists what has to be in place.
+LUNs that the array administrator presents to each host are prepared for the pass-through mode instead, see
+[Storage Arrays: Pass-Through Mode](storage-arrays.md).
 
 ## Supported Storage Arrays
 

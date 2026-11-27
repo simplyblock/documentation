@@ -82,7 +82,8 @@ Linux block devices, which stay attached under Linux.
 Any Linux block device can be used instead of NVMe devices, such as SAS or SATA SSDs, partitions, cloud volumes, or
 the LUNs of a storage array. The devices remain attached under Linux and have to be unmounted and unpartitioned. The
 same uniformity recommendation applies. See
-[Linux Block Devices](../architecture/concepts/linux-block-devices.md) and [Unified DataStore](unified-datastore.md).
+[Linux Block Devices](../architecture/concepts/linux-block-devices.md), [Storage Arrays](storage-arrays.md), and
+[Unified DataStore](unified-datastore.md).
 
 !!! note "Edge clusters"
     Edge clusters often use Linux block devices or partitions of a disk shared with the operating system. The rules

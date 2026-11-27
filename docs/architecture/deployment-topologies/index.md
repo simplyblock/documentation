@@ -39,8 +39,9 @@ The details and a comparison are in [Control Plane and Operator](control-plane-a
 - **Hybrid:** Some workers host both storage and applications, while others are storage-only or compute-only. The
   hybrid model is a matter of node selection and does not require a different installation.
 
-Each placement can run on local devices or, as a Unified DataStore, on LUNs of an external storage array that
-simplyblock provisions and fails over itself. See [Unified DataStore](unified-datastore.md).
+Each placement can run on local devices, on LUNs of an external storage array in
+[pass-through mode](../concepts/storage-arrays.md), or, as a Unified DataStore, on LUNs of an external storage array
+that simplyblock provisions and fails over itself. See [Unified DataStore](unified-datastore.md).
 
 ## Relation to Disaster Recovery
 

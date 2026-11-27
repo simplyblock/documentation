@@ -16,8 +16,9 @@ virtualized disks (virtio, Xen), or cloud volumes such as EBS.
     Linux block devices are attached through the kernel block layer, which adds latency compared with the native
     NVMe path. Where the lowest latency matters, local NVMe devices are recommended.
 
-LUNs of an FC, iSCSI, or NVMe-oF storage array are used through the [Unified DataStore](unified-datastore.md),
-in which the LUNs are created, presented, and taken over by simplyblock itself.
+LUNs of an FC, iSCSI, or NVMe-oF storage array are used the same way in pass-through mode, see
+[Storage Arrays](storage-arrays.md). In the [Unified DataStore](unified-datastore.md), the LUNs are instead created,
+presented, and taken over by simplyblock itself.
 
 ## Device Modes
 
