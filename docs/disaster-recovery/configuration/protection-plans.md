@@ -334,3 +334,9 @@ spec:
   s3Profile:
     name: ramen-fra
 ```
+
+A VolumeReplicationClass for the simplyblock CSI driver that is written by hand, outside dr-hub, has to carry the
+parameters `replication.storage.openshift.io/replication-secret-name` and
+`replication.storage.openshift.io/replication-secret-namespace`. The CSI-Addons controller refuses every replication
+call for a class that names no Secret, although the simplyblock driver never reads it. Any readable Secret is
+accepted, and an empty one is enough.

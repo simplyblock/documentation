@@ -32,24 +32,44 @@ a `ControlPlane` or `SimplyblockDriver` created by the release still exists.
 
 Besides the operator itself, the following objects are rendered when their values say so.
 
-| Object                                   | Rendered when                                                  | Purpose                                                                                                        |
-|------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
-| `ControlPlane/simplyblock`               | `deployment.profile` is `standalone` or `managed`              | The control plane, installed locally or reached remotely.                                                      |
-| `SimplyblockDriver/simplyblock`          | `deployment.profile` is `standalone` or `managed`              | The CSI driver, deployed from the `driver` block.                                                              |
-| `OperatorOps` with the `Discover` action | `standalone` profile and `discovery.enabled` is `true`         | The first discovery run, which writes a draft `ClusterDeploymentConfig`.                                       |
-| Secret `simplyblock-csi-secret-v2`       | `externallyManagedSecret.create` is `true`                     | Credentials of clusters the operator did not create, from `csiConfig`, `csiSecret`, and `multiCluster`.        |
-| Block StorageClass                       | A pool is set in `csiConfig.simplybk.pool` or `multiCluster`   | A StorageClass for a cluster that has no `StoragePool` object to write one.                                    |
-| cert-manager `ClusterIssuer`             | `tls.provider` is `cert-manager` with `createSelfSignedIssuer` | The self-signed issuer the chart mints its CA certificate from.                                                |
-| Observability stack                      | `controlplane.observability.enabled` is `true`                 | Graylog, Grafana, Thanos, Fluent Bit, and the MongoDB and OpenSearch subcharts.                                |
-| Prometheus                               | `prometheus.enabled` is `true`                                 | The instance the control plane pushes metrics to.                                                              |
-| Reloader                                 | `reloader.enabled` is `true`                                   | Rolls the workloads that mount the FoundationDB cluster file when the coordinators move.                       |
-| CSI snapshot controller                  | `snapshotcontroller.create` is `true`                          | The snapshot controller and the snapshot CRDs a cluster does not serve yet.                                    |
-| CSI-Addons                               | `csiaddons.create` is `true`                                   | The CSI-Addons CRDs and controller.                                                                            |
-| Control Center                           | `controlCenter.enabled` is `true`                              | The web console. See [Control Center](../../disaster-recovery/control-center.md).                              |
-| Ramen operators                          | `ramen.hub.enabled` or `ramen.drCluster.enabled` is `true`     | The disaster recovery operators. See [Installing Disaster Recovery](../../disaster-recovery/install/index.md). |
+| Object                                   | Rendered when                                                  | Purpose                                                                                                 |
+|------------------------------------------|----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `ControlPlane/simplyblock`               | `deployment.profile` is `standalone` or `managed`              | The control plane, installed locally or reached remotely.                                               |
+| `SimplyblockDriver/simplyblock`          | `deployment.profile` is `standalone` or `managed`              | The CSI driver, deployed from the `driver` block.                                                       |
+| `OperatorOps` with the `Discover` action | `standalone` profile and `discovery.enabled` is `true`         | The first discovery run, which writes a draft `ClusterDeploymentConfig`.                                |
+| Secret `simplyblock-csi-secret-v2`       | `externallyManagedSecret.create` is `true`                     | Credentials of clusters the operator did not create, from `csiConfig`, `csiSecret`, and `multiCluster`. |
+| Block StorageClass                       | A pool is set in `csiConfig.simplybk.pool` or `multiCluster`   | A StorageClass for a cluster that has no `StoragePool` object to write one.                             |
+| cert-manager `ClusterIssuer`             | `tls.provider` is `cert-manager` with `createSelfSignedIssuer` | The self-signed issuer the chart mints its CA certificate from.                                         |
+| Observability stack                      | `controlplane.observability.enabled` is `true`                 | Graylog, Grafana, Thanos, Fluent Bit, and the MongoDB and OpenSearch subcharts.                         |
+| Prometheus                               | `prometheus.enabled` is `true`                                 | The instance the control plane pushes metrics to.                                                       |
+| Reloader                                 | `reloader.enabled` is `true`                                   | Rolls the workloads that mount the FoundationDB cluster file when the coordinators move.                |
+| CSI snapshot controller                  | `snapshotcontroller.create` is `true`                          | The snapshot controller and the snapshot CRDs a cluster does not serve yet.                             |
+| CSI-Addons                               | `csiaddons.create` is `true`                                   | The CSI-Addons CRDs and controller. See [Ramen and CSI-Addons Values](#ramen-and-csi-addons-values).    |
+| Control Center                           | `controlCenter.enabled` is `true`                              | The web console. See [Control Center](../../disaster-recovery/control-center.md).                       |
+| Ramen operators                          | `ramen.hub.enabled` or `ramen.drCluster.enabled` is `true`     | The upstream Ramen operators. See [Ramen and CSI-Addons Values](#ramen-and-csi-addons-values).          |
 
 The `tls`, `driver`, `discovery`, and `controlplane.observability.grafana.notifications` blocks are validated by the
 chart's values schema. A key that is misspelled in one of them fails the render instead of being ignored.
+
+### Ramen and CSI-Addons Values
+
+The `ramen` block installs the upstream Ramen operators, for a disaster recovery setup that is not managed by
+simplyblock Disaster Recovery. With simplyblock Disaster Recovery, the Ramen operators are installed by the
+`dr-simplyblock-hub` chart and delivered to the sites by dr-hub (see
+[Installing Disaster Recovery](../../disaster-recovery/install/index.md)). `ramen.hub.enabled` and
+`ramen.drCluster.enabled` then stay `false`, because both installations create the same Ramen objects.
+
+- **`ramen.hub.enabled`:** Runs the Ramen hub operator on the management cluster. It requires an Open Cluster
+  Management hub on that cluster.
+- **`ramen.drCluster.enabled`:** Runs the Ramen DR cluster operator on a cluster that holds protected volumes. It is
+  enabled in the release that deploys the Simplyblock Operator on that cluster.
+- **`ramen.installCRDs`:** Installs the Ramen CRDs of the enabled operators. It is set to `false` where Ramen is
+  already installed, for example, by Red Hat Advanced Cluster Management or OpenShift Data Foundation.
+- **`ramen.s3StoreProfiles`:** The S3 stores that Ramen keeps cluster data in, in the Ramen `s3StoreProfiles` format.
+  The chart creates no S3 Secret, so the Secret named in `s3SecretRef` is created beforehand.
+
+`csiaddons.create` installs the CSI-Addons CRDs and controller, through which volume replication requests reach the
+simplyblock CSI driver. A cluster that holds protected volumes needs them, whichever way Ramen is installed.
 
 ## Example Values Files
 

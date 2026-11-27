@@ -49,8 +49,11 @@ failing volume does not hold up the others.
 Volumes are queued largest first, so that the longest copies start early. The members of a consistency group move
 together and share one turn.
 
-Transfers and cutovers are also serialized per logical volume store of the source cluster. The volumes of different
-logical volume stores cut over in parallel.
+Transfers are also serialized per logical volume store of the source cluster. Cutovers run one at a time per source
+cluster, whatever logical volume store a volume is on, and the members of a consistency group cut over together. A
+volume that has caught up while another cutover runs keeps replicating on its interval until its turn comes. The
+forecast serializes cutovers only per logical volume store, so a migration of many volumes on several storage nodes
+can end later than `completesAt`.
 
 ### Target Placement
 
@@ -76,9 +79,12 @@ The cutover runs as follows:
 5. **Switch:** The target paths are set to `optimized` on the leading storage node and `non_optimized` on the others.
    The queued I/O drains to the target cluster.
 
-The freeze lasts from the fence to the switch and typically takes a few seconds. A volume written faster than it
-replicates freezes for longer, because the convergence stops after at most 12 rounds and the remaining delta is copied
-during the freeze.
+The freeze lasts from the fence to the switch and typically takes a few seconds. SPDK allows the final delta copy 12
+seconds, so the control plane starts the freeze only when the last convergence round took at most 6 seconds. A volume
+that does not get there within 15 minutes is not frozen: the attempt is abandoned, the volume keeps replicating on its
+interval, and the cutover is retried 5 minutes later. Each abandoned attempt uses one of the cutover's retries, so a
+volume that never converges ends `failed`. A final copy that exceeds the 12 seconds fails, the source paths are
+restored, and I/O resumes on the source.
 
 The cutover is carried out by the storage nodes that lead the logical volume stores on both sides, so it also
 completes while a primary storage node is down. While a tertiary node leads the target logical volume store, the
@@ -97,14 +103,16 @@ and the cutover is retried.
 - **Replication resources:** A `ReplicationPair` from the source to the target cluster and a `ReplicationPolicy` with
   `mode: migration` that references it, as described in [Asynchronous Replication](asynchronous-replication.md).
 - **Free capacity on the source:** The snapshot of a volume's initial copy keeps every block that is overwritten while
-  the copy runs, up to the volume's used size. A plan is refused when the source cluster is at or above its capacity
-  warning threshold. A plan is accepted with a warning when the free capacity of the source is smaller than the used
-  size of the selected volumes.
+  the copy runs, up to the volume's used size. A plan is accepted with a warning when the source cluster is at or above
+  its capacity warning threshold, and when the free capacity of the source is smaller than the used size of the
+  selected volumes. Neither refuses the plan.
 - **Write rate:** A volume converges only while replication outruns the writes of its clients. The forecast reports
   a logical volume store whose volumes are written at 90% of its replication throughput or more as not converging.
   Their cutover does not start until the write rate drops.
 - **Encrypted volumes:** Encrypted volumes cannot be migrated. Deleting the source would delete the only copy of the
-  key, and replication does not carry the key to the target.
+  key, and replication does not carry the key to the target. The control plane refuses to start replication for an
+  encrypted volume, so an encrypted claim enrolled in a migration has its `ReplicationSlot` in `error`, and the
+  migration reports it as `failed`. Encrypted claims are left out of the move.
 - **Consistency groups:** A consistency group is migrated as a whole. A plan that selects only some of its members
   skips them.
 - **Disaster recovery relationships:** A volume that replicates in the `failover` mode is not moved by a selection of
@@ -169,6 +177,11 @@ kubectl apply -f migrate-cluster.yaml
 | `policy`  | `ReplicationPolicy` | Every volume attached to the policy.                                                    |
 | `volume`  | `ReplicationSlot`   | A single volume.                                                                        |
 
+The `target`, `policy`, and `volume` scopes move only the claims in the namespace of the operation, which is the
+namespace of the policy. Claims in other namespaces are moved with the `cluster` scope. Only the `cluster` scope checks
+the mode of the policy. The other three scopes are run over a policy in the `migration` mode: a migration over a
+`failover` policy moves its volumes and ends their disaster recovery protection.
+
 ### Selecting Claims with the Cluster Scope
 
 With the `cluster` scope, the operator decides for every bound claim:
@@ -212,9 +225,11 @@ kubectl get replicationops migrate-old-cluster-forecast -n simplyblock \
 
 ## Watching a Migration
 
-The operation stays `Running` until every volume has cut over. It ends in `Succeeded` when every volume moved, and in
-`Failed` when any volume did not, with the outcome of each volume kept in `status.results`. The operator reads the
-plan every 30 seconds. The wide output adds the forecast time to completion and the convergence verdict.
+The operation stays `Running` until every volume has cut over. It ends in `Succeeded` when no volume of the plan failed,
+and in `Failed` when any volume did not move, with the outcome of each volume kept in `status.results`. Claims skipped
+before the plan was created stay on the source and do not fail the operation, so the `skipped` results are read before
+the source cluster is retired. The operator reads the plan every 30 seconds. The wide output adds the forecast time to
+completion and the convergence verdict.
 
 ```bash title="Watching a migration"
 kubectl get replicationops -n simplyblock -o wide -w
@@ -250,7 +265,7 @@ Each entry of `status.results` carries the slot in `slotRef`, the claim in `pvcR
 | `cutting_over` | The target copy is prepared. The preconnect, the freeze, and the switch run. |
 | `done`         | The target cluster serves the volume.                                        |
 | `failed`       | The volume did not move. `detail` holds the reason.                          |
-| `canceled`     | The cutover was canceled before it started.                                  |
+| `canceled`     | The cutover was canceled before its freeze.                                  |
 | `skipped`      | The volume was not taken into the plan. `detail` holds the reason.           |
 
 ```bash title="Reading the per-volume progress of a migration"
@@ -293,6 +308,8 @@ created the plan, such as too little free capacity on the source.
 | `PreconnectFailed`     | `ReplicationSlot` | The preconnect Job failed. The cutover is held, and the Job is retried.          |
 | `LatePreconnect`       | `ReplicationSlot` | The target paths were connected after the switch, because the window was missed. |
 | `VolumeMoved`          | `ReplicationSlot` | The slot follows its volume to the cluster that serves it now.                   |
+| `CutoverAbandoned`     | `ReplicationSlot` | The control plane gave up the cutover, and the slot is back to `replicating`.    |
+| `ReplicationStopped`   | `ReplicationSlot` | Replication stopped on the control plane, and the slot re-attaches its policy.   |
 
 ## After the Cutover
 
@@ -306,8 +323,13 @@ cloned from. The control plane deletes each retired snapshot once nothing depend
 never retired, and neither is the latest recovery point of a consistency group. A failed delete of the source does
 not fail the cutover.
 
+With `deleteSource: true`, each migrated PersistentVolume is also annotated with `storage.simplyblock.io/relocated-to`,
+which names the volume that serves the data now. The CSI driver deletes the migrated volume through this annotation
+when the claim is deleted. The source `StorageCluster` is deleted only after every migrated PersistentVolume carries
+the annotation. Nothing enforces this order.
+
 Without `deleteSource`, the source volume and its replication snapshots stay on the source cluster and keep using
-capacity there. The source paths stay `inaccessible`.
+capacity there. The source paths stay `inaccessible`, and no annotation is written.
 
 ## Moving Volumes Back
 
@@ -329,8 +351,8 @@ kubectl -n simplyblock exec -it deploy/simplyblock-admin-control -- \
     {{ cliname }} cluster migrate-cancel <PLAN_ID>
 ```
 
-A cancel stops every cutover that has not yet prepared its target copy. A cutover that has already prepared it is
-left to finish, because stopping it would leave a half-built target. The canceled volumes keep replicating. Removing
+A cancel stops every cutover that is not already in its I/O freeze, and the control plane deletes any target clone it
+prepared. A cutover that is freezing is left to finish. The canceled volumes keep replicating. Removing
 the replication policy annotation from their claims stops the replication, as described in
 [Changing or Removing the Policy](asynchronous-replication.md#changing-or-removing-the-policy).
 
