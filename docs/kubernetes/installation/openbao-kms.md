@@ -326,7 +326,7 @@ kubectl -n simplyblock patch clusterdeploymentconfig discovered-initial-discover
     --type=merge -p '{"spec": {"approved": true}}'
 ```
 
-The endpoint must be an `http` or `https` URL whose host name resolves from the operator. Loopback and link-local
+The endpoint must be an `https` URL whose host name resolves from the operator. Loopback and link-local
 addresses are rejected, and a refused endpoint shows up as an `InvalidConfig` event on the `StorageCluster`. From then
 on, the encryption keys of new volumes are wrapped against the transit engine instead of being held in the cluster.
 

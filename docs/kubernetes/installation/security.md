@@ -31,12 +31,16 @@ chart copies them into the `tls` block of the `ControlPlane` resource (`spec.sou
 | `tls.cert-manager.namespace`              | `cert-manager` |                             |
 
 The chart refuses to render if TLS is enabled but the provider is not available: `tls.provider=cert-manager`
-requires that the cluster serves `cert-manager.io/v1`. A cluster without cert-manager must set `tls.enabled=false`.
+requires that the cluster serves `cert-manager.io/v1`, and `tls.provider=openshift` requires an OpenShift cluster.
+Mutual TLS is only allowed with `tls.provider=cert-manager`, so every other setting is combined with
+`tls.mutual_enabled=false`. A cluster without cert-manager sets `tls.enabled=false` and `tls.mutual_enabled=false`.
 
 !!! important "TLS on OpenShift"
-    The OpenShift service CA (`tls.provider=openshift`) does not work as a certificate provider. On OpenShift,
-    [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"} is installed and the default provider,
-    `cert-manager`, is used, which also supports mutual TLS. See [OpenShift](openshift.md#tls-on-openshift).
+    On OpenShift, a Helm installation can use the OpenShift service CA with `tls.provider=openshift` and
+    `tls.mutual_enabled=false`, and needs no cert-manager. The service CA issues serving certificates only, so mutual
+    TLS, and with it an external KMS, requires [cert-manager](https://cert-manager.io/){:target="_blank" rel="noopener"}.
+    An OperatorHub installation uses cert-manager as well, because the CA bundle ConfigMap the service CA provider
+    depends on is created only by the Helm chart. See [OpenShift](openshift.md#tls-on-openshift).
 
 ### Prerequisites
 
@@ -104,7 +108,9 @@ below.
 
 - **Mutual TLS:** [mTLS](#transport-layer-security-mutual-tls-mtls) has to be configured first, because the control
   plane authenticates to the KMS with a certificate issued by the `simplyblock-certificate-authority-issuer`. The
-  serving certificate of the KMS itself has to chain to the same certificate authority.
+  serving certificate of the KMS itself has to chain to the same certificate authority. Without mutual TLS, the
+  control plane refuses the cluster with `External KMS requires mTLS authentication to be used`, reported in a
+  `ClusterCreationFailed` event on the `StorageCluster`.
 - **A prepared instance:**
     === "Vault / OpenBao"
         A Vault or OpenBao instance reachable from the simplyblock namespace, initialized, unsealed, and configured
@@ -191,25 +197,31 @@ spec:
 The expansion copies the block to `StorageCluster.spec.kms`. The operator hands the KMS endpoint to the control
 plane when it creates the storage cluster, so the KMS has to be configured before the cluster is created.
 
-The Vault or OpenBao endpoint must be an `http` or `https` URL whose host name resolves. The KMIP endpoint must be a
-`host:port` pair whose host name resolves instead, carrying no URL scheme, because KMIP is a binary protocol over TLS
-rather than an HTTP API. Either form rejects a loopback or a link-local address.
+The Vault or OpenBao endpoint must be an `https` URL whose host name resolves. The `StorageCluster` schema also admits
+an `http` URL, but the control plane then refuses the cluster with a `ClusterCreationFailed` event. The KMIP endpoint
+must be a `host:port` pair whose host name resolves instead, carrying no URL scheme, because KMIP is a binary protocol
+over TLS rather than an HTTP API. Either form rejects a loopback or a link-local address.
 
 !!! warning "The KMS setting is immutable"
     Once `spec.kms` is set on a `StorageCluster`, it cannot be changed or removed. An approved
     `ClusterDeploymentConfig` cannot be changed either.
 
-!!! warning "Existing volumes are not affected"
-    Only encryption keys for volumes that are created after the KMS is wired up are wrapped and stored in the KMS.
-    Existing volumes keep their internally managed keys.
+!!! warning "The KMS is set when the cluster is created"
+    The KMS endpoint reaches the control plane only in the request that creates the cluster. `spec.kms` added to an
+    existing `StorageCluster` is accepted, but it is never sent to the control plane, so new volumes keep using the
+    internal key store as well. Because the block is immutable once set, it cannot be removed afterward either.
 
 ### Verification
 
-Once configured, check the cluster status and the operator logs:
+Neither the operator nor the creation of the cluster contacts the KMS. The first contact is the creation of the
+cluster's default pool, which creates the pool's key-encryption key in the KMS. The default `StoragePool` therefore
+has to reach the `Ready` phase. A KMS that cannot create the key leaves the pool with a `PoolCreationFailed` event, and
+the control plane logs `Failed to create pool key`:
 
-```bash title="Verify the KMS connection"
-kubectl -n simplyblock get storagecluster production -o jsonpath='{.status.message}'
-kubectl -n simplyblock logs deploy/simplyblock-operator
+```bash title="Verify the KMS connection through the default pool"
+kubectl -n simplyblock get storagepool production-default
+kubectl -n simplyblock describe storagepool production-default
+kubectl -n simplyblock logs deploy/simplyblock-webappapi | grep "pool key"
 ```
 
 Creating a new encrypted volume after the KMS is wired up exercises the path end-to-end. The volume's encryption key

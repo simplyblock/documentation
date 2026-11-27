@@ -6,7 +6,7 @@ weight: 30200
 
 Simplyblock supports NVMe-oF transport security to protect data in transit and restrict access to storage subsystems.
 Security is enabled at a storage pool level. Turning it on for a storage pool applies to all volume created in that
-specific storage pool. Host access control and the per-host security keys are then managed per volume. There is no
+specific storage pool. The allowed hosts are then managed per storage pool and applied to its volumes. There is no
 cluster-level security configuration. The DH-HMAC-CHAP parameters are fixed and cannot be set when creating a cluster.
 
 ## Host Access Control
@@ -15,9 +15,9 @@ By default, NVMe-oF subsystems in simplyblock allow connections from any host (`
 control is enabled, only explicitly allowed host NQNs can connect to a volume's subsystem. Hosts are identified by their
 NVMe Qualified Name (NQN), a unique identifier assigned to each NVMe-oF initiator.
 
-Host access control is configured per volume at creation time or managed dynamically afterward. When a pool has security
-options configured, every volume created in that pool automatically inherits those settings, and security keys are
-auto-generated for each allowed host.
+Host access control is configured on the storage pool, and its allowed hosts can be changed at any time. Every volume of
+a DHCHAP pool inherits the pool's allowed hosts. The pool has one key pair, a host key and a controller key. The pair is
+generated once, when the pool is created, and is shared by all allowed hosts and all volumes of the pool.
 
 ## DH-HMAC-CHAP Authentication
 
@@ -41,8 +41,8 @@ Simplyblock uses a fixed DH-HMAC-CHAP configuration. The following settings are 
 - Hash algorithms (digests) offered to and negotiated by the host: `sha256`, `sha384`, `sha512`.
 - Diffie-Hellman group: `ffdhe2048`.
 
-DH-HMAC-CHAP keys are automatically generated in the NVMe TP8018 format (`DHHC-1:<hash_id>:<base64(key)>:`) when
-a host is added to a volume in a pool with `dhchap_key` enabled in its security options.
+The pool's two DH-HMAC-CHAP keys are generated in the NVMe TP8018 format (`DHHC-1:<hash_id>:<base64(key)>:`) when the
+pool is created. Adding a host generates no new key.
 
 ## TLS/PSK Encryption
 
@@ -77,19 +77,34 @@ By default, all security options are disabled. If the parameter is present at po
 enabled:
 
 - Bidirectional DH-HMAC-CHAP Authentication (both `dhchap_key` and `dhchap_ctrlr_key` are auto-generated)
-- Host access control (`allow_any_host` is set to `false` for all volumes in the pool)
+- Host access control for every volume created while the pool has at least one allowed host
 
 ```bash title="Create Pool with DH-HMAC-CHAP Authentication"
 {{ cliname }} storage-pool add <POOL_NAME> <CLUSTER_ID> --dhchap
 ```
 
+!!! warning "Allowed hosts are added before the first volume"
+    A volume created while the pool's allowed-hosts list is empty gets a subsystem with `allow_any_host=true` and no
+    authentication. Hosts added later are listed on that subsystem, but `allow_any_host` is not switched off, so hosts
+    outside the list can still connect without authentication. The allowed hosts are therefore added before volumes
+    are created in a DHCHAP pool.
+
+### Kubernetes
+
+On Kubernetes, DH-HMAC-CHAP is enabled with `volumeDefaults.enableDHCHAP` on a `StoragePool`, and the allowed hosts are
+the Kubernetes nodes listed in its `allowedNodes`. The default pool of a cluster cannot use DH-HMAC-CHAP. See
+[Host Authentication and Encryption](../../kubernetes/operations/security/authentication-encryption.md).
+
 ## Host Management
 
 Once a pool with security options is in place, hosts can be managed per storage pool:
 
-- **Add a host:** `{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>` (keys are auto-generated based on the pool's
-  security options).
+- **Add a host:** `{{ cliname }} storage-pool add-host <POOL_ID> <HOST_NQN>`
 - **Remove a host:** `{{ cliname }} storage-pool remove-host <POOL_ID> <HOST_NQN>`
+
+Adding a host grants it access to every existing and every new volume of the pool, with the pool's key pair. Removing
+a host removes it from every volume of the pool, and the storage nodes close the host's open connections to those
+volumes. Workloads using the pool's volumes on that host are stopped before the host is removed.
 
 ## Connecting a Volume
 
@@ -112,8 +127,10 @@ nvme connect -t tcp -a 192.168.1.100 -s 4420 \
 ```
 
 The `--dhchap-secret` and `--dhchap-ctrl-secret` flags are included only when the volume belongs to a
-DHCHAP-enabled pool and the specified host NQN is in the pool's allowed hosts list. Without `--host-nqn`,
-the connect command returns a plain connection string without authentication parameters.
+DHCHAP-enabled pool and the specified host NQN is in the pool's allowed hosts list. For a volume with allowed hosts, a
+connect without `--host-nqn` is refused with `--host-nqn is required`, and a host NQN outside the list is refused with
+`Host NQN <HOST_NQN> not found in allowed hosts for volume <VOLUME_ID>`. The management API answers these with HTTP
+`400` and `403`. A volume without allowed hosts returns a plain connection string without authentication parameters.
 
 ## Clone Security Behavior
 

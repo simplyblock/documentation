@@ -253,9 +253,10 @@ kubectl -n simplyblock get pvc kms-check
 The cluster UUID comes from `kubectl get storagecluster production -n simplyblock -o jsonpath='{.status.uuid}'`. The
 example uses the default pool of the cluster, `production-default`.
 
-A pool's key-encryption key is created the first time a volume in it is encrypted, and each volume's two
-data-encryption keys are wrapped against it. Both surface as `Create`, `Activate`, `Encrypt`, and `Decrypt`
-operations in the appliance's log, each carrying the control plane's client identity:
+A pool's key-encryption key is created on the appliance together with the pool, so `Create` and `Activate` appear in
+the appliance's log as soon as the default pool exists. Each encrypted volume's two data-encryption keys are wrapped
+against that key when the volume is created, and unwrapped when it is brought online, which shows as `Encrypt` and
+`Decrypt` operations. Every entry carries the control plane's client identity:
 
 ```bash title="Reading the reference instance's log"
 kubectl -n simplyblock exec deploy/kmip-server -- cat /tmp/kmip.log
@@ -271,8 +272,8 @@ kmip.server.engine - INFO - Processing operation: Encrypt
 kmip.server.engine - INFO - Processing operation: Encrypt
 ```
 
-No entry, after a volume is created, means the control plane never reached the appliance, and the reason is in its
-own log:
+A default pool that stays `Pending` with a `PoolCreationFailed` event, or no `Encrypt` entry after a volume is
+created, means the control plane did not reach the appliance, and the reason is in its own log:
 
 ```bash title="Reading the control plane log after a failed key operation"
 kubectl logs -n simplyblock deploy/simplyblock-webappapi
